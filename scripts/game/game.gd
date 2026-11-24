@@ -156,6 +156,8 @@ var boss_at := -1.0
 ## Omegas let go (attack, special and circle) and dodges, for the run's log.
 var omegas := 0
 var dodges := 0
+## Times each button was used and blows taken with no dodge charge (RunLog.USE_KEYS), for the run's log.
+var uses := {}
 ## What hurt the paladin last (DefeatCause.of: {"attack", "enemy"}); empty before any blow. defeated_by() names it.
 var last_hurt := {}
 ## Each room in numbers (QW-011): its arena, life walking in, damage taken by kind, time; RESULT rooms, hp_at_boss.
@@ -306,6 +308,8 @@ func _ready() -> void:
 	player.cast_released.connect(func(_at: Vector2, omega: bool) -> void:
 		if omega:
 			omegas += 1)
+	player.struck.connect(func(node: ComboNode, _o: Vector2, _d: Vector2) -> void: _count_slot(node))
+	player.ult_started.connect(func(_dir: Vector2) -> void: _use(&"shift"))
 	player.glinted.connect(combat.glint)
 	player.cast_released.connect(combat.cast)
 	# was_hurt is emitted before died: the blow is counted before the run ends (BUG-014)
@@ -1174,9 +1178,24 @@ func _on_dodge_close() -> void:
 	dodge_closes += 1
 
 
+## Q and E count when their move lands (Skills.trigger_of).
+func _count_slot(node: ComboNode) -> void:
+	var which := Skills.trigger_of(node)
+	if which == SkillDef.Trigger.SHOUT:
+		_use(&"q")
+	elif which == SkillDef.Trigger.RUSH:
+		_use(&"e")
+
+
+## One more use of a button (RunLog.USE_KEYS).
+func _use(key: StringName) -> void:
+	uses[String(key)] = int(uses.get(String(key), 0)) + 1
+
+
 func _on_dodged(dir: Vector2) -> void:
 	skills.trigger(SkillDef.Trigger.DODGE)
 	dodges += 1
+	_use(&"space")
 	room_tally.dodge()
 	var dps := boons.stat(&"dodge_ember_dps")
 	if dps > 0.0 and arcane == null:  # (the Maga's Passo lays its own at both ends: Arcane._on_dodged)
@@ -1315,6 +1334,8 @@ func _blow_context(source: Object, id: Variant) -> Dictionary:
 ## The paladin lost life (Player.was_hurt, emitted before died): the blow's cause is kept and counted now, so a
 ## killing blow is in the log, on the end screen and in the boss's numbers (BUG-014).
 func _on_was_hurt(amount: float) -> void:
+	if player.dodge_charges <= 0:
+		_use(&"dry_hits")
 	combat.drop_combo()
 	if _blow.is_empty():
 		return

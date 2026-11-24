@@ -174,6 +174,31 @@ const SHOUT_PACK := 3
 const SHOUT_REACH := 4.0
 
 
+## Below this share of his life a full charge is spent at once (KT 3): the Golpe Supremo is also the way out of a bad moment.
+const HURT_ULT := 0.4
+## How close an enemy must be for the hurt paladin's Golpe Supremo (m).
+const HURT_ULT_NEAR := 9.0
+
+
+## Whether the paladin is hurt enough to spend a full ultimate without waiting for a crowd.
+static func hurt_for_ult(ready: bool, hp: float, max_hp: float) -> bool:
+	return ready and max_hp > 0.0 and hp < max_hp * HURT_ULT
+
+
+## The ultimate now: full and worth it (a pack in its reach, a big one), or full with the paladin hurt and a foe near.
+func _ult_now(game: Game, p: Vector2, dir: Vector2) -> bool:
+	if not game.player.ult_ready:
+		return false
+	if game.ults.worth(p, dir):
+		return true
+	if not hurt_for_ult(true, game.player.hp, game.player.max_hp):
+		return false
+	for e: Enemy in game.horde.list:
+		if e.alive and not e.invulnerable and e.pos.distance_to(p) <= HURT_ULT_NEAR:
+			return true
+	return false
+
+
 ## The Brado de Guerra is ready and SHOUT_PACK or more enemies stand within its reach.
 static func shout_worth(game: Game, at: Vector2) -> bool:
 	var p := game.player
@@ -343,7 +368,7 @@ func step(dt: float, game: Game) -> void:
 	if game.arcane != null:
 		_arcane_step(game, p, target)
 		return
-	if game.player.ult_ready and not Dev.has("bot-mouse") and game.ults.worth(p, pad.aim):
+	if not Dev.has("bot-mouse") and _ult_now(game, p, pad.aim):
 		# the ultimate as soon as it is full and worth it (the pack in the band or the Voragem, or a big one)
 		pad.press(&"ultimate")
 		return
@@ -432,7 +457,7 @@ func _arcane_step(game: Game, p: Vector2, target: Vector2) -> void:
 		pad.move = Vector2.ZERO
 	if player.state != Player.State.MOVE:
 		return
-	if player.ult_ready and game.ults.worth(p, dir):
+	if _ult_now(game, p, dir):
 		pad.press(&"ultimate")
 		return
 	if _wait > 0.0:

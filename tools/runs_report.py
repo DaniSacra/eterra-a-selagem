@@ -31,6 +31,12 @@ def dealt(x, *keys):
 def used(x):
     """Uso por tecla, o que o registro permite saber: o jogo não grava teclas, só efeitos."""
     ult = (x.get("ult") or {}).get("uses", 0)
+    u = x.get("uses")
+    if u:
+        # since log version 7 the game counts the presses themselves
+        return {"Espaço (esquiva)": u.get("space", 0), "Q (vezes)": u.get("q", 0), "E (vezes)": u.get("e", 0),
+                "Shift (vezes)": u.get("shift", 0), "Ômega": x.get("omegas", 0),
+                "Golpes levados sem carga de esquiva": u.get("dry_hits", 0)}
     return {
         "Espaço (esquiva)": x.get("dodges", 0),
         "Q (Brado)": dealt(x, "shout"),
@@ -110,8 +116,19 @@ def main(argv):
               "%.0f" % avg([x.get("hp_at_boss", 0) for x in reach]) if reach else "-", avg([x.get("boons_at_boss", 0) for x in reach]))]
     o += ["", "## Teclas e habilidades usadas", "",
           "O registro não grava teclas; o uso vem dos efeitos (dano por origem, esquivas, Ômegas, usos do final). Q, E e Especial contam dano causado (não vezes); Espaço, Shift e Ômega contam usos. Uma habilidade que não causa dano (Brado sem acertar) pode aparecer como não usada.", ""]
-    names = list(used(real[0]).keys())
-    tot = {k: [used(x)[k] for x in real] for k in names}
+    # two groups: lines of version 7 (counted presses) and older ones (read from the damage)
+    counted = [x for x in real if x.get("uses")]
+    if counted:
+        o += ["Desde a versão 7 do registro o jogo conta as vezes de Q, E, Shift e Espaço e os golpes levados com 0 carga de esquiva (%d partidas):" % len(counted), ""]
+        names = list(used(counted[0]).keys())
+        o.append(table(["Tecla", "Total", "Média/partida", "Partidas que usaram", "Nunca usaram"],
+                       [[k, sum(used(x)[k] for x in counted), "%.1f" % avg([used(x)[k] for x in counted]),
+                         sum(1 for x in counted if used(x)[k] > 0), sum(1 for x in counted if used(x)[k] == 0)] for k in names]))
+    older = [x for x in real if not x.get("uses")]
+    if not older:
+        older = []
+    names = list(used(older[0]).keys()) if older else []
+    tot = {k: [used(x)[k] for x in older] for k in names}
     o.append(table(["Tecla", "Total (dano ou contagem)", "Média/partida", "Partidas que usaram", "Nunca usaram"],
                    [[k, sum(v), "%.1f" % avg(v), sum(1 for a in v if a > 0), sum(1 for a in v if a == 0)] for k, v in tot.items()]))
     o.append("Partidas sem nenhum uso de: " + "; ".join("%s: %s" % (k, ", ".join("%s %s" % (x.get("when", "")[5:16], "s" + str(x.get("slot", "?"))) for x, a in zip(real, v) if a == 0) or "nenhuma") for k, v in tot.items() if 0 < sum(1 for a in v if a == 0) <= 6) + ".\n")

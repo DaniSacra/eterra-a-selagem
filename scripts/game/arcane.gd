@@ -256,6 +256,8 @@ func _blast(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			if burn > 0.0:
 				_burn_near(e.pos, burn)  # Brasa Viva
 	var fx := game.fx
+	if hits > 0:
+		combat.shot_weight(Combat.shot_stop_ms(node), dir)  # the Explosão weighs on contact (CB 2)
 	fx.ring(at, radius, AMBER, 0.35, 0.15, true)
 	fx.ring(at, radius * 0.55, IVORY, 0.25)
 	fx.burst(&"fire", Vector3(at.x, 0.6, at.y))

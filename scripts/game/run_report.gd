@@ -50,7 +50,7 @@ static func entry(g: Game, outcome: String, gain: Dictionary) -> Dictionary:
 		gifts.append({"id": String(id), "level": g.boons.level(id), "rarity": Boon.Rarity.keys()[g.boons.rarity(id)].to_lower()})
 	var device := "bot" if g.bot else RunLog.device(Controls.seen_keys, Controls.seen_pad)
 	var extra := {"outcome": outcome, "when": Time.get_datetime_string_from_system(), "gifts": gifts,
-		"device": device, "omegas": g.omegas, "dodges": g.dodges,
+		"device": device, "omegas": g.omegas, "dodges": g.dodges, "uses": RunLog.uses_of(g.uses),
 		"last_hurt": {"attack": String(g.last_hurt.get("attack", &"")), "enemy": String(g.last_hurt.get("enemy", &""))},
 		"defeated_by": String(g.defeated_by()) if outcome == "death" else "", "source": RunLog.source(g.bot != null),
 		"slot": Save.slot}

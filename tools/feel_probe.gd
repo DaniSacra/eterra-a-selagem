@@ -42,8 +42,8 @@ extends Node
 ##   D-44b  cast_no_safety      no protection after the circle is released (D-44 (2))
 ##   D-44c  cast_attack_lock    attack tapped every frame from the release starts 8 frames or more after it (D-44 (2))
 ##   ALL    no_lost_press       no line of the run says LOST
-##   GF-12  enemy_flinch       E1b (D-42): a skeleton struck in its wind-up goes back to walking on the hit frame and
-##                              attacks no sooner than its stun plus a whole new wind-up after it (the cut blow never comes)
+##   GF-12  enemy_flinch       CB 7 (nobody is interrupted, StunRule.DEFAULT = NONE): a skeleton struck in its wind-up keeps
+##                              winding up and attacks on the frame it would have anyway
 ##   E1c-P1 blows_planted      E1c (Daniel's E1 test and his Hades II video; docs/design/hades2_feel_study.md): direction
 ##                              held all the time, every blow (cut1, cut2, spin, special, its Omega, the lance) walks
 ##                              0 m from the press until its legs are free (the dash attack keeps its lunge)
@@ -451,6 +451,21 @@ func _s_combo_mash() -> void:
 		if with_dummy:
 			meta("GF-01b", "no_freeze_combo", "0 quadros parados no combo de 3 sobre um alvo", "%d" % frozen[0], frozen[0] == 0)
 			check_shape("GF-01c", "hit_stop_shape_spin", rates, _first(seen, "hit", "cut3"), 3, 1, 3)
+			# CB 1: the 2nd cut of a tight chain keeps its own hit stop (it lands 13 frames after the 1st), and no two
+			# stops start within HIT_SLOW_COOLDOWN of each other
+			var slow_at: Array[int] = []
+			for i in rates.size():
+				if float(rates[i]) <= 0.1 and (slow_at.is_empty() or i - slow_at[-1] > 3):
+					slow_at.append(i)
+			var h2 := _first(seen, "hit", "cut2")
+			var has2 := false
+			for f in slow_at:
+				has2 = has2 or (f >= h2 and f <= h2 + 8)
+			var closest := 999
+			for k in range(1, slow_at.size()):
+				closest = mini(closest, slow_at[k] - slow_at[k - 1])
+			meta("GF-01e", "hit_stop_per_blow", "o golpe 2 da corrente de 3 tem o proprio hit stop e dois hit stops nunca ficam a menos de 9 quadros (0,15 s)",
+				"golpe 2 %s, menor intervalo %d quadros (paradas em %s)" % ["tem" if has2 else "SEM", closest, str(slow_at)], has2 and closest >= 9)
 
 
 func _s_combo_on_hit() -> void:
@@ -546,7 +561,10 @@ func _s_dodge() -> void:
 					inv[1] = false
 			if i < 24 or i % 5 == 0:
 				out("f%d state=%s inv=%s x=%.2f charges=%d dodges=%d" % [i, Player.State.keys()[p.state], p.invulnerable(), p.pos.x - x0, p.dodge_charges, dodged[0]]))
-	meta("GF-09d", "dodge_safety_19", "protecao de 19 a 20 quadros desde o aperto", "%d" % inv[0], inv[0] >= 19 and inv[0] <= 20)
+	# C1e: the dodge protects Feel.dodge_iframes (0.2 s = 12 frames) after the press frame
+	var iframes := int(round(Feel.live().dodge_iframes * 60.0))
+	meta("GF-09d", "dodge_safety_19", "protecao de %d a %d quadros desde o aperto (dodge_iframes + o quadro do aperto)" % [iframes, iframes + 1], "%d" % inv[0],
+		inv[0] >= iframes and inv[0] <= iframes + 1)
 	out("== DODGE alone (no move held): distance")
 	await reset_hero(Vector2(-8, 4))
 	x0 = game.player.pos.x
@@ -560,7 +578,7 @@ func _s_dodge() -> void:
 			tap(&"dodge"),
 		func(_i: int, _s: bool) -> void: pass)
 	out("dodge distance standing (facing right): %.2f m" % (game.player.pos.x - x0))
-	meta("D-44a", "dodge_frame_0", "esquiva parada sai no quadro do aperto (f0)", "f%d" % at[0], at[0] == 0)
+	meta("D-44a", "dodge_frame_0", "esquiva parada sai no quadro do aperto (f0) ou antes, nunca depois", "f%d" % at[0], at[0] <= 0)
 
 
 func _s_dodge_cancel() -> void:
@@ -617,10 +635,11 @@ func _s_attack_in_dodge() -> void:
 		var good := false
 		if st:
 			var f: int = st[0][2]
-			good = (st[0][1] == "dash_cut" and f >= 13 and f <= 14) if d <= 13 else (f >= d and f <= d + 1)
+			# (since 2026-11-21 there is no dash cut: the tap waits and the cut starts when the dodge ends)
+			good = (st[0][1] == "cut1" and f >= 13 and f <= 14) if d <= 13 else (f >= d and f <= d + 1)
 		if not good:
 			bad.append("d%d:%s" % [d, ("%s@f%d" % [st[0][1], st[0][2]]) if st else "LOST"])
-	meta("GF-03a", "attack_in_dodge", "ataque nos quadros 1 a 13 da esquiva vira dash_cut no 13 ou 14; depois, na hora",
+	meta("GF-03a", "attack_in_dodge", "ataque nos quadros 1 a 13 da esquiva espera e sai como golpe 1 no 13 ou 14; depois, na hora",
 		"todos" if bad.is_empty() else "fora: " + " ".join(bad), bad.is_empty())
 
 
@@ -683,8 +702,9 @@ func _s_special() -> void:
 			meta("GF-07a", "bolt_attack_lock", "golpe 1 sai em f25 (24 a 26) com o ataque apertado todo quadro", ("f%d" % nxt) if nxt >= 0 else "nunca",
 				nxt >= 24 and nxt <= 26)
 		else:
-			meta("GF-07b", "bolt_recharge", "2a seta sai em f48 (47 a 49) com o especial apertado todo quadro", ("f%d" % nxt) if nxt >= 0 else "nunca",
-				nxt >= 47 and nxt <= 49)
+			# the special's own 0.5 s of cooldown (was 0.8 s, f48)
+			meta("GF-07b", "bolt_recharge", "2a seta sai em f38 (37 a 39) com o especial apertado todo quadro", ("f%d" % nxt) if nxt >= 0 else "nunca",
+				nxt >= 37 and nxt <= 39)
 	out("== SPECIAL: dart speed, and a dodge on f20 (move held)")
 	await reset_hero()
 	var speed := [0.0]
@@ -772,31 +792,27 @@ func _s_cast() -> void:
 		out("circle released at f%d omega=%s" % [at[0], at[1]])
 	meta("D-44b", "cast_no_safety", "D-44: nenhum quadro protegido depois de soltar o circulo",
 		"nenhum" if safe.is_empty() else "%d quadros (%s ... %s)" % [safe.size(), safe[0], safe[-1]], safe.is_empty())
-	out("== CAST tap, then attack tapped every frame from the release")
+	out("== BRADO (Q) tap, then attack tapped every frame from the press")
 	await reset_hero()
 	await step(200)
 	var seen := _combo_watch()
-	var rel := [-1]
-	var cb2 := func(_a: Vector2, _o: bool) -> void: rel[0] = _cur
-	game.player.cast_released.connect(cb2)
-	await run(50, func(i: int) -> void:
+	await run(60, func(i: int) -> void:
 		_cur = i
 		if i == 0:
-			hold(&"cast")
-		if i == 1:
-			let_go(&"cast")
-		if rel[0] >= 0:
+			tap(&"shout")
+		else:
 			tap(&"light_attack"),
 		func(_i: int, _s: bool) -> void: pass)
-	game.player.cast_released.disconnect(cb2)
 	_unwatch.call()
+	# (the circle left the kit: the Warrior's Q is the Brado, a move of the tree; its blow may not start before it ends)
+	var q0 := _first(seen, "start", "shout")
 	var first := -1
 	for x in seen:
-		if x[0] == "start" and first < 0:
+		if x[0] == "start" and x[1] == "cut1" and x[2] > q0 and first < 0:
 			first = x[2]
-	out("circle released at f%d, first blow %s" % [rel[0], ("f%d" % first) if first >= 0 else "never"])
-	meta("D-44c", "cast_attack_lock", "D-44: golpe so 8 quadros ou mais depois de soltar o circulo",
-		("%d quadros depois" % (first - rel[0])) if first >= 0 and rel[0] >= 0 else "sem golpe", rel[0] >= 0 and first - rel[0] >= 8)
+	out("Brado starts at f%d, first blow %s" % [q0, ("f%d" % first) if first >= 0 else "never"])
+	meta("D-44c", "cast_attack_lock", "D-44: golpe so 8 quadros ou mais depois do inicio do Brado (Q)",
+		("%d quadros depois" % (first - q0)) if first >= 0 and q0 >= 0 else "sem golpe", q0 >= 0 and first - q0 >= 8)
 
 
 func _s_hitstop_buffer() -> void:
@@ -868,10 +884,12 @@ func _s_enemy_interrupt() -> void:
 			if hit_at[0] >= 0 and i <= hit_at[0] + 12:
 				out("f%d e.state=%s state_t=%.2f hurt_t=%.2f stun_t=%.2f anim=%s" % [i, s, e.state_t, e.hurt_t, e.stun_t, e.anim]))
 	out("tap at f%d, struck f%d; enemy states %s" % [hit_at[0], struck[0], str(states)])
-	var soonest: int = int(struck[0]) + int((e.def.stun_time + e.def.attack_windup) * 60.0) - 1
-	meta("GF-12", "enemy_flinch", "esqueleto acertado na preparacao volta a andar no quadro do acerto e so ataca depois do atordoamento e de uma preparacao inteira (f%d ou depois)" % soonest,
-		"acerto f%d, anda f%d, ataque %s" % [struck[0], walk_at[0], ("f%d" % attack_at[0]) if attack_at[0] >= 0 else "nenhum"],
-		struck[0] >= 0 and walk_at[0] == struck[0] and (attack_at[0] < 0 or attack_at[0] >= soonest))
+	# CB 7 (StunRule.DEFAULT = NONE): nobody is interrupted. The skeleton struck in its wind-up keeps winding up and attacks
+	# on the frame it would have anyway (its whole wind-up from the start), never sooner and never later.
+	var due := int(e.def.attack_windup * 60.0)
+	var kept: bool = struck[0] >= 0 and attack_at[0] >= 0 and absi(attack_at[0] - due) <= 3 and (walk_at[0] < 0 or walk_at[0] > attack_at[0])
+	meta("GF-12", "enemy_flinch", "esqueleto acertado na preparacao nao e interrompido: ataca no quadro de sempre (f%d, 3 de folga) e so volta a andar depois" % due,
+		"acerto f%d, anda f%d, ataque %s" % [struck[0], walk_at[0], ("f%d" % attack_at[0]) if attack_at[0] >= 0 else "nenhum"], kept)
 	p.invuln = 0.0
 
 
@@ -895,9 +913,10 @@ func _s_kill() -> void:
 	check_shape("GF-01d", "hit_stop_shape_kill", rates, _first(seen, "hit", "cut1"), 1, 2, 4)
 	out("== KILL 3 at once with cut3 (spin): slow motion")
 	await reset_hero()
+	game.fx.slow_motion = true  # (an option of the save; --nosave runs may have it off)
 	var p := game.player
 	for k in 3:
-		dummy(p.pos + Vector2.from_angle(TAU * k / 3.0) * 1.6, 50.0)
+		dummy(p.pos + Vector2.from_angle(TAU * k / 3.0) * 1.6, 10.0)  # (the hero hits for 15 to 20 now: 10 hp is a sure kill)
 	await step(2)
 	var count := {stopped = 0, slow = 0}
 	await run(90, func(i: int) -> void:
@@ -1018,7 +1037,7 @@ func _s_extra() -> void:
 ## blow 11, 19, 30, special and its Omega 43 (0.71 s), lance 47 (0.78 s); start to next start 13 and 21.
 const PLANTED_CASES := {
 	"c1": [&"cut1", 5, 11], "c2": [&"cut2", 8, 19], "c3": [&"cut3", 22, 30],
-	"bolt": [&"bolt", 6, 43], "burst": [&"burst", 5, 43], "lance": [&"lance", -1, 47],
+	"bolt": [&"bolt", 6, 43], "lance": [&"lance", -1, 47],
 }
 
 
@@ -1110,7 +1129,7 @@ func _planted_input(kind: String, i: int, seen: Array) -> void:
 		if i == 0:
 			tap(&"heavy_attack")
 	else:
-		var action := &"heavy_attack" if kind == "burst" else &"light_attack"
+		var action := &"light_attack"
 		if i == 0:
 			hold(action)
 		if started.call(kind):
