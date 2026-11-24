@@ -37,6 +37,14 @@ const STEP_BURN := 4.0
 const TWIN_DELAY := 0.5
 ## The Suspensão Absoluta blinks its last seconds.
 const ULTRA_BLINK := 2.0
+## The dome's rim (the share of the radius from which Galael's shove acts), its speed at push_pct 1 and the Lumael heal's cap in enemies.
+const DOME_RIM := 0.7
+const DOME_PUSH := 4.0
+const DOME_HEAL_CAP := 6
+## The embers the Passo lays at both ends (Rastro and its kin).
+const FILM := preload("res://assets/shaders/dome_film.gdshader")
+const CLOCK := preload("res://assets/shaders/dome_clock.gdshader")
+const STEP_TRAIL := Vector3(1.4, 2.5, 0.0)
 
 class Circle:
 	var at := Vector2.ZERO
@@ -55,6 +63,9 @@ class Dome:
 	var tags: Array[StringName] = []
 	var touched: Dictionary = {}
 	var node: MeshInstance3D
+	## The Suspensao Absoluta's clock on the rim (a ring on the floor that empties), null in the E's dome.
+	var clock: MeshInstance3D
+	var span := 1.0
 	var held: Array[Projectiles.Shot] = []
 
 ## The Brasa Gêmea's second blast, waiting.
@@ -431,8 +442,47 @@ func _suspend(node: ComboNode) -> void:
 	d.node = _dome_node(d.radius, 0.1)
 	dome = d
 	tally.domes += 1
+	if _stat(&"dome_shield", d.tags) > 0.0 and not game.player.shield_ready:
+		game.player.shield_ready = true  # (Shomael: the dome opens with the shield ready)
+		game.fx.burst(&"heal", Vector3(game.player.pos.x, 1.2, game.player.pos.y))
 	game.fx.ring(game.player.pos, d.radius, IVORY, 0.35, 0.15, true)
 	Audio.play(CombatSounds.EVENTS[&"circle"])
+
+
+## The dome ends by its time (Lumael): she is healed for each enemy it held, up to DOME_HEAL_CAP.
+func _dome_heals(d: Dome) -> void:
+	var per := _stat(&"dome_heal", d.tags)
+	if per <= 0.0:
+		return
+	var n := 0
+	for e: Enemy in d.touched.keys():
+		if e.alive:
+			n += 1
+	if n > 0:
+		game.player.heal(per * mini(n, DOME_HEAL_CAP))
+		game.fx.burst(&"heal", Vector3(game.player.pos.x, 1.2, game.player.pos.y))
+
+
+## The film of the big dome: ivory with a gold hexagon net and an amber rim (dome_film.gdshader).
+func _film_material() -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = FILM
+	return m
+
+
+## The clock on the floor at the big dome's rim: it follows her and empties with the seconds (`_step_ultra`).
+func _clock_node(radius: float) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = Vector2.ONE * radius * 2.0
+	quad.orientation = PlaneMesh.FACE_Y
+	mi.mesh = quad
+	var m := ShaderMaterial.new()
+	m.shader = CLOCK
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	return mi
 
 
 ## The dome's ball: a pale ivory skin of this radius and alpha, put in the room.
@@ -465,15 +515,20 @@ func _step_dome(dt: float) -> void:
 		return
 	d.life -= dt
 	if d.life <= 0.0:
+		_dome_heals(d)
 		_end_dome()
 		return
 	var at := game.player.pos
 	d.node.position = Vector3(at.x, 1.1, at.y)
 	_hold_shots(d, at, false)
 	game.horde.in_circle(at, d.radius, _found)
+	var push := _stat(&"push_pct", d.tags)  # (Galael: the rim shoves outward)
 	for e: Enemy in _found:
 		if e.def.behavior != EnemyDef.Behavior.BOSS:
 			e.slow_t = maxf(e.slow_t, kit.dome_slow)
+			if push > 0.0 and e.pos.distance_to(at) >= d.radius * DOME_RIM:
+				var out := (e.pos - at).normalized()
+				e.pos = game.arena.sweep(e.pos, e.pos + out * DOME_PUSH * push * dt, e.def.radius) if game.arena else e.pos + out * DOME_PUSH * push * dt
 		if not d.touched.has(e):
 			d.touched[e] = true
 			game.combat.touch(e, d.tags)  # (burn, frost, weakness, mark of the Blessings of the E, once to each that comes in)
@@ -512,6 +567,8 @@ func _release(d: Dome) -> void:
 		s.life = 0.0
 		s.frozen = false
 	d.node.queue_free()
+	if d.clock != null:
+		d.clock.queue_free()
 
 
 # ---------- the Suspensão Absoluta (the second ultimate) ----------
@@ -522,7 +579,10 @@ func open_absolute(def: UltDef) -> void:
 	var d := Dome.new()
 	d.life = def.duration
 	d.radius = def.radius
+	d.span = maxf(def.duration, 0.1)
 	d.node = _dome_node(d.radius, 0.08)
+	d.node.material_override = _film_material()
+	d.clock = _clock_node(d.radius)
 	ultra = d
 	ultra_def = def
 	tally.ultras += 1
@@ -554,6 +614,9 @@ func _step_ultra(dt: float) -> void:
 	var at := game.player.pos
 	d.node.position = Vector3(at.x, 1.1, at.y)
 	d.node.visible = d.life > ULTRA_BLINK or int(d.life * 6.0) % 2 == 0
+	d.clock.position = Vector3(at.x, 0.12, at.y)
+	d.clock.visible = d.node.visible
+	(d.clock.material_override as ShaderMaterial).set_shader_parameter(&"left", d.life / d.span)
 	_hold_shots(d, at, true)
 	game.horde.in_circle(at, d.radius, _found)
 	for e: Enemy in _found:
@@ -573,6 +636,10 @@ func _end_ultra() -> void:
 
 ## Passo de Brasa: a flash where she was (it hurts and burns whoever stood there) and embers where she came out.
 func _on_dodged(_dir: Vector2) -> void:
+	var trail := _stat(&"dodge_ember_dps")
+	if trail > 0.0:  # (Rastro: embers where she left and where she came out, not a line ahead as the roll's)
+		game.ground.add_zone(Ground.Kind.EMBER, game.player.last_blink_from, STEP_TRAIL.x, STEP_TRAIL.y, trail, Combat.EMBER_TAGS)
+		game.ground.add_zone(Ground.Kind.EMBER, game.player.pos, STEP_TRAIL.x, STEP_TRAIL.y, trail, Combat.EMBER_TAGS)
 	var flash := _stat(&"step_flash")
 	if flash <= 0.0:
 		return

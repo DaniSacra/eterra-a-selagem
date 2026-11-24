@@ -17,3 +17,4 @@ anim = &"Cast"
 anim_peak = 0.1
 radius = 5.5
 duration = 8.0
+dome_shot_pct = 0.2

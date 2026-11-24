@@ -7,7 +7,7 @@
 script = ExtResource("1_dcsnt")
 stat = &"burn_dps"
 tag = &"blast"
-base = 4.0
+base = 3.0
 per_level = PackedFloat32Array()
 by_rarity = false
 

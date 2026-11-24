@@ -681,7 +681,7 @@ func _boons() -> void:
 	_boon(6, &"consolo", F.LUZ, 6, [_mod(&"heal_on_kill", 0.4, [0.3, 0.3])])
 	_boon(7, &"onda_maior", F.LUZ, 7, [], _skill(K.FAN, {"damage": [16, 22, 30], "count": [5, 8, 11], "cooldown": [5.0, 4.5, 4.0], "radius": [12, 13, 14]}))
 	_boon(8, &"flagelo", F.LUZ, 8, [], _skill(K.STRIKES, {"damage": [24, 32, 44], "count": [4, 6, 9], "cooldown": [4.5, 4.0, 3.5], "radius": [1.6, 1.8, 2.0], "status": &"stun", "status_power": [0.4, 0.5, 0.6]}))
-	_boon(9, &"escudo", F.VIGILIA, 9, [_fixed(&"shield_cooldown", 12, [-3, -3])])
+	_boon(9, &"escudo", F.VIGILIA, 9, [_fixed(&"shield_cooldown", 12, [-3, -3]), _fixed(&"dome_shield", 1)])  # (dome_shield: the Maga's Suspensao opens with it ready)
 	_boon(10, &"passos", F.VIGILIA, 10, [_fixed(&"dodge_charges", 1, [0, 1]), _fixed(&"move_speed_pct", 0.08, [0.06, 0.06])], null, S.DASH)
 	_boon(11, &"firmeza", F.VIGILIA, 11, [_mod(&"max_hp", 20, [15, 15])], _skill(K.CONSECRATE, {"damage": [12, 18, 26], "cooldown": [8, 7, 6], "radius": [4, 5, 6], "status": &"slow", "status_power": [4.0, 4.5, 5.0]}))
 	_boon(75, &"ultimo_brasa", F.CHAMA, 0, [], _skill(K.STRIKES, {"trigger": T.ULT, "damage": [20, 30, 42], "count": [8, 10, 12], "radius": [2.2],
@@ -718,7 +718,7 @@ func _boons() -> void:
 	_boon(29, &"passo_brasa", F.CHAMA, 16, [_mod(&"dodge_ember_dps", 6, [3, 3])], null, S.DASH)
 	_boon(30, &"passo_geada", F.GEADA, 17, [], _skill(K.FAN, {"trigger": T.RUSH, "damage": [14, 20, 28], "count": [3, 5, 7], "radius": [10],
 		"gap": [5.0], "status": &"freeze", "status_power": [0.6, 0.8, 1.0]}), S.RUSH)
-	_boon(31, &"passo_radiante", F.LUZ, 10, [_mod(&"damage_pct", 0.4, [0.2, 0.2], &"dash")], null, S.RUSH)
+	_boon(31, &"passo_radiante", F.LUZ, 10, [_mod(&"damage_pct", 0.4, [0.2, 0.2], &"dash"), _fixed(&"dome_heal", 1.0, [0.5, 0.5], &"dash")], null, S.RUSH)  # (dome_heal: the Maga's Suspensao heals for who it held)
 	# Fatia 2 (sistemas.md 1.6, 3.6): 2 to 3 Blessings more a family, all on their own (no action taken), so an angel
 	# meets a hand with three offers more often; Geada and Vigília (six each) first. Only stats the game knows.
 	_boon(32, &"geada_final", F.GEADA, 3, [_mod(&"freeze_time", 0.6, [0.3, 0.3], &"finisher")])
@@ -2154,9 +2154,9 @@ func _maga_talents() -> void:
 	# Piromancia: the detonated Selo leaves a burn (3 s of 4 a second on it and within 1.5 m); the shots burn (2 a second,
 	# the third 5); the Explosão burns what the Selo did not take and grows by a quarter; the amplified Explosão leaves 4 s of embers
 	_talent(0, &"brasa_viva", B.PIRO, T.ENTRY, 2, 1, {"mods": [_raw(&"seal_burn", 4.0)] as Array[BoonMod]})
-	_talent(1, &"pavio_longo", B.PIRO, T.MIDDLE, 2, 5, {"slot": S.ATTACK, "mods": [_raw(&"burn_dps", 2.0, [], &"light"), _raw(&"burn_dps", 3.0, [], &"seal")] as Array[BoonMod]})
-	_talent(2, &"combustao", B.PIRO, T.MIDDLE, 3, 7, {"slot": S.SPECIAL, "mods": [_raw(&"burn_dps", 4.0, [], &"blast"), _raw(&"cast_size_pct", 0.25, [], &"blast")] as Array[BoonMod]})
-	_talent(3, &"inferno_runico", B.PIRO, T.APEX, 4, 16, {"partner": B.ARCA, "mods": [_raw(&"inferno_dps", 10.0), _raw(&"inferno_time", 4.0)] as Array[BoonMod]})
+	_talent(1, &"pavio_longo", B.PIRO, T.MIDDLE, 2, 5, {"slot": S.ATTACK, "mods": [_raw(&"burn_dps", 2.0, [], &"light"), _raw(&"burn_dps", 2.0, [], &"seal")] as Array[BoonMod]})
+	_talent(2, &"combustao", B.PIRO, T.MIDDLE, 3, 7, {"slot": S.SPECIAL, "mods": [_raw(&"burn_dps", 3.0, [], &"blast"), _raw(&"cast_size_pct", 0.25, [], &"blast")] as Array[BoonMod]})
+	_talent(3, &"inferno_runico", B.PIRO, T.APEX, 4, 16, {"partner": B.ARCA, "mods": [_raw(&"inferno_dps", 8.0), _raw(&"inferno_time", 4.0)] as Array[BoonMod]})
 	# Arcanismo: a Selo gives 1 more Magia; the Selo comes a shot sooner (the third shot 5 weaker); a second Selo on one enemy
 	# (the blast's bonus x1.4); a detonated Selo leaps to the nearest enemy without one
 	_talent(4, &"eco_arcano", B.ARCA, T.ENTRY, 2, 2, {"mods": [_raw(&"seal_magick", 1.0)] as Array[BoonMod]})
@@ -2172,7 +2172,7 @@ func _maga_talents() -> void:
 	# bridges: the third shot burns (5 a second); a blast on 3 Selos or more throws a second at half; the Círculo lays a Selo
 	# on all inside when it closes; the Círculo and the Suspensão recharge a quarter sooner; the Círculo burns when it closes
 	# (12 and 4 a second); the Passo leaves a flash where she was and embers where she lands
-	_talent(12, &"chama_que_marca", B.BRIDGE, T.BRIDGE, 3, 11, {"joins": PA, "mods": [_raw(&"burn_dps", 5.0, [], &"seal")] as Array[BoonMod]})
+	_talent(12, &"chama_que_marca", B.BRIDGE, T.BRIDGE, 3, 11, {"joins": PA, "mods": [_raw(&"burn_dps", 4.0, [], &"seal")] as Array[BoonMod]})
 	_talent(13, &"brasa_gemea", B.BRIDGE, T.BRIDGE, 3, 19, {"joins": PA, "mods": [_raw(&"twin_blast", 0.5)] as Array[BoonMod]})
 	_talent(14, &"selo_no_chao", B.BRIDGE, T.BRIDGE, 3, 12, {"joins": AC, "mods": [_raw(&"circle_seal", 1.0)] as Array[BoonMod]})
 	_talent(15, &"leitura_rapida", B.BRIDGE, T.BRIDGE, 3, 14, {"joins": AC, "mods": [_raw(&"cooldown_pct", -0.25, [], &"shout"), _raw(&"cooldown_pct", -0.25, [], &"dome")] as Array[BoonMod]})
@@ -2213,7 +2213,7 @@ func _maga() -> void:
 	d.name_key = &"ult_dome_abs"
 	d.desc_key = &"ult_dome_abs_desc"
 	var dome_numbers := {"charge": 100.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 6, "gesture": 0.3,
-		"anim": &"Cast", "anim_peak": PEAK[&"Cast"], "radius": 5.5, "duration": 8.0, "dome_shot_pct": 0.3, "dome_blast_cost": 5.0}
+		"anim": &"Cast", "anim_peak": PEAK[&"Cast"], "radius": 5.5, "duration": 8.0, "dome_shot_pct": 0.2, "dome_blast_cost": 5.0}
 	for k: String in dome_numbers:
 		d.set(k, dome_numbers[k])
 	d.tags = [&"ultimate", &"cast"] as Array[StringName]

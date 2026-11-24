@@ -7,7 +7,7 @@
 script = ExtResource("1_os7uq")
 stat = &"burn_dps"
 tag = &"seal"
-base = 5.0
+base = 4.0
 per_level = PackedFloat32Array()
 by_rarity = false
 
