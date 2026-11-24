@@ -26,5 +26,6 @@ cd_floor = 6.0
 passive_tags = Array[StringName]([&"finisher"])
 arcane = SubResource("Resource_qenuo")
 ultimates = Array[ExtResource("4_ittxu")]([ExtResource("5_0l3wl"), ExtResource("6_r80al")])
+weapon = &"bastao"
 talents_dir = "res://data/talents/maga/"
 mastery = ExtResource("2_yanfv")

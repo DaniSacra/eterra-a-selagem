@@ -189,6 +189,51 @@ static func refund_preparo(out: Dictionary, old: Variant) -> Dictionary:
 	return given
 
 
+## The Gifts before the redesign of 2026-11-24 (04_PLANO A.4), hero: {id: Memória it cost}; frozen, never read from the
+## catalog (which changes). Free ones (Quarto Corte, Brasa Viva) cost 0 and give nothing back.
+const LEGACY_DONS := {
+	"warrior": {"quarto_corte": 0, "passo_encadeado": 1, "golpe_sem_fim": 4, "impeto": 1, "avanco_feroz": 3, "furia_plena": 4,
+		"corte_crescente": 1, "fio_longo": 1, "onda_atravessante": 4, "lamina_faminta": 1, "reserva": 3, "coracao_da_emeth": 4,
+		"investida": 3, "sangue_quente": 3, "onda_carregada": 3, "fio_do_passo": 3, "firmeza": 2, "respiro": 3, "ainda_de_pe": 5,
+		"voz_larga": 2, "escudo_de_guerra": 3, "folego_de_guerra": 3, "ferro_na_investida": 3},
+	"maga": {"brasa_viva": 0, "pavio_longo": 1, "combustao": 3, "inferno_runico": 4, "eco_arcano": 1, "cadeia_curta": 1,
+		"selo_duplo": 3, "ruptura": 4, "circulo_expandido": 1, "prisao_sigilada": 3, "suspensao_larga": 3, "contencao_perfeita": 4,
+		"chama_que_marca": 3, "brasa_gemea": 3, "selo_no_chao": 3, "leitura_rapida": 3, "brasa_que_prende": 3, "passo_de_brasa": 3,
+		"firmeza": 2, "reserva": 3, "respiro": 3, "passo_longo": 2, "ainda_de_pe": 5},
+}
+
+
+## The redesign's migration (the version 13 step; GE-3 turns it on in merged): every legacy Gift a hero had opened gives its
+## Memória back (a refund, not counted as brought home), the legacy ids leave opened, unlocked and equipped (the Vagas are
+## free again), the chosen ultimate is cleared (one fixed ultimate a weapon). Idempotent: a second run finds no legacy
+## id in opened and gives back 0. Everything else (Mastery, forge, firsts, materials, vine, codex) is left alone.
+## Returns the Memória given back, {hero: amount}.
+static func migrate_redesign(out: Dictionary) -> Dictionary:
+	var given := {}
+	if not out.get("heroes") is Dictionary:
+		return given
+	for hero_id: String in LEGACY_DONS:
+		var block: Variant = (out.heroes as Dictionary).get(hero_id)
+		if not block is Dictionary:
+			continue
+		var legacy: Dictionary = LEGACY_DONS[hero_id]
+		var refund := 0
+		var seen := []
+		for id: Variant in (block.get("opened", []) as Array):
+			if id is String and legacy.has(id) and not seen.has(id):
+				seen.append(id)
+				refund += int(legacy[id])
+		if refund > 0:
+			MaterialPurse.refund(out, MaterialPurse.MEMORY, refund)
+		given[hero_id] = refund
+		for key in ["opened", "unlocked"]:
+			if block.get(key) is Array:
+				block[key] = (block[key] as Array).filter(func(v: Variant) -> bool: return not (v is String and legacy.has(v)))
+		block["equipped"] = (block.get("equipped", []) as Array).filter(func(v: Variant) -> bool: return not (v is String and legacy.has(v)))
+		block["ultimate"] = ""
+	return given
+
+
 ## Opens for free every Gift the Warrior's block has revealed by its Mastery (the version 6 migration; a test or a
 ## capture that sets the Mastery and wants the save of a player who got there before the Memória).
 static func open_revealed(block: Dictionary, hero: HeroDef = null) -> void:

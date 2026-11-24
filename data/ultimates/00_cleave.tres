@@ -11,6 +11,7 @@ charge = 75.0
 damage_charge = 0.03
 hurt_charge = 1.0
 mastery_level = 3
+weapon = &"emeth"
 tags = Array[StringName]([&"ultimate", &"light"])
 core_damage = 180.0
 damage = 120.0
