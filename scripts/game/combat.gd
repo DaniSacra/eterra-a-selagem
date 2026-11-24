@@ -26,7 +26,14 @@ const SLOW_MO_COOLDOWN := 6.0
 const SLOW_MO_FRACTION := 0.2
 const SLOW_MO_HOLD := 0.12
 const SLOW_MO_OUT := 0.25
-const HIT_SLOW_COOLDOWN := 0.3
+## One hit stop at most this often. Short enough that the 2nd cut of a tight chain (13 frames after the 1st) still
+## plays its own (CB 1: at 0.3 it was always swallowed).
+const HIT_SLOW_COOLDOWN := 0.15
+## The hit stop of the Warrior's special and of the Maga's Explosão on contact (2 frames, 25 ms of wait; CB 2, KT 4):
+## when the move's own hit_stop_ms is 0 and it is a heavy one. The Maga's shots 1 and 2 have none.
+const SHOT_STOP_MS := 25.0
+## The camera jolt of those two (times Fx.KICK_METERS, as a common blow).
+const SHOT_KICK := 0.6
 ## The jolt of the camera along a blow that lands (Fx.kick, times Fx.KICK_METERS): a common blow on the scale of
 ## Hades II's 0.05 m shake (GF-10, at most 0.1 m), bigger only on a finisher and on an Omega (decision D-43).
 const KICK_COMMON := 0.25
@@ -372,6 +379,7 @@ func throw_wave(node: ComboNode, origin: Vector2, dir: Vector2, color: Color, ta
 	if node.wave_color.a > 0.0:
 		color = node.wave_color
 	var shot := projectiles.fire_wave(look, origin + dir * 0.8, dir, node.effect_power, node.effect_radius * length, width * size, color, tags)
+	shot.stop_ms = shot_stop_ms(node)
 	shot.through = boons.stat(&"wave_through", tags) > 0.0
 	if node.wave_speed > 0.0:
 		shot.vel = dir * node.wave_speed
@@ -478,6 +486,22 @@ func _hit_slow(node: ComboNode, extra_ms: float = 0.0) -> void:
 	fx.blow_stop(node.hit_stop_ms * k, (node.hit_slow_ms + extra_ms) * k, node.hit_slow_scale)
 
 
+## The hit stop (ms of wait) a projectile move has on contact: its own hit_stop_ms, else SHOT_STOP_MS for a heavy
+## move (the special, the Explosão), 0 for the light ones (the Maga's shots).
+static func shot_stop_ms(node: ComboNode) -> float:
+	if node.hit_stop_ms > 0.0:
+		return node.hit_stop_ms
+	return SHOT_STOP_MS if node.has_tag(&"heavy") else 0.0
+
+
+## The weight of a projectile's contact: one hit stop and one jolt of the camera, once per shot however many it crosses.
+func shot_weight(stop_ms: float, dir: Vector2) -> void:
+	if stop_ms <= 0.0:
+		return
+	fx.blow_stop(stop_ms * Feel.live().hit_stop_scale)
+	fx.kick(dir, SHOT_KICK)
+
+
 ## How hard the camera jolts when this move lands (times Fx.KICK_METERS): KICK_COMMON, KICK_FINISHER or KICK_OMEGA.
 static func kick_of(node: ComboNode) -> float:
 	if node.has_tag(OMEGA_TAG):
@@ -569,6 +593,9 @@ func on_shot_hit(e: Enemy, shot: Projectiles.Shot) -> void:
 	if arcane != null and shot.tags.has(&"arcane"):
 		arcane.shot_landed(e, shot)
 	if not e.invulnerable:
+		if not shot.stopped:
+			shot.stopped = true
+			shot_weight(shot.stop_ms, along)
 		Audio.play(CombatSounds.EVENTS[&"dart_hit"])
 		_play_material(CombatSounds.material_of(e))
 		if not shot.counted:

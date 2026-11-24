@@ -63,16 +63,16 @@ no relatório e a sessão principal cola, para não dar conflito no fim do arqui
 
 **Lote C, combate em código pequeno e ferramentas** (`gameplay-engineer`; arquivos: `scripts/game/combat.gd`, `scripts/game/projectiles.gd`,
 `scripts/core/run_log.gd`, `scripts/game/bot.gd`, `scripts/game/game.gd` só no bloco do `--stress`, `tools/feel_probe_run.gd`, `tools/feel_probe.gd`, `tests/`)
-12. **A sonda volta a ser regressão** (CB 9, P). Atualizar os alvos velhos (GF-09d, D-44a, GF-03a, GF-07b, D-44c, GF-05, E1c-P1) para o desenho de hoje e
+12. **A sonda volta a ser regressão** (CB 9, P). Atualizar os alvos velhos (GF-09d, D-44a, GF-03a, GF-07b, D-44c, GF-05, E1c-P1) para o desenho de hoje e  [FEITO 2026-11-24: alvos atualizados e GF-12 reescrita; sonda 42 de 42 (nova GF-01e).]
     reescrever GF-12 para a regra "ninguém é interrompido" (CB 7). Aceite: `feel_probe_run` 41 de 41 (ou os que faltarem com causa escrita).
-13. **Hit stop por golpe, não global** (CB 1, P). `HIT_SLOW_COOLDOWN` 0,3 s vira um cooldown que não bloqueia o golpe seguinte do combo (por nó do combo,
+13. **Hit stop por golpe, não global** (CB 1, P). `HIT_SLOW_COOLDOWN` 0,3 s vira um cooldown que não bloqueia o golpe seguinte do combo (por nó do combo,  [FEITO: `HIT_SLOW_COOLDOWN` 0,15 s; GF-01e na sonda.]
     ou 0,15 s). Aceite: sonda mostra o hit stop do corte 2 em toda corrente de 3; nenhuma sequência com dois hit stops em menos de 0,15 s.
-14. **Especial e Explosão pesam no contato** (CB 2, KT 4, P). Dano de projétil com estatística de hit stop (2 quadros, 25 ms) e tranco de câmera no especial
+14. **Especial e Explosão pesam no contato** (CB 2, KT 4, P). Dano de projétil com estatística de hit stop (2 quadros, 25 ms) e tranco de câmera no especial  [FEITO: `Shot.stop_ms`, `Combat.shot_stop_ms`/`shot_weight` (25 ms e tranco 0,6), na Explosão em `Arcane._blast`; o número é a constante `SHOT_STOP_MS` e `hit_stop_ms` do nó vence quando > 0 (o Lote D pode preencher no dado).]
     do Guerreiro e na Explosão da Maga; nada nos tiros 1 e 2. Número fica no dado (o Lote D preenche). Aceite: teste GUT de que o projétil do especial chama o
     hit stop e o tiro 1 não.
-15. **Registro conta o uso, não só o dano** (KT 9, CB 5, P). `RunLog` grava as vezes de Q, E, Shift e Espaço por partida e os golpes levados com 0 carga de
+15. **Registro conta o uso, não só o dano** (KT 9, CB 5, P). `RunLog` grava as vezes de Q, E, Shift e Espaço por partida e os golpes levados com 0 carga de  [FEITO: `RunLog` versão 7, campo `uses` (q, e, shift, space, dry_hits); `runs_report.py` mostra.]
     esquiva; `tools/runs_report.py` mostra as duas colunas. Aceite: teste em `tests/test_run_log.gd`; uma partida do robô mostra os números.
-16. **Robô usa o Supremo ferido e o stress não para na escolha** (KT 3, QA 3 e 5, P). `Bot` solta a ultimate com carga cheia e vida abaixo de 40%;
+16. **Robô usa o Supremo ferido e o stress não para na escolha** (KT 3, QA 3 e 5, P). `Bot` solta a ultimate com carga cheia e vida abaixo de 40%;  [FEITO: `Bot._ult_now` (vida abaixo de 40%, inimigo a 9 m); `Dev` liga `autopick` com `--stress`.]
     `--stress` liga o `--autopick`. Aceite: `tools/smoke.sh 600 --seed=6 --hero=maga` termina com `ult.boss_uses` ou usos maiores que 0; `--stress=300
     --hero=maga` não fica em `mode CHOICE`.
 

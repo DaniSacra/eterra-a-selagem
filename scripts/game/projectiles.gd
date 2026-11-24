@@ -114,6 +114,9 @@ class Shot:
 	## The paladin's wave already counted as its blow landing (Combat.landed: once a shot; a Gift's wave from a blow
 	## that counted itself).
 	var counted := false
+	## The hit stop its contact gives (ms of wait, 0: none; Combat.shot_stop_ms) and whether it already did.
+	var stop_ms := 0.0
+	var stopped := false
 	## The paladin's wave goes through stone (Onda Atravessante, the stat wave_through).
 	var through := false
 	## The paladin's shot ends at the first enemy it touches (the Maga's: the others pass through).

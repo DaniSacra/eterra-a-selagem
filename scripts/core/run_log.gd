@@ -16,7 +16,12 @@ const PATH := "user://runs.jsonl"
 ## offered, chose, cards, fallback; Encounters.log).
 ## 6 (Ofícios, Roteiro A; OficiosRun.report): oficios (finds, find_by, marked, gather: veins, stones, gather_s,
 ## noted; pity: due, passed_guardian).
-const VERSION := 6
+## 7 (KT 9, CB 5): uses, the times each button was used (RunLog.USE_KEYS) and the blows taken with no dodge charge.
+const VERSION := 7
+## The counts of `uses`: Q, E, Shift (the ultimate), Space (dodges) and the blows taken with 0 dodge charges.
+const USE_KEYS: Array[String] = ["q", "e", "shift", "space", "dry_hits"]
+## The field of version 7 and what an older line reads as (nothing counted).
+const USES_FIELDS := {"uses": {}}
 ## What an entry adds to the RESULT: outcome (victory, death, quit), when (local date and time), the gifts taken (in
 ## order: id, level and rarity), the device used (keyboard, gamepad, both, none; bot for the test robot), how many
 ## Omegas and dodges, the last thing that hurt the paladin (DefeatCause) and, on a death, its text key. Since
@@ -86,13 +91,21 @@ static func normalized(e: Dictionary) -> Dictionary:
 	if int(e.get("version", 1)) >= VERSION:
 		return e
 	var out := e.duplicate(true)
-	for fields: Dictionary in [HERO_FIELDS, MAP_FIELDS, KEEP_FIELDS, OFICIOS_FIELDS]:
+	for fields: Dictionary in [HERO_FIELDS, MAP_FIELDS, KEEP_FIELDS, OFICIOS_FIELDS, USES_FIELDS]:
 		for k: String in fields:
 			if not out.has(k):
 				out[k] = fields[k].duplicate() if fields[k] is Array or fields[k] is Dictionary else fields[k]
 	for r: Variant in out.get("rooms", []):
 		if r is Dictionary and not (r as Dictionary).has("node"):
 			r["node"] = -1
+	return out
+
+
+## The `uses` of an entry from a counting dictionary: every key of USE_KEYS, 0 where nothing was counted.
+static func uses_of(counts: Dictionary) -> Dictionary:
+	var out := {}
+	for k in USE_KEYS:
+		out[k] = int(counts.get(k, 0))
 	return out
 
 

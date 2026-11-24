@@ -21,6 +21,9 @@ static func _parse() -> void:
 			_args[a] = "1"
 		else:
 			_args[a.substr(0, eq)] = a.substr(eq + 1)
+	# --stress is a load test: it never waits at a choice screen (QA 5)
+	if _args.has("stress") and not _args.has("autopick"):
+		_args["autopick"] = "1"
 
 
 static func has(key: String) -> bool:
