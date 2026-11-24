@@ -54,6 +54,7 @@ está aqui foi feito (marcado FEITO com o commit) ou espera o Daniel.
    Ressonância) e o ramo do frio (`docs/design/heroes/maga.md:22` e `:113`). Não existe sistema de armas nem para o Guerreiro: a proposta
    precisa dizer se é um sistema dos dois heróis e virar pergunta ao Daniel antes de qualquer código. Aceite: `docs/design/heroes/maga_m3.md`
    com as opções e a recomendação.
+   FEITO no papel (2026-11-23): `docs/design/heroes/maga_m3.md` (3 opções de armas, recomendação B: focos só da Maga, dado no formato de aspecto; ramo do frio; capítulo no Livro de Ahk sem árvore; 9 perguntas ao Daniel). Falta o aval dele antes de qualquer código.
 
 **Lotes que rodam em paralelo** (arquivos separados): **A** `gameplay-engineer` itens 1 a 4 (exportação, `make_data`, `game.gd`, testes);
 **B** `gameplay-engineer` item 6 (Armadilheiro; não toca `make_data` se os números já existem, senão vai depois do A); **C** `technical-artist`
