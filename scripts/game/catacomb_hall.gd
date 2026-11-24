@@ -125,7 +125,7 @@ const ABYSS_LIGHT_Y := -12.0
 ## Width of the two standing stones (thick and blunt, as in the picture).
 const OBELISK_SOUTH := 2.2
 ## GR-24: the entrance stele 45% lower (it stood behind the HUD's buttons, a tenth of the frame; the collision circle is the same).
-const OBELISK_SOUTH_HEIGHT := 2.9
+const OBELISK_SOUTH_HEIGHT := 2.6
 const OBELISK_EAST := 2.3
 ## The floor in front of the portal's steps, always wet (x, z rect).
 const WET := Rect2(-1.0, -15.0, 13.0, 6.0)

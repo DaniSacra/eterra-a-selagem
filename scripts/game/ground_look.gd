@@ -250,6 +250,42 @@ static func set_plate(node: MeshInstance3D, s: Vector3, lead := 0.0) -> void:
 	put(m, &"progress", s.x if s.x > 0.0 else 1.0 if s.y > 0.0 else s.z if not lit else 0.0)
 
 
+## EA-02 (art review 2026-11-24): the grammar of the slab, rest (stone), prepare (amber ember), strike (red-hot), for the
+## hazards drawn as pieces (HazardPiece): one row of the table per piece, x rest, y prepare, z strike, in the share of the
+## piece's own light (its ember or haze). Prepare is at least PIECE_GAP over rest (the warning always lifts 25% or more over
+## the neighbouring floor; the breath rests at none, it only rises) and the strike over prepare. The slit and the wall trap's blade keep a dull iron at rest.
+enum Phase { REST, PREPARE, STRIKE }
+const PIECE_SLIT := &"slit"
+const PIECE_BLADE := &"blade"
+const PIECE_BREATH := &"breath"
+const PIECE_GAP := 1.25
+const PIECE_LOOK := {
+	PIECE_SLIT: Vector3(0.08, 0.3, 0.7),
+	PIECE_BLADE: Vector3(0.08, 0.3, 0.75),
+	PIECE_BREATH: Vector3(0.0, 0.67, 1.0),
+}
+
+
+## The phase a hazard's state vector (x arming, y strike, z ember falling back) is in.
+static func phase_of(s: Vector3) -> int:
+	if s.y > 0.0:
+		return Phase.STRIKE
+	if s.x > 0.0:
+		return Phase.PREPARE
+	return Phase.REST
+
+
+## The light of a piece in its phase: rest, the prepare value reached over the arming (s.x), the strike's.
+static func piece_light(piece: StringName, s: Vector3) -> float:
+	var row: Vector3 = PIECE_LOOK[piece]
+	match phase_of(s):
+		Phase.STRIKE:
+			return row.z
+		Phase.PREPARE:
+			return lerpf(row.x, row.y, clampf(s.x, 0.0, 1.0))
+	return lerpf(row.x, row.y, clampf(s.z, 0.0, 1.0)) if s.z > 0.0 else row.x
+
+
 static func _priority(m: ShaderMaterial, p: int) -> void:
 	m.render_priority = p
 	if m.next_pass != null:
