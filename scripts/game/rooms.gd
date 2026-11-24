@@ -652,6 +652,11 @@ static func spawn_point(arena: Arena, hero: Vector2, rng: RandomNumberGenerator,
 	return best
 
 
+## The life a won room gives back before any gift: only the fight rooms (combat, guardian), never events, shop or fountain.
+static func base_room_heal(kind: RunMap.Kind, base: float) -> float:
+	return base if kind == RunMap.Kind.COMBAT or kind == RunMap.Kind.MINIBOSS else 0.0
+
+
 func _room_cleared() -> void:
 	phase = Phase.REWARD
 	Music.set_level(Music.WALK)
@@ -659,6 +664,7 @@ func _room_cleared() -> void:
 	_stop_runes()
 	_fight_won()
 	game.hero_gifts.room_won()  # Respiro
+	game.player.heal(base_room_heal(room.kind, stage.room_heal_base))
 	# the last blow of a fight: the world slows to a third, the camera closes in, the screen streaks (Hades II)
 	game.fx.slow_mo(LAST_KILL_SLOW, LAST_KILL_HOLD, LAST_KILL_OUT, 1.1, 0.85)
 	game.projectiles.clear_hostile()
@@ -1608,13 +1614,12 @@ func _stop_runes() -> void:
 
 ## The items of each shop group (C13-04: ShopGroup.count of each), on pedestals in a row; a pomegranate (or its slice)
 ## only when a gift can grow.
-## The shop's items stand in a row level on the screen (along the camera's right, Feel.cam_yaw), STEP apart: at 4 m
-## the signs of five items ("Fortalecer ao acaso" and a price with "faltam" the widest, about 150 px at 720 lines)
-## keep about 20 px between them at 1280 x 720 and at 1920 x 1080 (measured: docs/gallery/e3/ui/shop_real_*). The row's
-## middle sits SHOP_SHIFT m to the left of the hall's, toward the landing the hero comes in by, so the last sign is on
-## screen as he arrives.
-const SHOP_STEP := 5.0
-const SHOP_SHIFT := 3.5
+## PT-11 (Daniel, 2026-11-23; docs/art/ref/sworn_daniel/shop_along_wall.png): the middle of the hall stays free. The first
+## item (the Blessing, the highlight) stands a little forward on the engraved medallion; the rest line the walls, thin stone
+## columns along the back (north) wall and the sides, each in its own bubble of light with the price plaque over it. SHOP_SLOTS
+## is the order they fill (1 to 5 items, the route shop's 3 the first three); all on the hall's floor, 6 m and more from the
+## way in, off the portal's door and the stairs of the east side (tests/test_shop_wall.gd).
+const SHOP_SLOTS: Array[Vector2] = [Vector2(-2.5, 1.0), Vector2(-3.5, -10.8), Vector2(-8.8, -10.2), Vector2(-11.6, -3.2), Vector2(11.6, -7.5)]
 ## The word of each shop group (StageDef.shop_groups, in order), over the item's name.
 const SHOP_GROUP_KEY: Array[StringName] = [&"shop_group_boon", &"shop_group_care", &"shop_group_growth"]
 ## Height over the floor of the point a marker's sign stands on.
@@ -1645,10 +1650,9 @@ func _build_shop() -> void:
 			picks.append({"item": group.items[i] as RunMap.Reward, "price": group.prices[i], "group": g})
 	_vine_stock(picks, valid)
 	var n := picks.size()
-	var right := Feel.screen_to_floor(Vector2.RIGHT, Feel.live().cam_yaw)
 	for k in n:
 		var p := picks[k]
-		var at := right * ((k - (n - 1) * 0.5) * SHOP_STEP - SHOP_SHIFT)
+		var at := SHOP_SLOTS[k]
 		p.at = at
 		p.node = _marker(at, p.item, "")
 		# two lines, the name and the price (benchmark_hades2_ui.md P1-3: the reward's mark says the group; the price

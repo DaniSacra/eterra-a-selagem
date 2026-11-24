@@ -491,7 +491,7 @@ func _walls(box: Rect2) -> void:
 		cut_out = -cut_out
 	wall(nw_a, nw_b, cut_out, WALL_HEIGHT, [], mat)
 	# the west wall with the arcade of the way in at the paladin's z
-	var entry := layout.hero_spawn.y
+	var entry := 3.5  # PT-6: the west arch stays as it was (sealed); he now comes in from the south
 	var s0 := sw.y - entry - ENTRY_WIDE * 0.5
 	wall(sw, nw_a, Vector2(-1, 0), WALL_HEIGHT, [Vector4(s0 - JAMB, s0 + ENTRY_WIDE + JAMB, 0.0, WALL_DOOR.y + 0.4)], mat)
 	door_arch(Vector2(west, entry), Vector2(1, 0), ENTRY_WIDE, FACE_SET + 0.45)

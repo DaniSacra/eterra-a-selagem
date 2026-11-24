@@ -664,3 +664,15 @@ Réguas (12 sementes, 1 a 12, `smoke.sh 700 --bot-reaction=R --ultimate=cleave`,
 | Robô 0,6: sala média de morte | 4,7 | 7,3 (salas 5 a 11) |
 Passos medidos: vida 40 e golpes do Cavaleiro e do Ancião menores: 0,25 passou de 8 a 10 de 12 (o Ancião seguia matando o robô com 4 sementes); orçamento das salas 1 a 4 em 0,5 a 0,7 (era 0,65 a 0,85): sem efeito acima do ruído, voltou; vida e armadura menores dos guardiões (luta mais curta, mais atordoamento): criança de 5 para 9 de 12. Ruído entre rodadas: 1 a 3 sementes (o `RunMap` e os sorteios mudam com a mudança de gasto de orçamento).
 Leitura e limites: o robô 0,25 agora passa sempre e chega a Morvath em 6 de 12 sem Maestria nem Dons; isso é mais generoso que a meta antiga ("chega ao guardião e às vezes vence") de propósito, a pedido do Daniel (criança passa da sala 5 e chega perto do meio), mas a primeira vitória sobre Morvath (0 de 12) e os Juramentos continuam sendo o teto. Se o Daniel (Maestria 18) achar fácil demais, o primeiro número a voltar é a vida do Guerreiro (40 para 35). Não mexi na Maga (30) nem em Morvath. Não resolvido: o jogador que pula a fonte da sala 4 chega ao guardião com pouca vida; um Respiro base (cura de 2 a 3 por sala vencida) é a próxima alavanca e pede código (`room_heal` hoje só vem da Maestria). Recalibrar com o `runs.jsonl` da próxima noite.
+
+## Cura base e PT-6/PT-11 (2026-11-24)
+Cura base: toda sala de combate ou guardião vencida devolve 3 de vida (`StageDef.room_heal_base`, `tools/make_data.gd`), somada ao Respiro da Maestria (`room_heal`), sem passar da vida máxima; fonte, loja, Provação e Altar não curam (`Rooms.base_room_heal`, `tests/test_room_heal_base.gd`). Mesma régua da noite (12 sementes, `smoke.sh 700 --bot-reaction=R --ultimate=cleave`, uma partida por vez): (a) `b8f086f`, (b) com a cura, (c) com a cura + PT-6/PT-11.
+| Medida | (a) antes | (b) cura | (c) cura + PT-6/PT-11 |
+|---|---|---|---|
+| R 0,25: passa da sala 5 (de 12) | 12 | 12 | 12 |
+| R 0,25: sala média de morte | 11,8 | 11,7 | 13,0 |
+| R 0,25: chega a Morvath (sala 14) | 6 | 6 | 9 |
+| R 0,25: termina a partida (ENDING) | 0 | 2 | 3 |
+| R 0,6: passa da sala 5 | 9 | 10 | 10 |
+| R 0,6: sala média de morte | 7,2 | 7,4 | 8,1 |
+Leitura: a cura sozinha mexe pouco (3 de vida por sala, dentro do ruído de 1 a 3 sementes); o PT-6/PT-11 não piorou nada (entrar por baixo e nascer ao norte deram ao robô mais tempo, subiu um pouco). A loja segue igual: `--start=shop --gold=400 --seed=5` compra Bênção, coração e cura (325 de ouro). Maestria e Dons continuam fora; se o Daniel achar fácil, voltar primeiro a vida do Guerreiro (40 para 35).

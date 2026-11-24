@@ -115,6 +115,8 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var silver_elite := 1
 @export var silver_door := 10
 @export var silver_guardian := 6
+## Life every won fight room (combat, guardian) gives back, on top of the Maestria's Respiro (balance 2026-11-24).
+@export var room_heal_base := 0.0
 @export var silver_phase := 2
 @export var phase_max := 4
 @export var silver_victory := 10

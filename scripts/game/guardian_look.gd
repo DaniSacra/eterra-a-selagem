@@ -310,7 +310,7 @@ func _west_wall() -> void:
 	var mat := m.ashlar(0.0, stone_tint())
 	var a := Vector2(_west, _south)
 	var b := Vector2(_west, _north)
-	var mid := layout.hero_spawn.y
+	var mid := 0.0  # PT-6: the west arch stays as it was (sealed); he now comes in from the south
 	var open: Array[Vector4] = [Vector4(a.y - mid - ENTRY_HALF - JAMB, a.y - mid + ENTRY_HALF + JAMB, 0.0, WALL_DOOR.y + 0.4)]
 	var backs: Array[Vector4] = []
 	var depths: Array[float] = []

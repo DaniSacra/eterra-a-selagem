@@ -978,6 +978,7 @@ func _stage() -> void:
 	st.silver_elite = 1
 	st.silver_door = 10
 	st.silver_guardian = 6
+	st.room_heal_base = 3.0  # the novice who skips the fountain still reaches the guardian with some life
 	st.silver_phase = 2
 	st.phase_max = 4
 	st.silver_victory = 10
@@ -1078,6 +1079,23 @@ func _arena(l: RoomLayout, id: StringName, size: RoomLayout.Size, difficulty: in
 	l.size_class = size
 	l.difficulty = difficulty
 	l.depth = depth
+
+
+## PT-6 (Daniel, 2026-11-23): in every room the paladin comes in at the bottom of the screen (the south edge, nearest to the
+## camera, facing north) and the doors are in the north (the far wall): his way in at `spawn`, the doors in the north wall
+## (z = `north`) at each x of `xs`, in the order the doors are numbered. Tests: tests/test_pt6_rooms.gd.
+func _gate(l: RoomLayout, spawn: Vector2, north: float, xs: Array) -> void:
+	l.hero_spawn = spawn
+	l.hero_facing = Vector2.UP
+	l.exits = _doors(north, xs)
+
+
+## The doors of the north wall (z = `north`) at each x of `xs`.
+func _doors(north: float, xs: Array) -> Array[ArenaExit]:
+	var list: Array[ArenaExit] = []
+	for x: float in xs:
+		list.append(ArenaExit.at_edge(Vector2(x, north), Vector2(0, 1)))
+	return list
 
 
 ## A polygon from flat pairs of numbers (x, z, x, z...).
@@ -1260,7 +1278,7 @@ func _plant() -> HazardDef:
 ## RP-16 (docs/design/rooms_progression.md): the Ossuary's arrow slits, on the north wall either side of the dividing
 ## wall (the east one clear of the north door's mouth): a low block of the wall, 0.5 x 0.6 m, 1.2 m high, stopping bodies
 ## and shots (the environment artist's slit with the chevron cut on its top replaces the placeholder block).
-const SLIT_WEST := -1.5
+const SLIT_WEST := -5.3
 const SLIT_EAST := 1.55
 
 
@@ -1335,7 +1353,8 @@ func _crypt() -> RoomLayout:
 	l.max_ranged = 2
 	l.banned_roles = [&"area"]
 	l.guardian = false
-	var bowls: Array[ArenaObstacle] = [_bowl(1.5, -11.0), _bowl(7.1, -11.0)]
+	var bowls: Array[ArenaObstacle] = [_bowl(3.4, -11.0), _bowl(8.6, -11.0)]
+	var bowls_b: Array[ArenaObstacle] = [_bowl(2.2, -11.0), _bowl(7.8, -11.0)]
 	var a: Array[ArenaObstacle] = [
 		_sarcophagus(0.5, 0.0, 4.0, 2.0, 1.5),
 		_column(-6.0, -5.6, 5.2, 0.65), _column(7.0, -5.6, 5.2, 0.65), _column(-5.5, 5.6, 5.2, 0.65),
@@ -1357,12 +1376,11 @@ func _crypt() -> RoomLayout:
 		_capsule(Vector2(-12, -2.5), Vector2(-8, -2.5), 0.6, 0.9), _capsule(Vector2(12, 1.0), Vector2(8, 1.0), 0.6, 0.9),
 		_slit(SLIT_WEST), _slit(SLIT_EAST),
 	]
-	b.append_array(bowls)
+	b.append_array(bowls_b)
 	l.variants = [_variant(b)]
-	l.hero_spawn = Vector2(-10.0, 4.5)
-	l.hero_facing = Vector2(1, 0)
-	l.exits = [ArenaExit.at_edge(Vector2(4.3, -10.5), Vector2(0, 1)), ArenaExit.at_edge(Vector2(12, 5.5), Vector2(-1, 0)),
-		ArenaExit.at_edge(Vector2(-2, 10.5), Vector2(0, -1))]
+	_gate(l, Vector2(-1.0, 8.6), -10.5, [-7.0, -0.5, 6.0])
+	# B: the dividing wall stands from the north wall at x 0.5, so two doors west of it and one east
+	l.variants[0].exits = _doors(-10.5, [-8.0, -2.5, 5.0])
 	l.spawns = [_rect(2, 7, -9.5, -7.5), _rect(8.5, 11.2, -4, -0.5), _rect(6.5, 11, 7, 9.5), _rect(-10, -7.5, -10, -8)]
 	# the whole crypt fits the screen: the camera keeps to one point, as in the Seal Chamber
 	l.cam_target = Vector2(1.0, 1.5)
@@ -1375,11 +1393,11 @@ func _crypt() -> RoomLayout:
 	# RP-06: slabs by the walls, off the 4 m ways round the great tomb, off the spawns and 6 m or more from the way in
 	# (its south-west corner is the way in: three corners and the east side). B: at the foot of the dividing wall, one
 	# on each side of its end.
-	l.hazard = _plates([_rect(-7.2, -4.2, -10.3, -7.3), _rect(8.0, 11.0, -7.5, -4.5), _rect(2.0, 5.0, 7.3, 10.3),
+	l.hazard = _plates([_rect(-11.5, -8.5, 2.0, 5.0), _rect(8.0, 11.0, -7.5, -4.5), _rect(-7.6, -4.6, -3.6, -0.6),
 		_rect(8.0, 11.0, 1.3, 4.3)], PLATES_FROM)
 	# A1, RP-12: the oil urns beside the slabs (late)
 	l.hazard.also = _urns(PackedVector2Array(CRYPT_URNS), PackedVector4Array(CRYPT_OIL))
-	l.hazard.also.also = _spikes([Vector2(-4.0, -4.5), Vector2(3.0, -1.0)], 0.4)
+	l.hazard.also.also = _spikes([Vector2(-4.0, -4.5), Vector2(3.0, 1.6)], 0.4)
 	l.variants[0].hazard = _plates([_rect(-3.4, -0.4, -6.3, -3.3), _rect(1.4, 4.4, -6.3, -3.3)], PLATES_FROM)
 	# RP-16: an arrow slit on the north wall each side of the dividing wall, firing south down its corridor to the row of
 	# the south sarcophagi; the slab on one side arms the slit of the other (the pack lured beyond the wall)
@@ -1402,7 +1420,7 @@ func _crypt() -> RoomLayout:
 ## doors and the pieces, beside the way from the reward to a door; placeholder spots for the room-designer).
 ## SR-P5: where the relic may stand, in the corner far from the way in of the Cripta, the Fendas, the Jardim and the
 ## Santuário (off every door, hazard and spawn; test_hazard_sr.gd). The theme is to confirm with the Daniel.
-const RELIC_SPOTS := {&"crypt": Vector2(-9.8, -9.0), &"rift": Vector2(-18.0, -11.0), &"garden": Vector2(-14.0, -11.0),
+const RELIC_SPOTS := {&"crypt": Vector2(-9.8, 7.9), &"rift": Vector2(-18.0, -11.0), &"garden": Vector2(14.5, 7.5),
 	&"sanctuary": Vector2(-18.5, 10.5)}
 
 
@@ -1420,7 +1438,7 @@ func _oficios_stage(st: StageDef) -> void:
 			&"rift":
 				l.gather_spots = PackedVector2Array([Vector2(3.5, 7.0)])
 			&"runes":
-				l.gather_spots = PackedVector2Array([Vector2(0.5, -10.0)])
+				l.gather_spots = PackedVector2Array([Vector2(-5.0, -9.5)])
 
 
 func _place_breakables(st: StageDef) -> void:
@@ -1443,7 +1461,7 @@ func _place_breakables(st: StageDef) -> void:
 					south_west, north_east])
 				# AT-Q4: B's west group moved off the niche's strip (AT-H2) to the foot of the north-west sarcophagus
 				l.variants[0].breakables = _breakable_groups([
-					[[F.URN, -5.75, -7.5, 0.8], [F.VASE, -4.95, -7.5, 0.6]],
+					[[F.URN, -11.2, 3.2, 0.8], [F.VASE, -11.2, 4.0, 0.6]],
 					south_west, north_east])
 			# AT-Q4 (room-designer): every other room, groups of 2 or 3 in its corners and against its walls (the far
 			# ends from the way in first), 1.5 m and more from a door and its mark, the way in, the reward, a spawn, the
@@ -1472,15 +1490,15 @@ func _place_breakables(st: StageDef) -> void:
 			# 2026-11-23: the guardians' houses, by the west wall either side of the way in, the north wall and the south-east
 			&"knight_hall":
 				l.breakables = _breakable_groups([
-					[[F.VASE, -10.4, -5.0, 0.6], [F.URN, -10.4, -4.2, 0.8]],
-					[[F.OFFERING, -10.4, 4.2, 0.4], [F.VASE, -10.4, 5.0, 0.6]],
-					[[F.URN, -1.6, -10.4, 0.8], [F.OFFERING, -0.8, -10.4, 0.4]],
+					[[F.VASE, -10.4, -0.4, 0.6], [F.URN, -10.4, 0.4, 0.8]],
+					[[F.OFFERING, 10.4, 0.6, 0.4], [F.VASE, 10.4, 1.4, 0.6]],
+					[[F.URN, -5.2, 10.4, 0.8], [F.OFFERING, -4.4, 10.4, 0.4]],
 				])
 			&"elder_hall":
 				l.breakables = _breakable_groups([
 					[[F.VASE, -11.4, -5.6, 0.6], [F.URN, -11.4, -4.8, 0.8]],
 					[[F.OFFERING, -11.4, 5.0, 0.4], [F.VASE, -11.4, 5.8, 0.6]],
-					[[F.URN, -1.6, -11.4, 0.8], [F.OFFERING, -0.8, -11.4, 0.4]],
+					[[F.URN, 11.4, 9.0, 0.8], [F.OFFERING, 11.4, 9.8, 0.4]],
 				])
 			&"bridge":
 				var bridge := [
@@ -1497,18 +1515,18 @@ func _place_breakables(st: StageDef) -> void:
 				# low boxes and bowls only (the runes are straight, D-29); AT-RA3, AT-RB3: never on a tile that arms, so
 				# only on the quiet floor of the way in (RUNES_ENTRY: the west walls and the south wall west of the door)
 				l.breakables = _breakable_groups([
-					[[F.CRATE, -14.5, -2.4, 0.6], [F.OFFERING, -13.7, -2.4, 0.35], [F.CRATE, -14.5, -1.6, 0.5]],
-					[[F.OFFERING, -14.5, 8.75, 0.4], [F.CRATE, -13.7, 8.75, 0.6], [F.OFFERING, -14.5, 7.95, 0.35]],
-					[[F.CRATE, -10.5, 11.5, 0.5], [F.OFFERING, -11.3, 11.5, 0.35]],
+					[[F.CRATE, -5.5, 11.3, 0.6], [F.OFFERING, -4.7, 11.3, 0.35], [F.CRATE, -5.5, 10.5, 0.5]],
+					[[F.OFFERING, 4.7, 11.3, 0.4], [F.CRATE, 5.5, 11.3, 0.6], [F.OFFERING, 5.5, 10.5, 0.35]],
+					[[F.CRATE, -3.8, 11.5, 0.5], [F.OFFERING, -3.0, 11.5, 0.35]],
 				])
 	# AT-Q4: the Provação (common ceramic, never on the stele) and the Altar (offerings away from the step and candles)
 	st.trial_layout.breakables = _breakable_groups([
-		[[F.VASE, 7.5, -5.25, 0.6], [F.OFFERING, 6.7, -5.25, 0.4], [F.VASE, 7.5, -4.45, 0.5]],
+		[[F.VASE, 7.5, 3.25, 0.6], [F.OFFERING, 6.7, 3.25, 0.4], [F.VASE, 7.5, 4.05, 0.5]],
 		[[F.OFFERING, -7.5, 3.0, 0.4], [F.VASE, -7.5, 2.2, 0.6]],
 		[[F.VASE, 4.25, 6.5, 0.55], [F.OFFERING, 5.05, 6.5, 0.4], [F.OFFERING, 3.45, 6.5, 0.35]],
 	])
 	st.altar_layout.breakables = _breakable_groups([
-		[[F.OFFERING, 8.5, -6.5, 0.4], [F.VASE, 7.7, -6.5, 0.6], [F.OFFERING, 8.5, -5.7, 0.35]],
+		[[F.OFFERING, 8.5, 2.5, 0.4], [F.VASE, 7.7, 2.5, 0.6]],
 		[[F.VASE, -8.5, 2.25, 0.55], [F.OFFERING, -7.9, 1.65, 0.4]],
 		[[F.OFFERING, 6.75, 6.5, 0.4], [F.VASE, 7.55, 6.5, 0.6]],
 	])
@@ -1551,7 +1569,7 @@ func _rift() -> RoomLayout:
 		_poly([8, -6.5, 9.5, -8.2, 12.5, -8.4, 14.6, -6.2, 14, -2.6, 11, -1.8, 8.4, -3.4])])
 	l.half = l.floor.extent()
 	l.max_alive = Vector2i(6, 8)
-	var bowls: Array[ArenaObstacle] = [_bowl(8.5, -15.6), _bowl(15.5, -15.6)]
+	var bowls: Array[ArenaObstacle] = [_bowl(5.5, -15.6), _bowl(12.5, -15.6)]
 	var a: Array[ArenaObstacle] = [
 		_sarcophagus(14.0, 7.0, 3.6, 1.0, 2.6, &"block", true), _column(7.5, 3.0, 3.8),
 		_sarcophagus(-14.0, -5.5, 1.2, 2.5), _column(-13.0, 3.0, 3.2),
@@ -1582,10 +1600,7 @@ func _rift() -> RoomLayout:
 	# RP-07 (the room-designer's bands, by the damage measured): A early to the middle, B from the 4th room on
 	l.variant_depth = Vector2(0.1, 0.6)
 	l.variants[0].depth = Vector2(0.34, 1.0)
-	l.hero_spawn = Vector2(-18.0, 6.5)
-	l.hero_facing = Vector2(1, 0)
-	l.exits = [ArenaExit.at_edge(Vector2(12, -15), Vector2(0, 1)), ArenaExit.at_edge(Vector2(21, 2), Vector2(-1, 0)),
-		ArenaExit.at_edge(Vector2(8, 15), Vector2(0, -1))]
+	_gate(l, Vector2(-9.0, 12.6), -15.0, [-16.5, 9.0, 15.5])
 	# nobody rises on a bridge or in the south way; the first wave across the rift, the west zone from the second
 	l.spawns = [_rect(5, 11, -13.5, -10.5), _rect(16, 19.5, -8, -2), _rect(5, 11, 7, 12)]
 	l.late_spawns = [_rect(-17, -11, -13, -9)]
@@ -1612,7 +1627,7 @@ func _garden() -> RoomLayout:
 	l.half = l.floor.extent()
 	l.max_alive = Vector2i(6, 8)
 	var trunk := ArenaObstacle.circle(TRUNK, TRUNK_RADIUS, &"trunk", 4.5, true, true)
-	var bowls: Array[ArenaObstacle] = [_bowl(10.5, -14.6), _bowl(15.5, -14.6), _bowl(17.6, -2.6)]
+	var bowls: Array[ArenaObstacle] = [_bowl(10.5, -14.6), _bowl(15.5, -14.6)]
 	var a: Array[ArenaObstacle] = [trunk]
 	for pts: Array in [[Vector2(-4.5, -7.0), Vector2(-2.5, -7.7), Vector2(-0.4, -8.1), Vector2(1.8, -8.1)],
 			[Vector2(-5.2, -2.2), Vector2(-3.5, -0.8), Vector2(-1.6, 0.3), Vector2(0.3, 1.2)],
@@ -1645,10 +1660,7 @@ func _garden() -> RoomLayout:
 	# AT-H3: the stub by the west wall became the hostile plant (its own hazard beside the root)
 	l.variants[0].hazard = _roots([[Vector2(-6.6, -1.2), Vector2(-6.2, 3.6)]])
 	l.variants[0].hazard.also = _plant()
-	l.hero_spawn = Vector2(-12.0, 9.0)
-	l.hero_facing = Vector2(1, -1).normalized()
-	l.exits = [ArenaExit.at_edge(Vector2(13, -14), Vector2(0, 1)), ArenaExit.at_edge(Vector2(17, 0), Vector2(-1, 0)),
-		ArenaExit.at_edge(Vector2(5, 14), Vector2(0, -1))]
+	_gate(l, Vector2(-9.0, 11.6), -14.0, [-9.0, 7.0, 13.0])
 	# (LR-04, the north group north of the trunk, x -12 to -5, was tried on 2026-11-20 and put back: tree_shade stayed 5
 	# to 7%, the trunk stopped 0.1 shot a room)
 	l.spawns = [_rect(6, 12, -12.5, -9.5), _rect(13, 16, -4, 3), _rect(-6, 0, -13.2, -10.5), _rect(-2, 6, 9, 12.5)]
@@ -2370,7 +2382,7 @@ const COLONNADE_CRACKED := Vector2(11, 0)
 const COLONNADE_TOP := 2.5
 
 
-const SANCTUARY_TRAPS := [[Vector2(-6.0, -14.0), Vector2(0, 1), 18.5], [Vector2(-1.5, 14.0), Vector2(0, -1), 19.0],
+const SANCTUARY_TRAPS := [[Vector2(-4.75, -14.0), Vector2(0, 1), 18.5], [Vector2(-1.5, 14.0), Vector2(0, -1), 19.0],
 	[Vector2(12.0, 14.0), Vector2(0, -1), 18.0]]
 
 
@@ -2387,7 +2399,7 @@ func _sanctuary() -> RoomLayout:
 	# fire bowls of the north door's recesses, 0.9 m out of the floor (drawn, never blocking; the bowl and its fire are
 	# 0.7 m round); the grille's two are the look's own, on its end pillars (SanctuaryLook), never in the data
 	var bowls: Array[ArenaObstacle] = [_bowl(4.3, -14.9), _bowl(8.7, -14.9)]
-	var walls: Array[ArenaObstacle] = [_sarcophagus(-12.0, -13.4, 2.5, 1.2), _sarcophagus(-4.0, -13.4, 2.5, 1.2),
+	var walls: Array[ArenaObstacle] = [_sarcophagus(-12.0, -13.4, 2.5, 1.2), _sarcophagus(3.0, -13.4, 2.5, 1.2),
 		_piece(-12.0, 10.2, 2.0, 0.6, 0.9, &"bench_broken"), _piece(6.0, 10.2, 2.0, 0.6, 0.9, &"bench_broken")]
 	var a: Array[ArenaObstacle] = []
 	for x: float in [-15.0, -9.0, -3.0, 9.0]:
@@ -2408,11 +2420,8 @@ func _sanctuary() -> RoomLayout:
 	b.append_array(bowls)
 	var fallen := FloorShape.poly([outline], [_poly([1, -3.2, 4.5, -3.5, 9, -3.1, 9.4, 0, 9, 3.1, 4.5, 3.5, 1, 3.2, 0.6, 0])])
 	l.variants = [_variant(b, fallen)]
-	l.hero_spawn = Vector2(19.5, 2.0)
-	l.hero_facing = Vector2(-1, 0)
 	l.boss_spawn = Vector2(-17.0, 0.0)
-	l.exits = [ArenaExit.at_edge(Vector2(6.5, -14), Vector2(0, 1)), ArenaExit.at_edge(Vector2(-6, 14), Vector2(0, -1)),
-		ArenaExit.at_edge(Vector2(-22, -10.5), Vector2(1, 0))]
+	_gate(l, Vector2(19.6, 11.6), -14.0, [-9.0, -0.5, 6.5])
 	# LR-03: the first wave rises also in the south aisle's east and the middle of the north one, so the fight opens in
 	# both aisles and the east third is no corridor (it was the hero's 5 s walk to a fight all in the west)
 	l.spawns = [_rect(-20, -14, -3, 3), _rect(-19, -15, 8, 11), _rect(-8, -2, -12, -8.5), _rect(4, 12, 8, 12),
@@ -2513,12 +2522,9 @@ func _guardian_house(l: RoomLayout, id: StringName, guardian_id: StringName, sid
 	l.guardian = true
 	l.guardian_home = true
 	l.guardian_id = guardian_id
-	l.hero_spawn = Vector2(-h + 1.5, 0.0)
-	l.hero_facing = Vector2(1, 0)
 	l.cam_target = Vector2.ZERO
 	l.cam_reach = 2.5
-	l.exits = [ArenaExit.at_edge(Vector2(4.3, -h), Vector2(0, 1)), ArenaExit.at_edge(Vector2(h, 0.0), Vector2(-1, 0)),
-		ArenaExit.at_edge(Vector2(1.0, h), Vector2(0, -1))]
+	_gate(l, Vector2(0.0, h - 1.5), -h, [-6.0, 0.0, 6.0])
 
 
 ## The Knight's hall (Daniel, 2026-11-23): a square of 22 m, the four corners each with the vault's stones and, beside it,
@@ -2530,15 +2536,15 @@ const KNIGHT_SIDE := 22.0
 func _knight_hall() -> RoomLayout:
 	var l := RoomLayout.new()
 	_guardian_house(l, &"knight_hall", &"knight", KNIGHT_SIDE, 2.5, &"armory")
-	l.boss_spawn = Vector2(7.5, 0.0)
-	l.obstacles = [_bowl(1.5, -11.5), _bowl(7.1, -11.5)]
+	l.boss_spawn = Vector2(0.0, -7.0)
+	l.obstacles = [_bowl(-2.8, -11.5), _bowl(2.8, -11.5)]
 	# the second guardian's escort (two mages) rises in the east half, never on a plate
-	l.spawns = [_rect(2, 7, -4.5, 4.5)]
-	l.late_spawns = [_rect(2, 7, -4.5, 4.5)]
+	l.spawns = [_rect(-5, 5, -9, -3)]
+	l.late_spawns = [_rect(-5, 5, -9, -3)]
 	# the four corners: where the vault's stones fall (north-west, south-west, south-east, north-east) and, by each, a plate
 	var corners: Array[Rect2] = [_rect(-10.6, -6.8, -10.6, -6.8), _rect(-10.6, -6.8, 6.8, 10.6), _rect(6.8, 10.6, 6.8, 10.6),
 		_rect(6.8, 10.6, -10.6, -6.8)]
-	var plates: Array[Rect2] = [_spike_rect(-6.0, -10.4), _spike_rect(-6.0, 8.0), _spike_rect(3.6, 8.0), _spike_rect(8.4, -5.6)]
+	var plates: Array[Rect2] = [_spike_rect(-9.4, -5.4), _spike_rect(-9.6, 3.2), _spike_rect(7.0, 3.2), _spike_rect(8.4, -5.6)]
 	l.hazard = _spike_plates(plates, HOUSE_FROM)
 	l.hazard.also = _rocks(corners)
 	l.hazard.also.from_progress = HOUSE_FROM
@@ -2554,13 +2560,13 @@ const ELDER_COLUMNS := [Vector2(-4.5, -4.5), Vector2(4.5, -4.5), Vector2(-4.5, 4
 func _elder_hall() -> RoomLayout:
 	var l := RoomLayout.new()
 	_guardian_house(l, &"elder_hall", &"priest_elder", ELDER_SIDE, 2.5, &"chapel")
-	l.boss_spawn = Vector2(7.0, 0.0)
-	var a: Array[ArenaObstacle] = [_bowl(1.5, -12.5), _bowl(7.1, -12.5)]
+	l.boss_spawn = Vector2(0.0, -7.0)
+	var a: Array[ArenaObstacle] = [_bowl(-2.8, -12.5), _bowl(2.8, -12.5)]
 	for p: Vector2 in ELDER_COLUMNS:
 		a.append(_column(p.x, p.y, 5.2, 0.9))
 	l.obstacles = a
-	l.spawns = [_rect(3, 10, -8, 8)]
-	l.late_spawns = [_rect(3, 10, -8, 8)]
+	l.spawns = [_rect(-9, 9, -9, -1)]
+	l.late_spawns = [_rect(-9, 9, -9, -1)]
 	_areas(l, ["columns", _rect(-8, 8, -8, 8), "walls", _rect(-12, 12, -12, 12)])
 	return l
 
@@ -2573,7 +2579,7 @@ func _bridge() -> RoomLayout:
 	_arena(l, &"bridge", RoomLayout.Size.LONG, 2, Vector2(0.4, 1.0))
 	var west := _poly([-28, -6, -25, -9, -15, -9, -14, -7, -14, 7, -16, 9, -26, 9, -28, 7])
 	var middle := _poly([-7, -6, -5, -8, 5, -8, 7, -6, 7, 6, 5, 8, -5, 8, -7, 6])
-	var east := _poly([14, -7, 15, -9, 25, -9, 28, -6, 28, 7, 26, 9, 16, 9, 14, 7])
+	var east := _poly([14, -7, 15, -9, 28, -9, 28, 7, 26, 9, 16, 9, 14, 7])
 	# the bridges reach 0.05 m into the platforms, so the union never opens a crack at a seam
 	l.floor = FloorShape.poly([west, FloorShape.box(_rect(-14.05, -6.95, -2.5, 2.5)), middle,
 		FloorShape.box(_rect(6.95, 14.05, -2.5, 2.5)), east])
@@ -2590,7 +2596,7 @@ func _bridge() -> RoomLayout:
 	a.append(_piece(16.0, 0.0, 1.0, 2.4, 2.2, &"block", true))
 	l.obstacles = a
 	var west_b := _poly([-28, -6, -25, -9, -13, -9, -12, -7, -12, 7, -14, 9, -26, 9, -28, 7])
-	var east_b := _poly([12, -7, 13, -9, 25, -9, 28, -6, 28, 7, 26, 9, 14, 9, 12, 7])
+	var east_b := _poly([12, -7, 13, -9, 28, -9, 28, 7, 26, 9, 14, 9, 12, 7])
 	var long_bridge := FloorShape.poly([west_b, FloorShape.box(_rect(-12.05, 12.05, -2.5, 2.5)),
 		FloorShape.box(_rect(-3, 3, -4.5, 4.5)), east_b])
 	var b := _variant(ends.duplicate(), long_bridge)
@@ -2606,15 +2612,13 @@ func _bridge() -> RoomLayout:
 	# RP-07: A in the middle of the descent, B (the long bridge) late
 	l.variant_depth = Vector2(0.5, 0.8)
 	l.variants[0].depth = Vector2(0.67, 1.0)
-	l.hero_spawn = Vector2(-24.5, 0.0)
-	l.hero_facing = Vector2(1, 0)
-	l.exits = [ArenaExit.at_edge(Vector2(21, -9), Vector2(0, 1)), ArenaExit.at_edge(Vector2(28, 0.5), Vector2(-1, 0)),
-		ArenaExit.at_edge(Vector2(21, 9), Vector2(0, -1))]
+	_gate(l, Vector2(-22.0, 6.6), -9.0, [17.5, 23.5])
+	l.exits.append(ArenaExit.at_edge(Vector2(28, -5.5), Vector2(-1, 0)))
 	# RP-04: everybody rises on the east platform (the middle no more): the room asks to cross under fire
 	l.spawns = [_rect(17, 24, -7.5, -1), _rect(17, 24, 1, 7.5)]
 	# the second wave closes behind the one who crossed
 	l.late_spawns = [_rect(-26, -20, -7, -4)]
-	l.cam_bounds = _rect(-14, 14, -1, 1)
+	l.cam_bounds = _rect(-14, 14, -1, 3)
 	# the question of the room: hold the island or cross
 	_areas(l, ["west", _rect(-28, -14, -9, 9), "bridge1", _rect(-14, -7, -3, 3), "middle", _rect(-7, 7, -8, 8),
 		"bridge2", _rect(7, 14, -3, 3), "east", _rect(14, 28, -9, 9)])
@@ -2743,7 +2747,7 @@ func _trap_blocks(specs: Array) -> Array[ArenaObstacle]:
 
 ## RP-02: the tiles any part of which lies within 6 m of the way in (hero_spawn (-12.5, 3.5)) never light: columns 0
 ## and 1 from row 3 to 7, column 2 from row 3 to 6 (the rule of every hazard: never near the door he came in by).
-const RUNES_ENTRY: Array[Rect2] = [Rect2(-15, -3, 6, 15), Rect2(-9, -3, 3, 12)]
+const RUNES_ENTRY: Array[Rect2] = [Rect2(-6, 3, 12, 9)]
 
 
 ## The runes' floor (spec 3.4): tiles of 3 m, 1.2 s warming up, 0.25 s striking, 2.4 s of rest, never in the first
@@ -2815,11 +2819,8 @@ func _runes() -> RoomLayout:
 	# RP-07: B (the quiet stone, easier) in the middle, A late
 	l.variant_depth = Vector2(0.67, 1.0)
 	l.variants[0].depth = Vector2(0.5, 0.8)
-	l.hero_spawn = Vector2(-12.5, 3.5)
-	l.hero_facing = Vector2(1, 0)
-	l.exits = [ArenaExit.at_edge(Vector2(6, -12), Vector2(0, 1)), ArenaExit.at_edge(Vector2(15, 0), Vector2(-1, 0)),
-		ArenaExit.at_edge(Vector2(-4.5, 12), Vector2(0, -1))]
-	l.spawns = [_rect(-4, 3, -11, -8), _rect(10, 13.5, -4, 4), _rect(0, 9, 8, 11)]
+	_gate(l, Vector2(0.0, 9.5), -12.0, [-9.5, -2.5, 8.5])
+	l.spawns = [_rect(-4, 3, -11, -8), _rect(10, 13.5, -4, 4), _rect(-13, -10, -4, 4)]
 	l.late_spawns = [_rect(-13, -9, -9.5, -6)]
 	l.cam_target = Vector2(0.5, 1.0)
 	l.cam_reach = 3.5
@@ -2839,10 +2840,9 @@ func _trial_room() -> RoomLayout:
 	l.half = l.floor.extent()
 	l.guardian = false
 	l.obstacles = [_piece(0.0, 0.0, 1.2, 1.2, 1.1, &"trial_block")]
-	l.hero_spawn = Vector2(-5.5, 4.5)
-	l.hero_facing = Vector2(1, -1).normalized()
-	l.exits = [ArenaExit.at_edge(Vector2(0, -7), Vector2(0, 1)), ArenaExit.at_edge(Vector2(-8, -2), Vector2(1, 0)),
-		ArenaExit.at_edge(Vector2(8, -2), Vector2(-1, 0))]
+	_gate(l, Vector2(0.0, 5.2), -7.0, [0.0])
+	l.exits.append(ArenaExit.at_edge(Vector2(-8, -3.0), Vector2(1, 0)))
+	l.exits.append(ArenaExit.at_edge(Vector2(8, -3.0), Vector2(-1, 0)))
 	l.cam_target = Vector2(0.0, 0.5)
 	l.cam_reach = 1.5
 	return l
@@ -2859,10 +2859,9 @@ func _altar_room() -> RoomLayout:
 	# a whole bench and a broken one (spec 6.3)
 	l.obstacles = [_piece(0.0, -6.2, 3.6, 1.6, 1.3, &"altar"), _piece(-3.0, -1.0, 2.0, 0.6, 0.9, &"bench"),
 		_piece(3.0, -1.5, 2.0, 0.6, 0.9, &"bench_broken")]
-	l.hero_spawn = Vector2(-6.5, 4.5)
-	l.hero_facing = Vector2(1, -1).normalized()
-	l.exits = [ArenaExit.at_edge(Vector2(9, 2), Vector2(-1, 0)), ArenaExit.at_edge(Vector2(9, -3.5), Vector2(-1, 0)),
-		ArenaExit.at_edge(Vector2(4.5, 7), Vector2(0, -1))]
+	# the altar stands against the whole north wall: the two doors are on its sides, in the north half (two doors, RunMap.doors_of)
+	_gate(l, Vector2(0.0, 5.2), -7.0, [])
+	l.exits = [ArenaExit.at_edge(Vector2(-9, -4.5), Vector2(1, 0)), ArenaExit.at_edge(Vector2(9, -4.5), Vector2(-1, 0))]
 	l.cam_target = Vector2.ZERO
 	l.cam_reach = 1.5
 	return l

@@ -160,6 +160,6 @@ func test_three_meters_off_every_reliquary() -> void:
 	var right := Feel.screen_to_floor(Vector2.RIGHT, Feel.live().cam_yaw)
 	for n in range(1, 6):
 		for k in n:
-			var item := right * ((k - (n - 1) * 0.5) * Rooms.SHOP_STEP - Rooms.SHOP_SHIFT)
+			var item := Rooms.SHOP_SLOTS[k]
 			for p in l.breakables:
 				assert_gte(p.at.distance_to(item), 3.0, "shop of %d: %s off the reliquary %d" % [n, p.at, k])

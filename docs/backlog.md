@@ -138,9 +138,10 @@ brandos, esqueleto e arqueiro 4 de dano), guardiões encurtados; em andamento a 
 `runs.jsonl` do PC do teste e as anotações do Daniel (`python3 -I tools/runs_report.py --since=2026-11-23T22:00`), e com ele recalibrar Morvath
 (`BOSS_DAMAGE` 1,3, golpe máximo abaixo de 30), o segundo minichefe brando e o ataque em 44% do dano.
 
-**Fase 2, salas: EM ANDAMENTO** (`gameplay-engineer` juntando PT-6, entrada por baixo e saída por cima, e PT-11, loja na parede). Aceite que segue valendo:
-o robô prova que a sala 5 não ficou mais difícil (9 sementes antes e depois). Depois: arte do portal ao sul, fim dos arcos selados do oeste, coluna e
-plaquinha da loja (`environment-artist`), captura GPU de 3 salas e da loja.
+**Fase 2, salas** (`room-designer`, `environment-artist`).
+- FEITO 2026-11-24: PT-6 e PT-11 juntados na `arpg-3d` junto com a cura base por sala (3 de vida, `StageDef.room_heal_base`); robô em 12 sementes não piorou (tabela em `docs/design/balance.md`, "Cura base e PT-6/PT-11").
+- Arte: portal de entrada ao sul e fim dos arcos selados do oeste; coluna esculpida e plaquinha de pergaminho da loja.
+- Captura GPU de 3 salas e da loja.
 
 **Fase 3, uma identidade por sistema da meta: FEITO O PRINCIPAL** (`docs/art/meta_identities.md`).
 - **3a Dons (medalhão)**: FEITO (`DonsScreen`; estação de bronze no pedestal `ca006c9`, captura `f942580`; correções da revisão `a63944c`, captura `3579c6f`).
@@ -247,7 +248,7 @@ guia `--guide=tree`, Santuário), ajustar alturas pelo que se vê, exe nas duas 
 - **PT-5 Explicar cada coisa nova no Santuário** (`ui-ux-designer`): na primeira vez que algo destrava (árvore de Dons, Forja, Encantos,
   anjos, escolha de herói, Videira), a câmera aproxima do lugar, uma seta/brilho aponta e uma frase curta diz o que fazer ("Clique aqui
   e conheça os Dons"). Uma vez por save, pular com qualquer tecla.
-- **PT-6 Salas entrando por baixo e saindo por cima** (todas as salas; grande, mexe em layouts e câmera). **Daniel: só marcar, fazer depois.**
+- **PT-6 Salas entrando por baixo e saindo por cima** (feito 2026-11-23, `room-designer`: `docs/reference/rooms.md` "PT-6", `tests/test_pt6_rooms.gd`; falta a arte do portal de entrada ao sul e dos arcos selados do oeste, `environment-artist`). Daniel: ver 3 salas (`--arena=crypt`, `rift`, `garden`) para julgar.
 - **PT-7 Anjos maiores na escolha** (`BoonChoice`/`EncounterScreen`): figura do anjo bem maior; junta com o BC-1 (anjo grande à esquerda).
 - **PT-8 Portas de guardião diferentes** (`room-designer`): hoje as duas portas de guardião dão a mesma coisa. Cada porta mostra **o anjo
   que vai abençoar** (dois anjos diferentes), e o jogador escolhe a luta pelo anjo.
@@ -264,7 +265,7 @@ guia `--guide=tree`, Santuário), ajustar alturas pelo que se vê, exe nas duas 
   três ofertas ficam em fila no meio do chão. Pedido: os itens em colunas de pedra finas **ao longo da parede do fundo e das
   laterais**, cada um flutuando numa bolha de luz pequena com a **plaquinha de preço** em cima (pergaminho, número + moeda), o
   meio da sala livre; uma oferta de destaque (a Bênção) pode ficar sozinha mais à frente. Aceite: captura na GPU, o robô compra
-  igual (`RESULT` com as mesmas compras).
+  igual (`RESULT` com as mesmas compras). **FEITO (2026-11-23, código)**: `Rooms.SHOP_SLOTS`, colunas em `CatacombHall.dress_shop`; falta só a captura na GPU e a arte final das colunas/plaquinhas.
 - **PT-9 Maga só depois de vencer Morvath e estação de troca de herói** (Daniel, 2026-11-23): a Maga fica travada até a primeira
   vitória sobre Morvath (hoje aparece no Portal a partir da 2ª descida); a troca de herói sai do Portal e ganha uma área própria no
   Santuário, ao lado do Vendedor (loja), com o seu guia de destrave (PT-5). Junto da Videira V2 (mesmo agente, mesmo Santuário). **FEITO (2026-11-23)**: `HubPlan.HEROES`, `HeroPickScreen`, `SaveData.hero_open`, guia `maga` (`docs/reference/hub.md`).

@@ -222,8 +222,19 @@ func test_style_only_pieces_are_off_the_floor_or_low() -> void:
 			# a piece over the walkable floor stays under 0.3 m unless it stands on a blocking piece
 			for c in [box.position, box.end, box.get_center()]:
 				var p := Vector2(c.x, c.z)
-				if a.shape().contains(p) and box.position.y < 0.3 and box.end.y > 0.3:
-					assert_true(a.overlaps(p, 0.0), "crypt %d: %s over the floor at %s" % [v, mi.name, p])
+				if a.shape().contains(p) and box.position.y < 0.3 and box.end.y > 0.3 and not a.overlaps(p, 0.0):
+					# PT-6: the box of a big piece under the room can have corners over the floor; it is a fault only when
+					# a vertex of the piece is over the floor above 0.3 m
+					assert_false(_has_vertex_over(a, mi), "crypt %d: %s over the floor at %s" % [v, mi.name, p])
+
+
+func _has_vertex_over(a: Arena, mi: MeshInstance3D) -> bool:
+	for sf in mi.mesh.get_surface_count():
+		for vert: Vector3 in (mi.mesh.surface_get_arrays(sf)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
+			var w := mi.global_transform * vert
+			if w.y > 0.3 and a.shape().contains(Vector2(w.x, w.z), 0.05):
+				return true
+	return false
 
 
 # ---------- RS-C1: one funerary piece rules each crypt (docs/art/rs_c1_crypt_spec.md) ----------
@@ -241,13 +252,13 @@ func _lit(a: Arena) -> Vector2i:
 
 func test_rs_c1_lights() -> void:
 	# before RS-C1: 18 lit (6 shadowed) in the classic crypt A, 17 (6) in B; 18 (1) in the stylized A and B
-	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(18, 6), "crypt A classic: as before")
-	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(17, 6), "crypt B classic: as before")
+	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(16, 6), "crypt A classic: as before (PT-6: the north wall has three doors, two sconces less)")
+	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(15, 6), "crypt B classic: as before (PT-6)")
 	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
 	# R-1 (Sworn P1 review): every other candle group of A out, two of them with a light
-	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(17, 1), "crypt A stylized: the C1V warm key, the crown's light in, the west step's and two groups' out")
+	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(15, 1), "crypt A stylized (PT-6, two lights less): the C1V warm key, the crown's light in, the west step's and two groups' out")
 	# cycle 2026-11-20 item 4: B adds the cold wash on the ossuary's niches (no shadow)
-	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(19, 1), "crypt B stylized: the C1V warm key, the lantern, the ossuary's wash and the entry's warm light in, two bowls and the statue's candles out")
+	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(17, 1), "crypt B stylized (PT-6, two lights less): the C1V warm key, the lantern, the ossuary's wash and the entry's warm light in, two bowls and the statue's candles out")
 
 
 func test_rs_c1_pieces_only_in_the_stylized_look() -> void:
