@@ -44,7 +44,7 @@ func setup(v: Vine) -> VinePlant:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	size = VineLayout.STAGE
 	for b in v.branches():
-		_paths[b] = VineLayout.path(b)
+		_paths[b] = VineLayout.path(b, vine.nodes_of(b).size())
 	return self
 
 

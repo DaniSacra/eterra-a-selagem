@@ -2,7 +2,7 @@ class_name VineLayout
 extends RefCounted
 ## Where the Videira's roots stand on its 1280 x 720 stage (docs/art/vine_spec.md 1.1) and how the focus walks between them.
 ## Pure data and arithmetic: a root is found by its branch and its step, so a branch with four nodes asks one more row in
-## BUD, not new code. Up is growing (step + 1), left and right pass to the neighbouring branch on the same step.
+## BUD, not new code (Vida has five). Up is growing (step + 1), left and right pass to the neighbouring branch on the same step.
 
 const STAGE := Vector2(1280, 720)
 ## The foot of the trunk where the three branches part, and the vase's centre.
@@ -11,18 +11,18 @@ const TRUNK_BASE := Vector2(490, 615)
 const VASE := Vector2(490, 660)
 ## The bud centres by branch, in step order (spec 1.1).
 const BUD := {
-	&"vida": [Vector2(390, 450), Vector2(290, 330), Vector2(220, 200)],
+	&"vida": [Vector2(395, 452), Vector2(325, 370), Vector2(262, 288), Vector2(215, 206), Vector2(178, 124)],
 	&"provisao": [Vector2(490, 390), Vector2(490, 275), Vector2(490, 160)],
 	&"perseveranca": [Vector2(590, 450), Vector2(690, 330), Vector2(760, 200)],
 }
 ## The clay tag's corner by branch and step (it stands outside the trunk: left for Vida, right for the others).
 const TAG := {
-	&"vida": [Vector2(240, 427), Vector2(140, 307), Vector2(70, 177)],
+	&"vida": [Vector2(245, 429), Vector2(175, 347), Vector2(112, 265), Vector2(65, 183), Vector2(28, 101)],
 	&"provisao": [Vector2(512, 367), Vector2(512, 252), Vector2(512, 137)],
 	&"perseveranca": [Vector2(612, 427), Vector2(712, 307), Vector2(782, 177)],
 }
 ## Where each branch's name is written (above its last bud).
-const NAME_AT := {&"vida": Vector2(220, 150), &"provisao": Vector2(490, 112), &"perseveranca": Vector2(760, 150)}
+const NAME_AT := {&"vida": Vector2(178, 78), &"provisao": Vector2(490, 112), &"perseveranca": Vector2(760, 150)}
 const TAG_SIZE := Vector2(128, 46)
 const SAMPLES := 12
 
@@ -38,10 +38,12 @@ static func tag(branch: StringName, step: int) -> Vector2:
 
 
 ## The branch's stem from the fork through its buds, as a smooth curve (Catmull-Rom): SAMPLES points per leg, so the
-## bud of step k stands at index k * SAMPLES.
-static func path(branch: StringName) -> PackedVector2Array:
+## bud of step k stands at index k * SAMPLES. Only `count` buds long (-1: every place of the branch in BUD), so a branch
+## with fewer nodes than places does not grow a stem to nowhere.
+static func path(branch: StringName, count := -1) -> PackedVector2Array:
 	var pts: Array[Vector2] = [FORK]
-	for p: Vector2 in BUD[branch]:
+	var row: Array = BUD[branch]
+	for p: Vector2 in row.slice(0, row.size() if count < 0 else mini(count, row.size())):
 		pts.append(p)
 	var out := PackedVector2Array()
 	for i in pts.size() - 1:
@@ -81,7 +83,7 @@ static func neighbor(vine: Vine, id: StringName, dir: Vector2) -> StringName:
 
 ## The first root to show with the focus: the lowest that can grow now (Vida first), else the first of Vida.
 static func first_focus(vine: Vine, data: Dictionary) -> StringName:
-	for row in range(0, 4):
+	for row in 6:
 		for branch in vine.branches():
 			var nodes := vine.nodes_of(branch)
 			if row < nodes.size() and vine.state(data, nodes[row].id) == Vine.State.AVAILABLE:

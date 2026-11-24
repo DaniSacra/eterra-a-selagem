@@ -61,7 +61,7 @@ var _bursts: Array = []
 
 func setup(p_loadout: HeroLoadout) -> MedallionView:
 	loadout = p_loadout
-	def = MedallionDef.of(String(loadout.hero.id))
+	def = without_ults(MedallionDef.of(String(loadout.hero.id)), loadout.hero)
 	nav = MedallionNav.new(def, loadout.book.catalog)
 	_edges = nav.edges()
 	_labels = _sector_labels()
@@ -79,6 +79,38 @@ func setup(p_loadout: HeroLoadout) -> MedallionView:
 	glow.draw.connect(_draw_glow)
 	add_child(glow)
 	return self
+
+
+## True when the hero's Supremo is fixed by the weapon (HeroDef.ult_for_weapon, redesign A.3): there is no ultimate to
+## choose, so the medallion has no ULT nodes and the Livro shows the one the hero has. Tolerant of a HeroDef without it.
+static func has_fixed_ult(hero: HeroDef) -> bool:
+	return hero.has_method(&"ult_for_weapon")
+
+
+## The Supremo of the hero's weapon, unlocked or not (null when the HeroDef has no ult_for_weapon yet): the one
+## HeroDef.ult_for_weapon plays, else the first non-reserve ultimate of the hero's weapon.
+static func weapon_ult(hero: HeroDef) -> UltDef:
+	if not has_fixed_ult(hero):
+		return null
+	var u: UltDef = hero.call(&"ult_for_weapon")
+	if u != null:
+		return u
+	for o in hero.ultimates:
+		if o.get(&"weapon") == hero.get(&"weapon") and not bool(o.get(&"reserve")):
+			return o
+	return null
+
+
+## The medallion without its ULT nodes when the hero's Supremo is fixed (the same def otherwise).
+static func without_ults(source: MedallionDef, hero: HeroDef) -> MedallionDef:
+	if not has_fixed_ult(hero):
+		return source
+	var out := MedallionDef.new()
+	out.hero = source.hero
+	for n in source.nodes:
+		if n.kind != MedallionNodeDef.Kind.ULT:
+			out.nodes.append(n)
+	return out
 
 
 func _process(delta: float) -> void:

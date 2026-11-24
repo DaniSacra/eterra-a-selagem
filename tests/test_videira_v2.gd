@@ -117,7 +117,7 @@ func test_the_nine_buds_stand_on_the_table_of_the_spec_with_a_tag_beside_each() 
 	var s := _screen(_data(100, 30))
 	assert_eq(s.buds.size(), 9)
 	assert_eq(s.tags.size(), 9)
-	var want := {&"vida_1": Vector2(390, 450), &"vida_3": Vector2(220, 200), &"viajante": Vector2(490, 390),
+	var want := {&"vida_1": Vector2(395, 452), &"vida_3": Vector2(262, 288), &"viajante": Vector2(490, 390),
 		&"reserva": Vector2(490, 160), &"prata": Vector2(590, 450), &"materiais": Vector2(760, 200)}
 	for id: StringName in want:
 		assert_lt(((s.buds[id] as Control).position + (s.buds[id] as Control).size * 0.5).distance_to(want[id]), 5.0, "%s on its place" % id)
@@ -266,10 +266,10 @@ func test_a_branch_path_passes_through_its_buds() -> void:
 	for b in Vine.BRANCHES:
 		var pts := VineLayout.path(b)
 		assert_eq(pts[0], VineLayout.FORK)
-		for step in range(1, 4):
+		for step in range(1, (VineLayout.BUD[b] as Array).size() + 1):
 			assert_lt(pts[step * VineLayout.SAMPLES].distance_to(VineLayout.bud(b, step)), 0.01)
 		var hull := Rect2(VineLayout.FORK, Vector2.ZERO)
-		for step in range(1, 4):
+		for step in range(1, (VineLayout.BUD[b] as Array).size() + 1):
 			hull = hull.expand(VineLayout.bud(b, step))
 		for p in pts:
 			assert_true(hull.grow(45.0).has_point(p), "%s does not run past its buds" % b)
@@ -316,3 +316,24 @@ func test_the_planting_shows_the_stages_bought_and_only_those() -> void:
 	assert_eq(v.stages_shown(), 3, "clamped to the three stages of a branch")
 	v.grown({})
 	assert_eq(v.stages_shown(), 0)
+
+
+func test_vida_has_places_for_five_steps_inside_the_stage_and_clear_of_each_other() -> void:
+	assert_eq((VineLayout.BUD[&"vida"] as Array).size(), 5, "Respiro and Ainda de Pé are steps 4 and 5 of Vida")
+	var tags: Array[Rect2] = []
+	for b in VineLayout.BUD:
+		assert_eq((VineLayout.TAG[b] as Array).size(), (VineLayout.BUD[b] as Array).size(), "a tag for each bud")
+		for step in range(1, (VineLayout.BUD[b] as Array).size() + 1):
+			var r := Rect2(VineLayout.tag(b, step), VineLayout.TAG_SIZE)
+			assert_true(Rect2(Vector2.ZERO, VineLayout.STAGE).encloses(r), "%s %d tag inside the stage" % [b, step])
+			assert_false(VineScreen.PANEL_RECT.intersects(r), "%s %d tag clear of the panel" % [b, step])
+			for o in tags:
+				assert_false(o.intersects(r), "%s %d tag over another" % [b, step])
+			tags.append(r)
+		assert_gt(VineLayout.NAME_AT[b].y, 40.0, "the name stays under the stage's top")
+
+
+func test_a_path_is_only_as_long_as_the_nodes_it_has() -> void:
+	assert_eq(VineLayout.path(&"vida", 3).size(), 3 * VineLayout.SAMPLES + 1)
+	assert_eq(VineLayout.path(&"vida").size(), 5 * VineLayout.SAMPLES + 1)
+	assert_eq(VineLayout.path(&"vida", 9).size(), 5 * VineLayout.SAMPLES + 1, "no more than the places")

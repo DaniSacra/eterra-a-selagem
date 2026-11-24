@@ -1,7 +1,7 @@
 class_name Glossary
 extends PanelContainer
 ## The words of rule a card uses, explained beside the row of cards (benchmark_hades2_ui.md P1-2, UI-HB1): for the card
-## in focus, up to MAX terms ("Congelar", "Queimadura", "Ômega"...), each its name in bold ivory and one line of what
+## in focus, up to MAX terms ("Congelar", "Queimadura", "Golpe Carregado"…), each its name in bold ivory and one line of what
 ## it does, on the interface's ink. The terms are text (data/text_pt.tres): gloss_<id> the name, gloss_<id>_text the
 ## line, gloss_<id>_words the beginnings of the words that call it, comma separated ("congela,congelad"). A term new
 ## to the game is a line in TERMS and three keys in the table.

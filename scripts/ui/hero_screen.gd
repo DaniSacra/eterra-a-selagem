@@ -555,15 +555,27 @@ func _skills(grid: GridContainer) -> void:
 			var rush: int = int(Hud.MAGA_GLYPHS[&"rush"]) if maga else BoonIcon.RUSH_GLYPH
 			_skill(grid, ActionSlot.glyph_mark(rush, MARK), T.t(&"hero_skill_name_rush_maga" if maga else &"howto_rush"),
 				T.t(_hk("hero_skill_rush")))
-	var u := loadout.hero.ultimate(loadout.ultimate())
-	if u != null:
-		_skill(grid, ActionSlot.glyph_mark(BoonIcon.ULT_GLYPH + u.kind, MARK), T.t(u.name_key), T.t(&"hero_skill_ultimate"))
+	if MedallionView.has_fixed_ult(loadout.hero):
+		_fixed_ult_row(grid)
 	else:
-		var first := loadout.hero.ultimates[0] if not loadout.hero.ultimates.is_empty() else null
-		if first != null:
-			_skill(grid, ActionSlot.glyph_mark(BoonIcon.ULT_GLYPH + first.kind, MARK), T.t(&"howto_ultimate"),
-				T.t(&"hero_ult_locked", {"n": first.mastery_level}))
+		var u := loadout.hero.ultimate(loadout.ultimate())
+		if u != null:
+			_skill(grid, ActionSlot.glyph_mark(BoonIcon.ULT_GLYPH + u.kind, MARK), T.t(u.name_key), T.t(&"hero_skill_ultimate"))
+		else:
+			var first := loadout.hero.ultimates[0] if not loadout.hero.ultimates.is_empty() else null
+			if first != null:
+				_skill(grid, ActionSlot.glyph_mark(BoonIcon.ULT_GLYPH + first.kind, MARK), T.t(&"howto_ultimate"),
+					T.t(&"hero_ult_locked", {"n": first.mastery_level}))
 	_skill(grid, TalentGlyph.mark(null, MARK), T.t(_hk("hero_passive")), T.t(_hk("hero_passive_desc")))
+
+
+## The weapon's own Supremo (no choice, redesign A.3): its name and its charge, or the Mastery that unlocks it.
+func _fixed_ult_row(grid: GridContainer) -> void:
+	var u := MedallionView.weapon_ult(loadout.hero)
+	if u == null:
+		return
+	var line := T.t(&"hero_ult_charge", {"n": int(u.charge)}) if u.mastery_level <= loadout.level() else T.t(&"hero_ult_locked", {"n": u.mastery_level})
+	_skill(grid, ActionSlot.glyph_mark(BoonIcon.ULT_GLYPH + u.kind, MARK), T.t(u.name_key), line)
 
 
 func _skill(grid: GridContainer, mark: Control, title: String, line: String) -> void:

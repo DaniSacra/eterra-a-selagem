@@ -129,7 +129,7 @@ func test_a_refused_press_says_how_much_is_charged() -> void:
 	await _tap_r()
 	assert_eq(game.ults.uses, 0)
 	assert_eq(game.hud._ult_slot.caption, "Carga 48%")
-	assert_eq(game.hud._notice.text, "O Golpe Supremo enche com Ômegas e com o dano que você causa e sofre")
+	assert_eq(game.hud._notice.text, "O Golpe Supremo enche com Golpes Carregados e com o dano que você causa e sofre")
 
 
 func test_the_captions() -> void:
