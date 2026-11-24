@@ -34,3 +34,12 @@ static func stuns(strong: bool) -> bool:
 ## Quebra instead) and bosses (Postura) are never stunned this way. Not asked of live: it holds in every mode.
 static func dash_stuns(common: bool, pierce: float) -> bool:
 	return pierce > 0.0 and common
+
+
+## The second exception (decision B4, 2026-11-24): with Voz do Leão (stun_pct above 0 on the Brado) the cry interrupts every common
+## enemy it reaches for SHOUT_STUN seconds, whatever the mode. Elites, guardians and bosses are never stunned this way.
+const SHOUT_STUN := 1.0
+
+
+static func shout_stuns(common: bool, stun_pct: float) -> bool:
+	return stun_pct > 0.0 and common

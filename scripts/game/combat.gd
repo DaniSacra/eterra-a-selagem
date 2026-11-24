@@ -17,6 +17,13 @@ signal landed(node: ComboNode, tags: Array[StringName], hits: int)
 const COMBO_KEEP := 3.0
 ## Extra hit slow when a blow kills (Hades II: 0.04 s).
 const KILL_HOLD_MS := 40.0
+## Apogeu (CF-04): the last blow of a sequence that carries the sum lands with a hit stop of this many ms (and 40 more of slow),
+## a heavier shake and its own sound. The Investida Implacável gives one frame of hit stop per body it goes through, three at most.
+const APOGEE_STOP_MS := 90.0
+const APOGEE_SLOW_MS := 40.0
+const APOGEE_SHAKE := 1.2
+const DASH_STOP_MS := 1000.0 / 60.0
+const DASH_STOPS_MAX := 3
 ## Slow motion in a fight is rare, as in Hades II (there only the last kill of a room and a boss's death slow the
 ## world; a blow only gets a few hundredths of a second of hit slow): a blow that fells SLOW_MO_KILLS at once or
 ## lands on SLOW_MO_CROWD, at most once every SLOW_MO_COOLDOWN seconds. Speed, seconds held, seconds back.
@@ -250,6 +257,8 @@ func _echo(node: ComboNode, origin: Vector2, dir: Vector2, share: float) -> void
 func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	_swing += 1
 	kill_blow = _swing
+	_dash_stops = 0
+	_apogee_landed = false
 	var tags := node.tags
 	var hits := 0
 	# Retorno do Corte (Fatia 2): the blow right after a Corte Veloz reaches farther and wider
@@ -262,7 +271,7 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	var color := color_of(tags)
 	var heavy := node.has_tag(&"heavy")
 	var finisher := node.has_tag(&"finisher")
-	# the Brado de Guerra (Effect.SHOUT): a cry, not a cut (rings, no blade's ribbon); it pushes and stuns no one
+	# the Brado de Guerra (Effect.SHOUT): a cry, not a cut (rings, no blade's ribbon); it pushes and stuns no one (but the common, with Voz do Leão)
 	var shout := node.effect == ComboNode.Effect.SHOUT
 	match node.shape:
 		ComboNode.Shape.ARC:
@@ -314,6 +323,8 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			continue
 		if node.has_tag(&"dash"):
 			_dash_through(e, tags)
+		if shout and StunRule.shout_stuns(is_common(e.def), boons.stat(&"stun_pct", tags)):
+			horde.flinch(e, StunRule.SHOUT_STUN)  # Voz do Leão: the cry interrupts the common (B4)
 		match node.effect:
 			ComboNode.Effect.LAUNCH:
 				if not e.def.heavy:
@@ -328,6 +339,8 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			# (Fx starts it once the hit stop is over: GF-05)
 			fx.slow_mo(SLOW_MO_FRACTION, SLOW_MO_HOLD, SLOW_MO_OUT, 1.05, 0.45)
 		fx.shake(node.shake * (1.0 + minf(struck.size(), 10) * 0.05))
+		if _apogee_landed:
+			_apogee_weight(node, dir)
 		var omega := node.has_tag(OMEGA_TAG)
 		fx.kick(dir, kick_of(node))
 		var buzz := RUMBLE_OMEGA if omega else RUMBLE_FINISHER if finisher else RUMBLE_COMMON
@@ -383,6 +396,9 @@ func _dash_through(e: Enemy, tags: Array[StringName]) -> void:
 		horde.boss_blow.emit(e, &"attack")
 	elif StunRule.dash_stuns(is_common(e.def), pierce):
 		horde.flinch(e, boons.stat(&"dash_stun", tags))
+	if _dash_stops < DASH_STOPS_MAX:
+		_dash_stops += 1
+		fx.blow_stop(0.0, DASH_STOP_MS * Feel.live().hit_stop_scale)
 
 
 ## The wave of a move with Effect.WAVE (the special and its Omega; the Pastor's flock throws more of them, E4): its
@@ -501,6 +517,15 @@ func _hit_slow(node: ComboNode, extra_ms: float = 0.0) -> void:
 	_slow_cd = HIT_SLOW_COOLDOWN
 	var k := Feel.live().hit_stop_scale
 	fx.blow_stop(node.hit_stop_ms * k, (node.hit_slow_ms + extra_ms) * k, node.hit_slow_scale)
+
+
+## Apogeu's blow lands with weight (CF-04): a longer hit stop than the spin's own, a heavier shake and kick, its own sound.
+func _apogee_weight(node: ComboNode, dir: Vector2) -> void:
+	_apogee_landed = false
+	fx.blow_stop(maxf(node.hit_stop_ms, APOGEE_STOP_MS) * Feel.live().hit_stop_scale, APOGEE_SLOW_MS)
+	fx.shake(APOGEE_SHAKE)
+	fx.kick(dir, KICK_OMEGA)
+	Audio.play(CombatSounds.EVENTS[&"apogee"])
 
 
 ## The hit stop (ms of wait) a projectile move has on contact: its own hit_stop_ms, else SHOT_STOP_MS for a heavy
@@ -701,6 +726,10 @@ static func is_common(def: EnemyDef) -> bool:
 var _strike_node: ComboNode
 ## The books of Apogeu (HeroGifts clears them when the sequence ends, a target dies or the room changes).
 var apogee := ApogeeLedger.new()
+## This blow carried Apogeu's sum onto some target (set by _apogee, read and cleared by strike).
+var _apogee_landed := false
+## Frames of hit stop the Investida has already given on this lunge.
+var _dash_stops := 0
 
 
 ## What Apogeu adds to this blow on `e` (0 for any blow but the last of the sequence, which spends the books): the share
@@ -716,6 +745,7 @@ func _apogee(e: Enemy, dmg: float, tags: Array[StringName]) -> float:
 		return 0.0
 	var extra := roundf(apogee.finisher(id, pct, dmg))
 	apogee.reset(id)
+	_apogee_landed = _apogee_landed or extra > 0.0
 	return extra
 
 

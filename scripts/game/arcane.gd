@@ -59,6 +59,10 @@ var words := WordBudget.new()
 ## What the kit did in this run (RESULT arcane).
 var tally := {"sparks": 0, "combusts": 0, "shards": 0, "frosts": 0, "arcs": 0, "domes": 0, "held": 0, "freezes": 0,
 	"thermal": 0, "overload": 0, "crystal": 0, "burn_damage": 0.0, "reactions": 0}
+## The burst of a reaction lives this long (CF-07: 0.25 s at most) and, but for the Sobrecarga's, rings this wide.
+const REACT_TIME := 0.25
+const REACT_RING := 1.4
+var _react_sound_t := -99.0
 var _burn_acc: Dictionary = {}
 var _shards_used := 0
 var _shard_t := 0.0
@@ -172,30 +176,42 @@ func _react(r: Reaction) -> void:
 	tally.reactions += 1
 	var at := Vector3(e.pos.x, 1.0 + e.y, e.pos.y)
 	var fx := game.fx
+	var color: Color
+	var burst: StringName
+	var sound: StringName
 	match r.kind:
 		Reaction.Kind.THERMAL:
 			tally.thermal += 1
 			_elemental_hit(e, r.damage, ElementLook.COLD)
-			fx.burst(&"fire", at)
-			fx.burst(&"frost", at)
+			color = ElementLook.REACT_THERMAL
+			burst = &"fire"
+			sound = &"react_thermal"
 		Reaction.Kind.OVERLOAD:
 			tally.overload += 1
 			_elemental_hit(e, r.damage, ElementLook.VOLT)
 			_around(e, r.damage, r.radius, 1.0, 0.0)
-			fx.ring(e.pos, r.radius, ElementLook.VOLT, 0.3, 0.15, true)
-			fx.burst(&"spark", at)
-		Reaction.Kind.CRYSTAL:
+			color = ElementLook.REACT_OVERLOAD
+			burst = &"spark"
+			sound = &"react_overload"
+		_:
 			tally.crystal += 1
 			if r.freeze > 0.0 and e.thaw_t <= 0.0 and e.frozen_t <= 0.0:
 				e.frozen_t = r.freeze * (0.4 if e.def.heavy else 1.0)
 				e.thaw_t = r.freeze + THAW
 			elif r.poise > 0.0:
 				game.horde.crack(e, &"crystal")  # Quebra instead of a freeze (the boss's Postura, a common's poise)
-			fx.burst(&"frost", at)
-			fx.burst(&"spark", at)
+			color = ElementLook.REACT_CRYSTAL
+			burst = &"frost"
+			sound = &"react_crystal"
+	# one burst a reaction (CF-07): one ring and one puff, in the reaction's color; the sound once a react_gap however many pop
+	fx.ring(e.pos, r.radius if r.kind == Reaction.Kind.OVERLOAD else REACT_RING, color, REACT_TIME, 0.15, true)
+	fx.burst(burst, at)
+	if book.now - _react_sound_t >= kit.react_gap:
+		_react_sound_t = book.now
+		Audio.play(CombatSounds.EVENTS[sound])
 	var word_key := &"word_react_thermal" if r.kind == Reaction.Kind.THERMAL else &"word_react_overload" if r.kind == Reaction.Kind.OVERLOAD else &"word_react_crystal"
 	if words.admit(book.now):
-		fx.word(at + Vector3(0.0, 0.8, 0.0), T.t(word_key) if words.named(word_key) else "", ElementLook.VOLT)
+		fx.word(at + Vector3(0.0, 0.8, 0.0), T.t(word_key) if words.named(word_key) else "", color)
 	var splash := _stat(&"react_splash")  # Fissão Térmica: the same damage, a share of it, 2 m around (no state, no chain)
 	if splash > 0.0 and r.kind != Reaction.Kind.CRYSTAL:
 		_around(e, r.damage * splash, SPLASH_RADIUS, 1.0, r.radius)

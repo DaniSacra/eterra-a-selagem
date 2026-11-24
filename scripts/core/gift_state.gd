@@ -114,12 +114,16 @@ func attack_speed(tags: Array[StringName] = []) -> float:
 	return 1.0 + fast + cadence(tags) + (rally_speed if rally_left > 0.0 else 0.0)
 
 
+## Cadência never speeds a blow past this (3 blows of Cadência: CF-03, the 1 < 2 < 3 of the sequence stays readable).
+const CADENCE_CAP := 0.24
+
+
 ## Cadência: cadence_pct for each blow of the sequence that landed, for the attack's blows only (the Brado, the special, the
 ## Golpe Carregado and the Investida do not play faster for it).
 func cadence(tags: Array[StringName]) -> float:
 	if chain_n <= 0 or tags.is_empty() or DealtBy.source(tags) != &"attack":
 		return 0.0
-	return value(&"cadence_pct") * chain_n
+	return minf(value(&"cadence_pct") * chain_n, CADENCE_CAP)
 
 
 ## A blow of the attack's sequence landed (true: it counted). The opener of the sequence starts the count over (chain_start).
