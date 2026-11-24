@@ -19,5 +19,5 @@ requires = &"viajante"
 name_key = &"vine_estoque"
 desc_key = &"vine_estoque_desc"
 material = &"memory"
-cost = 10
+cost = 6
 mods = Array[ExtResource("1_pvqsm")]([SubResource("Resource_6w33g")])

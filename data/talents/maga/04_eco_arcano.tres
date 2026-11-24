@@ -18,5 +18,5 @@ desc_key = &"talent_eco_arcano_desc"
 branch = 7
 cost = 2
 unlock_level = 2
-memory_cost = 2
+memory_cost = 1
 mods = Array[ExtResource("1_k8cyo")]([SubResource("Resource_1tcod")])

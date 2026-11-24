@@ -79,13 +79,13 @@ no relatório e a sessão principal cola, para não dar conflito no fim do arqui
 **Lote D, números** (`balance-designer` com `gameplay-engineer` para os dois campos novos; arquivos: `tools/make_data.gd`, `data/` regerado,
 `scripts/core/stage_def.gd`, `scripts/game/rooms.gd` só em `_room_cleared`, `tests/test_rejogabilidade.gd`; **começa depois** de integrar a cura por
 sala e o PT-6/PT-11, porque toca os mesmos arquivos)
-17. **A criança que morre na sala 5 leva algo para casa** (EC 1 e 2, M; decidido à noite, revisar). Campo novo `StageDef.silver_room` = 1 (Prata por sala
+17. **FEITO (Lote D, 2026-11-24, `tests/test_lote_d.gd`, medida em `docs/design/balance.md`)** **A criança que morre na sala 5 leva algo para casa** (EC 1 e 2, M; decidido à noite, revisar). Campo novo `StageDef.silver_room` = 1 (Prata por sala
     de luta vencida) e `memory_guardian_reach` = 1 (Memória ao entrar na sala do guardião); `silver_elite` 1 para 2. Aceite: teste GUT dos dois campos;
     régua do EC (15 sementes, ou 12 pela regra) com `materials.total.silver` na derrota p50 entre 6 e 15 e Memória 1 ou mais.
-18. **Preços que a criança alcança** (EC 3, 4, 5, 6, 8, P; decidido à noite, revisar). Dons de `unlock` 2 a 5 custam 1 de Memória; Vendedor 5 Prata por 1
+18. **FEITO (Lote D, 2026-11-24, `tests/test_lote_d.gd`, medida em `docs/design/balance.md`)** **Preços que a criança alcança** (EC 3, 4, 5, 6, 8, P; decidido à noite, revisar). Dons de `unlock` 2 a 5 custam 1 de Memória; Vendedor 5 Prata por 1
     Memória (era 10); Provisão da Videira 3, 6, 10 (custo por ramo); Perseverança 0,25 (era 0,1); Temperar I e II 20 e 45 (era 15 e 35). Aceite: tabela
     do EC refeita no `docs/design/balance.md` com o "descidas até o primeiro item" de antes e depois.
-19. **Combate mais justo para quem lê tarde** (CB 4 e 6, KT 3d, P; decidido à noite, revisar). `bang_lead` 0,35 para 0,45; segundo avanço do Cavaleiro com
+19. **FEITO (Lote D, 2026-11-24, `tests/test_lote_d.gd`, medida em `docs/design/balance.md`)** **Combate mais justo para quem lê tarde** (CB 4 e 6, KT 3d, P; decidido à noite, revisar). `bang_lead` 0,35 para 0,45; segundo avanço do Cavaleiro com
     aviso de 0,55 (era 0,45, abaixo do piso de 0,5 dos comuns); carga do Supremo 90 para 75 nos dois heróis até a Maestria 6; hit stop dos projéteis do item 14
     preenchido (25 ms no especial e na Explosão); `shot3.glint` da Maga 0 para 0,12. Aceite: robô de reação 0,6 em 12 sementes antes e depois, com o
     Guerreiro chegando mais longe sem que a Maga passe de 5 de 6 vitórias; mortes na 2ª investida do Cavaleiro abaixo de 1 em 3 (`--guardian=knight`).

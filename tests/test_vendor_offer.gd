@@ -28,8 +28,8 @@ func test_trade_states_and_the_cap() -> void:
 	var d := _open_data()
 	var t := VendorOffer.trade_at(0)
 	assert_eq(t.state(d, def), VendorOffer.State.SHORT)
-	assert_eq(t.missing(d, def), {MaterialPurse.SILVER: 10})
-	MaterialPurse.give(d, MaterialPurse.SILVER, 10)
+	assert_eq(t.missing(d, def), {MaterialPurse.SILVER: 5})
+	MaterialPurse.give(d, MaterialPurse.SILVER, 5)
 	assert_eq(t.state(d, def), VendorOffer.State.CAN)
 	MaterialPurse.give(d, MaterialPurse.MEMORY, int(MaterialPurse.CAP[MaterialPurse.MEMORY]))
 	assert_eq(t.state(d, def), VendorOffer.State.FULL)
@@ -40,14 +40,14 @@ func test_commit_uses_the_rules_that_already_exist() -> void:
 	var d := _open_data()
 	MaterialPurse.give(d, MaterialPurse.SILVER, 50)
 	assert_true(VendorOffer.trade_at(0).commit(d, def))
-	assert_eq(MaterialPurse.amount(d, MaterialPurse.SILVER), 40)
+	assert_eq(MaterialPurse.amount(d, MaterialPurse.SILVER), 45)
 	assert_eq(MaterialPurse.amount(d, MaterialPurse.MEMORY), 1)
 	assert_false(VendorOffer.of_discern(1).commit(d, def), "1 Memória is short of the grade")
 
 
 func test_the_tilt_grows_with_what_is_given_and_stays_in_range() -> void:
 	var def := OficiosDef.live()
-	assert_almost_eq(VendorOffer.trade_at(0).tilt(def), 8.0, 0.01)
+	assert_almost_eq(VendorOffer.trade_at(0).tilt(def), 6.0, 0.01)
 	for o in VendorOffer.all(def, Vendor.load_catalog()):
 		assert_between(o.tilt(def), VendorOffer.TILT_MIN, VendorOffer.TILT_MAX)
 
@@ -55,6 +55,6 @@ func test_the_tilt_grows_with_what_is_given_and_stays_in_range() -> void:
 func test_the_reading_of_a_trade_has_its_numbers_and_the_numbers_go_bold() -> void:
 	var def := OficiosDef.live()
 	var s := VendorOffer.trade_at(0).effect(def)
-	assert_string_contains(s, "10 Prata")
+	assert_string_contains(s, "5 Prata")
 	assert_string_contains(s, "1 Memória")
-	assert_string_contains(VendorPlate.bold_numbers(s), "[b]10[/b]")
+	assert_string_contains(VendorPlate.bold_numbers(s), "[b]5[/b]")

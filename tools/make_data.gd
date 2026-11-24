@@ -136,7 +136,7 @@ func _tree(fourth: bool) -> ComboTree:
 	var bolt := _move(&"bolt", H, &"Cast", [&"heavy", &"wave"],
 		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.1, "recovery": 18.0 / 60.0, "chain_window": 0.2,
 		"cooldown": 0.5, "move_hold": SPECIAL_HOLD, "sound": &"dart", "magick_cost": 12.0,
-		"hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "effect": ComboNode.Effect.WAVE, "effect_power": 55.0, "effect_radius": 6.0,
+		"hit_stop_ms": 25.0, "shake": 0.3, "move_scale": 0.0, "effect": ComboNode.Effect.WAVE, "effect_power": 55.0, "effect_radius": 6.0,
 		"effect_size": 1.4, "wave_bolt": true}, [], &"move_wave")
 	# Omega attack (attack held 0.8 s, 20 Magia): a long line of light to the front and to the back. Its windup and
 	# glint play inside the charge, so it lands when the charge fills (GF-08, Player._charge_lead). Hades II's Swing5:
@@ -398,7 +398,7 @@ func _enemies() -> void:
 		"heavy": true, "elite": true, "armor": 1100.0, "armor_stagger": 2.5, "attack_damage": 6.0, "attack_range": 14.0, "attack_cooldown": 2.4,
 		"attack_windup": 0.6, "lunge_speed": 24.0, "lunge_time": 0.6, "close_damage": 6.0, "close_range": 3.2, "close_windup": 0.5,
 		"exact_windup": true,
-		"charges": 1, "recharge_windup": 0.45, "aim_lock": 0.15, "raise_count": 3, "raise_max": 6, "escort": [&"mage", &"mage"] as Array[StringName],
+		"charges": 1, "recharge_windup": 0.55, "aim_lock": 0.15, "raise_count": 3, "raise_max": 6, "escort": [&"mage", &"mage"] as Array[StringName],
 		"armor_soft": 0.3,
 		"moves": [
 			_kmove(&"throw", {"from_life": 1.0, "cooldown": 18.0, "first": 8.0, "min_dist": 4.0, "max_dist": 16.0}),
@@ -975,7 +975,8 @@ func _stage() -> void:
 	# What a descent brings home (sistemas.md 1.2, starting numbers for the balance-designer): Prata by an elite 1, a
 	# door 10, a guardian 6, Morvath 2 a phase reached (up to 8) and 10 at the sealing; Memória by a door 3, a guardian 2,
 	# a Provação won 2 and the sealing 3.
-	st.silver_elite = 1
+	st.silver_elite = 2  # (was 1; balance 2026-11-24, Lote D)
+	st.silver_room = 1  # a fight room won
 	st.silver_door = 10
 	st.silver_guardian = 6
 	st.room_heal_base = 3.0  # the novice who skips the fountain still reaches the guardian with some life
@@ -984,6 +985,7 @@ func _stage() -> void:
 	st.silver_victory = 10
 	st.memory_door = 3
 	st.memory_guardian = 2
+	st.memory_guardian_reach = 1  # stepping into the guardian's room
 	st.memory_trial = 2
 	st.memory_victory = 3
 	# Esmeralda (Fatia 2): 1 when Morvath's phase 3 is reached, 1 at the sealing
@@ -1845,7 +1847,7 @@ func _feel() -> void:
 	f.close_fraction = 0.4
 	f.close_slow = 0.25
 	# PT-1: the "!" over a blow with no mark on the floor lights this long before it lands
-	f.bang_lead = 0.35
+	f.bang_lead = 0.45
 	# (the dodge charges, 1, and their 0.8 s to come back are the hero's: _hero)
 	f.sprint_scale = 890.0 / 540.0
 	f.move_scale_light = 0.0
@@ -1949,7 +1951,7 @@ func _ultimates() -> void:
 		DirAccess.remove_absolute(ULT_DIR + f)
 	# T5 (docs/design/t5_ultimate.md): it also fills with the damage dealt (ULT_DAMAGE_CHARGE a point, 3000 for the
 	# cleave) and the life lost (ULT_HURT_CHARGE a point): a player who never holds an Omega still gets it
-	_ult(0, &"cleave", UltDef.Kind.CLEAVE, {"charge": 90.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 3, "gesture": 0.3,
+	_ult(0, &"cleave", UltDef.Kind.CLEAVE, {"charge": 75.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 3, "gesture": 0.3,
 		"tags": [&"ultimate", &"light"] as Array[StringName], "anim": &"Slash_C", "anim_peak": PEAK[&"Slash_C"], "knockback": 6.0,
 		"length": 12.0, "width": 4.0, "core_width": 1.5, "core_damage": 180.0, "damage": 120.0, "stun": 1.0, "armor_mult": 2.0})
 	_ult(1, &"vortex", UltDef.Kind.VORTEX, {"charge": 105.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 10, "gesture": 0.3,
@@ -1974,7 +1976,8 @@ func _talent(n: int, id: StringName, branch: TalentDef.Branch, tier: TalentDef.T
 	t.unlock_level = unlock
 	# Rejogabilidade, Fatia 1 (sistemas.md 1.4): opening costs its Devotion in Memória, the first Gift (Mastery 1) comes
 	# open so the first descent is no poorer than before
-	t.memory_cost = 0 if unlock <= 1 else cost
+	# (balance 2026-11-24, Lote D: Gifts of Mastery 2 to 5 cost 1 Memoria, within a child reach; the later ones keep their Devotion)
+	t.memory_cost = 0 if unlock <= 1 else (1 if unlock <= 5 else cost)
 	for k: String in props:
 		t.set(k, props[k])
 	_save(t, _talent_dir + "%02d_%s.tres" % [n, id])
@@ -2111,11 +2114,11 @@ func _maga_tree() -> ComboTree:
 		shot.merged({"effect_power": 10.0, "effect_size": 0.7, "windup": 0.10, "recovery": 0.13, "move_hold": 0.20}), [shot3])
 	var shot1 := _move(&"bolt1", L, &"Cast", [&"light", &"bolt", &"arcane"],
 		shot.merged({"effect_power": 10.0, "effect_size": 0.7, "windup": 0.08, "recovery": 0.13, "move_hold": 0.18}), [shot2])
-	shot3.glint = 0.0  # (a finisher of the passive, but no glint: the shot leaves at once)
+	shot3.glint = 0.12  # (a finisher of the passive: a short glint on the hand so a slow reader sees the third shot coming; balance 2026-11-24)
 	# right button: Explosão Rúnica, 10 Magia (0 when amplified), 0.6 s between, at the cursor up to 10 m
 	var blast := _move(&"blast", H, &"Cast", [&"heavy", &"blast", &"arcane", &"finisher"],
 		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.18, "recovery": 0.25, "move_hold": 0.35,
-		"chain_window": 0.2, "cooldown": 0.6, "magick_cost": 10.0, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0,
+		"chain_window": 0.2, "cooldown": 0.6, "magick_cost": 10.0, "hit_stop_ms": 25.0, "shake": 0.3, "move_scale": 0.0,
 		"sound": &"dart", "effect": ComboNode.Effect.BLAST}, [], &"move_blast")
 	blast.glint = 0.0
 	# Q: Círculo de Contenção, recharge 10 s, within 8 m
@@ -2211,7 +2214,7 @@ func _maga() -> void:
 	u.kind = UltDef.Kind.STORM
 	u.name_key = &"ult_storm"
 	u.desc_key = &"ult_storm_desc"
-	var numbers := {"charge": 90.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 2, "gesture": 0.3,
+	var numbers := {"charge": 75.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 2, "gesture": 0.3,
 		"anim": &"Cast", "anim_peak": PEAK[&"Cast"], "knockback": 4.0, "ahead": 4.0, "aim_max": 9.0, "radius": 6.0, "radius_cap": 7.5,
 		"duration": 4.0, "tick": 0.5, "tick_damage": 8.0, "detonate_damage": 110.0, "elite_share": 0.5, "guardian_share": 0.25, "armor_mult": 2.0}
 	for k: String in numbers:
@@ -3018,11 +3021,11 @@ func _vine() -> void:
 		DirAccess.remove_absolute(dir + f)
 	var S := MaterialPurse.SILVER
 	var M := MaterialPurse.MEMORY
-	var costs := [5, 10, 20]
+	var costs := {&"vida": [5, 10, 20], &"provisao": [3, 6, 10], &"perseveranca": [5, 10, 20]}
 	var list := [
 		[&"vida", S, [[&"vida_1", &"max_hp", 5], [&"vida_2", &"max_hp", 5], [&"vida_3", &"max_hp", 5]]],
 		[&"provisao", M, [[&"viajante", &"traveler", 1], [&"estoque", &"shop_extra", 1], [&"reserva", &"shop_care", 1]]],
-		[&"perseveranca", S, [[&"prata", &"silver_pct", 0.1], [&"memoria", &"memory_pct", 0.1], [&"materiais", &"material_pct", 0.1]]],
+		[&"perseveranca", S, [[&"prata", &"silver_pct", 0.25], [&"memoria", &"memory_pct", 0.25], [&"materiais", &"material_pct", 0.25]]],
 	]
 	var i := 0
 	for branch: Array in list:
@@ -3034,7 +3037,7 @@ func _vine() -> void:
 			n.step = step + 1
 			n.requires = branch[2][step - 1][0] if step > 0 else &""
 			n.material = branch[1]
-			n.cost = costs[step]
+			n.cost = costs[branch[0]][step]
 			n.name_key = StringName("vine_" + n.id)
 			n.desc_key = StringName("vine_%s_desc" % n.id)
 			var mods: Array[BoonMod] = []
@@ -3048,8 +3051,8 @@ func _forge() -> void:
 	DirAccess.make_dir_recursive_absolute(FORGE_DIR)
 	for f in DirAccess.get_files_at(FORGE_DIR):
 		DirAccess.remove_absolute(FORGE_DIR + f)
-	_forge_rank(0, &"temper_1", 1, 15, [_fixed(&"damage_pct", 0.2, [], &"light")] as Array[BoonMod])
-	_forge_rank(1, &"temper_2", 2, 35, [_fixed(&"damage_pct", 0.2, [], &"heavy")] as Array[BoonMod])
+	_forge_rank(0, &"temper_1", 1, 20, [_fixed(&"damage_pct", 0.2, [], &"light")] as Array[BoonMod])
+	_forge_rank(1, &"temper_2", 2, 45, [_fixed(&"damage_pct", 0.2, [], &"heavy")] as Array[BoonMod])
 	# Fatia 2: Temperar III (C2), every blow of the Emeth 10% more (the attack's and the special's tags; no blow has both), 60
 	_forge_rank(2, &"temper_3", 3, 60, [_fixed(&"damage_pct", 0.1, [], &"light"), _fixed(&"damage_pct", 0.1, [], &"heavy")] as Array[BoonMod])
 	# Refinar (sistemas.md 1.5): a choice on each action, 25 Prata each, opened by the Forjador's first tool; Fio

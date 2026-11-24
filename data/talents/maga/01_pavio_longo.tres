@@ -28,6 +28,6 @@ branch = 6
 tier = 1
 cost = 2
 unlock_level = 5
-memory_cost = 2
+memory_cost = 1
 slot = 1
 mods = Array[ExtResource("1_0emub")]([SubResource("Resource_s1w5o"), SubResource("Resource_egyi4")])

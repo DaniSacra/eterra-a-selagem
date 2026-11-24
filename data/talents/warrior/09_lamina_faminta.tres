@@ -26,5 +26,5 @@ desc_key = &"talent_lamina_faminta_desc"
 branch = 3
 cost = 2
 unlock_level = 4
-memory_cost = 2
+memory_cost = 1
 mods = Array[ExtResource("1_s1fk7")]([SubResource("Resource_ymhe0"), SubResource("Resource_5kuc2")])

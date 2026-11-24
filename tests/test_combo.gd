@@ -293,7 +293,7 @@ func test_only_finishers_glint() -> void:
 	var glinting := 0
 	for n in tree.all_nodes():
 		if n.has_tag(&"finisher"):
-			assert_between(n.glint, 0.06, 0.1, "%s is a finisher: it glints 0.06 to 0.1 s" % n.id)
+			assert_between(n.glint, 0.06, 0.12, "%s is a finisher: it glints 0.06 to 0.12 s" % n.id)
 			glinting += 1
 		else:
 			assert_eq(n.glint, 0.0, "%s glints but is not a finisher" % n.id)

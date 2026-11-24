@@ -19,5 +19,5 @@ desc_key = &"talent_circulo_expandido_desc"
 branch = 8
 cost = 2
 unlock_level = 3
-memory_cost = 2
+memory_cost = 1
 mods = Array[ExtResource("1_om2ae")]([SubResource("Resource_rsbfa")])

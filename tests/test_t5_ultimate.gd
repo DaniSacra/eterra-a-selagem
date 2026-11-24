@@ -94,7 +94,7 @@ func test_a_new_save_has_none_and_the_hud_says_the_mastery_it_needs() -> void:
 	await _tap_r()
 	assert_eq(refused[0], 1, "the press is heard and refused")
 	assert_eq(game.player.state, Player.State.MOVE)
-	assert_eq(game.hud._notice.text, "A ultimate abre na Maestria 3")
+	assert_eq(game.hud._notice.text, "O Golpe Supremo abre na Maestria 3")
 
 
 func test_mastery_6_without_a_choice_plays_the_cleave_and_the_r_key_lets_it_go() -> void:
@@ -128,8 +128,8 @@ func test_a_refused_press_says_how_much_is_charged() -> void:
 	assert_eq(game.hud._ult_slot.caption, "", "nothing over it while charging quietly")
 	await _tap_r()
 	assert_eq(game.ults.uses, 0)
-	assert_eq(game.hud._ult_slot.caption, "Carga 40%")
-	assert_eq(game.hud._notice.text, "A ultimate enche com Ômegas e com o dano que você causa e sofre")
+	assert_eq(game.hud._ult_slot.caption, "Carga 48%")
+	assert_eq(game.hud._notice.text, "O Golpe Supremo enche com Ômegas e com o dano que você causa e sofre")
 
 
 func test_the_captions() -> void:

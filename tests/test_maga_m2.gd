@@ -66,7 +66,7 @@ func test_the_levels_unlock_the_gifts_in_the_planned_order() -> void:
 		want.sort()
 		assert_eq(got, want, "level %d" % level)
 	assert_eq(book.find(&"brasa_viva").memory_cost, 0, "the first one comes open")
-	assert_eq(book.find(&"eco_arcano").memory_cost, 2)
+	assert_eq(book.find(&"eco_arcano").memory_cost, 1)
 
 
 func test_an_entry_needs_only_the_centre_and_a_middle_its_branch_entry() -> void:

@@ -36,7 +36,7 @@ const EMERALD := &"emerald"
 @export var order_gives := &"angel_preview"
 ## Fatia 3: the Vendedor's trades between materials at a loss (Vendor.trade), each {give, give_n, get, get_n}.
 @export var trades: Array[Dictionary] = [
-	{"give": SILVER, "give_n": 10, "get": MEMORY, "get_n": 1},
+	{"give": SILVER, "give_n": 5, "get": MEMORY, "get_n": 1},
 	{"give": MEMORY, "give_n": 2, "get": SILVER, "get_n": 5},
 	{"give": SILVER, "give_n": 40, "get": EMERALD, "get_n": 1},
 ]

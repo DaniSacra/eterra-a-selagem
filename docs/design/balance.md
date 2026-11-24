@@ -676,3 +676,37 @@ Cura base: toda sala de combate ou guardião vencida devolve 3 de vida (`StageDe
 | R 0,6: passa da sala 5 | 9 | 10 | 10 |
 | R 0,6: sala média de morte | 7,2 | 7,4 | 8,1 |
 Leitura: a cura sozinha mexe pouco (3 de vida por sala, dentro do ruído de 1 a 3 sementes); o PT-6/PT-11 não piorou nada (entrar por baixo e nascer ao norte deram ao robô mais tempo, subiu um pouco). A loja segue igual: `--start=shop --gold=400 --seed=5` compra Bênção, coração e cura (325 de ouro). Maestria e Dons continuam fora; se o Daniel achar fácil, voltar primeiro a vida do Guerreiro (40 para 35).
+
+## Lote D (2026-11-24): o que a criança leva para casa, preços ao alcance, combate para quem lê tarde
+Backlog 17 a 19; tudo em `tools/make_data.gd` (regerado), mais os campos novos `StageDef.silver_room` (Prata por sala de luta vencida, `Rooms.room_silver` em `_room_cleared`, fonte `room`) e `memory_guardian_reach` (Memória ao entrar na sala do guardião, fonte `reach`). Testes: `tests/test_lote_d.gd`; ajustados `test_rejogabilidade`, `test_rejogabilidade_game`, `test_videira_v1`, `test_vendor_offer`, `test_fatia3`, `test_rj1_ui`, `test_forge_bench`, `test_hero_def`, `test_maga_m2`, `test_combo`, `test_t5_ultimate` (Carga 48%).
+
+| Número | Antes | Depois |
+|---|---|---|
+| `silver_room` (novo) / `silver_elite` | 0 / 1 | 1 / 2 |
+| `memory_guardian_reach` (novo) | 0 | 1 |
+| Dons de Maestria 2 a 5, Memória | 2, 3, 2, 2 (o custo de Devoção) | 1 cada (os de nível 6 em diante seguem) |
+| Vendedor, Prata por 1 Memória | 10 | 5 |
+| Videira, Provisão (Memória) | 5, 10, 20 | 3, 6, 10 |
+| Videira, Perseverança (Prata, Memória, materiais) | +10% | +25% |
+| Forja, Temperar I e II | 15 e 35 | 20 e 45 |
+| `Feel.bang_lead` | 0,35 | 0,45 |
+| Cavaleiro, aviso da segunda investida (`recharge_windup`) | 0,45 | 0,55 |
+| Golpe Supremo (cleave e Tempestade dos Selos), carga | 90 | 75 |
+| Maga, `shot3.glint` | 0 | 0,12 (dentro do windup de 0,14: a cadência 8, 8, 12 não muda) |
+| Hit stop do especial e da Explosão (`hit_stop_ms` no dado) | 0 (25 ms pela constante) | 25 (mesmo efeito) |
+
+Régua (12 sementes, 1 a 12, `smoke.sh 700 --ultimate=cleave --bot-reaction=R`, uma partida por vez; Maga 6 sementes a R 0,25; sem Maestria, Dons nem Forja). Antes = `f564252`.
+| Medida | Antes | Depois |
+|---|---|---|
+| Guerreiro R 0,25: vitórias (ENDING) / chega a Morvath / passa da sala 5 | 2 / 9 / 12 | 1 / 10 / 12 |
+| Guerreiro R 0,25: sala média de morte ou fim | 13,1 | 13,2 |
+| Guerreiro R 0,6: passa da sala 5 / sala média | 8 de 12 / 6,7 | 8 de 12 / 7,0 |
+| Maga R 0,25 (6): vitórias / chega a Morvath / passa da sala 5 | 1 / 1 / 5 | 1 / 2 / 4 |
+| Derrota, Prata total p50: R 0,25 / R 0,6 | 24 / 6 | 41 / 11 |
+| Derrota, Memória total p50: R 0,25 / R 0,6 | 6 / 2 | 8 / 3 |
+| R 0,6 que morre na sala 5 (4 sementes): Prata, Memória | 0 e 0 (todas) | 3 a 4 e 1 |
+| R 0,6 que morre nas salas 6 a 8: Prata, Memória | 6 a 12 e 2 a 4 | 10 a 18 e 3 a 5 |
+| R 0,6, Cavaleiro (`--guardian=knight`, o robô cai também no Ancião): mortes na sala do Cavaleiro / dos que chegaram nela | 1 de 6 | 2 de 6 |
+
+Leitura. (1) **Economia**: quem morre na sala 6 a 8 já leva 10 a 18 Prata e 3 a 5 Memória (meta 6 a 15 e 1 ou mais); quem morre na sala 5 leva só 3 a 4 Prata e 1 Memória: a Memória bate, a Prata fica abaixo de 6 (quatro salas de luta a 1 mais elites; se o Daniel quiser 6 ali, `silver_room` 2, que dobra o robô forte). O robô forte (0,25) quase dobra a Prata (24 para 41 na derrota): o efeito de `silver_elite` 2 e das salas; as lojas da Forja e da Videira ficam mais baratas ao mesmo tempo, então ele compra o primeiro item mais cedo (mexer primeiro em `silver_elite` se virar fácil). (2) **Vitória a R 0,25 sem Maestria**: 1 de 12 (antes 2), bem abaixo do teto de 6 de 12: não ficou fácil. Maga 1 de 6, abaixo de 5. (3) **Combate para quem lê tarde**: a criança (R 0,6) quase não muda (8 de 12 passam da 5, sala média 7,0 contra 6,7): o ruído de 1 a 3 sementes cobre isso; o ganho de `bang_lead` e do aviso do Cavaleiro é pequeno para este robô, que reage por tempo e não lê o "!". As mortes na sala do Cavaleiro foram de 1 para 2 de 6 que chegaram nela (o robô não separa a segunda investida, só a sala; um terço é o limite do critério, não abaixo): **não reverti** o 0,55; se o critério for estrito, olhar o registro de gente real. (4) **Descidas até o primeiro item** (criança que morre na sala 5, 3 a 4 Prata e 1 Memória por descida): Nó de Vida (5 Prata) 2 descidas (era nunca, 0,7 por descida); Temperar I (20 Prata) 6 descidas só com a sala 5, 2 a 3 se passa o guardião (era nunca / 1 com 18); primeiro Dom de Maestria 2 a 5 (1 Memória) 1 descida (era 2 Memória, nunca); Provisão Viajante (3 Memória) 3 descidas (era 5 Memória, nunca); troca de 5 Prata por 1 Memória no Vendedor ao alcance.
+(5) **Dom Respiro (`room_heal` 2) e Provação da Ferida ("cura menor") com a cura base de 3**: conferência de leitura, não medida. Respiro soma 2 aos 3 (5 por sala, 40 de vida: 12,5%), a Provação continua cobrando vida antes do guardião e o robô evoluído seguiria entrando abaixo do máximo. Sem mudança; vale rever se a Maestria 18 do Daniel achar fácil.

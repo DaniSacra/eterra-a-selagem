@@ -16,5 +16,5 @@ script = ExtResource("2_7gpyx")
 id = &"temper_1"
 name_key = &"forge_temper_1"
 desc_key = &"forge_temper_1_desc"
-cost = 15
+cost = 20
 mods = Array[ExtResource("1_p77g3")]([SubResource("Resource_cpkke")])

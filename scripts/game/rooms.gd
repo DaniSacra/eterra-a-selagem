@@ -468,6 +468,7 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 			_cap = mini(EncounterGen.cap(stage, stage.miniboss_tier, room.depth), alive.y)
 			game.horde.alive_cap = alive.y
 			phase = Phase.FIGHT
+			found(MaterialPurse.MEMORY, &"reach", stage.memory_guardian_reach)  # (the child who falls here still brings one home)
 			if layout != null and (layout.hazard == null or layout.hazard.kind == HazardDef.Kind.PLATES):
 				_start_hazard(layout)  # the slabs of the guardian's house (RP-06), its columns (RP-09); never the runes
 		RunMap.Kind.FOUNTAIN:
@@ -654,7 +655,16 @@ static func spawn_point(arena: Arena, hero: Vector2, rng: RandomNumberGenerator,
 
 ## The life a won room gives back before any gift: only the fight rooms (combat, guardian), never events, shop or fountain.
 static func base_room_heal(kind: RunMap.Kind, base: float) -> float:
-	return base if kind == RunMap.Kind.COMBAT or kind == RunMap.Kind.MINIBOSS else 0.0
+	return base if is_fight_room(kind) else 0.0
+
+
+## The Prata a won room leaves on top of its reward: the same fight rooms (StageDef.silver_room), never events or the shop.
+static func room_silver(kind: RunMap.Kind, per_room: int) -> int:
+	return per_room if is_fight_room(kind) else 0
+
+
+static func is_fight_room(kind: RunMap.Kind) -> bool:
+	return kind == RunMap.Kind.COMBAT or kind == RunMap.Kind.MINIBOSS
 
 
 func _room_cleared() -> void:
@@ -665,6 +675,7 @@ func _room_cleared() -> void:
 	_fight_won()
 	game.hero_gifts.room_won()  # Respiro
 	game.player.heal(base_room_heal(room.kind, stage.room_heal_base))
+	found(MaterialPurse.SILVER, &"room", room_silver(room.kind, stage.silver_room))
 	# the last blow of a fight: the world slows to a third, the camera closes in, the screen streaks (Hades II)
 	game.fx.slow_mo(LAST_KILL_SLOW, LAST_KILL_HOLD, LAST_KILL_OUT, 1.1, 0.85)
 	game.projectiles.clear_hostile()

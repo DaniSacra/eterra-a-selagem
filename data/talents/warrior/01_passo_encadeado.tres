@@ -19,6 +19,6 @@ desc_key = &"talent_passo_encadeado_desc"
 tier = 1
 cost = 2
 unlock_level = 5
-memory_cost = 2
+memory_cost = 1
 slot = 4
 mods = Array[ExtResource("1_rmr5e")]([SubResource("Resource_0u3eq")])

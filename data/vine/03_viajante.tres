@@ -17,5 +17,5 @@ branch = &"provisao"
 name_key = &"vine_viajante"
 desc_key = &"vine_viajante_desc"
 material = &"memory"
-cost = 5
+cost = 3
 mods = Array[ExtResource("1_2tx43")]([SubResource("Resource_disyd")])

@@ -55,7 +55,7 @@ func test_the_ultimates() -> void:
 	assert_eq(hero.ultimates.size(), 2)
 	var u1 := hero.ultimate(&"cleave")
 	assert_eq(u1.kind, UltDef.Kind.CLEAVE)
-	assert_eq(u1.charge, 90.0, "50% more since 2026-11-21 (was 60)")
+	assert_eq(u1.charge, 75.0, "2026-11-24 Lote D: 75 (was 90, 60 before 2026-11-21)")
 	assert_eq(u1.mastery_level, 3)
 	assert_eq(u1.length, 12.0)
 	assert_eq(u1.width, 4.0)

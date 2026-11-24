@@ -126,7 +126,7 @@ func test_only_a_persons_run_with_a_save_banks() -> void:
 func test_the_forjador_sells_temper_for_silver() -> void:
 	var saved := Save.data
 	Save.data = SaveData.defaults()
-	MaterialPurse.give(Save.data, MaterialPurse.SILVER, 20)
+	MaterialPurse.give(Save.data, MaterialPurse.SILVER, 25)
 	var hub: Hub = (load(SceneGo.HUB) as PackedScene).instantiate()
 	add_child_autofree(hub)
 	var bought: Array[StringName] = []
@@ -143,7 +143,7 @@ func test_the_forjador_sells_temper_for_silver() -> void:
 	assert_eq(MaterialPurse.amount(Save.data, MaterialPurse.SILVER), 5)
 	assert_eq(bought, [&"temper_1"] as Array[StringName])
 	assert_eq(f.shown.id, &"temper_2", "on to the next rank")
-	assert_eq(f.info.action, ForgeInfo.Action.NONE, "5 of 35 for Temperar II: nothing to forge")
+	assert_eq(f.info.action, ForgeInfo.Action.NONE, "5 of 45 for Temperar II: nothing to forge")
 	await wait_process_frames(2)
 	hub.host.close()
 	Save.data = saved
