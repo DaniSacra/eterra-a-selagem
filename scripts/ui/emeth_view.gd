@@ -21,13 +21,16 @@ const KEY := Color(1.0, 0.9, 0.76)
 const FILL := Color(0.55, 0.66, 0.72)
 
 var rank := 0.0
+## Lying flat, the tip to the right and no sway (the Forja's bench, docs/art/forge_spec.md 7).
+var flat := false
 var _target := 0.0
 var _blade: ShaderMaterial
 var _holder: Node3D
 var _t := 0.0
 
 
-func setup(px: Vector2) -> EmethView:
+func setup(px: Vector2, lying := false) -> EmethView:
+	flat = lying
 	name = "emeth"
 	custom_minimum_size = px
 	stretch = true
@@ -61,13 +64,14 @@ func setup(px: Vector2) -> EmethView:
 	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 	# the whole sword, slanted, with a little air round it (size is the view's height)
 	cam.keep_aspect = Camera3D.KEEP_HEIGHT
-	cam.size = length * FRAME
+	# flat: the sword's length is the view's width (pommel and tip on its edges)
+	cam.size = length * (px.y / px.x) if flat else length * FRAME
 	cam.position = Vector3(0, 0, 4)
 	cam.current = true
 	vp.add_child(cam)
 	_holder = Node3D.new()
 	_holder.name = "holder"
-	_holder.rotation_degrees.z = SLANT
+	_holder.rotation_degrees.z = -90.0 if flat else SLANT
 	vp.add_child(_holder)
 	var sword := EmethSword.make()
 	# the sword's middle (pommel to tip) on the camera's
@@ -93,7 +97,7 @@ func _apply() -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
-	if _holder != null:
+	if _holder != null and not flat:
 		_holder.rotation_degrees.y = sin(_t * TAU / SWAY_TIME) * SWAY
 	if not is_equal_approx(rank, _target):
 		rank = move_toward(rank, _target, delta / GROW)

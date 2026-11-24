@@ -1,26 +1,14 @@
 class_name ForgeScreen
 extends Control
-## The Forja da Emeth at the Forjador (Rejogabilidade, Fatia 1; sistemas.md 1.5 and 5.3), a spread of the Livro
-## (BookSpread, Book) as the Compêndio is: the left page the forge's index (the Temperar ranks as entries, each with its
-## cost, the owned ones marked) over the purse (MaterialCount.purse); the right page the rank in focus with the Livro's
-## own heads: Efeito, Custo, Estado and Próximo passo, then Forjar (the main action, only when the rules let it: Forge
-## problem OK) and Voltar. Forjar spends the Prata (Forge.buy), writes the save and says so (forged); everything on the
-## pages reads the save again. Nothing is bought by moving the focus: the index only shows, Enter on it goes to
-## Forjar. Esc and B close it (ScreenHost).
-## Fatia 2 (sistemas.md 1.5, 3.6 and 5.3 "Fatia 2"): the index is a grid of three columns that fits 720 lines, the
-## Temperar (I to III) and the Refinar's two actions (Ataque, Especial: three choices each, one on each action), every
-## entry with a mark of its state (Mark: the Prata's ingot and the cost while it waits, a diamond of old gold forged and
-## kept, an emerald diamond on the blade, a hollow one while the Forjador's tool is lost). Over the Refinar the tool's
-## state ("Ferramenta: Encontrada" or still lost). The main button says what it does: Forjar (buy; the first Refinar
-## bought on an action goes on it), Usar (a Refinar forged and kept goes on its action, free: Forge.put_on) or, the
-## one on the blade, Em uso (off).
-## Ofícios, Roteiro A (10_ux.md 10.5): once a vein was noted the spread has two bookmarks over the cover, Emeth (all
-## of the above) and Oficina: the left page the Picareta drawn as it stands (lost, its head found, restored), the
-## right page the tools' index (the Picareta) and the same heads, Restaurar spending its Prata (Oficios.restore) and
-## saying so (restored). LB and RB turn the bookmarks.
-## Fatia 3 (sistemas.md 1.5): once the Forjador's first tool was found, a third bookmark, Despertar: the Despertar's
-## choices (Esmeralda, one awake at a time: Despertar puts it on, free, Adormecer takes it off) and the Inscrever's
-## (an Encanto learned for the descents, Prata), each closed until its tool (Forge.TOOL_AWAKEN, TOOL_INSCRIBE).
+## The Forja da Emeth at the Forjador (docs/art/forge_spec.md; the identity in docs/art/meta_identities.md 3): not a
+## book but a bench. The Emeth lies on a cloth, tip to the right, with four points on it (Despertar at the pommel,
+## Refinar at the guard's two arms, Inscrever on the blade, Temperar on the edge); the point in focus offers its
+## choices as a strip of iron chips, and a plate below reads the choice in three seconds: what it is, what it changes
+## with its numbers, what it costs and "você tem N". The second bench, the Oficina, lays the Picareta in the Emeth's
+## place. LB and RB turn the benches.
+## The gesture: spending takes three hammer strikes (ForgeHammer): a press is one, the piece stays hot a moment, B cools
+## it without spending, holding the press gives the three. Usar, Despertar and Adormecer cost nothing: one press.
+## The rules are the game's own (Forge.buy and put_on, Oficios.restore); the words of a choice come from ForgeInfo.
 ##   host.open(ForgeScreen.new(), [Save.data])          # forged(rank) after each purchase and each change
 ##   host.open(ForgeScreen.new(), [Save.data, ForgeScreen.Tab.WORKSHOP])
 
@@ -29,659 +17,518 @@ signal forged(rank: StringName)
 ## The Picareta restored at the Oficina.
 signal restored
 
-enum Tab { EMETH, WORKSHOP, ARTS }
+enum Tab { EMETH, WORKSHOP }
 
-const SPINE := 0.46
-const OUTER := Vector2(22, 10)
-const ENTRY_WIDTH := 176.0
-const ENTRY_HEIGHT := 34.0
-const ENTRY_FONT := 16
-const ENTRY_PAD := 34
-const ENTRY_COUNT := 30.0
-const COLUMN_GAP := 10
-const MARK := 18.0
-const TEXT_SIZE := 18
-const BUTTON_WIDTH := 190.0
-## The Emeth's place on the left page and the size of the cost and the purse by the button.
-const EMETH := Vector2(300, 330)
-const DEAL_SIZE := 22
-## The bookmarks' width and the Picareta's drawing on the Oficina's left page.
-const PICK := 220.0
-const TAB_KEY: Array[StringName] = [&"forge_tab_emeth", &"forge_tab_workshop", &"forge_tab_arts"]
-const TAB_NAME: Array[String] = ["emeth", "workshop", "arts"]
+const STAGE := Vector2(1280, 720)
+const NAV: Array[StringName] = [&"awaken", &"attack", &"inscribe", &"temper"]
+const ICON := {&"awaken": &"stone", &"attack": &"ring", &"special": &"ring", &"inscribe": &"letter", &"temper": &"ingot",
+	&"pick": &"pick"}
+const STRIP_Y := 372.0
+const CHIP_GAP := 12.0
+const PLATE_AT := Vector2(140, 456)
+const TAB_AT: Array[Vector2] = [Vector2(574, 40), Vector2(706, 40)]
+const TAB_SIZE := Vector2(132, 34)
+const TAB_KEY: Array[StringName] = [&"forge_tab_emeth", &"forge_tab_workshop"]
+const PURSE_RIGHT := 1252.0
+const PICK_PITCH: Array[float] = [1.0, 1.15, 0.75]
 
 var forge: Forge
-## Every entry's rank, as entries: the Temperar first (rank order), then the Refinar's (attack, then special).
-var ranks: Array[ForgeRank] = []
-var temper_ranks: Array[ForgeRank] = []
-var entries: Array[Button] = []
-## The rank on show on the right page.
-var shown: ForgeRank
-var buy_button: Button
-var back_button: Button
-var _data: Dictionary
-var _purse: HBoxContainer
-var _title: VBoxContainer
-var _effect: Label
-var _cost: MaterialCount
-var _state: Label
-var _step: Label
-var _done: Label
-## The Emeth on the left page, the rank it has now under it, and over the rank in focus whether it is the next one.
-var emeth: EmethView
-var _now: Label
-var _kind: Label
-var _tool: Label
-var _deal: Control
-## The bookmark open, the bookmarks (none until a vein was noted), and the Oficina's parts.
 var tab := Tab.EMETH
-var tabs: Array[Button] = []
-var pick_entry: Button
-var showing_pick := false
-var pick_view: PickMark
+## The point in focus (ForgeBench.AT's keys), the chip in focus on its strip, and where the focus stands.
+var mark: StringName = &"temper"
+var chip_i := 0
+var in_strip := false
+var hammer := ForgeHammer.new()
+## What the strip offers (ForgeInfo each) and its chips; info is the one in focus, shown its rank (null on the Oficina).
+var infos: Array[ForgeInfo] = []
+var chips: Array[ForgeChip] = []
+var info: ForgeInfo
+var shown: ForgeRank
+var bench: ForgeBench
+var plate: ForgePlate
+var _data: Dictionary
 var _oficios: OficiosDef
-var _emeth_left: Control
-var _work_left: Control
-var _emeth_index: Control
-var _work_index: Control
-var _pick_now: Label
-var _head_line: Label
-var _arts_index: Control
-## The bookmarks in the order they stand (a Tab each; tabs[i] is _tab_order[i]).
-var _tab_order: Array[Tab] = []
+var _stage: Control
+var _title: Label
+var _sub: Label
+var _strip: Control
+var _slot_label: Label
+var _purse: HBoxContainer
+var _tabs: Array[ForgeTab] = []
+var _tab_keys: Array[Label] = []
+var _touch: Dictionary = {}
+var _tab_order: Array[Tab] = [Tab.EMETH]
+var _bag_shown: Dictionary = {}
+var _ground: Texture2D
 
 
-## An entry's mark, by its state.
-class Mark extends Control:
-	enum Look { BUY, OWNED, ON, LOCKED }
-	## The material its price is in (the ingot of Prata, the Esmeralda's stone).
-	var paid_in := MaterialPurse.SILVER
-	var look := Look.BUY:
+## A tab of the two benches: an iron plate, the one open in ember with a gold rim.
+class ForgeTab extends ForgeTouch:
+	var text := ""
+	var on := false:
 		set(v):
-			look = v
+			on = v
 			queue_redraw()
 
 	func _draw() -> void:
-		var c := size * 0.5
-		var r := minf(size.x, size.y) * 0.42
-		var d := PackedVector2Array([c + Vector2(0, -r), c + Vector2(r, 0), c + Vector2(0, r), c + Vector2(-r, 0)])
-		match look:
-			Look.BUY:
-				DoorGlyph.material(self, DoorGlyph.of_material(paid_in), c, size.y)
-			Look.OWNED:
-				draw_colored_polygon(d, Color(Book.INK, 0.12))
-				d.append(d[0])
-				draw_polyline(d, Book.GILT, 2.0, true)
-			Look.ON:
-				draw_colored_polygon(d, DoorGlyph.EMERALD_FILL)
-				d.append(d[0])
-				draw_polyline(d, UiKit.OLD_GOLD, 2.0, true)
-			Look.LOCKED:
-				d.append(d[0])
-				draw_polyline(d, Color(Book.FADED, 0.6), 1.5, true)
+		var r := Rect2(Vector2.ZERO, size)
+		draw_style_box(UiKit.box(ForgeBench.EMBER if on else Color("2a2620"), UiKit.OLD_GOLD if on else Color(0, 0, 0, 0), 2, 0, 5), r)
+		draw_string(UiKit.TITLE_FONT, Vector2(0, 23), text, HORIZONTAL_ALIGNMENT_CENTER, size.x, 16, UiKit.INK if on else UiKit.DIM)
 
 
-## data: the save data (Save.data in the game; tests give their own); start: the bookmark open first (the Oficina only
-## once a vein was noted).
+## data: the save data (Save.data in the game; tests give their own); start: the bench open first (the Oficina only once
+## a vein was noted).
 func open(data: Dictionary = {}, start: Tab = Tab.EMETH) -> void:
 	_data = data if not data.is_empty() else Save.data
 	_oficios = OficiosDef.live()
 	forge = Forge.new(Forge.load_catalog())
-	temper_ranks = forge.track(Forge.TEMPER)
 	name = "forge_screen"
-	theme = Book.theme()
+	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var shade := ColorRect.new()
-	shade.color = Color(0.01, 0.0, 0.02, 0.84)
-	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(shade)
-	var frame := MarginContainer.new()
-	frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	for side: String in ["left", "right"]:
-		frame.add_theme_constant_override("margin_" + side, int(OUTER.x))
-	frame.add_theme_constant_override(&"margin_top", int(OUTER.y))
-	frame.add_theme_constant_override(&"margin_bottom", int(ActionBar.RESERVE))
-	add_child(frame)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override(&"separation", -int(Book.MARK_HIDDEN))
-	frame.add_child(col)
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	_ground = ForgeArt.texture("bg.png")
+	_stage = Control.new()
+	_stage.name = "stage"
+	_stage.size = STAGE
+	_stage.custom_minimum_size = STAGE
+	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_stage)
+	resized.connect(_place_stage)
+	_place_stage()
+	_build_top()
+	bench = ForgeBench.new().setup()
+	bench.plain_fx = OS.has_feature("web") or RenderingServer.get_current_rendering_method() == "gl_compatibility"
+	_stage.add_child(bench)
+	if bench.emeth != null:
+		bench.emeth.show_rank(Forge.temper(_data))
+	_strip = Control.new()
+	_strip.name = "strip"
+	_strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stage.add_child(_strip)
+	_slot_label = UiKit.label("", UiKit.DIM, 15)
+	_slot_label.name = "slot"
+	_strip.add_child(_slot_label)
+	plate = ForgePlate.new().setup()
+	plate.position = PLATE_AT
+	plate.down.connect(press)
+	plate.up.connect(release)
+	_stage.add_child(plate)
 	_tab_order = [Tab.EMETH]
-	if arts_open():
-		_tab_order.append(Tab.ARTS)
 	if workshop_open():
 		_tab_order.append(Tab.WORKSHOP)
+	_build_tabs()
+	_attach_bar()
+	Controls.device_changed.connect(func(_pad: bool) -> void: _refresh())
+	_show_tab(start if _tab_order.has(start) else Tab.EMETH, false)
+	if Dev.has("forge-mark") and marks().has(StringName(Dev.arg("forge-mark"))):
+		focus_mark(StringName(Dev.arg("forge-mark")), true)
+	_enter()
+
+
+func _build_top() -> void:
+	_title = UiKit.label(T.t(&"forge_title"), UiKit.GOLD, 30, UiKit.TITLE_FONT)
+	_title.name = "title"
+	_title.position = Vector2(40, 22)
+	_stage.add_child(_title)
+	_sub = UiKit.label(T.t(&"forge_emeth_only"), UiKit.DIM, 16)
+	_sub.name = "emeth_only"
+	_sub.position = Vector2(42, 62)
+	_sub.visible = Dev.arg("hero") == "maga"
+	_stage.add_child(_sub)
+	_purse = HBoxContainer.new()
+	_purse.name = "purse"
+	_purse.add_theme_constant_override(&"separation", 18)
+	_purse.alignment = BoxContainer.ALIGNMENT_END
+	_purse.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_purse.position = Vector2(1000, 24)
+	_purse.size = Vector2(PURSE_RIGHT - 1000.0, 36)
+	_stage.add_child(_purse)
+
+
+func _build_tabs() -> void:
+	if _tab_order.size() < 2:
+		return
+	for i in _tab_order.size():
+		var t := ForgeTab.new()
+		t.name = "tab_" + ["emeth", "workshop"][_tab_order[i]]
+		t.text = T.t(TAB_KEY[_tab_order[i]])
+		t.size = TAB_SIZE
+		t.position = TAB_AT[i] - TAB_SIZE * 0.5
+		t.down.connect(_show_tab.bind(_tab_order[i], true))
+		_stage.add_child(t)
+		_tabs.append(t)
+	for k in 2:
+		var action: StringName = &"tab_prev" if k == 0 else &"tab_next"
+		var l := UiKit.label(UiKit.action_label(action), UiKit.DIM, 18, UiKit.BOLD_FONT)
+		l.name = "key_" + String(action)
+		l.size = Vector2(40, 24)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.position = Vector2(TAB_AT[0].x - TAB_SIZE.x * 0.5 - 46.0, 28.0) if k == 0 else Vector2(TAB_AT[1].x + TAB_SIZE.x * 0.5 + 6.0, 28.0)
+		_stage.add_child(l)
+		_tab_keys.append(l)
+
+
+func _attach_bar() -> void:
+	var keys := [ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())]
 	if _tab_order.size() > 1:
-		# the bookmarks out of the top of the cover, as the Livro's chapters (Book.mark)
-		var marks := HBoxContainer.new()
-		marks.name = "tabs"
-		marks.alignment = BoxContainer.ALIGNMENT_CENTER
-		marks.add_theme_constant_override(&"separation", 6)
-		marks.custom_minimum_size.y = Book.MARK_HEIGHT + Book.MARK_RISE
-		col.add_child(marks)
-		for t: Tab in _tab_order:
-			var b := Book.mark(T.t(TAB_KEY[t]))
-			b.name = "tab_" + TAB_NAME[t]
-			b.pressed.connect(_show_tab.bind(t, true))
-			tabs.append(b)
-			marks.add_child(b)
-	var book := BookSpread.new().setup(SPINE)
-	book.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	col.add_child(book)
-	_left_page(book.left)
-	_right_page(book.right)
-	buy_button.focus_neighbor_left = buy_button.get_path_to(entries[0] if not entries.is_empty() else buy_button)
-	back_button.focus_neighbor_left = back_button.get_path_to(buy_button)
-	var keys := [ActionBar.entry(&"ui_accept", T.t(&"bar_choose"), _press_focus),
-		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())]
-	if not tabs.is_empty():
 		keys.push_front(ActionBar.entry(&"tab_next", T.t(&"bar_next"), func() -> void: _turn(1), true))
 		keys.push_front(ActionBar.entry(&"tab_prev", T.t(&"bar_prev"), func() -> void: _turn(-1), true))
 	ActionBar.attach(self, keys)
-	emeth.show_rank(Forge.temper(_data))
-	_show_tab(start if _tab_order.has(start) else Tab.EMETH, false)
-	_first_focus().grab_focus.call_deferred()
 
 
-## Whether the Oficina has its bookmark: a vein was noted (the Forjador's order) or the Picareta is restored.
+func _place_stage() -> void:
+	if is_instance_valid(_stage):
+		_stage.position = ((size - STAGE) * 0.5).floor()
+	queue_redraw()
+
+
+## The opening: the ground comes in, the Emeth slides onto the cloth and the marks appear from the pommel to the tip.
+func _enter() -> void:
+	if not is_inside_tree():
+		return
+	_stage.modulate.a = 0.0
+	bench.reveal = 0.0
+	bench.position.x = -160.0
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(_stage, ^"modulate:a", 1.0, 0.2)
+	tw.tween_property(bench, ^"position:x", 0.0, 0.35).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tw.tween_property(bench, ^"reveal", 1.0, 0.5).set_delay(0.1)
+
+
+## Whether the Oficina has its bench: a vein was noted (the Forjador's order) or the Picareta is restored.
 func workshop_open() -> bool:
 	return Oficios.noted(_data) or Oficios.has_tool(_data, _oficios)
 
 
-## Whether the Despertar's bookmark shows: the Forjador's first tool was found (the next ones then say what they ask).
+## Whether the Despertar and the Inscrever show on the Emeth: the Forjador's first tool was found (each then says what it asks).
 func arts_open() -> bool:
 	return Forge.has_tool(_data, Forge.TOOL_REFINE) or Forge.has_tool(_data, Forge.TOOL_AWAKEN) \
 		or Forge.has_tool(_data, Forge.TOOL_INSCRIBE)
 
 
-## Shows a bookmark's pages; by_hand moves the focus to its first entry.
+## The points on the bench now, in the order the weapon lays them from the pommel to the tip.
+func marks() -> Array[StringName]:
+	if tab == Tab.WORKSHOP:
+		return [&"pick"]
+	var out: Array[StringName] = []
+	for m in NAV:
+		if (m == &"awaken" or m == &"inscribe") and not arts_open():
+			continue
+		out.append(m)
+	return out
+
+
+# ---- the benches ----
+
 func _show_tab(t: Tab, by_hand: bool = false) -> void:
+	var swap := by_hand and t != tab and is_inside_tree()
 	tab = t
-	for i in tabs.size():
-		Book.mark_open(tabs[i], _tab_order[i] == t)
-	var work := t == Tab.WORKSHOP
-	_emeth_left.visible = not work
-	_emeth_index.visible = t == Tab.EMETH
-	if _arts_index != null:
-		_arts_index.visible = t == Tab.ARTS
-	if _work_left != null:
-		_work_left.visible = work
-		_work_index.visible = work
-	if work:
-		_show_pick()
-		buy_button.focus_neighbor_left = buy_button.get_path_to(pick_entry)
-	else:
-		var first := _first_of(t)
-		_show(first)
-		buy_button.focus_neighbor_left = buy_button.get_path_to(_entry_of(first) if first != null else buy_button)
+	for i in _tabs.size():
+		_tabs[i].on = _tab_order[i] == t
+	_title.text = T.t(&"forge_title_workshop" if t == Tab.WORKSHOP else &"forge_title")
 	if by_hand:
 		Audio.play(&"ui_ok")
-		_first_focus().grab_focus()
+	_cool()
+	_build_touch()
+	mark = _first_mark()
+	in_strip = false
+	chip_i = -1
+	_refresh()
+	if swap:
+		# the other piece comes in from the side (the first goes out the other: the cloth stays)
+		bench.position.x = -260.0 if _tab_order.find(t) > 0 else 260.0
+		bench.modulate.a = 0.0
+		var tw := create_tween().set_parallel(true)
+		tw.tween_property(bench, ^"position:x", 0.0, 0.25).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+		tw.tween_property(bench, ^"modulate:a", 1.0, 0.2)
 
 
-func _first_focus() -> Control:
-	if tab == Tab.WORKSHOP and pick_entry != null:
-		return pick_entry
-	return _entry_of(shown) if shown != null else back_button
+## The bench's touch places: one per mark.
+func _build_touch() -> void:
+	for t: Variant in _touch.values():
+		(t as Node).queue_free()
+	_touch.clear()
+	for m in marks():
+		var t := ForgeTouch.new()
+		t.name = "touch_" + String(m)
+		var r := ForgeBench.touch_rect(m)
+		t.position = r.position
+		t.size = r.size
+		t.hovered.connect(focus_mark.bind(m))
+		t.down.connect(func() -> void:
+			focus_mark(m)
+			press())
+		t.up.connect(release)
+		bench.add_child(t)
+		_touch[m] = t
 
 
-## The bookmark before (-1) or after (1), as LB and RB.
+## The bench before (-1) or after (1), as LB and RB.
 func _turn(step: int) -> void:
-	if tabs.is_empty():
+	if _tab_order.size() < 2:
 		return
 	var i := clampi(_tab_order.find(tab) + step, 0, _tab_order.size() - 1)
 	if _tab_order[i] != tab:
 		_show_tab(_tab_order[i], true)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if not tabs.is_empty() and (event.is_action_pressed(&"tab_next") or event.is_action_pressed(&"tab_prev")) \
-			and not event.is_echo():
-		get_viewport().set_input_as_handled()
-		_turn(1 if event.is_action_pressed(&"tab_next") else -1)
+## Where the focus starts: the point with the cheapest thing to forge now, else the Temperar.
+func _first_mark() -> StringName:
+	if tab == Tab.WORKSHOP:
+		return &"pick"
+	var best: StringName = &"temper"
+	var cost := 1 << 30
+	for m in marks():
+		for i in _infos_of(m):
+			if i.look == ForgeInfo.Look.READY and i.cost < cost:
+				cost = i.cost
+				best = m
+	return best
 
 
-## The left page: the Emeth itself, the forge's piece (ciclo visual 2026-11-20, item 3; UI-HB4), with its rank of
-## Temperar on the blade, the title over it and the rank it has now under it.
-func _left_page(page: MarginContainer) -> void:
-	var v := VBoxContainer.new()
-	v.name = "index"
-	v.add_theme_constant_override(&"separation", 4)
-	page.add_child(v)
-	_emeth_left = v
-	if workshop_open():
-		page.add_child(_workshop_left())
-	v.add_child(Book.heading(T.t(&"forge_title"), 30, 260))
-	v.add_child(Book.text(T.t(&"forge_lead"), Book.FADED, 15))
-	emeth = EmethView.new().setup(EMETH)
-	emeth.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	emeth.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	v.add_child(emeth)
-	var now := HBoxContainer.new()
-	now.name = "now"
-	now.alignment = BoxContainer.ALIGNMENT_CENTER
-	now.add_theme_constant_override(&"separation", 10)
-	v.add_child(now)
-	now.add_child(Book.label(T.t(&"forge_current").to_upper(), Book.RUBRIC, 14, UiKit.TITLE_FONT))
-	_now = Book.label("", Book.INK, 20, UiKit.BOLD_FONT)
-	_now.name = "rank_now"
-	now.add_child(_now)
+# ---- what a point offers ----
+
+func _ranks_of(m: StringName) -> Array[ForgeRank]:
+	match m:
+		&"awaken":
+			return forge.track(Forge.AWAKEN)
+		&"attack", &"special":
+			return forge.refine_options(m)
+		&"inscribe":
+			return forge.track(Forge.INSCRIBE)
+	return forge.track(Forge.TEMPER)
 
 
-## The Oficina's left page: its title, a line, the Picareta drawn as it stands and its state under it.
-func _workshop_left() -> Control:
-	var v := VBoxContainer.new()
-	v.name = "workshop"
-	v.visible = false
-	v.add_theme_constant_override(&"separation", 4)
-	_work_left = v
-	v.add_child(Book.heading(T.t(&"forge_workshop_title"), 30, 260))
-	v.add_child(Book.text(T.t(&"forge_workshop_lead"), Book.FADED, 15))
-	pick_view = PickMark.new().setup(PickMark.Look.LOST, PICK)
-	pick_view.name = "pick"
-	pick_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	pick_view.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	v.add_child(pick_view)
-	var now := HBoxContainer.new()
-	now.alignment = BoxContainer.ALIGNMENT_CENTER
-	now.add_theme_constant_override(&"separation", 10)
-	v.add_child(now)
-	now.add_child(Book.label(T.t(&"oficio_pick").to_upper(), Book.RUBRIC, 14, UiKit.TITLE_FONT))
-	_pick_now = Book.label("", Book.INK, 20, UiKit.BOLD_FONT)
-	_pick_now.name = "pick_now"
-	now.add_child(_pick_now)
-	return v
+func _infos_of(m: StringName) -> Array[ForgeInfo]:
+	var out: Array[ForgeInfo] = []
+	if m == &"pick":
+		out.append(ForgeInfo.pick(_data, _oficios))
+		return out
+	for r in _ranks_of(m):
+		out.append(ForgeInfo.of(forge, _data, r))
+	return out
 
 
-## The right page: the track's ranks as an index, the rank in focus (the next improvement, or one forged) with its
-## effect, state and next step, and, by the buttons, the cost and the purse side by side (ciclo visual 2026-11-20:
-## "custo e saldo perto da ação de forjar").
-func _right_page(page: MarginContainer) -> void:
-	var v := VBoxContainer.new()
-	v.name = "rank"
-	v.add_theme_constant_override(&"separation", 4)
-	page.add_child(v)
-	# the heads: Temperar over its column, Refinar over the two of the actions with the tool's state at its end
-	var index := VBoxContainer.new()
-	index.name = "emeth_index"
-	index.add_theme_constant_override(&"separation", 4)
-	v.add_child(index)
-	_emeth_index = index
-	if workshop_open():
-		v.add_child(_workshop_index())
-	if arts_open():
-		v.add_child(_arts())
-	var heads := HBoxContainer.new()
-	heads.add_theme_constant_override(&"separation", COLUMN_GAP)
-	index.add_child(heads)
-	var temper_head := Book.section(T.t(&"forge_track_temper"))
-	temper_head.custom_minimum_size.x = ENTRY_WIDTH
-	heads.add_child(temper_head)
-	var refine_head := Book.section(T.t(&"forge_track_refine"))
-	refine_head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	heads.add_child(refine_head)
-	_tool = Book.label("", Book.FADED, 14, UiKit.BOLD_FONT)
-	_tool.name = "tool"
-	refine_head.add_child(_tool)
-	var grid := HBoxContainer.new()
-	grid.name = "grid"
-	grid.add_theme_constant_override(&"separation", COLUMN_GAP)
-	index.add_child(grid)
-	grid.add_child(_column("", temper_ranks))
-	for slot in forge.refine_slots():
-		grid.add_child(_column(T.t(StringName("forge_refine_slot_" + String(slot))), forge.refine_options(slot)))
-	v.add_child(_gap(6))
-	_kind = Book.label("", Book.RUBRIC, 14, UiKit.TITLE_FONT)
-	_kind.name = "kind"
-	v.add_child(_kind)
-	_title = Book.heading("", 28, 300)
-	v.add_child(_title)
-	v.add_child(Book.section(T.t(&"hero_effect")))
-	_effect = Book.text("", Book.INK, TEXT_SIZE)
-	_effect.name = "effect"
-	v.add_child(_effect)
-	v.add_child(_gap(4))
-	v.add_child(Book.section(T.t(&"hero_state_head")))
-	_state = Book.text("", Book.INK, TEXT_SIZE)
-	_state.name = "state"
-	_state.add_theme_font_override(&"font", UiKit.BOLD_FONT)
-	v.add_child(_state)
-	v.add_child(_gap(4))
-	v.add_child(Book.section(T.t(&"forge_step_head")))
-	_step = Book.text("", Book.FADED, TEXT_SIZE - 1)
-	_step.name = "step"
-	v.add_child(_step)
-	_done = Book.text(T.t(&"forge_done"), Book.OK, TEXT_SIZE - 1)
-	_done.name = "done"
-	v.add_child(_done)
-	var fill := Control.new()
-	fill.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	v.add_child(fill)
-	# the deal by the button: cost on the left, the purse on the right, label over value (benchmark 2.3)
-	var deal := HBoxContainer.new()
-	deal.name = "deal"
-	_deal = deal
-	deal.add_theme_constant_override(&"separation", 40)
-	v.add_child(deal)
-	var cost := VBoxContainer.new()
-	cost.add_theme_constant_override(&"separation", 2)
-	cost.add_child(Book.section(T.t(&"hero_cost_head")))
-	_cost = MaterialCount.new().setup(MaterialPurse.SILVER, 0, Book.INK, DEAL_SIZE, 24.0, true)
-	_cost.name = "cost"
-	cost.add_child(_cost)
-	_head_line = Book.label("", Book.INK, 15, UiKit.BOLD_FONT)
-	_head_line.name = "head_line"
-	_head_line.visible = false
-	cost.add_child(_head_line)
-	deal.add_child(cost)
-	var have := VBoxContainer.new()
-	have.add_theme_constant_override(&"separation", 2)
-	have.add_child(Book.section(T.t(&"forge_balance")))
-	_purse = MaterialCount.purse(_data, Book.INK, DEAL_SIZE, 24.0)
-	have.add_child(_purse)
-	deal.add_child(have)
-	v.add_child(_gap(8))
-	var foot := HBoxContainer.new()
-	foot.name = "foot"
-	foot.alignment = BoxContainer.ALIGNMENT_END
-	foot.add_theme_constant_override(&"separation", 12)
-	v.add_child(foot)
-	buy_button = Book.primary(Book.button(T.t(&"forge_do"), _buy, BUTTON_WIDTH))
-	buy_button.name = "buy"
-	foot.add_child(buy_button)
-	back_button = Book.button(T.t(&"back"), func() -> void: closed.emit(), BUTTON_WIDTH)
-	back_button.name = "back"
-	foot.add_child(back_button)
+## The chip a point rests on when the focus arrives: the first to forge now, then a lack or a wait, then the one on.
+static func default_chip(list: Array[ForgeInfo]) -> int:
+	for look: ForgeInfo.Look in [ForgeInfo.Look.READY, ForgeInfo.Look.SHORT, ForgeInfo.Look.NEEDS, ForgeInfo.Look.NO_TOOL,
+			ForgeInfo.Look.ON, ForgeInfo.Look.STORED]:
+		for i in list.size():
+			if list[i].look == look:
+				return i
+	return 0
 
 
-## The Oficina's index: the tools (the Picareta), in the Temperar's place.
-func _workshop_index() -> Control:
-	var v := VBoxContainer.new()
-	v.name = "workshop_index"
-	v.visible = false
-	v.add_theme_constant_override(&"separation", 2)
-	_work_index = v
-	var head := Book.section(T.t(&"forge_tools_head"))
-	head.custom_minimum_size.x = ENTRY_WIDTH
-	v.add_child(head)
-	var mark := Mark.new()
-	mark.name = "mark"
-	mark.custom_minimum_size = Vector2(MARK, MARK)
-	mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	pick_entry = Book.index_entry(T.t(&"oficio_pick"), mark, "", ENTRY_WIDTH, ENTRY_HEIGHT, ENTRY_FONT, ENTRY_PAD, ENTRY_COUNT)
-	pick_entry.name = "pick_entry"
-	pick_entry.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	pick_entry.focus_entered.connect(_show_pick)
-	pick_entry.pressed.connect(func() -> void:
-		_show_pick()
-		if not buy_button.disabled:
-			buy_button.grab_focus())
-	v.add_child(pick_entry)
-	# the two lines of entries the Emeth's index takes, kept: the heads below stand where they stood
-	v.add_child(_gap(ENTRY_HEIGHT + 18.0))
-	return v
+# ---- the focus ----
 
-
-## The Despertar's index (Fatia 3): two columns, Despertar and Inscrever, each its tool's state over its choices.
-func _arts() -> Control:
-	var v := VBoxContainer.new()
-	v.name = "arts_index"
-	v.visible = false
-	v.add_theme_constant_override(&"separation", 4)
-	_arts_index = v
-	var heads := HBoxContainer.new()
-	heads.add_theme_constant_override(&"separation", COLUMN_GAP)
-	v.add_child(heads)
-	var grid := HBoxContainer.new()
-	grid.name = "arts_grid"
-	grid.add_theme_constant_override(&"separation", COLUMN_GAP)
-	v.add_child(grid)
-	for pair: Array in [[Forge.AWAKEN, &"forge_awaken", Forge.TOOL_AWAKEN], [Forge.INSCRIBE, &"forge_inscribe", Forge.TOOL_INSCRIBE]]:
-		var head := Book.section(T.t(pair[1] as StringName))
-		head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		heads.add_child(head)
-		var found := Forge.has_tool(_data, pair[2] as StringName)
-		var tool := Book.label(T.t(&"forge_tool_found" if found else &"forge_tool_missing"), Book.OK if found else Book.FADED, 13, UiKit.BOLD_FONT)
-		tool.name = "tool_" + String(pair[0])
-		head.add_child(tool)
-		grid.add_child(_column("", forge.track(pair[0] as StringName)))
-	return v
-
-
-## The first rank to show on a bookmark: the Emeth's as before, on the Despertar's the first that may be forged or used
-## (else the first).
-func _first_of(t: Tab) -> ForgeRank:
-	if t != Tab.ARTS:
-		return _first()
-	var arts := forge.track(Forge.AWAKEN) + forge.track(Forge.INSCRIBE)
-	for r in arts:
-		if forge.problem(_data, r) in [Forge.Problem.OK, Forge.Problem.SHORT]:
-			return r
-	return arts[0] if not arts.is_empty() else _first()
-
-
-## A column of the index: its action's name over its entries ("" keeps the line, for the Temperar's).
-func _column(head: String, of: Array[ForgeRank]) -> VBoxContainer:
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override(&"separation", 2)
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var h := Book.label(head, Book.RUBRIC, 14, UiKit.BOLD_FONT)
-	h.custom_minimum_size.y = 18
-	col.add_child(h)
-	for r in of:
-		var mark := Mark.new()
-		mark.name = "mark"
-		mark.custom_minimum_size = Vector2(MARK, MARK)
-		mark.size = mark.custom_minimum_size
-		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var e := Book.index_entry(T.t(r.name_key), mark, "", ENTRY_WIDTH, ENTRY_HEIGHT, ENTRY_FONT, ENTRY_PAD, ENTRY_COUNT)
-		e.name = String(r.id)
-		e.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		e.focus_entered.connect(_show.bind(r))
-		e.pressed.connect(func() -> void:
-			_show(r)
-			if not buy_button.disabled:
-				buy_button.grab_focus())
-		ranks.append(r)
-		entries.append(e)
-		col.add_child(e)
-	return col
-
-
-func _entry_of(r: ForgeRank) -> Button:
-	return entries[ranks.find(r)]
-
-
-static func _gap(h: float) -> Control:
-	var c := Control.new()
-	c.custom_minimum_size.y = h
-	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return c
-
-
-## Where the focus starts: the Temperar to buy now, else a Refinar to forge with the tool found, else the last
-## Temperar (all owned).
-func _first() -> ForgeRank:
-	for r in temper_ranks:
-		if forge.state(_data, r) != Forge.State.OWNED:
-			return r
-	for r in ranks:
-		if r.track == Forge.REFINE and forge.problem(_data, r) in [Forge.Problem.OK, Forge.Problem.SHORT]:
-			return r
-	return temper_ranks.back() if not temper_ranks.is_empty() else null
-
-
-func _show(r: ForgeRank) -> void:
-	shown = r
-	showing_pick = false
+## The focus goes to a point (the strip leaves the weapon's zone and shows the point's choices).
+func focus_mark(m: StringName, silent: bool = false) -> void:
+	if m == mark and not in_strip and chip_i >= 0:
+		return
+	_cool()
+	mark = m
+	in_strip = false
+	chip_i = -1
+	if not silent:
+		Audio.play(&"ui_move")
 	_refresh()
 
 
-func _show_pick() -> void:
-	showing_pick = true
+func focus_chip(i: int) -> void:
+	if i < 0 or i >= infos.size() or (i == chip_i and in_strip):
+		return
+	_cool()
+	chip_i = i
+	in_strip = true
+	Audio.play(&"ui_move")
 	_refresh()
 
 
-## Everything on both pages from the save as it is now.
-func _refresh() -> void:
-	MaterialCount.refresh(_purse, _data)
-	var tool := Forge.has_tool(_data, Forge.TOOL_REFINE)
-	_tool.text = "%s: %s" % [T.t(&"forge_tool"), T.t(&"forge_tool_found" if tool else &"forge_tool_missing")]
-	_tool.add_theme_color_override(&"font_color", Book.OK if tool else Book.FADED)
-	for i in ranks.size():
-		var r := ranks[i]
-		var owned := forge.state(_data, r) == Forge.State.OWNED
-		var count := entries[i].find_child("count", false, false) as Label
-		count.text = "" if owned else str(r.cost)
-		var mark := entries[i].find_child("mark", false, false) as Mark
-		mark.paid_in = r.material
-		if forge.problem(_data, r) == Forge.Problem.NO_TOOL:
-			mark.look = Mark.Look.LOCKED
-		elif (r.track == Forge.REFINE or r.track == Forge.AWAKEN) and forge.is_on(_data, r):
-			mark.look = Mark.Look.ON
+## The direction pad, the arrows and the stick: along the weapon from the pommel to the tip, down into the strip and
+## along its chips, up back to the weapon; on the guard, up and down choose the arm of the Ataque or the Especial.
+func move(dir: Vector2i) -> void:
+	var list := marks()
+	if in_strip:
+		if dir.x != 0:
+			focus_chip(clampi(chip_i + dir.x, 0, infos.size() - 1))
+		elif dir.y < 0:
+			_cool()
+			in_strip = false
+			Audio.play(&"ui_move")
+			_refresh()
+		return
+	if dir.x != 0:
+		var at := list.find(&"attack" if mark == &"special" else mark)
+		var to := clampi(at + dir.x, 0, list.size() - 1)
+		if to != at:
+			focus_mark(list[to])
+	elif dir.y > 0:
+		if mark == &"attack":
+			focus_mark(&"special")
 		else:
-			mark.look = Mark.Look.OWNED if owned else Mark.Look.BUY
-		entries[i].set_pressed_no_signal(r == shown)
-		count.add_theme_color_override(&"font_color", Book.RUBRIC if r == shown else Book.GILT)
-	_head_line.visible = false
-	if pick_entry != null:
-		_refresh_pick_entry()
-	if showing_pick:
-		_done.visible = false
-		_refresh_pick()
+			focus_chip(maxi(chip_i, 0))
+	elif dir.y < 0 and mark == &"special":
+		focus_mark(&"attack")
+
+
+# ---- the hammer ----
+
+## A press (the key, the pad's A, the left button): a strike when the choice spends, the change itself when it is free.
+func press() -> void:
+	if info == null:
 		return
-	_done.visible = forge.state(_data, temper_ranks.back()) == Forge.State.OWNED and (shown == null or shown.track == Forge.TEMPER)
-	var rank := Forge.temper(_data)
-	_now.text = T.t(temper_ranks[rank - 1].name_key) if rank > 0 and rank <= temper_ranks.size() else T.t(&"forge_current_none")
-	if shown == null:
-		buy_button.disabled = true
-		return
-	(_title.get_node("text") as Label).text = T.t(shown.name_key)
-	var owned_now := forge.state(_data, shown) == Forge.State.OWNED
-	if shown.track == Forge.REFINE:
-		_kind.text = ("%s · %s" % [T.t(&"forge_track_refine"), T.t(StringName("forge_refine_slot_" + String(shown.slot)))]).to_upper()
-	elif shown.track == Forge.AWAKEN or shown.track == Forge.INSCRIBE:
-		_kind.text = T.t(&"forge_awaken" if shown.track == Forge.AWAKEN else &"forge_inscribe").to_upper()
-	else:
-		_kind.text = T.t(&"forge_owned" if owned_now else &"forge_next").to_upper()
-	_effect.text = T.t(shown.desc_key)
-	_cost.set_id(shown.material)
-	_cost.set_amount(shown.cost)
-	_deal.visible = not owned_now
-	var problem := forge.problem(_data, shown)
-	var before := _before(shown)
-	var verb := T.t(&"forge_inscribe_do" if shown.track == Forge.INSCRIBE else &"forge_do")
-	var have := MaterialPurse.amount(_data, shown.material)
-	var can := problem == Forge.Problem.OK
-	match problem:
-		Forge.Problem.OWNED:
-			if shown.track == Forge.AWAKEN:
-				var on := forge.is_on(_data, shown)
-				_set_state(T.t(&"forge_state_awake" if on else &"forge_state_asleep"), Book.OK if on else Book.INK)
-				_step.text = T.t(&"forge_step_awake" if on else &"forge_step_asleep")
-				verb = T.t(&"forge_awaken_off" if on else &"forge_awaken_use")
-				can = true
-			elif shown.track == Forge.INSCRIBE:
-				_set_state(T.t(&"forge_state_inscribed"), Book.OK)
-				_step.text = T.t(&"forge_step_inscribed")
-				verb = T.t(&"forge_state_inscribed")
-			elif shown.track == Forge.REFINE and forge.is_on(_data, shown):
-				_set_state(T.t(&"forge_state_on"), Book.OK)
-				_step.text = T.t(&"forge_step_on")
-				verb = T.t(&"forge_refine_in_use")
-			elif shown.track == Forge.REFINE:
-				_set_state(T.t(&"forge_state_off"), Book.INK)
-				var now_on := _on_of(shown.slot)
-				_step.text = T.t(&"forge_step_use", {"name": T.t(now_on.name_key)}) if now_on else T.t(&"forge_step_use_free")
-				verb = T.t(&"forge_refine_use")
-				can = true
-			else:
-				_set_state(T.t(&"forge_state_owned"), Book.OK)
-				_step.text = T.t(&"forge_step_owned")
-		Forge.Problem.NO_TOOL:
-			_set_state(T.t(&"forge_state_no_tool"), Book.FADED)
-			_step.text = T.t(StringName("forge_no_" + String(shown.tool))) if shown.tool != Forge.TOOL_REFINE else T.t(&"forge_no_tool")
-		Forge.Problem.NEEDS:
-			_set_state(T.t(&"forge_state_needs", {"name": T.t(before.name_key) if before else ""}), Book.FADED)
-			_step.text = T.t(&"forge_step_needs", {"name": T.t(before.name_key) if before else ""})
-		Forge.Problem.SHORT:
-			var gem := shown.material == MaterialPurse.EMERALD
-			_set_state(T.t(&"forge_short_emerald" if gem else &"forge_short", {"n": shown.cost - have, "name": T.t(shown.name_key)}), Book.WARN)
-			_step.text = T.t(&"forge_step_short_emerald" if gem else &"forge_step_short")
+	match info.action:
+		ForgeInfo.Action.NONE:
+			Audio.play(&"ui_move")
+		ForgeInfo.Action.HAMMER:
+			_landed(hammer.press())
 		_:
-			_set_state(T.t(&"forge_state_ready"), Book.INK)
-			_step.text = T.t(&"forge_step_buy_emerald" if shown.material == MaterialPurse.EMERALD else &"forge_step_buy",
-				{"cost": shown.cost, "have": have})
-	buy_button.text = verb
-	buy_button.disabled = not can
-	buy_button.focus_mode = Control.FOCUS_ALL if not buy_button.disabled else Control.FOCUS_NONE
+			_free_change()
 
 
-## The Picareta's entry: restored (a diamond of old gold), its head found (the Prata and the cost) or still lost.
-func _refresh_pick_entry() -> void:
-	var problem := Oficios.restore_problem(_data, _oficios)
-	var mark := pick_entry.find_child("mark", false, false) as Mark
-	var count := pick_entry.find_child("count", false, false) as Label
-	mark.look = Mark.Look.OWNED if problem == Oficios.DONE else (Mark.Look.LOCKED if problem == Oficios.NO_HEAD else Mark.Look.BUY)
-	count.text = str(_pick_cost()) if problem == &"" or problem == Oficios.SHORT else ""
-	pick_entry.set_pressed_no_signal(showing_pick)
-	count.add_theme_color_override(&"font_color", Book.RUBRIC if showing_pick else Book.GILT)
+func release() -> void:
+	hammer.release()
 
 
-func _pick_cost() -> int:
-	return int(_oficios.restore_cost.get(OficiosDef.SILVER, 0))
+## The strike number n landed (the hold gives two and three by itself).
+func _landed(n: int) -> void:
+	bench.hit(mark, n)
+	Audio.play(&"mat_armor", PICK_PITCH[clampi(n - 1, 0, 2)])
+	bench.heat_at = mark
+	bench.heat_target = 0.0 if n >= ForgeHammer.STRIKES else 0.25 * n
+	if n >= ForgeHammer.STRIKES:
+		_spend()
+	plate.queue_redraw()
 
 
-## The right page on the Picareta (Oficios.restore_problem): Efeito, Estado, Próximo passo, the cost and the head by
-## the button, Restaurar only when both are there.
-func _refresh_pick() -> void:
-	var problem := Oficios.restore_problem(_data, _oficios)
-	var cost := _pick_cost()
-	var have_head := Oficios.has_find(_data, _oficios.head)
-	_kind.text = T.t(&"forge_pick_kind").to_upper()
-	(_title.get_node("text") as Label).text = T.t(&"oficio_pick")
-	_effect.text = T.t(&"forge_pick_desc")
-	_cost.set_amount(cost)
-	_deal.visible = problem != Oficios.DONE
-	_head_line.visible = problem != Oficios.DONE
-	_head_line.text = T.t(&"forge_pick_head_have" if have_head else &"forge_pick_head_missing")
-	_head_line.add_theme_color_override(&"font_color", Book.OK if have_head else Book.RUBRIC)
-	match problem:
-		Oficios.DONE:
-			_set_state(T.t(&"forge_pick_state_restored"), Book.OK)
-			_step.text = T.t(&"forge_pick_step_restored")
-		Oficios.NO_HEAD:
-			_set_state(T.t(&"forge_pick_state_no_head"), Book.FADED)
-			_step.text = T.t(&"oficio_smith_where")
-		Oficios.SHORT:
-			_set_state(T.t(&"oficio_smith_short", {"n": Oficios.restore_short(_data, _oficios)}), Book.WARN)
-			_step.text = T.t(&"forge_step_short")
-		_:
-			_set_state(T.t(&"forge_pick_state_ready"), Book.INK)
-			_step.text = T.t(&"forge_pick_step_ready", {"cost": cost, "have": MaterialPurse.amount(_data, MaterialPurse.SILVER)})
-	if pick_view != null:
-		pick_view.look = PickMark.Look.WHOLE if problem == Oficios.DONE else (PickMark.Look.HEAD if have_head else PickMark.Look.LOST)
-		_pick_now.text = T.t(&"forge_pick_state_restored" if problem == Oficios.DONE else
-			(&"forge_pick_state_ready" if have_head else &"forge_pick_state_none"))
-	buy_button.text = T.t(&"oficio_restore")
-	buy_button.disabled = problem != &""
-	buy_button.focus_mode = Control.FOCUS_ALL if not buy_button.disabled else Control.FOCUS_NONE
+## Cools the piece without spending (B, or the focus going elsewhere).
+func _cool() -> void:
+	if hammer != null:
+		hammer.cancel()
+	if bench != null:
+		bench.heat_target = 0.0
+	if plate != null:
+		plate.queue_redraw()
 
 
-## Restores the Picareta (Restaurar): spends its Prata, the head goes, the tool comes; writes the save and says so.
-func restore() -> bool:
-	if not Oficios.restore(_data, _oficios):
+## The third strike: spends (Forge.buy or Oficios.restore), writes the save and says so.
+func _spend() -> bool:
+	var i := info
+	if i == null or i.action != ForgeInfo.Action.HAMMER:
 		return false
-	if is_same(_data, Save.data):
-		Save.write()
+	var ok := false
+	if i.id == &"pick":
+		ok = Oficios.restore(_data, _oficios)
+	else:
+		ok = forge.buy(_data, i.id)
+	if not ok:
+		return false
+	_write()
 	Audio.play(&"ui_ok")
-	restored.emit()
-	_refresh()
-	if pick_entry != null:
-		pick_entry.grab_focus()
+	if i.id == &"pick":
+		restored.emit()
+	else:
+		forged.emit(i.id)
+	if i.rank != null and i.rank.track == Forge.TEMPER:
+		if bench.emeth != null:
+			bench.emeth.show_rank(Forge.temper(_data), true)
+	_after_spend(i)
 	return true
 
 
-## The Refinar on an action now (null: none).
+## After a spend the screen reads the save again; on the Temperar the focus goes on to the next rank.
+func _after_spend(i: ForgeInfo) -> void:
+	if i.rank != null and i.rank.track == Forge.TEMPER:
+		chip_i = -1
+	_refresh()
+
+
+## Usar, Despertar, Adormecer: free, one press.
+func _free_change() -> void:
+	var r := info.rank
+	if r == null:
+		return
+	match info.action:
+		ForgeInfo.Action.USE:
+			if not forge.put_on(_data, r.id):
+				return
+		ForgeInfo.Action.AWAKEN:
+			if not forge.put_on(_data, r.id):
+				return
+		ForgeInfo.Action.SLEEP:
+			forge.take_off(_data, Forge.AWAKEN)
+	_write()
+	Audio.play(&"ui_ok")
+	forged.emit(r.id)
+	_refresh()
+
+
+func _write() -> void:
+	if is_same(_data, Save.data):
+		Save.write()
+
+
+## Restores the Picareta without the gesture (the Oficina's own rule, kept for callers and tests).
+func restore() -> bool:
+	if not Oficios.restore(_data, _oficios):
+		return false
+	_write()
+	Audio.play(&"ui_ok")
+	restored.emit()
+	_refresh()
+	return true
+
+
+# ---- showing ----
+
+## Everything on the bench and the plate from the save as it is now.
+func _refresh() -> void:
+	infos = _infos_of(mark)
+	if chip_i < 0:
+		chip_i = default_chip(infos)
+	chip_i = clampi(chip_i, 0, maxi(infos.size() - 1, 0))
+	info = infos[chip_i] if not infos.is_empty() else null
+	shown = info.rank if info != null else null
+	_bench_state()
+	_strip_state()
+	if info != null:
+		plate.show_info(info, hammer, ICON.get(mark, &"ingot"))
+	_purse_state()
+
+
+func _bench_state() -> void:
+	bench.workshop = tab == Tab.WORKSHOP
+	if bench.emeth != null:
+		bench.emeth.visible = not bench.workshop
+	if bench.emeth_tex != null:
+		bench.emeth_tex.visible = not bench.workshop
+	bench.marks = marks()
+	bench.focus = mark
+	bench.temper = Forge.temper(_data)
+	for slot: StringName in [&"attack", &"special"]:
+		var on := _on_of(slot)
+		bench.rings[slot] = String(ForgeBench.LETTER.get(on.id, "?")) if on != null else ""
+	var awake := forge.awake(_data)
+	bench.gem = awake.id if awake != null else &""
+	bench.lines = forge.track(Forge.INSCRIBE).filter(func(r: ForgeRank) -> bool: return forge.state(_data, r) == Forge.State.OWNED).size()
+	bench.pick_look = _pick_look()
+	bench.sealed = {&"attack": not Forge.has_tool(_data, Forge.TOOL_REFINE), &"special": not Forge.has_tool(_data, Forge.TOOL_REFINE),
+		&"awaken": not Forge.has_tool(_data, Forge.TOOL_AWAKEN), &"inscribe": not Forge.has_tool(_data, Forge.TOOL_INSCRIBE)}
+	bench.doing.clear()
+	for m in marks():
+		for i in (_infos_of(m) if m != mark else infos):
+			if i.look == ForgeInfo.Look.READY:
+				bench.doing[m] = true
+	bench.queue_redraw()
+
+
+func _pick_look() -> PickMark.Look:
+	var problem := Oficios.restore_problem(_data, _oficios)
+	if problem == Oficios.DONE:
+		return PickMark.Look.WHOLE
+	return PickMark.Look.HEAD if Oficios.has_find(_data, _oficios.head) else PickMark.Look.LOST
+
+
 func _on_of(slot: StringName) -> ForgeRank:
 	for r in forge.refine_options(slot):
 		if forge.is_on(_data, r):
@@ -689,55 +536,142 @@ func _on_of(slot: StringName) -> ForgeRank:
 	return null
 
 
-## The control in focus pressed (the action bar's click).
-func _press_focus() -> void:
-	var f := get_viewport().gui_get_focus_owner() as BaseButton
-	if f != null and is_ancestor_of(f) and not f.disabled:
-		f.pressed.emit()
+func _strip_state() -> void:
+	while chips.size() > infos.size():
+		chips.pop_back().queue_free()
+	while chips.size() < infos.size():
+		var chip := ForgeChip.new()
+		var i := chips.size()
+		chip.name = "chip_%d" % i
+		chip.hovered.connect(func() -> void: focus_chip(i))
+		chip.down.connect(func() -> void:
+			focus_chip(i)
+			press())
+		chip.up.connect(release)
+		_strip.add_child(chip)
+		chips.append(chip)
+	var n := infos.size()
+	var w := n * ForgeChip.SIZE.x + maxf(n - 1, 0.0) * CHIP_GAP
+	var x0 := (STAGE.x - w) * 0.5
+	for i in n:
+		chips[i].setup(infos[i])
+		chips[i].position = Vector2(x0 + i * (ForgeChip.SIZE.x + CHIP_GAP), STRIP_Y)
+		chips[i].focused = in_strip and i == chip_i
+		chips[i].current = not in_strip and i == chip_i
+		chips[i].queue_redraw()
+	var slot := mark == &"attack" or mark == &"special"
+	_slot_label.visible = slot
+	if slot:
+		_slot_label.text = T.t(StringName("forge_refine_slot_" + String(mark)))
+		_slot_label.position = Vector2(x0 - 100.0, STRIP_Y + 20.0)
+		_slot_label.size = Vector2(88, 24)
+		_slot_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
 
-func _set_state(text: String, color: Color) -> void:
-	_state.text = text
-	_state.add_theme_color_override(&"font_color", color)
-
-
-## The rank before r on its track (null for the first; the Refinar's choices have none).
-func _before(r: ForgeRank) -> ForgeRank:
-	var i := temper_ranks.find(r)
-	return temper_ranks[i - 1] if i > 0 else null
-
-
-## The main button: Forjar spends, writes the save (only the game's own data), tells the hub and the focus goes on to
-## the next rank; on a Refinar forged and kept, Usar puts it on its action (free) and stays on it.
-func _buy() -> void:
-	if showing_pick:
-		restore()
+## The bag: only the materials this bench uses (Prata and Esmeralda on the Emeth; Prata and Pedra Funda on the Oficina);
+## a number that changed counts to the new one in 0.3 s.
+func _purse_state() -> void:
+	var want: Array[StringName] = [MaterialPurse.SILVER]
+	for m in MaterialCount.shown(_data):
+		if m == (DoorGlyph.STONE_ID if tab == Tab.WORKSHOP else MaterialPurse.EMERALD):
+			want.append(m)
+	var key := "%s%s" % [tab, want]
+	if _bag_shown.get("key", "") != key:
+		for c in _purse.get_children():
+			c.queue_free()
+		for m in want:
+			_purse.add_child(MaterialCount.new().setup(m, MaterialCount.amount_of(_data, m), UiKit.PALE, 20, 24.0))
+		_bag_shown = {"key": key}
 		return
-	if shown == null:
+	for c in _purse.get_children():
+		var mc := c as MaterialCount
+		var now := MaterialCount.amount_of(_data, mc.id)
+		if mc != null and mc.amount != now:
+			if is_inside_tree():
+				var tw := create_tween()
+				tw.tween_method(mc.set_amount, mc.amount, now, 0.3)
+			else:
+				mc.set_amount(now)
+
+
+# ---- input and frame ----
+
+func _process(delta: float) -> void:
+	if hammer == null or info == null:
 		return
-	var r := shown
-	if r.track == Forge.AWAKEN and forge.state(_data, r) == Forge.State.OWNED:
-		if forge.is_on(_data, r):
-			forge.take_off(_data, Forge.AWAKEN)
-		elif not forge.put_on(_data, r.id):
+	var n := hammer.step(delta)
+	if hammer.cooled:
+		bench.heat_target = 0.0
+		plate.queue_redraw()
+	if n > 0:
+		_landed(n)
+	elif hammer.gauge.progress > 0.0 or hammer.strikes > 0:
+		plate.queue_redraw()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if info == null:
+		return
+	for action: StringName in [&"ui_left", &"ui_right", &"ui_up", &"ui_down"]:
+		if event.is_action_pressed(action, true):
+			get_viewport().set_input_as_handled()
+			move(_dir_of(action))
 			return
-	elif r.track == Forge.REFINE and forge.state(_data, r) == Forge.State.OWNED:
-		if forge.is_on(_data, r) or not forge.put_on(_data, r.id):
-			return
-	elif not forge.buy(_data, r.id):
+	if (event.is_action_pressed(&"tab_next") or event.is_action_pressed(&"tab_prev")) and not event.is_echo():
+		get_viewport().set_input_as_handled()
+		_turn(1 if event.is_action_pressed(&"tab_next") else -1)
+	elif event.is_action_pressed(&"ui_accept") and not event.is_echo():
+		get_viewport().set_input_as_handled()
+		press()
+	elif event.is_action_released(&"ui_accept"):
+		get_viewport().set_input_as_handled()
+		release()
+	elif event.is_action_pressed(&"ui_cancel") and (hammer.strikes > 0 or hammer.gauge.progress > 0.0):
+		# a hot piece first: B cools it without spending; cold, B closes the screen (ScreenHost)
+		get_viewport().set_input_as_handled()
+		_cool()
+		Audio.play(&"ui_move")
+
+
+static func _dir_of(action: StringName) -> Vector2i:
+	match action:
+		&"ui_left":
+			return Vector2i(-1, 0)
+		&"ui_right":
+			return Vector2i(1, 0)
+		&"ui_up":
+			return Vector2i(0, -1)
+	return Vector2i(0, 1)
+
+
+## The ground of the workshop: the painted one when it is there, else soot with the glow of the embers and a vignette.
+func _draw() -> void:
+	var r := Rect2(Vector2.ZERO, size)
+	if _ground != null:
+		draw_texture_rect(_ground, r, false)
 		return
-	if is_same(_data, Save.data):
-		Save.write()
-	Audio.play(&"ui_ok")
-	forged.emit(r.id)
-	if r.track != Forge.TEMPER:
-		_refresh()
-		_entry_of(r).grab_focus()
-		return
-	emeth.show_rank(Forge.temper(_data), true)
-	var next := _first()
-	_show(next)
-	if next != null and forge.state(_data, next) != Forge.State.OWNED:
-		_entry_of(next).grab_focus()
-	else:
-		back_button.grab_focus()
+	draw_rect(r, UiKit.INK)
+	var base := size.y
+	var top := maxf(0.0, size.y * 0.5 - 70.0)
+	draw_polygon(PackedVector2Array([Vector2(0, top), Vector2(size.x, top), Vector2(size.x, base), Vector2(0, base)]),
+		PackedColorArray([Color(ForgeBench.EMBER, 0.0), Color(ForgeBench.EMBER, 0.0), Color(ForgeBench.EMBER, 0.3), Color(ForgeBench.EMBER, 0.3)]))
+	var d := 220.0
+	var dark := Color(0, 0, 0, 0.6)
+	var clear := Color(0, 0, 0, 0.0)
+	draw_polygon(PackedVector2Array([Vector2(0, 0), Vector2(d, 0), Vector2(d, size.y), Vector2(0, size.y)]), PackedColorArray([dark, clear, clear, dark]))
+	draw_polygon(PackedVector2Array([Vector2(size.x - d, 0), Vector2(size.x, 0), Vector2(size.x, size.y), Vector2(size.x - d, size.y)]), PackedColorArray([clear, dark, dark, clear]))
+	draw_polygon(PackedVector2Array([Vector2(0, 0), Vector2(size.x, 0), Vector2(size.x, 120), Vector2(0, 120)]), PackedColorArray([dark, dark, clear, clear]))
+
+
+## The demo save of the capture (--screen=forge): a Prata purse, the three tools found, a Temperar forged, the Fio on.
+static func demo_data() -> Dictionary:
+	var d := SaveData.defaults()
+	MaterialPurse.give(d, MaterialPurse.SILVER, 47)
+	MaterialPurse.give(d, MaterialPurse.EMERALD, 3)
+	for t in Forge.TOOLS:
+		Forge.add_tool(d, t)
+	Forge.block(d).temper = 1
+	var f := Forge.new(Forge.load_catalog())
+	MaterialPurse.give(d, MaterialPurse.SILVER, 40)
+	f.buy(d, &"refine_fio")
+	return d

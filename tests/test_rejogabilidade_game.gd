@@ -133,15 +133,17 @@ func test_the_forjador_sells_temper_for_silver() -> void:
 	hub.forged.connect(func(id: StringName) -> void: bought.append(id))
 	hub.use(HubPlan.SMITH)
 	var f := hub.host.screen as ForgeScreen
-	assert_not_null(f, "the Forja, a spread of the Livro")
+	assert_not_null(f, "the Forja, the bench")
 	assert_eq(f.shown.id, &"temper_1", "the rank to buy first")
-	assert_false(f.buy_button.disabled)
-	f.buy_button.pressed.emit()
+	assert_eq(f.info.action, ForgeInfo.Action.HAMMER)
+	for k in 3:
+		f.press()
+		f.release()
 	assert_eq(Forge.temper(Save.data), 1)
 	assert_eq(MaterialPurse.amount(Save.data, MaterialPurse.SILVER), 5)
 	assert_eq(bought, [&"temper_1"] as Array[StringName])
 	assert_eq(f.shown.id, &"temper_2", "on to the next rank")
-	assert_true(f.buy_button.disabled, "5 of 35 for Temperar II: nothing to forge")
+	assert_eq(f.info.action, ForgeInfo.Action.NONE, "5 of 35 for Temperar II: nothing to forge")
 	await wait_process_frames(2)
 	hub.host.close()
 	Save.data = saved

@@ -60,47 +60,50 @@ func _forge(d: Dictionary) -> ForgeScreen:
 	return f
 
 
-func test_the_forge_is_a_spread_that_buys_in_order() -> void:
+func _hammer(f: ForgeScreen) -> void:
+	for k in 3:
+		f.press()
+		f.release()
+
+
+func test_the_forge_is_a_bench_that_buys_in_order() -> void:
 	var d := _data(1, 60)
 	var f := _forge(d)
-	assert_not_null(f.find_child("book", true, false) as BookSpread, "a spread of the Livro")
-	for head in [&"hero_effect", &"hero_cost_head", &"hero_state_head", &"forge_step_head"]:
-		assert_true(_texts(f).has(T.t(head).to_upper()), "the head %s" % head)
+	assert_not_null(f.bench, "the Emeth on its cloth")
+	assert_eq(f.mark, &"temper")
 	assert_eq(f.shown.id, &"temper_1")
 	var bought: Array[StringName] = []
 	f.forged.connect(func(id: StringName) -> void: bought.append(id))
-	assert_false(f.buy_button.disabled)
-	f.buy_button.pressed.emit()
+	assert_eq(f.info.action, ForgeInfo.Action.HAMMER)
+	_hammer(f)
 	assert_eq(Forge.temper(d), 1)
 	assert_eq(bought, [&"temper_1"] as Array[StringName])
 	assert_eq(f.shown.id, &"temper_2", "on to the next")
-	assert_eq((f.entries[0].find_child("count", false, false) as Label).text, "", "forged: no price")
-	assert_eq((f.entries[0].find_child("mark", false, false) as ForgeScreen.Mark).look, ForgeScreen.Mark.Look.OWNED)
-	assert_false(f.buy_button.disabled, "45 of 35")
-	f.buy_button.pressed.emit()
+	assert_eq(f.chips[0].info.look, ForgeInfo.Look.ON, "forged: on the blade")
+	assert_eq(f.info.look, ForgeInfo.Look.READY, "45 of 35")
+	_hammer(f)
 	assert_eq(Forge.temper(d), 2)
 	# (Fatia 2: Temperar III next, 60 Prata; 10 left)
 	assert_eq(f.shown.id, &"temper_3")
-	assert_true(f.buy_button.disabled, "10 of 60")
+	assert_eq(f.info.look, ForgeInfo.Look.SHORT, "10 of 60")
 	MaterialPurse.give(d, MaterialPurse.SILVER, 60)
 	f._refresh()
-	assert_false(f.buy_button.disabled, "70 of 60")
-	f.buy_button.pressed.emit()
+	assert_eq(f.info.look, ForgeInfo.Look.READY, "70 of 60")
+	_hammer(f)
 	assert_eq(Forge.temper(d), 3)
-	assert_true((f.find_child("done", true, false) as Label).visible, "all forged")
+	assert_eq((f.find_child("why", true, false) as Label).text, T.t(&"forge_done"), "all forged")
 	assert_false(T.t(&"forge_done").contains("versão"), "no prototype words")
 
 
 func test_the_forge_says_what_is_missing() -> void:
 	var f := _forge(_data(1, 5))
-	assert_true(f.buy_button.disabled)
-	assert_eq(f.buy_button.focus_mode, Control.FOCUS_NONE)
+	assert_eq(f.info.action, ForgeInfo.Action.NONE, "5 of 15: no hammer")
 	var state := f.find_child("state", true, false) as Label
-	assert_eq(state.text, T.t(&"forge_short", {"n": 10, "name": T.t(&"forge_temper_1")}))
-	f._show(f.ranks[1])
+	assert_eq(state.text, T.t(&"forge_lack", {"n": 10, "name": T.t(&"material_silver_short")}))
+	f.focus_chip(1)
 	assert_eq(state.text, T.t(&"forge_state_needs", {"name": T.t(&"forge_temper_1")}))
-	var purse := f.find_child("purse", true, false)
-	assert_eq((purse.get_child(0) as MaterialCount).amount, 5)
+	assert_eq((f.find_child("have", true, false) as Label).text, T.t(&"forge_have", {"n": 5}))
+	assert_eq((f.find_child("purse", true, false).get_child(0) as MaterialCount).amount, 5)
 
 
 func test_the_forjador_opens_the_forge() -> void:
