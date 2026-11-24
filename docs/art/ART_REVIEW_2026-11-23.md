@@ -147,7 +147,7 @@ chapado; esperam a arte do ChatGPT (`assets/ui/shop/`).
 ## Segunda rodada (capturas GPU de 2026-11-23, `docs/gallery/review_2026-11-23/`)
 
 ### 18. Faixa do Canalizador opaca (P1, `technical-artist`)
-**FEITO (2026-11-24, falta captura GPU):** `GroundLook.beam` (aro 0,08 m, preenchimento até 0,2, que com o ganho 1,5 do estilizado dá 0,3; sem chão base), chamado em `Horde._behave_beam`; novo uniform `rim_cap` no `ground.gdshaderinc`.
+**FEITO (2026-11-24, falta captura GPU; 2ª tentativa depois de `canalizador2.png`):** o feixe ativo (zona com tag `beam`, `Horde._behave_beam`) agora é `GroundLook.beam`: núcleo de 0,12 m (uniform `beam_core` no `ground.gdshaderinc`, luz em `extra`) e halo transparente que se apaga para os lados, sem aro nem preenchimento. O preparo continua o fio do aim com preenchimento até `AIM_FILL` (0,33 no estilizado). A primeira versão (aro 0,08 + preenchimento 0,2) ainda lia como faixa cheia porque o aro, com ganho 2,5, saturava.
 `canalizador.png` (570..1130, 485..800): faixa magenta-vermelha de cerca de 1 m, opaca, sem borda nem textura, do
 Canalizador até atrás do herói. Tem `ground_warning` (o PT-1 permite), mas lê como fita adesiva sobre o chão e é a
 coisa mais saturada da tela, acima do herói. Pedido: estilo de aviso da casa (preenchimento com alfa até 0,3, aro de

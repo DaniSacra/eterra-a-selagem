@@ -124,3 +124,27 @@ func test_it_breathes_where_the_fight_is() -> void:
 			armed.append(a)
 			bodies = PackedVector2Array([Vector2(11, 1)]) if armed.size() == 1 else PackedVector2Array()
 	assert_eq(armed, [2, 1, 2], "the busiest, then the busiest, then in turn after the last")
+
+
+## Art review 2026-11-23 (laje_armada): the breath pushes and never hurts, so its band is a pale haze, never the red of
+## what hurts (PT-1); the Canalizador's held beam is a thin core over a transparent halo with no fill (item 18).
+func test_breath_band_is_not_warning_red() -> void:
+	var node := GroundLook.new_node()
+	GroundLook.hazard(node, Vector2.ZERO, Vector2.RIGHT, 6.0, 2.3, 0.05)
+	var m := node.material_override as ShaderMaterial
+	GroundLook.gust(m)
+	var c := m.get_shader_parameter(&"color") as Color
+	assert_true(c.b > c.r * 0.9, "bluish haze, not red")
+	assert_lt(float(m.get_shader_parameter(&"fill_max")), 0.15)
+	assert_lt(float(m.get_shader_parameter(&"strength")), 1.0)
+	node.free()
+
+
+func test_held_beam_is_a_core_with_no_fill() -> void:
+	var node := GroundLook.new_node()
+	GroundLook.warning(node, GroundLook.Shape.LINE, Vector2.ZERO, Vector2.RIGHT, 12.0, 0.5, 0.05)
+	var m := node.material_override as ShaderMaterial
+	GroundLook.beam(m, 0.25)
+	assert_almost_eq(float(m.get_shader_parameter(&"beam_core")), GroundLook.BEAM_CORE_M, 0.001)
+	assert_eq(float(m.get_shader_parameter(&"fill_max")), 0.0)
+	node.free()

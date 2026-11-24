@@ -154,6 +154,7 @@ static func dress(node: MeshInstance3D, style: Style, shape: int, color: Color, 
 	put(m, &"size_m", maxf(0.1, width * 0.5 if line else radius))
 	put(m, &"rim_m", rim_m)
 	put(m, &"rim_cap", 0.2)
+	put(m, &"beam_core", 0.0)
 	put(m, &"length_m", radius if line else 1.0)
 	match shape:
 		Shape.LINE:
@@ -291,16 +292,15 @@ static func gust(m: ShaderMaterial) -> void:
 	put(m, &"fill_max", GUST_FILL)
 
 
-## The Canalizador's beam on the floor (art review 2026-11-23, item 18): a floor that shows through (the fill never past
-## BEAM_FILL_MAX, 0.3 after the stylized gain of 1.5) inside a thin warning ring of BEAM_RIM_M, not an opaque tape.
-const BEAM_RIM_M := 0.08
-const BEAM_FILL_MAX := 0.2
+## The Canalizador's beam held on the floor (art review 2026-11-23, item 18): a thin bright core of BEAM_CORE_M and a
+## transparent halo (ground.gdshaderinc beam_core), no rim and no fill: the floor shows through. The wind-up is the
+## aim's own thread with its fill up to AIM_FILL (0.33 stylized).
+const BEAM_CORE_M := 0.12
 static func beam(m: ShaderMaterial, half_width: float) -> void:
-	put(m, &"rim_m", BEAM_RIM_M)
-	put(m, &"rim_cap", BEAM_RIM_M / maxf(half_width, 0.01))
-	put(m, &"fill_early", BEAM_FILL_MAX)
-	put(m, &"fill_max", BEAM_FILL_MAX)
+	put(m, &"fill_early", 0.0)
+	put(m, &"fill_max", 0.0)
 	put(m, &"base_fill", 0.0)
+	put(m, &"beam_core", BEAM_CORE_M)
 
 
 ## One of Morvath's warnings, with his signature (ART-001).
