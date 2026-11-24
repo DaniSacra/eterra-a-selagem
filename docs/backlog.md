@@ -36,7 +36,7 @@ guia `--guide=tree`, Santuário), ajustar alturas pelo que se vê, exe nas duas 
   três ofertas ficam em fila no meio do chão. Pedido: os itens em colunas de pedra finas **ao longo da parede do fundo e das
   laterais**, cada um flutuando numa bolha de luz pequena com a **plaquinha de preço** em cima (pergaminho, número + moeda), o
   meio da sala livre; uma oferta de destaque (a Bênção) pode ficar sozinha mais à frente. Aceite: captura na GPU, o robô compra
-  igual (`RESULT` com as mesmas compras).
+  igual (`RESULT` com as mesmas compras). **FEITO (2026-11-23, código)**: `Rooms.SHOP_SLOTS`, colunas em `CatacombHall.dress_shop`; falta só a captura na GPU e a arte final das colunas/plaquinhas.
 - **PT-9 Maga só depois de vencer Morvath e estação de troca de herói** (Daniel, 2026-11-23): a Maga fica travada até a primeira
   vitória sobre Morvath (hoje aparece no Portal a partir da 2ª descida); a troca de herói sai do Portal e ganha uma área própria no
   Santuário, ao lado do Vendedor (loja), com o seu guia de destrave (PT-5). Junto da Videira V2 (mesmo agente, mesmo Santuário). **FEITO (2026-11-23)**: `HubPlan.HEROES`, `HeroPickScreen`, `SaveData.hero_open`, guia `maga` (`docs/reference/hub.md`).

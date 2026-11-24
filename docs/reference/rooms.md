@@ -616,3 +616,12 @@ altar em no máximo
 - Provisório (arte, `environment-artist`): as `look`s ainda desenham o arco da entrada antigo na parede oeste (agora selado, em posição fixa,
   `entry` de `CryptLook`/`RunesLook`/`GuardianLook`/`BridgeLook`); falta o portal de entrada na borda sul (e o `_front_walls` da `CryptLook` já corre inteiro, sem vão ao sul).
   O Altar não aceita porta ao norte sem a `AltarLook` abrir o nicho.
+
+## PT-11, loja junto da parede (2026-11-23; `tests/test_shop_wall.gd`)
+- `Rooms.SHOP_SLOTS` (5 pontos no chão do Salão, na ordem em que enchem; a loja da rota usa os 3 primeiros): o 1º (a Bênção, destaque) fica um pouco
+  à frente, sobre o medalhão gravado (-2,5; 1); os outros ao longo da parede norte (-3,5 e -8,8; z -10,8/-10,2) e das laterais (-11,6; -3,2) e (11,6; -7,5).
+  O meio fica livre, a entrada (sul) e a porta (norte, x 2,8) ficam a 5 m ou mais de qualquer item. Cada um mantém a bolha de luz (`RewardShaft`) e a
+  plaquinha de preço (`DoorSign.shop`); a `dress_shop` põe um tapete pequeno e uma coluna de pedra fina (`SHOP_COLUMN`) atrás de cada item de parede, no
+  lugar das lanternas de braço da fila antiga. Os quebráveis do Salão ficam a 3 m ou mais dos pontos (testes `test_breakables`, `test_breakable_rules`).
+- Provisório (arte): coluna é caixa de pedra; falta a coluna fina esculpida e a plaquinha de pergaminho com a moeda do `environment-artist`.
+- Captura: `tools/gpu.sh shot x.png --start=shop --gold=400 --bot --autopick --seed=5 --shot-at=4` (a sessão principal).
