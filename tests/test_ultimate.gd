@@ -14,6 +14,7 @@ var hits := 0
 
 
 func after_each() -> void:
+	Audio.listen(false)
 	Controls.virtual = null
 	Controls.clear_presses()
 	Engine.time_scale = 1.0
@@ -107,6 +108,36 @@ func test_omegas_charge_it_in_play() -> void:
 	game.player.magick.spend(15.0)
 	_step()
 	assert_true(game.player.ult_ready)
+
+
+## Lote E / combat review 2026-11-24b N3: the "ready" bell plays once for each time the charge fills (it fills at 75), not
+## every frame it stays full, and again only after the charge was spent and filled anew.
+func test_ult_ready_sounds_once_per_fill() -> void:
+	var frames := [0]
+	Audio.listen(true, func() -> int: return frames[0] * 1000 / 60)
+	await _start(&"cleave", false)
+	var rings := func() -> int:
+		return Audio.heard.filter(func(h: Array) -> bool: return h[0] == &"ult_ready").size()
+	for i in 60:
+		frames[0] += 1
+		_step()
+	assert_eq(rings.call(), 0, "not full, no bell")
+	game.ults.charge.fill()
+	for i in 240:
+		frames[0] += 1
+		_step()
+	assert_true(game.player.ult_ready)
+	assert_eq(rings.call(), 1, "full for 4 s: one bell")
+	assert_true(game.ults.charge.use())
+	for i in 240:
+		frames[0] += 1
+		_step()
+	assert_false(game.player.ult_ready)
+	game.ults.charge.fill()
+	for i in 240:
+		frames[0] += 1
+		_step()
+	assert_eq(rings.call(), 2, "filled anew: a second bell, once")
 
 
 func test_a_press_without_charge_does_nothing() -> void:

@@ -255,7 +255,7 @@ func build_steps(a: Arena, l: RoomLayout, exit_count: int, seed_: int) -> Array[
 		m = kit.masonry
 		tomb = TombKit.new(m)
 		_see = stone().duplicate() as ShaderMaterial
-		_see.set_shader_parameter(&"see_through", 1.0)
+		Masonry.see_fade(_see)
 		_floor()))
 	steps.append(_timed.bind(&"edges", func() -> Array[Callable]: return _edges_steps()))
 	steps.append(_timed.bind(&"abyss", _abyss))
@@ -733,7 +733,7 @@ func ashlar(base_y := 0.0) -> ShaderMaterial:
 func see(mat: ShaderMaterial) -> ShaderMaterial:
 	if not _see_twins.has(mat):
 		var t := mat.duplicate() as ShaderMaterial
-		t.set_shader_parameter(&"see_through", 1.0)
+		Masonry.see_fade(t)
 		_see_twins[mat] = t
 	return _see_twins[mat]
 

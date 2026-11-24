@@ -87,6 +87,9 @@ uniform float root_rim = 1.0;
 // joints show; everything else keeps no cap).
 uniform float base_fill = 0.08;
 uniform float rim_scale = 1.0;
+// A line's edges melting into the floor over this many meters, all round (art review 2026-11-24 N5: the rift's mist was a
+// hard-edged rectangle; GroundLook.gust sets it); 0: the hard edges of every warning.
+uniform float soft_edge_m = 0.0;
 uniform float light_cap = 64.0;
 // C12d (VX-03): an enemy's warning's fill (the second pass), as light added to the floor (not times strength): its
 // most at the end of the wind-up, what it shows before that, and the share of the wind-up over which it comes up.
@@ -317,6 +320,12 @@ void fragment() {
 			a = frame * (0.35 + 0.65 * progress) + level;
 		} else {
 			a = (1.0 - side * side) * (0.5 + 0.5 * noise(vec2(uv.x * 3.0, along * 8.0 - TIME * 2.0)));
+		}
+		if (soft_edge_m > 0.0 && side <= 1.0) {
+			float soft = smoothstep(0.0, soft_edge_m, size_m * (1.0 - side)) * smoothstep(0.0, soft_edge_m, min(along, 1.0 - along) * length_m);
+			a *= soft;
+			filled *= soft;
+			extra *= soft;
 		}
 	} else {
 		float dm = length(uv) * (size_m + pad_m);

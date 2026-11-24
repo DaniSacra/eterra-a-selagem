@@ -159,9 +159,13 @@ void vertex() {
 #include "res://assets/shaders/frame_yaw.gdshaderinc"
 
 void fragment() {
+#ifdef SEE_FADE
+	ALPHA = see_through_alpha(VERTEX, VIEW_MATRIX, PROJECTION_MATRIX, see_through, see_radius, see_height, see_gap);
+#else
 	if (see_through_hole(VERTEX, FRAGCOORD.xy, VIEW_MATRIX, PROJECTION_MATRIX, see_through, see_radius, see_height, see_keep, see_gap)) {
 		discard;
 	}
+#endif
 	// the courses run along the room's own axes (frame_yaw.gdshaderinc: the hub is turned; elsewhere fw is world)
 	vec3 fw = vec3(world.x, world.y, world.z);
 	vec3 fn = wnormal;

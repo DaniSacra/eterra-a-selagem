@@ -7,6 +7,9 @@ extends RefCounted
 const SHADER := preload("res://assets/shaders/masonry.gdshader")
 ## Its twin in the stylized look (STY-04; ArenaKit.paint_look puts it through VisualProfile).
 const PAINT_SHADER := preload("res://assets/shaders/masonry_paint.gdshader")
+## The same two with the see-through pieces fading for real (alpha, not stipple; GR-8, art review 2026-11-24 N1).
+const FADE_SHADER := preload("res://assets/shaders/masonry_fade.gdshader")
+const FADE_PAINT_SHADER := preload("res://assets/shaders/masonry_paint_fade.gdshader")
 const DEPTH_SHADER := preload("res://assets/shaders/depth_stone.gdshader")
 ## Relief of real stone (Poly Haven "Rock Surface", CC0, docs/art/asset_credits.md) under the painted colour.
 const ROCK_NORMAL := preload("res://assets/textures/rock_surface/rock_surface_nor_gl_1k.jpg")
@@ -429,6 +432,16 @@ func stairs(foot: Vector3, up: Vector2, width: float, steps: int, rise: float, r
 		box(Vector3(c.x, foot.y - 0.6 + h * 0.5, c.z), Vector3(width, h, run), yaw, mat if mat else stone(foot.y), false)
 
 
+## A masonry material opening round the paladin behind it: see_through on, and the fading twin of its shader.
+static func see_fade(mat: ShaderMaterial) -> ShaderMaterial:
+	mat.set_shader_parameter(&"see_through", 1.0)
+	if mat.shader == SHADER:
+		mat.shader = FADE_SHADER
+	elif mat.shader == PAINT_SHADER:
+		mat.shader = FADE_PAINT_SHADER
+	return mat
+
+
 ## A thick, blunt standing stone (the picture's): a base, three stacked blocks each a little narrower and turned, a low
 ## flat-topped cap set a little askew, and a dark pointed niche on the face that looks along `face`.
 func obelisk(at: Vector3, height: float, width: float, face: Vector2) -> void:
@@ -436,7 +449,7 @@ func obelisk(at: Vector3, height: float, width: float, face: Vector2) -> void:
 	var mat := stone(at.y).duplicate() as ShaderMaterial
 	mat.set_shader_parameter(&"upright_cracks", OBELISK_CRACKS)
 	# the paladin behind it reads through a stippled hole round him (masonry.gdshader, see_through)
-	mat.set_shader_parameter(&"see_through", 1.0)
+	see_fade(mat)
 	block(at, Vector3(width * 1.3, 0.5, width * 1.3), yaw, mat)
 	var y := 0.5
 	var cap := width * 0.45

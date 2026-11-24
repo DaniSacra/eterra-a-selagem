@@ -22,6 +22,10 @@ uniform float edge_light = 0.95;
 uniform float edge_pale = 0.45;
 uniform float body_sat = 0.5;
 uniform float peak = 0.6;
+// The spin's ribbon (art review 2026-11-24 N4): added to what is behind it instead of laid over it (additive: 1), its
+// two ends (the head's start and the tail) thinning away over this share of the swing instead of a straight cut.
+uniform float additive = 0.0;
+uniform float tip_fade = 0.0;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -50,6 +54,11 @@ void fragment() {
 	body *= smoothstep(0.0, 0.03, head - x + 0.005);
 	float fade = 1.0 - smoothstep(0.5, 1.0, t);
 	float edge = (1.0 - smoothstep(0.0, 0.05, abs(y - 0.95))) * (1.0 - smoothstep(0.2, 0.33, k)) * fade;
+	if (tip_fade > 0.0) {
+		float tips = smoothstep(0.0, tip_fade, x) * smoothstep(0.0, tip_fade, x - tail_end);
+		body *= tips;
+		edge *= tips;
+	}
 	if (body + edge <= 0.01) discard;
 	vec3 hue = color.rgb / max(max(color.r, max(color.g, color.b)), 0.0001);
 	float grey = dot(hue, vec3(0.333));
@@ -59,5 +68,5 @@ void fragment() {
 	light *= min(1.0, peak / max(top, 0.0001));
 	float ink_a = body * ink_opacity * fade;
 	ALBEDO = ink.rgb * ink_a + light;
-	ALPHA = clamp(ink_a + min(top, peak) / max(peak, 0.0001), 0.0, 1.0);
+	ALPHA = clamp(ink_a + min(top, peak) / max(peak, 0.0001), 0.0, 1.0) * (1.0 - additive);
 }
