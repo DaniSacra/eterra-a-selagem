@@ -411,7 +411,6 @@ func _gift_info(id: StringName, n: MedallionNodeDef) -> Dictionary:
 	var info := {"name": T.t(t.name_key), "desc": T.t(t.desc_key), "paint": _paint(id, n), "tint": view.tint_of(id),
 		"key": UiKit.action_label(&"ui_accept"), "slot": int(t.slot) if t.slot != Boon.Slot.NONE else -1,
 		"sub": _place(t), "cost_kind": "devotion", "cost_n": t.cost,
-		"cost_right": T.t(&"dons_cost_free", {"free": loadout.devotion() - loadout.used(), "max": loadout.devotion()}),
 		"verb": "", "enabled": false, "reason": "", "hold": false}
 	match st:
 		HeroLoadout.State.LOCKED:

@@ -68,6 +68,9 @@ const LAYER := 2
 ## the door's "Bênção / Guardião", the shop's "Bênção nova" stood 50 px over its five signs).
 static var keep_out := Rect2()
 const KEEP_GAP := 8.0
+## How far from the screen's edge a sign may stand, and the shop price's size (readable for a child at 720 lines).
+const EDGE_MARGIN := 8.0
+const PRICE_SIZE := 18
 
 var title: Label
 var detail: Label
@@ -184,6 +187,7 @@ static func shop(name_text: String, price_: int, group_text: String = "",
 		reward_mark: DoorGlyph.Kind = DoorGlyph.Kind.NONE) -> DoorSign:
 	var s := make(name_text, price_text(price_), DoorGlyph.Kind.NONE, reward_mark)
 	s.price = price_
+	s.detail.add_theme_font_size_override(&"font_size", PRICE_SIZE)
 	if group_text != "":
 		s.group = _label(group_text, GROUP_COLOR, GROUP_SIZE)
 		s.group.name = "group"
@@ -286,7 +290,17 @@ func _process(_delta: float) -> void:
 	# a greeting of the HUD up there (EloBanner): the sign steps down under it, never touching it (P1-1)
 	if keep_out.has_area() and Rect2(_box.position, s).intersects(keep_out):
 		_box.position.y = keep_out.end.y + KEEP_GAP
+	_box.position = clamp_to_screen(Rect2(_box.position, s), get_viewport().get_visible_rect()).position
 	_box.visible = true
+
+
+## The box pushed inside the screen, EDGE_MARGIN px from its borders (B5: the price of a shop row stood cut by the edge).
+static func clamp_to_screen(box: Rect2, screen: Rect2) -> Rect2:
+	var inner := screen.grow(-EDGE_MARGIN)
+	var out := box
+	out.position.x = clampf(box.position.x, inner.position.x, maxf(inner.end.x - box.size.x, inner.position.x))
+	out.position.y = clampf(box.position.y, inner.position.y, maxf(inner.end.y - box.size.y, inner.position.y))
+	return out
 
 
 ## Height of the capitals in screen pixels for this canvas font size on a screen this many lines tall.

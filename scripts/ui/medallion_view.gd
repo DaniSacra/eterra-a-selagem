@@ -27,9 +27,13 @@ const SHELL := Color("b8b4aa")
 const IVORY := Color(0.97, 0.93, 0.84)
 const LINE := Color("8e7444")
 const LOCKED_D := 48.0
-const LABEL_GAP := 42.0
+const LABEL_GAP := 58.0
+const NODE_NUM_MIN := 16
 const LABEL_APART := 24.0
-const CAPTION_MAX := 46
+const CAPTION_MAX := 70
+const CAPTION_W := 230.0
+const CAPTION_FS := 16
+const CAPTION_LINE := 20.0
 
 var def: MedallionDef
 var nav: MedallionNav
@@ -330,10 +334,11 @@ func _draw_node(n: MedallionNodeDef) -> void:
 		# not reached yet: dark, with the Mastery level that reaches it (the padlock is the sealed Gift's, the one that asks Memória)
 		var lvl := str(t.unlock_level) if t != null else str(loadout.hero.ultimate(id).mastery_level)
 		var f := UiKit.BOLD_FONT
-		var fs := maxi(int(r * 0.57), 9)
+		var fs := maxi(int(r * 0.7), NODE_NUM_MIN)
 		GiftArt.corner(self, c + Vector2(0.0, -r * 0.34), r * 0.26, loadout.hero, Color(MUTE, a))
 		var at := c + Vector2(-f.get_string_size(lvl, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x * 0.5, r * 0.38 + (f.get_ascent(fs) - f.get_descent(fs)) * 0.5)
-		draw_string(f, at, lvl, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(UiKit.PARCHMENT, 0.7 * a))
+		draw_string_outline(f, at, lvl, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, 4, Color(UiKit.INK, a))
+		draw_string(f, at, lvl, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(IVORY, a))
 	else:
 		MedallionView.draw_icon(self, loadout.hero, id, n, c, r * 0.5, icon * mod, fill)
 	if st == HeroLoadout.State.SEALED and t != null:
@@ -342,8 +347,8 @@ func _draw_node(n: MedallionNodeDef) -> void:
 		DonsArt.memory_mark(self, at, 20.0)
 		var f := UiKit.BOLD_FONT
 		var s := str(t.memory_cost)
-		draw_string_outline(f, at + Vector2(-3.0 - f.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x * 0.5 + 2.0, 20.0), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, 4, Color(UiKit.INK, a))
-		draw_string(f, at + Vector2(-3.0 - f.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x * 0.5 + 2.0, 20.0), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(UiKit.PALE, a))
+		draw_string_outline(f, at + Vector2(-3.0 - f.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x * 0.5 + 2.0, 20.0), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, 4, Color(UiKit.INK, a))
+		draw_string(f, at + Vector2(-3.0 - f.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x * 0.5 + 2.0, 20.0), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color(UiKit.PALE, a))
 
 
 ## The glyph of a node inside radius r: the lion or the star on the crown, the ultimate's mark, the Gift's own glyph or
@@ -463,8 +468,38 @@ func _draw_caption() -> void:
 	var c := spot(focus_id)
 	var inward := (MedallionDef.CENTER - c).normalized()
 	var f := UiKit.TEXT_FONT
-	var w := minf(f.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x, 260.0)
-	var p := caption_spot(c, inward, n.diameter * 0.5 + 62.0, Vector2(w + 16.0, 26.0))
-	var box := Rect2(p - Vector2(w * 0.5 + 8.0, 13.0), Vector2(w + 16.0, 26.0))
+	var lines := caption_lines(caption)
+	var box_size := caption_box_size(lines)
+	# start far enough that the box clears the node's disc whatever the direction (UI B2: it covered the node)
+	var reach := absf(inward.x) * box_size.x * 0.5 + absf(inward.y) * box_size.y * 0.5
+	var p := caption_spot(c, inward, n.diameter * 0.5 + FOCUS_GAP + 12.0 + reach, box_size)
+	var box := Rect2(p - box_size * 0.5, box_size)
 	draw_style_box(UiKit.box(Color(0.03, 0.025, 0.035, 0.92), UiKit.OLD_GOLD, 1, 0, 4), box)
-	draw_string(f, p + Vector2(-w * 0.5, 5.5), caption, HORIZONTAL_ALIGNMENT_LEFT, w, 15, UiKit.PALE)
+	for i in lines.size():
+		var w := f.get_string_size(lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_FS).x
+		draw_string(f, Vector2(p.x - w * 0.5, box.position.y + 18.0 + i * CAPTION_LINE), lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_FS, UiKit.PALE)
+
+
+## The caption broken on words into lines no wider than CAPTION_W (never cut mid-word).
+static func caption_lines(text: String) -> Array[String]:
+	var f := UiKit.TEXT_FONT
+	var out: Array[String] = []
+	var cur := ""
+	for word in text.split(" ", false):
+		var tryw := word if cur == "" else cur + " " + word
+		if cur != "" and f.get_string_size(tryw, HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_FS).x > CAPTION_W:
+			out.append(cur)
+			cur = word
+		else:
+			cur = tryw
+	if cur != "":
+		out.append(cur)
+	return out
+
+
+static func caption_box_size(lines: Array[String]) -> Vector2:
+	var f := UiKit.TEXT_FONT
+	var w := 0.0
+	for l in lines:
+		w = maxf(w, f.get_string_size(l, HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_FS).x)
+	return Vector2(w + 16.0, 12.0 + CAPTION_LINE * maxi(lines.size(), 1))

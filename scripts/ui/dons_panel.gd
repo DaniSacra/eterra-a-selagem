@@ -221,7 +221,7 @@ class CostIcon:
 		if memory:
 			DonsArt.memory_mark(self, size * 0.5, size.y)
 		else:
-			DonsArt.disc(self, size * 0.5, 9.0)
+			DonsArt.socket(self, size * 0.5, 10.0)
 
 
 ## The button: key plate, verb, and the bar that fills while held.

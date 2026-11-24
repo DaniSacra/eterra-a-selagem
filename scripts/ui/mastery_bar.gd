@@ -98,7 +98,7 @@ func _draw() -> void:
 	else:
 		draw_rect(bar.grow(1.0), UiKit.OLD_GOLD, false, UiKit.FRAME * 0.75)
 	var text_font := UiKit.BOLD_FONT
-	var label := T.t(&"hero_mastery")
+	var label := T.t(&"hero_mastery_level", {"n": level()})  # the diamond alone never said it was the level (B10)
 	var base := cy - 4.0
 	if not paper:
 		UiKit.draw_shadow(self, text_font, Vector2(x0, base), label, LABEL_SIZE)
