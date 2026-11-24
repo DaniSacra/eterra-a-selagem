@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="VineNode" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_p8ckq"]
+[ext_resource type="Script" path="res://scripts/core/vine_node.gd" id="2_q60fq"]
+
+[sub_resource type="Resource" id="Resource_umlwv"]
+script = ExtResource("1_p8ckq")
+stat = &"room_heal"
+base = 2.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_q60fq")
+id = &"respiro"
+branch = &"vida"
+step = 4
+requires = &"vida_3"
+name_key = &"vine_respiro"
+desc_key = &"vine_respiro_desc"
+cost = 30
+mods = Array[ExtResource("1_p8ckq")]([SubResource("Resource_umlwv")])

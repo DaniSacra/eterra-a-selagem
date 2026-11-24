@@ -25,6 +25,10 @@ enum Kind { CLEAVE, VORTEX, STORM, DOME }
 @export var damage_charge := 0.0
 @export var hurt_charge := 0.0
 @export_range(1, 20) var mastery_level := 2
+## The weapon whose ultimate it is (redesign A.3: one fixed ultimate a weapon, no choice in the tree): &"emeth", &"bastao".
+## A reserve one (a future weapon's, as the Voragem) stays in the data and in the tests but is never the hero's.
+@export var weapon: StringName = &""
+@export var reserve := false
 ## The protected gesture that starts it (cuts the blow in progress, as the dodge does).
 @export var gesture := 0.3
 ## What the Blessings see (one action's tags plus ultimate; never finisher nor omega).

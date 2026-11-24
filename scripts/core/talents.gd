@@ -78,6 +78,11 @@ func cost(ids: Array) -> int:
 
 ## True when the Gifts in equipped (TalentDefs) give t what its place in the tree asks for.
 static func needs_met(t: TalentDef, equipped: Array[TalentDef]) -> bool:
+	if t.needs != &"":
+		for o in equipped:
+			if o.id == t.needs:
+				return true
+		return false
 	match t.tier:
 		TalentDef.Tier.MIDDLE:
 			return _has(equipped, t.branch, TalentDef.Tier.ENTRY)

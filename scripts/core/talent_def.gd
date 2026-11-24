@@ -8,7 +8,9 @@ extends Resource
 
 ## The four families (game design, not canon) and the two places off them.
 ## The Maga's three branches (M2, docs/design/heroes/maga_m2.md 2.1) come after the Warrior's, so the saved numbers stay.
-enum Branch { COMBO, FURIA, EMETH, MAGIA, BRIDGE, SUSTAIN, PIRO, ARCA, CTRL }
+## Redesign 2026-11-24 (04_PLANO A.1): the six branches of 3 x 4 Gifts a hero come after the old ones (IMPETO, DOMINIO for
+## the Warrior beside COMBO; ELEMENTALISMO, CONJURACAO, FEITICARIA for the Maga). The old values leave with their catalogs.
+enum Branch { COMBO, FURIA, EMETH, MAGIA, BRIDGE, SUSTAIN, PIRO, ARCA, CTRL, IMPETO, DOMINIO, ELEMENTALISMO, CONJURACAO, FEITICARIA }
 enum Tier { ENTRY, MIDDLE, APEX, BRIDGE, SUSTAIN }
 
 ## Neighbours in the diamond (the order of the art bible): Combo and Furia, Furia and Magia, Magia and Emeth, Emeth and
@@ -40,6 +42,9 @@ const NEIGHBOURS := {
 @export_range(0, 9) var memory_cost := 0
 ## The action it changes (Boon.Slot): one Gift per action; NONE when it only reinforces (any number of them).
 @export var slot: Boon.Slot = Boon.Slot.NONE
+## The Gift that must be equipped for this one to go on (redesign A.2; empty: the place in the tree decides, as before).
+## When set it replaces the tier rule (Talents.needs_met).
+@export var needs: StringName = &""
 ## An apex: the neighbouring branch one more Gift must come from.
 @export var partner: Branch = Branch.COMBO
 ## A bridge: the two branches whose entries it needs.

@@ -82,6 +82,8 @@ static var _maga: HeroDef
 
 @export_group("Progression")
 @export var ultimates: Array[UltDef] = []
+## The weapon the hero fights with (UltDef.weapon): the ultimate it plays is the one of that weapon.
+@export var weapon: StringName = &""
 @export_dir var talents_dir := ""
 @export var mastery: MasteryCurve
 
@@ -109,15 +111,17 @@ func ultimate(ult_id: StringName) -> UltDef:
 
 ## The ultimate a descent plays at this Mastery level (T5): the one chosen when it is unlocked, else the first one the
 ## level unlocks (a player who reached Mastery 2 and never opened the hero screen still has one), else null.
-func ult_for(chosen: StringName, level: int) -> UltDef:
-	var u := ultimate(chosen)
-	if u != null and u.mastery_level <= level:
-		return u
-	var first: UltDef = null
-	for o in ultimates:
-		if o.mastery_level <= level and (first == null or o.mastery_level < first.mastery_level):
-			first = o
-	return first
+## Compatibility shim (the UI still calls it until UI-2): the choice is gone, it is ult_for_weapon.
+func ult_for(_chosen: StringName, level: int) -> UltDef:
+	return ult_for_weapon(level)
+
+
+## The fixed ultimate of the hero's weapon (redesign A.3; reserve ones never), or null below its Mastery level.
+func ult_for_weapon(level: int) -> UltDef:
+	for u in ultimates:
+		if u.weapon == weapon and not u.reserve and weapon != &"":
+			return u if u.mastery_level <= level else null
+	return null
 
 
 ## The lowest Mastery level that unlocks an ultimate (0: the hero has none).

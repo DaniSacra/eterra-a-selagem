@@ -11,6 +11,7 @@ kind = 2
 charge = 75.0
 damage_charge = 0.03
 hurt_charge = 1.0
+weapon = &"bastao"
 tags = Array[StringName]([&"ultimate", &"cast"])
 anim = &"Cast"
 anim_peak = 0.1

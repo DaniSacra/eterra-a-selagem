@@ -133,9 +133,12 @@ func test_ultimates_open_by_level_and_one_is_chosen() -> void:
 	assert_false(l.ult_open(cleave))
 	assert_false(l.choose_ult(&"cleave"))
 	l = _loadout(XP_6)
-	assert_true(l.choose_ult(&"cleave"))
-	assert_eq(l.block.ultimate, "cleave")
-	assert_false(l.choose_ult(&"vortex"), "the Voragem opens at level 10")
+	assert_true(l.choose_ult(&"cleave"), "the fixed one of the Emeth (the shim answers true for it)")
+	assert_eq(l.ultimate(), &"cleave")
+	assert_false(l.choose_ult(&"vortex"), "the Voragem is in reserve: no choice")
+	l = _loadout(HeroDef.warrior().mastery.total_to(12))
+	assert_false(l.choose_ult(&"vortex"))
+	assert_eq(l.ultimate(), &"cleave")
 
 
 func test_next_level_tells_what_it_brings() -> void:

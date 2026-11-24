@@ -12,6 +12,7 @@ charge = 100.0
 damage_charge = 0.03
 hurt_charge = 1.0
 mastery_level = 6
+reserve = true
 tags = Array[StringName]([&"ultimate", &"cast"])
 anim = &"Cast"
 anim_peak = 0.1

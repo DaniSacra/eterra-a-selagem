@@ -18,5 +18,6 @@ cd_refund_hit = 0.3
 cd_refund_break = 1.5
 cd_floor = 8.0
 ultimates = Array[ExtResource("3_rujxb")]([ExtResource("4_wgqt4"), ExtResource("5_dl24e")])
+weapon = &"emeth"
 talents_dir = "res://data/talents/warrior/"
 mastery = ExtResource("1_iqgsx")

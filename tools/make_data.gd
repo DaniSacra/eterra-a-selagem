@@ -1951,10 +1951,10 @@ func _ultimates() -> void:
 		DirAccess.remove_absolute(ULT_DIR + f)
 	# T5 (docs/design/t5_ultimate.md): it also fills with the damage dealt (ULT_DAMAGE_CHARGE a point, 3000 for the
 	# cleave) and the life lost (ULT_HURT_CHARGE a point): a player who never holds an Omega still gets it
-	_ult(0, &"cleave", UltDef.Kind.CLEAVE, {"charge": 75.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 3, "gesture": 0.3,
+	_ult(0, &"cleave", UltDef.Kind.CLEAVE, {"charge": 75.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 3, "gesture": 0.3, "weapon": &"emeth",
 		"tags": [&"ultimate", &"light"] as Array[StringName], "anim": &"Slash_C", "anim_peak": PEAK[&"Slash_C"], "knockback": 6.0,
 		"length": 12.0, "width": 4.0, "core_width": 1.5, "core_damage": 180.0, "damage": 120.0, "stun": 1.0, "armor_mult": 2.0})
-	_ult(1, &"vortex", UltDef.Kind.VORTEX, {"charge": 105.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 10, "gesture": 0.3,
+	_ult(1, &"vortex", UltDef.Kind.VORTEX, {"charge": 105.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 10, "gesture": 0.3, "weapon": &"", "reserve": true,
 		"tags": [&"ultimate", &"cast"] as Array[StringName], "anim": &"Sword_Attack", "anim_peak": PEAK[&"Sword_Attack"], "knockback": 2.0,
 		"ahead": 4.0, "aim_max": 8.0, "radius": 6.0, "radius_cap": 7.5, "duration": 4.0, "tick": 0.25, "tick_damage": 5.0,
 		"implode_damage": 72.0, "implode_radius": 3.0, "implode_stun": 0.8, "pull": 3.5, "swirl": 2.0, "core": 1.2,
@@ -2085,6 +2085,7 @@ func _hero() -> void:
 	for f in files:
 		ults.append(ResourceLoader.load(ULT_DIR + f, "", ResourceLoader.CACHE_MODE_REPLACE))
 	h.ultimates = ults
+	h.weapon = &"emeth"
 	h.talents_dir = TALENT_DIR
 	h.mastery = ResourceLoader.load(MASTERY_PATH, "", ResourceLoader.CACHE_MODE_REPLACE)
 	DirAccess.make_dir_recursive_absolute(HERO_DIR)
@@ -2214,7 +2215,7 @@ func _maga() -> void:
 	u.kind = UltDef.Kind.STORM
 	u.name_key = &"ult_storm"
 	u.desc_key = &"ult_storm_desc"
-	var numbers := {"charge": 75.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 2, "gesture": 0.3,
+	var numbers := {"charge": 75.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 2, "gesture": 0.3, "weapon": &"bastao",
 		"anim": &"Cast", "anim_peak": PEAK[&"Cast"], "knockback": 4.0, "ahead": 4.0, "aim_max": 9.0, "radius": 6.0, "radius_cap": 7.5,
 		"duration": 4.0, "tick": 0.5, "tick_damage": 8.0, "detonate_damage": 110.0, "elite_share": 0.5, "guardian_share": 0.25, "armor_mult": 2.0}
 	for k: String in numbers:
@@ -2228,7 +2229,7 @@ func _maga() -> void:
 	d.kind = UltDef.Kind.DOME
 	d.name_key = &"ult_dome_abs"
 	d.desc_key = &"ult_dome_abs_desc"
-	var dome_numbers := {"charge": 100.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 6, "gesture": 0.3,
+	var dome_numbers := {"charge": 100.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 6, "gesture": 0.3, "weapon": &"", "reserve": true,
 		"anim": &"Cast", "anim_peak": PEAK[&"Cast"], "radius": 5.5, "duration": 8.0, "dome_shot_pct": 0.2, "dome_blast_cost": 5.0}
 	for k: String in dome_numbers:
 		d.set(k, dome_numbers[k])
@@ -2252,6 +2253,7 @@ func _maga() -> void:
 	h.arcane = kit
 	h.ultimates = [ResourceLoader.load(MAGA_ULT, "", ResourceLoader.CACHE_MODE_REPLACE),
 		ResourceLoader.load(MAGA_ULT2, "", ResourceLoader.CACHE_MODE_REPLACE)] as Array[UltDef]
+	h.weapon = &"bastao"
 	h.talents_dir = MAGA_TALENTS
 	h.mastery = ResourceLoader.load(MAGA_MASTERY_PATH, "", ResourceLoader.CACHE_MODE_REPLACE)
 	_save(h, HeroDef.MAGA)
@@ -3010,7 +3012,7 @@ func _oficios() -> void:
 	ResourceSaver.save(d, "res://data/oficios/oficios.tres")
 
 
-## A Videira (Daniel 2026-11-23, docs/design/videira_pacote_2026-11-23/; it replaced "O Preparo"): 3 branches of 3 nodes, no
+## A Videira (Daniel 2026-11-23, docs/design/videira_pacote_2026-11-23/; it replaced "O Preparo"): 3 branches of 3 nodes (Vida has 5), no
 ## damage, small permanent improvements for every hero. Costs 5, 10 and 20 a branch (the package's): Vida and
 ## Perseverança in Prata Antiga, Provisão in Fragmento de Memória. File order = purchase order within a branch; the robot
 ## (--vine=N, also --account=N) takes step 1 of every branch, then step 2, then step 3 (Vine.first).
@@ -3021,22 +3023,25 @@ func _vine() -> void:
 		DirAccess.remove_absolute(dir + f)
 	var S := MaterialPurse.SILVER
 	var M := MaterialPurse.MEMORY
-	var costs := {&"vida": [5, 10, 20], &"provisao": [3, 6, 10], &"perseveranca": [5, 10, 20]}
+	var costs := {&"vida": [5, 10, 20, 30, 12], &"provisao": [3, 6, 10], &"perseveranca": [5, 10, 20]}
 	var list := [
-		[&"vida", S, [[&"vida_1", &"max_hp", 5], [&"vida_2", &"max_hp", 5], [&"vida_3", &"max_hp", 5]]],
+		# redesign 2026-11-24 (04_PLANO A.5 and G): Respiro and Ainda de Pé, the Gifts the Warrior and the Maga lost, are steps 4 and
+		# 5 of Vida (Prata 30; Memória 12, as the Gift it replaces cost 5 of Memória); no fourth branch, no new trunk art
+		[&"vida", S, [[&"vida_1", &"max_hp", 5], [&"vida_2", &"max_hp", 5], [&"vida_3", &"max_hp", 5],
+			[&"respiro", &"room_heal", 2], [&"ainda_de_pe", &"rise_share", 0.5]]],
 		[&"provisao", M, [[&"viajante", &"traveler", 1], [&"estoque", &"shop_extra", 1], [&"reserva", &"shop_care", 1]]],
 		[&"perseveranca", S, [[&"prata", &"silver_pct", 0.25], [&"memoria", &"memory_pct", 0.25], [&"materiais", &"material_pct", 0.25]]],
 	]
 	var i := 0
 	for branch: Array in list:
-		for step in 3:
+		for step in (branch[2] as Array).size():
 			var row: Array = branch[2][step]
 			var n := VineNode.new()
 			n.id = row[0]
 			n.branch = branch[0]
 			n.step = step + 1
 			n.requires = branch[2][step - 1][0] if step > 0 else &""
-			n.material = branch[1]
+			n.material = M if row[0] == &"ainda_de_pe" else branch[1]
 			n.cost = costs[branch[0]][step]
 			n.name_key = StringName("vine_" + n.id)
 			n.desc_key = StringName("vine_%s_desc" % n.id)

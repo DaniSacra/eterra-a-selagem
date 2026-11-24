@@ -221,10 +221,8 @@ func test_ultimates_are_chosen_on_the_crown() -> void:
 	var d := _data("warrior", XP_TOP)
 	var s := _screen("warrior", d)
 	s.press(&"vortex")
-	assert_eq(s.loadout.ultimate(), &"vortex")
-	assert_eq(SaveData.hero(d, "warrior").ultimate, "vortex")
-	assert_eq(s.view.state_of(&"vortex"), HeroLoadout.State.EQUIPPED)
-	assert_eq(s.view.state_of(&"cleave"), HeroLoadout.State.OPEN)
+	assert_eq(s.loadout.ultimate(), &"cleave", "redesign A.3: the weapon's ultimate is fixed, pressing the Voragem changes nothing")
+	assert_eq(SaveData.hero(d, "warrior").ultimate, "")
 
 
 func test_direction_input_moves_the_focus() -> void:

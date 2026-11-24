@@ -84,7 +84,7 @@ func test_the_prices() -> void:
 	for b in vine.branches():
 		costs[b] = vine.nodes_of(b).map(func(n: VineNode) -> int: return n.cost)
 	assert_eq(costs[&"provisao"], [3, 6, 10])
-	assert_eq(costs[&"vida"], [5, 10, 20])
+	assert_eq(costs[&"vida"], [5, 10, 20, 30, 12], "Respiro (Prata 30) and Ainda de Pé (Memória 12) after the three of life")
 	assert_eq(vine.find(&"prata").mods[0].value(1), 0.25)
 	var forge := Forge.new(Forge.load_catalog())
 	assert_eq([forge.find(&"temper_1").cost, forge.find(&"temper_2").cost], [20, 45])
