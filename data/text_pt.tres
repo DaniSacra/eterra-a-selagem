@@ -637,6 +637,7 @@ entries = {
 "hud_ult_charging": "Carga {n}%",
 "hud_ult_locked_tip": "A ultimate abre na Maestria {n}",
 "hud_ult_charge_tip": "A ultimate enche com Ômegas e com o dano que você causa e sofre",
+"hud_shout_tip": "{key}: Brado",
 "end_xp": "+{n} XP",
 "end_level_up": "Nível {n} alcançado",
 "end_unlocked": "Dom revelado: {name}",
