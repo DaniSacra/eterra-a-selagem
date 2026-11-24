@@ -184,16 +184,16 @@ func test_the_row_is_centred_at_the_foot() -> void:
 	assert_lt(area / (screen.x * screen.y), 0.075)
 
 
-func test_the_bars_stack_magia_over_life_beside_the_medallion() -> void:
+func test_the_bars_stack_life_over_magia_beside_the_medallion() -> void:
 	var hud := await _hud_with("")
 	var crest := hud._crest.get_global_rect()
 	var magick := hud._magick.get_global_rect()
 	var life := hud._life.get_global_rect()
 	assert_gte(magick.position.x, crest.end.x, "right of the medallion")
-	assert_lt(magick.end.y, life.position.y, "Magia over life")
-	assert_lt(life.end.y, hud._charge.get_global_rect().position.y + 1.0, "the ultimate's charge under life")
+	assert_lt(life.end.y, magick.position.y, "life over Magia (Lote B)")
+	assert_lt(magick.end.y, hud._charge.get_global_rect().position.y + 1.0, "the ultimate's charge under the bars")
 	assert_almost_eq(magick.position.x, life.position.x, 0.5, "left edges together")
-	assert_lte(life.end.y, crest.end.y + 1.0, "no lower than the medallion")
+	assert_lte(magick.end.y, crest.end.y + 1.0, "no lower than the medallion")
 	assert_gte(magick.position.y, crest.position.y - 1.0, "no higher than it")
 
 
