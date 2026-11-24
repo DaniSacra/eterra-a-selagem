@@ -65,10 +65,10 @@ func test_the_ultimate_of_a_level() -> void:
 	var hero := HeroDef.warrior()
 	# C1: the cleave at Mastery 3, the vortex at 10
 	assert_null(hero.ult_for(&"", 2), "Mastery 2: none")
-	assert_eq(hero.ult_for(&"", 3).id, &"cleave", "Mastery 3, never chosen: the first unlocked")
-	assert_eq(hero.ult_for(&"vortex", 7).id, &"cleave", "chosen but locked: the first unlocked")
-	assert_eq(hero.ult_for(&"vortex", 10).id, &"vortex", "chosen and unlocked: that one")
-	assert_eq(hero.ult_for(&"cleave", 13).id, &"cleave")
+	assert_eq(hero.ult_for_weapon(3).id, &"cleave", "Mastery 3: the Emeth's one")
+	assert_eq(hero.ult_for_weapon(7).id, &"cleave")
+	assert_eq(hero.ult_for_weapon(10).id, &"cleave", "the Voragem is in reserve: never the hero's")
+	assert_eq(hero.ult_for_weapon(13).id, &"cleave")
 	assert_eq(hero.first_ult_level(), 3)
 
 
@@ -116,7 +116,7 @@ func test_mastery_6_without_a_choice_plays_the_cleave_and_the_r_key_lets_it_go()
 	assert_false(slot.ready_ring(), "spent: the ring goes with the charge")
 
 
-func test_a_locked_choice_falls_back_to_the_unlocked_one() -> void:
+func test_a_saved_choice_is_ignored_the_weapons_ultimate_plays() -> void:
 	await _start(HeroDef.warrior().mastery.total_to(7), "vortex")
 	assert_eq(game.ultimate, "cleave")
 

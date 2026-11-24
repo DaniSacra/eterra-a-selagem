@@ -134,9 +134,9 @@ func toggle(id: StringName) -> bool:
 	return true
 
 
-## The ultimate the next descent plays: the one chosen, or the first unlocked when none is (HeroDef.ult_for, T5).
+## The ultimate the next descent plays: the fixed one of the hero's weapon (redesign A.3), none below its Mastery level.
 func ultimate() -> StringName:
-	var u := hero.ult_for(StringName(block.ultimate), level())
+	var u := hero.ult_for_weapon(level())
 	return u.id if u != null else &""
 
 
@@ -144,13 +144,10 @@ func ult_open(u: UltDef) -> bool:
 	return u.mastery_level <= level()
 
 
-## Chooses an ultimate (only one unlocked; choosing the one already chosen keeps it). False when it is locked.
+## Compatibility shim until the UI drops the choice (UI-2): there is nothing to choose now, the ultimate is the weapon's.
+## True only when id is that fixed ultimate; nothing is written to the save (block.ultimate is no longer read).
 func choose_ult(id: StringName) -> bool:
-	var u := hero.ultimate(id)
-	if u == null or not ult_open(u):
-		return false
-	block.ultimate = String(id)
-	return true
+	return id != &"" and ultimate() == id
 
 
 ## Why a Gift cannot go on now, as {key, args} for T.t ({} when it can, or it is on).

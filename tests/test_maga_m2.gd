@@ -134,9 +134,8 @@ func test_the_two_ultimates_open_at_mastery_two_and_six() -> void:
 	assert_eq([hero.ultimates[1].id, hero.ultimates[1].mastery_level], [&"dome_abs", 6])
 	assert_eq(hero.ultimates[1].kind, UltDef.Kind.DOME)
 	assert_null(hero.ult_for(&"", 1), "none before the Mastery opens one")
-	assert_eq(hero.ult_for(&"", 2).id, &"storm")
-	assert_eq(hero.ult_for(&"dome_abs", 5).id, &"storm", "not yet open: the first")
-	assert_eq(hero.ult_for(&"dome_abs", 6).id, &"dome_abs")
+	assert_eq(hero.ult_for_weapon(2).id, &"storm")
+	assert_eq(hero.ult_for_weapon(6).id, &"storm", "the Suspensão Absoluta is in reserve (GE-4 removes it)")
 	assert_eq(hero.ultimates[1].dome_blast_cost, 5.0)
 
 

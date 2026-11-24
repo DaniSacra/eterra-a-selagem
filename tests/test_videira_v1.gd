@@ -30,12 +30,12 @@ func after_each() -> void:
 
 # ---------- data ----------
 
-func test_nine_nodes_three_branches_costs_and_coins() -> void:
-	assert_eq(tree.catalog.size(), 9)
+func test_eleven_nodes_three_branches_costs_and_coins() -> void:
+	assert_eq(tree.catalog.size(), 11, "Vida has Respiro and Ainda de Pé as steps 4 and 5 (redesign G)")
 	assert_eq(tree.branches(), [&"vida", &"provisao", &"perseveranca"] as Array[StringName])
 	for branch in tree.branches():
 		var nodes := tree.nodes_of(branch)
-		assert_eq(nodes.size(), 3, "%s has three nodes" % branch)
+		assert_eq(nodes.size(), 5 if branch == &"vida" else 3, "%s nodes" % branch)
 		for i in 3:
 			assert_eq(nodes[i].step, i + 1)
 			assert_eq(nodes[i].cost, ([3, 6, 10] if branch == &"provisao" else [5, 10, 20])[i], "%s step %d" % [branch, i + 1])

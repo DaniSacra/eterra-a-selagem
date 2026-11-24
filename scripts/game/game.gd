@@ -1874,12 +1874,9 @@ func _equip_talents() -> void:
 		talents_opened = book.open_ones(level, opened).size()
 		if Dev.has("hero-equip"):
 			_warn_dropped(book, block.equipped, ids, level)
-		# the one chosen or, never chosen (T5), the first the level unlocks, kept in the save as the choice
-		var ult := hero.ult_for(StringName(block.ultimate), level)
+		# the fixed ultimate of the hero's weapon, once its Mastery level is reached (redesign A.3; no choice, nothing saved)
+		var ult := hero.ult_for_weapon(level)
 		ultimate = String(ult.id) if ult != null else ""
-		if ultimate != "" and block.ultimate != ultimate and Save.enabled:
-			block.ultimate = ultimate
-			Save.write()
 	elif Dev.has("hero-equip"):
 		push_warning("--hero-equip: the robot takes no Gifts from the save; use --talents=a,b")
 	if Dev.has("ultimate"):
@@ -1889,7 +1886,8 @@ func _equip_talents() -> void:
 		if chosen == null:
 			push_warning("--ultimate: no ultimate %s" % Dev.arg("ultimate"))
 	if hero.arcane != null and ultimate == "" and not hero.ultimates.is_empty() and (bot != null or Dev.has("talents")):
-		ultimate = String(hero.ultimates[0].id)  # (the robot and --talents play the Tempestade; a person gets it at Mastery 2, as her own curve says)
+		var fixed := hero.ult_for_weapon(99)
+		ultimate = String(fixed.id) if fixed != null else ""  # (the robot and --talents play the Tempestade; a person gets it at Mastery 2, as her own curve says)
 	talents = ids
 	if bot != null or Dev.has("talents"):
 		talents_opened = ids.size()

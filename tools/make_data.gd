@@ -3012,7 +3012,7 @@ func _oficios() -> void:
 	ResourceSaver.save(d, "res://data/oficios/oficios.tres")
 
 
-## A Videira (Daniel 2026-11-23, docs/design/videira_pacote_2026-11-23/; it replaced "O Preparo"): 3 branches of 3 nodes, no
+## A Videira (Daniel 2026-11-23, docs/design/videira_pacote_2026-11-23/; it replaced "O Preparo"): 3 branches of 3 nodes (Vida has 5), no
 ## damage, small permanent improvements for every hero. Costs 5, 10 and 20 a branch (the package's): Vida and
 ## Perseverança in Prata Antiga, Provisão in Fragmento de Memória. File order = purchase order within a branch; the robot
 ## (--vine=N, also --account=N) takes step 1 of every branch, then step 2, then step 3 (Vine.first).
@@ -3023,22 +3023,25 @@ func _vine() -> void:
 		DirAccess.remove_absolute(dir + f)
 	var S := MaterialPurse.SILVER
 	var M := MaterialPurse.MEMORY
-	var costs := {&"vida": [5, 10, 20], &"provisao": [3, 6, 10], &"perseveranca": [5, 10, 20]}
+	var costs := {&"vida": [5, 10, 20, 30, 12], &"provisao": [3, 6, 10], &"perseveranca": [5, 10, 20]}
 	var list := [
-		[&"vida", S, [[&"vida_1", &"max_hp", 5], [&"vida_2", &"max_hp", 5], [&"vida_3", &"max_hp", 5]]],
+		# redesign 2026-11-24 (04_PLANO A.5 and G): Respiro and Ainda de Pé, the Gifts the Warrior and the Maga lost, are steps 4 and
+		# 5 of Vida (Prata 30; Memória 12, as the Gift it replaces cost 5 of Memória); no fourth branch, no new trunk art
+		[&"vida", S, [[&"vida_1", &"max_hp", 5], [&"vida_2", &"max_hp", 5], [&"vida_3", &"max_hp", 5],
+			[&"respiro", &"room_heal", 2], [&"ainda_de_pe", &"rise_share", 0.5]]],
 		[&"provisao", M, [[&"viajante", &"traveler", 1], [&"estoque", &"shop_extra", 1], [&"reserva", &"shop_care", 1]]],
 		[&"perseveranca", S, [[&"prata", &"silver_pct", 0.25], [&"memoria", &"memory_pct", 0.25], [&"materiais", &"material_pct", 0.25]]],
 	]
 	var i := 0
 	for branch: Array in list:
-		for step in 3:
+		for step in (branch[2] as Array).size():
 			var row: Array = branch[2][step]
 			var n := VineNode.new()
 			n.id = row[0]
 			n.branch = branch[0]
 			n.step = step + 1
 			n.requires = branch[2][step - 1][0] if step > 0 else &""
-			n.material = branch[1]
+			n.material = M if row[0] == &"ainda_de_pe" else branch[1]
 			n.cost = costs[branch[0]][step]
 			n.name_key = StringName("vine_" + n.id)
 			n.desc_key = StringName("vine_%s_desc" % n.id)

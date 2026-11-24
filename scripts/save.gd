@@ -99,8 +99,6 @@ func _dev_hero() -> void:
 			SaveData.open_revealed(block, HeroDef.maga() if maga else null)
 	if Dev.has("hero-equip"):
 		block.equipped = Array(Dev.arg("hero-equip").split(",", false))
-	if Dev.has("hero-ult"):
-		block.ultimate = Dev.arg("hero-ult")
 
 
 ## Captures and checks (E6): --wins=N (Morvath sealed N times: the Juramentos open) and, on the title,

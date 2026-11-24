@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="VineNode" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_p6sm4"]
+[ext_resource type="Script" path="res://scripts/core/vine_node.gd" id="2_dymid"]
+
+[sub_resource type="Resource" id="Resource_wyq0l"]
+script = ExtResource("1_p6sm4")
+stat = &"silver_pct"
+base = 0.25
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_dymid")
+id = &"prata"
+branch = &"perseveranca"
+name_key = &"vine_prata"
+desc_key = &"vine_prata_desc"
+cost = 5
+mods = Array[ExtResource("1_p6sm4")]([SubResource("Resource_wyq0l")])
