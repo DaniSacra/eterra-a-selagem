@@ -259,9 +259,9 @@ func _place(discs: Array[Rect2], near: int, screen: Vector2, cam: Camera3D) -> v
 			others.append(discs[i].grow(4.0))
 	var best := Vector2.ZERO
 	var best_cost := INF
-	for side in [1, -1]:
+	for side: int in [1, -1]:
 		var x := me.end.x + GAP if side == 1 else me.position.x - GAP - s.x
-		for lift in [0.0, -1.0, 1.0]:
+		for lift: float in [0.0, -1.0, 1.0]:
 			var y := me.get_center().y - s.y * 0.5 + lift * (s.y * 0.5 + 6.0)
 			var p := Vector2(clampf(x, EDGE, maxf(EDGE, screen.x - EDGE - s.x)), clampf(y, EDGE, maxf(EDGE, screen.y - EDGE - s.y)))
 			var rect := Rect2(p, s)

@@ -861,7 +861,6 @@ entries = {
 "door_mod_angel": "Bênção de {name}",
 "door_mod_angels": "Dois anjos se encontram aqui: você escolhe um",
 "door_mod_find": "Há um achado aqui: {name}",
-"hud_build_key": "{key}: resumo da build",
 "enchant_title": "Escolha um Encanto",
 "enchant_hint": "O Encanto muda um golpe da Emeth até o fim da descida.",
 "enchant_pick_hint": "Até dois Encantos por descida. Escolha um.",
