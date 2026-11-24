@@ -179,6 +179,11 @@ class Kind:
 	## (BakedModel.ground_speed; 0: not measured, Horde.walk_rate falls back to its old pace).
 	var ground := 0.0
 
+## Build of a baked model on top of the def's size (x and z, y), so a body shared with another enemy gets its own
+## silhouette without a new bake (the assets are at 68.55 of 70 MB): the Trinca squat and broad, the Varredor taller,
+## narrower, its pole longer. Draw only: the simulation never reads it.
+const BUILD := {&"trio": Vector3(1.25, 0.88, 1.25), &"sweeper": Vector3(0.84, 1.14, 0.84)}
+
 ## Visual layers of everything drawn here (torches skip the crowd's layer).
 var layers := 1
 ## The round shade under each figure's feet (false on a page, FigureSketch: the paper has no floor).
@@ -410,7 +415,7 @@ func add_kind(k: Kind, d: EnemyDef, anim: StringName, t: float, pos: Vector3, ya
 		basis = basis * Basis(Vector3.RIGHT, tilt)
 	if lean != 0.0:
 		basis = basis * Basis(Vector3.BACK, lean)
-	basis = basis.scaled(squash * d.size)
+	basis = basis.scaled(squash * d.size * (BUILD.get(d.model, Vector3.ONE) as Vector3))
 	var row := c.first + (a if p - a < 0.5 else next)
 	if from_row >= 0 and fade < 1.0:
 		# T5b P1-3: toward the new clip's own blend (its pose a and the next by p - a), not its nearest pose, which

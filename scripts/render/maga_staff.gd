@@ -14,6 +14,10 @@ const MODEL_HAND := -0.36
 ## Fist to each point, in the sword's space (1 = 1.1 m as drawn): the whole staff about her drawn height, a little
 ## under the art's (there it is longer than she is tall, and the lower head would cut the floor in the idle).
 const HALF := 1.2
+## The orb of a head, in the model's own space (found on the amber of its texture), and the glow's radius over it.
+const ORB_AT := Vector3(0.0, 0.28, 0.0)
+const ORB_RADIUS := 0.075
+const GLOW := preload("res://assets/shaders/staff_glow.gdshader")
 
 
 ## The staff: an empty holder at the fist with the two copies under it ("Upper" and "Lower"), painted as the body.
@@ -31,4 +35,31 @@ static func make() -> MeshInstance3D:
 		root.add_child(mi)
 	scene.free()
 	HeroBody._fill(root)
+	for half in root.get_children():  # after the fill, which paints every mesh it finds
+		half.add_child(_glow(half.get_index()))
 	return root
+
+
+## The amber haze of one head: a small sphere of 8 by 4 rings over the orb, additive (staff_glow.gdshader), no particles.
+static func _glow(index: int) -> MeshInstance3D:
+	var ball := SphereMesh.new()
+	ball.radius = ORB_RADIUS
+	ball.height = ORB_RADIUS * 2.0
+	ball.radial_segments = 8
+	ball.rings = 4
+	var mat := ShaderMaterial.new()
+	mat.shader = GLOW
+	mat.set_shader_parameter(&"phase", PI * index)  # the two heads breathe against each other
+	var glow := MeshInstance3D.new()
+	glow.name = "Glow"
+	glow.mesh = ball
+	glow.material_override = mat
+	glow.position = ORB_AT
+	glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return glow
+
+
+## The glow's lift for a cast (0 to 1), for whoever holds the staff (the hero's cast hook calls it; idle is 0).
+static func set_cast(staff: Node3D, amount: float) -> void:
+	for glow in staff.find_children("Glow", "MeshInstance3D", true, false):
+		((glow as MeshInstance3D).material_override as ShaderMaterial).set_shader_parameter(&"cast", clampf(amount, 0.0, 1.0))

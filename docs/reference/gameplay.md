@@ -660,7 +660,7 @@ nele, 0 vence; evoluído (4 Dons, Forja 2, conta 6) 12 chegam, 1 morre nele, 5 v
 - **Morvath**: maldição 55 graus/s por 0,9 s (era 75 e 1,4; passo 6 do plano revisado).
 - Modelos: `trio` (esqueleto sem cutelo, curvado) e `sweeper` (besteiro sem besta, haste e lâmina do cutelo), `tools/bake.gd`, zero créditos. Provisórios.
 - Sinais (só desenho, `scripts/game/c5_marks.gd`, `C5Marks`, lê `horde.list` por quadro; testes `tests/test_c5_signals.gd`): anel fino marfim que fecha de 1,5 a 0,35 m no monte em `rise_time` (some sem o grupo de pé); 4 chevrons vermelhos de aviso sobre a faixa do Varredor no preparo, apontando o sentido da varredura (`side`), dentro da faixa (sem área nova).
-- Pendente: silhueta lado a lado com os seis.
+- Silhueta própria (2026-11-23): `CrowdRenderer.BUILD` (Trinca baixa e larga, Varredor alto e magro), sem assado novo (68,55 de 70 MB). Pendente: aprovação do `art-director` lado a lado na GPU.
 
 ## C1b, Frente 1: a Quebra e o preço do erro (2026-11-22; `docs/design/combate_c1b.md`; testes em `tests/test_c1b_break.gd`)
 - **Quebra (poise)**: `EnemyDef.poise` (100 nos quatro comuns: esqueleto, corredor, feiticeiro, besteiro; 0 em elites, guardiões, Trinca, Escudo, Sacerdote, Varredor e chefes), `poise_stun` 1,2 s, `poise_vuln` +40% de dano enquanto quebrado, `poise_idle` 4 s sem golpe que tire poise e ele enche. Lógica pura em `scripts/core/poise.gd` (`share`, `wear`, `settle`, `takes`); o estado e a quebra em `Horde._wear_poise` (chamada em `damage()` depois do dano em vida) e `_poise_timers`.

@@ -40,7 +40,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   mão); `HeroBody.make(id)`. A Maga é `hero_maga_img-rigged.glb` (mesmos 24 ossos e orçamento do Guerreiro) com os clipes
   da Quaternius levados a ela por `tools/bake_hero.gd -- maga` (`MAGA_CLIPS`; todos os golpes tocam `Cast`, o Passo `Blink`;
   os nomes de espada do Guerreiro apontam para `Cast`; o script imprime a altura das pontas do bastão em cada clipe) e o
-  bastão `MagaStaff` (duas cópias da cabeça de `w_maga_staff` unidas no punho, `HALF` 1,2 do espaço da espada para cada lado).
+  bastão `MagaStaff` (duas cópias da cabeça de `w_maga_staff` unidas no punho, `HALF` 1,2 do espaço da espada para cada lado). Brilho âmbar nas pontas (2026-11-23): uma esfera de 8 x 4 anéis em cada orbe (`MagaStaff._glow`, `staff_glow.gdshader`, aditivo, sem partícula, respira em contrafase, abaixo do limiar do brilho); `MagaStaff.set_cast(staff, 0..1)` levanta o brilho ao conjurar (falta o gancho do `Player`, de `scripts/game/`).
 - Proporção: o KayKit é cabeçudo; `scripts/render/slender.gd` (`Slender`) afina o boneco depois da animação (cabeça
   menor, pernas e tronco mais longos), só no assado dos bonecos do KayKit guardados (os modelos do Meshy já têm a proporção certa).
 - Câmera da imagem de referência, medida nela: girada 35° (`Feel.cam_yaw`; a sala vira o losango da pintura),

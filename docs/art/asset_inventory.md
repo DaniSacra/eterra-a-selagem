@@ -67,6 +67,13 @@ Lote 2B (2026-11-20): os nove reassados juntos (opção `"centred"` no erguer, `
 hub (teto 70).
 
 **Lote do Canalizador (2026-11-23): assados 69,61 MB (teto 70, sem espaço) para 68,55 MB com o novo `channeler.res` (3,35 MB).**
+**Trinca e Varredor, silhueta própria (2026-11-23, item 8): orçamento 68,55 MB, sem assado novo e sem alteração de assados.** Os dois já têm assado
+próprio (`trio.res` 3,41 MB, `sweeper.res` 3,81 MB, corpos provisórios do esqueleto e do besteiro). A silhueta vem do desenho, não do disco:
+`CrowdRenderer.BUILD` (por modelo, só desenho, a simulação não lê): Trinca (`trio`) 1,25 x 0,88 x 1,25 (baixa e larga, três corcundas), Varredor
+(`sweeper`) 0,84 x 1,14 x 0,84 (mais alto, mais magro, haste mais longa). Para lado a lado dos oito comuns a decisão é do `art-director` na captura da GPU.
+Se ele quiser mais (peça nova, outra arma), é reassar e o custo é de cerca de 3,4 a 3,8 MB por assado: só cabe cortando antes poses
+(candidatos acima).
+
 Peso de um assado = vértices x poses (a textura de 1024 pesa só 0,25 a 0,4 MB: ATLAS 768 ou 512 não rende). Folga aberta
 nos clipes comuns (`COMMON_ANIMS` em `tools/bake.gd`, as poses se misturam, a duração não muda): `death` 16 para 11 poses,
 `hit` 8 para 6, `rise` 12 para 9; `PIPELINE` 2 e todos reassados (os dois do hub também). `tests/test_living_crowd.gd` aceita
