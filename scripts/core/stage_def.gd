@@ -113,6 +113,8 @@ enum Tier { COMMON, HARD, SPECIAL }
 ## Prata, a guardian won, each of Morvath's phases reached (silver_phase each, up to phase_max) and the sealing;
 ## Fragmentos de Memória by a door of Memória, a guardian won, a Provação won and the sealing.
 @export var silver_elite := 1
+## Prata for every fight room won (combat, guardian; a child who dies in room 5 still takes some home; balance 2026-11-24).
+@export var silver_room := 0
 @export var silver_door := 10
 @export var silver_guardian := 6
 ## Life every won fight room (combat, guardian) gives back, on top of the Maestria's Respiro (balance 2026-11-24).
@@ -129,6 +131,8 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var relic_silver := 6
 @export var memory_door := 3
 @export var memory_guardian := 2
+## Memória for walking into the guardian's room, won or not (the first one on the way down).
+@export var memory_guardian_reach := 0
 @export var memory_trial := 2
 @export var memory_victory := 3
 ## Fatia 2: Esmeralda by Morvath's phase emerald_phase_at reached (once) and the sealing (sistemas.md 1.2).

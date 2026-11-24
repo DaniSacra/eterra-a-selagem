@@ -173,7 +173,7 @@ func test_the_focus_walks_the_weapon_and_the_strip() -> void:
 
 func test_it_opens_on_the_cheapest_thing_to_forge() -> void:
 	var f := _screen(_data(30, true))
-	assert_eq(f.mark, &"temper", "Temperar I is 15")
+	assert_true(f.mark in [&"temper", &"inscribe"], "Temperar I and Inscrever are both 20 now (a tie; was 15 for Temperar)")
 	var g := _screen(_data(0))
 	assert_eq(g.mark, &"temper", "nothing to forge: the Temperar")
 

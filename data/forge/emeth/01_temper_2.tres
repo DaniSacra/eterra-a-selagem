@@ -17,5 +17,5 @@ id = &"temper_2"
 rank = 2
 name_key = &"forge_temper_2"
 desc_key = &"forge_temper_2_desc"
-cost = 35
+cost = 45
 mods = Array[ExtResource("1_uunuh")]([SubResource("Resource_80tuk")])

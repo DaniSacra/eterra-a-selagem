@@ -38,7 +38,7 @@ func test_nine_nodes_three_branches_costs_and_coins() -> void:
 		assert_eq(nodes.size(), 3, "%s has three nodes" % branch)
 		for i in 3:
 			assert_eq(nodes[i].step, i + 1)
-			assert_eq(nodes[i].cost, [5, 10, 20][i], "%s step %d" % [branch, i + 1])
+			assert_eq(nodes[i].cost, ([3, 6, 10] if branch == &"provisao" else [5, 10, 20])[i], "%s step %d" % [branch, i + 1])
 			assert_eq(nodes[i].material, MaterialPurse.MEMORY if branch == &"provisao" else MaterialPurse.SILVER)
 			assert_eq(nodes[i].requires, &"" if i == 0 else nodes[i - 1].id)
 			assert_false(nodes[i].mods.is_empty())
@@ -76,12 +76,12 @@ func test_the_branch_order_and_the_states() -> void:
 func test_the_coins_are_the_right_ones() -> void:
 	var d := _data(50, 7)
 	assert_true(tree.buy(d, &"viajante"))
-	assert_eq(MaterialPurse.amount(d, MaterialPurse.MEMORY), 2)
+	assert_eq(MaterialPurse.amount(d, MaterialPurse.MEMORY), 4)
 	assert_eq(MaterialPurse.amount(d, MaterialPurse.SILVER), 50, "Provisão takes no Prata")
 	assert_true(tree.buy(d, &"prata"))
 	assert_eq(MaterialPurse.amount(d, MaterialPurse.SILVER), 45)
-	assert_eq(MaterialPurse.amount(d, MaterialPurse.MEMORY), 2, "Perseverança takes no Memória")
-	assert_false(tree.buy(d, &"estoque"), "10 Memória and he has 2")
+	assert_eq(MaterialPurse.amount(d, MaterialPurse.MEMORY), 4, "Perseverança takes no Memória")
+	assert_false(tree.buy(d, &"estoque"), "6 Memória and he has 4")
 
 
 # ---------- effects ----------
@@ -187,11 +187,11 @@ func test_materials_ten_percent_each() -> void:
 
 func test_the_purse_of_a_descent_reads_the_stats() -> void:
 	var g := _game(6)
-	assert_almost_eq(float(g.materials.bonus[MaterialPurse.SILVER]), 0.1, 0.001)
-	assert_almost_eq(float(g.materials.bonus[MaterialPurse.MEMORY]), 0.1, 0.001)
+	assert_almost_eq(float(g.materials.bonus[MaterialPurse.SILVER]), 0.25, 0.001)
+	assert_almost_eq(float(g.materials.bonus[MaterialPurse.MEMORY]), 0.25, 0.001)
 	assert_almost_eq(float(g.materials.bonus[&"all"]), 0.0, 0.001, "step 3 is not in the first six")
 	var all := _game(9)
-	assert_almost_eq(float(all.materials.bonus[&"all"]), 0.1, 0.001)
+	assert_almost_eq(float(all.materials.bonus[&"all"]), 0.25, 0.001)
 
 
 # ---------- the robot ----------

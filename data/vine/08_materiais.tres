@@ -6,7 +6,7 @@
 [sub_resource type="Resource" id="Resource_1yni4"]
 script = ExtResource("1_23y1i")
 stat = &"material_pct"
-base = 0.1
+base = 0.25
 per_level = PackedFloat32Array()
 by_rarity = false
 

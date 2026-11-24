@@ -6,6 +6,7 @@
 script = ExtResource("1_oingo")
 speed = 6.75
 dodge_speed = 37.5
+bang_lead = 0.45
 sprint_scale = 1.6481481481481481
 move_scale_light = 0.0
 move_scale_heavy = 0.0

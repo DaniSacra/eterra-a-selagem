@@ -67,7 +67,7 @@ func _hammer(f: ForgeScreen) -> void:
 
 
 func test_the_forge_is_a_bench_that_buys_in_order() -> void:
-	var d := _data(1, 60)
+	var d := _data(1, 75)
 	var f := _forge(d)
 	assert_not_null(f.bench, "the Emeth on its cloth")
 	assert_eq(f.mark, &"temper")
@@ -80,7 +80,7 @@ func test_the_forge_is_a_bench_that_buys_in_order() -> void:
 	assert_eq(bought, [&"temper_1"] as Array[StringName])
 	assert_eq(f.shown.id, &"temper_2", "on to the next")
 	assert_eq(f.chips[0].info.look, ForgeInfo.Look.ON, "forged: on the blade")
-	assert_eq(f.info.look, ForgeInfo.Look.READY, "45 of 35")
+	assert_eq(f.info.look, ForgeInfo.Look.READY, "55 of 45")
 	_hammer(f)
 	assert_eq(Forge.temper(d), 2)
 	# (Fatia 2: Temperar III next, 60 Prata; 10 left)
@@ -97,9 +97,9 @@ func test_the_forge_is_a_bench_that_buys_in_order() -> void:
 
 func test_the_forge_says_what_is_missing() -> void:
 	var f := _forge(_data(1, 5))
-	assert_eq(f.info.action, ForgeInfo.Action.NONE, "5 of 15: no hammer")
+	assert_eq(f.info.action, ForgeInfo.Action.NONE, "5 of 20: no hammer")
 	var state := f.find_child("state", true, false) as Label
-	assert_eq(state.text, T.t(&"forge_lack", {"n": 10, "name": T.t(&"material_silver_short")}))
+	assert_eq(state.text, T.t(&"forge_lack", {"n": 15, "name": T.t(&"material_silver_short")}))
 	f.focus_chip(1)
 	assert_eq(state.text, T.t(&"forge_state_needs", {"name": T.t(&"forge_temper_1")}))
 	assert_eq((f.find_child("have", true, false) as Label).text, T.t(&"forge_have", {"n": 5}))

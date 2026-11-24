@@ -19,5 +19,5 @@ requires = &"estoque"
 name_key = &"vine_reserva"
 desc_key = &"vine_reserva_desc"
 material = &"memory"
-cost = 20
+cost = 10
 mods = Array[ExtResource("1_pbvtk")]([SubResource("Resource_vrafq")])
