@@ -14,13 +14,13 @@ Coordenadas em pixels da própria captura (x, y a partir do canto de cima à esq
 ## Resumo por prioridade
 | # | Item | Veredito | Prio | Dono |
 |---|------|----------|------|------|
-| 1 | Laje armada como retângulo vermelho cheio (sala 2) | AJUSTAR | P0 | `technical-artist` |
+| 1 | Laje armada como retângulo vermelho cheio (sala 2) | FEITO no código; `laje.png` não mostra laje, falta captura | P0 | `technical-artist` |
 | 2 | Forja: disco preto no pomo e no guarda-mão | AJUSTAR | P0 | `ui-ux-designer` |
 | 3 | Dons: nomes dos ramos longe dos nós | AJUSTAR | P1 | `ui-ux-designer` |
 | 4 | Dons: número do nó escuro não diz "Maestria" | AJUSTAR | P1 | `ui-ux-designer` |
 | 5 | Videira: broto comprado perde o nome | AJUSTAR | P1 | `ui-ux-designer` |
 | 6 | Encanto: o mesmo ícone nas três cartas | AJUSTAR | P1 | `ui-ux-designer` |
-| 7 | GR-8 raio-x de pontinhos (ainda `bayer4`) | AJUSTAR | P1 | `technical-artist` |
+| 7 | GR-8 raio-x de pontinhos | FEITO em parte; sem captura com o herói atrás de peça | P1 | `technical-artist` |
 | 8 | Retrato da Maga no HUD fotográfico | AJUSTAR (asset) | P1 | `ui-ux-designer` + pedido ChatGPT |
 | 9 | Legenda da última habilidade ao lado de "Espaço" | AJUSTAR | P2 | `ui-ux-designer` |
 | 10 | Encontro dos anjos: HUD por cima | AJUSTAR | P2 | `ui-ux-designer` |
@@ -30,8 +30,16 @@ Coordenadas em pixels da própria captura (x, y a partir do canto de cima à esq
 | 14 | Maga com o bastão aceso | FEITO | - | - |
 | 15 | Luz morna da Câmara de Morvath | FEITO | - | - |
 | 16 | GR-17 letras do golpe de Morvath | SAI (Morvath sem marca no chão, `159f206`) | - | - |
-| 17 | GR-19 fio da mira | SAI provável (besteiro mudo pelo PT-1); confirmar | - | - |
-| 18 | Trinca e Varredor, Canalizador em jogo, portas, Suspensão, GR-18, GR-20, GR-26, GR-27 (dano por tempo) | SEM CAPTURA útil | - | ver lista no fim |
+| 17 | GR-19 fio da mira | SAI (`besteiro.png`: sem linha) | - | - |
+| 18 | Faixa do Canalizador opaca e chapada | AJUSTAR | P1 | `technical-artist` |
+| 19 | Rastro de fogo da Bênção: discos laranja opacos | AJUSTAR | P1 | `technical-artist` |
+| 20 | GR-26 duas barras no guardião | AJUSTAR | P2 | `ui-ux-designer` |
+| 21 | GR-27 dano por tempo pequeno e cinza | AJUSTAR | P2 | `combat-feel-director` |
+| 22 | Portas: ponto preto no medalhão da recompensa | AJUSTAR | P2 | `ui-ux-designer` |
+| 23 | Trinca: silhueta baixa não lê | AJUSTAR | P2 | `technical-artist` |
+| 24 | Varredor, Canalizador (modelo), portas (resto), Livro de Ahk | FEITO | - | - |
+| 25 | GR-18 besta | SAI provisório (sem palitos em repouso) | - | - |
+| 26 | Suspensão Absoluta, GR-20 arco do giro, laje armada, GR-8 | SEM CAPTURA útil | - | lista no fim |
 
 ## Itens
 
@@ -95,8 +103,7 @@ anjos pintados; espera arte.
 
 ### 7. GR-8 raio-x de pontinhos (P1, `technical-artist`)
 **FEITO em parte (2026-11-23, falta captura GPU):** o include já não usava `bayer4` (código morto, removido). No Forward+ o limiar é a média de dois ruídos por pixel (sem grade) e a borda suave vai por todo o raio; no Compatibility segue o ruído simples. Esmaecimento realmente contínuo exigiria trocar os 8 shaders opacos por transparentes; não feito. Se a captura ainda mostrar pontos, é esse o próximo passo.
-`dicas.png` (480..690, 430..640): o bloco ao lado do herói mostra a grade de pontos. `assets/shaders/see_through.gdshaderinc`
-ainda usa `bayer4`. Pedido: no Forward+ o esmaecimento contínuo (alfa até 0,35 com borda suave de 0,6 m ao redor do
+`dicas.png` (480..690, 430..640): o bloco ao lado do herói mostra pontos (correção: o `bayer4` era código morto; os pontos vêm do ruído). Pedido: no Forward+ o esmaecimento contínuo (alfa até 0,35 com borda suave de 0,6 m ao redor do
 herói); o pontilhado fica só no Compatibility. Aceite: captura GPU 1080p com o herói atrás de pilar sem grade de pontos
 visível.
 
@@ -134,27 +141,65 @@ chapado; esperam a arte do ChatGPT (`assets/ui/shop/`).
 - GR-19: o besteiro não tem `ground_warning` (PT-1), então a mira não é desenhada. Confirmar com a captura 6 abaixo; se a
   linha ainda aparecer, volta como AJUSTAR (`technical-artist`, proposta original da revisão 2026-11-21b).
 
-### 18. Sem captura útil
-- Trinca e Varredor (`comuns_trinca_varredor.png`): não dá para apontar qual figura é a Trinca (baixa, larga, três
-  corcundas) nem ver a faixa do Varredor; as figuras grandes estão cortadas na borda esquerda e as barras de vida se
-  empilham (250..500, 470). Captura 1.
-- Canalizador: só o laboratório (`lab_game.png`, silhueta com orbes distinta do feiticeiro, bom); falta em jogo e a morte.
-  Captura 2.
-- Portas com anel, selo e caixa (PT-10): `porta_caixa.png` não mostra porta nenhuma. Captura 3.
-- Película e relógio da Suspensão Absoluta: captura 4.
-- GR-18 besta (código igual: `INK_EDGE` 0,09) e GR-19: captura 6. GR-20 arco do giro (`body_sat` 0,5 no
-  `crescent.gdshader`, igual): captura 5. GR-26 duas barras do guardião: captura 7. GR-27: os números diretos
-  ("55", "35") leem brancos com contorno, bom; falta o dano por tempo: captura 8.
+  Confirmado em `besteiro.png`: dois besteiros de pé, nenhuma linha no chão.
 
-## Capturas que faltam (sessão principal, uma por vez)
-1. `tools/gpu.sh shot docs/gallery/review_2026-11-23/trinca_varredor.png --stress=4 --stress-ids=trinca,varredor --hero-hp=99999 --seed=5 --shot-at=3`
-2. `tools/gpu.sh shot docs/gallery/review_2026-11-23/canalizador.png --stress=3 --stress-ids=canalizador --hero-hp=99999 --bot --seed=5 --shot-at=6`
-3. `tools/gpu.sh shot docs/gallery/review_2026-11-23/portas.png --bot --autopick --seed=5 --shot-on=reward --shot-after=1.5`
-4. `tools/gpu.sh shot docs/gallery/review_2026-11-23/suspensao.png --bot --autopick --seed=5 --hero=maga --ultimate=dome_abs --ult-full --shot-on=ult --shot-after=2`
-5. `tools/gpu.sh shot docs/gallery/review_2026-11-23/giro.png --bot --autopick --seed=5 --shot-on=spin --shot-after=0.1`
-6. `tools/gpu.sh shot docs/gallery/review_2026-11-23/besteiro.png --stress=3 --stress-ids=archer --hero-hp=99999 --seed=5 --shot-at=4`
-7. `tools/gpu.sh shot docs/gallery/review_2026-11-23/guardiao.png --bot --autopick --start=miniboss --seed=5 --shot-at=8`
-8. `tools/gpu.sh shot docs/gallery/review_2026-11-23/numeros_dot.png --bot --autopick --boons=25 --seed=5 --shot-at=9`
-9. Laje armada depois do item 1: a mesma sala de `porta_caixa.png` (o comando que gerou essa captura), no momento da laje acesa.
+## Segunda rodada (capturas GPU de 2026-11-23, `docs/gallery/review_2026-11-23/`)
 
-Se `--shot-on=spin` ou `--shot-on=reward` não existirem com esse nome, `--shot-at` no segundo certo serve.
+### 18. Faixa do Canalizador opaca (P1, `technical-artist`)
+`canalizador.png` (570..1130, 485..800): faixa magenta-vermelha de cerca de 1 m, opaca, sem borda nem textura, do
+Canalizador até atrás do herói. Tem `ground_warning` (o PT-1 permite), mas lê como fita adesiva sobre o chão e é a
+coisa mais saturada da tela, acima do herói. Pedido: estilo de aviso da casa (preenchimento com alfa até 0,3, aro de
+0,08 m no vermelho de aviso, enchimento de trás para a frente durante o preparo); magenta só no orbe do punho. Aceite:
+o chão aparece sob a faixa (luma do chão visível, juntas de pedra legíveis) e o herói continua o ponto mais claro.
+O modelo (orbes nos punhos, capuz) está FEITO: lê diferente do feiticeiro.
+
+### 19. Rastro de fogo da Bênção (P1, `technical-artist`)
+`numeros_dot.png` (850..1280, 470..900): sete discos laranja opacos em fila, cada um com cerca de 2,5 m. Efeito do
+herói com a cara de área de perigo inimiga e cobrindo inimigos e o chão. Pedido: efeito do herói em modo aditivo,
+alfa até 0,35 no miolo, borda que se desfaz (sem aro duro), labaredas ou brasas pequenas em vez de disco liso, na cor
+da família Chama; o vermelho e o laranja chapados ficam só para o que machuca o herói. Aceite: na mesma captura o
+inimigo dentro do rastro é legível e o rastro não se confunde com aviso.
+
+### 20. GR-26 duas barras no guardião (P2, `ui-ux-designer`)
+`guardiao.png`: barra do alto "Sacerdote Ancião" (520..1150, 60) e barra na cabeça (1085..1240, 152..165) dizem o
+mesmo. Pedido mantido: esconder a da cabeça quando há a barra do alto (a armadura dourada passa para a barra do alto).
+
+### 21. GR-27 dano por tempo (P2, `combat-feel-director`)
+`numeros_dot.png`: o dano direto "55" lê bem; os tiques "8" (842, 417, laranja) e "4" (771, 383, cinza) têm metade da
+altura e o cinza some no chão. Pedido: altura mínima 70% do número direto, sempre na cor da família com valor mínimo
+0,75 e contorno de 3 px; nunca cinza.
+
+### 22. Portas (FEITO, um ajuste P2, `ui-ux-designer`)
+`portas.png`: os medalhões de recompensa sobre as saídas leem (Bênção com cristal, Ouro com moedas), etiqueta "Bênção /
+Dois anjos" clara. Ajuste: o disco preto no canto do medalhão da Bênção (1072..1095, 178..200), o mesmo defeito da
+Forja (engaste vazio deve ser bronze, não preto). O medalhão do Ouro (1430..1590, 515..660) passa por baixo da coluna
+de Dons do HUD; aceitável, a câmera muda.
+
+### 23. Trinca e Varredor
+`trinca_varredor.png`: o Varredor (as duas figuras altas de lâmina longa, 610..750, 520..840 e 790..930, 380..690) é
+FEITO: silhueta própria e arma que diz "varre". A Trinca (a figura baixa ao lado do herói, 420..540, 600..720) não lê
+como "baixa, larga, três corcundas": cola no herói e parece um esqueleto agachado. P2, `technical-artist`: aumentar a
+largura do `CrowdRenderer.BUILD` da Trinca para 1,45 e baixar a altura para 0,8, para a forma de monte aparecer de
+cima; captura com ela longe do herói.
+
+### 24. Livro de Ahk, página do Guerreiro (FEITO)
+`meta_2026-11-23/livro_guerreiro.png`: lê como livro, retrato pintado no pergaminho, hierarquia clara (Arma, Estilo,
+Habilidades, Dons equipados), botões discretos. Polimento P2 (`ui-ux-designer`): a barra de Maestria vazia
+(1192..1484, 168..185) é um bloco preto sobre o pergaminho; trocar por trilho em tinta (contorno 1,5 px, fundo
+pergaminho escurecido 15%).
+
+### 25. GR-18 besta (SAI provisório)
+`besteiro.png`: em repouso não há os três palitos brancos. Só no preparo dá para confirmar; se o Daniel não reclamar,
+fica fechado.
+
+### 26. Ainda sem captura útil
+- **Suspensão Absoluta**: `suspensao.png` (`--shot-at=7`) mostra a Maga com a ultimate pronta (Shift aceso), sem cúpula.
+- **Laje armada**: `laje.png` é a sala 1, sem lajes. A correção está no código, não vista.
+- **GR-8**: em nenhuma das capturas novas o herói está atrás de uma peça.
+- **GR-20**: arco do giro não capturado.
+
+## Capturas que faltam (segunda rodada, uma por vez)
+1. Suspensão: `tools/gpu.sh shot docs/gallery/review_2026-11-23/suspensao.png --bot --autopick --seed=5 --hero=maga --ultimate=dome_abs --ult-full --frames=docs/gallery/review_2026-11-23/suspensao --count=6 --every=1 --shot-at=2` (escolher o quadro com a cúpula).
+2. Laje armada: o comando que gerou `porta_caixa.png` (sala 2 da semente 5), no mesmo segundo.
+3. GR-8: `tools/gpu.sh shot docs/gallery/review_2026-11-23/raiox.png --bot --autopick --seed=5 --shot-at=3` (é o enquadramento de `dicas.png`, com o herói junto do bloco; se não ficar atrás, `--shot-at=4`).
+4. GR-20: `tools/gpu.sh shot docs/gallery/review_2026-11-23/giro.png --bot --autopick --seed=5 --shot-on=spin --shot-after=0.1`.
