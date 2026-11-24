@@ -31,7 +31,7 @@ está aqui foi feito (marcado FEITO com o commit) ou espera o Daniel.
    por save"; o robô e `--autopick` não esperam; mesmo `RESULT` da semente 5.
 
 **Combate**
-6. **Placa do Armadilheiro como desenhada** (`gameplay-engineer`, M). Hoje o dano é um golpe só no fim do X (`docs/reference/gameplay.md`,
+6. **FEITO (2026-11-23)** **Placa do Armadilheiro como desenhada** (`gameplay-engineer`, M). Hoje o dano é um golpe só no fim do X (`docs/reference/gameplay.md`,
    Armadilheiro); o desenho (`docs/design/inimigos_c1e.md:64`) pede espinhos levantados por 0,5 s depois do X e a placa sumindo em 6 s, que é
    o que faz dela memória da esquiva. Arquivos: `scripts/core/trap_rules.gd`, `scripts/game/horde.gd` (parte do Armadilheiro),
    `scripts/game/c1e_marks.gd`. Aceite: teste GUT do tempo dos espinhos e do sumiço; 12 sementes sem travar e o Armadilheiro ferindo menos de

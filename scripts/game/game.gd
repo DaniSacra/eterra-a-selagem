@@ -598,6 +598,7 @@ func _step(dt: float) -> void:
 	horde.target_alive = player.alive() and mode == Mode.PLAY
 	horde.dodge_end = player.last_dodge_end
 	horde.dodge_age = player.dodge_age
+	horde.target_safe = player.invulnerable()
 	horde.step(dt)
 	_lap(&"horde")
 	if boss:

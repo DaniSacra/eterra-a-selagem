@@ -186,6 +186,10 @@ var target_alive := true
 ## C1e (the Armadilheiro): where the paladin's last dodge ended and the seconds since (Game sets them each step).
 var dodge_end := Vector2.ZERO
 var dodge_age := 99.0
+## The paladin cannot be hurt now (a dodge, invulnerable frames): Game sets it each step; a plate's spikes wait for him to step off.
+var target_safe := false
+## The Armadilheiro's plates lying now, from the X to the dormant plate (TrapRules.Plate); C1eMarks draws them.
+var plates_laid: Array[TrapRules.Plate] = []
 ## The kind (EnemyDef.id) acting now, while the crowd steps (&"" outside it): the warnings and shots it lays carry it
 ## (Ground.Zone.by, Projectiles.Shot.by), so the game knows what hurt the paladin ("Derrotado por").
 var acting: StringName = &""
@@ -365,6 +369,7 @@ func step(dt: float) -> void:
 		e.y = e.height()
 		_drawn_motion(e, dt)
 	_step_shields(dt)
+	_step_plates(dt)
 	_step_waves(dt)
 	_sweep()
 	for d in dying:
@@ -1735,17 +1740,18 @@ func _call(e: Enemy) -> void:
 		e.spots.clear()
 
 
-## The centres of the plates lying now (the zones tagged Ground.PLATE_TAG still warming).
+## The centres of the plates lying now (from the X to the dormant plate, until they are gone).
 func _plates() -> Array[Vector2]:
 	var out: Array[Vector2] = []
-	for z in ground.zones:
-		if z.tags.has(Ground.PLATE_TAG) and z.life > 0.0:
-			out.append(z.pos + Vector2(z.radius * 0.5, 0.0))
+	for p in plates_laid:
+		out.append(p.at)
 	return out
 
 
 ## C1e, the Armadilheiro: a plate where the paladin stands, or where his last dodge ended (under plate_window s ago). Its warning is the X
-## of C1eMarks for plate_time s (the zone's own red fill is hidden); then it hurts whoever stands on it, the dodge's protection excepted.
+## of C1eMarks for plate_time s (the zone's own red fill is hidden); then it hurts whoever stands on it, the dodge's protection excepted;
+## the spikes stand plate_spikes s more and hurt who steps on them and was not hurt at the landing; the dormant plate lies on (a memory of
+## the dodge, and one of the plate_max) until plate_life s after it was laid.
 func _lay_plate(e: Enemy) -> void:
 	var d := e.def
 	var at := arena.resolve(TrapRules.spot(target, dodge_end, dodge_age, d.plate_window), d.plate_half)
@@ -1756,7 +1762,35 @@ func _lay_plate(e: Enemy) -> void:
 		d.plate_damage * _out(e))
 	z.tags.append(Ground.PLATE_TAG)
 	z.node.visible = false
+	var p := TrapRules.Plate.new()
+	p.at = at
+	p.half = d.plate_half
+	p.warn = d.plate_time
+	p.spikes = d.plate_spikes
+	p.life = d.plate_life
+	p.damage = d.plate_damage * _out(e)
+	p.by = e.def.id
+	plates_laid.append(p)
 	Audio.play(&"summon")
+
+
+## The plates age; at the landing the zone has hurt (or missed) whoever stood there, and while the spikes stand one who steps on them is hurt once.
+func _step_plates(dt: float) -> void:
+	var i := plates_laid.size() - 1
+	while i >= 0:
+		var p := plates_laid[i]
+		p.age += dt
+		match p.phase():
+			TrapRules.Phase.GONE:
+				plates_laid.remove_at(i)
+			TrapRules.Phase.SPIKES:
+				if not p.landed:
+					p.landed = true
+					p.struck = target_alive and p.covers(target, Player.RADIUS * 0.6)
+				elif not p.struck and target_alive and p.covers(target, Player.RADIUS * 0.6) and not target_safe:
+					p.struck = true
+					ground.plate_strike(p.damage, p.at, p.by, p.warn)
+		i -= 1
 
 
 ## Elite: stays back, raises skeletons around itself and shoots a fan of orbs.
@@ -2649,6 +2683,7 @@ func windup_report() -> Dictionary:
 
 ## Removes the common crowd (the crypt doors opened): no experience, no drops. Elites and bosses stay.
 func clear_crowd() -> void:
+	plates_laid.clear()
 	for e in list:
 		if not e.def.elite and e.def.behavior != EnemyDef.Behavior.BOSS:
 			e.alive = false

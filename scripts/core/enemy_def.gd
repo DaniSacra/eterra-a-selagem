@@ -278,6 +278,10 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 @export var plate_half := 0.8
 @export var plate_max := 4
 @export var plate_window := 3.0
+## ... then its spikes stand for plate_spikes s (they hurt whoever steps on them and was not hurt at the landing), and the plate lies dormant
+## (a dim X that still counts against plate_max) until plate_life s after it was laid.
+@export var plate_spikes := 0.5
+@export var plate_life := 6.0
 ## Roles it is never drawn into a fight with (EncounterGen.pick_kinds; the Coveiro and the swarm).
 @export var never_with: Array[StringName] = []
 ## C5, the Trinca: figures that come together (a head count of the room's wave stands for this many bodies) and fall

@@ -58,6 +58,20 @@ func test_the_pulses_come_one_every_interval_the_first_at_once() -> void:
 	assert_almost_eq(BeamRules.hold_time(5, 0.45), 2.25, 0.001)
 
 
+func test_a_plate_is_x_then_spikes_for_half_a_second_then_dormant_until_six_seconds() -> void:
+	assert_eq(TrapRules.phase(0.0, 1.0, 0.5, 6.0), TrapRules.Phase.WARN)
+	assert_eq(TrapRules.phase(0.99, 1.0, 0.5, 6.0), TrapRules.Phase.WARN)
+	assert_eq(TrapRules.phase(1.0, 1.0, 0.5, 6.0), TrapRules.Phase.SPIKES)
+	assert_eq(TrapRules.phase(1.49, 1.0, 0.5, 6.0), TrapRules.Phase.SPIKES)
+	assert_eq(TrapRules.phase(1.5, 1.0, 0.5, 6.0), TrapRules.Phase.DORMANT)
+	assert_eq(TrapRules.phase(5.99, 1.0, 0.5, 6.0), TrapRules.Phase.DORMANT)
+	assert_eq(TrapRules.phase(6.0, 1.0, 0.5, 6.0), TrapRules.Phase.GONE)
+	var p := TrapRules.Plate.new()
+	p.at = Vector2(2, 2)
+	assert_true(p.covers(Vector2(2.7, 1.3)))
+	assert_false(p.covers(Vector2(3.0, 2.0)))
+
+
 func test_the_beam_hurts_in_its_line_and_not_at_its_root() -> void:
 	var from := Vector2.ZERO
 	assert_true(BeamRules.hits(from, Vector2.RIGHT, Vector2(6, 0.2), 12.0, 0.5, 1.0))
@@ -269,6 +283,55 @@ func test_the_armadilheiro_lays_a_plate_that_warns_one_second_then_hurts() -> vo
 		game.player.pos = Vector2.ZERO
 	assert_eq(hurts.size(), 1, "standing on it he took it once")
 	assert_almost_eq(hurts[0], 10.0, 0.01)
+
+
+func test_the_plate_lies_dormant_until_six_seconds_and_its_spikes_hurt_who_steps_on_them() -> void:
+	_room()
+	var e := _spawn(&"armadilheiro", Vector2(6, 0))
+	e.cooldown = 0.0
+	var hurts: Array[float] = []
+	game.ground.hit_player.connect(func(a: float, _f: Vector2) -> void: hurts.append(a))
+	game.player.pos = Vector2(-5, -5)
+	for i in 240:
+		_step()
+		game.player.pos = Vector2(-5, -5)
+		if not game.horde.plates_laid.is_empty():
+			break
+	assert_eq(game.horde.plates_laid.size(), 1, "it laid one")
+	var plate: TrapRules.Plate = game.horde.plates_laid[0]
+	e.cooldown = 99.0
+	var far := Vector2(5, 5)
+	game.player.pos = far
+	for i in 400:
+		if plate.age >= plate.warn + 0.1:
+			break
+		_step()
+		game.player.pos = far
+	assert_eq(plate.phase(), TrapRules.Phase.SPIKES)
+	assert_eq(hurts.size(), 0, "he was not there at the landing")
+	game.player.pos = plate.at
+	_step()
+	assert_eq(hurts.size(), 1, "stepping onto the spikes hurts")
+	assert_almost_eq(hurts[0], 10.0, 0.01)
+	_step(10)
+	assert_eq(hurts.size(), 1, "once")
+	for i in 600:
+		if plate.age >= 5.5:
+			break
+		_step()
+		game.player.pos = far
+	assert_eq(plate.phase(), TrapRules.Phase.DORMANT)
+	assert_true(game.horde.plates_laid.has(plate), "still lying at 5.5 s")
+	hurts.clear()
+	game.player.pos = plate.at
+	_step()
+	assert_eq(hurts.size(), 0, "dormant: no harm")
+	for i in 600:
+		if plate.age >= 6.2:
+			break
+		_step()
+		game.player.pos = far
+	assert_false(game.horde.plates_laid.has(plate), "gone at 6 s")
 
 
 func test_the_plate_follows_the_last_dodge_and_a_dodge_over_it_is_safe() -> void:
