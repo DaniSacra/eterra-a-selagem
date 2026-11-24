@@ -8,7 +8,7 @@ extends RefCounted
 ## bigger one, Coração da Emeth a gem in a ring (never rays: never the sun), Investida an arrow through a foe, Sangue
 ## Quente two flames (two charges), Onda Carregada a crescent with three lights behind, Fio do Passo a dash ending in a
 ## small wave, Firmeza a drop beside a gem (life and Magia), Respiro a drop with a rising chevron, Ainda de Pé an arrow
-## rising from the ground. A Gift without its own glyph draws its branch's (draw returns false). Never a cross, never
+## rising from the ground. The Warrior's twelve (disciplina to investida_implacavel) come after. A Gift without its own glyph draws its branch's (draw returns false). Never a cross, never
 ## a sun. Drawn by TalentNode in the tree and by mark() in the Compendium and on the hero page.
 
 const IVORY := Color(0.97, 0.93, 0.84)
@@ -25,7 +25,10 @@ const TONGUE: Array[Vector2] = [Vector2(0.05, -0.05), Vector2(0.28, 0.45), Vecto
 const IDS: Array[StringName] = [&"quarto_corte", &"passo_encadeado", &"golpe_sem_fim", &"impeto", &"avanco_feroz",
 	&"furia_plena", &"corte_crescente", &"fio_longo", &"onda_atravessante", &"lamina_faminta", &"reserva",
 	&"coracao_da_emeth", &"investida", &"sangue_quente", &"onda_carregada", &"fio_do_passo", &"firmeza", &"respiro",
-	&"ainda_de_pe"]
+	&"ainda_de_pe",
+	# the Warrior's twelve (redesign 2026-11-24)
+	&"disciplina", &"cadencia", &"maestria_marcial", &"apogeu", &"forca_concentrada", &"determinacao", &"concentracao",
+	&"forca_titanica", &"ruptura", &"voz_do_leao", &"imposicao", &"investida_implacavel"]
 
 
 ## The Gifts added after the 19 draw an existing Gift's symbol (no new art): each a different one.
@@ -113,6 +116,61 @@ static func draw(ci: CanvasItem, id: StringName, c: Vector2, r: float, col: Colo
 		&"ainda_de_pe":
 			ci.draw_line(c + Vector2(-0.95, 0.85) * r, c + Vector2(0.95, 0.85) * r, col, th, true)
 			_arrow(ci, c + Vector2(0, 0.7) * r, c + Vector2(0, -0.95) * r, r, th, col)
+		&"disciplina":
+			# the same cut twice over a ground line: the trained stroke
+			for k in 2:
+				_cut(ci, c + Vector2((k - 0.5) * 0.7, -0.2) * r, Vector2(0.6, -0.8), r * 0.62, th, col)
+			ci.draw_line(c + Vector2(-0.95, 0.85) * r, c + Vector2(0.95, 0.85) * r, col, th, true)
+		&"cadencia":
+			# three cuts in a row, each a little longer: the rhythm of the combo
+			for k in 3:
+				_cut(ci, c + Vector2((k - 1) * 0.62, 0.0) * r, Vector2(0.6, -0.8), r * (0.4 + 0.18 * k), th, col)
+		&"maestria_marcial":
+			_blade(ci, c + Vector2(-0.75, 0.75) * r, c + Vector2(0.65, -0.65) * r, r * 0.2, col)
+			ci.draw_arc(c, r * 0.98, PI * 0.55, PI * 1.45, 14, col, th * 0.8, true)
+			ci.draw_arc(c, r * 0.98, -PI * 0.45, PI * 0.45, 14, col, th * 0.8, true)
+		&"apogeu":
+			_blade(ci, c + Vector2(0, 0.95) * r, c + Vector2(0, -0.45) * r, r * 0.2, col)
+			_chevron_up(ci, c + Vector2(0, -0.78) * r, r * 0.4, th, col)
+			_chevron_up(ci, c + Vector2(0, -1.0) * r, r * 0.3, th * 0.8, col)
+		&"forca_concentrada":
+			ci.draw_colored_polygon(_gem(c, r * 0.4), col)
+			for a in 4:
+				var d := Vector2.from_angle(a * PI * 0.5 + PI * 0.25)
+				_head(ci, c + d * r * 0.55, -d, r * 0.34, col)
+				ci.draw_line(c + d * r * 0.95, c + d * r * 0.62, col, th * 0.7, true)
+		&"determinacao":
+			ci.draw_rect(Rect2(c + Vector2(-0.9, 0.35) * r, Vector2(1.8, 0.5) * r), col)
+			ci.draw_colored_polygon(_gem(c + Vector2(0, -0.3) * r, r * 0.6), col)
+		&"concentracao":
+			ci.draw_arc(c, r * 0.95, 0.0, TAU, 28, col, th * 0.8, true)
+			ci.draw_arc(c, r * 0.55, 0.0, TAU, 20, col, th * 0.8, true)
+			ci.draw_circle(c, r * 0.2, col)
+		&"forca_titanica":
+			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-0.38, -1.0) * r, c + Vector2(0.38, -1.0) * r, c + Vector2(0.3, 0.3) * r,
+				c + Vector2(0, 0.62) * r, c + Vector2(-0.3, 0.3) * r]), col)
+			for x: float in [-0.7, 0.7]:
+				ci.draw_line(c + Vector2(x, 0.85) * r, c + Vector2(x * 1.35, 0.55) * r, col, th * 0.8, true)
+			ci.draw_line(c + Vector2(-0.95, 0.95) * r, c + Vector2(0.95, 0.95) * r, col, th, true)
+		&"ruptura":
+			# a gem split in two halves by a crack
+			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-0.05, -0.95) * r, c + Vector2(-0.6, 0.0) * r, c + Vector2(-0.12, 0.95) * r,
+				c + Vector2(-0.22, 0.2) * r]), col)
+			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(0.1, -0.85) * r, c + Vector2(0.62, 0.0) * r, c + Vector2(0.02, 0.95) * r,
+				c + Vector2(0.14, 0.1) * r]), col)
+		&"voz_do_leao":
+			ci.draw_colored_polygon(_gem(c + Vector2(-0.7, 0.0) * r, r * 0.38), col)
+			for k in 3:
+				ci.draw_arc(c + Vector2(-0.55, 0.0) * r, r * (0.55 + 0.3 * k), -PI * 0.3, PI * 0.3, 10, col, th * 0.8, true)
+		&"imposicao":
+			ci.draw_circle(c + Vector2(0, 0.6) * r, r * 0.28, col)
+			_chevron_down(ci, c + Vector2(0, -0.55) * r, r * 0.8, th, col)
+			_chevron_down(ci, c + Vector2(0, -0.1) * r, r * 0.55, th, col)
+		&"investida_implacavel":
+			ci.draw_arc(c + Vector2(0.45, 0) * r, r * 0.38, 0.0, TAU, 16, col, th * 0.8, true)
+			_arrow(ci, c + Vector2(-0.8, 0) * r, c + Vector2(0.95, 0) * r, r, th * 1.2, col)
+			for y: float in [-0.5, 0.5]:
+				ci.draw_line(c + Vector2(-1.0, y) * r, c + Vector2(-0.4, y) * r, col, th * 0.7, true)
 		_:
 			return false
 	return true
@@ -129,7 +187,7 @@ static func mark(t: TalentDef, side: float, open: bool = true) -> Control:
 	m.draw.connect(func() -> void:
 		var c := m.size * 0.5
 		var h := side * 0.5
-		var tint := TalentNode.BRANCH_COLOR[t.branch] if t != null else TalentNode.CENTRE
+		var tint := TalentNode.branch_color(t.branch) if t != null else TalentNode.CENTRE
 		if not open:
 			# not reached: a hollow diamond in faded ink, as the page's own marks
 			m.draw_polyline(TalentNode._closed(TalentNode._diamond(c, h - 1.0)), Book.FADED, 1.4, true)
@@ -166,6 +224,10 @@ static func _chevron(ci: CanvasItem, c: Vector2, s: float, th: float, col: Color
 
 static func _chevron_up(ci: CanvasItem, c: Vector2, s: float, th: float, col: Color) -> void:
 	ci.draw_polyline(PackedVector2Array([c + Vector2(-1.0, 0.5) * s, c + Vector2(0.0, -0.5) * s, c + Vector2(1.0, 0.5) * s]), col, th, true)
+
+
+static func _chevron_down(ci: CanvasItem, c: Vector2, s: float, th: float, col: Color) -> void:
+	ci.draw_polyline(PackedVector2Array([c + Vector2(-1.0, -0.5) * s, c + Vector2(0.0, 0.5) * s, c + Vector2(1.0, -0.5) * s]), col, th, true)
 
 
 ## A crescent wave opening to the left (its belly to the right, where it runs), radius r around c.

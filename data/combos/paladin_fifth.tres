@@ -1,10 +1,10 @@
 [gd_resource type="Resource" script_class="ComboTree" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/combo_node.gd" id="1_ni07j"]
-[ext_resource type="Script" path="res://scripts/core/combo_tree.gd" id="2_wicqm"]
+[ext_resource type="Script" path="res://scripts/core/combo_node.gd" id="1_fvwfq"]
+[ext_resource type="Script" path="res://scripts/core/combo_tree.gd" id="2_hcpqv"]
 
-[sub_resource type="Resource" id="Resource_27m2j"]
-script = ExtResource("1_ni07j")
+[sub_resource type="Resource" id="Resource_2cf54"]
+script = ExtResource("1_fvwfq")
 id = &"cut3"
 title = &"move_spin"
 anim = &"Slash_C"
@@ -28,8 +28,31 @@ layers = Array[StringName]([&"dash_land", &"dodge"])
 shake = 1.6
 magick_per_hit = 0.5
 
-[sub_resource type="Resource" id="Resource_fulcj"]
-script = ExtResource("1_ni07j")
+[sub_resource type="Resource" id="Resource_t6i7i"]
+script = ExtResource("1_fvwfq")
+id = &"cut4"
+anim = &"Slash_A"
+anim_speed = 1.5000000000000002
+anim_from = 0.07999999999999999
+recover_anim = &"Slash_A_Rec"
+sweep = 1
+tags = Array[StringName]([&"light"])
+damage = 15.0
+reach = 5.375
+width = 150.0
+knockback = 2.5
+move_scale = 0.0
+windup = 0.1
+recovery = 0.15
+move_hold = 0.2
+chain_window = 0.4
+hit_stop_ms = 30.0
+shake = 0.6
+magick_per_hit = 0.5
+next = Array[Resource]([SubResource("Resource_2cf54")])
+
+[sub_resource type="Resource" id="Resource_uwpjs"]
+script = ExtResource("1_fvwfq")
 id = &"thrust4"
 anim = &"Sword_Attack"
 anim_speed = 1.5
@@ -51,10 +74,10 @@ sound = &"thrust"
 sound_at = 0.11500000000000002
 shake = 0.8
 magick_per_hit = 0.5
-next = Array[Resource]([SubResource("Resource_27m2j")])
+next = Array[Resource]([SubResource("Resource_t6i7i")])
 
-[sub_resource type="Resource" id="Resource_14ox4"]
-script = ExtResource("1_ni07j")
+[sub_resource type="Resource" id="Resource_7rma2"]
+script = ExtResource("1_fvwfq")
 id = &"cut2"
 anim = &"Slash_B"
 anim_speed = 1.5
@@ -76,10 +99,10 @@ sound = &"blade_heavy"
 layers = Array[StringName]([&"dodge"])
 shake = 0.8
 magick_per_hit = 0.5
-next = Array[Resource]([SubResource("Resource_fulcj")])
+next = Array[Resource]([SubResource("Resource_uwpjs")])
 
-[sub_resource type="Resource" id="Resource_5fvx0"]
-script = ExtResource("1_ni07j")
+[sub_resource type="Resource" id="Resource_6d52d"]
+script = ExtResource("1_fvwfq")
 id = &"cut1"
 anim = &"Slash_A"
 anim_speed = 1.5
@@ -99,10 +122,10 @@ chain_window = 0.4
 hit_stop_ms = 25.0
 shake = 0.6
 magick_per_hit = 0.5
-next = Array[Resource]([SubResource("Resource_14ox4")])
+next = Array[Resource]([SubResource("Resource_7rma2")])
 
-[sub_resource type="Resource" id="Resource_x4ej5"]
-script = ExtResource("1_ni07j")
+[sub_resource type="Resource" id="Resource_8ep7d"]
+script = ExtResource("1_fvwfq")
 id = &"bolt"
 input = 1
 title = &"move_wave"
@@ -128,8 +151,8 @@ effect_radius = 6.0
 effect_size = 1.4
 wave_bolt = true
 
-[sub_resource type="Resource" id="Resource_mv8ty"]
-script = ExtResource("1_ni07j")
+[sub_resource type="Resource" id="Resource_b4uw1"]
+script = ExtResource("1_fvwfq")
 id = &"lance"
 input = 3
 title = &"move_lance"
@@ -158,8 +181,8 @@ magick_cost = 20.0
 charge_time = 0.8
 shake = 2.0
 
-[sub_resource type="Resource" id="Resource_vgjhi"]
-script = ExtResource("1_ni07j")
+[sub_resource type="Resource" id="Resource_yn3p4"]
+script = ExtResource("1_fvwfq")
 id = &"shout"
 input = 4
 title = &"move_shout"
@@ -186,8 +209,8 @@ buff_speed = 0.15
 buff_guard = 0.15
 buff_ward = 1
 
-[sub_resource type="Resource" id="Resource_l3soh"]
-script = ExtResource("1_ni07j")
+[sub_resource type="Resource" id="Resource_wy0uc"]
+script = ExtResource("1_fvwfq")
 id = &"dash_cut"
 input = 5
 title = &"move_dash_cut"
@@ -213,6 +236,6 @@ shake = 0.9
 magick_per_hit = 2.0
 
 [resource]
-script = ExtResource("2_wicqm")
-neutral = Array[ExtResource("1_ni07j")]([SubResource("Resource_5fvx0"), SubResource("Resource_x4ej5"), SubResource("Resource_mv8ty"), SubResource("Resource_vgjhi"), SubResource("Resource_l3soh")])
+script = ExtResource("2_hcpqv")
+neutral = Array[ExtResource("1_fvwfq")]([SubResource("Resource_6d52d"), SubResource("Resource_8ep7d"), SubResource("Resource_b4uw1"), SubResource("Resource_yn3p4"), SubResource("Resource_wy0uc")])
 dodge_window = 0.0

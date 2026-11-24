@@ -161,7 +161,7 @@ func test_the_rajada_shows_its_cost_and_says_without_magia() -> void:
 func test_the_buff_shows_while_the_brado_runs_beside_the_bars() -> void:
 	var hud := await _run()
 	assert_false(hud._buff.visible)
-	game.player.gifts.rally(5.0, 0.2, 0.15, 0)
+	game.player.gifts.rally(5.0, 0.2, 0.15)
 	await wait_process_frames(2)
 	assert_true(hud._buff.visible)
 	var bars: Rect2 = hud._life.get_global_rect()
@@ -173,7 +173,7 @@ func test_the_buff_shows_while_the_brado_runs_beside_the_bars() -> void:
 
 func test_the_buff_mark_has_an_emerald_dot_only_while_the_brado_absorbs() -> void:
 	var hud := await _run()
-	game.player.gifts.rally(5.0, 0.2, 0.15, 0)
+	game.player.gifts.rally(5.0, 0.2, 0.15)
 	game.player.gifts.ward = 0
 	await wait_process_frames(2)
 	assert_false(hud._buff.absorbing, "no absorption left: no dot")

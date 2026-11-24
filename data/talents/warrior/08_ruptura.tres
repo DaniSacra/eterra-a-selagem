@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_ureyi"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_72mei"]
+
+[sub_resource type="Resource" id="Resource_84smq"]
+script = ExtResource("1_ureyi")
+stat = &"armor_pct"
+tag = &"finisher"
+base = 0.5
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_72mei")
+id = &"ruptura"
+name_key = &"talent_ruptura"
+desc_key = &"talent_ruptura_desc"
+branch = 10
+cost = 2
+unlock_level = 3
+memory_cost = 1
+mods = Array[ExtResource("1_ureyi")]([SubResource("Resource_84smq")])

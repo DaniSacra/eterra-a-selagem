@@ -64,11 +64,11 @@ func test_a_version_5_save_opens_whole_and_keeps_everything_through_four_runs() 
 	assert_gte(SaveData.VERSION, 6)
 	var w: Dictionary = out.heroes.warrior
 	assert_eq(int(w.mastery_xp), 330)
-	assert_eq(w.equipped, ["quarto_corte", "impeto", "corte_crescente"], "the loadout stays")
-	# Mastery 6 (330 XP) with the B-3 ladder (balance.md B.5): up to Passo Encadeado (5); Avanço Feroz at 7
-	for id in ["quarto_corte", "impeto", "corte_crescente", "lamina_faminta", "passo_encadeado"]:
+	assert_eq(w.equipped, [], "the old loadout goes with the v13 migration (the Vagas are free again)")
+	# Mastery 6 (330 XP): Disciplina, Força Concentrada, Ruptura, Cadência and Determinação are revealed; Voz do Leão at 8
+	for id in ["disciplina", "forca_concentrada", "ruptura", "cadencia", "determinacao"]:
 		assert_true((w.opened as Array).has(id), "%s unlocked before: opened for free" % id)
-	assert_false((w.opened as Array).has("avanco_feroz"), "nothing past its Mastery")
+	assert_false((w.opened as Array).has("voz_do_leao"), "nothing past its Mastery")
 	assert_eq(int(w.forge.temper), 0)
 	assert_eq(w.tools, [])
 	assert_eq(MaterialPurse.amount(out, MaterialPurse.SILVER), 20, "5 a descent played (4)")
@@ -116,11 +116,11 @@ func test_a_fresh_save_opens_only_the_free_gift() -> void:
 	var book := HeroDef.warrior().talents()
 	var opened := Talents.opened_of(d.heroes.warrior)
 	assert_eq(opened, [])
-	assert_eq(book.open_ones(1, opened).map(func(t: TalentDef) -> StringName: return t.id), [&"quarto_corte"],
-		"Quarto Corte comes open (memory_cost 0)")
-	assert_eq(book.find(&"impeto").memory_cost, 1)
-	assert_eq(book.find(&"corte_crescente").memory_cost, 1)
-	assert_eq(book.find(&"lamina_faminta").memory_cost, 1, "1 each for Mastery 2 to 5 (balance 2026-11-24, Lote D)")
+	assert_eq(book.open_ones(1, opened).map(func(t: TalentDef) -> StringName: return t.id), [&"disciplina"],
+		"Disciplina comes open (memory_cost 0)")
+	assert_eq(book.find(&"forca_concentrada").memory_cost, 1)
+	assert_eq(book.find(&"ruptura").memory_cost, 1)
+	assert_eq(book.find(&"cadencia").memory_cost, 1, "1 each for Mastery 2 to 5 (balance 2026-11-24, Lote D)")
 
 
 # ---------- the Gifts opened with Memória ----------
@@ -129,37 +129,37 @@ func test_a_gift_revealed_must_be_opened_before_it_is_equipped() -> void:
 	var book := HeroDef.warrior().talents()
 	var d := SaveData.defaults()
 	var w: Dictionary = d.heroes.warrior
-	assert_eq(book.check(["quarto_corte", "impeto"], 3, 99, Talents.opened_of(w)).problem, Talents.Problem.SEALED)
-	assert_eq(book.check(["quarto_corte", "impeto"], 3, 99).problem, Talents.Problem.OK, "null: every Gift open (--talents)")
-	assert_eq(book.open_problem(&"impeto", 1, [], 9), Talents.Problem.LOCKED, "not revealed yet")
-	assert_eq(book.open_problem(&"impeto", 3, [], 0), Talents.Problem.SHORT)
-	assert_eq(book.open_problem(&"quarto_corte", 3, [], 0), Talents.Problem.OPENED, "free")
-	assert_false(book.open_in(d, "warrior", &"impeto", 3), "no Memória")
+	assert_eq(book.check(["disciplina", "forca_concentrada"], 3, 99, Talents.opened_of(w)).problem, Talents.Problem.SEALED)
+	assert_eq(book.check(["disciplina", "forca_concentrada"], 3, 99).problem, Talents.Problem.OK, "null: every Gift open (--talents)")
+	assert_eq(book.open_problem(&"forca_concentrada", 1, [], 9), Talents.Problem.LOCKED, "not revealed yet")
+	assert_eq(book.open_problem(&"forca_concentrada", 3, [], 0), Talents.Problem.SHORT)
+	assert_eq(book.open_problem(&"disciplina", 3, [], 0), Talents.Problem.OPENED, "free")
+	assert_false(book.open_in(d, "warrior", &"forca_concentrada", 3), "no Memória")
 	MaterialPurse.give(d, MaterialPurse.MEMORY, 5)
-	assert_true(book.open_in(d, "warrior", &"impeto", 3))
+	assert_true(book.open_in(d, "warrior", &"forca_concentrada", 3))
 	assert_eq(MaterialPurse.amount(d, MaterialPurse.MEMORY), 4, "1 spent (Lote D)")
-	assert_false(book.open_in(d, "warrior", &"impeto", 3), "once")
-	assert_eq(book.check(["quarto_corte", "impeto"], 3, 99, Talents.opened_of(w)).problem, Talents.Problem.OK)
-	assert_eq(book.sanitized(["quarto_corte", "impeto", "corte_crescente"], 4, 99, Talents.opened_of(w)),
-		[&"quarto_corte", &"impeto"] as Array[StringName], "a sealed Gift never goes down")
-	assert_eq(book.why_dropped(["corte_crescente"], [], 4, 99, Talents.opened_of(w)).get(&"corte_crescente"), Talents.Problem.SEALED)
+	assert_false(book.open_in(d, "warrior", &"forca_concentrada", 3), "once")
+	assert_eq(book.check(["disciplina", "forca_concentrada"], 3, 99, Talents.opened_of(w)).problem, Talents.Problem.OK)
+	assert_eq(book.sanitized(["disciplina", "forca_concentrada", "ruptura"], 4, 99, Talents.opened_of(w)),
+		[&"disciplina", &"forca_concentrada"] as Array[StringName], "a sealed Gift never goes down")
+	assert_eq(book.why_dropped(["ruptura"], [], 4, 99, Talents.opened_of(w)).get(&"ruptura"), Talents.Problem.SEALED)
 
 
 func test_the_hero_screen_sees_a_sealed_gift_and_opens_it() -> void:
 	var d := SaveData.defaults()
 	d.heroes.warrior.mastery_xp = HeroDef.warrior().mastery.total_to(3)
 	var l := HeroLoadout.new(HeroDef.warrior(), d)
-	var impeto := l.book.find(&"impeto")
-	assert_eq(l.state(impeto), HeroLoadout.State.SEALED)
-	assert_eq(l.next_step(impeto).key, &"hero_step_open")
-	assert_eq(l.can_open(impeto), Talents.Problem.SHORT)
-	assert_false(l.toggle(&"impeto"), "no Memória: nothing changes")
+	var forca_concentrada := l.book.find(&"forca_concentrada")
+	assert_eq(l.state(forca_concentrada), HeroLoadout.State.SEALED)
+	assert_eq(l.next_step(forca_concentrada).key, &"hero_step_open")
+	assert_eq(l.can_open(forca_concentrada), Talents.Problem.SHORT)
+	assert_false(l.toggle(&"forca_concentrada"), "no Memória: nothing changes")
 	MaterialPurse.give(d, MaterialPurse.MEMORY, 1)
-	assert_false(l.toggle(&"impeto"), "toggle never opens a sealed Gift (the screen asks first)")
-	assert_eq(l.can_open(impeto), Talents.Problem.OK)
-	assert_true(l.open(&"impeto"))
-	assert_true(l.toggle(&"impeto"), "opened, it goes on")
-	assert_eq(l.state(impeto), HeroLoadout.State.EQUIPPED)
+	assert_false(l.toggle(&"forca_concentrada"), "toggle never opens a sealed Gift (the screen asks first)")
+	assert_eq(l.can_open(forca_concentrada), Talents.Problem.OK)
+	assert_true(l.open(&"forca_concentrada"))
+	assert_true(l.toggle(&"forca_concentrada"), "opened, it goes on")
+	assert_eq(l.state(forca_concentrada), HeroLoadout.State.EQUIPPED)
 	assert_eq(l.memory(), 0)
 
 

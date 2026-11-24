@@ -55,7 +55,7 @@ func test_the_special_wears_armor_down_faster() -> void:
 
 func test_the_brado_takes_one_blow() -> void:
 	var p := game.player
-	p.gifts.rally(5.0, 0.15, 0.15, 0)
+	p.gifts.rally(5.0, 0.15, 0.15)
 	p.gifts.ward = 1
 	p.invuln = 0.0
 	var hp := p.hp

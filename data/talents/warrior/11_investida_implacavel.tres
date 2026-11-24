@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_qfllj"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_eei1p"]
+
+[sub_resource type="Resource" id="Resource_jxp4m"]
+script = ExtResource("1_qfllj")
+stat = &"dash_pierce"
+tag = &"dash"
+base = 1.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_gael1"]
+script = ExtResource("1_qfllj")
+stat = &"dash_stun"
+tag = &"dash"
+base = 2.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_mkcit"]
+script = ExtResource("1_qfllj")
+stat = &"armor_pct"
+tag = &"dash"
+base = 0.5
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_eei1p")
+id = &"investida_implacavel"
+name_key = &"talent_investida_implacavel"
+desc_key = &"talent_investida_implacavel_desc"
+branch = 10
+tier = 2
+cost = 4
+unlock_level = 18
+memory_cost = 4
+needs = &"imposicao"
+mods = Array[ExtResource("1_qfllj")]([SubResource("Resource_jxp4m"), SubResource("Resource_gael1"), SubResource("Resource_mkcit")])

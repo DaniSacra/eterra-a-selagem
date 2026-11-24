@@ -71,60 +71,57 @@ func test_level_and_devotion_come_from_the_xp() -> void:
 
 func test_a_gift_goes_on_and_off_and_a_locked_one_never() -> void:
 	var l := _loadout(0)
-	assert_eq(l.state(l.book.find(&"quarto_corte")), HeroLoadout.State.OPEN)
-	assert_true(l.toggle(&"quarto_corte"))
-	assert_eq(l.equipped(), ["quarto_corte"])
-	assert_eq(l.used(), 3)
-	assert_eq(l.state(l.book.find(&"impeto")), HeroLoadout.State.LOCKED)
-	assert_false(l.toggle(&"impeto"), "Ímpeto opens at level 2")
-	assert_eq(l.why(l.book.find(&"impeto")).key, &"hero_why_locked")
-	assert_true(l.toggle(&"quarto_corte"))
+	assert_eq(l.state(l.book.find(&"disciplina")), HeroLoadout.State.OPEN)
+	assert_true(l.toggle(&"disciplina"))
+	assert_eq(l.equipped(), ["disciplina"])
+	assert_eq(l.used(), 2)
+	assert_eq(l.state(l.book.find(&"forca_concentrada")), HeroLoadout.State.LOCKED)
+	assert_false(l.toggle(&"forca_concentrada"), "Força Concentrada opens at level 2")
+	assert_eq(l.why(l.book.find(&"forca_concentrada")).key, &"hero_why_locked")
+	assert_true(l.toggle(&"disciplina"))
 	assert_eq(l.equipped(), [])
 
 
 func test_why_tells_the_rule_that_refuses() -> void:
 	var top := 2470
 	var l := _loadout(top)
-	# a middle without its entry
-	var why := l.why(l.book.find(&"passo_encadeado"))
+	# a Gift without the one it needs
+	var why := l.why(l.book.find(&"cadencia"))
 	assert_eq(why.key, &"hero_why_needs")
-	assert_eq(why.args.what, T.t(&"talent_quarto_corte"))
-	# a bridge without both entries
-	assert_eq(l.why(l.book.find(&"investida")).key, &"hero_why_bridge")
-	# an apex: its middle and a Gift of the partner branch
-	assert_eq(l.why(l.book.find(&"golpe_sem_fim")).key, &"hero_why_apex")
-	# one Gift per action: the dash
-	assert_true(l.toggle(&"quarto_corte"))
-	assert_true(l.toggle(&"passo_encadeado"))
-	assert_true(l.toggle(&"corte_crescente"))
-	var slot := l.why(l.book.find(&"fio_do_passo"))
-	assert_eq(slot.key, &"hero_why_slot")
-	assert_eq(slot.args.name, T.t(&"talent_passo_encadeado"))
+	assert_eq(why.args.what, T.t(&"talent_disciplina"))
+	# an apex asks for the Gift the package names, not for a partner branch
+	why = l.why(l.book.find(&"apogeu"))
+	assert_eq(why.key, &"hero_why_needs")
+	assert_eq(why.args.what, T.t(&"talent_maestria_marcial"))
+	assert_true(l.toggle(&"disciplina"))
+	assert_true(l.toggle(&"maestria_marcial"))
+	assert_true(l.toggle(&"apogeu"))
 
 
 func test_devotion_refuses_what_does_not_fit() -> void:
 	var l := _loadout(0)
-	assert_true(l.toggle(&"quarto_corte")) # 3 of 6
-	l = _loadout(XP_3, ["quarto_corte", "impeto"]) # 5 of 8
-	assert_eq(l.used(), 5)
-	var d := _loadout(XP_8, ["quarto_corte", "impeto", "corte_crescente", "lamina_faminta", "passo_encadeado"])
-	assert_eq(d.used(), 12)
-	assert_eq(d.devotion(), 13)
-	var why := d.why(d.book.find(&"avanco_feroz"))
+	assert_true(l.toggle(&"disciplina")) # 2 of 6
+	l = _loadout(XP_3, ["disciplina", "forca_concentrada"]) # 4 of 8
+	assert_eq(l.used(), 4)
+	var ids := ["disciplina", "cadencia", "maestria_marcial", "forca_concentrada", "determinacao", "concentracao", "ruptura", "voz_do_leao", "imposicao"]
+	var d := _loadout(2470, ids)
+	assert_eq(d.used(), 22)
+	assert_eq(d.devotion(), 25)
+	var why := d.why(d.book.find(&"apogeu"))
 	assert_eq(why.key, &"hero_why_devotion")
-	assert_eq(why.args.free, 1)
+	assert_eq(why.args.free, 3)
 
 
 func test_taking_an_entry_off_takes_what_needed_it() -> void:
-	var l := _loadout(XP_8, ["quarto_corte", "passo_encadeado"])
-	assert_eq(l.equipped(), ["quarto_corte", "passo_encadeado"])
-	assert_true(l.toggle(&"quarto_corte"))
-	assert_eq(l.equipped(), [], "Passo Encadeado needs Quarto Corte on")
+	var l := _loadout(XP_8, ["disciplina", "cadencia"])
+	assert_eq(l.equipped(), ["disciplina", "cadencia"])
+	assert_true(l.toggle(&"disciplina"))
+	assert_eq(l.equipped(), [], "Cadência needs Disciplina on")
 
 
 func test_what_the_save_holds_is_cleaned_on_open() -> void:
-	var l := _loadout(0, ["impeto", "nope", "quarto_corte"])
-	assert_eq(l.equipped(), ["quarto_corte"])
+	var l := _loadout(0, ["forca_concentrada", "nope", "disciplina"])
+	assert_eq(l.equipped(), ["disciplina"])
 
 
 func test_ultimates_open_by_level_and_one_is_chosen() -> void:
@@ -142,8 +139,8 @@ func test_ultimates_open_by_level_and_one_is_chosen() -> void:
 
 
 func test_next_level_tells_what_it_brings() -> void:
-	assert_eq(_loadout(0).next_unlocks(), [T.t(&"talent_impeto")] as Array[String])
-	assert_eq(_loadout(HeroDef.warrior().mastery.total_to(2)).next_unlocks(), [T.t(&"talent_corte_crescente"), T.t(&"ult_cleave")] as Array[String])
+	assert_eq(_loadout(0).next_unlocks(), [T.t(&"talent_forca_concentrada")] as Array[String])
+	assert_eq(_loadout(HeroDef.warrior().mastery.total_to(2)).next_unlocks(), [T.t(&"talent_ruptura"), T.t(&"ult_cleave")] as Array[String])
 	assert_eq(_loadout(2470).next_unlocks(), [] as Array[String])
 
 
@@ -181,13 +178,12 @@ func test_report_tells_the_sources_and_what_the_new_levels_unlocked() -> void:
 	assert_eq(gain.total, 90)
 	assert_eq(MasteryReport.sources_text(gain), "%s 40, %s 25, %s 25" % [T.t(&"mastery_src_rooms"),
 		T.t(&"mastery_src_guardians"), T.t(&"mastery_src_first_guardian")])
-	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 1, 2), [T.t(&"end_unlocked", {"name": T.t(&"talent_impeto")})] as Array[String])
-	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 2, 3), [T.t(&"end_unlocked", {"name": T.t(&"talent_corte_crescente")}), T.t(&"end_unlocked_ult", {"name": T.t(&"ult_cleave")})] as Array[String])
+	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 1, 2), [T.t(&"end_unlocked", {"name": T.t(&"talent_forca_concentrada")})] as Array[String])
+	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 2, 3), [T.t(&"end_unlocked", {"name": T.t(&"talent_ruptura")}), T.t(&"end_unlocked_ult", {"name": T.t(&"ult_cleave")})] as Array[String])
 	# several levels at once: one line each, the names joined
 	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 1, 4), [
-		T.t(&"end_unlocked_many", {"name": ", ".join([T.t(&"talent_impeto"), T.t(&"talent_corte_crescente"), T.t(&"talent_lamina_faminta")])}), T.t(&"end_unlocked_ult", {"name": T.t(&"ult_cleave")})] as Array[String])
-	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 9, 10), [T.t(&"end_unlocked", {"name": T.t(&"talent_reserva")}),
-		T.t(&"end_unlocked_ult", {"name": T.t(&"ult_vortex")})] as Array[String])
+		T.t(&"end_unlocked_many", {"name": ", ".join([T.t(&"talent_forca_concentrada"), T.t(&"talent_ruptura"), T.t(&"talent_cadencia")])}), T.t(&"end_unlocked_ult", {"name": T.t(&"ult_cleave")})] as Array[String])
+	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 9, 10), [T.t(&"end_unlocked_ult", {"name": T.t(&"ult_vortex")})] as Array[String])
 	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 3, 3), [] as Array[String])
 
 
@@ -228,9 +224,9 @@ func test_codex_shows_reached_gifts_and_hides_the_rest() -> void:
 	var c := CodexScreen.new()
 	add_child_autofree(c)
 	c.open(CodexScreen.Tab.GIFTS, _data(XP_3))
-	var open_row := c.find_child("impeto", true, false)
-	assert_eq((open_row.find_child("Name", false, false) as Label).text, T.t(&"talent_impeto"))
-	var closed_row := c.find_child("lamina_faminta", true, false)
+	var open_row := c.find_child("forca_concentrada", true, false)
+	assert_eq((open_row.find_child("Name", false, false) as Label).text, T.t(&"talent_forca_concentrada"))
+	var closed_row := c.find_child("cadencia", true, false)
 	assert_eq((closed_row.find_child("Name", false, false) as Label).text, "???")
 	assert_eq((closed_row.find_child("Desc", false, false) as Label).text, T.t(&"codex_locked", {"n": 4}))
 
@@ -240,7 +236,7 @@ func test_codex_tabs_switch_by_focus() -> void:
 	add_child_autofree(c)
 	c.open(CodexScreen.Tab.MOVES, _data(0))
 	assert_eq(c.tab, CodexScreen.Tab.MOVES)
-	assert_null(c.find_child("quarto_corte", true, false))
+	assert_null(c.find_child("disciplina", true, false))
 	c.tabs[0].grab_focus()
 	assert_eq(c.tab, CodexScreen.Tab.GIFTS)
 	assert_true(c.tabs[0].button_pressed)

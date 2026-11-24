@@ -102,7 +102,7 @@ const U := 80.0
 
 ## The paladin's moves, built on the timings, damage and reach of the first weapon of Hades II (study only:
 ## our own sword, animations, names and look). Frames are at 60 a second.
-func _tree(fourth: bool) -> ComboTree:
+func _tree(fifth: bool) -> ComboTree:
 	# attack: three swings, the third a turn of the blade all around. E1c (Daniel's E1 test: "tem que atacar parado",
 	# "o primeiro ataque é muito rápido", "diferença de tempo entre os 3"; his Hades II video of 2026-11-16): every
 	# blow is struck standing still (no lunge), windup (+ the finisher's glint), the frame it lands, then the clip's
@@ -117,8 +117,8 @@ func _tree(fourth: bool) -> ComboTree:
 		# press only gathers
 		"sound_at": 0.36 - SWISH_PEAK, "sound_press": &"spin_gather", "layers": LAYER_SPIN}, [], &"move_spin")
 	var after_cut2: Array[ComboNode] = [cut3]
-	if fourth:
-		after_cut2 = [_fourth(cut3)]
+	if fifth:
+		after_cut2 = [_extra_blows(cut3)]
 	var cut2 := _move(&"cut2", L, &"Slash_B", [&"light"],
 		{"damage": 15.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[1], "windup": 0.13, "recovery": 13.0 / 60.0,
 		"move_hold": 19.0 / 60.0, "magick_per_hit": 0.5,
@@ -172,28 +172,29 @@ func _tree(fourth: bool) -> ComboTree:
 	return tree
 
 
-## The tree Quarto Corte equips (TalentDef.combos): the same moves with the thrust between cut2 and the spin.
-const FOURTH_TREE := "res://data/combos/paladin_fourth.tres"
+## The tree Maestria Marcial equips (TalentDef.combos, redesign 2026-11-24): five blows, the spin still the last.
+const FIFTH_TREE := "res://data/combos/paladin_fifth.tres"
 
 
 func _combos() -> void:
 	_save(_tree(false), "res://data/combos/paladin.tres")
-	_save(_tree(true), FOURTH_TREE)
+	_save(_tree(true), FIFTH_TREE)
 
 
-## Quarto Corte (warrior_spec.md 4.2): a thrust of 30 between cut2 and the spin, a trade and not a gain. The three
-## cuts deal 105 in 1.22 s from press to press (windups, the spin's glint, attack locks): 86 a second; the thrust adds
-## 30 and 0.34 s (0.14 of windup, 12 frames of lock): 135 in 1.56 s, 86.5 a second (tests/test_warrior_talents.gd
-## keeps it within 10%). A pale thrust of the blade (emeth_thrust), the push of cut2 so the spin still reaches; its
-## tags are the attack's (light), so every Blessing of the attack counts on it.
-const FOURTH := {"damage": 15.0, "windup": 0.14, "recovery": 12.0 / 60.0, "move_hold": 18.0 / 60.0}
+## Maestria Marcial (01_GUERREIRO): the three blows become five. A thrust (30 ahead, as Quarto Corte's was) and a backhand cut
+## sit between cut2 and the spin: the blows 4 and 5 of the sequence are thrust4 and cut4, the spin (5th) is Apogeu's. Their
+## tags are the attack's (light), so every Blessing of the attack counts on them.
+const EXTRA := {"damage": 15.0, "windup": 0.14, "recovery": 12.0 / 60.0, "move_hold": 18.0 / 60.0}
 
 
-func _fourth(spin: ComboNode) -> ComboNode:
+func _extra_blows(spin: ComboNode) -> ComboNode:
+	var back := _move(&"cut4", L, &"Slash_A", [&"light"],
+		{"damage": EXTRA.damage, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.1, "recovery": 9.0 / 60.0,
+		"move_hold": 12.0 / 60.0, "magick_per_hit": 0.5, "chain_window": 0.4, "hit_stop_ms": 30.0, "shake": 0.6, "move_scale": 0.0}, [spin])
 	return _move(&"thrust4", L, &"Sword_Attack", [&"light", &"thrust"],
-		{"damage": FOURTH.damage, "shape": ComboNode.Shape.LINE, "reach": 430.0 / U, "width": 1.6, "knockback": COMBO_PUSH[1],
-		"windup": FOURTH.windup, "recovery": FOURTH.recovery, "move_hold": FOURTH.move_hold, "magick_per_hit": 0.5, "chain_window": 0.4,
-		"hit_stop_ms": 50.0, "shake": 0.8, "move_scale": 0.0, "sound": &"thrust", "sound_at": FOURTH.windup - THRUST_PEAK}, [spin])
+		{"damage": EXTRA.damage, "shape": ComboNode.Shape.LINE, "reach": 430.0 / U, "width": 1.6, "knockback": COMBO_PUSH[1],
+		"windup": EXTRA.windup, "recovery": EXTRA.recovery, "move_hold": EXTRA.move_hold, "magick_per_hit": 0.5, "chain_window": 0.4,
+		"hit_stop_ms": 50.0, "shake": 0.8, "move_scale": 0.0, "sound": &"thrust", "sound_at": EXTRA.windup - THRUST_PEAK}, [back])
 
 
 # ---------- enemies ----------
@@ -1983,62 +1984,37 @@ func _talent(n: int, id: StringName, branch: TalentDef.Branch, tier: TalentDef.T
 	_save(t, _talent_dir + "%02d_%s.tres" % [n, id])
 
 
-## The Warrior's tree of Gifts (warrior_spec.md 4): four branches (Combo, Furia, Emeth, Magia), each an entry, a middle
-## and an apex; four bridges; three sustain Gifts. Costs of the six first Gifts from 4.2, the rest proposals; unlock
-## levels in the order of 4.4 (transforming Gifts first; levels 2 and 6 are the ultimates; 20 unlocks two apexes).
-## Every number is a stat of its mods (BoonState.stat, read by GiftState and Combat; a tag limits it to the moves that
-## carry it); Quarto Corte is a combo tree (TalentDef.combos). Choices of E2-07/E2-09: warrior_spec.md 4.5.
-## Off until the tree screen has places for the C2 Dons (see _talents).
-const NEW_GIFTS_IN_TREE := true
-
-
+## The Warrior's tree of Gifts (redesign 2026-11-24, docs/design/heroes/redesign_2026-11-24/01_GUERREIRO.md and 04_PLANO B.1):
+## three branches of four, Combo (the sequence), Ímpeto (the held blow and Magia) and Domínio (control), each an entry, two
+## middles and an apex; `needs` is the Gift that must be equipped (an apex needs a middle or the entry as the package says).
+## No Gift takes a button (slot NONE) and none reads a tag of the Emeth alone (spin, wave, thrust): they hold for any weapon.
+## Every number is a stat of its mods (BoonState.stat, read by GiftState, Combat and Player; a tag limits it to the moves that
+## carry it). Maestria Marcial is a combo tree (TalentDef.combos). The Fúria and its Gifts are gone (B.5).
 func _talents() -> void:
 	DirAccess.make_dir_recursive_absolute(TALENT_DIR)
 	for f in DirAccess.get_files_at(TALENT_DIR):
 		DirAccess.remove_absolute(TALENT_DIR + f)
 	var B := TalentDef.Branch
 	var T := TalentDef.Tier
-	var S := Boon.Slot
-	# Combo: a 4th blow (a thrust of 30 before the spin, FOURTH); the Corte Veloz counts as the 1st blow (the next press
-	# is cut2); the spin that lands on 3 or more starts the combo over at cut2
-	_talent(0, &"quarto_corte", B.COMBO, T.ENTRY, 3, 1, {"slot": S.ATTACK, "combos": FOURTH_TREE})
-	_talent(1, &"passo_encadeado", B.COMBO, T.MIDDLE, 2, 5, {"slot": S.DASH, "mods": [_fixed(&"dash_chain", 1, [], &"dash")] as Array[BoonMod]})
-	_talent(2, &"golpe_sem_fim", B.COMBO, T.APEX, 4, 16, {"partner": B.FURIA, "mods": [_fixed(&"spin_loop_hits", 3, [], &"spin")] as Array[BoonMod]})
-	# Furia (charges that fade in 3 s, no new bar: D-70): a charge a kill, up to 3, all gone 3 s after the last kill, 6%
-	# more speed of every blow a charge; a kill by a finisher gives the dodge's charge back; with 3 charges a finisher
-	# stuns 0.5 s longer, those with armor too
-	_talent(3, &"impeto", B.FURIA, T.ENTRY, 2, 2, {"mods": [_fixed(&"fury_per_kill", 1), _fixed(&"fury_max", 3),
-		_fixed(&"fury_time", 3.0), _fixed(&"fury_speed", 0.06)] as Array[BoonMod]})
-	_talent(4, &"avanco_feroz", B.FURIA, T.MIDDLE, 3, 7, {"mods": [_fixed(&"dash_back_on_kill", 1, [], &"finisher")] as Array[BoonMod]})
-	_talent(5, &"furia_plena", B.FURIA, T.APEX, 4, 18, {"partner": B.COMBO, "mods": [_fixed(&"fury_full_pct", 0.4, [], &"finisher")] as Array[BoonMod]})
-	# Emeth: the spin throws an emerald wave 6 m ahead for 16 (3 m across); the special's wave goes through stone
-	_talent(6, &"corte_crescente", B.EMETH, T.ENTRY, 3, 3, {"mods": _wave(&"spin", 12.0, 6.0, 3.0)})
-	_talent(7, &"fio_longo", B.EMETH, T.MIDDLE, 1, 8, {"mods": [_fixed(&"reach_pct", 0.15, [], &"light")] as Array[BoonMod]})
-	_talent(8, &"onda_atravessante", B.EMETH, T.APEX, 4, 20, {"partner": B.MAGIA, "mods": [_fixed(&"wave_through", 1, [], &"wave")] as Array[BoonMod]})
-	# Magia: an Omega begun within 1 s of a finisher that landed costs half (the glint stays on the tip that long); the
-	# ultimate charges 25% faster (ult_charge_pct, read by the ultimate) and the passive gives 1 more
-	_talent(9, &"lamina_faminta", B.MAGIA, T.ENTRY, 2, 4, {"mods": [_fixed(&"hungry_time", 1.0, [], &"finisher"), _fixed(&"omega_discount", 0.5)] as Array[BoonMod]})
-	_talent(10, &"reserva", B.MAGIA, T.MIDDLE, 3, 10, {"mods": [_fixed(&"magick_max", 20)] as Array[BoonMod]})
-	_talent(11, &"coracao_da_emeth", B.MAGIA, T.APEX, 4, 20, {"partner": B.EMETH, "mods": [_fixed(&"ult_charge_pct", 0.25), _fixed(&"finisher_magick", 1)] as Array[BoonMod]})
-	# bridges between neighbouring branches: the Corte Veloz that kills gives the dodge back; a kill by an Omega gives 2
-	# charges; the special's Omega throws the spin's wave; the Corte Veloz throws a short wave (the special's look, 12,
-	# 9.6 m: just past the cut's 8 m)
-	_talent(12, &"investida", B.BRIDGE, T.BRIDGE, 3, 11, {"joins": [B.COMBO, B.FURIA] as Array[TalentDef.Branch], "mods": [_fixed(&"dash_back_on_kill", 1, [], &"dash")] as Array[BoonMod]})
-	_talent(13, &"sangue_quente", B.BRIDGE, T.BRIDGE, 3, 13, {"joins": [B.FURIA, B.MAGIA] as Array[TalentDef.Branch], "mods": [_fixed(&"fury_per_kill", 1, [], &"omega")] as Array[BoonMod]})
-	_talent(14, &"onda_carregada", B.BRIDGE, T.BRIDGE, 3, 14, {"joins": [B.MAGIA, B.EMETH] as Array[TalentDef.Branch], "slot": S.SPECIAL, "mods": _wave(&"heavy", 12.0, 6.0, 3.0)})
-	_talent(15, &"fio_do_passo", B.BRIDGE, T.BRIDGE, 3, 15, {"joins": [B.EMETH, B.COMBO] as Array[TalentDef.Branch], "slot": S.DASH, "mods": _wave(&"dash", 12.0, 9.6, 1.6)})
-	# sustain, off the branches: a room won heals 2; once a descent he gets up with half his life, but never in Morvath's
-	# room (E6: no rise_boss_share; with the rise there the Mastery 20 robot won 72 of 72, docs/design/e6_balance.md)
-	_talent(16, &"firmeza", B.SUSTAIN, T.SUSTAIN, 2, 9, {"mods": [_fixed(&"max_hp", 10), _fixed(&"magick_max", 10)] as Array[BoonMod]})
-	_talent(17, &"respiro", B.SUSTAIN, T.SUSTAIN, 3, 12, {"mods": [_fixed(&"room_heal", 2)] as Array[BoonMod]})
-	_talent(18, &"ainda_de_pe", B.SUSTAIN, T.SUSTAIN, 5, 17, {"mods": [_fixed(&"rise_share", 0.5)] as Array[BoonMod]})
-	# C2: four Dons for the Brado (Q) and the Investida (E), approved by Daniel; the tree screen has one spot a branch and
-	# tier (TalentTree.spot), so they stay out of data/ until the art-director draws their places (NEW_GIFTS_IN_TREE)
-	if NEW_GIFTS_IN_TREE:
-		_talent(19, &"voz_larga", B.FURIA, T.MIDDLE, 2, 7, {"mods": [_fixed(&"reach_pct", 0.35, [], &"shout"), _fixed(&"damage_pct", 0.5, [], &"shout"), _fixed(&"push_pct", 0.3, [], &"shout")] as Array[BoonMod]})
-		_talent(20, &"escudo_de_guerra", B.FURIA, T.MIDDLE, 3, 12, {"mods": [_fixed(&"shout_ward", 1, [], &"shout")] as Array[BoonMod]})
-		_talent(21, &"folego_de_guerra", B.BRIDGE, T.BRIDGE, 3, 13, {"joins": [B.COMBO, B.FURIA] as Array[TalentDef.Branch], "mods": [_fixed(&"cooldown_pct", -0.25, [], &"shout"), _fixed(&"cooldown_pct", -0.25, [], &"dash")] as Array[BoonMod]})
-		_talent(22, &"ferro_na_investida", B.COMBO, T.MIDDLE, 3, 6, {"slot": S.DASH, "mods": [_fixed(&"damage_pct", 0.5, [], &"dash"), _fixed(&"armor_pct", 0.25, [], &"dash")] as Array[BoonMod]})
+	# Combo: the dodge keeps the sequence 2 s longer; each blow of it 8% faster; five blows; the 5th hits for 150% of the others
+	_talent(0, &"disciplina", B.COMBO, T.ENTRY, 2, 1, {"mods": [_fixed(&"dodge_window_add", 2.0)] as Array[BoonMod]})
+	_talent(1, &"cadencia", B.COMBO, T.MIDDLE, 2, 4, {"needs": &"disciplina", "mods": [_fixed(&"cadence_pct", 0.08)] as Array[BoonMod]})
+	_talent(2, &"maestria_marcial", B.COMBO, T.MIDDLE, 3, 9, {"needs": &"disciplina", "combos": FIFTH_TREE})
+	_talent(3, &"apogeu", B.COMBO, T.APEX, 4, 16, {"needs": &"maestria_marcial", "mods": [_fixed(&"apogee_pct", 1.5, [], &"finisher")] as Array[BoonMod]})
+	# Ímpeto: the Golpe Carregado hits 40% harder; Magia from the attack doubles; it charges 30% faster; Força Titânica costs
+	# twice the Magia and hits x3 at the end (final_pct 2.0, after Força Concentrada's damage_pct)
+	_talent(4, &"forca_concentrada", B.IMPETO, T.ENTRY, 2, 2, {"mods": [_fixed(&"damage_pct", 0.4, [], &"omega")] as Array[BoonMod]})
+	_talent(5, &"determinacao", B.IMPETO, T.MIDDLE, 2, 6, {"needs": &"forca_concentrada", "mods": [_fixed(&"attack_magick_pct", 1.0)] as Array[BoonMod]})
+	_talent(6, &"concentracao", B.IMPETO, T.MIDDLE, 3, 11, {"needs": &"forca_concentrada", "mods": [_fixed(&"charge_time_pct", -0.3)] as Array[BoonMod]})
+	_talent(7, &"forca_titanica", B.IMPETO, T.APEX, 4, 17, {"needs": &"forca_concentrada", "mods": [_fixed(&"omega_cost_pct", 1.0), _fixed(&"final_pct", 2.0, [], &"omega")] as Array[BoonMod]})
+	# Domínio: the finisher breaks armor 50% faster; the Brado is wider, stronger and interrupts (the old Voz Larga's numbers);
+	# the stun of a blow lasts 50% longer; the Investida goes through and stuns whoever it hits for 2 s (B.4), armor takes 50% more
+	_talent(8, &"ruptura", B.DOMINIO, T.ENTRY, 2, 3, {"mods": [_fixed(&"armor_pct", 0.5, [], &"finisher")] as Array[BoonMod]})
+	_talent(9, &"voz_do_leao", B.DOMINIO, T.MIDDLE, 3, 8, {"needs": &"ruptura", "mods": [_fixed(&"reach_pct", 0.35, [], &"shout"),
+		_fixed(&"damage_pct", 0.5, [], &"shout"), _fixed(&"push_pct", 0.3, [], &"shout"), _fixed(&"stun_pct", 0.5, [], &"shout")] as Array[BoonMod]})
+	_talent(10, &"imposicao", B.DOMINIO, T.MIDDLE, 3, 13, {"needs": &"ruptura", "mods": [_fixed(&"stun_pct", 0.5)] as Array[BoonMod]})
+	_talent(11, &"investida_implacavel", B.DOMINIO, T.APEX, 4, 18, {"needs": &"imposicao", "mods": [_fixed(&"dash_pierce", 1.0, [], &"dash"),
+		_fixed(&"dash_stun", 2.0, [], &"dash"), _fixed(&"armor_pct", 0.5, [], &"dash")] as Array[BoonMod]})
 
 
 ## A wave a blow throws (Combat._gift_wave) on the moves with this tag: damage, meters it runs, meters across.
@@ -2296,25 +2272,25 @@ func _psalms() -> void:
 	_psalm(0, &"sentinela", &"watch", S.CAST, E.SENTINEL, [
 		["circulo_brasa", "circulo_geada", "circulo_radiante", "circulo_firme"],
 		["escudo", "passos", "firmeza", "golpe_firme", "pesado_firme"],
-		["bastiao", "rastro", "passo_frio", G + "reserva", G + "lamina_faminta", G + "coracao_da_emeth"]],
+		["bastiao", "rastro", "passo_frio", G + "voz_do_leao", G + "imposicao", G + "forca_concentrada"]],
 		{"damage": 30.0})
 	# sheltering: the dodge leaves a shelter of 2.6 m for 3 s where it ends (two at most) that undoes enemy shots
 	_psalm(1, &"abrigo", &"shelter", S.DASH, E.SHELTER, [
 		["passos", "passo_brasa", "passo_geada", "passo_radiante"],
 		["escudo", "firmeza", "consolo", "circulo_firme"],
-		["rastro", "passo_frio", "bastiao", G + "passo_encadeado", G + "fio_do_passo", G + "investida"]],
+		["rastro", "passo_frio", "bastiao", G + "disciplina", G + "cadencia", G + "investida_implacavel"]],
 		{"radius": 2.6, "duration": 3.0, "count": 2})
 	# guiding: each kill gathers a light (three at most); the special throws one more wave for each, 14 degrees apart
 	_psalm(2, &"pastor", &"shepherd", S.SPECIAL, E.FLOCK, [
 		["toque_geada", "pesado_brasa", "pesado_radiante", "pesado_firme"],
 		["consolo", "onda_maior", "flagelo", "golpe_radiante", "circulo_radiante", "passo_radiante"],
-		["aurora", "chama_viva", G + "corte_crescente", G + "onda_carregada", G + "onda_atravessante"]],
+		["aurora", "chama_viva", G + "forca_concentrada", G + "determinacao", G + "forca_titanica"]],
 		{"count": 3, "spread": 14.0})
 	# firmness: the spin plants a stone of light: 30 within 4 m, the common ones stunned 1 s, then 3 s slowing there
 	_psalm(3, &"rocha", &"rock", S.ATTACK, E.STONE, [
 		["golpe_brasa", "golpe_geada", "golpe_radiante", "golpe_firme"],
 		["firmeza", "escudo", "pesado_firme", "estilhaco", "peso_inverno"],
-		["vapor", "bastiao", G + "quarto_corte", G + "golpe_sem_fim", G + "furia_plena", G + "fio_longo"]],
+		["vapor", "bastiao", G + "maestria_marcial", G + "apogeu", G + "cadencia", G + "ruptura"]],
 		{"damage": 30.0, "radius": 4.0, "stun": 1.0, "duration": 3.0})
 
 
@@ -3167,15 +3143,10 @@ func _angels() -> void:
 ## Node places per hero: [id, angle (degrees from twelve o'clock, clockwise), radius, diameter]. The ring is 254, a spur 200
 ## or 308; the crown and the apexes are the big ones (72), the rest 48 (bigger since the children's test, 2026-11-23). A new Gift is a new row here.
 const MEDALLION_WARRIOR := [
-	[&"crown", 0, 254, 72], [&"cleave", 331, 254, 48], [&"vortex", 29, 254, 48],
-	[&"firmeza", 50, 254, 48], [&"respiro", 63, 254, 48], [&"ainda_de_pe", 76, 254, 48], [&"fio_do_passo", 89, 254, 48],
-	[&"corte_crescente", 102, 254, 48], [&"fio_longo", 116, 254, 48], [&"onda_atravessante", 131, 254, 72],
-	[&"onda_carregada", 147, 254, 48], [&"lamina_faminta", 160, 254, 48], [&"reserva", 172, 254, 48],
-	[&"coracao_da_emeth", 186, 254, 72], [&"sangue_quente", 202, 254, 48], [&"impeto", 215, 254, 48],
-	[&"avanco_feroz", 228, 254, 48], [&"voz_larga", 228, 308, 48], [&"escudo_de_guerra", 228, 200, 48],
-	[&"furia_plena", 243, 254, 72], [&"investida", 258, 254, 48], [&"folego_de_guerra", 258, 308, 48],
-	[&"quarto_corte", 272, 254, 48], [&"passo_encadeado", 286, 254, 48], [&"ferro_na_investida", 286, 308, 48],
-	[&"golpe_sem_fim", 301, 254, 72],
+	[&"crown", 0, 254, 72], [&"disciplina", 40, 254, 48], [&"cadencia", 60, 254, 48], [&"maestria_marcial", 60, 308, 48],
+	[&"apogeu", 80, 254, 72], [&"forca_concentrada", 180, 254, 48], [&"determinacao", 160, 254, 48], [&"concentracao", 160, 308, 48],
+	[&"forca_titanica", 200, 254, 72], [&"ruptura", 280, 254, 48], [&"voz_do_leao", 300, 254, 48], [&"imposicao", 300, 308, 48],
+	[&"investida_implacavel", 320, 254, 72],
 ]
 const MEDALLION_MAGA := [
 	[&"crown", 0, 254, 72], [&"storm", 331, 254, 48], [&"dome_abs", 29, 254, 48],
@@ -3191,7 +3162,7 @@ const MEDALLION_MAGA := [
 
 
 func _medallion() -> void:
-	for pair: Array in [["warrior", MEDALLION_WARRIOR, [&"cleave", &"vortex"]], ["maga", MEDALLION_MAGA, [&"storm", &"dome_abs"]]]:
+	for pair: Array in [["warrior", MEDALLION_WARRIOR, []], ["maga", MEDALLION_MAGA, [&"storm", &"dome_abs"]]]:
 		var m := MedallionDef.new()
 		m.hero = StringName(pair[0])
 		for row: Array in pair[1]:

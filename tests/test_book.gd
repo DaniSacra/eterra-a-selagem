@@ -118,23 +118,24 @@ func test_every_new_text_is_in_the_table_without_a_dash() -> void:
 func test_needs_text_by_place_in_the_tree() -> void:
 	var lo := _loadout(2470)
 	var book := lo.book
-	assert_eq(lo.needs_text(book.find(&"quarto_corte")).key, &"hero_needs_none", "an entry needs nothing")
-	assert_eq(lo.needs_text(book.find(&"firmeza")).key, &"hero_needs_none", "a sustain Gift neither")
-	var mid := lo.needs_text(book.find(&"passo_encadeado"))
+	assert_eq(lo.needs_text(book.find(&"disciplina")).key, &"hero_needs_none", "an entry needs nothing")
+	var mid := lo.needs_text(book.find(&"cadencia"))
 	assert_eq(mid.key, &"hero_why_needs")
-	assert_eq(mid.args.what, T.t(&"talent_quarto_corte"))
-	assert_eq(lo.needs_text(book.find(&"golpe_sem_fim")).key, &"hero_why_apex")
+	assert_eq(mid.args.what, T.t(&"talent_disciplina"))
+	var apex := lo.needs_text(book.find(&"apogeu"))
+	assert_eq(apex.key, &"hero_why_needs", "redesign: an apex names the Gift it needs")
+	assert_eq(apex.args.what, T.t(&"talent_maestria_marcial"))
 
 
 func test_next_step_and_xp_missing() -> void:
 	var lo := _loadout(XP_3)
-	var later := lo.book.find(&"lamina_faminta")
+	var later := lo.book.find(&"cadencia")
 	var step := lo.next_step(later)
 	assert_eq(step.key, &"hero_step_mastery")
 	assert_eq(step.args.xp, HeroDef.warrior().mastery.total_to(later.unlock_level) - XP_3)
-	assert_eq(lo.next_step(lo.book.find(&"quarto_corte")), {}, "open: nothing to do but put it on")
+	assert_eq(lo.next_step(lo.book.find(&"disciplina")), {}, "open: nothing to do but put it on")
 	var blocked := _loadout(XP_8)
-	assert_eq(blocked.next_step(blocked.book.find(&"passo_encadeado")).key, &"hero_why_needs", "blocked: the rule")
+	assert_eq(blocked.next_step(blocked.book.find(&"cadencia")).key, &"hero_why_needs", "blocked: the rule")
 	assert_eq(lo.xp_missing(1), 0)
 
 
@@ -240,7 +241,7 @@ func test_the_pages_are_equal_and_the_head_names_the_chapter() -> void:
 
 
 func test_the_hero_page_lists_the_equipped_gifts_to_read_only() -> void:
-	var s := _book(_data(XP_3, [&"quarto_corte"]))
+	var s := _book(_data(XP_3, [&"disciplina"]))
 	var list := s.find_child("gifts_equipped", true, false)
 	assert_not_null(list)
 	assert_eq(list.get_child_count(), 1)

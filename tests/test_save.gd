@@ -124,9 +124,11 @@ func test_version_3_keeps_heroes_and_codex_through_read_and_write() -> void:
 	var w: Dictionary = out.heroes.warrior
 	assert_eq(w.mastery_xp, 512, "no retroactive XP on a version 3 file")
 	assert_eq(typeof(w.mastery_xp), TYPE_INT)
-	assert_eq(w.unlocked, ["quarto_corte", "impeto"], "only ids (strings) are kept")
-	assert_eq(w.equipped, ["quarto_corte", "impeto"])
-	assert_eq(w.ultimate, "cleave")
+	# (the fixture holds the Warrior's old Gifts: the v13 migration takes them out and gives the Memória back; the ids that
+	# are not strings were dropped by the read before that)
+	assert_eq(w.unlocked, [], "only ids (strings) are kept, the legacy ones migrated")
+	assert_eq(w.equipped, [])
+	assert_eq(w.ultimate, "", "the Supremo is the weapon's: nothing chosen is kept")
 	assert_eq(int(w.firsts.guardian), 2)
 	assert_true(out.heroes.has("someone_later"), "a hero this version does not know is kept")
 	assert_eq(out.heroes.someone_later.mastery_xp, 40)

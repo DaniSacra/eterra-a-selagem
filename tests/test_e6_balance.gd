@@ -61,20 +61,20 @@ func test_the_robot_walks_into_the_altar_only_to_trade() -> void:
 
 func test_the_gifts_left_out_say_why() -> void:
 	var book := HeroDef.warrior().talents()
-	var asked := [&"quarto_corte", &"impeto", &"reserva", &"nope"]
+	var asked := [&"disciplina", &"forca_concentrada", &"apogeu", &"nope"]
 	var top := HeroDef.warrior().mastery.max_level
 	var dev := HeroDef.warrior().mastery.devotion(top)
 	var kept := book.sanitized(asked, top, dev)
-	assert_eq(kept, [&"quarto_corte", &"impeto"] as Array[StringName])
+	assert_eq(kept, [&"disciplina", &"forca_concentrada"] as Array[StringName])
 	var why := book.why_dropped(asked, kept, top, dev)
-	assert_eq(why.get(&"reserva"), Talents.Problem.NEEDS, "Reserva is the Magia branch's middle: it needs Lâmina Faminta")
+	assert_eq(why.get(&"apogeu"), Talents.Problem.NEEDS, "Apogeu needs Maestria Marcial")
 	assert_eq(why.get(&"nope"), Talents.Problem.UNKNOWN)
-	assert_false(why.has(&"impeto"))
+	assert_false(why.has(&"forca_concentrada"))
 	var low := book.sanitized(asked, 1, HeroDef.warrior().mastery.devotion(1))
-	assert_eq(book.why_dropped(asked, low, 1, HeroDef.warrior().mastery.devotion(1)).get(&"impeto"), Talents.Problem.LOCKED,
-		"Ímpeto opens at Mastery 3")
-	var with_entry := book.sanitized([&"lamina_faminta", &"reserva"], top, dev)
-	assert_eq(with_entry, [&"lamina_faminta", &"reserva"] as Array[StringName], "with its entry Reserva stays")
+	assert_eq(book.why_dropped(asked, low, 1, HeroDef.warrior().mastery.devotion(1)).get(&"forca_concentrada"), Talents.Problem.LOCKED,
+		"Força Concentrada opens at Mastery 2")
+	var with_entry := book.sanitized([&"disciplina", &"cadencia"], top, dev)
+	assert_eq(with_entry, [&"disciplina", &"cadencia"] as Array[StringName], "with its entry Cadência stays")
 
 
 func test_a_pomegranate_slice_grows_a_blessing_in_a_real_run() -> void:
@@ -88,10 +88,17 @@ func test_a_pomegranate_slice_grows_a_blessing_in_a_real_run() -> void:
 	assert_true(game.offer_cards.is_empty())
 
 
+func _rise() -> Array[BoonMod]:
+	var m := BoonMod.new()
+	m.stat = &"rise_share"
+	m.base = 0.5
+	m.by_rarity = false
+	return [m] as Array[BoonMod]
+
+
 func test_ainda_de_pe_guards_the_descent_not_morvaths_fight() -> void:
 	var gs := GiftState.new(HeroDef.warrior(), BoonState.new())
-	var t := HeroDef.warrior().talents()
-	gs.boons.equip_talents(t.defs([&"ainda_de_pe"]))
+	gs.boons.grant(_rise())  # (Ainda de Pé is a Videira node now: a granted number)
 	gs.rises = 1
 	assert_almost_eq(gs.rise_life(40.0), 20.0, 0.01, "half of his life on the descent")
 	gs.boss_room = true
@@ -103,7 +110,8 @@ func test_in_a_real_run_the_fall_before_morvath_is_final() -> void:
 	var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
 	add_child_autofree(game)
 	game.rooms.start_at(RunMap.Kind.FOUNTAIN)
-	game.equip_talents([&"ainda_de_pe"] as Array[StringName])
+	game.boons.grant(_rise())
+	game.hero_gifts.equip()
 	game.start_boss(&"morvath")
 	var p := game.player
 	p.invuln = 0.0

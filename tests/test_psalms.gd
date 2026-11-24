@@ -99,8 +99,8 @@ func test_a_psalm_needs_one_held_thing_of_each_group() -> void:
 	assert_false(Psalms.met(p, Psalms.held_of(_held([]), [])), "nothing held")
 	assert_false(Psalms.met(p, Psalms.held_of(_held(["circulo_brasa", "escudo"]), [])), "two of three")
 	assert_true(Psalms.met(p, Psalms.held_of(_held(["circulo_brasa", "escudo", "bastiao"]), [])), "a Blessing, a Blessing, an Elo")
-	assert_true(Psalms.met(p, Psalms.held_of(_held(["circulo_geada", "passos"]), [&"reserva"])), "a Gift equipped counts")
-	assert_false(Psalms.met(p, Psalms.held_of(_held(["circulo_geada", "passos", "reserva"]), [])),
+	assert_true(Psalms.met(p, Psalms.held_of(_held(["circulo_geada", "passos"]), [&"voz_do_leao"])), "a Gift equipped counts")
+	assert_false(Psalms.met(p, Psalms.held_of(_held(["circulo_geada", "passos", "voz_do_leao"]), [])),
 		"a Gift is only a Gift equipped (never a Blessing of the same name)")
 
 
@@ -115,7 +115,7 @@ func test_the_draw_reads_the_held_blessings_elos_and_gifts() -> void:
 	var held := _held(["golpe_firme", "escudo", "vapor"])
 	var ids := rules.eligible(held, []).map(func(p: PsalmDef) -> StringName: return p.id)
 	assert_eq(ids, [&"rocha"], "the attack's Blessing, a firm one and an Elo: the Rocha")
-	ids = rules.eligible(_held(["golpe_firme", "escudo"]), [&"quarto_corte"]).map(func(p: PsalmDef) -> StringName: return p.id)
+	ids = rules.eligible(_held(["golpe_firme", "escudo"]), [&"maestria_marcial"]).map(func(p: PsalmDef) -> StringName: return p.id)
 	assert_eq(ids, [&"rocha"], "or an equipped Gift in the third group")
 
 

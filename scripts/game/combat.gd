@@ -251,8 +251,6 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	_swing += 1
 	kill_blow = _swing
 	var tags := node.tags
-	# Fúria Plena: with every charge the finisher causes more (GiftState.fury_full_pct)
-	var full := 1.0 + (gifts.fury_full_pct(tags) if gifts else 0.0)
 	var hits := 0
 	# Retorno do Corte (Fatia 2): the blow right after a Corte Veloz reaches farther and wider
 	var back := 0.0
@@ -303,7 +301,9 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			_draw_hit(e, cut_axis(node.shape, origin, e.pos, away, flip), away, color, heavy or node.has_tag(&"omega"), finisher)
 		# (the cry only pushes: not even the stun of a plain blow comes with it)
 		_no_stun = shout
-		var died := hit_enemy(e, node.damage * full, tags, away, node.knockback, true, finisher)
+		_strike_node = node if node.tags.has(&"light") and not shout else null
+		var died := hit_enemy(e, node.damage, tags, away, node.knockback, true, finisher)
+		_strike_node = null
 		_no_stun = false
 		hits += 1
 		_mats.append(CombatSounds.material_of(e))
@@ -312,6 +312,8 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		if died:
 			kills += 1
 			continue
+		if node.has_tag(&"dash"):
+			_dash_through(e, tags)
 		match node.effect:
 			ComboNode.Effect.LAUNCH:
 				if not e.def.heavy:
@@ -346,7 +348,7 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		ComboNode.Effect.SHOUT:
 			fx.hero_burst(&"light", Vector3(origin.x, 0.4, origin.y))
 			if gifts:
-				gifts.rally(node.effect_time, node.buff_speed, node.buff_guard, int(node.effect_power))
+				gifts.rally(node.effect_time, node.buff_speed, node.buff_guard)
 				gifts.ward = node.buff_ward + int(boons.stat(&"shout_ward", tags))  # Escudo de Guerra: more blows absorbed
 	if gifts:
 		_gift_wave(node, origin, dir, color)
@@ -366,6 +368,19 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	swung.emit(node, struck.size())
 	if hits > 0:
 		landed.emit(node, tags, hits)
+
+
+## Investida Implacável (B.4): each enemy the Investida's thrust goes through (once: one strike a lunge) is stunned dash_stun
+## seconds when it is common (StunRule.dash_stuns); armor takes more by the Gift's armor_pct (hit_enemy), and a boss takes
+## the Quebra of a combo's blow (the Postura, as an `attack` source: no new number, decision G of the plan).
+func _dash_through(e: Enemy, tags: Array[StringName]) -> void:
+	var pierce := boons.stat(&"dash_pierce", tags)
+	if pierce <= 0.0:
+		return
+	if e.def.behavior == EnemyDef.Behavior.BOSS:
+		horde.boss_blow.emit(e, &"attack")
+	elif StunRule.dash_stuns(is_common(e.def), pierce):
+		horde.flinch(e, boons.stat(&"dash_stun", tags))
 
 
 ## The wave of a move with Effect.WAVE (the special and its Omega; the Pastor's flock throws more of them, E4): its
@@ -679,6 +694,29 @@ static func is_common(def: EnemyDef) -> bool:
 	return not def.heavy and not def.elite and def.behavior != EnemyDef.Behavior.BOSS
 
 
+## Apogeu (redesign B.2): the blow of the attack's sequence that is being dealt by strike() (null for everything else: waves,
+## echoes, burns, the Brado, the Investida, the Golpe Carregado, reactions never reach the books).
+var _strike_node: ComboNode
+## The books of Apogeu (HeroGifts clears them when the sequence ends, a target dies or the room changes).
+var apogee := ApogeeLedger.new()
+
+
+## What Apogeu adds to this blow on `e` (0 for any blow but the last of the sequence, which spends the books): the share
+## apogee_pct of what the sequence already dealt to this target, aditive after every multiplier, never past ApogeeLedger.CAP
+## times the blow's own damage. A blow of the sequence before it only adds its damage to the books.
+func _apogee(e: Enemy, dmg: float, tags: Array[StringName]) -> float:
+	if _strike_node == null or DealtBy.source(tags) != &"attack":
+		return 0.0
+	var id := e.get_instance_id()
+	var pct := boons.stat(&"apogee_pct", tags)
+	if pct <= 0.0:
+		apogee.add(id, dmg)
+		return 0.0
+	var extra := roundf(apogee.finisher(id, pct, dmg))
+	apogee.reset(id)
+	return extra
+
+
 ## One enemy takes one hit, with every gift applied. counts: it is a blow of the paladin (feeds the combo counter).
 ## Returns true when it died.
 func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, knockback: float, counts: bool = true, big: bool = false) -> bool:
@@ -692,6 +730,7 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	# BO-2: the shatter belongs to a button's tags (the special's wave, a shot that is no combo count, shatters too)
 	var shatter := boons.stat(&"shatter_pct", tags) if frozen and (counts or tags.has(&"wave") or tags.has(&"blast")) else 0.0
 	var dmg := DamageCalc.hit(base, boons.stat(&"damage_pct", tags), e.air_t > 0.0, frozen and shatter > 0.0, shatter, e.def.undead, boons.stat(&"undead_mult"))
+	dmg *= 1.0 + boons.stat(&"final_pct", tags)  # Força Titânica: x3 at the very end of the Golpe Carregado's damage_pct
 	dmg = DamageCalc.marked(dmg, MARK_CRIT + boons.stat(&"crit_pct", tags), e.mark_t > 0.0)
 	dmg = DamageCalc.shoved(dmg, boons.stat(&"shove_pct"), e.shove_t > 0.0)
 	var push_pct := boons.stat(&"push_pct", tags)
@@ -713,6 +752,7 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 		elif tags.has(&"light") and e.def.guard_back_mult > 1.0 and horde.guard_up(e) and horde.behind(e, horde.target):
 			dmg *= e.def.guard_back_mult  # K3: the guardian's back, with its shield raised, takes more
 	dmg = maxf(1.0, roundf(dmg))
+	dmg += _apogee(e, dmg, tags)
 	if push_pct > 0.0:
 		knockback = maxf(knockback, SHOVE_MIN) * (1.0 + push_pct)
 		e.shove_t = SHOVE_TIME
@@ -720,10 +760,12 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	kill_tags = tags
 	horde.dealing = source if source != &"" else DealtBy.source(tags)
 	horde.stun_scale = 0.0 if _no_stun else 1.0 + boons.stat(&"stun_pct", tags)
+	horde.break_scale = 1.0 + boons.stat(&"stun_pct", tags)
 	horde.strong = tags.has(OMEGA_TAG)
 	horde.heavy_blow = tags.has(&"heavy")
 	var died := horde.damage(e, dmg, away, knockback, GUARD_NUMBER if shut else number_color(tags, big), true, big)
 	horde.stun_scale = 1.0
+	horde.break_scale = 1.0
 	horde.strong = false
 	horde.heavy_blow = false
 	kill_tags = []

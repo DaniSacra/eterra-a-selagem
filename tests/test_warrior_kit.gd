@@ -56,7 +56,7 @@ func _frames(p: Player, n: int) -> void:
 # ---------- the data ----------
 
 func test_the_tree_of_data() -> void:
-	for path in [HeroDef.warrior().combos, "res://data/combos/paladin_fourth.tres"]:
+	for path in [HeroDef.warrior().combos, "res://data/combos/paladin_fifth.tres"]:
 		var tree: ComboTree = load(path)
 		var bolt := ComboTree.find(tree.neutral, ComboNode.In.HEAVY)
 		assert_eq(bolt.effect_power, 55.0, "55 damage")

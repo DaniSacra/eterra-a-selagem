@@ -8,46 +8,46 @@ extends RefCounted
 const DIR := "res://assets/ui/book/"
 ## The ribbon of the last chapter: the ultimates ("Poder maior"), a ribbon of gold.
 const ULT_BRANCH := -1
-const WARRIOR_ORDER: Array[int] = [TalentDef.Branch.COMBO, TalentDef.Branch.FURIA, TalentDef.Branch.EMETH, TalentDef.Branch.MAGIA]
-const MAGA_ORDER: Array[int] = [TalentDef.Branch.PIRO, TalentDef.Branch.ARCA, TalentDef.Branch.CTRL]
+## The chapters by branch name (a name the enum no longer has is skipped): the Warrior's three, the Maga's three (the old
+## three first, while a Maga catalog still has them).
+const WARRIOR_ORDER: Array[StringName] = [&"COMBO", &"IMPETO", &"DOMINIO", &"FURIA", &"EMETH", &"MAGIA"]
+const MAGA_ORDER: Array[StringName] = [&"ELEMENTALISMO", &"CONJURACAO", &"FEITICARIA", &"PIRO", &"ARCA", &"CTRL"]
 ## Inks of the branches, lowered for the paper (the vivid emerald stays the Emeth's own light, not a paper ink).
 const INK := {
-	TalentDef.Branch.COMBO: Color("783222"), TalentDef.Branch.FURIA: Color("9a5a2a"),
-	TalentDef.Branch.EMETH: Color("2f7a58"), TalentDef.Branch.MAGIA: Color("3d6a8c"),
-	TalentDef.Branch.BRIDGE: Color("7f5c26"), TalentDef.Branch.SUSTAIN: Color("7a4e3a"),
-	TalentDef.Branch.PIRO: Color("9a4a1c"), TalentDef.Branch.ARCA: Color("86601a"), TalentDef.Branch.CTRL: Color("4a5560"),
+	&"COMBO": Color("783222"), &"IMPETO": Color("9a5a2a"), &"DOMINIO": Color("2f7a58"),
+	&"ELEMENTALISMO": Color("9a4a1c"), &"CONJURACAO": Color("86601a"), &"FEITICARIA": Color("7f5c26"),
+	&"FURIA": Color("9a5a2a"), &"EMETH": Color("2f7a58"), &"MAGIA": Color("3d6a8c"),
+	&"BRIDGE": Color("7f5c26"), &"SUSTAIN": Color("7a4e3a"),
+	&"PIRO": Color("9a4a1c"), &"ARCA": Color("86601a"), &"CTRL": Color("4a5560"),
 }
 const MAGA_TITLE := Color("6a3a14")
 const ULT_INK := Color("b08a2a")
-const BRANCH_ART := {
-	TalentDef.Branch.COMBO: &"branch_combo", TalentDef.Branch.FURIA: &"branch_furia", TalentDef.Branch.EMETH: &"branch_emeth",
-	TalentDef.Branch.MAGIA: &"branch_magia", TalentDef.Branch.BRIDGE: &"branch_bridge", TalentDef.Branch.SUSTAIN: &"branch_sustain",
-	TalentDef.Branch.PIRO: &"branch_piro", TalentDef.Branch.ARCA: &"branch_arca", TalentDef.Branch.CTRL: &"branch_ctrl",
-}
 
 
 static func is_maga(hero: HeroDef) -> bool:
 	return hero != null and hero.id == &"maga"
 
 
-## The branches of the hero's chapters, in order (the Warrior's four, or the Maga's three, then Pontes and Sustento,
-## only those the hero's catalog has).
+## The branches of the hero's chapters, in order (the Warrior's three or the Maga's three, only those the hero's catalog has).
 static func chapters(hero: HeroDef) -> Array[int]:
 	var out: Array[int] = []
 	var have := {}
 	for t in hero.talents().catalog:
 		have[t.branch] = true
-	var order: Array[int] = []
-	order.append_array(MAGA_ORDER if is_maga(hero) else WARRIOR_ORDER)
-	order.append_array([TalentDef.Branch.BRIDGE, TalentDef.Branch.SUSTAIN])
-	for b in order:
-		if have.has(b):
+	for n in (MAGA_ORDER if is_maga(hero) else WARRIOR_ORDER):
+		var b: int = TalentDef.Branch.get(String(n), -1)
+		if b >= 0 and have.has(b):
 			out.append(b)
 	return out
 
 
+## The painted art key of a branch (assets/ui/book/branch_<name>.png when it exists).
+static func branch_art(branch: int) -> StringName:
+	return StringName("branch_" + String(TalentNode.branch_name(branch)).to_lower())
+
+
 static func ink(branch: int) -> Color:
-	return INK.get(branch, ULT_INK)
+	return INK.get(TalentNode.branch_name(branch), ULT_INK)
 
 
 ## The ink of the page's titles: the Warrior's iron-gall brown, the Maga's dark amber.
@@ -55,18 +55,8 @@ static func title_ink(hero: HeroDef) -> Color:
 	return MAGA_TITLE if is_maga(hero) else Book.INK
 
 
-## The second ink of a Gift of Pontes (its capital split on the diagonal: the first branch and this one); transparent
-## for any other.
-static func ink2(t: TalentDef) -> Color:
-	if t.tier == TalentDef.Tier.BRIDGE and t.joins.size() == 2:
-		return ink(t.joins[1])
-	return Color(0, 0, 0, 0)
-
-
-## The first ink of a Gift: its branch's (a bridge: its first branch's).
+## The ink of a Gift: its branch's.
 static func gift_ink(t: TalentDef) -> Color:
-	if t.tier == TalentDef.Tier.BRIDGE and t.joins.size() == 2:
-		return ink(t.joins[0])
 	return ink(t.branch)
 
 

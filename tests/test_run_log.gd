@@ -200,7 +200,7 @@ func test_the_mastery_of_a_run_goes_into_the_save_data_and_a_death_keeps_it() ->
 	assert_eq(gain.first_victory, 0)
 	game.award_mastery(gain, "death", data)
 	assert_eq(data.heroes.warrior.mastery_xp, gain.total, "a death keeps the XP")
-	assert_true((data.heroes.warrior.unlocked as Array).has("quarto_corte"))
+	assert_true((data.heroes.warrior.unlocked as Array).has("disciplina"))
 	assert_eq(data.codex.boons.brasas.seen, 1)
 	assert_eq(data.codex.elos.vapor.formed, 1)
 	assert_eq(int(data.heroes.warrior.firsts.guardian), 1)

@@ -7,21 +7,18 @@ extends RefCounted
 ##
 ## - Passive (P-A): a finisher (HeroDef.passive_tags, never passive_never) that lands gives back
 ##   HeroDef.magick_on_finisher + finisher_magick of Magia, once a blow.
-## - Ímpeto: fury_per_kill charges a kill (tagged: Sangue Quente adds one for an Omega), up to fury_max, all gone
-##   fury_time seconds after the last kill; fury_speed more speed of every blow a charge.
-## - Fúria Plena: with fury_max charges a finisher causes fury_full_pct more damage.
-## - Avanço Feroz, Investida: a kill by a blow with dash_back_on_kill gives the dodge's charge back, once a blow.
-## - Lâmina Faminta: a blow with hungry_time that lands opens a window that long; an Omega begun in it costs
-##   omega_discount less.
-## - Golpe sem Fim: a blow with spin_loop_hits that lands on that many starts the combo over at its 2nd blow.
-## - Passo Encadeado: a blow with dash_chain counts as the combo's 1st blow.
-## - Corte Crescente, Onda Carregada, Fio do Passo: blow_wave (damage), blow_wave_m, blow_wave_w (Combat throws it).
+## - Cadência (redesign 2026-11-24): cadence_pct more speed of every attack blow for each blow of the sequence already
+##   landed (chain_n; the opener, a lost sequence and a blow taken start it over).
+## - Corte Crescente, Onda Carregada, Fio do Passo: blow_wave (damage), blow_wave_m, blow_wave_w (Combat throws it; the
+##   Encantos use them).
 ## - Ainda de Pé: once a descent, a fall leaves him standing with rise_share of his life (rise_boss_share in Morvath's
 ##   room, E6: none today).
 ## - Fatia 2 (Encantos, Refinar): blow_wave_fan more waves in a fan (Lâmina Tríplice); echo_pct of a blow again after
 ##   echo_delay (Eco da Verdade, Combat); return_reach after a blow with return_time (Retorno do Corte, Combat);
 ##   blow_speed (Pressa) and armor_pct (Peso, Onda Pesada, Combat).
-## - Respiro: room_heal of life a room won. Coração da Emeth: ult_charge_pct (the ultimate reads it), finisher_magick.
+## - Respiro: room_heal of life a room won. ult_charge_pct (the ultimate reads it), finisher_magick.
+## The Dons of the redesign are read where they act: dodge_window_add (ComboRunner), attack_magick_pct (KitFeed), charge_time_pct
+## and omega_cost_pct (Player), final_pct and apogee_pct and stun_pct (Combat), dash_pierce and dash_stun (Combat, Player).
 
 ## The most of a move's cooldown the Dons and Blessings may take off (Fôlego de Guerra).
 const COOLDOWN_CUT_MAX := 0.5
@@ -29,15 +26,12 @@ const COOLDOWN_CUT_MAX := 0.5
 ## The Blessings and Gifts of the run (their stat sums every number; held here, a Callable would not keep it alive).
 var boons: BoonState
 var hero: HeroDef
-## Ímpeto's charges and the seconds before they all fade.
-var fury := 0
-var fury_left := 0.0
+## Blows of the attack's sequence that have landed so far (Cadência).
+var chain_n := 0
 ## The Brado's buff (2026-11-21): seconds left, the extra speed of every blow and the share of damage taken it takes off.
 var rally_left := 0.0
 var rally_speed := 0.0
 var rally_guard := 0.0
-## Seconds left of Lâmina Faminta's window.
-var hungry_left := 0.0
 ## Falls Ainda de Pé still stands him up from this descent.
 var rises := 0
 ## Morvath's room has begun (Game._start_boss): a fall there rises only with rise_boss_share (E6, docs/design/
@@ -58,13 +52,7 @@ func value(name: StringName, tags: Array[StringName] = []) -> float:
 
 
 func step(dt: float) -> void:
-	hungry_left = maxf(0.0, hungry_left - dt)
 	rally_left = maxf(0.0, rally_left - dt)
-	if fury > 0:
-		fury_left -= dt
-		if fury_left <= 0.0:
-			fury = 0
-			fury_left = 0.0
 
 
 # ---------- the passive ----------
@@ -87,37 +75,14 @@ func passive_magick(tags: Array[StringName], hits: int) -> float:
 	return hero.magick_on_finisher + value(&"finisher_magick")
 
 
-# ---------- Ímpeto, Fúria Plena ----------
-
-func fury_max() -> int:
-	return int(value(&"fury_max"))
-
-
-## A kill by a blow with these tags (none: a burn, a zone): the charges it gives. Returns how many it gained.
-func on_kill(tags: Array[StringName]) -> int:
-	var top := fury_max()
-	if top <= 0 or tags.has(&"shout"):  # (the Brado's charges are rally's, whatever it fells)
-		return 0
-	var before := fury
-	fury = mini(top, fury + int(value(&"fury_per_kill", tags)))
-	fury_left = value(&"fury_time")
-	return fury - before
-
+# ---------- the Brado ----------
 
 ## The Brado de Guerra was cried (2026-11-21): for `seconds` every blow plays `speed` faster and `guard` of the damage
-## taken is taken off, and `charges` of Ímpeto come (none without the Dom Ímpeto), up to fury_max. Returns the charges
-## gained.
-func rally(seconds: float, speed: float, guard: float, charges: int) -> int:
+## taken is taken off (the Fúria and its charge are gone, redesign B.5).
+func rally(seconds: float, speed: float, guard: float) -> void:
 	rally_left = seconds
 	rally_speed = speed
 	rally_guard = guard
-	var top := fury_max()
-	if top <= 0 or charges <= 0:
-		return 0
-	var before := fury
-	fury = mini(top, fury + charges)
-	fury_left = value(&"fury_time")
-	return fury - before
 
 
 ## Blows the Brado's buff still takes whole (ComboNode.buff_ward).
@@ -146,53 +111,34 @@ func guard() -> float:
 ## blow_speed with the attack's tag, Fatia 2, plays the attack's blows faster).
 func attack_speed(tags: Array[StringName] = []) -> float:
 	var fast := value(&"blow_speed", tags) if not tags.is_empty() else 0.0
-	return 1.0 + fast + (fury * value(&"fury_speed") if fury > 0 else 0.0) + (rally_speed if rally_left > 0.0 else 0.0)
+	return 1.0 + fast + cadence(tags) + (rally_speed if rally_left > 0.0 else 0.0)
 
 
-## The share more a finisher with these tags causes (Fúria Plena, only with every charge).
-func fury_full_pct(tags: Array[StringName]) -> float:
-	if fury <= 0 or fury < fury_max():
+## Cadência: cadence_pct for each blow of the sequence that landed, for the attack's blows only (the Brado, the special, the
+## Golpe Carregado and the Investida do not play faster for it).
+func cadence(tags: Array[StringName]) -> float:
+	if chain_n <= 0 or tags.is_empty() or DealtBy.source(tags) != &"attack":
 		return 0.0
-	return value(&"fury_full_pct", tags)
+	return value(&"cadence_pct") * chain_n
+
+
+## A blow of the attack's sequence landed (true: it counted). The opener of the sequence starts the count over (chain_start).
+func chain_hit(tags: Array[StringName]) -> bool:
+	if tags.is_empty() or DealtBy.source(tags) != &"attack":
+		return false
+	chain_n += 1
+	return true
+
+
+## The sequence began again, or was lost (the window ran out, a blow taken, a dodge past its keeping).
+func chain_reset() -> void:
+	chain_n = 0
 
 
 ## The share of its cooldown a move with these tags gets back (Fôlego de Guerra: cooldown_pct is negative, never past
 ## COOLDOWN_CUT_MAX).
 func cooldown_cut(tags: Array[StringName]) -> float:
 	return clampf(-value(&"cooldown_pct", tags), 0.0, COOLDOWN_CUT_MAX)
-
-
-# ---------- Avanço Feroz, Investida ----------
-
-## True when a kill by a blow with these tags gives the dodge's charge back.
-func dash_back(tags: Array[StringName]) -> bool:
-	return value(&"dash_back_on_kill", tags) > 0.0
-
-
-# ---------- Lâmina Faminta ----------
-
-## A blow with these tags landed on hits enemies: opens the window (true when it did).
-func on_landed(tags: Array[StringName], hits: int) -> bool:
-	var window := value(&"hungry_time", tags)
-	if hits <= 0 or window <= 0.0:
-		return false
-	hungry_left = maxf(hungry_left, window)
-	return true
-
-
-## The share of an Omega's cost taken off when it is begun now (0 outside the window).
-func omega_discount() -> float:
-	return clampf(value(&"omega_discount"), 0.0, 1.0) if hungry_left > 0.0 else 0.0
-
-
-# ---------- Golpe sem Fim, Passo Encadeado ----------
-
-## True when the blow just landed (hits enemies) makes the combo go on at its 2nd blow.
-func chains_on(tags: Array[StringName], hits: int) -> bool:
-	if value(&"dash_chain", tags) > 0.0:
-		return true
-	var loop := value(&"spin_loop_hits", tags)
-	return loop > 0.0 and hits >= int(loop)
 
 
 # ---------- waves ----------

@@ -79,4 +79,4 @@ func test_the_ultimates() -> void:
 
 func test_gifts_and_mastery_are_linked() -> void:
 	assert_not_null(hero.mastery)
-	assert_eq(hero.talents().catalog.size(), 23)
+	assert_eq(hero.talents().catalog.size(), 12)

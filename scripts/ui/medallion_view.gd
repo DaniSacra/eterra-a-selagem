@@ -61,7 +61,7 @@ var _bursts: Array = []
 
 func setup(p_loadout: HeroLoadout) -> MedallionView:
 	loadout = p_loadout
-	def = without_ults(MedallionDef.of(String(loadout.hero.id)), loadout.hero)
+	def = only_known(without_ults(MedallionDef.of(String(loadout.hero.id)), loadout.hero), loadout.book.catalog)
 	nav = MedallionNav.new(def, loadout.book.catalog)
 	_edges = nav.edges()
 	_labels = _sector_labels()
@@ -102,6 +102,20 @@ static func without_ults(source: MedallionDef, hero: HeroDef) -> MedallionDef:
 		if n.kind != MedallionNodeDef.Kind.ULT:
 			out.nodes.append(n)
 	return out
+
+
+## The medallion without the Gift nodes the hero's catalog does not have (a stale or drawn-ahead place never crashes the
+## view; the crown and the ultimates stay). The same def when none is missing.
+static func only_known(source: MedallionDef, catalog: Array[TalentDef]) -> MedallionDef:
+	var have := {}
+	for t in catalog:
+		have[t.id] = true
+	var out := MedallionDef.new()
+	out.hero = source.hero
+	for n in source.nodes:
+		if n.kind != MedallionNodeDef.Kind.GIFT or have.has(n.id):
+			out.nodes.append(n)
+	return out if out.nodes.size() != source.nodes.size() else source
 
 
 func _process(delta: float) -> void:
@@ -342,11 +356,6 @@ func _draw_node(n: MedallionNodeDef) -> void:
 	draw_circle(c, r + 1.5, Color(UiKit.INK, 0.9 * a))
 	if st == HeroLoadout.State.BLOCKED:
 		_dashed(c, r - 1.0, Color(rim, a), 2.5)
-	elif t != null and t.tier == TalentDef.Tier.BRIDGE and t.joins.size() == 2:
-		draw_arc(c, r - 1.0, PI * 0.5, PI * 1.5, 16, Color(GiftArt.ink(t.joins[0]).lightened(0.25), a), 3.0, true)
-		draw_arc(c, r - 1.0, -PI * 0.5, PI * 0.5, 16, Color(GiftArt.ink(t.joins[1]).lightened(0.25), a), 3.0, true)
-		if st == HeroLoadout.State.EQUIPPED:
-			draw_arc(c, r + 0.5, 0.0, TAU, 28, Color(UiKit.GOLD, a), 1.2, true)
 	else:
 		draw_circle(c, r, rim * mod)
 	draw_circle(c, r - 2.6, fill * mod)
@@ -406,13 +415,12 @@ func _draw_focus() -> void:
 		draw_arc(c, r + 5.0, -PI * 0.5, -PI * 0.5 + TAU * hold_progress, 48, UiKit.GOLD, 4.0, true)
 
 
-## The name of every branch written on the inside of the ring at the middle of its sector (Combo, Fúria, Magia, Emeth,
-## Sustento; the bridges have no name of their own): [{text, pos, ink}].
+## The name of every branch written on the inside of the ring at the middle of its sector (the hero's three branches): [{text, pos, ink}].
 func _sector_labels() -> Array:
 	var sums := {}
 	for n in def.nodes:
 		var t := nav.talent(n.id)
-		if t == null or t.branch == TalentDef.Branch.BRIDGE:
+		if t == null or not HeroLoadout.BRANCH_KEY.has(t.branch):
 			continue
 		var s: Dictionary = sums.get(t.branch, {"sum": 0.0, "n": 0, "r": INF, "first": n.id, "at": n.angle})
 		s.sum += n.angle

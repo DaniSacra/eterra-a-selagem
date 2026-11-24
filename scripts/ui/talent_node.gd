@@ -11,11 +11,16 @@ extends BaseButton
 ## The cost is a row of small diamonds under it. Focus (mouse, keys or gamepad: the mouse takes the focus with it) is
 ## an ivory line round the frame; on_path rings the Gifts the focused one needs (TalentTree lights their links).
 
-## The branch's colour, muted (TalentDef.Branch; the centre is CENTRE).
-## Combo is the crimson of the Emeth's hilt and the Warrior's hair (it was a grey that read as switched off).
-const BRANCH_COLOR: Array[Color] = [Color("c4404e"), Color("c8643c"), Color("3fae7c"), Color("4f9cc6"), Color("a88e5c"), Color("b8665a"),
-	# the Maga's triangle (M2), amber and ivory, no violet: Piromancia ember amber, Arcanismo pale ivory gold, Selos old brass
-	Color("d9772b"), Color("e6d6a0"), Color("b8923f")]
+## The branch's colour, muted, by the branch's name in TalentDef.Branch (so a branch that leaves the enum only leaves a
+## dead entry here). Combo is the crimson of the Emeth's hilt and the Warrior's hair; Ímpeto burnt orange, Domínio the
+## Emeth's emerald; the Maga's three, amber and ivory, no violet: Elementalismo ember amber, Conjuração pale ivory gold,
+## Feitiçaria old brass. The last rows are the old branches still in a catalog until the Maga's step lands.
+const BRANCH_COLOR := {
+	&"COMBO": Color("c4404e"), &"IMPETO": Color("c8643c"), &"DOMINIO": Color("3fae7c"),
+	&"ELEMENTALISMO": Color("d9772b"), &"CONJURACAO": Color("e6d6a0"), &"FEITICARIA": Color("b8923f"),
+	&"FURIA": Color("c8643c"), &"EMETH": Color("3fae7c"), &"MAGIA": Color("4f9cc6"), &"BRIDGE": Color("a88e5c"),
+	&"SUSTAIN": Color("b8665a"), &"PIRO": Color("d9772b"), &"ARCA": Color("e6d6a0"), &"CTRL": Color("b8923f"),
+}
 const CENTRE := Color("3fae7c")
 ## A Gift worn: its felt takes this much of its branch's colour (darkened this much), the line is the Emeth's emerald
 ## and a glow of GLOW_RINGS rings reaches GLOW_REACH px out.
@@ -61,18 +66,23 @@ const FLAME := TalentGlyph.FLAME
 const TONGUE := TalentGlyph.TONGUE
 const DROP := TalentGlyph.DROP
 
-enum Glyph { COMBO, FURIA, EMETH, MAGIA, BRIDGE, SUSTAIN, CENTRE, PIRO, ARCA, CTRL }
+## The glyph names are the branch names (TalentDef.Branch), so a branch finds its glyph by name.
+enum Glyph { COMBO, IMPETO, DOMINIO, ELEMENTALISMO, CONJURACAO, FEITICARIA, CENTRE, FURIA, EMETH, MAGIA, BRIDGE, SUSTAIN, PIRO, ARCA, CTRL }
 
-## The glyph of a branch (the Maga's three come after the centre in the enum, so the branch index is not the glyph's).
-static func glyph_of(branch: TalentDef.Branch) -> Glyph:
-	match branch:
-		TalentDef.Branch.PIRO:
-			return Glyph.PIRO
-		TalentDef.Branch.ARCA:
-			return Glyph.ARCA
-		TalentDef.Branch.CTRL:
-			return Glyph.CTRL
-	return (branch as int) as Glyph
+
+## A branch's name (an unknown one gives &"").
+static func branch_name(branch: int) -> StringName:
+	return StringName(str(TalentDef.Branch.find_key(branch)))
+
+
+## The colour of a branch (the centre's emerald for an unknown one).
+static func branch_color(branch: int) -> Color:
+	return BRANCH_COLOR.get(branch_name(branch), CENTRE)
+
+
+## The glyph of a branch, by name; CENTRE for one without a glyph.
+static func glyph_of(branch: int) -> Glyph:
+	return Glyph.get(String(branch_name(branch)), Glyph.CENTRE) as Glyph
 
 var def: TalentDef
 var glyph := Glyph.CENTRE
@@ -104,7 +114,7 @@ func setup(p_def: TalentDef, side: float = SIDE) -> TalentNode:
 
 
 func color() -> Color:
-	return CENTRE if def == null else BRANCH_COLOR[def.branch]
+	return CENTRE if def == null else branch_color(def.branch)
 
 
 ## A short shake of the line when a rule refuses it.
@@ -294,6 +304,37 @@ static func branch_glyph(ci: CanvasItem, g: Glyph, c: Vector2, r: float, col: Co
 				var gd := a.lerp(b, 0.22)
 				var across := (b - a).normalized().orthogonal() * r * 0.32
 				ci.draw_line(gd - across, gd + across, col, 2.0, true)
+		Glyph.IMPETO:
+			# three chevrons running right: the charge
+			for k in 3:
+				ci.draw_polyline(PackedVector2Array([c + Vector2(-r * 0.8 + k * r * 0.5, -r * 0.7), c + Vector2(-r * 0.3 + k * r * 0.5, 0.0),
+					c + Vector2(-r * 0.8 + k * r * 0.5, r * 0.7)]), col, 2.2, true)
+		Glyph.DOMINIO:
+			# a low crown of three points over a band: the Lion's command
+			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-r * 0.9, r * 0.35), c + Vector2(-r * 0.9, -r * 0.7), c + Vector2(-r * 0.45, -r * 0.1),
+				c + Vector2(0, -r * 0.95), c + Vector2(r * 0.45, -r * 0.1), c + Vector2(r * 0.9, -r * 0.7), c + Vector2(r * 0.9, r * 0.35)]), col)
+			ci.draw_line(c + Vector2(-r * 0.9, r * 0.8), c + Vector2(r * 0.9, r * 0.8), col, 2.2, true)
+		Glyph.ELEMENTALISMO:
+			# a flame with a bolt across it
+			ci.draw_colored_polygon(_shape(c, r, FLAME), col)
+			ci.draw_polyline(PackedVector2Array([c + Vector2(r * 0.15, -r * 0.5), c + Vector2(-r * 0.2, r * 0.05), c + Vector2(r * 0.2, r * 0.1),
+				c + Vector2(-r * 0.1, r * 0.65)]), UiKit.INK, 1.8, true)
+		Glyph.CONJURACAO:
+			# a ring with a four-pointed spark in it: the shot made of Mana
+			ci.draw_arc(c, r * 0.95, 0.0, TAU, 20, col, 1.8, true)
+			var spark := PackedVector2Array()
+			for i in 8:
+				spark.append(c + Vector2.from_angle(i * PI * 0.25 - PI * 0.5) * (r * 0.62 if i % 2 == 0 else r * 0.2))
+			ci.draw_colored_polygon(spark, col)
+		Glyph.FEITICARIA:
+			# an eye (the hex): a lens with a round pupil
+			var lens := PackedVector2Array()
+			for i in 9:
+				lens.append(c + Vector2(lerpf(-r, r, i / 8.0), -r * 0.55 * sin(PI * i / 8.0)))
+			for i in 9:
+				lens.append(c + Vector2(lerpf(r, -r, i / 8.0), r * 0.55 * sin(PI * i / 8.0)))
+			ci.draw_polyline(_closed(lens), col, 2.0, true)
+			ci.draw_circle(c, r * 0.28, col)
 		Glyph.FURIA:
 			ci.draw_colored_polygon(_shape(c, r, FLAME), col)
 			ci.draw_colored_polygon(_shape(c, r, TONGUE), UiKit.INK)

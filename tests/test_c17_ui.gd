@@ -37,7 +37,7 @@ func test_no_arrow_of_light_in_the_players_text() -> void:
 
 
 func test_every_move_of_the_special_is_the_wave() -> void:
-	for path: String in ["res://data/combos/paladin.tres", "res://data/combos/paladin_fourth.tres"]:
+	for path: String in ["res://data/combos/paladin.tres", "res://data/combos/paladin_fifth.tres"]:
 		var tree: ComboTree = load(path)
 		for m in tree.named_moves():
 			var title := T.t((m.node as ComboNode).title)

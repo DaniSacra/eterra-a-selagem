@@ -18,7 +18,7 @@ extends RefCounted
 ## older file opens with none bought; nothing else changes.
 ## 12 (A Videira, V1, replaced "O Preparo"): vine (bought: ids of the nodes, Vine) in place of account. What a file had
 ## bought of the old tree comes back as the material it paid (Prata or Memória, exact, LEGACY_PREPARO), the old block is left.
-const VERSION := 12
+const VERSION := 13
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
@@ -161,6 +161,10 @@ static func merged(loaded: Variant) -> Dictionary:
 	# files before version 12 (A Videira): the old tree "O Preparo" is gone; what he bought comes back as what he paid
 	if version < 12:
 		refund_preparo(out, loaded.get("account"))
+	# files before version 13 (the Warrior's redesign, GE-3): his old Gifts give their Memória back and the Vagas are free again.
+	# The Maga keeps hers until her own redesign (GE-4 adds the same step for her, as version 14)
+	if version < 13:
+		migrate_redesign(out, ["warrior"])
 	# version 8 (Ofícios): nothing to move, an older file opens with the empty block (defaults)
 	out.version = VERSION
 	return out
@@ -203,16 +207,18 @@ const LEGACY_DONS := {
 }
 
 
-## The redesign's migration (the version 13 step; GE-3 turns it on in merged): every legacy Gift a hero had opened gives its
+## The redesign's migration (the version 13 step for the Warrior, GE-3; GE-4 will run it for the Maga): every legacy Gift a hero had opened gives its
 ## Memória back (a refund, not counted as brought home), the legacy ids leave opened, unlocked and equipped (the Vagas are
 ## free again), the chosen ultimate is cleared (one fixed ultimate a weapon). Idempotent: a second run finds no legacy
 ## id in opened and gives back 0. Everything else (Mastery, forge, firsts, materials, vine, codex) is left alone.
-## Returns the Memória given back, {hero: amount}.
-static func migrate_redesign(out: Dictionary) -> Dictionary:
+## `only`: the heroes to migrate (empty: all of LEGACY_DONS). Returns the Memória given back, {hero: amount}.
+static func migrate_redesign(out: Dictionary, only: Array = []) -> Dictionary:
 	var given := {}
 	if not out.get("heroes") is Dictionary:
 		return given
 	for hero_id: String in LEGACY_DONS:
+		if not only.is_empty() and not only.has(hero_id):
+			continue
 		var block: Variant = (out.heroes as Dictionary).get(hero_id)
 		if not block is Dictionary:
 			continue

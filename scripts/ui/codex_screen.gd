@@ -459,7 +459,7 @@ func _gifts() -> void:
 		row.custom_minimum_size.y = LIST_ROW
 		row.add_theme_constant_override(&"separation", 10)
 		row.add_child(TalentGlyph.mark(t, GIFT_MARK, open))
-		var name := UiKit.label(T.t(t.name_key) if open else UNKNOWN, Book.ink(TalentNode.BRANCH_COLOR[t.branch]) if open else Book.FADED, ROW_SIZE, UiKit.BOLD_FONT)
+		var name := UiKit.label(T.t(t.name_key) if open else UNKNOWN, Book.ink(TalentNode.branch_color(t.branch)) if open else Book.FADED, ROW_SIZE, UiKit.BOLD_FONT)
 		name.name = &"Name"
 		name.custom_minimum_size.x = NAME_WIDTH
 		row.add_child(name)

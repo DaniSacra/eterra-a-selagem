@@ -118,7 +118,7 @@ func _brado(tree: ComboTree) -> ComboNode:
 
 
 func test_the_brado_is_a_move_of_data_in_both_trees() -> void:
-	for path in [HeroDef.warrior().combos, "res://data/combos/paladin_fourth.tres"]:
+	for path in [HeroDef.warrior().combos, "res://data/combos/paladin_fifth.tres"]:
 		var n := _brado(load(path))
 		assert_not_null(n, path)
 		assert_eq(n.id, &"shout")
@@ -144,7 +144,7 @@ func test_the_brado_is_a_move_of_data_in_both_trees() -> void:
 
 # ---------- the cry in a fight ----------
 
-func _run(ids: Array[StringName] = [&"impeto"]) -> void:
+func _run(ids: Array[StringName] = []) -> void:
 	game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
 	add_child_autofree(game)
 	game.rooms.start_at(RunMap.Kind.FOUNTAIN)
@@ -185,7 +185,7 @@ func test_it_hurts_and_pushes_and_stuns_no_one() -> void:
 	assert_almost_eq(a.push.length(), 10.5, 0.01, "1.5 m of push at the horde's decay of 7")
 
 
-func test_it_gives_the_buff_and_one_charge() -> void:
+func test_it_gives_the_buff() -> void:
 	_run()
 	_enemy(&"skeleton", Vector2(1.5, 0))
 	var s := game.hero_gifts.state
@@ -193,8 +193,7 @@ func test_it_gives_the_buff_and_one_charge() -> void:
 	_cry()
 	assert_true(s.rallied())
 	assert_eq(s.rally_left, 5.0)
-	assert_eq(s.fury, 1, "one charge of Ímpeto")
-	assert_almost_eq(s.attack_speed(), 1.0 + 0.15 + 0.06, 0.001, "15% and the charge's 6%")
+	assert_almost_eq(s.attack_speed(), 1.0 + 0.15, 0.001, "15% faster blows (the Fúria is gone)")
 	assert_eq(s.guard(), 0.15)
 
 
@@ -205,14 +204,13 @@ func test_it_works_on_an_empty_floor_too() -> void:
 	game.hero_gifts.state.step(5.1)
 	assert_false(game.hero_gifts.state.rallied())
 	assert_eq(game.hero_gifts.state.guard(), 0.0)
-	assert_eq(game.hero_gifts.state.attack_speed(), 1.0 + 0.06 * game.hero_gifts.state.fury)
+	assert_eq(game.hero_gifts.state.attack_speed(), 1.0)
 
 
-func test_without_impeto_the_buff_comes_and_no_charge() -> void:
+func test_the_buff_comes_with_no_gift() -> void:
 	_run([])
 	_cry()
 	assert_true(game.hero_gifts.state.rallied())
-	assert_eq(game.hero_gifts.state.fury, 0)
 	assert_eq(game.hero_gifts.state.attack_speed(), 1.15)
 
 
@@ -227,21 +225,10 @@ func test_the_buff_takes_15_percent_off_a_blow_taken() -> void:
 	p.hp = p.max_hp
 	p.invuln = 0.0
 	p.state = Player.State.MOVE
-	game.hero_gifts.state.rally(5.0, 0.2, 0.15, 0)
+	game.hero_gifts.state.rally(5.0, 0.2, 0.15)
 	p.hurt(20.0, Vector2(3, 0))
 	assert_eq(plain, 20.0)
 	assert_eq(p.max_hp - p.hp, 17.0, "15% off 20")
-
-
-func test_the_rule_of_the_charges_is_pure() -> void:
-	var boons := BoonState.new()
-	boons.equip_talents(HeroDef.warrior().talents().defs([&"impeto"] as Array[StringName]))
-	var s := GiftState.new(HeroDef.warrior(), boons)
-	assert_eq(s.rally(5.0, 0.2, 0.15, 2), 2)
-	assert_eq(s.rally(5.0, 0.2, 0.15, 2), 1, "up to the 3 of Ímpeto")
-	assert_eq(s.rally(5.0, 0.2, 0.15, 1), 0, "full")
-	assert_eq(s.fury, 3)
-	assert_eq(s.on_kill([&"shout"] as Array[StringName]), 0, "a fall under the cry's own tag gives none")
 
 
 # ---------- the button, the recharge ----------

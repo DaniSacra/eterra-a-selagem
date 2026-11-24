@@ -29,7 +29,7 @@ func test_the_medallion_keeps_ult_nodes_only_when_the_supremo_is_not_fixed() -> 
 			ults += 1
 	if MedallionView.has_fixed_ult(hero):
 		assert_eq(ults, 0, "a fixed Supremo has no node to choose")
-		assert_lt(shown.nodes.size(), def.nodes.size())
+		assert_lte(shown.nodes.size(), def.nodes.size())
 		assert_not_null(MedallionView.weapon_ult(hero), "the Livro shows it")
 	else:
 		assert_same(shown, def, "without ult_for_weapon the medallion is as it was")

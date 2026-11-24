@@ -129,7 +129,7 @@ func _table() -> void:
 					hues.append(c.h * 360.0)
 		sats.sort()
 		var branch := TalentMotif.branch_of(id)
-		var bh := TalentNode.BRANCH_COLOR[branch].h * 360.0 if branch >= 0 else -1.0
+		var bh := TalentNode.branch_color(branch).h * 360.0 if branch >= 0 else -1.0
 		# the median of each coloured pixel's hue taken round the branch's hue (a mean of red and green is yellow)
 		var offs: Array = []
 		for h: float in hues:
@@ -139,7 +139,7 @@ func _table() -> void:
 		var hue := fposmod(bh + mid_off, 360.0)
 		var off := absf(mid_off)
 		print("  %s | %d | %.2f | %.2f | %.0f | %.0f | %.0f%s" % [id, branch, top, sats[sats.size() / 2] if sats.size() > 0 else 0.0,
-			hue, bh, off, "" if off <= 20.0 or branch >= TalentDef.Branch.BRIDGE else " OFF"])
+			hue, bh, off, "" if off <= 20.0 else " OFF"])
 	var paper := NODE_PAPER.get_luminance()
 	var ink := Book.INK.get_luminance()
 	print("CONTRAST outline on the node %.1f:1 (3:1 or more)" % ((paper + 0.05) / (ink + 0.05)))

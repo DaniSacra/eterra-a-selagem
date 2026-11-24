@@ -17,6 +17,9 @@ signal move_glint(node: ComboNode, time: float)
 signal move_hit(node: ComboNode)
 signal move_ended(node: ComboNode)
 signal combo_dropped
+## The sequence of the attack is over or lost for good (the window ran out, a blow taken, the dodge past its keeping):
+## Cadência and Apogeu start over. combo_dropped is kept as it was.
+signal chain_lost
 
 const NO_INPUT := -1
 
@@ -38,6 +41,13 @@ var _t := 0.0
 var _buffered := NO_INPUT
 var _buffer_age := 0.0
 var _dodge_left := 0.0
+## Disciplina (dodge_window_add): the seconds a dodge keeps the sequence it cut, set by HeroGifts (0: the dodge drops it).
+var dodge_keep := 0.0
+## The blow the kept sequence goes on after, and the seconds it is still kept.
+var _kept: ComboNode
+var _kept_left := 0.0
+## The blow that landed just before the one under way (it is the kept one when the dodge cuts a windup).
+var _prev: ComboNode
 ## Glint still to announce in this windup (the windup timer counts windup + glint).
 var _hold := 0.0
 ## Seconds more nothing may start (hold_for: the 8 frames after the circle of light, D-44); presses wait as when locked.
@@ -156,6 +166,16 @@ func charge_available(charge: ComboNode.In = ComboNode.In.CHARGE) -> bool:
 ## Called when a dodge starts: drops the current chain (a windup it cuts never lands) and opens the dodge chains.
 ## Presses from before the dodge are dropped; those made during it come out when it ends (the dash attack).
 func on_dodge() -> void:
+	# Disciplina: the sequence waits dodge_keep seconds for the next blow, from the last one that landed
+	var kept: ComboNode = null
+	if dodge_keep > 0.0 and node != null:
+		kept = node if phase == Phase.RECOVERY or phase == Phase.WINDOW else _prev
+	elif _kept != null and _kept_left > 0.0:
+		kept = _kept  # a second dodge keeps it too
+	if node != null and kept == null:
+		chain_lost.emit()
+	_kept = kept
+	_kept_left = dodge_keep if kept != null else 0.0
 	phase = Phase.IDLE
 	node = null
 	_chain_from = null
@@ -168,6 +188,8 @@ func on_dodge() -> void:
 func on_dodge_end() -> void:
 	locked = false
 	_dodge_left = tree.dodge_window
+	if _kept != null:
+		_kept_left = dodge_keep  # (the keeping counts from the end of the roll)
 
 
 ## Drops everything (the paladin was hurt). clear_cooldowns: also the moves' own cooldowns (a blow taken keeps them).
@@ -183,8 +205,14 @@ func reset(clear_cooldowns: bool = true) -> void:
 	_dodge_left = 0.0
 	_held = 0.0
 	_legs = 0.0
+	var had_kept := _kept != null
+	_kept = null
+	_kept_left = 0.0
+	_prev = null
 	if had_chain:
 		combo_dropped.emit()
+	if had_chain or had_kept:
+		chain_lost.emit()
 
 
 ## The buffer counts only while a press could be used (GF-04: Hades II's trigger lock): a press during a swing, the
@@ -207,6 +235,11 @@ func step(dt: float) -> void:
 			if not held and not _try_start():
 				_dodge_left = maxf(0.0, _dodge_left - dt)
 				_age(dt)
+				if _kept != null and not locked:
+					_kept_left -= dt
+					if _kept_left <= 0.0:
+						_kept = null
+						chain_lost.emit()
 		Phase.WINDUP:
 			_t -= dt * speed
 			if _hold > 0.0 and _t <= _hold:
@@ -241,11 +274,14 @@ func step(dt: float) -> void:
 				node = null
 				_chain_from = null
 				combo_dropped.emit()
+				chain_lost.emit()
 
 
 func _options() -> Array[ComboNode]:
 	if phase == Phase.WINDOW and node != null:
 		return _chain_from.following() if _chain_from != null else node.following()
+	if _kept != null and phase == Phase.IDLE:
+		return _kept.following()
 	return tree.dodge if _dodge_left > 0.0 else tree.neutral
 
 
@@ -257,12 +293,17 @@ func _try_start() -> bool:
 	if found == null and phase == Phase.WINDOW:
 		# an input that does not continue this chain starts a new one
 		found = ComboTree.find(tree.neutral, input)
-	if found == null and _dodge_left > 0.0:
+	if found == null and (_dodge_left > 0.0 or _kept != null):
 		found = ComboTree.find(tree.neutral, input)
 	if found == null or _cooldowns.has(found.id):
 		return false
 	_buffered = NO_INPUT
 	_dodge_left = 0.0
+	# the blow this one follows (the one a dodge in its windup keeps the sequence after)
+	var before: ComboNode = node if phase == Phase.WINDOW else _kept
+	_prev = before if before != null and (before.following() as Array).has(found) else null
+	_kept = null
+	_kept_left = 0.0
 	node = found
 	_chain_from = null
 	phase = Phase.WINDUP

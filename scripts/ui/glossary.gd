@@ -9,11 +9,11 @@ extends PanelContainer
 ##   g.show_for(card_text)          # empty: the panel stays, with nothing in it
 
 ## The terms the cards may call, in the order they are listed when several are.
-const TERMS: Array[StringName] = [&"freeze", &"burn", &"stun", &"omega", &"magick", &"armor", &"dash_cut", &"fury", &"weak", &"mark"]
+const TERMS: Array[StringName] = [&"freeze", &"burn", &"stun", &"omega", &"magick", &"armor", &"dash_cut", &"weak", &"mark"]
 ## Each term's colour in the text and over its box (H4 of the SWORN reference, 2026-11-21): light enough to read on the
 ## card's ink, none of the rarities' (Boon.RARITY_COLOR) and none of the families' as they are on the gems.
 const COLORS := {&"freeze": Color("9fdcf5"), &"burn": Color("ffa85c"), &"stun": Color("f2d98a"), &"omega": Color("c9b6f0"),
-	&"magick": Color("7cc4e6"), &"armor": Color("b9bcc4"), &"dash_cut": Color("f4ecd6"), &"fury": Color("ef8a7a"),
+	&"magick": Color("7cc4e6"), &"armor": Color("b9bcc4"), &"dash_cut": Color("f4ecd6"),
 	&"weak": Color("d8b9a0"), &"mark": Color("cfc66e")}
 ## The most terms shown at once.
 const MAX := 2

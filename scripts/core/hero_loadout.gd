@@ -31,6 +31,9 @@ const BRANCH_KEY := {
 	TalentDef.Branch.EMETH: &"hero_branch_emeth", TalentDef.Branch.MAGIA: &"hero_branch_magia",
 	TalentDef.Branch.BRIDGE: &"hero_branch_bridge", TalentDef.Branch.SUSTAIN: &"hero_branch_sustain",
 	TalentDef.Branch.PIRO: &"hero_branch_piro", TalentDef.Branch.ARCA: &"hero_branch_arca", TalentDef.Branch.CTRL: &"hero_branch_ctrl",
+	TalentDef.Branch.IMPETO: &"hero_branch_impeto", TalentDef.Branch.DOMINIO: &"hero_branch_dominio",
+	TalentDef.Branch.ELEMENTALISMO: &"hero_branch_elementalismo", TalentDef.Branch.CONJURACAO: &"hero_branch_conjuracao",
+	TalentDef.Branch.FEITICARIA: &"hero_branch_feiticaria",
 }
 const TIER_KEY := {
 	TalentDef.Tier.ENTRY: &"hero_tier_entry", TalentDef.Tier.MIDDLE: &"hero_tier_middle",
@@ -179,6 +182,8 @@ func short_why(t: TalentDef) -> Dictionary:
 		Talents.Problem.SLOT_TAKEN:
 			return {"key": &"codex_block_slot", "args": {"action": T.t(action_key(hero, t.slot)), "name": _name(_slot_holder(t.slot))}}
 		Talents.Problem.NEEDS:
+			if t.needs != &"":
+				return {"key": &"codex_block_needs", "args": {"what": _name(book.find(t.needs))}}
 			match t.tier:
 				TalentDef.Tier.APEX:
 					return {"key": &"codex_block_apex", "args": {"middle": _name(of(t.branch, TalentDef.Tier.MIDDLE)),
@@ -217,6 +222,8 @@ func xp_missing(n: int) -> int:
 
 ## What a Gift needs by its place in the tree ({} for an entry or a sustain Gift).
 func needs(t: TalentDef) -> Dictionary:
+	if t.needs != &"":  # the redesign: the Gift it names, whatever its place
+		return {"key": &"hero_why_needs", "args": {"what": _name(book.find(t.needs))}}
 	match t.tier:
 		TalentDef.Tier.MIDDLE:
 			return {"key": &"hero_why_needs", "args": {"what": _name(of(t.branch, TalentDef.Tier.ENTRY))}}

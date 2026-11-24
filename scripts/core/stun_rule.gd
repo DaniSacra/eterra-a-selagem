@@ -27,3 +27,10 @@ static func step() -> void:
 
 static func stuns(strong: bool) -> bool:
 	return live == Mode.ALL or (live == Mode.STRONG and strong)
+
+
+## The one exception of the rule (redesign 2026-11-24, B.4): with Investida Implacável (dash_pierce above 0) the Investida
+## stuns whoever it goes through, for dash_stun seconds, but only a common enemy: elites, guardians (armor takes the
+## Quebra instead) and bosses (Postura) are never stunned this way. Not asked of live: it holds in every mode.
+static func dash_stuns(common: bool, pierce: float) -> bool:
+	return pierce > 0.0 and common

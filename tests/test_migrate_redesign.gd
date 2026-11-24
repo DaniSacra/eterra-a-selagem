@@ -1,5 +1,6 @@
 extends GutTest
-## GE-1 of the heroes redesign (04_PLANO A.4): the pure migration, not yet switched on in SaveData.merged.
+## The heroes redesign's save migration (04_PLANO A.4): the pure step, and since GE-3 switched on in SaveData.merged for the
+## Warrior (version 13); the Maga's goes on with her redesign (GE-4).
 
 
 func _save_with(hero: String, opened: Array, equipped: Array) -> Dictionary:
@@ -26,8 +27,8 @@ func test_legacy_tables_sum_to_the_plan() -> void:
 
 
 func test_legacy_tables_match_the_catalogs_still_on_disk() -> void:
-	# the catalogs are the old ones until GE-3 and GE-4: the frozen table must agree with them now
-	for hero: HeroDef in [HeroDef.warrior(), HeroDef.maga()]:
+	# the Maga's catalog is the old one until GE-4: the frozen table must agree with it now (the Warrior's changed in GE-3)
+	for hero: HeroDef in [HeroDef.maga()]:
 		var table: Dictionary = SaveData.LEGACY_DONS[String(hero.id)]
 		for t in Talents.load_catalog(hero.talents_dir):
 			assert_eq(int(table.get(String(t.id), -1)), t.memory_cost, "%s %s" % [hero.id, t.id])
@@ -76,5 +77,32 @@ func test_a_save_without_gifts_or_heroes_is_safe() -> void:
 	assert_true(SaveData.migrate_redesign({}).is_empty())
 
 
-func test_not_switched_on_yet() -> void:
-	assert_lt(SaveData.VERSION, 13, "GE-3 turns the v13 migration on together with the new catalogs")
+func test_the_file_of_version_12_is_migrated_for_the_warrior_only() -> void:
+	var old := _save_with("warrior", SaveData.LEGACY_DONS.warrior.keys(), ["furia_plena", "reserva"])
+	old.version = 12
+	var maga: Dictionary = SaveData.hero_defaults()
+	maga["opened"] = ["combustao"]
+	maga["equipped"] = ["combustao"]
+	maga["ultimate"] = "storm"
+	old.heroes["maga"] = maga
+	var m0 := MaterialPurse.amount(old, MaterialPurse.MEMORY)
+	var out := SaveData.merged(old)
+	assert_eq(out.version, SaveData.VERSION)
+	assert_eq(SaveData.VERSION, 13)
+	assert_eq(MaterialPurse.amount(out, MaterialPurse.MEMORY) - m0, 60, "the Warrior gets 60 Memória back")
+	assert_eq(out.heroes.warrior.opened, [])
+	assert_eq(out.heroes.warrior.equipped, [], "the Vagas are free")
+	assert_eq(out.heroes.warrior.mastery_xp, 777)
+	assert_eq(out.heroes.maga.opened, ["combustao"], "the Maga keeps hers until GE-4")
+	assert_eq(out.heroes.maga.equipped, ["combustao"])
+	assert_eq(out.heroes.maga.ultimate, "storm")
+	var again := SaveData.merged(out)
+	assert_eq(MaterialPurse.amount(again, MaterialPurse.MEMORY), MaterialPurse.amount(out, MaterialPurse.MEMORY), "idempotent")
+
+
+func test_a_current_save_is_not_touched() -> void:
+	var d := _save_with("warrior", ["disciplina"], ["disciplina"])
+	d.version = SaveData.VERSION
+	var out := SaveData.merged(d)
+	assert_eq(out.heroes.warrior.opened, ["disciplina"])
+	assert_eq(out.heroes.warrior.equipped, ["disciplina"])

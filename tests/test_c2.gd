@@ -80,7 +80,16 @@ func test_temper_three_is_ten_percent_and_the_waves_are_twelve() -> void:
 	b.equip_forge(ranks)
 	assert_almost_eq(b.stat(&"damage_pct", LIGHT), 0.30, 0.0001)
 	var s := GiftState.new(HeroDef.warrior(), BoonState.new())
-	s.boons.equip_talents(HeroDef.warrior().talents().defs([&"corte_crescente", &"onda_carregada"] as Array[StringName]))
+	# (the Gifts that threw these waves left in the redesign; the Encantos still do, through the same stat)
+	var mods: Array[BoonMod] = []
+	for tag: StringName in [&"spin", &"heavy"]:
+		var m := BoonMod.new()
+		m.stat = &"blow_wave"
+		m.tag = tag
+		m.base = 12.0
+		m.by_rarity = false
+		mods.append(m)
+	s.boons.grant(mods)
 	assert_eq(float(s.wave([&"spin"]).damage), 12.0)
 	assert_eq(float(s.wave(HEAVY).damage), 12.0)
 
@@ -92,13 +101,6 @@ func test_the_four_milestones_of_the_curve() -> void:
 	assert_almost_eq(start * 1.26, 63.0, 0.5, "marker 1: Forja I + forca_1")
 	assert_almost_eq((start + 15.0) * 1.26, 82.0, 0.5, "marker 2: Quarto Corte")
 	assert_almost_eq((start + 15.0) * 1.42, 92.0, 0.5, "marker 3: Temperar III and the account")
-
-
-func test_furia_plena_stat_is_a_damage_share_not_a_stun() -> void:
-	var s := GiftState.new(HeroDef.warrior(), BoonState.new())
-	s.boons.equip_talents(HeroDef.warrior().talents().defs([&"quarto_corte", &"impeto", &"furia_plena"] as Array[StringName]))
-	assert_eq(s.value(&"fury_full_pct", [&"finisher"] as Array[StringName]), 0.4)
-	assert_eq(s.value(&"fury_stun", [&"finisher"] as Array[StringName]), 0.0)
 
 
 func test_cooldown_cut_by_tag_and_capped() -> void:

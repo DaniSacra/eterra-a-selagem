@@ -47,10 +47,13 @@ func test_every_gift_and_ultimate_has_one_place() -> void:
 			ids[n.id] = n
 		for t in hero.talents().catalog:
 			assert_true(ids.has(t.id), "%s: %s has no place" % [h, t.id])
-		for u in hero.ultimates:
-			assert_true(ids.has(u.id) and ids[u.id].kind == MedallionNodeDef.Kind.ULT, "%s: ultimate %s" % [h, u.id])
+		# the Warrior's Supremo is fixed (redesign A.3): no ULT nodes; the Maga's still has hers until GE-4
+		var ults := hero.ultimates.size() if h == "maga" else 0
+		if h == "maga":
+			for u in hero.ultimates:
+				assert_true(ids.has(u.id) and ids[u.id].kind == MedallionNodeDef.Kind.ULT, "%s: ultimate %s" % [h, u.id])
 		assert_true(ids.has(MedallionDef.CROWN_ID))
-		assert_eq(def.nodes.size(), hero.talents().catalog.size() + hero.ultimates.size() + 1, h)
+		assert_eq(def.nodes.size(), hero.talents().catalog.size() + ults + 1, h)
 
 
 func test_nodes_keep_their_distance() -> void:
@@ -76,9 +79,9 @@ func test_nodes_clear_the_panel_and_the_screen() -> void:
 
 func test_place_matches_the_spec_table() -> void:
 	var def := _def("warrior")
-	assert_lt(def.position_of(def.find(&"firmeza")).distance_to(Vector2(815, 215)), 1.5)
+	assert_lt(def.position_of(def.find(&"disciplina")).distance_to(MedallionDef.place(40.0, 254.0)), 1.5)
 	assert_lt(def.position_of(def.find(&"crown")).distance_to(Vector2(620, 124)), 0.5)
-	assert_lt(def.position_of(def.find(&"coracao_da_emeth")).distance_to(Vector2(593, 631)), 1.5)
+	assert_lt(def.position_of(def.find(&"forca_titanica")).distance_to(MedallionDef.place(200.0, 254.0)), 1.5)
 
 
 # ---------- the pure parts ----------
@@ -90,20 +93,21 @@ func test_nav_edges_follow_the_prerequisites() -> void:
 	var pairs := {}
 	for e: Array in edges:
 		pairs["%s|%s" % [e[0], e[1]]] = true
-	assert_true(pairs.has("passo_encadeado|quarto_corte"), "the Middle runs to its Entry")
-	assert_true(pairs.has("golpe_sem_fim|passo_encadeado"), "the Apex runs to its Middle")
-	assert_true(pairs.has("ferro_na_investida|passo_encadeado") or pairs.has("ferro_na_investida|quarto_corte"), "a spur is tied to the ring")
+	assert_true(pairs.has("cadencia|disciplina"), "the Middle runs to the Gift it needs")
+	assert_true(pairs.has("apogeu|maestria_marcial"), "the Apex runs to the Gift it needs")
+	assert_true(pairs.has("forca_titanica|forca_concentrada"), "an apex that needs the entry")
+	assert_true(pairs.has("maestria_marcial|cadencia") or pairs.has("maestria_marcial|disciplina"), "a spur is tied to the ring")
 	for e: Array in edges:
 		assert_lte((nav.pos[e[0]] as Vector2).distance_to(nav.pos[e[1]]), 130.0, "no line runs far: %s %s" % [e[0], e[1]])
 
 
 func test_nav_direction_goes_to_the_nearest_on_that_side() -> void:
 	var nav := MedallionNav.new(_def("warrior"), HeroDef.warrior().talents().catalog)
-	assert_eq(nav.neighbor(&"crown", Vector2.RIGHT), &"vortex")
-	assert_eq(nav.neighbor(&"crown", Vector2.LEFT), &"cleave")
+	assert_eq(nav.neighbor(&"crown", Vector2.RIGHT), &"disciplina")
+	assert_eq(nav.neighbor(&"crown", Vector2.LEFT), &"investida_implacavel")
 	var down := nav.neighbor(&"crown", Vector2.DOWN)
 	assert_ne(down, &"crown", "something is always found")
-	assert_eq(nav.neighbor(&"voz_larga", Vector2.RIGHT), &"impeto")
+	assert_ne(nav.neighbor(&"imposicao", Vector2.RIGHT), &"imposicao", "from the spur the arrow goes on")
 
 
 func test_nav_sector_step_walks_the_ring_and_wraps() -> void:
@@ -115,7 +119,7 @@ func test_nav_sector_step_walks_the_ring_and_wraps() -> void:
 		if at == &"crown":
 			break
 		seen.append(at)
-	assert_eq(seen[0], &"firmeza", "the first sector after the crown")
+	assert_eq(seen[0], &"disciplina", "the first sector after the crown")
 	assert_eq(nav.sector_step(seen[0], -1), &"crown", "and back")
 	assert_eq(at, &"crown", "the walk wraps round to the crown")
 
@@ -139,8 +143,8 @@ func test_hold_gauge_fills_in_a_second_and_drains_when_let_go() -> void:
 
 func test_screen_opens_on_a_gift_that_can_go_on_and_says_what_each_counter_is() -> void:
 	var s := _screen("warrior", _data("warrior", XP_TOP, 7))
-	assert_eq(s.focus_id, &"quarto_corte", "the first Dom that can be equipped now")
-	assert_eq(_screen("warrior", _data("warrior", 0)).focus_id, &"quarto_corte")
+	assert_eq(s.focus_id, &"disciplina", "the first Dom that can be equipped now")
+	assert_eq(_screen("warrior", _data("warrior", 0)).focus_id, &"disciplina")
 	assert_not_null(s.find_child("howto", true, false))
 	assert_eq(s.find_child("notes", true, false).get_child_count(), 2, "one sentence for Devoção, one for Memória")
 	assert_string_contains(s.find_child("howto", true, false).text, "Segure")
@@ -156,39 +160,39 @@ func test_press_puts_a_gift_on_and_takes_it_off_and_writes_the_save() -> void:
 	var d := _data("warrior", XP_TOP)
 	var s := _screen("warrior", d)
 	# Quarto Corte is open from the start (no Memória)
-	s.press(&"quarto_corte")
-	assert_true(s.loadout.is_equipped(&"quarto_corte"))
-	assert_true(SaveData.hero(d, "warrior").equipped.has("quarto_corte"), "the save block holds it")
-	s.press(&"quarto_corte")
-	assert_false(s.loadout.is_equipped(&"quarto_corte"))
+	s.press(&"disciplina")
+	assert_true(s.loadout.is_equipped(&"disciplina"))
+	assert_true(SaveData.hero(d, "warrior").equipped.has("disciplina"), "the save block holds it")
+	s.press(&"disciplina")
+	assert_false(s.loadout.is_equipped(&"disciplina"))
 	assert_eq(SaveData.hero(d, "warrior").equipped, [], "taken off")
 
 
 func test_a_sealed_gift_opens_only_after_holding_a_second() -> void:
 	var d := _data("warrior", XP_TOP, 5)
 	var s := _screen("warrior", d)
-	var t := s.loadout.book.find(&"impeto")
+	var t := s.loadout.book.find(&"forca_concentrada")
 	assert_eq(s.loadout.state(t), HeroLoadout.State.SEALED)
-	s.press(&"impeto")
+	s.press(&"forca_concentrada")
 	s._process(0.6)
 	s.release()
 	s._process(0.5)
 	assert_eq(s.loadout.state(t), HeroLoadout.State.SEALED, "let go before the end: nothing opens")
 	assert_eq(s.loadout.memory(), 5)
-	s.press(&"impeto")
+	s.press(&"forca_concentrada")
 	s._process(0.6)
 	s._process(0.5)
 	assert_ne(s.loadout.state(t), HeroLoadout.State.SEALED, "held to the end: open")
 	assert_eq(s.loadout.memory(), 5 - t.memory_cost, "the Memória is spent once")
-	assert_true(Talents.opened_of(SaveData.hero(d, "warrior")).has("impeto"), "and written")
+	assert_true(Talents.opened_of(SaveData.hero(d, "warrior")).has("forca_concentrada"), "and written")
 
 
 func test_a_sealed_gift_without_memory_does_not_open() -> void:
 	var s := _screen("warrior", _data("warrior", XP_TOP, 0))
-	s.press(&"impeto")
+	s.press(&"forca_concentrada")
 	s._process(1.2)
-	assert_eq(s.loadout.state(s.loadout.book.find(&"impeto")), HeroLoadout.State.SEALED)
-	s._focus(&"impeto")
+	assert_eq(s.loadout.state(s.loadout.book.find(&"forca_concentrada")), HeroLoadout.State.SEALED)
+	s._focus(&"forca_concentrada")
 	assert_false(s.panel.verb_enabled())
 	assert_string_contains(s.panel._verb.reason, "Faltam")
 
@@ -196,23 +200,23 @@ func test_a_sealed_gift_without_memory_does_not_open() -> void:
 func test_panel_says_each_state_in_words() -> void:
 	var d := _data("warrior", 90, 3)
 	var s := _screen("warrior", d)
-	s._focus(&"quarto_corte")
+	s._focus(&"disciplina")
 	assert_eq(s.panel.verb_text(), "Equipar")
-	s.press(&"quarto_corte")
+	s.press(&"disciplina")
 	assert_eq(s.panel.verb_text(), "Tirar")
-	s._focus(&"impeto")
+	s._focus(&"forca_concentrada")
 	assert_eq(s.panel.verb_text(), "Segure para abrir", "sealed")
-	s._focus(&"golpe_sem_fim")
+	s._focus(&"apogeu")
 	assert_false(s.panel.verb_enabled())
 	assert_string_contains(s.panel._verb.reason, "Maestria 16", "locked says the level")
-	assert_eq(s.view.state_of(&"golpe_sem_fim"), HeroLoadout.State.LOCKED)
+	assert_eq(s.view.state_of(&"apogeu"), HeroLoadout.State.LOCKED)
 
 
 func test_a_blocked_gift_says_what_it_asks() -> void:
 	var s := _screen("warrior", _data("warrior", XP_TOP, 20))
-	s.loadout.open(&"passo_encadeado")
-	s._focus(&"passo_encadeado")
-	assert_eq(s.view.state_of(&"passo_encadeado"), HeroLoadout.State.BLOCKED)
+	s.loadout.open(&"cadencia")
+	s._focus(&"cadencia")
+	assert_eq(s.view.state_of(&"cadencia"), HeroLoadout.State.BLOCKED)
 	assert_false(s.panel.verb_enabled())
 	assert_string_contains(s.panel._verb.reason, "Pede")
 

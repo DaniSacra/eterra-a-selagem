@@ -12,6 +12,112 @@ Ordem: **A** infraestrutura comum (Supremo por arma, 3 ramos de 4 Dons, sustento
 **B** Guerreiro (01) com exe; **C** Maga elemental (02) com exe e proposta dos 12 Dons dela para aprovação (não fechar sem o Daniel).
 Começar pelo `hero-designer` conferindo o pacote contra o código (HeroDef, ComboTree, ArcaneKit, KitFeed, GiftState, UltDef/UltCharge, saves, Videira).
 
+## Rodada de backlog 2026-11-24 noite
+Game-director, commit lido `58c843e` com a árvore em mudança (GE-3 do Guerreiro no disco, sem commit). Fontes: `docs/backlog_proposals/` (CF combate,
+RD salas, AD arte, HD heróis, BL equilíbrio, UX interface, EA cenário, TA arte técnica; cerca de 80 itens, os arquivos ficam como fonte do detalhe e do aceite).
+Conferido por grep, sem rodar nada. O próximo exe é o do redesign (passos 1 a 5 do `04_PLANO.md`, um exe só no fim) e vai para as crianças.
+**Saem por já estarem feitos**: CF-01 (sonda 42 de 42, item 12 da madrugada), UX-03 (a caixa da porta só aparece onde o F entra, `4adb491`),
+RD-03 (o `RunMap` já não repete arena seguida, `run_map.gd:12`), UX-10 (`title_pad` conferido certo na madrugada), TA-01 (builds debug e web apagados),
+a maior parte do CF-08 (`RoomTally.hurt_ctx` já grava aviso, esquiva possível e atacante na tela por golpe levado) e do UX-12 (pulso do Supremo e dica do Q, Lote B).
+**Achados novos na conferência**: (1) com `StunRule.DEFAULT = NONE` nenhum golpe atordoa, então o `stun_pct` de Imposição e a "interrupção" de Voz do Leão
+só mexem na Quebra (`combat.gd:762-763`, `stun_rule.gd:28`): é o mesmo caso do Vigia Firme; (2) os Dons novos de nível 2 a 4 custam 2 de Memória
+(`make_data.gd:2000-2014`), o Lote D tinha fixado 1 para os níveis 2 a 5; total 34 (o BL-06 pede 28 a 32); (3) a medida do Ancião (7 de 12) é de antes de
+`79fe4ec` (Ancião mais brando, Guerreiro 40 de vida): medir de novo antes de mexer.
+
+### (A) Fazer agora sem perguntar
+Marca **[exe]**: entra no exe do redesign (o das crianças). Cada lote só toca os arquivos dele; `tools/make_data.gd`, `combat.gd`, `player.gd` e
+`data/text_pt.tres` seguem com os donos do redesign (GE e UI), então o que mexe neles entra como item do passo GE-3/GE-4/UI-3/UI-4, não como lote solto.
+
+**Lote R1, dentro do GE-3 (Guerreiro)** (`gameplay-engineer` do redesign; `make_data.gd`, `combat.gd`, `player.gd`, `stun_rule.gd`, `tools/feel_probe*`)
+1. **[exe] Imposição e Voz do Leão sem efeito de atordoar** (bug médio, achado 1). Até o Daniel responder (B4): descrição honesta do que fazem hoje (Quebra) e teste GUT
+   de que cada Dom do Guerreiro muda algum número em jogo. Aceite: teste "todo Dom tem efeito" verde com `StunRule.NONE`.
+2. **[exe] Preço dos Dons novos segue o Lote D** (achado 2; BL-06, Lote D 18). Níveis 2 a 5 custam 1; total entre 28 e 32. Aceite: soma em `_talents` no teste de custo.
+3. **[exe] Cadência sem Fúria igual à de antes** (CF-02). Linha de base da sonda no `d841c81` (cópia separada) e no GE-3: 0 quadros de diferença nos golpes 1 a 3 e no especial.
+4. **[exe] Cadência e Maestria Marcial não achatam o 1 menor que 2 menor que 3** (CF-03). Teto de `cadence_pct` em 3 golpes ou piso de recuperação; aceite do CF-03.
+5. **[exe] Apogeu e Investida Implacável com peso** (CF-04, CF-05). Apogeu com hit stop de 65 ms ou mais, tremor e som; Investida com 1 quadro de hit stop por alvo
+   (máximo 3) e o traço de atordoado por 2 s inteiros. A pose do Apogeu fica com o `art-director` depois (C).
+
+**Lote R2, antes e dentro do GE-4 (Maga)** (`combat-feel-director` só em `docs/design/combat_cadence.md`; depois `gameplay-engineer` do GE-4)
+6. **[exe] Régua do redesign e cadência da Maga no papel antes do código** (CF-12, CF-06). Seção "Critérios do redesign" e tabela de preparação, ativo,
+   recuperação, hit stop e som das 5 habilidades; o GE-4 implementa por ela. Aceite: seção publicada antes do merge do GE-4.
+7. **[exe] Reação elemental com um estouro só** (CF-07, AD-04 parcial). Estouro de até 0,25 s, som e cor próprios, 1 por `react_gap`; a Convergência sem cobrir o chefe.
+
+**Lote R3, leitura da Maga** (`technical-artist`; arquivos: `scripts/core/element_look.gd` novo, `scripts/render/` dos efeitos, `assets/shaders/` novo, o desenho
+dos pips ao lado do `CrowdRenderer`; o estado vem do GE-4). O `art-director` disse que a Maga nova não entra no exe das crianças sem isto.
+8. **[exe] Três cores reservadas num lugar só** (AD-01, TA-09). `ElementLook` com fogo, gelo e elétrico separados do âmbar do perigo e do petróleo do herói; tabela na §2.1
+   do `art_direction.md` (o `art-director` escreve). Aceite: `grep` acha as cores só no `ElementLook`.
+9. **[exe] Pips de estado no inimigo** (AD-02, TA-10, HD-05, UX-02). Um `MultiMesh` com 3 formas (losango, floco, faísca), nunca vermelho nem triângulo, máximo 3 por inimigo;
+   losangos de Ressonância saem do HUD. Aceite: 60 inimigos com 3 pips custam 1 chamada de desenho e menos de 0,2 ms; formas distintas em cinza a 10 px.
+10. **[exe] Um visual por habilidade e a placa da Geada** (AD-03, TA-11). Centelha, Combustão, Estilhaço, Geada (borda que se desfaz) e Arco na cor do elemento, pool
+   compartilhado, shader no aquecimento; hexágono e sigilos de Selo saem. Aceite: folha de 5 quadros GPU (captura da sessão principal).
+11. **Se couber no exe: disco da Convergência por fase e reações completas** (AD-05, AD-04). Senão vai para depois do exe.
+
+**Lote R4, Dons que a criança entende** (`ui-ux-designer` do UI-3/UI-4; `data/text_pt.tres`, `scripts/ui/dons_*`, `medallion_view.gd`, `talent_*`, `fx.gd` só na regra do texto)
+12. **[exe] Dom em uma linha "Botão: o que muda"** (HD-01, UX-01). Os 12 do Guerreiro e os 12 da Maga; ao focar, "Precisa de: X" com o pré-requisito realçado; subtítulo de
+   papel por ramo. Aceite: nenhum Dom sem o botão no texto; captura 1280x720 sem corte.
+13. **[exe] Medalhão de 3 setores e glifos novos** (AD-06 parte procedural, AD-07, UX-07; já previstos no UI-3/UI-4). Etiquetas dos ramos novos, nenhum nó ou etiqueta antiga;
+   HUD da Maga com a carga da Convergência no lugar da Ressonância. Aceite: `tools/lab/motif_sheet.gd` sem par igual.
+14. **[exe] Texto flutuante com teto** (UX-08). Nome da reação só nas 3 primeiras da partida, no máximo 6 textos vivos. Aceite: `--stress=300` sem passar de 6.
+15. **Videira legível** (AD-08 parte interna). Etiquetas em pergaminho claro com contraste 4,5:1, vaso e treliça menos caixa. Depois do exe se apertar.
+
+**Lote R5, o registro que as crianças vão gerar** (`gameplay-engineer`, segunda instância; `scripts/core/run_log.gd`, `scripts/core/room_tally.gd`, `tools/runs_report.py`, `tests/test_run_log.gd`)
+16. **[exe] Registro por sala e causa da morte** (BL-11, CF-08, RD-04). Campos `cause`, `hp_enter` por sala, `oaths`, golpes de perigo no herói e no inimigo;
+   `runs_report.py --by=room` com mortes por sala e causa e a coluna "golpes sem carga de esquiva" a partir do `hurt_ctx` que já existe. Aceite: teste e uma partida do robô.
+
+**Lote R6, salas das crianças** (`room-designer`, depois `balance-designer`; arquivos de sala e o `_stage`/inimigos do `make_data.gd`, **depois do GE-4 integrado**)
+17. **[exe] Ancião: medir de novo, depois arena, depois número** (RD-01, BL-01; achado 3). 12 sementes `--start=miniboss` novato no HEAD; se abaixo de 10 de 12: colunas e
+   escolta (`max_alive` 4 para 3); só então dano dos projéteis vezes 0,8. Aceite do BL-01 (dano abaixo de 16 por luta, 90 a 130 s).
+18. **[exe] Um perigo de aprender antes da sala 5** (RD-02). Laje da Cripta A desde 0,15 com aviso de 1,5 s e 10 de dano. Aceite do RD-02.
+
+**Lote R7, cenário da primeira sala** (`environment-artist`; `scripts/render/` do chão e `GroundLook`, peças da sala 1)
+19. **[exe] Vão preto do sul da sala 1** (AD-09). Luma 30 ou mais no vão, herói visível ao passar.
+20. **[exe] O perigo se lê pela peça nas salas 1 a 5** (EA-02). Repouso, preparo e golpe por constante em `GroundLook` para seteira, lâmina e respiração; teste das 3 fases.
+
+**Lote R8, medida do redesign** (`balance-designer`, só `docs/design/balance.md` e linhas de comando; uma passada de 12 sementes, depois do GE-4)
+21. **[exe] DPS por Magia antes do exe** (BL-07, exigido pelo `04_PLANO.md` G). Carregado entre 1,0 e 1,4 vez o combo; se passar, propor Força Titânica x2,6 e Apogeu 300%.
+22. **Régua de Maestria e Dons** (BL-04, BL-09, BL-08, BL-05, HD-07, BL-12). Tabela M1, 5, 10, 20, Dom isolado, Maga contra Guerreiro, buracos da curva (hoje 13 para 16
+   e nada em 19 e 20), metas por faixa de sala. Só medida e proposta; números novos voltam para cá.
+
+**Lote R9, sessão principal: capturas e sondas** (uma por vez, GPU, depois do exe)
+23. O Lote F da madrugada que falta, mais EA-01 (salas 1 a 5 e os dois guardiões com luma), UX-09 (telas em 1280x720), GR-20/AD-11 (arco do giro) e CF-09
+   (`boss_probe` e `enemy_motion_probe` de Morvath no HEAD). O `art-director` só lê.
+
+**Lote R10, dívidas técnicas** (`technical-artist`, depois do exe; nada apagado sem prova)
+24. `tools/disk_report.sh` só lista (TA-02); `steam-ia.md`, inventário e órfãos `.uid` e `.import` (TA-12; a Steam exige o `steam-ia.md` em dia); Morvath assado abaixo de
+   60 MB no total (TA-07; hoje 69 de 70); medalhões acima de 512 px (TA-08); lista de origens sem uso (TA-05, TA-06, só a lista).
+
+**Documentos** (`hero-designer`, `art-director`; sem código)
+25. Tabela Bênção x botão dos dois heróis (HD-06) e as cores e o Supremo por arma em `art_direction.md` e `estetica.md` (AD-12), no passo 5 do redesign.
+
+### (B) Precisa do Daniel
+Substitui as perguntas B1, B4, B6, B7 e B8 da madrugada (a B5 ficou velha: o Círculo sai no redesign; B2 e B3 já saíram). B9 e B10 seguem lá.
+1. **Ajuda para as crianças**: (a) "Coragem" automática, +3 de vida e 1 romã por morte seguida até a sala 5, máximo 3, some ao passar (BL-02); (b) "Passo do Aprendiz"
+   no menu, +50% de vida e avisos 20% mais longos (HD-02, UX-05); (c) esperar o registro. Recomendo **(a)**: não pede menu, some sozinha e não facilita o seu jogo.
+2. **Os 12 Dons da Maga** (HD-03, `04_PLANO.md` C.4): entram provisórios no exe; você marca aprovar, trocar ou cortar numa tabela de uma página. Recomendo **sim, assim**.
+3. **Força Titânica x3 e teto do Apogeu 400%** (PL F b, BL-07): recomendo **manter no exe e decidir pela medida do DPS por Magia** (cair para x2,6 e 300% se passar 1,4 vez o combo).
+4. **Imposição e Voz do Leão com "ninguém é interrompido"**: hoje o atordoar delas não vale. (a) texto honesto, só Quebra; (b) exceção como a Investida Implacável;
+   (c) trocar os Dons. Recomendo **(b) para Voz do Leão** (o Brado interrompe comuns por 1 s, é o papel do ramo Domínio) **e Imposição vira Quebra em todo golpe**.
+5. **Provação da Ferida antes do guardião** (B8, BL-03): recomendo **não oferecer com vida abaixo de 60%** (dado, `trial_min_hp_frac`) e avisar o risco no cartão.
+6. **O Supremo cura 10% ao começar?** (B1): recomendo **sim**; ensina o Shift como último recurso.
+7. **Bênção da tecla esquecida** (B6): mais peso para a Bênção do botão menos usado. Recomendo **sim, depois do registro das crianças**.
+8. **Limpar o repositório** (TA-03, TA-04, TA-02): mover ciclos antigos da galeria para um arquivo fora, `git lfs` ou reescrever o histórico, levar 134 MB de capturas velhas
+   ao Downloads. Recomendo **não mexer no histórico; recomprimir PNG sem perda e só mover galeria antiga se o seu diretor de arte do ChatGPT não usar**.
+9. **Pedidos de arte ao ChatGPT**: medalhão de 3 setores (AD-06), Videira (AD-08), chão pintado das salas 2 a 5 (EA-06), pinturas-alvo (EA-09). Recomendo **AD-06 primeiro**.
+10. **Heróis futuros** (HD-08, HD-09): o Paladino tem bloqueio com custo? A Ladina é paladina, outra ordem ou a Andilla? Nomes seguem `PALADIN_1..4`. Recomendo **responder depois do exe**.
+11. **Metas de vitória por Maestria** (BL-04: M1 8 a 17%, M5 25 a 40%, M10 50 a 65%, M20 80 a 90% no robô de reação 0,25): recomendo **aceitar como régua provisória**.
+
+### (C) Depois
+- Salas: aviso de fim de onda e luz da porta (RD-05), salas menores no começo (RD-06), regra própria de Ponte, Fendas B, Runas, Santuário C (RD-07), sala de descanso
+  depois do guardião (RD-08), perigo que o jogador arma (RD-09), dano do perigo no inimigo cresce (RD-10).
+- Cenário: `ROOM_MOOD` e brilho do oeste (EA-03, AD-10), raio-x com teste de oclusão (EA-04), um marco por sala (EA-05), Santuário HV-D antes do HV-E (EA-07),
+  teto de luzes por sala (EA-08), Compatibility do aviso (EA-10).
+- Combate e arte: corredor elite e 2º anel (CF-10), rastro por golpe sem a Fúria (CF-11), arco do giro na cor da Emeth (AD-11), pose do Apogeu (CF-04).
+- Interface: seta de atirador fora da tela (UX-04; boa para a sala 5, mas é HUD novo, medir com o R5 antes), Supremo no slot por arma (UX-06; um por herói hoje),
+  glossário (UX-11).
+- Heróis: Maga com um Dom de forma por ramo e combinações (HD-04, depois da resposta B2), herói de brinquedo no contrato (HD-10), Ladina e Paladino v2 (HD-08, HD-09, depois da B10).
+- Equilíbrio: ouro até o guardião (BL-10).
+- Arte técnica: mover origens do Meshy e KayKit sem uso (TA-05, TA-06, depois da lista do R10).
+
 ## Rodada de melhoria (2026-11-24 madrugada)
 Game-director, commit lido `aa161c8`. LER PRIMEIRO.
 Fontes: `docs/qa/ui_review_2026-11-24.md` (UI), `docs/qa/combat_review_2026-11-24.md` (CB), `docs/qa/qa_review_2026-11-24.md` (QA),

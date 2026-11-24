@@ -151,17 +151,6 @@ const BLADE_TIP := Vector3(0, 1.15, 0)
 ## violet when it lands. The special (and its Omega) is locked while it lasts, walking and dodging never.
 const CURSE_GLOW := Color(0.55, 0.12, 0.8, 0.65)
 const CURSE_ACTION := &"heavy_attack"
-## Ímpeto's embers (show_fury, fury_ember.gdshader): where on the blade (the sword's own space: the grip's top at 0.13,
-## the tip at 1.5), meters across, the colour (Emeth's green), how far the heart goes toward white (its brightest
-## channel, the peak, kept under the glow and ScreenTone.SAFE: ember_peak) and each one's flicker phase. E2: at 0.12 m
-## and plain green they vanished on the green blade; a pale heart in a dark ink ring reads on it at 1080.
-const EMBER_AT: Array[Vector3] = [Vector3(0, 0.55, 0), Vector3(0, 0.85, 0), Vector3(0, 1.15, 0)]
-const EMBER_SIZE := 0.3
-const EMBER_COLOR := Color(0.3, 1.0, 0.45)
-const EMBER_PALE := 0.5
-const EMBER_SHADER := preload("res://assets/shaders/fury_ember.gdshader")
-## The ring at his feet when a kill gives the dodge back (Avanço Feroz, Investida): meters.
-const DODGE_BACK_RING := 1.1
 ## Lote E (KT 3a): when the ultimate's charge fills, an amber and gold ring on the floor under him (never white, nothing
 ## over his body): it pulses for ULT_RING_PULSE seconds, then breathes lightly until the ultimate is used.
 const ULT_RING_SIZE := 3.1
@@ -214,6 +203,12 @@ var gifts: GiftState
 ## The share of an Omega's cost taken off if it is begun now (Lâmina Faminta; HeroGifts sets it every step), and the
 ## share kept for the charge or the circle under way (taken when it began).
 var omega_discount := 0.0
+## Força Titânica: the Golpe Carregado costs this share more Magia (1.0: twice); Concentração: its charge takes this share more
+## (negative: less) of its time; Investida Implacável: the Investida walks through bodies. HeroGifts sets them every step.
+var omega_cost_pct := 0.0
+var charge_time_pct := 0.0
+var dash_pierce := false
+var _piercing := false
 ## The Maga's amplified Explosão costs no Magia (Arcane sets it while the Ressonância is full).
 var free_special := false
 ## The share off the Explosão's Magia (the Maga's Suspensão Absoluta: half; Arcane sets it each step).
@@ -222,8 +217,6 @@ var blast_discount := 0.0
 var _blinked := false
 var _charge_discount := 0.0
 var _cast_discount := 0.0
-## Ímpeto's embers on the blade (one per charge; made the first time a charge shows).
-var _embers: Array[MeshInstance3D] = []
 var curse := CurseState.new()
 var _curse_aura: CurseAura
 var _blade_mat: ShaderMaterial
@@ -669,7 +662,9 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 	if dashing and not _dodge_cut and wanted.distance_to(pos) > 0.05:
 		_dodge_cut = true
 		dodge_blocked.emit(arena.blocker_at(wanted, RADIUS))
-	if horde and not dashing and not _blinked:
+	if _lunge.length_squared() <= 0.04:
+		_piercing = false
+	if horde and not dashing and not _blinked and not _piercing:
 		# the enemies' bodies stop him: he slides along them and pushes no one (BodyBlock)
 		pos = horde.stop_walker(start, pos, RADIUS, arena.resolve)
 	_show(dt, move)
@@ -798,7 +793,7 @@ func _press_special() -> void:
 ## True when the special's tap is paid for (it costs nothing, or the Magia is there).
 func _special_paid() -> bool:
 	var node := ComboTree.find(tree.neutral, ComboNode.In.HEAVY)
-	return node == null or node.magick_cost <= 0.0 or (free_special and node.has_tag(&"blast")) or magick.can_pay(omega_cost(node.magick_cost, blast_discount if node.has_tag(&"blast") else omega_discount))
+	return node == null or node.magick_cost <= 0.0 or (free_special and node.has_tag(&"blast")) or magick.can_pay(cost_of(node, blast_discount if node.has_tag(&"blast") else omega_discount))
 
 
 ## A press of an attack button plays the move at once (as in Hades II). Holding the button on charges its Omega
@@ -839,12 +834,18 @@ func charges_cancelled() -> int:
 
 func _affordable(held: ComboNode.In) -> bool:
 	var node := ComboTree.find(tree.neutral, held)
-	return node != null and magick.can_pay(omega_cost(node.magick_cost, omega_discount))
+	return node != null and magick.can_pay(cost_of(node, omega_discount))
 
 
-## What an Omega costing base Magia costs with this share taken off (Lâmina Faminta).
-static func omega_cost(base: float, discount: float) -> float:
-	return base * (1.0 - discount)
+## What an Omega costing base Magia costs: more by `more` (Força Titânica: 1.0 is twice), less by `discount` (an Encanto or
+## Blessing), never under 0 (B.3: Magia never goes negative).
+static func omega_cost(base: float, discount: float, more: float = 0.0) -> float:
+	return maxf(0.0, base * (1.0 + more) * (1.0 - discount))
+
+
+## What the move costs now: omega_cost with Força Titânica's share when it is a Golpe Carregado (tag omega).
+func cost_of(node: ComboNode, discount: float) -> float:
+	return omega_cost(node.magick_cost, discount, omega_cost_pct if node.has_tag(&"omega") else 0.0)
 
 
 ## Plays this combo tree from now on (a Gift that changes the attack's chain: TalentDef.combos).
@@ -854,53 +855,6 @@ func use_tree(path: String) -> void:
 	runner.reset()
 
 
-## A kill gave the dodge's charge back (Avanço Feroz, Investida): a thin ring on the floor at his feet. False when
-## every charge was already there.
-func give_dodge_back() -> bool:
-	if dodge_charges >= dodge_max:
-		return false
-	dodge_charges += 1
-	_dodge_recharge = 0.0
-	fx.ring(pos, DODGE_BACK_RING, Combat.EMETH, 0.3, 0.06, true)
-	return true
-
-
-## Ímpeto's charges as embers on the blade: n small emerald embers along it, under the glow (ember_peak; the glow
-## starts at 1.3), none without a charge. One material for the three.
-func show_fury(n: int) -> void:
-	if n > 0 and _embers.is_empty() and _sword:
-		var m := ShaderMaterial.new()
-		m.shader = EMBER_SHADER
-		m.render_priority = XRAY_PRIORITY + 3
-		m.set_shader_parameter(&"color", EMBER_COLOR)
-		m.set_shader_parameter(&"heart_pale", EMBER_PALE)
-		m.set_shader_parameter(&"peak", ember_peak())
-		for k in EMBER_AT.size():
-			_embers.append(_ember(EMBER_AT[k], m, float(k) / EMBER_AT.size()))
-	for k in _embers.size():
-		_embers[k].visible = k < n
-
-
-## The brightest channel of an ember's pale heart: 1 at most (under the glow), less where it would pass ScreenTone.SAFE.
-static func ember_peak() -> float:
-	return minf(1.0, ScreenTone.linear_peak(EMBER_COLOR.lerp(Color.WHITE, EMBER_PALE)))
-
-
-func _ember(at: Vector3, m: ShaderMaterial, phase: float) -> MeshInstance3D:
-	var quad := QuadMesh.new()
-	# (in the sword's space, which the body scales: meters on the screen)
-	quad.size = Vector2.ONE * EMBER_SIZE / maxf(_sword.global_basis.get_scale().x, 0.001)
-	var mi := MeshInstance3D.new()
-	mi.mesh = quad
-	mi.material_override = m
-	mi.set_instance_shader_parameter(&"phase", phase)
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mi.position = at
-	mi.visible = false
-	_sword.add_child(mi)
-	return mi
-
-
 ## How far an Omega's charge has got (0..1; 0 when nothing charges).
 func charge_progress() -> float:
 	return clampf(charge_t / maxf(_charge_time(), 0.01), 0.0, 1.0) if charging else 0.0
@@ -908,7 +862,7 @@ func charge_progress() -> float:
 
 func _charge_time() -> float:
 	var node := ComboTree.find(tree.neutral, _charge_held)
-	return node.charge_time if node != null else tree.charge_time
+	return (node.charge_time if node != null else tree.charge_time) * maxf(0.1, 1.0 + charge_time_pct)
 
 
 ## Seconds the held move takes from its start to its landing (windup and glint), played inside the charge.
@@ -1071,7 +1025,7 @@ func _step_move_sound(dt: float) -> void:
 func _on_move_started(node: ComboNode) -> void:
 	facing = _strike_dir()
 	if node.magick_cost > 0.0 and not (free_special and node.has_tag(&"blast")):
-		magick.spend(omega_cost(node.magick_cost, _charge_discount if node.has_tag(&"omega") else blast_discount if node.has_tag(&"blast") else 0.0))
+		magick.spend(cost_of(node, _charge_discount if node.has_tag(&"omega") else blast_discount if node.has_tag(&"blast") else 0.0))
 	_anim.speed_scale = 1.0
 	_sound_node = null
 	if hero.id == &"maga" and node.has_tag(&"finisher") and node.has_tag(&"bolt"):
@@ -1086,6 +1040,7 @@ func _on_move_started(node: ComboNode) -> void:
 	elif node.sound != &"":
 		Audio.play(node.sound)
 	_lunge = facing * node.lunge * LUNGE_DECAY
+	_piercing = dash_pierce and node.lunge > 0.0  # Investida Implacável: the bodies of the crowd do not stop this lunge
 	# (Ímpeto plays every blow faster: runner.speed)
 	_play(node.anim, node.anim_speed * runner.speed, node.anim_from)
 	_move_anim = node.anim

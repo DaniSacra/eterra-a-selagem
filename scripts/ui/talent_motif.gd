@@ -39,12 +39,12 @@ static var _branches := {}
 static func tone(key: String) -> Color:
 	var c: Color
 	match key:
-		"carmine": c = TalentNode.BRANCH_COLOR[TalentDef.Branch.COMBO]
-		"rust": c = TalentNode.BRANCH_COLOR[TalentDef.Branch.FURIA]
-		"emerald": c = TalentNode.BRANCH_COLOR[TalentDef.Branch.EMETH]
-		"blue": c = TalentNode.BRANCH_COLOR[TalentDef.Branch.MAGIA]
-		"gold": c = TalentNode.BRANCH_COLOR[TalentDef.Branch.BRIDGE]
-		"terra": c = TalentNode.BRANCH_COLOR[TalentDef.Branch.SUSTAIN]
+		"carmine": c = TalentNode.BRANCH_COLOR[&"COMBO"]
+		"rust": c = TalentNode.BRANCH_COLOR[&"IMPETO"]
+		"emerald": c = TalentNode.BRANCH_COLOR[&"DOMINIO"]
+		"blue": c = TalentNode.BRANCH_COLOR[&"MAGIA"]
+		"gold": c = TalentNode.BRANCH_COLOR[&"BRIDGE"]
+		"terra": c = TalentNode.BRANCH_COLOR[&"SUSTAIN"]
 		"pale": return PALE
 		"stone": return STONE
 		"steel": return STEEL

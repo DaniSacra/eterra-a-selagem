@@ -41,7 +41,7 @@ func test_a_new_save_shows_the_bare_hub() -> void:
 	assert_eq(s.forge_tools.size(), 0)
 	assert_eq(s.vendor, HubEvolution.Stall.CLOSED, "the stall closed (cloth over the goods)")
 	assert_eq(s.tree_lit, 0)
-	assert_eq(s.tree_total, 22, "a plate for each Gift bought with Memória")
+	assert_eq(s.tree_total, 11, "a plate for each Gift bought with Memória")
 	assert_eq(s.book_spines, 0)
 	assert_true(s.shelf, "the Ofícios shelf stands (the mechanic exists)")
 	assert_eq(s.shelf_items, 0, "and is empty")
@@ -92,7 +92,7 @@ func test_e3_the_tree_plates_light_by_the_gifts_opened() -> void:
 	var s := HubEvolution.of(d)
 	assert_eq(s.tree_lit, 0, "the Maestria alone lights none")
 	assert_eq(s.mastery, 20)
-	hero.opened = ["passo_encadeado", "golpe_sem_fim", "quarto_corte"]
+	hero.opened = ["cadencia", "apogeu", "disciplina"]
 	assert_eq(HubEvolution.of(d).tree_lit, 2, "the two bought with Memória (the free one has no plate)")
 
 

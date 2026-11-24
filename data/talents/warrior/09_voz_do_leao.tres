@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_2dlhd"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_lhie4"]
+
+[sub_resource type="Resource" id="Resource_djy8u"]
+script = ExtResource("1_2dlhd")
+stat = &"reach_pct"
+tag = &"shout"
+base = 0.35
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_7s4sw"]
+script = ExtResource("1_2dlhd")
+stat = &"damage_pct"
+tag = &"shout"
+base = 0.5
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_q6d1l"]
+script = ExtResource("1_2dlhd")
+stat = &"push_pct"
+tag = &"shout"
+base = 0.3
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_jmb0k"]
+script = ExtResource("1_2dlhd")
+stat = &"stun_pct"
+tag = &"shout"
+base = 0.5
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_lhie4")
+id = &"voz_do_leao"
+name_key = &"talent_voz_do_leao"
+desc_key = &"talent_voz_do_leao_desc"
+branch = 10
+tier = 1
+cost = 3
+unlock_level = 8
+memory_cost = 3
+needs = &"ruptura"
+mods = Array[ExtResource("1_2dlhd")]([SubResource("Resource_djy8u"), SubResource("Resource_7s4sw"), SubResource("Resource_q6d1l"), SubResource("Resource_jmb0k")])

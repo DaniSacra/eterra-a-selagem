@@ -111,14 +111,12 @@ func edges() -> Array:
 		if not pos.has(t.id):
 			continue
 		var wants: Array[TalentDef] = []
-		match t.tier:
-			TalentDef.Tier.MIDDLE:
-				wants = _of(t.branch, TalentDef.Tier.ENTRY)
-			TalentDef.Tier.APEX:
-				wants = _of(t.branch, TalentDef.Tier.MIDDLE)
-			TalentDef.Tier.BRIDGE:
-				for b in t.joins:
-					wants.append_array(_of(b, TalentDef.Tier.ENTRY))
+		if t.needs != &"":
+			for o in catalog:
+				if o.id == t.needs:
+					wants.append(o)
+		else:
+			wants = _wants_by_place(t)
 		for w in wants:
 			if pos.has(w.id) and (pos[t.id] as Vector2).distance_to(pos[w.id]) <= EDGE_MAX:
 				_add(out, seen, t.id, w.id)
@@ -128,6 +126,20 @@ func edges() -> Array:
 					and absf(m.radius - MedallionDef.RING) < 1.0:
 				_add(out, seen, n.id, m.id)
 	return out
+
+
+## What a Gift without `needs` wants by its place (the Maga's old tree until GE-4).
+func _wants_by_place(t: TalentDef) -> Array[TalentDef]:
+	var wants: Array[TalentDef] = []
+	match t.tier:
+		TalentDef.Tier.MIDDLE:
+			wants = _of(t.branch, TalentDef.Tier.ENTRY)
+		TalentDef.Tier.APEX:
+			wants = _of(t.branch, TalentDef.Tier.MIDDLE)
+		TalentDef.Tier.BRIDGE:
+			for b in t.joins:
+				wants.append_array(_of(b, TalentDef.Tier.ENTRY))
+	return wants
 
 
 func _of(b: TalentDef.Branch, tier: TalentDef.Tier) -> Array[TalentDef]:

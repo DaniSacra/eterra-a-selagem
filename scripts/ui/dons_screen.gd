@@ -118,7 +118,8 @@ func _build() -> void:
 func first_focus() -> StringName:
 	var def := MedallionDef.of(hero_id)
 	for n in def.nodes:
-		if n.kind == MedallionNodeDef.Kind.GIFT and loadout.state(loadout.book.find(n.id)) == HeroLoadout.State.OPEN:
+		if n.kind == MedallionNodeDef.Kind.GIFT and loadout.book.find(n.id) != null \
+				and loadout.state(loadout.book.find(n.id)) == HeroLoadout.State.OPEN:
 			return n.id
 	return MedallionDef.CROWN_ID
 
@@ -443,13 +444,8 @@ func _blocked(t: TalentDef) -> String:
 	return T.t(why.key, why.args) if not why.is_empty() else ""
 
 
-## "Dom · Fúria · Meio", "Dom · ponte Combo e Fúria", "Dom · Sustento".
+## "Dom · Ímpeto · Meio".
 func _place(t: TalentDef) -> String:
-	match t.tier:
-		TalentDef.Tier.BRIDGE:
-			return T.t(&"dons_sub_bridge", {"a": T.t(HeroLoadout.BRANCH_KEY[t.joins[0]]), "b": T.t(HeroLoadout.BRANCH_KEY[t.joins[1]])})
-		TalentDef.Tier.SUSTAIN:
-			return T.t(&"dons_sub_sustain")
 	return T.t(&"dons_sub_tier", {"branch": T.t(HeroLoadout.BRANCH_KEY[t.branch]), "tier": T.t(HeroLoadout.TIER_KEY[t.tier]).capitalize()})
 
 

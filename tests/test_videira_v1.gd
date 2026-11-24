@@ -225,7 +225,7 @@ func test_open_after_the_forge() -> void:
 
 
 func test_save_version_12_opens_older_files_with_nothing_bought() -> void:
-	assert_eq(SaveData.VERSION, 12)
+	assert_eq(SaveData.VERSION, 13)
 	for v in [1, 6, 7, 9, 11]:
 		var out := SaveData.merged({"version": v, "runs": 2})
 		assert_eq(out.version, SaveData.VERSION)
@@ -245,7 +245,7 @@ func test_the_old_tree_comes_back_as_what_he_paid() -> void:
 	assert_eq(MaterialPurse.amount(v11, MaterialPurse.EMERALD), 1, "the Esmeralda untouched")
 	assert_eq(int(v11.materials_total.silver), 200, "a refund is not brought home")
 	assert_eq(Vine.bought_ids(v11), [], "nothing of the new tree is bought")
-	assert_eq(v11.version, 12)
+	assert_eq(v11.version, SaveData.VERSION)
 	assert_eq(v11.hub.guided, ["forge"])
 	# opened again as a version 12 file the refund is not paid twice
 	var again := SaveData.merged(v11)

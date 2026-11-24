@@ -156,6 +156,8 @@ var dealt := DealtBy.new()
 var dealing: StringName = &""
 ## Fatia 2, the Refinar Peso: a blow's flinch lasts this many times its own (Combat sets it while it deals a blow).
 var stun_scale := 1.0
+## Imposição, Voz do Leão: the Quebra's stun lasts this much longer (Combat sets 1 + stun_pct around its damage, the cry too).
+var break_scale := 1.0
 ## The blow being dealt is an Omega (Combat sets it while it deals one): strong for the StunRule though not `big`.
 var strong := false
 ## The blow being dealt is the special (tag heavy) or an Omega: only drawn (combate_c1_leitura 7), armor gives it more sparks.
@@ -2555,9 +2557,10 @@ func _wear_poise(e: Enemy, from_dir: Vector2) -> void:
 	var key := String(dealing)
 	breaks[key] = int(breaks.get(key, 0)) + 1
 	interrupt(e)
-	e.stun_t = maxf(e.stun_t, d.poise_stun)
-	e.stun_len = d.poise_stun
-	e.broken_t = d.poise_stun
+	var stun := d.poise_stun * break_scale
+	e.stun_t = maxf(e.stun_t, stun)
+	e.stun_len = stun
+	e.broken_t = stun
 	e.hurt_t = HURT_TIME
 	var chest := Vector3(e.pos.x, e.y + 1.2 * d.size, e.pos.y)
 	tells.armor_break(chest, d.size * 0.8, EnemyFx.POISE_BREAK)
