@@ -25,6 +25,18 @@ guia `--guide=tree`, Santuário), ajustar alturas pelo que se vê, exe nas duas 
 - **PT-7 Anjos maiores na escolha** (`BoonChoice`/`EncounterScreen`): figura do anjo bem maior; junta com o BC-1 (anjo grande à esquerda).
 - **PT-8 Portas de guardião diferentes** (`room-designer`): hoje as duas portas de guardião dão a mesma coisa. Cada porta mostra **o anjo
   que vai abençoar** (dois anjos diferentes), e o jogador escolhe a luta pelo anjo.
+- **PT-10 Telas e HUD pelas referências do Daniel (2026-11-23 noite;** imagens só locais em `docs/art/ref/sworn_daniel/`, só o princípio):
+  encontro com os anjos em altura toda com o efeito de cada família e a caixa de fala do anjo em foco (`angel_pair_fullheight.png`);
+  escolha da Bênção com o anjo grande, raridade visível e a tecla dentro da frase ("Seu Ataque [Mouse esq.] incendeia...", uma
+  linha por número; `boon_choice_rows.png`); escolha do Encanto com a arma cravada e acesa à esquerda e o **ichthys** (a runa de
+  duas curvas deitada, o peixe) como símbolo do Encanto (`enchant_choice_stone.png`); portas com anel de energia, selo de
+  modificador e caixa ao chegar perto (`door_sigils.png`, `door_tip.png`); coluna da direita com a pintura de cada Bênção e o
+  nível (`build_column.png`). Em andamento (dois `ui-ux-designer`).
+- **PT-11 Loja da descida junto da parede** (`room-designer` + `environment-artist`, depois do PT-6; `shop_along_wall.png`): hoje as
+  três ofertas ficam em fila no meio do chão. Pedido: os itens em colunas de pedra finas **ao longo da parede do fundo e das
+  laterais**, cada um flutuando numa bolha de luz pequena com a **plaquinha de preço** em cima (pergaminho, número + moeda), o
+  meio da sala livre; uma oferta de destaque (a Bênção) pode ficar sozinha mais à frente. Aceite: captura na GPU, o robô compra
+  igual (`RESULT` com as mesmas compras).
 - **PT-9 Maga só depois de vencer Morvath e estação de troca de herói** (Daniel, 2026-11-23): a Maga fica travada até a primeira
   vitória sobre Morvath (hoje aparece no Portal a partir da 2ª descida); a troca de herói sai do Portal e ganha uma área própria no
   Santuário, ao lado do Vendedor (loja), com o seu guia de destrave (PT-5). Junto da Videira V2 (mesmo agente, mesmo Santuário). **FEITO (2026-11-23)**: `HubPlan.HEROES`, `HeroPickScreen`, `SaveData.hero_open`, guia `maga` (`docs/reference/hub.md`).
