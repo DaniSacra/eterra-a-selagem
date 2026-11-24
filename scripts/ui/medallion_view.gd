@@ -26,7 +26,9 @@ const DEEP := Color("2a2620")
 const SHELL := Color("b8b4aa")
 const IVORY := Color(0.97, 0.93, 0.84)
 const LINE := Color("8e7444")
-const LABEL_R := 138.0
+const LOCKED_D := 48.0
+const LABEL_GAP := 42.0
+const LABEL_APART := 24.0
 const CAPTION_MAX := 46
 
 var def: MedallionDef
@@ -184,9 +186,9 @@ func _draw() -> void:
 	for e: Array in _edges:
 		_draw_edge(self, e[0], e[1], false)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	_draw_labels()
 	for n in def.nodes:
 		_draw_node(n)
+	_draw_labels()
 	_draw_focus()
 	_draw_caption()
 
@@ -280,8 +282,10 @@ func _draw_node(n: MedallionNodeDef) -> void:
 	if _shake.has(id):
 		c.x += sin(_shake[id] * 30.0) * 3.0 * _shake[id]
 	var grow := 1.0 + 0.12 * sin(float(_pop.get(id, 0.0)) * PI)
-	var r := n.diameter * 0.5 * grow * (0.7 + 0.3 * a)
 	var st := state_of(id)
+	# a dark node (the big capstones too) is no bigger than the open nodes (the eye goes to what can be used)
+	var d := minf(n.diameter, LOCKED_D) if st == HeroLoadout.State.LOCKED else n.diameter
+	var r := d * 0.5 * grow * (0.7 + 0.3 * a)
 	var tint := tint_of(id)
 	var mod := Color(1, 1, 1, a)
 	var t := nav.talent(id)
@@ -326,8 +330,10 @@ func _draw_node(n: MedallionNodeDef) -> void:
 		# not reached yet: dark, with the Mastery level that reaches it (the padlock is the sealed Gift's, the one that asks Memória)
 		var lvl := str(t.unlock_level) if t != null else str(loadout.hero.ultimate(id).mastery_level)
 		var f := UiKit.BOLD_FONT
-		var fs := int(r * 0.95)
-		draw_string(f, c + Vector2(-f.get_string_size(lvl, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x * 0.5, (f.get_ascent(fs) - f.get_descent(fs)) * 0.5), lvl, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(MUTE, a))
+		var fs := maxi(int(r * 0.57), 9)
+		GiftArt.corner(self, c + Vector2(0.0, -r * 0.34), r * 0.26, loadout.hero, Color(MUTE, a))
+		var at := c + Vector2(-f.get_string_size(lvl, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x * 0.5, r * 0.38 + (f.get_ascent(fs) - f.get_descent(fs)) * 0.5)
+		draw_string(f, at, lvl, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(UiKit.PARCHMENT, 0.7 * a))
 	else:
 		MedallionView.draw_icon(self, loadout.hero, id, n, c, r * 0.5, icon * mod, fill)
 	if st == HeroLoadout.State.SEALED and t != null:
@@ -380,22 +386,37 @@ func _sector_labels() -> Array:
 		var t := nav.talent(n.id)
 		if t == null or t.branch == TalentDef.Branch.BRIDGE:
 			continue
-		var s: Dictionary = sums.get(t.branch, {"sum": 0.0, "n": 0})
+		var s: Dictionary = sums.get(t.branch, {"sum": 0.0, "n": 0, "r": INF, "first": n.id, "at": n.angle})
 		s.sum += n.angle
 		s.n += 1
+		if n.radius < s.r:
+			s.r = n.radius
+			s.first = n.id
+			s.at = n.angle
 		sums[t.branch] = s
 	var out: Array = []
 	for b: int in sums:
-		var mid: float = sums[b].sum / sums[b].n
-		out.append({"text": T.t(HeroLoadout.BRANCH_KEY[b]), "angle": mid, "ink": GiftArt.ink(b).lightened(0.45)})
+		# right inside the branch's innermost node (its own angle), not at the middle of the sector
+		out.append({"text": T.t(HeroLoadout.BRANCH_KEY[b]), "angle": sums[b].at, "radius": sums[b].r - LABEL_GAP, "first": sums[b].first, "ink": GiftArt.ink(b).lightened(0.45)})
+	# two labels closer than LABEL_APART: the one with the larger angle slides along the arc
+	out.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return x.angle < y.angle)
+	for i in range(1, out.size()):
+		for k in 12:
+			if MedallionDef.place(out[i].angle, out[i].radius).distance_to(MedallionDef.place(out[i - 1].angle, out[i - 1].radius)) >= LABEL_APART:
+				break
+			out[i].angle += 3.0
 	return out
 
 
 func _draw_labels() -> void:
 	var f := UiKit.TITLE_FONT
 	for l: Dictionary in _labels:
-		var p := spot_at(l.angle, LABEL_R)
+		var p := spot_at(l.angle, l.radius)
 		var w := f.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+		var to := spot(l.first)
+		var dir := (to - p).normalized()
+		var edge := minf(w * 0.5 + 8.0, 12.0 / maxf(absf(dir.y), 0.01)) if absf(dir.y) > 0.01 else w * 0.5 + 8.0
+		draw_line(p + dir * edge, to - dir * (def.find(l.first).diameter * 0.5 + 1.5), Color(l.ink, 0.5), 1.0, true)
 		var box := Rect2(p - Vector2(w * 0.5 + 8.0, 12.0), Vector2(w + 16.0, 24.0))
 		draw_style_box(UiKit.box(Color(0.03, 0.025, 0.035, 0.78 * clampf(reveal * 2.0, 0.0, 1.0)), Color(l.ink, 0.7), 1, 0, 11), box)
 		draw_string(f, p + Vector2(-w * 0.5, 5.5), l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, l.ink)

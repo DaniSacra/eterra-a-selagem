@@ -203,3 +203,20 @@ fica fechado.
 2. Laje armada: o comando que gerou `porta_caixa.png` (sala 2 da semente 5), no mesmo segundo.
 3. GR-8: `tools/gpu.sh shot docs/gallery/review_2026-11-23/raiox.png --bot --autopick --seed=5 --shot-at=3` (é o enquadramento de `dicas.png`, com o herói junto do bloco; se não ficar atrás, `--shot-at=4`).
 4. GR-20: `tools/gpu.sh shot docs/gallery/review_2026-11-23/giro.png --bot --autopick --seed=5 --shot-on=spin --shot-after=0.1`.
+
+Se `--shot-on=spin` ou `--shot-on=reward` não existirem com esse nome, `--shot-at` no segundo certo serve.
+
+## Andamento do `ui-ux-designer` (2026-11-24, sem captura GPU ainda; o Game Director captura)
+- **2 FEITO** `ForgeBench._socket`: engaste vazio de bronze (fundo 0,20/0,13/0,07, sombra interna na metade de cima, aro OLD_GOLD 2 px a 70%, silhueta da gema ou do "F" a 18%), no pomo e no anel vazio.
+- **3 FEITO** `MedallionView`: etiqueta de cada ramo logo por dentro do nó mais interno (raio menos `LABEL_GAP`), traço fino na tinta a 50%, empurra pelo arco se ficar a menos de 24 px; etiquetas desenhadas por cima dos nós.
+- **4 FEITO** nó escuro: leão pequeno em cima, número a 57% do tamanho e pergaminho a 70%, nunca maior que 48 de diâmetro (os de 72 desenham a 48 enquanto escuros); legenda "Escuro: o número é a Maestria que falta".
+- **5 FEITO** `VineTag`: verso com o nome e visto pequeno à esquerda, fundo mais verde; preço sem alcance em rubrica (0,55/0,10/0,08) com contorno pergaminho de 1 px.
+- **6 FEITO** `BoonCard.setup_enchant`: medalhão com o glifo do golpe que muda a 62% do raio, ichthys como selo de 28 px no canto inferior direito.
+- **9 FEITO** `Hud._follow_row`: o nome do golpe fica acima do losango de onde ele veio (acima do aviso do Brado quando é o Brado).
+- **10 FEITO** `Hud`: relógio, contador de sala e coluna de Bênçãos somem enquanto o `EncounterScreen` está aberto.
+- **11 FEITO (placeholder melhorado)** `ShopArt`: toldo com dobras e sombra, frente do balcão com tábuas, trilho de bronze e rebites na faixa de baixo. A arte do ChatGPT ainda substitui.
+- **20 FEITO** (GR-26) `Horde.top_bar_for`: o guardião que tem a barra do alto não desenha a da cabeça.
+- **22 FEITO (ajuste)** `RewardGem._bronze`: haste e pino da porta em bronze aceso, não metal espelhado (era o disco preto onde a ponta da haste encara a câmera). Conferir na captura GPU.
+- **21 FEITO** (GR-27) `Fx.number(tick)`: dano por tempo com altura mínima de 70% do direto, cor de família com valor mínimo 0,75 (cinza vira o verde da Emeth) e contorno de 3 px.
+- **24 FEITO** `MasteryBar` sobre pergaminho: trilho de tinta (contorno 1,5 px, fundo do papel 15% mais escuro).
+- **8** (retrato da Maga) fica para a arte do ChatGPT.

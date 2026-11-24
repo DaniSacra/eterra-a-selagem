@@ -1,13 +1,15 @@
 class_name VineTag
 extends Button
 ## The clay tag hung beside a root's bud (docs/art/vine_spec.md 1.1): the root's name over its price in the right material,
-## the price in rubric when it is out of reach. A root that has grown turns the tag over: a blank back with a green check
-## (never text). A mouse-only button: the bud beside it carries the keyboard and gamepad focus, the tag only points at it.
+## the price in rubric when it is out of reach. A root that has grown turns the tag over: a greener back that keeps the
+## name with a small check beside it (no price). A mouse-only button: the bud beside it carries the keyboard and gamepad focus, the tag only points at it.
 
 const FACE := Color("9a6a48")
 const BURNT := Color("5a3a24")
 const DARK_INK := Color("2a1a10")
-const RUBRIC_LIT := Color(0.62, 0.12, 0.08)
+const RUBRIC_LIT := Color(0.55, 0.10, 0.08)
+const GREEN_BACK := Color(0.78, 1.08, 0.72)
+const CHECK_W := 20.0
 const CHECK := Color("5f6b2e")
 const NAME_SIZE := 15
 const NAME_MIN := 13
@@ -17,6 +19,8 @@ var id: StringName
 var owned := false
 var cost: MaterialCount
 var _name: Label
+var _text := ""
+var _col: VBoxContainer
 var home := Vector2.ZERO
 
 
@@ -35,12 +39,9 @@ func setup(n: VineNode) -> VineTag:
 	col.add_theme_constant_override(&"separation", 0)
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	add_child(col)
-	var text := T.t(n.name_key)
-	var px := NAME_SIZE
-	var room := VineLayout.TAG_SIZE.x - PAD * 2.0 - 4.0
-	while px > NAME_MIN and UiKit.BOLD_FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x > room:
-		px -= 1
-	_name = UiKit.label(text, DARK_INK, px, UiKit.BOLD_FONT)
+	_col = col
+	_text = T.t(n.name_key)
+	_name = UiKit.label(_text, DARK_INK, _fit(0.0), UiKit.BOLD_FONT)
 	_name.name = "name"
 	_name.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -58,10 +59,22 @@ func setup(n: VineNode) -> VineTag:
 ## `short`: the price is out of reach (rubric); `owned`: the tag shows its back.
 func show_state(is_owned: bool, short: bool) -> void:
 	owned = is_owned
-	_name.visible = not is_owned
 	cost.visible = not is_owned
+	_col.offset_left = PAD + (CHECK_W if is_owned else 0.0)
+	_name.add_theme_font_size_override(&"font_size", _fit(CHECK_W if is_owned else 0.0))
 	cost.set_color(RUBRIC_LIT if short else DARK_INK)
+	cost.number.add_theme_color_override(&"font_outline_color", UiKit.PARCHMENT)
+	cost.number.add_theme_constant_override(&"outline_size", 1 if short else 0)
 	queue_redraw()
+
+
+## The largest name size (NAME_MIN at least) that fits the tag, less `taken` px on the left.
+func _fit(taken: float) -> int:
+	var px := NAME_SIZE
+	var room := VineLayout.TAG_SIZE.x - PAD * 2.0 - 4.0 - taken
+	while px > NAME_MIN and UiKit.BOLD_FONT.get_string_size(_text, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x > room:
+		px -= 1
+	return px
 
 
 ## The tag rises a little under the focus.
@@ -74,11 +87,11 @@ func _draw() -> void:
 	var file := "tag_back.png" if owned else "tag.png"
 	var tex := VineArt.texture(file)
 	if tex != null:
-		draw_texture_rect(tex, r, false)
+		draw_texture_rect(tex, r, false, GREEN_BACK if owned else Color.WHITE)
 	else:
-		draw_rect(r, FACE if not owned else FACE.darkened(0.12))
+		draw_rect(r, FACE if not owned else Color(0.36, 0.42, 0.26))
 		draw_rect(r, BURNT, false, 2.0)
 		draw_circle(Vector2(size.x * 0.5, 6.0), 2.5, BURNT.darkened(0.5))
 	if owned:
-		var c := r.get_center()
-		draw_polyline(PackedVector2Array([c + Vector2(-11, 1), c + Vector2(-3, 9), c + Vector2(12, -9)]), CHECK, 4.0, true)
+		var c := Vector2(PAD + 10.0, r.get_center().y)
+		draw_polyline(PackedVector2Array([c + Vector2(-5, 0), c + Vector2(-1, 4), c + Vector2(6, -5)]), CHECK, 2.5, true)

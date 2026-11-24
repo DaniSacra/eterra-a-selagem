@@ -256,6 +256,9 @@ func _lines(ci: Control, dy: float) -> void:
 			x += w + 2.0
 
 
+const SOCKET_BG := Color(0.20, 0.13, 0.07)
+
+
 func _rings(ci: Control, dy: float) -> void:
 	if not marks.has(&"attack"):
 		return
@@ -263,19 +266,37 @@ func _rings(ci: Control, dy: float) -> void:
 		var c: Vector2 = AT[slot] + Vector2(0, dy)
 		var letter: String = rings[slot]
 		var on := letter != ""
-		ci.draw_circle(c, 15.0, Color(0.04, 0.03, 0.03, 0.85))
+		if on:
+			ci.draw_circle(c, 15.0, Color(0.04, 0.03, 0.03, 0.85))
+		else:
+			_socket(ci, c, 15.0, "F")
 		ci.draw_arc(c, 14.0, 0.0, TAU, 28, UiKit.OLD_GOLD.lightened(0.2) if on else RING, 4.0, true)
 		if on:
 			ci.draw_string(UiKit.BOLD_FONT, c + Vector2(-20, 5), letter, HORIZONTAL_ALIGNMENT_CENTER, 40, 14, UiKit.PARCHMENT)
+
+
+## Empty bronze setting: dark-bronze cavity, inner shadow on the upper half, old-gold rim and a faint
+## silhouette of what goes in (a diamond for the gem, the letter for a ring).
+func _socket(ci: Control, c: Vector2, r: float, letter: String) -> void:
+	ci.draw_circle(c, r, SOCKET_BG)
+	ci.draw_arc(c, r - 1.5, PI, TAU, 20, Color(0.12, 0.075, 0.04), 3.0, true)
+	ci.draw_arc(c, r, 0.0, TAU, 32, Color(UiKit.OLD_GOLD, 0.7), 2.0, true)
+	var ghost := Color(UiKit.PARCHMENT, 0.18)
+	if letter == "":
+		var k := r * 0.55
+		ci.draw_colored_polygon(PackedVector2Array([c + Vector2(0, -k), c + Vector2(k, 0), c + Vector2(0, k), c + Vector2(-k, 0)]), ghost)
+	else:
+		ci.draw_string(UiKit.BOLD_FONT, c + Vector2(-20, 5), letter, HORIZONTAL_ALIGNMENT_CENTER, 40, 14, ghost)
 
 
 func _gem(ci: Control, dy: float) -> void:
 	if not marks.has(&"awaken"):
 		return
 	var c: Vector2 = AT[&"awaken"] + Vector2(0, dy)
-	ci.draw_circle(c, 19.0, Color(0.03, 0.025, 0.03))
 	if gem == &"":
+		_socket(ci, c, 19.0, "")
 		return
+	ci.draw_circle(c, 19.0, SOCKET_BG)
 	var col: Color = Color("f0a040")
 	for k: StringName in GEM:
 		if String(gem).contains(String(k)):
