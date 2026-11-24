@@ -289,6 +289,12 @@ func test_a_blessing_door_shows_one_angel_who_comes() -> void:
 	assert_true(Rooms.door_text(r).contains(T.t(StringName("angel_" + String(r.angel)))), "the sign names the angel")
 	game.rooms._room_cleared()
 	game.rooms._collect()
+	# BC-4: the lone angel speaks first (the stage, alone), then a press takes it to its cards
+	var meet := game._screen as EncounterScreen
+	assert_not_null(meet, "the angel alone on the stage")
+	assert_eq(meet.buttons.size(), 1)
+	meet._opened_at -= BoonChoice.GUARD_MS * 2
+	meet._press_focus()
 	var entry: Dictionary = game.encounters.meetings[-1]
 	assert_eq(entry.offered, [String(r.angel)], "the angel the door showed, alone")
 	assert_eq(entry.chose, String(r.angel))
