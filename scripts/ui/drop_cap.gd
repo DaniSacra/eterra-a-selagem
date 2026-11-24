@@ -152,6 +152,9 @@ static func gift(ci: CanvasItem, box: Rect2, letter: String, rung: Rung, ink: Co
 		ci.draw_string(f, base + Vector2(0.8, 0.8), letter, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(Book.INK, 0.5))
 		ci.draw_string(f, base, letter, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, letter_color)
 	else:
-		# only a line of the letter (the open and sealed ones carry no colour)
-		ci.draw_string_outline(f, base, letter, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, 2, Color(line, 0.9))
-		ci.draw_string(f, base, letter, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Book.PAPER.darkened(0.05) if not faded else Color(Book.PAPER, 0.6))
+		# the open and sealed ones: the letter in the branch's ink on the bare paper (no field); the locked: a pencil line
+		if faded:
+			ci.draw_string_outline(f, base, letter, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, 2, Color(line, 0.9))
+			ci.draw_string(f, base, letter, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(Book.PAPER, 0.6))
+		else:
+			ci.draw_string(f, base, letter, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, line)

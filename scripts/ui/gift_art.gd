@@ -15,7 +15,7 @@ const INK := {
 	TalentDef.Branch.COMBO: Color("783222"), TalentDef.Branch.FURIA: Color("9a5a2a"),
 	TalentDef.Branch.EMETH: Color("2f7a58"), TalentDef.Branch.MAGIA: Color("3d6a8c"),
 	TalentDef.Branch.BRIDGE: Color("7f5c26"), TalentDef.Branch.SUSTAIN: Color("7a4e3a"),
-	TalentDef.Branch.PIRO: Color("9a4a1c"), TalentDef.Branch.ARCA: Color("c4962a"), TalentDef.Branch.CTRL: Color("4a5560"),
+	TalentDef.Branch.PIRO: Color("9a4a1c"), TalentDef.Branch.ARCA: Color("86601a"), TalentDef.Branch.CTRL: Color("4a5560"),
 }
 const MAGA_TITLE := Color("6a3a14")
 const ULT_INK := Color("b08a2a")
