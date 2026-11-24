@@ -1,6 +1,6 @@
 extends GutTest
 ## E2 interface: "Bênção" in the player's text (QW-018, E2-03), the hero screen on the title (E2-06: HeroLoadout,
-## TalentTree, HeroScreen), the Mastery on the end screen (E2-04: MasteryReport) and the small Compendium (E2-11:
+## CodexBook, HeroScreen), the Mastery on the end screen (E2-04: MasteryReport) and the small Compendium (E2-11:
 ## CodexScreen).
 
 ## XP at the start of a level (40 + 10 per level: 2 at 40, 3 at 90, 6 at 300, 8 at 490).
@@ -148,44 +148,42 @@ func test_next_level_tells_what_it_brings() -> void:
 
 func test_the_screen_shows_every_gift_and_the_two_ultimates() -> void:
 	var s := _screen(_data(0))
-	assert_eq(s.tree.nodes.size(), HeroDef.warrior().talents().catalog.size())
+	assert_eq(s.codex.entries.size(), HeroDef.warrior().talents().catalog.size())
 	assert_eq(s.ults.size(), 2)
-	assert_eq(s.tree.node(&"impeto").state, HeroLoadout.State.LOCKED)
-	assert_eq(s.tree.node(&"quarto_corte").state, HeroLoadout.State.OPEN)
+	assert_eq(s.codex.entry(&"impeto").state, HeroLoadout.State.LOCKED)
+	assert_eq(s.codex.entry(&"quarto_corte").state, HeroLoadout.State.OPEN)
 	assert_false(s.ults[0].open)
 	await wait_process_frames(2)
 	var focus := get_viewport().gui_get_focus_owner()
-	assert_eq(focus, s.tree.node(&"quarto_corte"), "the focus starts on the Gift that can go on")
+	assert_eq(focus, s.codex.entry(&"quarto_corte"), "the focus starts on the Gift that can go on")
 
 
 func test_pressing_a_node_equips_it_in_the_save_data() -> void:
 	var d := _data(XP_3)
 	var s := _screen(d)
-	s.tree.node(&"quarto_corte").pressed.emit()
+	s.codex.entry(&"quarto_corte").pressed.emit()
 	assert_eq(SaveData.hero(d, "warrior").equipped, ["quarto_corte"])
-	assert_eq(s.tree.node(&"quarto_corte").state, HeroLoadout.State.EQUIPPED)
+	assert_eq(s.codex.entry(&"quarto_corte").state, HeroLoadout.State.EQUIPPED)
 	var count := s.find_child("devotion", true, false) as Label
 	assert_eq(count.text, T.t(&"hero_devotion_count", {"used": 3, "max": 8}))
-	s.tree.node(&"quarto_corte").pressed.emit()
+	s.codex.entry(&"quarto_corte").pressed.emit()
 	assert_eq(SaveData.hero(d, "warrior").equipped, [])
 
 
-## QA of E2: a Gift worn and a Gift only open read apart at a glance (filled, emerald line, glow against an outline),
-## and Combo has a colour of its own (it was a grey that read as switched off).
+## QA of E2: a Gift worn and a Gift only open read apart at a glance (the capital filled against only a line, the
+## gold leaf), and every branch has an ink of its own.
 func test_worn_and_open_gifts_look_apart() -> void:
 	var s := _screen(_data(XP_8, ["quarto_corte"]))
-	var worn := s.tree.node(&"quarto_corte")
-	var open := s.tree.node(&"impeto")
+	var worn := s.codex.entry(&"quarto_corte")
+	var open := s.codex.entry(&"impeto")
 	assert_eq(worn.state, HeroLoadout.State.EQUIPPED)
 	assert_eq(open.state, HeroLoadout.State.OPEN)
-	assert_eq(worn.line_color(), Book.GILT)
-	assert_ne(open.line_color(), worn.line_color())
-	assert_gt(open.ink_color().get_luminance(), 0.4, "AP-4 1.5: the open Gift is a toasted paper, no slate")
-	assert_gt(absf(worn.ink_color().get_luminance() - open.ink_color().get_luminance()) + absf(worn.ink_color().s - open.ink_color().s), 0.05)
-	var combo := TalentNode.BRANCH_COLOR[TalentDef.Branch.COMBO]
-	assert_gt(combo.s, 0.4, "Combo is a colour, not a grey")
-	for b in [TalentDef.Branch.FURIA, TalentDef.Branch.EMETH, TalentDef.Branch.MAGIA]:
-		assert_gt(absf(combo.h - TalentNode.BRANCH_COLOR[b].h), 0.03, "Combo apart from branch %d" % b)
+	assert_eq(worn.fill(), 1.0, "the capital of a worn Gift is filled")
+	assert_eq(open.fill(), 0.0, "an open one is only a line")
+	var inks := {}
+	for b in GiftArt.chapters(s.loadout.hero):
+		inks[GiftArt.ink(b)] = true
+	assert_eq(inks.size(), 6, "six branches, six inks")
 
 
 func test_the_hint_names_the_keys_of_the_device_in_hand() -> void:
@@ -206,10 +204,10 @@ func test_the_hint_names_the_keys_of_the_device_in_hand() -> void:
 func test_the_panel_says_why_a_gift_cannot_go_on() -> void:
 	var d := _data(XP_8)
 	var s := _screen(d)
-	s.tree.node(&"passo_encadeado").focus_entered.emit()
+	s.codex.entry(&"passo_encadeado").focus_entered.emit()
 	var status := s.find_child("status", true, false) as Label
 	assert_eq(status.text, T.t(&"hero_why_needs", {"what": T.t(&"talent_quarto_corte")}))
-	s.tree.node(&"passo_encadeado").pressed.emit()
+	s.codex.entry(&"passo_encadeado").pressed.emit()
 	assert_eq(SaveData.hero(d, "warrior").equipped, [], "refused")
 	var name := s.find_child("gift_name", true, false) as Label
 	assert_eq(name.text, T.t(&"talent_passo_encadeado"))
@@ -227,15 +225,16 @@ func test_choosing_an_ultimate_on_the_screen() -> void:
 	assert_eq(SaveData.hero(d, "warrior").ultimate, "cleave", "the locked one is never chosen")
 
 
-func test_keys_walk_the_diamond() -> void:
+func test_keys_walk_the_page() -> void:
 	var s := _screen(_data(2470))
 	await wait_process_frames(2)
-	s.tree.centre.grab_focus()
-	var right := s.tree.centre.find_valid_focus_neighbor(SIDE_RIGHT)
-	assert_true(right is TalentNode, "right of the centre is a Gift")
-	assert_eq((right as TalentNode).def.id, &"impeto", "Fúria's entry is to the right")
-	var up := s.tree.centre.find_valid_focus_neighbor(SIDE_TOP)
-	assert_eq((up as TalentNode).def.id, &"quarto_corte", "Combo's entry is above")
+	var first := s.codex.entry(&"quarto_corte")
+	first.grab_focus()
+	var down := first.find_valid_focus_neighbor(SIDE_BOTTOM)
+	assert_true(down is GiftEntry, "down of the first entry is the next one")
+	assert_eq((down as GiftEntry).def.id, &"passo_encadeado")
+	var up := first.find_valid_focus_neighbor(SIDE_TOP)
+	assert_true(up is GiftRibbon, "up of the first entry is its ribbon")
 
 
 func test_every_text_of_the_screen_is_in_the_table() -> void:

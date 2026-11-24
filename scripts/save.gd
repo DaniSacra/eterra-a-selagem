@@ -86,7 +86,9 @@ func _dev_hero() -> void:
 	if not Dev.has("hero-xp") and not Dev.has("hero-equip"):
 		return
 	enabled = false
-	var block := SaveData.hero(data, SaveData.FIRST_HERO)
+	# the Maga's with --hero=maga (the Gifts chapter picks the same hero)
+	var maga := Dev.arg("hero") == "maga"
+	var block := SaveData.hero(data, "maga" if maga else SaveData.FIRST_HERO)
 	if Dev.has("hero-xp"):
 		block.mastery_xp = int(Dev.num("hero-xp", 0))
 		# a save of that level has opened what its Mastery revealed (as the version 6 migration did); --hero-opened=a,b
@@ -94,7 +96,7 @@ func _dev_hero() -> void:
 		if Dev.has("hero-opened"):
 			block.opened = Array(Dev.arg("hero-opened").split(",", false))
 		else:
-			SaveData.open_revealed(block)
+			SaveData.open_revealed(block, HeroDef.maga() if maga else null)
 	if Dev.has("hero-equip"):
 		block.equipped = Array(Dev.arg("hero-equip").split(",", false))
 	if Dev.has("hero-ult"):

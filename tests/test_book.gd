@@ -1,6 +1,6 @@
 extends GutTest
 ## Art pack stage 2: the Livro de Ahk (HeroScreen in three chapters on a BookSpread), the Gift tree's new language
-## (TalentNode states, TalentGlyph, TalentTree.path_of and fit), the panel's prerequisite and next step
+## (GiftEntry states, TalentGlyph, the codex's thread), the panel's prerequisite and next step
 ## (HeroLoadout.needs_text, next_step, xp_missing) and the Compendium as a page of the book (CodexScreen.progress, its
 ## index).
 
@@ -37,7 +37,7 @@ func test_the_book_opens_on_the_warrior_with_the_focus_on_his_gifts() -> void:
 	assert_eq(get_viewport().gui_get_focus_owner(), s.find_child("to_gifts", true, false))
 	assert_true(s.chapters[HeroScreen.Chapter.HERO].button_pressed)
 	assert_true(s.find_child("portrait", true, false).is_visible_in_tree(), "the painted Warrior on the left page")
-	assert_false(s.tree.is_visible_in_tree(), "the tree waits in its chapter")
+	assert_false(s.codex.is_visible_in_tree(), "the tree waits in its chapter")
 
 
 func test_only_the_playable_hero_is_in_the_book() -> void:
@@ -55,7 +55,7 @@ func test_dons_opens_the_tree_with_the_focus_on_a_gift() -> void:
 	var s := _book(_data(XP_3))
 	(s.find_child("to_gifts", true, false) as Button).pressed.emit()
 	assert_eq(s.chapter, HeroScreen.Chapter.GIFTS)
-	assert_true(get_viewport().gui_get_focus_owner() is TalentNode)
+	assert_true(get_viewport().gui_get_focus_owner() is GiftEntry)
 
 
 func test_focus_on_a_bookmark_shows_its_chapter() -> void:
@@ -119,13 +119,13 @@ func test_every_new_text_is_in_the_table_without_a_dash() -> void:
 
 func test_the_panel_tells_cost_prerequisite_state_and_next_step() -> void:
 	var s := _book(_data(XP_3), HeroScreen.Chapter.GIFTS)
-	s.tree.node(&"lamina_faminta").focus_entered.emit()
+	s.codex.entry(&"lamina_faminta").focus_entered.emit()
 	var step := s.find_child("step", true, false) as Label
 	var status := s.find_child("status", true, false) as Label
 	var lo := s.loadout
 	assert_eq(status.text, T.t(&"hero_why_locked", {"n": 4}))
 	assert_eq(step.text, T.t(&"hero_step_mastery", {"n": 4, "xp": lo.xp_missing(4)}))
-	s.tree.node(&"quarto_corte").focus_entered.emit()
+	s.codex.entry(&"quarto_corte").focus_entered.emit()
 	assert_eq(step.text, "", "no next step when it can go on")
 	assert_eq(status.text, T.t(&"hero_can_equip"))
 
@@ -160,41 +160,33 @@ func test_every_gift_has_its_own_glyph() -> void:
 		assert_true(TalentGlyph.has(t.id), String(t.id))
 
 
-func test_path_of_lights_what_a_gift_needs() -> void:
-	var s := _book(_data(2470), HeroScreen.Chapter.GIFTS)
-	var book := s.loadout.book
-	assert_eq(s.tree.path_of(book.find(&"quarto_corte")), [] as Array[TalentDef])
-	var apex := s.tree.path_of(book.find(&"golpe_sem_fim"))
-	assert_eq(apex.size(), 3, "the entry and both middles (Ferro na Investida, C2): either opens it")
-	assert_true(apex.has(book.find(&"passo_encadeado")) and apex.has(book.find(&"quarto_corte")))
-	var bridge := book.catalog.filter(func(t: TalentDef) -> bool: return t.tier == TalentDef.Tier.BRIDGE)[0] as TalentDef
-	assert_eq(s.tree.path_of(bridge).size(), 2, "both entries")
-	s.tree.node(&"golpe_sem_fim").focus_entered.emit()
-	assert_true(s.tree.node(&"passo_encadeado").on_path)
-	assert_false(s.tree.node(&"impeto").on_path)
+func test_the_thread_runs_down_a_branch_and_lights_with_what_is_worn() -> void:
+	var s := _book(_data(2470, ["quarto_corte"]), HeroScreen.Chapter.GIFTS)
+	assert_eq(s.codex.entry(&"quarto_corte").thread_in, GiftEntry.Cord.NONE, "an entry needs nothing")
+	assert_eq(s.codex.entry(&"passo_encadeado").thread_in, GiftEntry.Cord.MET, "its entry is worn")
+	assert_eq(s.codex.entry(&"golpe_sem_fim").thread_in, GiftEntry.Cord.MISSING, "the apex lacks its middle")
+	assert_eq(s.codex.entry(&"firmeza").thread_in, GiftEntry.Cord.NONE, "a sustain Gift hangs on nothing")
+	s.codex.entry(&"passo_encadeado").pressed.emit()
+	s.codex.entry(&"impeto").pressed.emit()
+	assert_eq(s.codex.entry(&"golpe_sem_fim").thread_in, GiftEntry.Cord.MET, "the middle and a Fúria Gift are worn")
 
 
-func test_the_four_states_read_apart() -> void:
+func test_the_five_states_read_apart() -> void:
 	var s := _book(_data(XP_8, ["quarto_corte"]), HeroScreen.Chapter.GIFTS)
-	var worn := s.tree.node(&"quarto_corte")
-	var open := s.tree.node(&"impeto")
-	var locked := s.tree.node(&"furia_plena")
+	var worn := s.codex.entry(&"quarto_corte")
+	var open := s.codex.entry(&"impeto")
+	var locked := s.codex.entry(&"furia_plena")
 	var d := _data(XP_8)
 	var t := _book(d, HeroScreen.Chapter.GIFTS)
-	var blocked := t.tree.node(&"passo_encadeado")
+	var blocked := t.codex.entry(&"passo_encadeado")
 	assert_eq(blocked.state, HeroLoadout.State.BLOCKED)
 	assert_eq(locked.state, HeroLoadout.State.LOCKED)
-	var lines := [worn.line_color(), open.line_color(), blocked.line_color(), locked.line_color()]
-	for i in lines.size():
-		for j in range(i + 1, lines.size()):
-			assert_ne(lines[i], lines[j], "lines %d and %d" % [i, j])
-	assert_ne(blocked.glyph_color(), open.glyph_color())
-
-
-func test_the_tree_fits_the_room_it_gets() -> void:
-	assert_almost_eq(TalentTree.fit(TalentTree.base_size()), 1.0, 0.001)
-	assert_eq(TalentTree.fit(Vector2(10, 10)), TalentTree.FIT_MIN)
-	assert_almost_eq(TalentTree.fit(TalentTree.base_size() * Vector2(0.9, 2.0)), 0.9, 0.001)
+	assert_eq(locked.line, T.t(&"codex_gift_locked", {"n": 18}), "the Mastery that opens it, written")
+	assert_eq(blocked.line, T.t(&"codex_block_needs", {"what": T.t(&"talent_quarto_corte")}), "the reason, written")
+	assert_true(blocked.line_is_reason)
+	assert_eq(open.line, T.t(open.def.desc_key))
+	assert_eq(worn.fill(), 1.0)
+	assert_eq(open.fill(), 0.0)
 
 
 # ---------- the Compendium ----------

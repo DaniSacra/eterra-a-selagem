@@ -43,22 +43,15 @@ func test_the_loadout_gives_every_gift_of_a_place() -> void:
 	assert_eq(l.all_of(TalentDef.Branch.COMBO, TalentDef.Tier.MIDDLE).size(), 2)
 
 
-func test_no_two_gifts_share_a_spot_and_all_fit_the_room() -> void:
-	var l := _loadout()
-	var tree := TalentTree.new()
-	var spots: Array[Vector2] = []
-	var sustain := 0
-	tree.loadout = l
-	for t in l.book.catalog:
-		var at := TalentTree.spot(t, sustain, tree.variant_of(t))
-		if t.tier == TalentDef.Tier.SUSTAIN:
-			sustain += 1
-		assert_lte(absf(at.x), TalentTree.HALF.x + 20.0, str(t.id))
-		assert_lte(absf(at.y), TalentTree.HALF.y + 20.0, str(t.id))
-		for o in spots:
-			assert_gt(at.distance_to(o), TalentNode.SIDE + 8.0, "%s overlaps" % t.id)
-		spots.append(at)
-	tree.free()
+func test_every_gift_has_one_entry_in_its_own_chapter() -> void:
+	var s := HeroScreen.new()
+	add_child_autofree(s)
+	s.open(_data(), HeroScreen.Chapter.GIFTS)
+	var l := s.loadout
+	assert_eq(s.codex.entries.size(), l.book.catalog.size())
+	for i in s.codex.branches.size():
+		for e: GiftEntry in s.codex.by_chapter[i]:
+			assert_eq(e.def.branch, s.codex.branches[i], str(e.def.id))
 
 
 func test_they_can_be_worn_and_the_apex_needs_any_middle() -> void:
@@ -75,10 +68,11 @@ func test_the_screen_shows_them_and_keys_reach_them() -> void:
 	s.open(_data(), HeroScreen.Chapter.GIFTS)
 	await wait_process_frames(2)
 	for id in NEW:
-		assert_not_null(s.tree.node(id), str(id))
-	s.tree.node(&"avanco_feroz").grab_focus()
-	var down := s.tree.node(&"avanco_feroz").find_valid_focus_neighbor(SIDE_BOTTOM)
-	assert_true(down is TalentNode, "a Gift below the first Fúria middle")
+		assert_not_null(s.codex.entry(id), str(id))
+	s.codex.show_chapter(1)
+	s.codex.entry(&"avanco_feroz").grab_focus()
+	var down := s.codex.entry(&"avanco_feroz").find_valid_focus_neighbor(SIDE_BOTTOM)
+	assert_true(down is GiftEntry, "a Gift below the first Fúria middle")
 
 
 func test_effects_reach_the_stats_the_game_reads() -> void:
@@ -103,22 +97,3 @@ func test_the_four_new_gifts_draw_different_symbols() -> void:
 		var key := str(TalentMotif.shapes(id))
 		assert_false(seen.has(key), "%s repeats a symbol" % id)
 		seen[key] = true
-
-
-func test_no_two_lines_of_the_tree_cross() -> void:
-	var tree := TalentTree.new()
-	add_child_autofree(tree)
-	tree.setup(_loadout())
-	var segs: Array = []
-	for pair in tree.links():
-		var a: Vector2 = Vector2.ZERO if pair[0] == null else tree.node(pair[0].id).get_meta(&"at")
-		var b: Vector2 = tree.node(pair[1].id).get_meta(&"at")
-		segs.append([a, b, pair[0], pair[1]])
-	for i in segs.size():
-		for j in range(i + 1, segs.size()):
-			var s: Array = segs[i]
-			var o: Array = segs[j]
-			if s[2] == o[2] or s[3] == o[3] or s[2] == o[3] or s[3] == o[2]:
-				continue
-			assert_null(Geometry2D.segment_intersects_segment(s[0], s[1], o[0], o[1]),
-				"%s->%s crosses %s->%s" % [s[2].id if s[2] else "centre", s[3].id, o[2].id if o[2] else "centre", o[3].id])

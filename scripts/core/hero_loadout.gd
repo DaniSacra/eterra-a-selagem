@@ -172,6 +172,27 @@ func why(t: TalentDef) -> Dictionary:
 	return {}
 
 
+## The short reason of a BLOCKED Gift, for the codex entry's second line ("Pede: X", "Já há um Dom no botão Y: X",
+## "Faltam 2 velas"), as {key, args} for T.t ({} when it is not refused for these reasons).
+func short_why(t: TalentDef) -> Dictionary:
+	match problem(t):
+		Talents.Problem.DEVOTION:
+			var n := t.cost - (devotion() - used())
+			return {"key": &"codex_block_candle" if n == 1 else &"codex_block_candles", "args": {"n": n}}
+		Talents.Problem.SLOT_TAKEN:
+			return {"key": &"codex_block_slot", "args": {"action": T.t(action_key(hero, t.slot)), "name": _name(_slot_holder(t.slot))}}
+		Talents.Problem.NEEDS:
+			match t.tier:
+				TalentDef.Tier.APEX:
+					return {"key": &"codex_block_apex", "args": {"middle": _name(of(t.branch, TalentDef.Tier.MIDDLE)),
+						"branch": T.t(BRANCH_KEY[t.partner])}}
+				TalentDef.Tier.BRIDGE:
+					return {"key": &"codex_block_bridge", "args": {"a": _name(of(t.joins[0], TalentDef.Tier.ENTRY)),
+						"b": _name(of(t.joins[1], TalentDef.Tier.ENTRY))}}
+			return {"key": &"codex_block_needs", "args": {"what": _name(of(t.branch, TalentDef.Tier.ENTRY))}}
+	return {}
+
+
 ## What a Gift needs equipped before it, as {key, args} for T.t, whatever is on now (stage 2 of the art pack: the
 ## panel's "Pré-requisito"): nothing for an entry or a sustain Gift (hero_needs_none).
 func needs_text(t: TalentDef) -> Dictionary:

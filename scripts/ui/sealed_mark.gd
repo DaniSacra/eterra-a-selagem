@@ -53,3 +53,42 @@ static func _circle(c: Vector2, r: float) -> PackedVector2Array:
 		var a := TAU * float(i) / 40.0
 		out.append(c + Vector2(cos(a), sin(a)) * r)
 	return out
+
+
+# ---- the lacre of a sealed Gift (Livro de Ahk): a disc of wax on a cord, the Memória's price pressed in it ----
+
+const WAX := Color("7a3a34")
+const CORD := Color("5a4630")
+
+
+## The cord across an entry's paragraph, from `a` to `b` (it sags a little), and the lacre at `at` of radius `r` with
+## `number` pressed in it. `crack` 0..1 is the break: the two halves part and fall, the cord lets go (0: whole).
+static func lacre(ci: CanvasItem, a: Vector2, b: Vector2, at: Vector2, r: float, number: String, crack: float = 0.0) -> void:
+	var cord_alpha := 1.0 - crack
+	if cord_alpha > 0.0:
+		var pts := PackedVector2Array()
+		for i in 13:
+			var t := float(i) / 12.0
+			pts.append(a.lerp(b, t) + Vector2(0.0, sin(t * PI) * 2.5))
+		ci.draw_polyline(pts, Color(CORD, cord_alpha), 2.2, true)
+	var fall := crack * crack * r * 1.4
+	var apart := crack * r * 0.7
+	for side: float in [-1.0, 1.0]:
+		var half := PackedVector2Array()
+		for i in 13:
+			var ang := (PI * 0.5 if side < 0.0 else -PI * 0.5) + PI * float(i) / 12.0
+			var k := r if i % 2 == 0 else r * 0.86
+			half.append(Vector2(cos(ang), sin(ang)) * k)
+		for i in half.size():
+			half[i] += at + Vector2(side * apart, fall)
+		var col := Color(WAX, 1.0 - crack * 0.8)
+		ci.draw_colored_polygon(half, col)
+	if crack <= 0.0:
+		ci.draw_arc(at, r * 0.62, 0.0, TAU, 20, WAX.lightened(0.3), 1.2, true)
+		ci.draw_line(at + Vector2(0.0, -r * 0.95), at + Vector2(0.0, r * 0.95), WAX.darkened(0.45), 1.0)
+		var font := UiKit.number_font()
+		var fs := int(r * 1.05)
+		var w := font.get_string_size(number, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		var pos := at + Vector2(-w * 0.5, (font.get_ascent(fs) - font.get_descent(fs)) * 0.5)
+		ci.draw_string(font, pos + Vector2(0.8, 0.8), number, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(0.1, 0.03, 0.03, 0.8))
+		ci.draw_string(font, pos, number, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(0.95, 0.8, 0.72))

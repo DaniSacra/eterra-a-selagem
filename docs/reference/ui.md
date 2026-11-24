@@ -481,3 +481,46 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 
 
 - **Árvore da Maga em triângulo (M2, 2026-11-23)**: `HeroScreen` abre com o herói escolhido (`SaveData.picked_hero`, ou `--hero=maga` nas capturas) e `TalentTree.triangle` liga sozinho quando o livro tem um Dom de `PIRO`. Três ramos a 120 graus num círculo verdadeiro (`HALF_TRIANGLE`), pontes entre vizinhos, Sustento em coluna à esquerda (`SUSTAIN_AT_TRIANGLE`) e o ciclo dos ápices como anel tracejado no sentido horário (Piromancia, Arcanismo, Selos, Piromancia; âmbar antigo quando o ápice e um Dom do ramo parceiro estão equipados, rubrica no ápice em foco). Cores âmbar e marfim em `TalentNode.BRANCH_COLOR`, glifos próprios (`Glyph.PIRO/ARCA/CTRL`, `TalentNode.glyph_of`). O Guerreiro não muda. Pendente: as páginas Abertura, O Guerreiro e Ofícios do Livro ainda são do Guerreiro (texto e retrato); só Dons é da Maga. Captura: `tools/shot.sh out.png 3 --title --screen=gifts --hero=maga`.
+
+## Livro de Ahk como códice de pergaminho (2026-11-23, `docs/art/meta_screens_identity.md` 1)
+
+**Substitui as árvores de nós dos Dons** (o losango do Guerreiro e o triângulo da Maga acima são históricos; `TalentTree`
+foi apagada; `TalentNode` fica só como biblioteca de cores e glifos que o Compêndio e `TalentGlyph` ainda usam). O capítulo
+Dons do `HeroScreen` é o `CodexBook` (`scripts/ui/codex_book.gd`), na página da esquerda:
+- **Fitas** (`GiftRibbon`): uma por ramo, na tinta do ramo (`GiftArt.INK`, baixada para o papel); Guerreiro 6 (Combo,
+  Fúria, Emeth, Magia, Pontes, Sustento), Maga 5 (Piromancia, Arcanismo, Selos, Pontes, Sustento), mais a dourada "Poder
+  maior" (ultimates). A aberta desce mais; na ponta, um ponto de ouro por Dom equipado ali (até 3, depois "+N"). Foco ou
+  mouse numa fita vira a página; Enter/clique entra nela.
+- **Página do capítulo**: nome em Cinzel 30 na tinta do ramo, miniatura (faixa de até 110 px; encolhe sozinha para caberem as
+  5 ou 6 entradas de Pontes e Sustento) e as **entradas** (`GiftEntry`) em ordem de leitura Entrada, Meio, Ápice. Capitular
+  por degrau (`DropCap.gift`, `DropCap.Rung`: letra de 28 px, 34 px com filigrana, 44 px iluminada); Pontes parte a capitular
+  na diagonal nas tintas dos dois ramos (`GiftArt.ink2`). **Fio na margem** (verdadeiro em ouro quando o pré-requisito está
+  equipado, tracejado quando falta; `GiftEntry.Cord`, `Talents.needs_met`), só nos ramos de três degraus. Ápice com nota de
+  margem "com um Dom de Fúria"; ponte com os dois ramos que une. Dois Dons no mesmo botão (`slot`) ficam seguidos por um
+  "ou" em rubrica; o glifo da ação (`ActionSlot.mark`) fica à direita. Custo em velas pequenas (`Candles.paint`).
+- **Cinco estados** (`HeroLoadout.State`), por desenho e por palavra: `LOCKED` pautas a lápis, contorno, "Maestria N";
+  `SEALED` o texto preso por um cordão e um **lacre** de cera com a Memória gravada (`SealedMark.lacre`; a palavra é
+  "lacre", nunca "selo"); `OPEN` tinta cheia, capitular só a traço; `EQUIPPED` capitular cheia na cor do ramo (enche de
+  baixo para cima em 0,3 s) e folha de ouro na margem; `BLOCKED` tinta apagada, manícula e o motivo curto
+  (`HeroLoadout.short_why`: "Pede: X", "Já há um Dom no botão Y: X", "Faltam 2 velas"). Romper o lacre mantém os dois
+  apertos do `HeroScreen` (`arming`, 3 s), e a cera racha e cai em 0,38 s.
+- **Pé da página**: "O nível N revela: X" em rubrica (some do alto da página nesse capítulo). **Cantoneiras** (`GiftArt.corner`):
+  o leão do Guerreiro e a estrela de 8 pontas da Maga (nunca violeta), nos dois cantos de baixo. Título do herói na tinta dele
+  (`GiftArt.title_ink`: Guerreiro `Book.INK`, Maga âmbar 6a3a14).
+- **Poder maior** (`UltCard`, agora iluminura larga com miniatura): travada só o desenho de base a lápis e "Maestria N";
+  aberta em cor; escolhida com moldura dupla de ouro.
+- **Página da direita**: igual a antes (`_gifts_right`), com a **Devoção em velas** (`Candles`, até 25, 16 px, passo menor
+  quando são muitas; vela acesa = livre, apagada com fio de fumaça = gasta) e o número escrito ao lado; as velas que a
+  entrada em foco custaria (ou ocupa) tremulam (`Candles.set_preview`).
+- **Entrada**: ↑/↓ andam nas entradas (a primeira sobe para a fita), ←/→ passam para a fita ao lado caindo na mesma linha,
+  Enter/A equipa, tira ou rompe o lacre, mouse toma o foco ao passar e clica para o verbo. PageUp/PageDown seguem trocando as
+  abas do Livro (Abertura, herói, Dons, Ofícios).
+- **Miniaturas por id** (`GiftArt.texture`): `assets/ui/book/<id>.png` se existir, senão o substituto desenhado (a
+  capitular grande do ramo, ou a letra a lápis da ultimate). Os ids estão em `assets/ui/book/LEIAME.txt`
+  (`branch_combo|furia|emeth|magia|piro|arca|ctrl|bridge|sustain`, `ult_cleave|vortex|storm|dome_abs`); a arte do ChatGPT
+  entra em `docs/steam-ia.md` antes.
+- Capturas: `--title --screen=gifts [--hero=maga] --hero-xp=N --hero-opened=a,b --hero-equip=a,b [--ribbon=N]` (`--ribbon`
+  abre numa fita; `--hero-*` agora valem para a Maga com `--hero=maga`). Testes: `tests/test_codex_book.gd`.
+- Pendente: "Pavio Longo ou Cadeia Curta" da Maga estão em fitas diferentes, então o "ou" só liga Dons do mesmo capítulo; a
+  rodinha do mouse não anda entre entradas; o clique é um só (o foco já lê, o clique faz o verbo); sem som de papel nem
+  animação de dobra ao trocar de fita (só 0,15 s de opacidade).

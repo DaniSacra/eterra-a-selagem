@@ -191,8 +191,8 @@ static func refund_preparo(out: Dictionary, old: Variant) -> Dictionary:
 
 ## Opens for free every Gift the Warrior's block has revealed by its Mastery (the version 6 migration; a test or a
 ## capture that sets the Mastery and wants the save of a player who got there before the Memória).
-static func open_revealed(block: Dictionary) -> void:
-	var warrior := HeroDef.warrior()
+static func open_revealed(block: Dictionary, hero: HeroDef = null) -> void:
+	var warrior := hero if hero != null else HeroDef.warrior()
 	var opened: Array = block.opened
 	for t in warrior.talents().unlocked(warrior.mastery.level_of(int(block.mastery_xp))):
 		if not opened.has(String(t.id)):

@@ -58,7 +58,7 @@ void fragment() {
 """
 
 var loadout: HeroLoadout
-var tree: TalentTree
+var codex: CodexBook
 var ults: Array[UltCard] = []
 var chapter := Chapter.HERO
 var chapters: Array[Button] = []
@@ -69,7 +69,7 @@ var _left: Array[Control] = []
 var _right: Array[Control] = []
 var _bar: MasteryBar
 var _next: Label
-var _devotion: DevotionPips
+var _devotion: Candles
 var _devotion_count: Label
 var _name: Label
 var _place: Label
@@ -92,6 +92,8 @@ var _codex: CodexScreen
 var _codex_button: Button
 ## What the panel tells now (a TalentDef, an UltDef or null for the centre).
 var _shown: Variant = null
+## False until the first refresh: the book opens with its capitals already filled (nothing animates at the start).
+var _ready_once := false
 ## Abrir with Memória (Rejogabilidade, Fatia 1): the sealed Gift asked to open, waiting for the second press that
 ## confirms it on this page (no sheet over the book), for CONFIRM_TIME seconds; moving the focus forgets it.
 const CONFIRM_TIME := 3.0
@@ -166,7 +168,15 @@ func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = fals
 		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
 	_refresh()
 	_show(start)
-	_first_focus().grab_focus.call_deferred()
+	# --ribbon=N opens the Gifts on that ribbon (captures: Pontes, Poder maior)
+	if Dev.has("ribbon") and start == Chapter.GIFTS:
+		var ribbon := clampi(int(Dev.num("ribbon", 0)), 0, codex.ribbons.size() - 1)
+		codex.show_chapter(ribbon)
+		var first := codex.first_of(ribbon)
+		var target: Control = first if first != null else codex.ribbons[ribbon]
+		target.grab_focus.call_deferred()
+	else:
+		_first_focus().grab_focus.call_deferred()
 	# the book opens: a breath of the pages coming up
 	_book.modulate.a = 0.0
 	create_tween().tween_property(_book, ^"modulate:a", 1.0, 0.22)
@@ -192,7 +202,7 @@ func _head_left() -> Control:
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override(&"separation", 12)
 	names.add_child(line)
-	line.add_child(Book.label(T.t(loadout.hero.name_key), Book.INK, 30, UiKit.TITLE_FONT))
+	line.add_child(Book.label(T.t(loadout.hero.name_key), GiftArt.title_ink(loadout.hero), 30, UiKit.TITLE_FONT))
 	var bar := ColorRect.new()
 	bar.color = Color(Book.GILT, 0.7)
 	bar.custom_minimum_size = Vector2(1, 24)
@@ -245,7 +255,8 @@ func _head_right() -> Control:
 	_devotion_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	top.add_child(_devotion_count)
 	dev.add_child(top)
-	_devotion = DevotionPips.new()
+	_devotion = Candles.new().setup(16.0)
+	_devotion.name = "candles"
 	dev.add_child(_devotion)
 	row.add_child(dev)
 	# the purse: Prata and Memória held (the Memória opens the sealed Gifts), under the Devotion's pips (beside them
@@ -598,17 +609,19 @@ static func _gap(h: float) -> Control:
 # ---- Dons ----
 
 func _gifts_left() -> Control:
-	tree = TalentTree.new().setup(loadout)
-	tree.picked.connect(_pick)
-	tree.focused.connect(_tell)
-	return tree
+	codex = CodexBook.new().setup(loadout)
+	codex.picked.connect(_pick)
+	codex.focused.connect(_tell)
+	codex.ult_chosen.connect(_choose)
+	ults = codex.ults
+	return codex
 
 
 func _gifts_right() -> Control:
 	var v := VBoxContainer.new()
 	v.name = "gifts_right"
 	v.add_theme_constant_override(&"separation", 3)
-	_name = Book.label("", Book.INK, NAME_SIZE, UiKit.TITLE_FONT)
+	_name = Book.label("", GiftArt.title_ink(loadout.hero), NAME_SIZE, UiKit.TITLE_FONT)
 	_name.name = "gift_name"
 	v.add_child(_name)
 	var rule := GoldRule.new()
@@ -643,17 +656,6 @@ func _gifts_right() -> Control:
 	var gap := Control.new()
 	gap.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(gap)
-	v.add_child(Book.section(T.t(&"hero_ultimate")))
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override(&"separation", 12)
-	v.add_child(row)
-	for u in loadout.hero.ultimates:
-		var card := UltCard.new().setup(u)
-		card.pressed.connect(_choose.bind(u))
-		card.focus_entered.connect(_tell.bind(u))
-		ults.append(card)
-		row.add_child(card)
 	return v
 
 
@@ -743,6 +745,7 @@ func _show(c: int) -> void:
 		_left[i].visible = i == c
 		_right[i].visible = i == c
 	_to_gifts.visible = chapter == Chapter.HERO
+	_next.visible = chapter != Chapter.GIFTS
 	_name_keys(Controls.using_pad)
 
 
@@ -769,12 +772,8 @@ func _chapter_focus(c: Chapter) -> Control:
 			# the Discernimento's next grade, else its bookmark holds the focus
 			var d := _discern_focus()
 			return d if d != null else chapters[Chapter.OFICIOS]
-	# the Gifts: the first that can go on, else the first one on, else the centre
-	for want: HeroLoadout.State in [HeroLoadout.State.OPEN, HeroLoadout.State.EQUIPPED]:
-		for n in tree.nodes:
-			if n.state == want:
-				return n
-	return tree.centre
+	# the Gifts: the first that can go on, else the first one on, else the first ribbon
+	return codex.first_focus()
 
 
 func _pick(t: TalentDef) -> void:
@@ -785,7 +784,7 @@ func _pick(t: TalentDef) -> void:
 		Audio.play(&"ui_ok")
 		_save()
 	else:
-		tree.node(t.id).refuse()
+		codex.entry(t.id).refuse()
 	_refresh()
 
 
@@ -794,7 +793,7 @@ func _pick(t: TalentDef) -> void:
 func _open_sealed(t: TalentDef) -> void:
 	if loadout.can_open(t) != Talents.Problem.OK:
 		arming = &""
-		tree.node(t.id).refuse()
+		codex.entry(t.id).refuse()
 		_tell(t)
 		return
 	if arming != t.id:
@@ -837,15 +836,14 @@ func _save() -> void:
 
 
 func _refresh() -> void:
-	tree.refresh()
-	for c in ults:
-		c.open = loadout.ult_open(c.def)
-		c.chosen = loadout.ultimate() == c.def.id
+	codex.refresh(_ready_once)
+	_ready_once = true
 	MaterialCount.refresh(_purse, _data)
 	_devotion.set_counts(loadout.used(), loadout.devotion())
 	_devotion_count.text = T.t(&"hero_devotion_count", {"used": loadout.used(), "max": loadout.devotion()})
 	var next := loadout.next_unlocks()
 	_next.text = T.t(&"hero_next", {"n": loadout.level() + 1, "what": ", ".join(next)}) if not next.is_empty() else ""
+	codex.set_foot(_next.text)
 	_name_keys(Controls.using_pad)
 	_tell(_shown)
 
@@ -884,10 +882,13 @@ func _tell(what: Variant) -> void:
 	_shown = what
 	_name_keys()
 	if what is TalentDef:
+		_devotion.set_preview((what as TalentDef).cost, loadout.is_equipped((what as TalentDef).id))
 		_tell_gift(what)
 	elif what is UltDef:
+		_devotion.set_preview(0)
 		_tell_ult(what)
 	else:
+		_devotion.set_preview(0)
 		_name.text = T.t(&"hero_passive")
 		_place.text = T.t(&"hero_passive_note")
 		_desc.text = T.t(&"hero_passive_desc")
@@ -918,7 +919,7 @@ func _tell_gift(t: TalentDef) -> void:
 		HeroLoadout.State.LOCKED:
 			_set_status(T.t(&"hero_why_locked", {"n": t.unlock_level}), Book.FADED)
 		HeroLoadout.State.SEALED:
-			_set_status(T.t(&"hero_state_sealed"), Book.INK)
+			_set_status(T.t(&"codex_state_sealed", {"n": loadout.open_cost(t)}), Book.INK)
 		_:
 			var why := loadout.why(t)
 			_set_status(T.t(why.key, why.args) if not why.is_empty() else "", Book.WARN)
@@ -964,32 +965,3 @@ func _set_status(text: String, color: Color) -> void:
 	_status.add_theme_color_override(&"font_color", color)
 
 
-## The Devotion as a row of small diamonds: the used ones filled in old gold, the free ones hollow.
-class DevotionPips:
-	extends Control
-
-	const STEP := 12.0
-	const HALF := 4.4
-
-	var used := 0
-	var total := 0
-
-	func _init() -> void:
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
-		custom_minimum_size = Vector2(STEP * 8, 14)
-
-	func set_counts(p_used: int, p_total: int) -> void:
-		used = p_used
-		total = p_total
-		custom_minimum_size.x = maxf(STEP * total, 60.0)
-		queue_redraw()
-
-	func _draw() -> void:
-		for i in total:
-			var c := Vector2(HALF + 1.0 + i * STEP, size.y * 0.5)
-			var d := PackedVector2Array([c + Vector2(0, -HALF), c + Vector2(HALF, 0), c + Vector2(0, HALF), c + Vector2(-HALF, 0)])
-			if i < used:
-				draw_colored_polygon(d, Book.GILT)
-			else:
-				d.append(d[0])
-				draw_polyline(d, Color(Book.GILT, 0.7), 1.3, true)
