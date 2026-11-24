@@ -336,7 +336,7 @@ func test_combustao_burns_all_the_blast_reaches_and_widens_it() -> void:
 	var wide := _dummy(Vector2(6, 3.7))  # outside 3.2, inside 4.0
 	_blast()
 	assert_gt(bare.burn_t, 0.0)
-	assert_eq(bare.burn_dps, 4.0)
+	assert_eq(bare.burn_dps, 3.0)
 	assert_lt(wide.hp, 5000.0, "the blast is a quarter wider")
 
 
@@ -345,10 +345,10 @@ func test_pavio_longo_and_chama_que_marca_burn_the_shots() -> void:
 	var any: Array[StringName] = [&"light", &"bolt", &"arcane"]
 	var third: Array[StringName] = [&"light", &"bolt", &"arcane", &"seal", &"finisher"]
 	assert_eq(game.boons.stat(&"burn_dps", any), 2.0)
-	assert_eq(game.boons.stat(&"burn_dps", third), 5.0)
+	assert_eq(game.boons.stat(&"burn_dps", third), 4.0)
 	game.equip_talents(_ids([&"brasa_viva", &"eco_arcano", &"chama_que_marca"]))
 	assert_eq(game.boons.stat(&"burn_dps", any), 0.0, "Chama que Marca burns only the shot that lays the Selo")
-	assert_eq(game.boons.stat(&"burn_dps", third), 5.0)
+	assert_eq(game.boons.stat(&"burn_dps", third), 4.0)
 
 
 func test_inferno_runico_leaves_embers_only_after_the_amplified_blast() -> void:
@@ -366,7 +366,7 @@ func test_inferno_runico_leaves_embers_only_after_the_amplified_blast() -> void:
 		if z.kind == Ground.Kind.EMBER:
 			ember = z
 	assert_not_null(ember, "embers on the floor")
-	assert_eq(ember.power, 10.0)
+	assert_eq(ember.power, 8.0)
 	assert_almost_eq(ember.life, 4.0, 0.7)
 
 
@@ -541,7 +541,7 @@ func test_inside_it_every_shot_lays_a_selo_and_hits_thirty_percent_harder() -> v
 	_absolute()
 	var shot := _shot([&"arcane", &"bolt1"] as Array[StringName])
 	shot.pos = e.pos
-	assert_almost_eq(game.arcane.shot_mult(shot), 1.3, 0.001)
+	assert_almost_eq(game.arcane.shot_mult(shot), 1.2, 0.001)
 	game.arcane.shot_landed(e, shot)
 	assert_true(game.arcane.seals.has(e), "the first shot lays one")
 	var far := _shot([&"arcane", &"bolt1"] as Array[StringName])

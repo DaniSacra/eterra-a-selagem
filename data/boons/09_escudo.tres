@@ -14,7 +14,7 @@ by_rarity = false
 script = ExtResource("1_hbscw")
 stat = &"dome_shield"
 base = 1.0
-per_level = PackedFloat32Array()
+per_level = PackedFloat32Array(0, 0)
 by_rarity = false
 
 [resource]
