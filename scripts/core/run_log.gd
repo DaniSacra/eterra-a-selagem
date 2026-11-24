@@ -34,6 +34,9 @@ const KEEP_FIELDS := {"materials": {}, "forge": {}, "talents_opened": 0, "angels
 ## The field of version 6 and what an older line (no Ofícios) reads as.
 const OFICIOS_FIELDS := {"oficios": {}}
 ## Who played a run (source).
+## A "quit" before any room was won and within this many seconds is someone passing through the Portal: not logged.
+const EMPTY_QUIT_S := 10.0
+
 const HUMAN := "human"
 const BOT := "bot"
 const OUTCOMES: Array[String] = ["victory", "death", "quit"]
@@ -105,3 +108,8 @@ static func device(keys: bool, pad: bool) -> String:
 ## Who played: the test robot or a person.
 static func source(bot: bool) -> String:
 	return BOT if bot else HUMAN
+
+
+## Whether a run is worth a line in the log: not a "quit" with no room won and under EMPTY_QUIT_S seconds.
+static func worth_keeping(outcome: String, rooms_won: int, time: float) -> bool:
+	return outcome != "quit" or rooms_won > 0 or time >= EMPTY_QUIT_S

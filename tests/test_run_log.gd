@@ -222,3 +222,11 @@ func test_without_a_save_nothing_is_awarded() -> void:
 	game.rooms.won.assign([RunMap.Kind.COMBAT])
 	game.log_run("death")
 	assert_eq(JSON.stringify(Save.data), before, "the tests (as --nosave) never touch the save data")
+
+
+func test_a_quit_with_no_room_won_and_under_ten_seconds_is_not_kept() -> void:
+	assert_false(RunLog.worth_keeping("quit", 0, 3.0))
+	assert_true(RunLog.worth_keeping("quit", 1, 3.0), "a room was won")
+	assert_true(RunLog.worth_keeping("quit", 0, 10.0), "ten seconds in")
+	assert_true(RunLog.worth_keeping("death", 0, 2.0), "a death always counts")
+	assert_true(RunLog.worth_keeping("victory", 0, 2.0))

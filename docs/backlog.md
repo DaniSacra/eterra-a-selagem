@@ -18,7 +18,7 @@ está aqui foi feito (marcado FEITO com o commit) ou espera o Daniel.
    (`scripts/game/combat.gd:695`), então `stun_pct` não tem efeito, e a carta (`make_data.gd:728`, "Seus golpes atordoam por mais tempo")
    segue no sorteio de Shomael. Mandar para a `RESERVE` (dado) até o C6 refazer Shomael. Arquivos: `tools/make_data.gd`, `data/boons/`.
    Aceite: `BoonState.offerable` sem ela, teste GUT; `RESULT` muda só pelo sorteio (anotar a semente 5 antes e depois).
-3. **Registro de partida com "quit" vazio** (baixo; `gameplay-engineer`, P). Entrar no Portal e sair grava uma linha "quit" em
+3. **FEITO (2026-11-23)** **Registro de partida com "quit" vazio** (baixo; `gameplay-engineer`, P). Entrar no Portal e sair grava uma linha "quit" em
    `runs.jsonl` (`Game._exit_tree` chama `log_run("quit")`, `scripts/game/game.gd:498`; achado em `docs/qa/playtest_2026-11-23.md`), o que
    suja o `tools/runs_report.py` justo na leitura do teste com usuários. Aceite: sem sala vencida e com menos de 10 s, não grava; teste em
    `tests/test_run_log.gd`.
