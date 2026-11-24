@@ -57,3 +57,12 @@ func test_the_hall_and_the_seal_chamber() -> void:
 	var c := stage.boss_layout
 	assert_gt(c.hero_spawn.y, c.boss_spawn.y, "the Seal Chamber: he comes in at the south, Morvath is north")
 	assert_lt(c.hero_facing.y, -0.5)
+
+
+## Nobody rises near the way in: every spawn zone of every room starts 7 m and more from where he comes in (the south).
+func test_no_spawn_zone_by_the_way_in() -> void:
+	for l in _layouts():
+		for r in l.spawns:
+			var rect := r as Rect2
+			var near := Vector2(clampf(l.hero_spawn.x, rect.position.x, rect.end.x), clampf(l.hero_spawn.y, rect.position.y, rect.end.y))
+			assert_gte(near.distance_to(l.hero_spawn), 7.0, "%s: a spawn zone %s by the way in" % [l.id, rect])

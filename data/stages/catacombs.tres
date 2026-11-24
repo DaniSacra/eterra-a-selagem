@@ -3147,7 +3147,7 @@ script = ExtResource("5_51rpt")
 half = Vector2(11, 11)
 floor = SubResource("Resource_eoxm6")
 hero_spawn = Vector2(0, 9.5)
-boss_spawn = Vector2(0, -2.5)
+boss_spawn = Vector2(0, -7)
 cam_reach = 2.5
 id = &"knight_hall"
 name_key = &"arena_knight_hall"
@@ -3165,8 +3165,8 @@ relic_spots = PackedVector2Array()
 areas = Array[Rect2]([Rect2(-11, -11, 7, 7), Rect2(-11, 4, 7, 7), Rect2(4, 4, 7, 7), Rect2(4, -11, 7, 7), Rect2(-11, -11, 22, 22)])
 area_names = PackedStringArray("corner_nw", "corner_sw", "corner_se", "corner_ne", "middle")
 obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_ugd87"), SubResource("Resource_e8ome")])
-spawns = Array[Rect2]([Rect2(2, -4.5, 5, 9)])
-late_spawns = Array[Rect2]([Rect2(2, -4.5, 5, 9)])
+spawns = Array[Rect2]([Rect2(-5, -9, 10, 6)])
+late_spawns = Array[Rect2]([Rect2(-5, -9, 10, 6)])
 exits = Array[ExtResource("2_kin83")]([SubResource("Resource_sxjqq"), SubResource("Resource_sue28"), SubResource("Resource_4k57e")])
 
 [sub_resource type="Resource" id="Resource_hn8lt"]
@@ -3287,7 +3287,7 @@ script = ExtResource("5_51rpt")
 half = Vector2(12, 12)
 floor = SubResource("Resource_t2vq5")
 hero_spawn = Vector2(0, 10.5)
-boss_spawn = Vector2(0, -2.5)
+boss_spawn = Vector2(0, -7)
 cam_reach = 2.5
 id = &"elder_hall"
 name_key = &"arena_elder_hall"
@@ -3304,8 +3304,8 @@ relic_spots = PackedVector2Array()
 areas = Array[Rect2]([Rect2(-8, -8, 16, 16), Rect2(-12, -12, 24, 24)])
 area_names = PackedStringArray("columns", "walls")
 obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_qlogr"), SubResource("Resource_2chck"), SubResource("Resource_jebxi"), SubResource("Resource_i2rtf"), SubResource("Resource_00qcs"), SubResource("Resource_mx6xy")])
-spawns = Array[Rect2]([Rect2(3, -8, 7, 16)])
-late_spawns = Array[Rect2]([Rect2(3, -8, 7, 16)])
+spawns = Array[Rect2]([Rect2(-9, -9, 18, 8)])
+late_spawns = Array[Rect2]([Rect2(-9, -9, 18, 8)])
 exits = Array[ExtResource("2_kin83")]([SubResource("Resource_cfmym"), SubResource("Resource_5dtry"), SubResource("Resource_r21q0")])
 
 [sub_resource type="Resource" id="Resource_s26mc"]

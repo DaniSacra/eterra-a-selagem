@@ -2534,11 +2534,11 @@ const KNIGHT_SIDE := 22.0
 func _knight_hall() -> RoomLayout:
 	var l := RoomLayout.new()
 	_guardian_house(l, &"knight_hall", &"knight", KNIGHT_SIDE, 2.5, &"armory")
-	l.boss_spawn = Vector2(0.0, -2.5)
+	l.boss_spawn = Vector2(0.0, -7.0)
 	l.obstacles = [_bowl(-2.8, -11.5), _bowl(2.8, -11.5)]
 	# the second guardian's escort (two mages) rises in the east half, never on a plate
-	l.spawns = [_rect(2, 7, -4.5, 4.5)]
-	l.late_spawns = [_rect(2, 7, -4.5, 4.5)]
+	l.spawns = [_rect(-5, 5, -9, -3)]
+	l.late_spawns = [_rect(-5, 5, -9, -3)]
 	# the four corners: where the vault's stones fall (north-west, south-west, south-east, north-east) and, by each, a plate
 	var corners: Array[Rect2] = [_rect(-10.6, -6.8, -10.6, -6.8), _rect(-10.6, -6.8, 6.8, 10.6), _rect(6.8, 10.6, 6.8, 10.6),
 		_rect(6.8, 10.6, -10.6, -6.8)]
@@ -2558,13 +2558,13 @@ const ELDER_COLUMNS := [Vector2(-4.5, -4.5), Vector2(4.5, -4.5), Vector2(-4.5, 4
 func _elder_hall() -> RoomLayout:
 	var l := RoomLayout.new()
 	_guardian_house(l, &"elder_hall", &"priest_elder", ELDER_SIDE, 2.5, &"chapel")
-	l.boss_spawn = Vector2(0.0, -2.5)
+	l.boss_spawn = Vector2(0.0, -7.0)
 	var a: Array[ArenaObstacle] = [_bowl(-2.8, -12.5), _bowl(2.8, -12.5)]
 	for p: Vector2 in ELDER_COLUMNS:
 		a.append(_column(p.x, p.y, 5.2, 0.9))
 	l.obstacles = a
-	l.spawns = [_rect(3, 10, -8, 8)]
-	l.late_spawns = [_rect(3, 10, -8, 8)]
+	l.spawns = [_rect(-9, 9, -9, -1)]
+	l.late_spawns = [_rect(-9, 9, -9, -1)]
 	_areas(l, ["columns", _rect(-8, 8, -8, 8), "walls", _rect(-12, 12, -12, 12)])
 	return l
 
