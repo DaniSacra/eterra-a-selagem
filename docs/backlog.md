@@ -31,7 +31,7 @@ captura GPU.
   `Downloads\Pedido-ChatGPT-medalhao-dos-Dons.txt`), sons (nota ao segurar, sino ao equipar), Memória voando ao contador, linhas dos ramos
   mais fortes, ícone do cristal de Memória, a Maga em captura, a estação do Santuário como medalhão de bronze num pedestal.
 - **3b Forja** (arma deitada, ferro e brasa, três marteladas): FEITO (tela em bancada, `ForgeScreen` refeita pela `forge_spec.md`; detalhe em `docs/reference/ui.md`). Falta: captura GPU, arte do ChatGPT (`assets/ui/forge/`), sons de bigorna e chiado, estação do Santuário se a arte mudar.
-- **3c Loja da descida e Vendedor** (pano e balança, pôr no prato).
+- **3c Loja da descida e Vendedor**: Vendedor FEITO (`VendorScreen` como balança, `VendorOffer`, Discernimento saiu do Livro para a coluna Obras; `--title --screen=vendor`, ver `docs/reference/ui.md`). Falta: loja da descida (Parte A, outro agente nas salas), arte do ChatGPT (`assets/ui/shop/`), sons de moedas e balança, balcão fechado (B.5), captura GPU.
 - **3d Videira**: FEITO o principal (`VineScreen` como planta, etiquetas de barro, painel de leitura e Regar; `--title --screen=vine`). Falta: arte do ChatGPT (`assets/ui/vine/`), sons de água e folhas, captura GPU.
 - **3e Livro de Ahk** (pergaminho, virar a página; só Abertura, O Guerreiro e Ofícios agora).
 - **3f Alquimista** (estante, vidro e cobre, verter): só depois do Daniel decidir para que serve (Q-OF7).
