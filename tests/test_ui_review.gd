@@ -163,11 +163,11 @@ func test_the_book_in_the_hub_has_no_way_down() -> void:
 	assert_not_null(get_viewport().gui_get_focus_owner(), "something holds the focus")
 	hub._show(HeroScreen.Chapter.HERO)
 	var foot := hub.find_child("foot", true, false) as HBoxContainer
-	for id in ["to_gifts", "codex", "back"]:
+	for id in ["to_gifts", "codex"]:
 		assert_eq((foot.find_child(id, false, false) as Button).get_parent(), foot, "%s in the one row" % id)
 
 
-func test_the_chapters_are_bookmarks_of_the_book() -> void:
+func test_the_chapters_are_ribbons_of_the_book() -> void:
 	var s := HeroScreen.new()
 	add_child_autofree(s)
 	s.open(_data(500))

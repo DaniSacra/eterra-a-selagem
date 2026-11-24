@@ -41,12 +41,10 @@ func test_the_book_opens_on_the_warrior_with_the_focus_on_his_gifts() -> void:
 
 func test_only_the_playable_hero_is_in_the_book() -> void:
 	var s := _book(_data(0))
-	# one hero: one name in the head of the page, no other hero offered anywhere
-	var names := 0
-	for l: Node in s.find_children("*", "Label", true, false):
-		if (l as Label).text == T.t(HeroDef.warrior().name_key):
-			names += 1
-	assert_eq(names, 1)
+	# one hero: his name is the chapter's (capital and rest in the head), no other hero offered anywhere
+	var head := (s.find_child("name_cap", true, false) as Label).text + (s.find_child("name_rest", true, false) as Label).text
+	assert_eq(head, T.t(HeroDef.warrior().name_key))
+	assert_false(T.t(&"hero_maga") in s.chapters.map(func(b: Button) -> String: return String(b.get_meta(&"title"))))
 	assert_eq(s.chapters.size(), 3, "Abertura, o herói, Ofícios: the Gifts left the book")
 
 
@@ -59,7 +57,7 @@ func test_dons_button_opens_the_medallion_over_the_book() -> void:
 	assert_false(is_instance_valid(s._dons))
 
 
-func test_focus_on_a_bookmark_shows_its_chapter() -> void:
+func test_focus_on_a_ribbon_shows_its_chapter() -> void:
 	var s := _book(_data(0))
 	s.chapters[HeroScreen.Chapter.OPENING].grab_focus()
 	assert_eq(s.chapter, HeroScreen.Chapter.OPENING)
@@ -75,7 +73,7 @@ func test_the_opening_quotes_ahk_and_the_descent() -> void:
 	assert_string_contains(said, "Elun, o Filho da Luz")
 	var cap := ep.get_child(0).get_child(0) as DropCap
 	assert_eq(cap.letter, "M", "the capital is the paragraph's first letter")
-	assert_eq(cap.custom_minimum_size.y, ceilf(UiKit.TEXT_FONT.get_height(22)) * 3.0, "three lines tall")
+	assert_eq(cap.custom_minimum_size.y, ceilf(UiKit.TEXT_FONT.get_height(HeroScreen.EPIGRAPH_SIZE)) * 3.0, "three lines tall")
 	for id: String in HowToScreen.STEPS:
 		assert_not_null(s.find_child("step_" + id, true, false), id)
 	assert_eq((s.find_child("book_title", true, false) as Label).text, T.t(&"book_title").to_upper())
@@ -87,8 +85,7 @@ func test_the_way_down_emits_descend() -> void:
 	watch_signals(s)
 	(s.find_child("descend", true, false) as Button).pressed.emit()
 	assert_signal_emitted(s, "descend")
-	(s.find_child("descend_hero", true, false) as Button).pressed.emit()
-	assert_signal_emit_count(s, "descend", 2)
+	assert_null(s.find_child("descend_hero", true, false), "the one way down is the Abertura's")
 
 
 func test_the_hero_page_names_his_weapon_and_abilities_with_the_hud_marks() -> void:
@@ -189,3 +186,87 @@ func test_drop_cap_split_keeps_every_word() -> void:
 	p.add_string(parts[0], UiKit.TEXT_FONT, 22)
 	assert_lte(p.get_line_count(), DropCap.LINES, "the head is three lines at most")
 	assert_eq(DropCap.split("curto", UiKit.TEXT_FONT, 22, 220.0)[1], "", "a short text has no tail")
+
+
+# ---------- the redo of 2026-11-23 (docs/art/book_spec.md) ----------
+
+func test_the_chapters_loop_and_a_far_ribbon_is_a_turn_a_chapter() -> void:
+	assert_eq(BookTurn.next(2, 1, 3), 0, "Ofícios turns to the Abertura")
+	assert_eq(BookTurn.next(0, -1, 3), 2)
+	assert_eq(BookTurn.next(1, 1, 3), 2)
+	assert_eq(BookTurn.route(0, 2), [1, 2] as Array[int], "one turn for each chapter of distance")
+	assert_eq(BookTurn.route(2, 0), [1, 0] as Array[int])
+	assert_eq(BookTurn.route(1, 1), [] as Array[int])
+	assert_almost_eq(HeroScreen.TURN, 0.35, 0.001)
+
+
+func test_inputs_turn_the_page() -> void:
+	var wheel := InputEventMouseButton.new()
+	wheel.button_index = MOUSE_BUTTON_WHEEL_DOWN
+	wheel.pressed = true
+	assert_eq(HeroScreen.page_step(wheel), 1)
+	wheel.button_index = MOUSE_BUTTON_WHEEL_UP
+	assert_eq(HeroScreen.page_step(wheel), -1)
+	var key := InputEventAction.new()
+	key.pressed = true
+	key.action = &"tab_next"
+	assert_eq(HeroScreen.page_step(key), 1)
+	key.action = &"tab_prev"
+	assert_eq(HeroScreen.page_step(key), -1)
+	key.action = &"ui_accept"
+	assert_eq(HeroScreen.page_step(key), 0)
+
+
+func test_turning_goes_to_the_next_chapter_and_loops() -> void:
+	var s := _book(_data(0), HeroScreen.Chapter.OFICIOS)
+	s._turn_page(1)
+	assert_eq(s.chapter, HeroScreen.Chapter.OPENING)
+	s._turn_page(-1)
+	assert_eq(s.chapter, HeroScreen.Chapter.OFICIOS)
+	for i in 2:
+		assert_eq((s.get("_folios")[i] as Label).text, HeroScreen.FOLIO[HeroScreen.Chapter.OFICIOS][i], "the folios follow")
+
+
+func test_the_pages_are_equal_and_the_head_names_the_chapter() -> void:
+	var s := _book(_data(0))
+	await wait_process_frames(3)
+	assert_almost_eq(s._book.left.size.x, s._book.right.size.x, 1.0, "two equal pages")
+	assert_eq((s.find_child("name_cap", true, false) as Label).text + (s.find_child("name_rest", true, false) as Label).text,
+		T.t(&"title_hero"))
+	s._show(HeroScreen.Chapter.OPENING)
+	assert_eq((s.find_child("name_cap", true, false) as Label).text, "A")
+	assert_not_null(s.find_child("mastery", true, false))
+	assert_null(s.find_child("devotion", true, false))
+
+
+func test_the_hero_page_lists_the_equipped_gifts_to_read_only() -> void:
+	var s := _book(_data(XP_3, [&"quarto_corte"]))
+	var list := s.find_child("gifts_equipped", true, false)
+	assert_not_null(list)
+	assert_eq(list.get_child_count(), 1)
+	for b in list.find_children("*", "BaseButton", true, false):
+		assert_true(false, "no button in the list")
+	var none := _book(_data(0))
+	assert_not_null(none.find_child("gifts_none", true, false))
+	assert_eq((none.find_child("gifts_none", true, false) as Label).text, T.t(&"hero_gifts_none"))
+
+
+func test_the_book_follows_the_picked_hero() -> void:
+	var d := _data(0)
+	d.wins = 1
+	d.hero = "maga"
+	var s := _book(d)
+	assert_true(GiftArt.is_maga(s.loadout.hero), "the Maga's page")
+	assert_eq((s.chapters[HeroScreen.Chapter.HERO].get_meta(&"title") as String), T.t(&"hero_maga"))
+	var skills := s.find_child("skills", true, false)
+	var said := " ".join(skills.find_children("*", "Label", true, false).map(func(l: Node) -> String: return (l as Label).text))
+	assert_string_contains(said, T.t(&"hero_skill_name_special_maga"))
+	assert_string_contains(said, T.t(&"hero_passive_maga"))
+	assert_false(said.contains(T.t(&"hero_passive")), "not the Warrior's passive")
+
+
+func test_nothing_is_bought_in_the_book() -> void:
+	var s := _book(_data(0), HeroScreen.Chapter.OFICIOS)
+	for b in s.find_children("*", "Button", true, false):
+		var n := String((b as Button).name)
+		assert_false(n.begins_with("buy") or n.begins_with("discern_"), n)

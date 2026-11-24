@@ -1,17 +1,17 @@
 class_name HeroScreen
 extends Control
-## "O Guerreiro" on the title: the Livro de Ahk (E2-06; art pack stage 2, boards 04, 05 and 09). An open book
-## (BookSpread) with the hero's medallion, "O Guerreiro" and "Livro de Ahk" at the head of the left page and his Mastery
-## (MasteryBar, with what the next level brings) and Devotion at the head of the right one, and its chapters behind
-## the bookmarks above it:
+## The Livro de Ahk (docs/art/book_spec.md; art pack stage 2, boards 04, 05 and 09): an open book on a table, two equal
+## pages (BookSpread), three silk ribbons (Abertura, the picked hero, Ofícios) and a page turn of 0.35 s between the
+## chapters (BookTurn: LB and RB, PageUp and PageDown, the wheel, a dog-ear, a ribbon, the d-pad at the edge). It is read,
+## nothing is bought in it. At the head of every page: the chapter's name on the left, the hero's Mastery on the right.
 ## - Abertura: Ahk's words from the canon (his testimony) and the descent in three steps (the same signs and words as
-##   Como Jogar), with a straight way down ("Descer às catacumbas": the descend signal, the title's Iniciar);
-## - O Guerreiro: the playable hero (the only one: the cast comes from the data, HeroDef.warrior) painted on the left
-##   page; on the right his weapon, his way of fighting and his abilities with the HUD's own marks (the four actions,
-##   the ultimate the descent plays and the passive); from here, the Gifts or the way down;
-## The Gifts are not in the book any more (PT-12): the hero page's "Dons" button opens the medallion (DonsScreen) over it.
-## The bookmarks are tabs (focus shows the chapter, like the Compendium's). Esc or B goes back (the title closes the
-## screen on ui_cancel, like its other panels).
+##   Como Jogar), with the way down ("Descer às catacumbas": the descend signal, the title's Iniciar);
+## - the hero (SaveData.picked_hero: the Warrior or the Maga): painted on the left page; on the right his weapon, his
+##   way of fighting, his abilities with the HUD's own marks, the Gifts he has equipped (read only) and the buttons to
+##   the Gifts medallion (DonsScreen) and the Compêndio;
+## - Ofícios: what was noted (the Pedra Funda, the Picareta, the orders, the Obras) and the Discernimento, read only
+##   (it is bought at the Vendedor's counter).
+## Esc or B goes back (the title closes the screen on ui_cancel, like its other panels).
 
 signal closed
 ## The way down from the book (the title starts the descent as Iniciar does, Juramentos first after a victory).
@@ -21,28 +21,41 @@ enum Chapter { OPENING, HERO, OFICIOS }
 
 const CHAPTER_KEY: Array[StringName] = [&"book_chapter_opening", &"title_hero", &"chapter_oficios"]
 const CHAPTER_NAME: Array[String] = ["chapter_opening", "chapter_hero", "chapter_oficios"]
-## Screen margins round the book and the bookmarks' width, px at 720 lines.
-## (12 px over the bookmarks at the top: UI review d2ff05d, P1-5.)
+## The page numbers at the foot of each chapter's two pages.
+const FOLIO: Array[Array] = [["i", "ii"], ["1", "2"], ["3", "4"]]
+## Screen margins round the book, px at 720 lines (12 px over the ribbons at the top: UI review d2ff05d, P1-5).
 const OUTER := Vector2(22, 12)
-## The spine: the left page (the tree, the painting) a little wider than the right (the words).
-const SPINE := 0.55
-const CREST := 46.0
-const NAME_SIZE := 26
-const DESC_SIZE := 18
-const META_SIZE := 16
+## The two pages are equal (the spine in the middle).
+const SPINE := 0.5
 const STEP_GLYPH := 52.0
-## The buttons in the foot of the right page.
-const FOOT_WIDTH := 124.0
+## The seconds of one turn, and of each when a ribbon far away passes several chapters.
+const TURN := 0.35
+const TURN_FAR := 0.25
+## The buttons in the foot of the right page, and the room left to the page's dog-ear.
+const FOOT_WIDTH := 150.0
 const MARK := 26.0
-## The places beside the Warrior's in the book's head: how many are sealed, and their size.
-const SEALED := 3
-const SEAT := 40.0
+const EAR_ROOM := 36.0
+## Left of the right page's head, under the ribbon that hangs over it.
+const RIBBON_ROOM := 56.0
+## The Dons equipped: glyph side and names a line.
+const GIFT_MARK := 20.0
+const GIFT_COLUMNS := 3
+const EPIGRAPH_WIDTH := 430.0
+const EPIGRAPH_SIZE := 20
+const NAME_SIZE := 30
+const CAP_SIZE := 38
+const FOLIO_SIZE := 14
+const FOLIO_ROOM := 10.0
 ## The Como Jogar row that names each action (howto_<id>).
 const SKILL_ROW := {Boon.Slot.ATTACK: "light_attack", Boon.Slot.SPECIAL: "heavy_attack", Boon.Slot.CAST: "shout",
 	Boon.Slot.DASH: "dodge"}
-## The Warrior painted on the hero page (art pack board 04, made by AI, cut by hand; docs/steam-ia.md), its edges
-## feathered into the paper.
+## The action the Maga's marks on the HUD (Hud.MAGA_GLYPHS) stand for, by slot.
+const MAGA_ACTION := {Boon.Slot.ATTACK: &"light_attack", Boon.Slot.SPECIAL: &"heavy_attack", Boon.Slot.CAST: &"shout"}
+## The hero painted on the hero page (art pack board 04, made by AI, cut by hand; docs/steam-ia.md), its edges feathered
+## into the paper. The final art, when it comes: assets/ui/book/warrior_ink.png and maga_ink.png.
 const PORTRAIT: Texture2D = preload("res://assets/ui/hero/warrior_page.png")
+const MAGA_PORTRAIT := "res://assets/models/meshy/hero_maga_img/hero_maga_img.png"
+const BOOK_ART := "res://assets/ui/book/"
 const FEATHER := """
 shader_type canvas_item;
 uniform float feather = 0.1;
@@ -63,23 +76,26 @@ var _left: Array[Control] = []
 var _right: Array[Control] = []
 var _bar: MasteryBar
 var _next: Label
-var _devotion_count: Label
-## The keys at the foot (benchmark P0-2): chapters on the left, the press and the way back on the right.
+var _name_cap: Label
+var _name_rest: Label
+var _folios: Array[Label] = []
+var _ears: Array[Button] = []
+var _foot: Control
+var _turn: BookTurn
+var _frame: MarginContainer
+## Bumped by every chapter change, so a trip across several chapters stops when another begins.
+var _trip := 0
+## The keys at the foot (benchmark P0-2): the turn and the press on the left, the way back on the right.
 var bar: ActionBar
 var _to_gifts: Button
 var _dons: DonsScreen
 var _down: Button
-var _down_hero: Button
 ## Opened in the hub (the Livro de Ahk at its lectern): no way down from the book, the Portal is the way down (UI
 ## review d2ff05d, P1-4).
 var in_hub := false
 ## The Compêndio opened from the book (null: none).
 var _codex: CodexScreen
 var _codex_button: Button
-## What the panel tells now (a TalentDef, an UltDef or null for the centre).
-## False until the first refresh: the book opens with its capitals already filled (nothing animates at the start).
-## The materials held, in the head of the right page (MaterialCount.purse).
-var _purse: HBoxContainer
 
 
 ## data: the save data to read and edit (Save.data in the game; tests give their own); start: the chapter open first.
@@ -87,40 +103,36 @@ var _purse: HBoxContainer
 func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = false) -> void:
 	in_hub = hub
 	_data = data if not data.is_empty() else Save.data
-	# the hero picked at the Portal (the Maga once Morvath was sealed); the Gifts chapter draws her triangle
-	# (--hero=maga forces her, for captures)
+	# the hero picked at the Portal (the Maga once Morvath was sealed); --hero=maga forces her, for captures
 	var id := Dev.arg("hero") if Dev.has("hero") else SaveData.picked_hero(_data)
 	loadout = HeroLoadout.new(HeroDef.maga() if id == "maga" else HeroDef.warrior(), _data)
 	theme = Book.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var shade := ColorRect.new()
-	shade.color = Color(0.01, 0.0, 0.02, 0.88)
-	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(shade)
+	add_child(BookDesk.new())
 	var frame := MarginContainer.new()
+	frame.name = "frame"
 	frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	frame.add_theme_constant_override(&"margin_left", int(OUTER.x))
-	frame.add_theme_constant_override(&"margin_right", int(OUTER.x))
+	_frame = frame
+	resized.connect(_fit)
+	_fit()
 	frame.add_theme_constant_override(&"margin_top", int(OUTER.y))
 	frame.add_theme_constant_override(&"margin_bottom", int(ActionBar.RESERVE))
 	add_child(frame)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override(&"separation", -int(Book.MARK_HIDDEN))
 	frame.add_child(col)
-	# the chapters are leather bookmarks standing out of the top of the cover (P1-5), not the menus' tabs
+	# the chapters are silk ribbons standing out of the top of the cover, one a chapter
 	var marks := HBoxContainer.new()
 	marks.name = "chapters"
 	marks.alignment = BoxContainer.ALIGNMENT_CENTER
-	marks.add_theme_constant_override(&"separation", 6)
-	marks.custom_minimum_size.y = Book.MARK_HEIGHT + Book.MARK_RISE
+	marks.add_theme_constant_override(&"separation", int(BookRibbon.WIDTH * 0.8))
+	marks.custom_minimum_size.y = BookRibbon.HEIGHT + Book.MARK_RISE
 	col.add_child(marks)
 	for c: int in Chapter.values():
-		# the hero's chapter carries the picked hero's name ("A Maga" for her)
-		var key: StringName = &"hero_maga" if c == 1 and loadout.hero.id == &"maga" else CHAPTER_KEY[c]
-		var b := Book.mark(T.t(key))
+		var b := _ribbon(c)
 		b.name = CHAPTER_NAME[c]
-		b.focus_entered.connect(_show.bind(c))
-		b.pressed.connect(_show.bind(c))
+		b.focus_entered.connect(go.bind(c))
+		b.pressed.connect(go.bind(c))
 		chapters.append(b)
 		marks.add_child(b)
 	_book = BookSpread.new().setup(SPINE)
@@ -136,10 +148,19 @@ func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = fals
 		_right[i].size_flags_vertical = Control.SIZE_EXPAND_FILL
 		left.add_child(_left[i])
 		right.add_child(_right[i])
-	right.add_child(_footer())
+	_foot = _footer()
+	right.add_child(_foot)
+	# room for the folio under the buttons
+	right.add_child(_gap(FOLIO_ROOM))
+	_decorate()
+	_turn = BookTurn.new()
+	_turn.name = "turn"
+	_turn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_turn.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(_turn)
 	bar = ActionBar.attach(self, [
-		ActionBar.entry(&"tab_prev", T.t(&"bar_prev"), func() -> void: _turn(-1), true),
-		ActionBar.entry(&"tab_next", T.t(&"bar_next"), func() -> void: _turn(1), true),
+		ActionBar.entry(&"tab_prev", T.t(&"bar_prev"), func() -> void: _turn_page(-1), true),
+		ActionBar.entry(&"tab_next", T.t(&"bar_next"), func() -> void: _turn_page(1), true),
 		ActionBar.entry(&"ui_accept", T.t(&"bar_confirm"), _press_focus),
 		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
 	_refresh()
@@ -147,7 +168,33 @@ func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = fals
 	_first_focus().grab_focus.call_deferred()
 	# the book opens: a breath of the pages coming up
 	_book.modulate.a = 0.0
-	create_tween().tween_property(_book, ^"modulate:a", 1.0, 0.22)
+	create_tween().tween_property(_book, ^"modulate:a", 1.0, 0.3)
+
+
+## The silk ribbon of chapter c (the hero's in his ink: the Warrior's petrol, the Maga's amber).
+func _ribbon(c: int) -> Button:
+	var maga := GiftArt.is_maga(loadout.hero)
+	match c:
+		Chapter.OPENING:
+			return BookRibbon.make(T.t(CHAPTER_KEY[c]), BookRibbon.OPENING_TINT, BookRibbon.Mark.FEATHER)
+		Chapter.HERO:
+			return BookRibbon.make(T.t(&"hero_maga" if maga else CHAPTER_KEY[c]), BookRibbon.MAGA_TINT if maga else Book.RIBBON,
+				BookRibbon.Mark.HERO, loadout.hero)
+	return BookRibbon.make(T.t(CHAPTER_KEY[c]), BookRibbon.OFICIOS_TINT, BookRibbon.Mark.HAMMER)
+
+
+## The book keeps its shape on a wide screen: the table shows each side (BookDesk), the candles on it.
+func _fit() -> void:
+	var side := OUTER.x + BookDesk.side_room(size)
+	_frame.add_theme_constant_override(&"margin_left", int(side))
+	_frame.add_theme_constant_override(&"margin_right", int(side))
+
+
+static func _gap(h: float) -> Control:
+	var c := Control.new()
+	c.custom_minimum_size.y = h
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return c
 
 
 func _page_column(page: MarginContainer, head: Control) -> VBoxContainer:
@@ -158,85 +205,79 @@ func _page_column(page: MarginContainer, head: Control) -> VBoxContainer:
 	return v
 
 
+## The folios and the dog-ears, in the margin at the foot of the pages (placed when the book has its size).
+func _decorate() -> void:
+	for side in 2:
+		var f := Book.label("", Book.FADED, FOLIO_SIZE, UiKit.TITLE_FONT)
+		f.name = "folio_%d" % side
+		f.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		f.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_book.add_child(f)
+		_folios.append(f)
+		var ear := BookRibbon.ear(side == 0)
+		ear.name = "ear_%s" % ("back" if side == 0 else "forward")
+		ear.pressed.connect(_turn_page.bind(-1 if side == 0 else 1))
+		_book.add_child(ear)
+		_ears.append(ear)
+	_book.resized.connect(_place_decor)
+	_place_decor.call_deferred()
+
+
+func _place_decor() -> void:
+	var r := _book.paper_rect()
+	var half := r.size.x * SPINE
+	for side in 2:
+		var x := r.position.x + half * side
+		var f := _folios[side]
+		f.position = Vector2(x, r.end.y - FOLIO_SIZE - 10.0)
+		f.size = Vector2(half, FOLIO_SIZE + 6.0)
+		var ear := _ears[side]
+		ear.position = Vector2(x if side == 0 else x + half - BookRibbon.EAR, r.end.y - BookRibbon.EAR)
+
+
+## The head of the left page: the chapter's name with its capital in the rubric, and whose book it is.
 func _head_left() -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override(&"separation", 12)
-	var crest := HeroCrest.new().setup(CREST).set_hero(loadout.hero.id)
-	crest.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(crest)
-	var names := VBoxContainer.new()
-	names.add_theme_constant_override(&"separation", -2)
-	names.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var v := VBoxContainer.new()
+	v.name = "head_left"
+	v.add_theme_constant_override(&"separation", -4)
 	var line := HBoxContainer.new()
-	line.add_theme_constant_override(&"separation", 12)
-	names.add_child(line)
-	line.add_child(Book.label(T.t(loadout.hero.name_key), GiftArt.title_ink(loadout.hero), 30, UiKit.TITLE_FONT))
-	var bar := ColorRect.new()
-	bar.color = Color(Book.GILT, 0.7)
-	bar.custom_minimum_size = Vector2(1, 24)
-	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	line.add_child(bar)
-	var book := Book.label(T.t(&"book_title").to_upper(), Book.GILT, 15, UiKit.TITLE_FONT)
+	line.add_theme_constant_override(&"separation", 1)
+	_name_cap = Book.label("", Book.RUBRIC, CAP_SIZE, UiKit.TITLE_FONT)
+	_name_cap.name = "name_cap"
+	_name_rest = Book.label("", Book.INK, NAME_SIZE, UiKit.TITLE_FONT)
+	_name_rest.name = "name_rest"
+	_name_rest.size_flags_vertical = Control.SIZE_SHRINK_END
+	line.add_child(_name_cap)
+	line.add_child(_name_rest)
+	v.add_child(line)
+	var book := Book.label(T.t(&"book_title").to_upper(), Book.GILT, 14, UiKit.TITLE_FONT)
 	book.name = "book_title"
-	book.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	line.add_child(book)
-	_next = Book.label("", Book.FADED, 15)
-	_next.name = "next"
-	names.add_child(_next)
-	row.add_child(names)
-	row.add_child(_sealed_seats())
-	return row
+	v.add_child(book)
+	return v
 
 
-## The Warrior's crest is the first of four places; the other three are sealed silhouettes (HUB-C, D-H3): no name, no
-## text, nothing to choose (no focus, no click), pushed to the page's outer edge.
-func _sealed_seats() -> Control:
-	var seats := HBoxContainer.new()
-	seats.name = "sealed"
-	seats.alignment = BoxContainer.ALIGNMENT_END
-	seats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	seats.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	seats.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	seats.add_theme_constant_override(&"separation", 6)
-	for i in SEALED:
-		seats.add_child(SealedMark.new().setup(SEAT, true))
-	return seats
-
-
+## The head of the right page: the hero's Mastery (a level and what the next one shows). No Devotion, no purse.
 func _head_right() -> Control:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override(&"separation", 18)
+	row.name = "head_right"
+	var room := Control.new()
+	room.custom_minimum_size.x = RIBBON_ROOM
+	room.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(room)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override(&"separation", 0)
 	_bar = MasteryBar.new().setup(loadout.hero.mastery, loadout.xp(), 250.0)
 	_bar.name = "mastery"
 	_bar.paper = true
-	_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(_bar)
-	var dev := VBoxContainer.new()
-	dev.add_theme_constant_override(&"separation", 2)
-	dev.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	dev.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var top := HBoxContainer.new()
-	top.add_child(Book.label(T.t(&"hero_devotion"), Book.INK, 16, UiKit.BOLD_FONT))
-	_devotion_count = Book.label("", Book.FADED, 16, UiKit.number_font())
-	_devotion_count.name = "devotion"
-	_devotion_count.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_devotion_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	top.add_child(_devotion_count)
-	dev.add_child(top)
-	row.add_child(dev)
-	# the purse: Prata and Memória held (the Memória opens the sealed Gifts), under the Devotion's pips (beside them
-	# it pushed the page's buttons out at 720 lines)
-	_purse = MaterialCount.purse(_data, Book.INK, 15, 16.0)
-	_purse.alignment = BoxContainer.ALIGNMENT_END
-	_purse.add_theme_constant_override(&"separation", 12)
-	dev.add_child(_purse)
+	v.add_child(_bar)
+	_next = Book.label("", Book.RUBRIC, 15)
+	_next.name = "next"
+	v.add_child(_next)
+	row.add_child(v)
 	return row
 
 
 # ---- Abertura ----
-
-const EPIGRAPH_WIDTH := 347.0
-
 
 ## Ahk's testimony (the canon's own words, as the Cronologia opens) and who wrote it.
 func _opening_left() -> Control:
@@ -247,16 +288,13 @@ func _opening_left() -> Control:
 	var vignette := AhkVignette.new()
 	vignette.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(vignette)
-	var title := Book.label(T.t(&"book_title"), Book.RUBRIC, 40, UiKit.TITLE_FONT)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(title)
 	var rule := GoldRule.new()
 	rule.tint = Book.GILT
 	rule.custom_minimum_size = Vector2(320, 14)
 	rule.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(rule)
 	# the epigraph on a left aligned column with the illuminated capital (AP-4 1.4); the signature to its right
-	var words := DropCap.paragraph(T.t(&"book_epigraph"), Book.INK, 22, EPIGRAPH_WIDTH)
+	var words := DropCap.paragraph(T.t(&"book_epigraph"), Book.INK, EPIGRAPH_SIZE, EPIGRAPH_WIDTH)
 	words.name = "epigraph"
 	words.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(words)
@@ -307,7 +345,6 @@ func _oficios_left() -> Control:
 	var v := VBoxContainer.new()
 	v.name = "oficios_left"
 	v.add_theme_constant_override(&"separation", 8)
-	v.add_child(Book.heading(T.t(&"chapter_oficios"), 28, 260))
 	var noted := Oficios.noted(_data)
 	var ever := int((Oficios.block(_data).items_total as Dictionary).get(String(d.stone), 0)) > 0
 	if not noted and not ever and not Oficios.has_tool(_data, d):
@@ -436,13 +473,18 @@ func _descend_button(id: String) -> Button:
 	return b
 
 
-# ---- O Guerreiro ----
+# ---- the hero ----
 
-## The Warrior painted on his page.
+## The hero's own text (the Maga's keys end in _maga; the Warrior's are the plain ones).
+func _hk(key: String) -> String:
+	return key + "_maga" if GiftArt.is_maga(loadout.hero) else key
+
+
+## The hero painted on his page (the final ink painting when it exists in assets/ui/book/).
 func _hero_left() -> Control:
 	var art := TextureRect.new()
 	art.name = "portrait"
-	art.texture = PORTRAIT if loadout.hero == HeroDef.warrior() else null
+	art.texture = _portrait()
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
@@ -455,31 +497,56 @@ func _hero_left() -> Control:
 	return art
 
 
-## His weapon, his way of fighting and his abilities, and the ways on from here.
+func _portrait() -> Texture2D:
+	var maga := GiftArt.is_maga(loadout.hero)
+	var path := BOOK_ART + ("maga_ink.png" if maga else "warrior_ink.png")
+	if ResourceLoader.exists(path):
+		return load(path)
+	return load(MAGA_PORTRAIT) if maga else PORTRAIT
+
+
+## His weapon, his way of fighting, his abilities and the Gifts he has equipped, and the ways on from here.
 func _hero_right() -> Control:
 	var v := VBoxContainer.new()
 	v.name = "hero_right"
-	v.add_theme_constant_override(&"separation", 5)
+	v.add_theme_constant_override(&"separation", 3)
 	v.add_child(Book.section(T.t(&"hero_weapon")))
-	v.add_child(Book.label(T.t(&"hero_weapon_name"), Book.INK, 22, UiKit.TITLE_FONT))
-	v.add_child(Book.text(T.t(&"hero_weapon_desc"), Book.INK, 17))
-	v.add_child(_gap(4))
+	v.add_child(Book.label(T.t(_hk("hero_weapon_name")), Book.INK, 20, UiKit.TITLE_FONT))
+	v.add_child(Book.text(T.t(_hk("hero_weapon_desc")), Book.INK, 16))
 	v.add_child(Book.section(T.t(&"hero_style")))
-	v.add_child(Book.text(T.t(&"hero_style_desc"), Book.INK, 17))
-	v.add_child(_gap(4))
+	v.add_child(Book.text(T.t(_hk("hero_style_desc")), Book.INK, 16))
 	v.add_child(Book.section(T.t(&"hero_skills")))
 	var grid := GridContainer.new()
 	grid.name = "skills"
 	grid.columns = 2
 	grid.add_theme_constant_override(&"h_separation", 10)
-	grid.add_theme_constant_override(&"v_separation", 6)
+	grid.add_theme_constant_override(&"v_separation", 4)
 	v.add_child(grid)
+	_skills(grid)
+	v.add_child(_rule())
+	v.add_child(Book.section(T.t(&"hero_gifts_equipped")))
+	v.add_child(_gifts_equipped())
+	var gap := Control.new()
+	gap.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	v.add_child(gap)
+	return v
+
+
+## The five actions, the ultimate the descent plays and the passive, with the HUD's marks.
+func _skills(grid: GridContainer) -> void:
+	var maga := GiftArt.is_maga(loadout.hero)
 	for slot: Boon.Slot in [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.DASH]:
-		_skill(grid, ActionSlot.mark(slot, MARK), T.t("howto_" + String(SKILL_ROW[slot])),
-			T.t("hero_skill_" + String(Boon.Slot.keys()[slot]).to_lower()))
+		var key := String(Boon.Slot.keys()[slot]).to_lower()
+		var mark: Control = ActionSlot.mark(slot, MARK)
+		if maga and MAGA_ACTION.has(slot):
+			mark = ActionSlot.glyph_mark(int(Hud.MAGA_GLYPHS[MAGA_ACTION[slot]]), MARK)
+		var title := T.t(_hk("hero_skill_name_" + key)) if maga else T.t("howto_" + String(SKILL_ROW[slot]))
+		_skill(grid, mark, title, T.t(_hk("hero_skill_" + key)))
 		if slot == Boon.Slot.CAST:
-			# the Investida (E) has no Blessing slot: its row follows the Brado's
-			_skill(grid, ActionSlot.glyph_mark(BoonIcon.RUSH_GLYPH, MARK), T.t(&"howto_rush"), T.t(&"hero_skill_rush"))
+			# the Investida (E) has no Blessing slot: its row follows the Brado's (the Maga's Suspensão)
+			var rush: int = int(Hud.MAGA_GLYPHS[&"rush"]) if maga else BoonIcon.RUSH_GLYPH
+			_skill(grid, ActionSlot.glyph_mark(rush, MARK), T.t(&"hero_skill_name_rush_maga" if maga else &"howto_rush"),
+				T.t(_hk("hero_skill_rush")))
 	var u := loadout.hero.ultimate(loadout.ultimate())
 	if u != null:
 		_skill(grid, ActionSlot.glyph_mark(BoonIcon.ULT_GLYPH + u.kind, MARK), T.t(u.name_key), T.t(&"hero_skill_ultimate"))
@@ -488,15 +555,7 @@ func _hero_right() -> Control:
 		if first != null:
 			_skill(grid, ActionSlot.glyph_mark(BoonIcon.ULT_GLYPH + first.kind, MARK), T.t(&"howto_ultimate"),
 				T.t(&"hero_ult_locked", {"n": first.mastery_level}))
-	_skill(grid, TalentGlyph.mark(null, MARK), T.t(&"hero_passive"), T.t(&"hero_passive_desc"))
-	var gap := Control.new()
-	gap.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	v.add_child(gap)
-	# the way down on the title's book only; Dons sits in the foot with the Compêndio and Voltar (P1-4)
-	if not in_hub:
-		_down_hero = _descend_button("descend_hero")
-		v.add_child(_down_hero)
-	return v
+	_skill(grid, TalentGlyph.mark(null, MARK), T.t(_hk("hero_passive")), T.t(_hk("hero_passive_desc")))
 
 
 func _skill(grid: GridContainer, mark: Control, title: String, line: String) -> void:
@@ -508,20 +567,50 @@ func _skill(grid: GridContainer, mark: Control, title: String, line: String) -> 
 	words.add_theme_constant_override(&"separation", -3)
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.add_child(Book.label(title, Book.INK, 16, UiKit.BOLD_FONT))
-	var l := Book.text(line, Book.INK, 15)
-	words.add_child(l)
+	words.add_child(Book.text(line, Book.INK, 15))
 	row.add_child(words)
 	grid.add_child(row)
 
 
-static func _gap(h: float) -> Control:
-	var c := Control.new()
-	c.custom_minimum_size.y = h
-	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return c
+## The Dons equipped, to read: a glyph in the branch's ink and the name, three to a line; or that there is none.
+func _gifts_equipped() -> Control:
+	var ids := loadout.equipped()
+	if ids.is_empty():
+		var none := Book.label(T.t(&"hero_gifts_none"), Book.FADED, 16)
+		none.name = "gifts_none"
+		return none
+	var grid := GridContainer.new()
+	grid.name = "gifts_equipped"
+	grid.columns = GIFT_COLUMNS
+	grid.add_theme_constant_override(&"h_separation", 10)
+	grid.add_theme_constant_override(&"v_separation", 2)
+	for id: Variant in ids:
+		var t := loadout.book.find(StringName(id))
+		if t == null:
+			continue
+		var row := HBoxContainer.new()
+		row.name = String(t.id)
+		row.add_theme_constant_override(&"separation", 5)
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(TalentGlyph.mark(t, GIFT_MARK))
+		var name_ := Book.label(T.t(t.name_key), Book.INK, 16)
+		name_.clip_text = true
+		name_.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(name_)
+		grid.add_child(row)
+	return grid
 
 
-# ---- Dons ----
+## A thin rule between the sections.
+func _rule() -> Control:
+	var r := ColorRect.new()
+	r.color = Color(Book.GILT, 0.45)
+	r.custom_minimum_size.y = 1.0
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return r
+
+
+# ---- the foot: the ways on (Ver os Dons, Compêndio) ----
 
 func _footer() -> Control:
 	var row := HBoxContainer.new()
@@ -530,17 +619,18 @@ func _footer() -> Control:
 	fill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(fill)
-	# one row at the foot of the right page, to its right (P1-4): Dons (on the Warrior's chapter), Compêndio, Voltar
 	row.add_theme_constant_override(&"separation", 10)
 	_to_gifts = Book.button(T.t(&"hero_gifts"), _open_dons, FOOT_WIDTH)
 	_to_gifts.name = "to_gifts"
 	row.add_child(_to_gifts)
-	_codex_button = Book.button(T.t(&"pause_moves"), _open_codex, FOOT_WIDTH + 24.0)
+	_codex_button = Book.button(T.t(&"pause_moves"), _open_codex, FOOT_WIDTH)
 	_codex_button.name = "codex"
 	row.add_child(_codex_button)
-	var back := Book.button(T.t(&"back"), func() -> void: closed.emit(), FOOT_WIDTH)
-	back.name = "back"
-	row.add_child(back)
+	# the page's dog-ear is in this corner
+	var ear := Control.new()
+	ear.custom_minimum_size.x = EAR_ROOM
+	ear.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(ear)
 	return row
 
 
@@ -592,9 +682,9 @@ func _close_dons() -> void:
 	_to_gifts.grab_focus.call_deferred()
 
 
-# ---- chapters and focus ----
+# ---- chapters and the turn ----
 
-## LB and RB (PageUp, PageDown) turn to the chapter before or after (DT-103).
+## LB and RB (PageUp, PageDown), the wheel and the d-pad off the edge of the page turn it.
 func _unhandled_input(event: InputEvent) -> void:
 	if is_instance_valid(_dons):
 		if event.is_action_pressed(&"ui_cancel"):
@@ -607,23 +697,72 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_close_codex()
 		return
-	if UiKit.step_tabs(event, chapters, chapter):
+	var step := page_step(event)
+	if step != 0:
 		get_viewport().set_input_as_handled()
+		_turn_page(step)
 
 
+## The way an input turns the book: -1 back, 1 forward, 0 none.
+static func page_step(event: InputEvent) -> int:
+	if event.is_echo():
+		return 0
+	if event.is_action_pressed(&"tab_next"):
+		return 1
+	if event.is_action_pressed(&"tab_prev"):
+		return -1
+	if event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
+		match (event as InputEventMouseButton).button_index:
+			MOUSE_BUTTON_WHEEL_DOWN:
+				return 1
+			MOUSE_BUTTON_WHEEL_UP:
+				return -1
+	# the d-pad that found no neighbour: off the right edge of the right page, off the left edge of the left one
+	if event.is_action_pressed(&"ui_right"):
+		return 1
+	if event.is_action_pressed(&"ui_left"):
+		return -1
+	return 0
+
+
+## Shows chapter c at once: its pages, its ribbon, its name and its folios.
 func _show(c: int) -> void:
 	chapter = c as Chapter
 	for i in chapters.size():
-		Book.mark_open(chapters[i], i == c)
+		BookRibbon.set_open(chapters[i], i == c)
 		_left[i].visible = i == c
 		_right[i].visible = i == c
-	_to_gifts.visible = chapter == Chapter.HERO
+	_foot.visible = chapter == Chapter.HERO
+	var title: String = String(chapters[c].get_meta(&"title", ""))
+	_name_cap.text = title.left(1)
+	_name_rest.text = title.substr(1)
+	_name_rest.add_theme_color_override(&"font_color", GiftArt.title_ink(loadout.hero) if chapter == Chapter.HERO else Book.INK)
+	for side in _folios.size():
+		_folios[side].text = FOLIO[c][side]
 
 
-## Opens a chapter from inside the book (a button), with the focus on its first control.
-func _open_chapter(c: Chapter) -> void:
-	Audio.play(&"ui_ok")
-	_show(c)
+## Turns to chapter c with the page turn (one turn a chapter of distance); at once where there is no screen to draw it.
+func go(c: int) -> void:
+	if c == chapter:
+		return
+	_trip += 1
+	var trip := _trip
+	if not BookTurn.can_animate() or not _book.is_visible_in_tree() or _turn.busy:
+		_turn.finish()
+		_show(c)
+		return
+	var route := BookTurn.route(chapter, c)
+	var secs := TURN if route.size() == 1 else TURN_FAR
+	for step in route:
+		if trip != _trip:
+			return
+		await _turn.flip(_book, step > chapter, _show.bind(step), secs)
+
+
+## The chapter before (-1) or after (1), looping, with the focus on its first control.
+func _turn_page(step: int) -> void:
+	var c := BookTurn.next(chapter, step, chapters.size())
+	go(c)
 	_chapter_focus(c).grab_focus()
 
 
@@ -635,7 +774,7 @@ func _first_focus() -> Control:
 func _chapter_focus(c: Chapter) -> Control:
 	match c:
 		Chapter.OPENING:
-			# in the hub the Opening has no way down: its bookmark holds the focus
+			# in the hub the Opening has no way down: its ribbon holds the focus
 			return _down if _down != null else chapters[Chapter.OPENING]
 		Chapter.HERO:
 			return _to_gifts
@@ -644,14 +783,7 @@ func _chapter_focus(c: Chapter) -> Control:
 	return chapters[c]
 
 
-func _save() -> void:
-	if is_same(_data, Save.data):
-		Save.write()
-
-
 func _refresh() -> void:
-	MaterialCount.refresh(_purse, _data)
-	_devotion_count.text = T.t(&"hero_devotion_count", {"used": loadout.used(), "max": loadout.devotion()})
 	var next := loadout.next_unlocks()
 	_next.text = T.t(&"hero_next", {"n": loadout.level() + 1, "what": ", ".join(next)}) if not next.is_empty() else ""
 
@@ -661,12 +793,3 @@ func _press_focus() -> void:
 	var f := get_viewport().gui_get_focus_owner() as BaseButton
 	if f != null and is_ancestor_of(f) and not f.disabled:
 		f.pressed.emit()
-
-
-## The chapter before (-1) or after (1), as LB and RB.
-func _turn(step: int) -> void:
-	var c := clampi(chapter + step, 0, chapters.size() - 1)
-	if c != chapter:
-		_show(c)
-		chapters[c].grab_focus()
-

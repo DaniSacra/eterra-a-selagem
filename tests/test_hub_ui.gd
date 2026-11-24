@@ -193,19 +193,14 @@ func test_the_vendor_is_honest() -> void:
 		assert_false(hub.host.is_open())
 
 
-func test_the_book_shows_three_sealed_places_beside_the_warrior() -> void:
+func test_the_book_head_has_the_mastery_and_no_devotion_nor_purse() -> void:
 	var screen := HeroScreen.new()
 	add_child_autofree(screen)
 	screen.open(SaveData.defaults())
-	var sealed := screen.find_child("sealed", true, false) as Control
-	assert_not_null(sealed)
-	var seats := sealed.get_children()
-	assert_eq(seats.size(), HeroScreen.SEALED)
-	for s: Node in seats:
-		assert_true(s is SealedMark and (s as SealedMark).figure, "a silhouette")
-		assert_eq((s as Control).focus_mode, Control.FOCUS_NONE, "nothing to choose")
-		assert_eq((s as Control).mouse_filter, Control.MOUSE_FILTER_IGNORE)
-	assert_eq(sealed.find_children("*", "Label", true, false).size(), 0, "no name, no text")
+	assert_not_null(screen.find_child("mastery", true, false), "the Maestria is read")
+	assert_null(screen.find_child("devotion", true, false), "the Devoção is the medallion's")
+	assert_null(screen.find_child("purse", true, false), "no purse in the book")
+	assert_null(screen.find_child("sealed", true, false), "no sealed places")
 
 
 func test_the_book_opens_the_compendium_and_esc_comes_back() -> void:

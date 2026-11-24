@@ -263,7 +263,7 @@ func _check_hero_page_fits(size: Vector2) -> void:
 	var paper: Rect2 = s._book.paper_rect()
 	paper.position += s._book.global_position
 	var foot_top: float = size.y - ActionBar.RESERVE
-	for id: String in ["descend_hero", "to_gifts", "codex", "back"]:
+	for id: String in ["to_gifts", "codex"]:
 		var b: Control = s.find_child(id, true, false)
 		assert_not_null(b, id)
 		if b == null:
@@ -271,9 +271,9 @@ func _check_hero_page_fits(size: Vector2) -> void:
 		var r := b.get_global_rect()
 		assert_true(paper.encloses(r), "%s inside the sheet at %s: %s in %s" % [id, size, r, paper])
 		assert_lt(r.end.y, foot_top, "%s above the key bar at %s" % [id, size])
-	var down: Control = s.find_child("descend_hero", true, false)
+	var gifts: Control = s.find_child("hero_right", true, false)
 	var to_gifts: Control = s.find_child("to_gifts", true, false)
-	assert_lte(down.get_global_rect().end.y, to_gifts.get_global_rect().position.y + 1.0, "the way down above the foot row")
+	assert_lte(gifts.get_global_rect().end.y, to_gifts.get_global_rect().position.y + 1.0, "the page's text above the foot row")
 
 
 func test_the_warriors_page_fits_at_1280() -> void:
