@@ -539,3 +539,14 @@ Dons do `HeroScreen` é o `CodexBook` (`scripts/ui/codex_book.gd`), na página d
 - Pendente: "Pavio Longo ou Cadeia Curta" da Maga estão em fitas diferentes, então o "ou" só liga Dons do mesmo capítulo; a
   rodinha do mouse não anda entre entradas; o clique é um só (o foco já lê, o clique faz o verbo); sem som de papel nem
   animação de dobra ao trocar de fita (só 0,15 s de opacidade).
+
+## Quatro dicas da primeira descida (GP-9 e 10B-2, 2026-11-23; testes em `tests/test_first_tips.gd`)
+- `FirstTips` (`scripts/core/first_tips.gd`, puro): `pick(data, ctx)` devolve a dica devida, uma por vez. Ordem: `armor` (inimigo com blindagem
+  a menos de 14 m), `fight` (1,5 s de combate: atacar e esquivar), `hold` (8 s de combate e `fight` já vista: Ômega), `elo` (fora do combate, 2
+  Bênçãos ou mais e nenhum Elo). Uma vez por save em `data.hub.tips` (ids; save sem a lista ganha a lista). Só vale em save novo: menos de
+  `FIRST_RUNS` (2) descidas.
+- `TipToast` (`scripts/ui/tip_toast.gd`, filho do `Hud`): caixa escura baixa e centrada (172 px acima da borda, acima da fileira de ações), 5,5 s
+  com fade, 3 s de pausa entre dicas, nunca pausa nem pega entrada. Teclas por `UiKit.action_label` (`{attack}`, `{special}`, `{dodge}`), então
+  teclado, mouse e controle dizem certo. Textos `tip_*` em `data/text_pt.tres`. Escreve o save ao aparecer.
+- Fora para o robô, `--smoke` e `--nosave` (`FirstTips.enabled`). `--tips` força todas, sem gravar (capturas). Não toca na partida: o `RESULT`
+  da semente 5 não muda.

@@ -24,7 +24,7 @@ está aqui foi feito (marcado FEITO com o commit) ou espera o Daniel.
    `tests/test_run_log.gd`.
 4. **Suíte libera um RefCounted à mão** (dívida de teste; `gameplay-engineer`, P). `tests/test_blow_family.gd:15` chama `_combat.free()`
    e `Combat` é `RefCounted` (3 `SCRIPT ERROR` por suíte, `docs/qa/c1_c3_qa.md`). Aceite: `-gselect=test_blow_family` sem `SCRIPT ERROR`.
-5. **Quatro dicas na primeira descida** (GP-9 e 10B-2, aprovado em 2026-11-22; `ui-ux-designer`, P). Não existe nada além do guia do
+5. **FEITO (2026-11-23, `FirstTips` + `TipToast`, `docs/reference/ui.md`)** Quatro dicas na primeira descida (GP-9 e 10B-2, aprovado em 2026-11-22; `ui-ux-designer`, P). Não existe nada além do guia do
    Santuário (PT-5) e da linha do Como Jogar. Uma vez por save, curtas, sem pausar: bater e esquivar; segurar o especial; a barra amarela
    (blindagem) e a barrinha clara (Quebra); par de Bênçãos que forma Elo. Arquivos: `scripts/ui/hud.gd` (ou um `FirstTips` próprio),
    `scripts/core/save_data.gd`, `data/text_pt.tres`. **Depois** do PT-10 entrar (a coluna da direita é do HUD). Aceite: teste GUT de "uma vez
@@ -316,7 +316,7 @@ Altar e Encanto fica para depois, se ele gostar.
   blindagem e parada maior na quebra; vídeo para o Daniel aprovar.
 - GP-6, GP-12: o mago causa 33% do dano sofrido; o arqueiro acerta 2% dos tiros.
 - GP-8 (P1): até o guardião, 2 a 4 Bênçãos e 0 Elos. Guardião nunca antes da sala 5 e a terceira Bênção ajudando a fechar Elo.
-- GP-9 (P1): nenhuma dica na primeira partida (Ômega, blindagem, esquiva, Elo). Quatro dicas curtas, uma vez por save.
+- GP-9 (P1, FEITO: item 5): nenhuma dica na primeira partida (Ômega, blindagem, esquiva, Elo). Quatro dicas curtas, uma vez por save.
 - GP-10 (P1): a maldição de Morvath acerta 7 de 7; afrouxar a perseguição. Os golpes com rastreio novo estão justos. Pergunta ao
   Daniel: Morvath ainda é atordoado por 3 golpes pesados na fase 3, fora da regra `NONE` (sugestão: manter).
 
