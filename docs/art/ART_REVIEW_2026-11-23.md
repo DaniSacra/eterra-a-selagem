@@ -36,6 +36,7 @@ Coordenadas em pixels da própria captura (x, y a partir do canto de cima à esq
 ## Itens
 
 ### 1. Laje armada vira tapete vermelho (P0, `technical-artist`)
+**FEITO (2026-11-23, falta captura GPU):** `GroundLook.set_plate` mantém a pedra, a fissura acende âmbar (1,0; 0,62; 0,25, preenchimento até 0,25) e o vermelho é só um aro de 0,12 m (uniform `plate_red` em `ground.gdshaderinc`) nos últimos `Feel.bang_lead` do preparo e no golpe.
 `porta_caixa.png` (1410..1580, 200..330): retângulo vermelho saturado e opaco, com chevrons ">>" ao lado, perto da saída.
 Pela posição e pelos chevrons é a laje que empurra (RP-13): `GroundLook.set_plate` leva `PLATE_REST_COLOR` até
 `HAZARD_COLOR` (o vermelho de aviso) já em `hot` 0,25 e com `HAZARD_STRENGTH`, então a laje fica vermelha cheia quase o
@@ -93,6 +94,7 @@ diferentes à primeira vista. Placeholder: a espada na pedra à esquerda (20..31
 anjos pintados; espera arte.
 
 ### 7. GR-8 raio-x de pontinhos (P1, `technical-artist`)
+**FEITO em parte (2026-11-23, falta captura GPU):** o include já não usava `bayer4` (código morto, removido). No Forward+ o limiar é a média de dois ruídos por pixel (sem grade) e a borda suave vai por todo o raio; no Compatibility segue o ruído simples. Esmaecimento realmente contínuo exigiria trocar os 8 shaders opacos por transparentes; não feito. Se a captura ainda mostrar pontos, é esse o próximo passo.
 `dicas.png` (480..690, 430..640): o bloco ao lado do herói mostra a grade de pontos. `assets/shaders/see_through.gdshaderinc`
 ainda usa `bayer4`. Pedido: no Forward+ o esmaecimento contínuo (alfa até 0,35 com borda suave de 0,6 m ao redor do
 herói); o pontilhado fica só no Compatibility. Aceite: captura GPU 1080p com o herói atrás de pilar sem grade de pontos

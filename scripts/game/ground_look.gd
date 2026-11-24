@@ -140,6 +140,7 @@ static func dress(node: MeshInstance3D, style: Style, shape: int, color: Color, 
 	put(m, &"color", color)
 	put(m, &"tile_m", 0.0)
 	put(m, &"plate", 0.0)
+	put(m, &"plate_red", 0.0)
 	put(m, &"aim_px", 0.0)
 	put(m, &"fill_early", FILL_EARLY)
 	put(m, &"fill_max", FILL_MAX)
@@ -220,14 +221,30 @@ static func plate_band(node: MeshInstance3D, from: Vector2, dir: Vector2, length
 	put(m, &"fill_max", HAZARD_FILL_MAX)
 
 
-## A slab's state (PlateHazard.state: x arming, y strike, z ember): at rest the bone frame; arming the amber reaching in;
-## striking the whole slab lit; the ember falling back to rest.
-static func set_plate(node: MeshInstance3D, s: Vector3) -> void:
+## The ember of a slab's fissure (RP-13, art review 2026-11-23 item 1): arming is a coal, not a warning.
+const PLATE_EMBER := Color(1.0, 0.62, 0.25)
+const PLATE_EMBER_STRENGTH := 0.8
+const PLATE_FILL_MAX := 0.25
+## The red of the warning shows only as a rim this wide (m), the last Feel.bang_lead seconds of the arming and the strike.
+const PLATE_RED_RIM := 0.12
+
+
+## A slab's state (PlateHazard.state: x arming, y strike, z ember): at rest the bone frame; arming the amber of the
+## fissure reaching in (the slab's body stays stone); in the last `lead` share of the arming (Feel.bang_lead / warn)
+## and while it strikes, the red rim of PLATE_RED_RIM; the ember falling back to rest.
+static func set_plate(node: MeshInstance3D, s: Vector3, lead := 0.0) -> void:
 	var m := node.material_override as ShaderMaterial
 	var hot := maxf(maxf(s.x, s.y), s.z)
 	var lit := s.x > 0.0 or s.y > 0.0
-	put(m, &"color", PLATE_REST_COLOR.lerp(HAZARD_COLOR, minf(1.0, hot * 4.0)))
-	put(m, &"strength", lerpf(PLATE_REST_STRENGTH, HAZARD_STRENGTH, minf(1.0, hot * 4.0)))
+	var glow := minf(1.0, hot * 4.0)
+	put(m, &"color", PLATE_REST_COLOR.lerp(PLATE_EMBER, glow))
+	put(m, &"strength", lerpf(PLATE_REST_STRENGTH, PLATE_EMBER_STRENGTH, glow))
+	put(m, &"fill_max", PLATE_FILL_MAX)
+	var red := 0.0
+	if s.y > 0.0 or (s.x > 0.0 and lead > 0.0 and s.x >= 1.0 - lead):
+		red = 1.0
+	put(m, &"plate_red", red)
+	put(m, &"plate_red_m", PLATE_RED_RIM)
 	put(m, &"progress", s.x if s.x > 0.0 else 1.0 if s.y > 0.0 else s.z if not lit else 0.0)
 
 

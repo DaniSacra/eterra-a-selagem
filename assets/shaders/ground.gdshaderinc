@@ -96,6 +96,9 @@ uniform float tile_m = 0.0;
 // where it has got to), never a circle (D-29).
 uniform float plate = 0.0;
 uniform float crack_m = 0.06;
+// The slab's warning red, only as a rim plate_red_m wide on its edge (plate_red 1: the last bang_lead of the arming, the strike).
+uniform float plate_red = 0.0;
+uniform float plate_red_m = 0.12;
 // C17, QW-107 (ART P1-6: the crossbow's aim and the soldier's pounce read as an opaque red band end to end, the
 // strongest thing on the screen): aim_px > 0 draws an unsigned line warning as an aim instead: a thread aim_px pixels
 // wide down its middle at aim_light, brighter toward its far end (the last aim_tip of it, up to 1), a bar across that
@@ -287,6 +290,7 @@ void fragment() {
 			float front = (1.0 - smoothstep(0.0, rim_m, abs(to_edge - reach))) * step(0.02, progress) * step(progress, 0.999);
 			float level = mix(fill_early, fill_max, smoothstep(1.0 - fill_late, 1.0, progress));
 			a = max(frame, crack) * (0.35 + 0.65 * progress) + swept * level + front * 0.5;
+			extra += vec3(1.0, 0.18, 0.12) * (1.0 - smoothstep(plate_red_m * 0.6, plate_red_m, to_edge)) * plate_red * 0.9;
 		} else if (style == 3) {
 			float along_m = along * length_m;
 			float cell = tile_m > 0.0 ? tile_m : length_m;
