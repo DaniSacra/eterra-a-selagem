@@ -29,7 +29,7 @@ spec do `art-director`, pedido ao ChatGPT para o Daniel, tela pelo `ui-ux-design
 captura GPU.
 - **3a Dons (medalhão)**: FEITO o principal (`DonsScreen`, aba do Livro removida). Falta: arte do ChatGPT (pedido em
   `Downloads\Pedido-ChatGPT-medalhao-dos-Dons.txt`), sons (nota ao segurar, sino ao equipar), Memória voando ao contador, linhas dos ramos
-  mais fortes, ícone do cristal de Memória, a Maga em captura, a estação do Santuário como medalhão de bronze num pedestal.
+  mais fortes, ícone do cristal de Memória, a Maga em captura. Estação do Santuário como medalhão de bronze num pedestal: FEITA (`HubLook._tree`; falta captura GPU).
 - **3b Forja** (arma deitada, ferro e brasa, três marteladas): FEITO (tela em bancada, `ForgeScreen` refeita pela `forge_spec.md`; detalhe em `docs/reference/ui.md`). Falta: captura GPU, arte do ChatGPT (`assets/ui/forge/`), sons de bigorna e chiado, estação do Santuário se a arte mudar.
 - **3c Loja da descida e Vendedor** (pano e balança, pôr no prato).
 - **3d Videira**: FEITO o principal (`VineScreen` como planta, etiquetas de barro, painel de leitura e Regar; `--title --screen=vine`). Falta: arte do ChatGPT (`assets/ui/vine/`), sons de água e folhas, captura GPU.

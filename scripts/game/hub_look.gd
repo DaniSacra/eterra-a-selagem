@@ -8,8 +8,8 @@ extends ArenaRoom
 ## walls with the stations' niches; the low balustrade in front with the arrival stairs and two lamp posts. On the
 ## square the lion's medallion in old gold and the fountain of the lion (decoration: it neither heals nor is used).
 ## The five stations as pieces (their NPCs are HUB-D's: only their place): the Vendedor's awning with lanterns over
-## his counter, the Forjador's furnace in the west wall with the anvil and a rack of blades, the golden Árvore de Dons
-## (StoneTree, grown small) on its dais before a blind arch, the Livro de Ahk open on a lectern before a shelf of
+## his counter, the Forjador's furnace in the west wall with the anvil and a rack of blades, the Árvore de Dons (a bronze medallion
+## with the lion, on a pedestal and its dais) before a blind arch, the Livro de Ahk open on a lectern before a shelf of
 ## scrolls in the east wall. Every blocking piece is drawn on its footprint in the layout (HubPlan.layout; the same
 ## data draws and collides); nothing else stands on the walkable floor. The stylized look is the one the hub was made
 ## for (STYLE: warm limestone, petrol shadow, a lighter and warmer air than any room); the classic one is the same
@@ -266,26 +266,24 @@ const FOCUS_EASE := 0.3
 const FOCUS_RIM := Vector3(1.85, 0.07, 0.5)
 const FOCUS_GOLD := Color(0.9, 0.7, 0.38)
 const ANVIL_STUMP := Vector2(0.45, 0.6)
-## Árvore de Dons (spec 3.4): the dais's two steps (outer radius, top of each), the tree grown at TREE_SCALE of the
-## garden's in old gold, the crown's leaves (from height in the tree's own metres, one card every few points, sizes,
-## pale gold), its light (energy, reach, height over the dais).
+## Árvore de Dons (spec 3.4; phase 3a: the station is the Dons' bronze medallion, as the screen): the dais's two steps
+## (outer radius, top of each), the stone pedestal (foot, shaft and cap: width, height), the bronze disc on it (radius,
+## thickness, height of its centre over the dais, tilt toward the camera in degrees), the rim ring (width), the lion in
+## relief (side as a share of the radius), the warm glow behind it (size as a share of the disc, alpha), its light
+## (energy, reach, height over the dais).
 const DAIS: Array[Vector2] = [Vector2(3.2, 0.25), Vector2(2.6, 0.5)]
-const TREE_SCALE := 0.56
-const BARK := Color(0.25, 0.2, 0.15)
-const BARK_CORD := Color(0.3, 0.25, 0.19)
-const BARK_LICHEN := Color(0.26, 0.25, 0.18)
-const BARK_FRACTURE := Color(0.4, 0.33, 0.23)
-const TREE_ROOTS: Array[float] = [215.0, 290.0, 25.0]
-## How far short of the dais's rim the roots end (the tree's metres; they dive past their last point).
-const ROOT_SHORT := 2.3
-const LEAVES_FROM := 4.6
-const LEAVES_EVERY := 3
-const LEAF_SIZE := Vector2(1.9, 2.9)
-const LEAF_A := Color(0.29, 0.31, 0.2)
-const LEAF_B := Color(0.42, 0.44, 0.3)
-## Leaves across a card and how much of it the clump fills (the tree is half the garden's: fewer, larger leaves).
-const LEAF_COUNT := 5.0
-const LEAF_FILL := 0.7
+const PEDESTAL: Array[Vector2] = [Vector2(1.5, 0.35), Vector2(1.0, 1.0), Vector2(1.3, 0.22)]
+const DISC_RADIUS := 1.25
+const DISC_THICK := 0.16
+const DISC_HEIGHT := 2.35
+const DISC_TILT := 22.0
+const DISC_RIM := 0.12
+const DISC_LION := 1.5
+const DISC_BRONZE := Color(0.46, 0.31, 0.15)
+const DISC_FIELD := Color(0.3, 0.2, 0.1)
+const DISC_RIM_BRONZE := Color(0.58, 0.4, 0.19)
+const DISC_GLOW := Vector2(2.1, 0.5)
+const DISC_GLOW_COLOR := Color(1.0, 0.72, 0.36)
 const TREE_LIGHT := Vector3(1.0, 6.0, 3.2)
 const TREE_COLOR := Color(1.0, 0.82, 0.5)
 ## Livro de Ahk (spec 3.5; HUB-D): the lectern's foot and its sloped top (tilt in degrees), the open book (a page's
@@ -414,8 +412,7 @@ const WEST := Vector2(-1, 0)
 var frame: Node3D
 var fk: ArenaKit
 var fm: Masonry
-## The tree that was grown, and each station's own light (HUB-B3 lifts the one in focus).
-var tree: StoneTree
+## Each station's own light (HUB-B3 lifts the one in focus).
 ## V2 and PT-9: the Videira's planting and the heroes' standards (null before dress; Hub.evolve gives them the save).
 var vine_station: VineStation
 var hero_station: HeroStation
@@ -438,7 +435,7 @@ var _forge_light: OmniLight3D
 var _forge_twin: OmniLight3D
 var _forge_glow: StandardMaterial3D
 var _forge_fires: Array[Array] = []
-## What goes out or away while a station is closed (set_closed): the forge's coals, flame and smoke, the tree's leaves, the
+## What goes out or away while a station is closed (set_closed): the forge's coals, flame and smoke, the Dons' glow, the
 ## book's open pages; and where the closed book lies.
 var _closed_hides: Dictionary[StringName, Array] = {}
 var _book_at := Transform3D.IDENTITY
@@ -619,7 +616,7 @@ func station_light(id: StringName) -> Light3D:
 
 
 ## A station not open yet (HubGate; Hub calls it with the save): its light and fire are out (the Vendedor keeps his cloth,
-## HubEvolution). Closed, the forge is cold (no coals, flame nor smoke), the tree bare of leaves and the book shut (2026-11-21).
+## HubEvolution). Closed, the forge is cold (no coals, flame nor smoke), the Dons' glow out and the book shut (2026-11-21).
 func set_closed(id: StringName, closed: bool) -> void:
 	if closed:
 		# (opened, they are as built: some only show in one look, F7, so nothing is ever shown by hand here)
@@ -1972,9 +1969,10 @@ func _anvil(c: Vector2, o: ArenaObstacle) -> void:
 	_bar(at(c.x + 0.2, o.height + 0.02, c.y + 0.1), Vector3(0.5, 0.05, 0.06), ir, Basis(Vector3.UP, 0.4))
 
 
-## The Árvore de Dons (spec 3.4): the dais of two octagonal steps on its footprint, the garden's stone tree grown at
-## TREE_SCALE in old gold (no crystals, gold veins), pale gold leaves in its crown, its warm light.
-func _tree(c: Vector2, o: ArenaObstacle) -> void:
+## The Árvore de Dons (spec 3.4; phase 3a): the dais of two octagonal steps on its footprint, a stone pedestal on it and,
+## tilted toward the camera, the bronze medallion of the Dons screen (a rim ring, the lion in relief, a soft warm glow
+## behind), its warm light. It replaced the stone tree so that the Videira is the one tree of the hub.
+func _tree(c: Vector2, _o: ArenaObstacle) -> void:
 	var mat := stone()
 	for k in DAIS.size():
 		var pts := PackedVector2Array()
@@ -1984,28 +1982,61 @@ func _tree(c: Vector2, o: ArenaObstacle) -> void:
 			pts.append(Vector2(p.x, -p.y))
 		fm.prism(pts, DAIS[k - 1].y if k > 0 else -0.6, DAIS[k].y, mat)
 	var top := DAIS[DAIS.size() - 1].y
-	var holder := Node3D.new()
-	holder.name = "GiftTree"
-	holder.transform = Transform3D(Basis.from_scale(Vector3.ONE * TREE_SCALE), world(c.x, top, c.y))
-	add_child(holder)
-	var roots: Array[PackedVector2Array] = []
-	for b in TREE_ROOTS:
-		var w := StoneTree.toward(b)
-		roots.append(PackedVector2Array([w * 2.4, w * 3.2, w * (o.radius / TREE_SCALE - ROOT_SHORT)]))
-	tree = StoneTree.new()
-	tree.build(holder, Vector2.ZERO, roots, 0.0, 19)
-	var crystals := holder.get_node_or_null("StoneTreeCrystals")
-	if crystals != null:
-		holder.remove_child(crystals)
-		crystals.free()
-	var sm := tree.stone_material
-	sm.set_shader_parameter(&"base_color", BARK)
-	sm.set_shader_parameter(&"cord_color", BARK_CORD)
-	sm.set_shader_parameter(&"lichen_color", BARK_LICHEN)
-	sm.set_shader_parameter(&"fracture_color", BARK_FRACTURE)
-	sm.set_shader_parameter(&"vein_color", MEDALLION_GOLD)
-	sm.set_shader_parameter(&"vein_light", 0.0)
-	_leaves(holder)
+	var y := top
+	for part in PEDESTAL:
+		fm.block(at(c.x, y, c.y), Vector3(part.x, part.y, part.x), 0.0, mat, false)
+		y += part.y
+	var centre := at(c.x, top + DISC_HEIGHT, c.y)
+	# a cylinder stands on its Y axis: a quarter turn about X lays that axis along the screen's depth, then it tilts back
+	var tilt := Basis(Vector3.RIGHT, -deg_to_rad(DISC_TILT))
+	var face := tilt * Basis(Vector3.RIGHT, PI * 0.5)
+	var normal := tilt * Vector3.BACK
+	var cm := CylinderMesh.new()
+	cm.top_radius = DISC_RADIUS
+	cm.bottom_radius = DISC_RADIUS
+	cm.height = DISC_THICK
+	cm.radial_segments = 40
+	cm.rings = 1
+	var disc := MeshInstance3D.new()
+	disc.mesh = cm
+	disc.material_override = _bronze(DISC_BRONZE, 0.45)
+	disc.transform = Transform3D(face, centre)
+	frame.add_child(disc)
+	var rm := TorusMesh.new()
+	rm.inner_radius = DISC_RADIUS - DISC_RIM * 0.5
+	rm.outer_radius = DISC_RADIUS + DISC_RIM * 0.5
+	rm.rings = 40
+	rm.ring_segments = 8
+	var ring := MeshInstance3D.new()
+	ring.mesh = rm
+	ring.material_override = _bronze(DISC_RIM_BRONZE, 0.35)
+	ring.transform = Transform3D(face, centre + normal * (DISC_THICK * 0.5))
+	frame.add_child(ring)
+	# the lion, in relief on the face
+	_lion(centre + normal * (DISC_THICK * 0.5 + 0.008), tilt, DISC_RADIUS * DISC_LION, DISC_FIELD)
+	# the soft glow behind and round the disc
+	var grad := Gradient.new()
+	grad.set_color(0, Color(DISC_GLOW_COLOR, DISC_GLOW.y))
+	grad.set_color(1, Color(DISC_GLOW_COLOR, 0.0))
+	var gt := GradientTexture2D.new()
+	gt.gradient = grad
+	gt.fill = GradientTexture2D.FILL_RADIAL
+	gt.fill_from = Vector2(0.5, 0.5)
+	gt.fill_to = Vector2(1.0, 0.5)
+	var gm := StandardMaterial3D.new()
+	gm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	gm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	gm.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	gm.albedo_texture = gt
+	var gq := QuadMesh.new()
+	gq.size = Vector2.ONE * DISC_RADIUS * 2.0 * DISC_GLOW.x
+	var glow := MeshInstance3D.new()
+	glow.mesh = gq
+	glow.material_override = gm
+	glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	glow.transform = Transform3D(tilt, centre - normal * 0.05)
+	frame.add_child(glow)
+	_closed_hides[HubPlan.TREE] = [glow]
 	_gift_plaques(c)
 	var l := OmniLight3D.new()
 	l.position = world(c.x, top + TREE_LIGHT.z, c.y)
@@ -2018,12 +2049,23 @@ func _tree(c: Vector2, o: ArenaObstacle) -> void:
 	station_lights[HubPlan.TREE] = l
 
 
+## A bronze: a metallic plain material of colour c and roughness (one per pair).
+func _bronze(c: Color, rough: float) -> StandardMaterial3D:
+	var key := [&"bronze", c, rough]
+	if not _plain_mats.has(key):
+		var s := StandardMaterial3D.new()
+		s.albedo_color = c
+		s.roughness = rough
+		s.metallic = 0.7
+		_plain_mats[key] = s
+	return _plain_mats[key]
+
+
 ## HV-C (6.3), the Dons' plaques round the dais (HV-E E3 lights them; dull at first): low stones on the lower step
-## (PLAQUE: width, height, thickness), one every PLAQUE_STEP degrees clear of the roots, a lozenge cut on the face
+## (PLAQUE: width, height, thickness), one every PLAQUE_STEP degrees all round, a lozenge cut on the face
 ## turned out, in dimmed old gold.
 const PLAQUE := Vector3(0.42, 0.24, 0.12)
 const PLAQUE_STEP := 30.0
-const PLAQUE_CLEAR := 22.0
 const PLAQUE_GOLD := 0.6
 func _gift_plaques(c: Vector2) -> void:
 	var mat := stone()
@@ -2032,57 +2074,14 @@ func _gift_plaques(c: Vector2) -> void:
 	var r := (DAIS[0].x + DAIS[1].x) * 0.5
 	var a := PLAQUE_STEP * 0.5
 	while a < 360.0:
-		var clear := true
-		for b in TREE_ROOTS:
-			if absf(wrapf(a - b, -180.0, 180.0)) < PLAQUE_CLEAR:
-				clear = false
-		if clear:
-			var w := Vector2.from_angle(deg_to_rad(a))
-			var p := c + w * r
-			var yaw := atan2(-w.y, w.x) + PI * 0.5
-			var b := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, -0.12)
-			fm.box(at(p.x, DAIS[0].y + PLAQUE.y * 0.5, p.y), PLAQUE, yaw, mat, false)
-			var face := at(p.x, DAIS[0].y + PLAQUE.y * 0.55, p.y) + Vector3(w.x, 0, -w.y) * (PLAQUE.z * 0.5 + 0.004)
-			_bar(face, Vector3(0.08, 0.08, 0.006), gold, b * Basis(Vector3.BACK, PI * 0.25))
+		var w := Vector2.from_angle(deg_to_rad(a))
+		var p := c + w * r
+		var yaw := atan2(-w.y, w.x) + PI * 0.5
+		var b := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, -0.12)
+		fm.box(at(p.x, DAIS[0].y + PLAQUE.y * 0.5, p.y), PLAQUE, yaw, mat, false)
+		var face := at(p.x, DAIS[0].y + PLAQUE.y * 0.55, p.y) + Vector3(w.x, 0, -w.y) * (PLAQUE.z * 0.5 + 0.004)
+		_bar(face, Vector3(0.08, 0.08, 0.006), gold, b * Basis(Vector3.BACK, PI * 0.25))
 		a += PLAQUE_STEP
-
-
-## The crown's leaves: cards on the crown's high points facing the camera (the garden's canopy), pale gold.
-func _leaves(holder: Node3D) -> void:
-	var spots: Array[Vector3] = []
-	for k in tree.crown.size():
-		if tree.crown[k].y >= LEAVES_FROM and k % LEAVES_EVERY == 0:
-			spots.append(tree.crown[k])
-	if spots.is_empty():
-		return
-	var q := QuadMesh.new()
-	q.size = Vector2.ONE
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.use_custom_data = true
-	mm.mesh = q
-	mm.instance_count = spots.size()
-	var r := RandomNumberGenerator.new()
-	r.seed = 5113
-	var yaw := deg_to_rad(Feel.live().cam_yaw)
-	for i in spots.size():
-		var size := r.randf_range(LEAF_SIZE.x, LEAF_SIZE.y)
-		var basis := Basis(Vector3.UP, yaw + r.randf_range(-0.5, 0.5)) * Basis(Vector3.BACK, r.randf() * TAU) * Basis.from_scale(Vector3(size, size, 1.0))
-		mm.set_instance_transform(i, Transform3D(basis, spots[i] + Vector3(r.randf_range(-0.5, 0.5), r.randf_range(-0.2, 0.6), r.randf_range(-0.5, 0.5))))
-		mm.set_instance_custom_data(i, Color(r.randf(), 0, 0, 0))
-	var mat := ShaderMaterial.new()
-	mat.shader = CANOPY_SHADER
-	mat.set_shader_parameter(&"leaf_a", LEAF_A)
-	mat.set_shader_parameter(&"leaf_b", LEAF_B)
-	mat.set_shader_parameter(&"leaves", LEAF_COUNT)
-	mat.set_shader_parameter(&"fill", LEAF_FILL)
-	var mi := MultiMeshInstance3D.new()
-	mi.name = "Leaves"
-	mi.multimesh = mm
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	holder.add_child(mi)
-	_closed_hides[HubPlan.TREE] = [mi]
 
 
 ## The Livro de Ahk (spec 3.5; HUB-D, H-P0-4: a pulpit, not a side table): the lectern on its footprint (a stone foot on

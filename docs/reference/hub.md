@@ -40,8 +40,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   leão só decorativa (bacia em blocos, água escura `dark_water`, estela com o leão e o fio d'água, musgo com flores
   ocre e terra). Estações: toldo listrado terra e ocre com o leão sobre o balcão do Vendedor, mercadorias em âmbar,
   marfim e azul-ardósia, duas lanternas; forno, bigorna e cavalete com três lâminas de ponta para cima e o escudo do
-  leão; Árvore de Dons = `StoneTree` a 0,65 em ouro velho (sem cristais, veios de ouro, folhas de ouro pálido no
-  `canopy.gdshader`) sobre o estrado octogonal, luz quente sem sombra; Livro de Ahk aberto no atril
+  leão; Árvore de Dons = medalhão de bronze (disco de 1,25 m inclinado 22 graus, aro, leão em relevo, brilho quente aditivo; fase 3a, 2026-11-23, no lugar da `StoneTree`, que era concorrente da Videira) num pedestal de pedra sobre o estrado octogonal, luz quente sem sombra (`DISC_*`, `PEDESTAL`; fechada, só o brilho some); Livro de Ahk aberto no atril
   (`hub_page.gdshader`: pergaminho com linhas de tinta e rubrica, nada legível), fita petróleo, velas, tapete. Luz por
   estação em `HubLook.station_lights` (`station_light(id)`, para o HUB-B3). Ar e pintura próprios (`AIR`, `STYLE`:
   calcário morno, sombra petróleo; ambiente e lua um pouco mais neutros que a spec para a saturação ficar na meta) e
@@ -111,8 +110,8 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   36,8% na caixa 690,0,300,150 a 1672 x 941 no `--shot-at=1`; a Longe igual; `--hero-at` pula isso); com estação em foco a câmera ainda se inclina pelo
   `HubPlan.frame_for` (`SHOW`, `CamRig.lean`). Estações com lugar próprio e de frente para a câmera: barraca do Vendedor
   no lóbulo oeste (`COUNTER` com `COUNTER_HALF`, toldo de 5,8 m listrado terra e ocre de 5 a 3,5 m de altura sobre quatro
-  postes, `AWNING_*`, prateleiras atrás, mercadorias, duas lanternas; mercadorias encostadas, `GOODS`); Árvore a 0,56 (inteira na tela da Longe, re-revisão E-3) em ouro mais velho sobre
-  o estrado no lóbulo leste (folhas em cartões maiores e em menos lugares, H-P2-1); forja no chão a noroeste da bigorna
+  postes, `AWNING_*`, prateleiras atrás, mercadorias, duas lanternas; mercadorias encostadas, `GOODS`); Árvore de Dons (medalhão de bronze, ver acima) sobre
+  o estrado no lóbulo leste (as placas baixas dão a volta inteira, sem raízes a evitar); forja no chão a noroeste da bigorna
   (`FORGE`, `FORGE_HALF`: bloco de 3,8 x 3 m e 3,4 de altura, boca em arco para o sul com brasas, fogo e brilho, coifa,
   chaminé de 5,8 m com fumaça, a única luz de fogo com sombra), bigorna 1,5 vez maior, os dois NPCs com círculo de corpo onde são desenhados (`HubPlan.SMITH_SPOT` onde o martelo do
   Forjador pousa, `VENDOR_SPOT` 0,4 m atrás do balcão, `test_the_npcs_block_where_they_stand`), pátio a oeste (`YARD`: cavalete com
