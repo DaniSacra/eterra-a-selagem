@@ -108,7 +108,7 @@ func step(dt: float) -> void:
 	for i in nodes.size():
 		if is_instance_valid(nodes[i]):
 			var st := hazard.state(i)
-			GroundLook.set_plate(nodes[i], st)
+			GroundLook.set_plate(nodes[i], st, Feel.live().bang_lead / maxf(def.warn, 0.001))
 			# SW-G7: with the room's piece the slab at rest is the piece; the drawn frame only shows the amber warming up
 			nodes[i].visible = pieces[i] == null or st.x > 0.0 or st.y > 0.0
 	_show_pieces()

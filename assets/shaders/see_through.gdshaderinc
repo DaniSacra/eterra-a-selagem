@@ -7,14 +7,6 @@ global uniform vec3 hero_pos;
 // The Chamber of the Seal (C11): the same hole opens round Morvath too (BossChamber.BOSS_FAR when there is none).
 global uniform vec3 boss_pos;
 
-// A 4 x 4 ordered dither: the threshold of this pixel (0..1).
-float bayer4(vec2 frag) {
-	ivec2 p = ivec2(mod(frag, 4.0));
-	int i = p.x + p.y * 4;
-	int m[16] = int[](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
-	return (float(m[i]) + 0.5) / 16.0;
-}
-
 // Interleaved gradient noise (Jimenez): a threshold with no regular grid to it (the 4 x 4 pattern read as a screen of
 // dots at 1080, art review 2026-11-21 item 6).
 float ign(vec2 frag) {
@@ -39,8 +31,17 @@ bool see_through_hole(vec3 vertex, vec2 frag, mat4 view, mat4 projection, float 
 		if (vertex.z > hv.z + gap) {
 			// this pixel's line of sight where it crosses his depth, and how far from him that is
 			float d = length(vertex.xy * (hv.z / vertex.z) - hv.xy) / radius;
-			open = max(open, (1.0 - smoothstep(0.15, 1.0, d)) * (1.0 - max(keep, SEE_GHOST)) * amount);
+			open = max(open, (1.0 - smoothstep(0.0, 1.0, d)) * (1.0 - max(keep, SEE_GHOST)) * amount);
 		}
 	}
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+	// the browser: a plain per-pixel threshold (no 4 x 4 grid), hard edge
 	return ign(frag) < open;
+#else
+	// Forward+ (GR-8, art review 2026-11-23 item 7): the same ghost, but the threshold is two decorrelated per-pixel
+	// noises averaged (triangular, no regular grid, no screen of dots) and the edge is eased over the whole 0.6 m rim,
+	// so under 2x MSAA it reads as a soft fade, not stippling.
+	float t = 0.5 * (ign(frag) + ign(frag.yx + vec2(17.0, 43.0)));
+	return t < smoothstep(0.0, 1.0, open);
+#endif
 }
