@@ -42,6 +42,7 @@ var hammer := ForgeHammer.new()
 ## What the strip offers (ForgeInfo each) and its chips; info is the one in focus, shown its rank (null on the Oficina).
 var infos: Array[ForgeInfo] = []
 var chips: Array[ForgeChip] = []
+var _bar: ActionBar
 var info: ForgeInfo
 var shown: ForgeRank
 var bench: ForgeBench
@@ -140,8 +141,8 @@ func _build_top() -> void:
 	_purse.add_theme_constant_override(&"separation", 18)
 	_purse.alignment = BoxContainer.ALIGNMENT_END
 	_purse.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_purse.position = Vector2(1000, 24)
-	_purse.size = Vector2(PURSE_RIGHT - 1000.0, 36)
+	_purse.add_theme_constant_override(&"separation", 16)
+	CoinCorner.place(_purse, PURSE_RIGHT, 24.0)
 	_stage.add_child(_purse)
 
 
@@ -169,11 +170,14 @@ func _build_tabs() -> void:
 
 
 func _attach_bar() -> void:
-	var keys := [ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())]
+	var keys := [ActionBar.entry(&"ui_accept", T.t(&"bar_hammer"), func() -> void:
+			press()
+			release()),
+		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())]
 	if _tab_order.size() > 1:
 		keys.push_front(ActionBar.entry(&"tab_next", T.t(&"bar_next"), func() -> void: _turn(1), true))
 		keys.push_front(ActionBar.entry(&"tab_prev", T.t(&"bar_prev"), func() -> void: _turn(-1), true))
-	ActionBar.attach(self, keys)
+	_bar = ActionBar.attach(self, keys)
 
 
 func _place_stage() -> void:
@@ -494,6 +498,8 @@ func _refresh() -> void:
 	if info != null:
 		plate.show_info(info, hammer, ICON.get(mark, &"ingot"))
 	_purse_state()
+	if _bar != null and info != null and info.verb() != "":
+		_bar.item(&"ui_accept").set_verb(info.verb())
 
 
 func _bench_state() -> void:
@@ -514,12 +520,37 @@ func _bench_state() -> void:
 	bench.pick_look = _pick_look()
 	bench.sealed = {&"attack": not Forge.has_tool(_data, Forge.TOOL_REFINE), &"special": not Forge.has_tool(_data, Forge.TOOL_REFINE),
 		&"awaken": not Forge.has_tool(_data, Forge.TOOL_AWAKEN), &"inscribe": not Forge.has_tool(_data, Forge.TOOL_INSCRIBE)}
+	bench.causes = _causes()
 	bench.doing.clear()
 	for m in marks():
 		for i in (_infos_of(m) if m != mark else infos):
 			if i.look == ForgeInfo.Look.READY:
 				bench.doing[m] = true
 	bench.queue_redraw()
+
+
+## Why each point is closed now, one short line: the missing tool, or the cheapest thing it lacks (UI 9). The two arms
+## of the guard share one name, so only one of them speaks when both are closed alike.
+func _causes() -> Dictionary:
+	var out := {}
+	if tab == Tab.WORKSHOP:
+		return out
+	for m in marks():
+		if bench.sealed.get(m, false):
+			out[m] = T.t(&"forge_state_no_tool")
+			continue
+		var lack := 0
+		var what := ""
+		var open := false
+		for i in (_infos_of(m) if m != mark else infos):
+			if i.look in [ForgeInfo.Look.READY, ForgeInfo.Look.ON, ForgeInfo.Look.STORED]:
+				open = true
+			elif i.look == ForgeInfo.Look.SHORT and (lack == 0 or i.cost - i.have < lack):
+				lack = i.cost - i.have
+				what = MaterialCount.short_of(i.material)
+		if not open and lack > 0:
+			out[m] = T.t(&"forge_lack", {"n": lack, "name": what})
+	return out
 
 
 func _pick_look() -> PickMark.Look:
@@ -571,16 +602,15 @@ func _strip_state() -> void:
 ## The bag: only the materials this bench uses (Prata and Esmeralda on the Emeth; Prata and Pedra Funda on the Oficina);
 ## a number that changed counts to the new one in 0.3 s.
 func _purse_state() -> void:
-	var want: Array[StringName] = [MaterialPurse.SILVER]
-	for m in MaterialCount.shown(_data):
-		if m == (DoorGlyph.STONE_ID if tab == Tab.WORKSHOP else MaterialPurse.EMERALD):
-			want.append(m)
+	var want: Array[StringName] = CoinCorner.WALLET_ORDER.duplicate()
+	if tab == Tab.WORKSHOP and MaterialCount.shown(_data).has(DoorGlyph.STONE_ID):
+		want.append(DoorGlyph.STONE_ID)
 	var key := "%s%s" % [tab, want]
 	if _bag_shown.get("key", "") != key:
 		for c in _purse.get_children():
 			c.queue_free()
 		for m in want:
-			_purse.add_child(MaterialCount.new().setup(m, MaterialCount.amount_of(_data, m), UiKit.PALE, 20, 24.0))
+			_purse.add_child(MaterialCount.new().setup(m, MaterialCount.amount_of(_data, m), UiKit.PALE, 18, 22.0, true))
 		_bag_shown = {"key": key}
 		return
 	for c in _purse.get_children():

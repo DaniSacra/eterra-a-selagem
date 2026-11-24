@@ -422,6 +422,33 @@ func _draw_labels() -> void:
 		draw_string(f, p + Vector2(-w * 0.5, 5.5), l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, l.ink)
 
 
+## The boxes the branch labels fill now (same size and place as _draw_labels).
+func label_boxes() -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	var f := UiKit.TITLE_FONT
+	for l: Dictionary in _labels:
+		var w := f.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+		out.append(Rect2(spot_at(l.angle, l.radius) - Vector2(w * 0.5 + 8.0, 12.0), Vector2(w + 16.0, 24.0)))
+	return out
+
+
+## Where the caption's centre goes: inward from the node at `start`, pushed along that line (further in, then back
+## toward the node) until its box clears every branch label (UI 6: the hint sat over "FÚRIA" and "COMBO").
+func caption_spot(c: Vector2, inward: Vector2, start: float, box_size: Vector2) -> Vector2:
+	var boxes := label_boxes()
+	for step: float in [0.0, 28.0, 56.0, -28.0, 84.0, -56.0]:
+		var p := c + inward * (start + step)
+		var r := Rect2(p - box_size * 0.5, box_size).grow(4.0)
+		var clear := true
+		for b in boxes:
+			if r.intersects(b):
+				clear = false
+				break
+		if clear:
+			return p
+	return c + inward * start
+
+
 ## A place on the ring's plane by angle and radius, with the entrance's turn.
 func spot_at(angle: float, radius: float) -> Vector2:
 	return MedallionDef.CENTER + (MedallionDef.place(angle, radius) - MedallionDef.CENTER).rotated(_turn())
@@ -437,7 +464,7 @@ func _draw_caption() -> void:
 	var inward := (MedallionDef.CENTER - c).normalized()
 	var f := UiKit.TEXT_FONT
 	var w := minf(f.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x, 260.0)
-	var p := c + inward * (n.diameter * 0.5 + 62.0)
+	var p := caption_spot(c, inward, n.diameter * 0.5 + 62.0, Vector2(w + 16.0, 26.0))
 	var box := Rect2(p - Vector2(w * 0.5 + 8.0, 13.0), Vector2(w + 16.0, 26.0))
 	draw_style_box(UiKit.box(Color(0.03, 0.025, 0.035, 0.92), UiKit.OLD_GOLD, 1, 0, 4), box)
 	draw_string(f, p + Vector2(-w * 0.5, 5.5), caption, HORIZONTAL_ALIGNMENT_LEFT, w, 15, UiKit.PALE)

@@ -87,6 +87,8 @@ var _frame: MarginContainer
 var _trip := 0
 ## The keys at the foot (benchmark P0-2): the turn and the press on the left, the way back on the right.
 var bar: ActionBar
+## The coins at the foot, the same three as the other screens (CoinCorner.wallet).
+var _wallet: HBoxContainer
 var _to_gifts: Button
 var _dons: DonsScreen
 var _down: Button
@@ -161,8 +163,11 @@ func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = fals
 	bar = ActionBar.attach(self, [
 		ActionBar.entry(&"tab_prev", T.t(&"bar_prev"), func() -> void: _turn_page(-1), true),
 		ActionBar.entry(&"tab_next", T.t(&"bar_next"), func() -> void: _turn_page(1), true),
-		ActionBar.entry(&"ui_accept", T.t(&"bar_confirm"), _press_focus),
+		ActionBar.entry(&"ui_accept", T.t(&"bar_open_page"), _press_focus),
 		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
+	_wallet = CoinCorner.wallet(_data, 17, 20.0)
+	_wallet.name = "coins"
+	bar.set_center(_wallet)
 	_refresh()
 	_show(start)
 	_first_focus().grab_focus.call_deferred()
@@ -270,7 +275,7 @@ func _head_right() -> Control:
 	_bar.name = "mastery"
 	_bar.paper = true
 	v.add_child(_bar)
-	_next = Book.label("", Book.RUBRIC, 15)
+	_next = Book.label("", Book.GILT, 16)
 	_next.name = "next"
 	v.add_child(_next)
 	row.add_child(v)
@@ -668,6 +673,7 @@ func _open_dons() -> void:
 	for c in get_children():
 		(c as CanvasItem).visible = false
 	add_child(_dons)
+	_dons.closed.connect(_close_dons)
 	_dons.open(_data)
 
 
@@ -784,6 +790,8 @@ func _chapter_focus(c: Chapter) -> Control:
 
 
 func _refresh() -> void:
+	if is_instance_valid(_wallet):
+		MaterialCount.refresh(_wallet, _data)
 	var next := loadout.next_unlocks()
 	_next.text = T.t(&"hero_next", {"n": loadout.level() + 1, "what": ", ".join(next)}) if not next.is_empty() else ""
 

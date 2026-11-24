@@ -20,6 +20,8 @@ no relatório e a sessão principal cola, para não dar conflito no fim do arqui
 
 ### (A) Fazer agora sem perguntar
 
+**Lote A: FEITO 2026-11-24 (itens 1 a 8, ver `tests/test_lote_a_meta_ui.gd`; falta só a recaptura GPU do Lote F: Dons, Forja, Videira, Vendedor, Livro, fim de descida; Vendedor com selo ERGUIDA e o chip do Enter do Vendedor ainda sem captura).** Notas: carteira única em `CoinCorner.wallet`, `ActionBar.set_center` (Livro, nó `coins`), Forja com `ForgeBench.causes` e `SUB_KEY`, dica do Dons por `MedallionView.caption_spot`, linha `end_brought_none`. Chaves de texto novas: `bar_sector_prev/next`, `bar_swap_hero`, `bar_open_page`, `bar_water`, `bar_hammer`, `forge_sub_*`, `end_brought_none`.
+
 **Lote A, telas da meta e textos** (`ui-ux-designer`; arquivos: `data/text_pt.tres`, `scripts/ui/dons_screen.gd`, `dons_panel.gd`,
 `medallion_view.gd`, `forge_screen.gd`, `forge_bench.gd`, `vendor_screen.gd`, `vendor_plate.gd`, `vine_screen.gd`, `coin_corner.gd`, `end_screen.gd`)
 1. **Textos errados ou em inglês** (bug de texto, P). UI 13, 14, 17 e o quickwin `dons_do_chosen`. `mouse_1` "Mouse esq." vira "Clique esquerdo"

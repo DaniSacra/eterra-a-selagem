@@ -126,10 +126,15 @@ func _book(d: Dictionary) -> HeroScreen:
 	return s
 
 
-func test_the_book_sells_nothing_and_holds_no_purse() -> void:
+func test_the_book_sells_nothing_and_shows_the_same_three_coins() -> void:
 	var s := _book(_data(1, 7, 4))
-	assert_null(s.find_child("purse", true, false))
-	assert_eq(s.find_children("*", "MaterialCount", true, false).size(), 0)
+	var purse := s.find_child("coins", true, false)
+	assert_not_null(purse, "the Livro holds the common wallet at its foot")
+	var ids: Array[StringName] = []
+	for c in purse.get_children():
+		ids.append((c as MaterialCount).id)
+	assert_eq(ids, CoinCorner.WALLET_ORDER)
+	assert_eq(s.find_children("*", "MaterialCount", true, false).size(), 3, "and sells nothing")
 
 
 # ---------- the Encontro ----------
@@ -205,7 +210,10 @@ func test_the_end_says_what_was_brought() -> void:
 	var none := EndScreen.new()
 	add_child_autofree(none)
 	none.open(false, {"time": 20.0, "level": 0, "kills": 3, "best_combo": 2, "boons": 0}, false)
-	assert_null(none.find_child("brought", true, false), "nothing brought, nothing said")
+	assert_null(none.find_child("brought", true, false), "no row of materials when none came")
+	assert_not_null(none.find_child("brought_none", true, false), "but the way to bring some is said")
+	assert_null(end.find_child("brought_none", true, false), "and not when something came")
+	assert_false(T.t(&"end_brought_none").contains("—"))
 
 
 func test_the_hub_shows_the_purse_and_hides_it_under_a_screen() -> void:

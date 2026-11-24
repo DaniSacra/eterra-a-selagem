@@ -114,10 +114,8 @@ func _head() -> void:
 	title.size = Vector2(STAGE.x, 40)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_stage.add_child(title)
-	_purse = MaterialCount.purse(_data, UiKit.PALE, 20, 24.0)
-	_purse.position = Vector2(1010, 104)
-	_purse.size = Vector2(246, 32)
-	_purse.alignment = BoxContainer.ALIGNMENT_END
+	_purse = CoinCorner.wallet(_data)
+	CoinCorner.place(_purse, 1256.0, 104.0)
 	_stage.add_child(_purse)
 
 
@@ -299,7 +297,7 @@ func _set_close() -> void:
 		var can := st == VendorOffer.State.CAN
 		close_button.disabled = not can
 		close_button.text = _deal_text(placed) if can else placed.state_text(_data, def)
-		bar.item(&"ui_accept").set_verb(T.t(&"vendor_deal_trade" if placed.is_trade() else &"bar_confirm"))
+		bar.item(&"ui_accept").set_verb(_deal_text(placed))
 	else:
 		bar.item(&"ui_accept").set_verb(T.t(&"bar_put"))
 	_wire()

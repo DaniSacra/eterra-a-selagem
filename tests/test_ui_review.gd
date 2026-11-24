@@ -323,7 +323,7 @@ func test_the_hub_names_its_place_and_its_stations() -> void:
 func test_the_mastery_reveals_and_the_memory_opens() -> void:
 	assert_true(T.t(&"end_unlocked_many", {"name": "x"}).begins_with("Dons revelados"))
 	assert_true(T.t(&"end_unlocked", {"name": "x"}).begins_with("Dom revelado"))
-	assert_true(T.t(&"hero_next", {"n": 3, "what": "x"}).contains("revela"))
+	assert_true(T.t(&"hero_next", {"n": 3, "what": "x"}).contains("você ganha"))
 
 
 func test_the_codex_enemies_have_a_mark_and_a_tall_row() -> void:

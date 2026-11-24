@@ -31,6 +31,8 @@ const STEP_KEYS := "← →"
 
 var left: HBoxContainer
 var right: HBoxContainer
+## The middle of the row (between the extras and the main action): empty, or what set_center put there.
+var center: HBoxContainer
 var items: Array[Item] = []
 
 
@@ -65,10 +67,12 @@ func _init() -> void:
 	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	left.add_theme_constant_override(&"separation", GAP)
 	add_child(left)
-	var fill := Control.new()
-	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	fill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_child(fill)
+	center = HBoxContainer.new()
+	center.name = "center"
+	center.alignment = BoxContainer.ALIGNMENT_CENTER
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	add_child(center)
 	right = HBoxContainer.new()
 	right.name = "right"
 	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -78,6 +82,13 @@ func _init() -> void:
 
 func _ready() -> void:
 	Controls.device_changed.connect(func(_pad: bool) -> void: refresh())
+
+
+## A passive piece in the middle of the row (the Livro's coins).
+func set_center(node: Control) -> void:
+	for c in center.get_children():
+		c.queue_free()
+	center.add_child(node)
 
 
 func add(e: Dictionary) -> Item:

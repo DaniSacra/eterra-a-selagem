@@ -100,3 +100,29 @@ func note_text() -> String:
 func tick(delta: float) -> void:
 	_note_t = maxf(0.0, _note_t - delta)
 	note.modulate.a = clampf(_note_t / NOTE_FADE, 0.0, 1.0)
+
+
+# ---- the wallet of the full screens (UI 8 and 18) ----
+
+## The coins of every screen that stops the game, always the same three in the same order (Prata, Memória, Esmeralda)
+## with their short names, so the corner reads the same in the Dons, the Videira, the Forja, the Vendedor and the Livro.
+##   var row := CoinCorner.wallet(data); CoinCorner.place(row, 1256.0, 24.0); ...; MaterialCount.refresh(row, data)
+const WALLET_ORDER: Array[StringName] = [MaterialPurse.SILVER, MaterialPurse.MEMORY, MaterialPurse.EMERALD]
+const WALLET_WIDTH := 400.0
+
+
+static func wallet(data: Dictionary, size: int = 18, mark_px: float = 22.0) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.name = "purse"
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.alignment = BoxContainer.ALIGNMENT_END
+	row.add_theme_constant_override(&"separation", 16)
+	for m in WALLET_ORDER:
+		row.add_child(MaterialCount.new().setup(m, MaterialCount.amount_of(data, m), UiKit.PALE, size, mark_px, true))
+	return row
+
+
+## Right edge and top of the wallet in a 1280 x 720 stage.
+static func place(row: Control, right: float, top: float) -> void:
+	row.size = Vector2(WALLET_WIDTH, 32.0)
+	row.position = Vector2(right - WALLET_WIDTH, top)

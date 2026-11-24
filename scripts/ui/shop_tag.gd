@@ -17,6 +17,8 @@ const STAMP := Color("d9b866")
 
 var offer: VendorOffer
 var home := Vector2.ZERO
+## What the stamp takes from the right of a made tag.
+const STAMP_ROOM := 96.0
 var _toward := 1.0
 var _content: Control
 var _stamp: Label
@@ -48,7 +50,7 @@ func setup(p_offer: VendorOffer, def: OficiosDef, p_size: Vector2 = SIZE, p_towa
 	_stamp.name = "stamp"
 	_stamp.visible = false
 	_stamp.rotation = deg_to_rad(-8.0)
-	_stamp.position = Vector2(p_size.x - 118.0, p_size.y * 0.42)
+	_stamp.position = Vector2(p_size.x - 124.0, p_size.y * 0.5 - 14.0)
 	UiKit.shadow(_stamp)
 	add_child(_stamp)
 	focus_entered.connect(_lit.bind(true))
@@ -115,7 +117,9 @@ func refresh(data: Dictionary, def: OficiosDef) -> void:
 	for c in _costs:
 		c.set_color(ShopArt.SHORT if missing.has(c.id) and st != VendorOffer.State.MADE else Book.MARK_IVORY)
 	var made := st == VendorOffer.State.MADE
-	_content.modulate.a = 0.6 if made else 1.0
+	_content.modulate.a = 0.4 if made else 1.0
+	# the stamp takes the side and the words stay clear of it (UI 20)
+	_content.size.x = size.x - CUT - 36.0 - (STAMP_ROOM if made else 0.0)
 	_stamp.visible = made
 	_stamp.text = offer.state_text(data, def) if made else ""
 	queue_redraw()
