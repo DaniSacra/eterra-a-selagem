@@ -8,7 +8,7 @@ extends Node3D
 ## the real key that follows the device, never over the hero; hidden while a screen is open). interact (E, A), or a
 ## click on the sign, uses it: the Portal asks a short confirmation on a leaf of the Livro (HubPanel: "Descer às
 ## catacumbas?", Descer, Ficar) and goes down as the title's Iniciar used to (the Juramentos first once Morvath was
-## sealed, then the run); the Árvore de Dons and the Livro de Ahk open the Livro (HeroScreen) on the Gifts and on the
+## sealed, then the run); the Árvore de Dons opens the Gifts medallion (DonsScreen) and the Livro de Ahk the Livro (HeroScreen) on the
 ## Warrior (its Compêndio from there); the Vendedor and the Forjador say honestly, on their own leaf, that they are
 ## still to be defined (nothing to buy or forge). Esc (pause) opens the hub's menu (PauseMenu.hub: Como Jogar,
 ## Compêndio, Configurações, Voltar ao título). Its music is its own place in Músicas (MusicCatalog.HUB).
@@ -271,7 +271,7 @@ func use(id: StringName) -> void:
 		HubPlan.PORTAL:
 			_open_portal()
 		HubPlan.TREE:
-			_open_book(HeroScreen.Chapter.GIFTS)
+			host.open(DonsScreen.new())
 		HubPlan.BOOK:
 			_open_book(HeroScreen.Chapter.HERO)
 		HubPlan.SMITH:

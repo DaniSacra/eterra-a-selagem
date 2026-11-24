@@ -550,3 +550,29 @@ Dons do `HeroScreen` é o `CodexBook` (`scripts/ui/codex_book.gd`), na página d
   teclado, mouse e controle dizem certo. Textos `tip_*` em `data/text_pt.tres`. Escreve o save ao aparecer.
 - Fora para o robô, `--smoke` e `--nosave` (`FirstTips.enabled`). `--tips` força todas, sem gravar (capturas). Não toca na partida: o `RESULT`
   da semente 5 não muda.
+
+## Dons em medalhão (PT-12, 2026-11-23; especificação `docs/art/dons_medallion_spec.md`, testes em `tests/test_dons_medallion.gd`)
+A estação "Árvore de Dons" do Santuário abre `DonsScreen` (`--title --screen=dons [--hero=warrior|maga] [--dons-focus=<id>]`,
+mais `--hero-xp`, `--hero-opened`, `--hero-equip` de sempre). O capítulo Dons do `CodexBook` continua como está até a revisão
+do Daniel (depois saem `CodexBook`, `GiftEntry`, `GiftRibbon`, `Candles`).
+- **Dado**: `data/heroes/<herói>_medallion.tres` (`MedallionDef` com `MedallionNodeDef`: id, tipo coroa/Dom/ultimate, ângulo
+  do meio-dia no sentido do relógio, raio, diâmetro), escrito por `_medallion` em `tools/make_data.gd` (tabelas
+  `MEDALLION_WARRIOR` e `MEDALLION_MAGA`; Dom novo é linha nova). Espaço de projeto 1280 x 720, centro (620, 378), anel 254.
+- **Peças**: `MedallionNav` (puro: posições, linhas de pré-requisito, direção por cone de 60 graus, salto de setor com
+  LB/RB), `HoldGauge` (o "segure" de 1 s, solta e a barra volta em 0,2 s), `MedallionView` (moldura, anel, linhas acesas com
+  brilho aditivo, nós por estado, foco, anel de segurar, clarão e 12 faíscas ao abrir), `DonsPanel` (disco, nome, "Dom · ramo ·
+  degrau", descrição, custo em Devoção ou Memória, botão com a tecla ou botão do controle via `UiKit.action_label`),
+  `DonsScreen` (fundo, halo, figura, faixa, contadores, traço do nó ao painel, entrada). Palco de 1280 x 720 centrado na tela
+  (a 16:9 vale x1,5 em 1080; em outras proporções sobra fundo nas laterais).
+- **Regras**: as do Livro, pelo `HeroLoadout` (`toggle`, `open`, `choose_ult`, `can_open`); toda mudança grava o save na hora.
+  Apertar equipa e tira; um Dom selado abre **segurando** 1 s (sem Memória, o botão diz "Faltam N de Memória"); coroa mostra o
+  herói (nível, barra de Maestria, "o nível N revela", frase); as ultimates se escolhem no aro (aro duplo, a escolhida cheia).
+  Direcional anda ao nó mais perto no lado apertado, LB/RB (`tab_prev`/`tab_next`) saltam de setor, Y (`menu_reroll`) troca o
+  herói (só heróis liberados), B/Esc fecha (o `ScreenHost`).
+- **Arte final**: cada peça tem caminho previsto em `DonsArt` (`assets/ui/dons/<herói>_bg.png`, `<herói>_figure.png`,
+  `frame.png`, `disc.png`, `memory.png`); o arquivo que aparecer é usado sem mexer em código. Provisório: fundo do título
+  (sem o logo, desfocado, escurecido e aquecido para sair o violeta, shader `dons_art.gdshader`), retrato do Guerreiro com
+  máscara de borda, recorte da Maga, moldura e faixa desenhadas, cristal de Memória do `DoorGlyph`.
+- **Pendências conhecidas**: som (nota que sobe ao segurar, sino ao equipar, tom ao abrir) e o cristal que voa para o
+  contador; o traço do nó ao painel só sai dos nós da metade direita (da esquerda cruzaria a figura); a estação do
+  Santuário ainda é a árvore de pedra (o medalhão de bronze é peça do `environment-artist`).
