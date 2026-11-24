@@ -418,6 +418,11 @@ func _ready() -> void:
 		# dev, for captures: the paladin's life (a defeat in a few blows, or blows taken without falling)
 		player.max_hp = Dev.num("hero-hp", hero.max_hp)
 		player.hp = player.max_hp
+	if Dev.has("enchant-choice"):
+		# dev, for captures: the Encanto's choice open at once (PT-10)
+		var scr := EnchantChoice.new()
+		open_screen.call_deferred(scr)
+		scr.open_enchants.call_deferred(Enchants.load_catalog().slice(0, 3))
 	if Dev.has("encounter") and encounters != null:
 		encounters.dev_open.call_deferred(Dev.arg("encounter"))
 	if Dev.has("feel-panel"):

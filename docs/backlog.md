@@ -31,7 +31,8 @@ guia `--guide=tree`, Santuário), ajustar alturas pelo que se vê, exe nas duas 
   linha por número; `boon_choice_rows.png`); escolha do Encanto com a arma cravada e acesa à esquerda e o **ichthys** (a runa de
   duas curvas deitada, o peixe) como símbolo do Encanto (`enchant_choice_stone.png`); portas com anel de energia, selo de
   modificador e caixa ao chegar perto (`door_sigils.png`, `door_tip.png`); coluna da direita com a pintura de cada Bênção e o
-  nível (`build_column.png`). Em andamento (dois `ui-ux-designer`).
+  nível (`build_column.png`). **Feito (2026-11-23, falta captura na GPU)**: palco do Encontro, tecla na frase, altar e ichthys do Encanto
+  (`docs/reference/ui.md`); faltam portas (`door_sigils`, `door_tip`) e a coluna da direita (`build_column`).
 - **PT-11 Loja da descida junto da parede** (`room-designer` + `environment-artist`, depois do PT-6; `shop_along_wall.png`): hoje as
   três ofertas ficam em fila no meio do chão. Pedido: os itens em colunas de pedra finas **ao longo da parede do fundo e das
   laterais**, cada um flutuando numa bolha de luz pequena com a **plaquinha de preço** em cima (pergaminho, número + moeda), o

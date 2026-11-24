@@ -513,7 +513,18 @@ static func describe(b: Boon, level: int, mult: float = 1.0, marked := false) ->
 	if marked:
 		for k: String in args:
 			args[k] = UiKit.strong(str(args[k]))
+	args["key"] = key_in_text(b.button(), marked)
 	return T.t("boon_%s_desc" % b.id, args)
+
+
+## PT-10: the real key of a button inside the sentence ("O ataque [Mouse esq.] incendeia..."): the key as the player has
+## it now (the pad's, a remapped key), in strong ink when marked, with the space before it. Empty for a Blessing that
+## acts alone.
+static func key_in_text(action: StringName, marked := false) -> String:
+	if action == &"":
+		return ""
+	var k := UiKit.action_label(action)
+	return " " + (UiKit.strong("[lb]%s[rb]" % k) if marked else "[%s]" % k)
 
 
 ## The stats whose value is a time, a damage each second, or a count added: how a fact reads its value.
