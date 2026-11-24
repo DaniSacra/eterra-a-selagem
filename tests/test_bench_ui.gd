@@ -99,7 +99,7 @@ func test_every_screen_that_stops_the_game_has_the_bar() -> void:
 	await _bar_ok(meet, "the angels")
 	var book := HeroScreen.new()
 	add_child_autofree(book)
-	book.open(SaveData.defaults(), HeroScreen.Chapter.GIFTS)
+	book.open(SaveData.defaults(), HeroScreen.Chapter.HERO)
 	await _bar_ok(book, "the Livro")
 	var forge := ForgeScreen.new()
 	add_child_autofree(forge)
@@ -343,12 +343,6 @@ func test_the_tree_tells_its_states_apart_beyond_colour() -> void:
 		n.state = st as HeroLoadout.State
 		await wait_process_frames(1)
 		assert_true(n.is_visible_in_tree())
-	var book := HeroScreen.new()
-	add_child_autofree(book)
-	book.open(SaveData.defaults(), HeroScreen.Chapter.GIFTS)
-	var glance := book.find_child("glance", true, false) as HBoxContainer
-	assert_not_null(glance, "cost and what it asks side by side")
-	assert_eq(glance.get_child_count(), 2)
 
 
 func test_every_menu_has_the_bar_in_the_same_place() -> void:

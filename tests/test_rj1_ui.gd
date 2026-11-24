@@ -119,52 +119,8 @@ func test_the_forjador_opens_the_forge() -> void:
 func _book(d: Dictionary) -> HeroScreen:
 	var s := HeroScreen.new()
 	add_child_autofree(s)
-	s.open(d, HeroScreen.Chapter.GIFTS)
+	s.open(d, HeroScreen.Chapter.HERO)
 	return s
-
-
-func test_a_sealed_gift_opens_on_a_second_press_only() -> void:
-	var d := _data(3, 0, 2)
-	var s := _book(d)
-	var impeto := s.loadout.book.find(&"impeto")
-	assert_eq(s.loadout.state(impeto), HeroLoadout.State.SEALED)
-	assert_eq(s.codex.entry(&"impeto").state, HeroLoadout.State.SEALED)
-	s._tell(impeto)
-	assert_eq(s.bar.item(&"ui_accept").verb.text, T.t(&"bar_open").to_upper(), "the bar says it opens with Memória")
-	s._pick(impeto)
-	assert_eq(s.arming, &"impeto", "the first press asks")
-	assert_false(s.loadout.is_open(impeto))
-	assert_eq((s.find_child("step", true, false) as Label).text, T.t(&"hero_open_confirm", {"cost": 2}))
-	s._pick(impeto)
-	assert_true(s.loadout.is_open(impeto), "the second opens it")
-	assert_eq(s.loadout.memory(), 0)
-	assert_false(s.loadout.is_equipped(&"impeto"), "opening never puts it on")
-	s._pick(impeto)
-	assert_true(s.loadout.is_equipped(&"impeto"), "then a press puts it on")
-
-
-func test_the_question_goes_away_with_the_focus_or_the_time() -> void:
-	var s := _book(_data(3, 0, 2))
-	var impeto := s.loadout.book.find(&"impeto")
-	s._pick(impeto)
-	s._tell(s.loadout.book.find(&"quarto_corte"))
-	assert_eq(s.arming, &"", "another Gift in focus")
-	s._tell(impeto)
-	s._pick(impeto)
-	s._process(HeroScreen.CONFIRM_TIME + 0.1)
-	assert_eq(s.arming, &"", "three seconds")
-	s._pick(impeto)
-	assert_false(s.loadout.is_open(impeto), "a new question, nothing opened")
-
-
-func test_without_memory_the_gift_refuses_and_says_why() -> void:
-	var s := _book(_data(3, 0, 1))
-	var impeto := s.loadout.book.find(&"impeto")
-	s._tell(impeto)
-	s._pick(impeto)
-	assert_eq(s.arming, &"")
-	assert_false(s.loadout.is_open(impeto))
-	assert_eq((s.find_child("step", true, false) as Label).text, T.t(&"hero_open_short", {"n": 1}))
 
 
 func test_the_book_shows_the_purse() -> void:

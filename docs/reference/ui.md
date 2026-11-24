@@ -553,8 +553,12 @@ Dons do `HeroScreen` é o `CodexBook` (`scripts/ui/codex_book.gd`), na página d
 
 ## Dons em medalhão (PT-12, 2026-11-23; especificação `docs/art/dons_medallion_spec.md`, testes em `tests/test_dons_medallion.gd`)
 A estação "Árvore de Dons" do Santuário abre `DonsScreen` (`--title --screen=dons [--hero=warrior|maga] [--dons-focus=<id>]`,
-mais `--hero-xp`, `--hero-opened`, `--hero-equip` de sempre). O capítulo Dons do `CodexBook` continua como está até a revisão
-do Daniel (depois saem `CodexBook`, `GiftEntry`, `GiftRibbon`, `Candles`).
+mais `--hero-xp`, `--hero-opened`, `--hero-equip` de sempre). **O medalhão substituiu o capítulo Dons do Livro de Ahk** (decisão do Daniel: "não quero ele no formato de livro"): saíram
+`CodexBook`, `GiftEntry`, `GiftRibbon`, `Candles`, `UltCard`, `test_codex_book`, `test_c2_tree` e as chaves `codex_*` só dele.
+O Livro tem Abertura, O Guerreiro e Ofícios (`HeroScreen.Chapter`: OPENING, HERO, OFICIOS); o botão "Dons" da página do
+herói abre o `DonsScreen` por cima do livro (Esc e B fecham e devolvem o foco). `--title --screen=gifts` e `--screen=dons`
+abrem o medalhão; `--ribbon` não existe mais. As descrições de capítulos antigos abaixo (tela de Dons em pergaminho, fitas,
+velas, lacres) são histórico.
 - **Dado**: `data/heroes/<herói>_medallion.tres` (`MedallionDef` com `MedallionNodeDef`: id, tipo coroa/Dom/ultimate, ângulo
   do meio-dia no sentido do relógio, raio, diâmetro), escrito por `_medallion` em `tools/make_data.gd` (tabelas
   `MEDALLION_WARRIOR` e `MEDALLION_MAGA`; Dom novo é linha nova). Espaço de projeto 1280 x 720, centro (620, 378), anel 254.

@@ -58,12 +58,10 @@ func _ready() -> void:
 			_open(CodexScreen.new(), TitleButton.Kind.HOWTO)
 		"hero":
 			_open_hero(HeroScreen.Chapter.HERO)
-		"gifts":
-			_open_hero(HeroScreen.Chapter.GIFTS)
+		"gifts", "dons":
+			_open(DonsScreen.new(), TitleButton.Kind.HERO)
 		"book":
 			_open_hero(HeroScreen.Chapter.OPENING)
-		"dons":
-			_open(DonsScreen.new(), TitleButton.Kind.HERO)
 		"howto":
 			_open(HowToScreen.new(), TitleButton.Kind.HOWTO)
 		"juramentos":

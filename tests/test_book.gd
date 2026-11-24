@@ -37,7 +37,6 @@ func test_the_book_opens_on_the_warrior_with_the_focus_on_his_gifts() -> void:
 	assert_eq(get_viewport().gui_get_focus_owner(), s.find_child("to_gifts", true, false))
 	assert_true(s.chapters[HeroScreen.Chapter.HERO].button_pressed)
 	assert_true(s.find_child("portrait", true, false).is_visible_in_tree(), "the painted Warrior on the left page")
-	assert_false(s.codex.is_visible_in_tree(), "the tree waits in its chapter")
 
 
 func test_only_the_playable_hero_is_in_the_book() -> void:
@@ -48,14 +47,16 @@ func test_only_the_playable_hero_is_in_the_book() -> void:
 		if (l as Label).text == T.t(HeroDef.warrior().name_key):
 			names += 1
 	assert_eq(names, 1)
-	assert_eq(s.chapters.size(), 4)
+	assert_eq(s.chapters.size(), 3, "Abertura, o herói, Ofícios: the Gifts left the book")
 
 
-func test_dons_opens_the_tree_with_the_focus_on_a_gift() -> void:
+func test_dons_button_opens_the_medallion_over_the_book() -> void:
 	var s := _book(_data(XP_3))
 	(s.find_child("to_gifts", true, false) as Button).pressed.emit()
-	assert_eq(s.chapter, HeroScreen.Chapter.GIFTS)
-	assert_true(get_viewport().gui_get_focus_owner() is GiftEntry)
+	assert_true(s._dons is DonsScreen)
+	assert_true(s._dons.is_inside_tree())
+	s._close_dons()
+	assert_false(is_instance_valid(s._dons))
 
 
 func test_focus_on_a_bookmark_shows_its_chapter() -> void:
@@ -117,19 +118,6 @@ func test_every_new_text_is_in_the_table_without_a_dash() -> void:
 
 # ---------- the panel ----------
 
-func test_the_panel_tells_cost_prerequisite_state_and_next_step() -> void:
-	var s := _book(_data(XP_3), HeroScreen.Chapter.GIFTS)
-	s.codex.entry(&"lamina_faminta").focus_entered.emit()
-	var step := s.find_child("step", true, false) as Label
-	var status := s.find_child("status", true, false) as Label
-	var lo := s.loadout
-	assert_eq(status.text, T.t(&"hero_why_locked", {"n": 4}))
-	assert_eq(step.text, T.t(&"hero_step_mastery", {"n": 4, "xp": lo.xp_missing(4)}))
-	s.codex.entry(&"quarto_corte").focus_entered.emit()
-	assert_eq(step.text, "", "no next step when it can go on")
-	assert_eq(status.text, T.t(&"hero_can_equip"))
-
-
 func test_needs_text_by_place_in_the_tree() -> void:
 	var lo := _loadout(2470)
 	var book := lo.book
@@ -158,35 +146,6 @@ func test_next_step_and_xp_missing() -> void:
 func test_every_gift_has_its_own_glyph() -> void:
 	for t in HeroDef.warrior().talents().catalog:
 		assert_true(TalentGlyph.has(t.id), String(t.id))
-
-
-func test_the_thread_runs_down_a_branch_and_lights_with_what_is_worn() -> void:
-	var s := _book(_data(2470, ["quarto_corte"]), HeroScreen.Chapter.GIFTS)
-	assert_eq(s.codex.entry(&"quarto_corte").thread_in, GiftEntry.Cord.NONE, "an entry needs nothing")
-	assert_eq(s.codex.entry(&"passo_encadeado").thread_in, GiftEntry.Cord.MET, "its entry is worn")
-	assert_eq(s.codex.entry(&"golpe_sem_fim").thread_in, GiftEntry.Cord.MISSING, "the apex lacks its middle")
-	assert_eq(s.codex.entry(&"firmeza").thread_in, GiftEntry.Cord.NONE, "a sustain Gift hangs on nothing")
-	s.codex.entry(&"passo_encadeado").pressed.emit()
-	s.codex.entry(&"impeto").pressed.emit()
-	assert_eq(s.codex.entry(&"golpe_sem_fim").thread_in, GiftEntry.Cord.MET, "the middle and a Fúria Gift are worn")
-
-
-func test_the_five_states_read_apart() -> void:
-	var s := _book(_data(XP_8, ["quarto_corte"]), HeroScreen.Chapter.GIFTS)
-	var worn := s.codex.entry(&"quarto_corte")
-	var open := s.codex.entry(&"impeto")
-	var locked := s.codex.entry(&"furia_plena")
-	var d := _data(XP_8)
-	var t := _book(d, HeroScreen.Chapter.GIFTS)
-	var blocked := t.codex.entry(&"passo_encadeado")
-	assert_eq(blocked.state, HeroLoadout.State.BLOCKED)
-	assert_eq(locked.state, HeroLoadout.State.LOCKED)
-	assert_eq(locked.line, T.t(&"codex_gift_locked", {"n": 18}), "the Mastery that opens it, written")
-	assert_eq(blocked.line, T.t(&"codex_block_needs", {"what": T.t(&"talent_quarto_corte")}), "the reason, written")
-	assert_true(blocked.line_is_reason)
-	assert_eq(open.line, T.t(open.def.desc_key))
-	assert_eq(worn.fill(), 1.0)
-	assert_eq(open.fill(), 0.0)
 
 
 # ---------- the Compendium ----------
