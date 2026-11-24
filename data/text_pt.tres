@@ -1108,6 +1108,8 @@ entries = {
 "list_head": "Habilidades",
 "list_alone": "Age sozinha",
 "encounter_hear": "Ouvir {name}",
+"encounter_swap": "Trocar de anjo",
+"encounter_hint_alone": "A Bênção desta sala vem por ele.",
 "choice_hint_angel": "A Bênção escolhida fica com você até o fim da descida. Esc: voltar aos anjos.",
 "choice_hint_angel_pad": "A Bênção escolhida fica com você até o fim da descida. B: voltar aos anjos.",
 "hub_smith_desc": "Temperar a Emeth com Prata Antiga",

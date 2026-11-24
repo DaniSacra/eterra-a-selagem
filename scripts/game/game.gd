@@ -418,6 +418,8 @@ func _ready() -> void:
 		# dev, for captures: the paladin's life (a defeat in a few blows, or blows taken without falling)
 		player.max_hp = Dev.num("hero-hp", hero.max_hp)
 		player.hp = player.max_hp
+	if Dev.has("encounter") and encounters != null:
+		encounters.dev_open.call_deferred(Dev.arg("encounter"))
 	if Dev.has("feel-panel"):
 		_toggle_feel_panel.call_deferred()
 	if Dev.has("shot"):
