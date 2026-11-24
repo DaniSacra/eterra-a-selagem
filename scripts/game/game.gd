@@ -1159,7 +1159,7 @@ func _take(b: Boon) -> void:
 		player.shield_ready = true
 	player.shield_cooldown = shield
 	var hp_bonus := boons.stat(&"max_hp")
-	player.max_hp = hero.max_hp + hp_bonus + life_bonus
+	player.max_hp = _base_max_hp() + hp_bonus + life_bonus
 	player.heal(hp_bonus - old_hp_bonus)
 	# (vfx_pass_spec.md 6 and 5.3: no column over him; the family's own form on the floor, a plain ring for an Elo)
 	if Fx.MARK_FORM.has(b.family):
@@ -1993,9 +1993,14 @@ func equip_talents(ids: Array[StringName]) -> void:
 	hero_gifts.equip()
 
 
+## The hero's own life before Bênçãos and the Videira: --hero-hp=N (dev, for captures) holds through Dons and Bênçãos.
+func _base_max_hp() -> float:
+	return Dev.num("hero-hp", hero.max_hp) if Dev.has("hero-hp") else hero.max_hp
+
+
 func _apply_talents(ids: Array[StringName]) -> void:
 	boons.equip_talents(hero.talents().defs(ids))
-	player.max_hp = hero.max_hp + boons.stat(&"max_hp") + life_bonus
+	player.max_hp = _base_max_hp() + boons.stat(&"max_hp") + life_bonus
 	player.hp = player.max_hp
 	player.magick.max_value = hero.magick_max + boons.stat(&"magick_max")
 	player.magick.value = player.magick.max_value

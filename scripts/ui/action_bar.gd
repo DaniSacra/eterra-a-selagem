@@ -161,6 +161,17 @@ class Item:
 	func set_verb(text: String) -> void:
 		verb.text = text.to_upper()
 
+	## While the button has the focus the verb is this text (the Livro's "Descer", the end's two ways); back to
+	## the verb it had when the focus leaves.
+	func follow(button: Control, text: String) -> void:
+		button.focus_entered.connect(func() -> void:
+			if not has_meta(&"base"):
+				set_meta(&"base", verb.text)
+			set_verb(text))
+		button.focus_exited.connect(func() -> void:
+			if has_meta(&"base"):
+				set_verb(String(get_meta(&"base"))))
+
 	## The text on the key plate now.
 	func key_text() -> String:
 		return key.text

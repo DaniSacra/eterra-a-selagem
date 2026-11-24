@@ -32,6 +32,7 @@ var vine: Vine
 var buds: Dictionary = {}
 var tags: Dictionary = {}
 var water_button: Button
+var bar: ActionBar
 ## The root whose Regar is in focus (&"": none).
 var pending: StringName = &""
 ## The root the panel shows (the one focused).
@@ -79,7 +80,7 @@ func open(data: Dictionary = {}) -> void:
 		_stage.add_child(_bud(n))
 	_build_panel()
 	_foot()
-	ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_water"), ActionBar.press_focus.bind(self)),
+	bar = ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_water"), ActionBar.press_focus.bind(self)),
 		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), _back)])
 	_refresh()
 	var first := VineLayout.first_focus(vine, _data)
@@ -297,6 +298,8 @@ func _fill(id: StringName) -> void:
 	water_button.disabled = not can
 	water_button.text = ("%s  %s" % [UiKit.action_label(&"ui_accept"), T.t(&"vine_water", {"n": n.cost, "m": MaterialCount.short_of(n.material)})]) \
 		if can else word
+	if bar != null:
+		bar.item(&"ui_accept").set_verb(T.t(&"bar_water") if can else word)
 
 
 func _state_word(n: VineNode, st: Vine.State) -> String:

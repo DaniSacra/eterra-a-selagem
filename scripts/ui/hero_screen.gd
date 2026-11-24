@@ -475,6 +475,7 @@ func _descend_button(id: String) -> Button:
 	var b := Book.primary(Book.button(T.t(&"menu_play"), func() -> void: descend.emit(), 280))
 	b.name = id
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	(func() -> void: if bar != null: bar.item(&"ui_accept").follow(b, T.t(&"bar_descend"))).call_deferred()
 	return b
 
 

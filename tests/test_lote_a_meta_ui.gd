@@ -95,7 +95,8 @@ func test_every_bar_leaves_by_the_same_word() -> void:
 	vine.open(SaveData.defaults())
 	var vbar := vine.find_child("action_bar", true, false) as ActionBar
 	assert_eq(vbar.item(&"ui_cancel").verb.text, back)
-	assert_eq(vbar.item(&"ui_accept").verb.text, T.t(&"bar_water").to_upper(), "Enter waters")
+	# an empty purse: Enter says why it cannot water (UI review 2026-11-24b, B1; test_enter_follows_focus)
+	assert_eq(vbar.item(&"ui_accept").verb.text, vine.water_button.text.to_upper(), "Enter says the reason")
 	var book := HeroScreen.new()
 	add_child_autofree(book)
 	book.open(SaveData.defaults(), HeroScreen.Chapter.HERO)

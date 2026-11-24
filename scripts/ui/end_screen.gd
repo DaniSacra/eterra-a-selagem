@@ -488,7 +488,9 @@ func _ways(parent: Control, victory: bool) -> void:
 	main.grab_focus.call_deferred()
 	_home = to_menu
 	# the keys at the foot (benchmark P0-2, UI-HB6)
-	ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_confirm"), ActionBar.press_focus.bind(self))])
+	var enter := ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_confirm"), ActionBar.press_focus.bind(self))]).item(&"ui_accept")
+	enter.follow(to_menu, to_menu.text)
+	enter.follow(again, again.text)
 
 
 ## The fight is over: the HUD hides under any ending (the defeat showed the map, the hit count and the gifts' row
