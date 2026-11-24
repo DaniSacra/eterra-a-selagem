@@ -26,6 +26,10 @@ uniform float rim_m = 0.28;
 // How much of a line's half width its rim may take (0.2: every warning's; the Canalizador's beam, a narrow line with a
 // thin ring of its own, asks for more).
 uniform float rim_cap = 0.2;
+// A held beam (line, style 0): the width of its bright core in metres (0: not a beam), the light of the core and of the halo.
+uniform float beam_core = 0.0;
+uniform float beam_light = 0.7;
+uniform float beam_halo = 0.1;
 // A line warning's length in meters (its chevrons keep their size on short and long lines).
 uniform float length_m = 4.0;
 // The paladin's circle (style 2): how much of its light fills the inside, and how many marks turn inside its rim.
@@ -272,6 +276,16 @@ void fragment() {
 				filled = warning_fill(step(tip, front));
 			}
 			a = max(max(edge, far) * 0.9 * rim_light * mix(root_rim, 1.0, root_k), near * 0.3) + fill + head * 0.6 + marks * 0.16 + base;
+			if (beam_core > 0.0 && !sign) {
+				// a beam held on the floor (the Canalizador's, art review 2026-11-23 item 18): a thin bright core and a
+				// transparent halo that fades out to the sides, no rim, no fill: the floor shows through
+				float w = beam_core * 0.5;
+				float core = 1.0 - smoothstep(w * 0.55, w, x_m);
+				float halo = (1.0 - side) * (1.0 - side) * beam_halo;
+				a = halo;
+				filled = 0.0;
+				extra += vec3(1.0, 0.8, 0.86) * core * beam_light * root_k;
+			}
 			if (aim_px > 0.0 && !sign) {
 				float px = max(fwidth(x_m), 0.0005);
 				float half_w = aim_px * 0.5 * px;
