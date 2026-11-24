@@ -178,7 +178,7 @@ func test_obelisks_open_round_the_paladin_and_plain_stone_does_not() -> void:
 	var seen := 0
 	for c in root.get_children():
 		var mat := (c as MeshInstance3D).material_override as ShaderMaterial
-		if mat != null and mat.shader == Masonry.SHADER:
+		if mat != null and mat.shader in [Masonry.SHADER, Masonry.FADE_SHADER]:
 			assert_eq(mat.get_shader_parameter(&"see_through"), 1.0, "every stone of the obelisk, its niche too")
 			seen += 1
 	assert_gt(seen, 4)

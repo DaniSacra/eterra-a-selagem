@@ -475,7 +475,9 @@ func _descend_button(id: String) -> Button:
 	var b := Book.primary(Book.button(T.t(&"menu_play"), func() -> void: descend.emit(), 280))
 	b.name = id
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	(func() -> void: if bar != null: bar.item(&"ui_accept").follow(b, T.t(&"bar_descend"))).call_deferred()
+	# the Enter chip says Descer while the way down has the focus (UI review 2026-11-24b, B1)
+	b.focus_entered.connect(func() -> void: if bar != null: bar.item(&"ui_accept").set_verb(T.t(&"bar_descend")))
+	b.focus_exited.connect(func() -> void: if bar != null: bar.item(&"ui_accept").set_verb(T.t(&"bar_open_page")))
 	return b
 
 

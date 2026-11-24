@@ -1,5 +1,17 @@
 # Backlog de A Selagem
 
+## Redesign dos heróis (pacote do Daniel de 2026-11-24, `docs/design/heroes/redesign_2026-11-24/`) — LER PRIMEIRO na conversa nova
+Aprovado pelo Daniel em 2026-11-24 ("pode, segue as recomendações"). Decisões:
+1. Dons removidos (Fúria, Guerra, sustento): devolver toda a Memória gasta e liberar as Vagas, migração idempotente nos três saves.
+2. "Ômega" vira **Golpe Carregado** para o jogador (nome técnico pode ficar).
+3. O recurso continua **"Magia"** no jogo (o pacote diz "Mana").
+4. Supremo do Guerreiro: **Corte do Juízo**, único da Emeth; Voragem guardada para arma futura (sem seleção na árvore, assets ficam).
+5. Convergência Elemental: a fase elétrica **reaplica fogo e frio nos ticks finais** para a reação sempre acontecer.
+6. Saem da lista "(B) Precisa do Daniel": B2 (Fúria pelo Brado, a Fúria sai) e B3 (Investida que atravessa vira o Dom Investida Implacável).
+Ordem: **A** infraestrutura comum (Supremo por arma, 3 ramos de 4 Dons, sustento para a Videira, migração de saves, termos) com exe;
+**B** Guerreiro (01) com exe; **C** Maga elemental (02) com exe e proposta dos 12 Dons dela para aprovação (não fechar sem o Daniel).
+Começar pelo `hero-designer` conferindo o pacote contra o código (HeroDef, ComboTree, ArcaneKit, KitFeed, GiftState, UltDef/UltCharge, saves, Videira).
+
 ## Rodada de melhoria (2026-11-24 madrugada)
 Game-director, commit lido `aa161c8`. LER PRIMEIRO.
 Fontes: `docs/qa/ui_review_2026-11-24.md` (UI), `docs/qa/combat_review_2026-11-24.md` (CB), `docs/qa/qa_review_2026-11-24.md` (QA),
