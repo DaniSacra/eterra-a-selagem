@@ -652,6 +652,11 @@ static func spawn_point(arena: Arena, hero: Vector2, rng: RandomNumberGenerator,
 	return best
 
 
+## The life a won room gives back before any gift: only the fight rooms (combat, guardian), never events, shop or fountain.
+static func base_room_heal(kind: RunMap.Kind, base: float) -> float:
+	return base if kind == RunMap.Kind.COMBAT or kind == RunMap.Kind.MINIBOSS else 0.0
+
+
 func _room_cleared() -> void:
 	phase = Phase.REWARD
 	Music.set_level(Music.WALK)
@@ -659,6 +664,7 @@ func _room_cleared() -> void:
 	_stop_runes()
 	_fight_won()
 	game.hero_gifts.room_won()  # Respiro
+	game.player.heal(base_room_heal(room.kind, stage.room_heal_base))
 	# the last blow of a fight: the world slows to a third, the camera closes in, the screen streaks (Hades II)
 	game.fx.slow_mo(LAST_KILL_SLOW, LAST_KILL_HOLD, LAST_KILL_OUT, 1.1, 0.85)
 	game.projectiles.clear_hostile()

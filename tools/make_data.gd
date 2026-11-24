@@ -978,6 +978,7 @@ func _stage() -> void:
 	st.silver_elite = 1
 	st.silver_door = 10
 	st.silver_guardian = 6
+	st.room_heal_base = 3.0  # the novice who skips the fountain still reaches the guardian with some life
 	st.silver_phase = 2
 	st.phase_max = 4
 	st.silver_victory = 10
