@@ -158,6 +158,27 @@ func buy(data: Dictionary, id: StringName) -> bool:
 	return true
 
 
+## The max life the branch gives up to and with this root (0 when it gives none): the screen's second line. Read from
+## the mods, so a data change shows by itself.
+func life_total(id: StringName) -> int:
+	var n := find(id)
+	if n == null:
+		return 0
+	var total := 0.0
+	for m in nodes_of(n.branch):
+		if m.step <= n.step:
+			for mod in m.mods:
+				if mod.stat == &"max_hp":
+					total += mod.base
+	return int(total)
+
+
+## What is still missing to pay the node (0 when nothing is).
+func missing(data: Dictionary, id: StringName) -> int:
+	var n := find(id)
+	return 0 if n == null else maxi(n.cost - MaterialPurse.amount(data, n.material), 0)
+
+
 ## Every mod of the owned nodes (BoonState.grant).
 func mods_of(ids: Array) -> Array[BoonMod]:
 	var out: Array[BoonMod] = []

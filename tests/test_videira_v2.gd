@@ -113,59 +113,77 @@ func test_the_forjador_is_only_the_forja_again() -> void:
 
 # ---------- the screen ----------
 
-func test_the_screen_has_three_columns_of_three_with_name_effect_cost_and_state() -> void:
-	var d := _data(100, 30)
-	var s := _screen(d)
-	assert_eq(s.cards.size(), 9)
-	for branch in Vine.BRANCHES:
-		var col := s.find_child(String(branch), true, false)
-		assert_not_null(col, "a column for %s" % branch)
-		assert_eq(col.get_children().filter(func(c: Node) -> bool: return c is Button).size(), 3)
-	var first: Button = s.cards[&"vida_1"]
-	assert_eq((first.find_child("name", true, false) as Label).text, T.t(&"vine_vida_1"))
-	assert_eq((first.find_child("desc", true, false) as Label).text, T.t(&"vine_vida_1_desc"))
-	var cost := first.find_child("cost", true, false) as MaterialCount
-	assert_eq(cost.id, MaterialPurse.SILVER)
-	assert_eq(cost.amount, 5)
-	assert_eq((s.cards[&"viajante"].find_child("cost", true, false) as MaterialCount).id, MaterialPurse.MEMORY, "Provisão is paid in Memória")
-	assert_eq((s.cards[&"vida_2"].find_child("state", true, false) as Label).text, T.t(&"vine_locked", {"a": T.t(&"vine_vida_1")}))
-	assert_eq(T.t(&"vine_line"), "Raízes que fortalecem todas as jornadas")
-	assert_eq((s.find_child("line", true, false) as Label).text, T.t(&"vine_line"))
+func test_the_nine_buds_stand_on_the_table_of_the_spec_with_a_tag_beside_each() -> void:
+	var s := _screen(_data(100, 30))
+	assert_eq(s.buds.size(), 9)
+	assert_eq(s.tags.size(), 9)
+	var want := {&"vida_1": Vector2(390, 450), &"vida_3": Vector2(220, 200), &"viajante": Vector2(490, 390),
+		&"reserva": Vector2(490, 160), &"prata": Vector2(590, 450), &"materiais": Vector2(760, 200)}
+	for id: StringName in want:
+		assert_lt(((s.buds[id] as Control).position + (s.buds[id] as Control).size * 0.5).distance_to(want[id]), 5.0, "%s on its place" % id)
+	assert_eq((s.tags[&"estoque"] as Control).position, Vector2(512, 252))
+	var all := []
+	for id: StringName in s.tags:
+		all.append(Rect2((s.tags[id] as Control).position, VineLayout.TAG_SIZE))
+	for i in all.size():
+		assert_false(VineScreen.PANEL_RECT.intersects(all[i]), "a tag clear of the panel")
+		for j in range(i + 1, all.size()):
+			assert_false((all[i] as Rect2).intersects(all[j]), "no tag over another")
 
 
-func test_the_balance_shows_prata_and_memoria() -> void:
-	var s := _screen(_data(42, 7))
-	var purse := s.find_child("purse", true, false)
-	assert_eq((purse.get_node("silver") as MaterialCount).amount, 42)
-	assert_eq((purse.get_node("memory") as MaterialCount).amount, 7)
+func test_a_tag_says_the_name_and_the_price_in_the_right_material() -> void:
+	var s := _screen(_data(100, 30))
+	var tag := s.tags[&"viajante"] as VineTag
+	assert_eq((tag.find_child("name", true, false) as Label).text, T.t(&"vine_viajante"))
+	assert_eq(tag.cost.id, MaterialPurse.MEMORY, "Provisão is paid in Memória")
+	assert_eq((s.tags[&"vida_1"] as VineTag).cost.amount, 5)
 
 
-func test_buying_asks_first_then_spends_and_says_it() -> void:
+func test_the_panel_reads_what_it_does_what_it_costs_and_what_you_have() -> void:
+	var s := _screen(_data(30, 2))
+	assert_eq(s.shown, &"vida_1", "opens on the first root that can grow")
+	assert_eq((s.find_child("name", true, false) as Label).text, T.t(&"vine_vida_1"))
+	assert_eq((s.find_child("state", true, false) as Label).text, T.t(&"vine_can"))
+	assert_string_contains((s.find_child("life", true, false) as RichTextLabel).text, "5", "the branch's life total")
+	assert_eq((s.find_child("cost", true, false) as MaterialCount).amount, 5)
+	assert_eq((s.find_child("have", true, false) as Label).text, T.t(&"vine_have", {"n": 30}))
+	assert_true(s.water_button.text.contains("Regar") and s.water_button.text.contains("5"), "the price on the button")
+	s._show(&"viajante")
+	assert_eq((s.find_child("state", true, false) as Label).text, T.t(&"vine_short_n", {"n": 3, "m": "Memória"}))
+	assert_eq((s.find_child("have", true, false) as Label).text, T.t(&"vine_have", {"n": 2}))
+	assert_true(s.water_button.disabled)
+	assert_eq(s.water_button.text, T.t(&"vine_short_n", {"n": 3, "m": "Memória"}), "the reason in place of the verb")
+	s._show(&"vida_2")
+	assert_eq((s.find_child("state", true, false) as Label).text, T.t(&"vine_locked", {"a": T.t(&"vine_vida_1")}))
+	assert_string_contains((s.find_child("life", true, false) as RichTextLabel).text, "10", "Seiva and Caule together")
+
+
+func test_watering_asks_nothing_spends_once_and_grows_the_plant() -> void:
 	var d := _data(30, 0)
 	var s := _screen(d)
 	var heard := []
 	s.bought.connect(func(id: StringName) -> void: heard.append(id))
-	assert_false(s.select(&"vida_2"), "locked: no question")
-	assert_false(s.select(&"viajante"), "short: no question")
+	assert_false(s.select(&"vida_2"), "locked: stays")
+	assert_false(s.select(&"viajante"), "short: stays")
 	assert_eq(s.pending, &"")
 	assert_true(s.select(&"vida_1"))
 	assert_eq(s.pending, &"vida_1")
-	assert_true(s.buy_button.visible and s.cancel_button.visible and not s.back_button.visible)
-	assert_string_contains((s.find_child("info", true, false) as Label).text, T.t(&"vine_vida_1"))
-	assert_string_contains((s.find_child("info", true, false) as Label).text, "5")
-	assert_eq(MaterialPurse.amount(d, MaterialPurse.SILVER), 30, "nothing spent by asking")
+	assert_eq(MaterialPurse.amount(d, MaterialPurse.SILVER), 30, "nothing spent by choosing")
 	assert_true(s.confirm())
+	assert_false(s.confirm(), "a second Regar spends nothing")
 	assert_eq(heard, [&"vida_1"])
 	assert_eq(MaterialPurse.amount(d, MaterialPurse.SILVER), 25)
 	assert_eq(s.vine.state(d, &"vida_1"), Vine.State.OWNED)
-	assert_eq((s.cards[&"vida_1"].find_child("state", true, false) as Label).text, T.t(&"vine_owned"))
+	assert_eq((s.find_child("state", true, false) as Label).text, T.t(&"vine_owned"))
+	assert_eq(T.t(&"vine_owned"), "Já cresceu")
+	assert_true((s.tags[&"vida_1"] as VineTag).owned, "the tag turned over")
+	assert_eq(s.plant.states[&"vida_1"], Vine.State.OWNED)
 	assert_eq(((s.find_child("purse", true, false)).get_node("silver") as MaterialCount).amount, 25, "the balance follows")
-	assert_eq(s.vine.state(d, &"vida_2"), Vine.State.AVAILABLE, "the next node of the branch opens")
-	assert_false(s.confirm(), "no question open")
-	assert_true(s.back_button.visible and not s.buy_button.visible)
+	assert_eq(s.vine.state(d, &"vida_2"), Vine.State.AVAILABLE, "the next root of the branch opens")
+	assert_string_contains((s.find_child("count", true, false) as Label).text, "1")
 
 
-func test_cancelling_spends_nothing() -> void:
+func test_going_back_from_regar_spends_nothing() -> void:
 	var d := _data(30, 0)
 	var s := _screen(d)
 	s.select(&"vida_1")
@@ -176,48 +194,94 @@ func test_cancelling_spends_nothing() -> void:
 	assert_false(s.confirm())
 
 
-func test_a_short_root_is_marked_and_cannot_be_bought() -> void:
-	var s := _screen(_data(3, 0))
-	assert_eq((s.cards[&"vida_1"].find_child("state", true, false) as Label).text, T.t(&"vine_short"))
-	assert_false(s.select(&"vida_1"))
+func test_the_balance_shows_prata_and_memoria() -> void:
+	var s := _screen(_data(42, 7))
+	var purse := s.find_child("purse", true, false)
+	assert_eq((purse.get_node("silver") as MaterialCount).amount, 42)
+	assert_eq((purse.get_node("memory") as MaterialCount).amount, 7)
 
 
-func test_keys_and_the_mouse_reach_every_card_and_the_foot() -> void:
+func test_keys_and_the_mouse_walk_the_buds_and_reach_regar() -> void:
 	var s := _screen(_data(50, 10))
 	await wait_process_frames(3)
-	assert_true((s.cards[&"vida_1"] as Button).has_focus(), "the first root that can be bought has the focus")
-	for id: StringName in s.cards:
-		assert_eq((s.cards[id] as Button).focus_mode, Control.FOCUS_ALL, "%s walkable" % id)
-	var down := s.cards[&"vida_1"] as Button
-	assert_eq(down.get_node(down.focus_neighbor_bottom), s.cards[&"vida_2"])
-	assert_eq(down.get_node(down.focus_neighbor_right), s.cards[&"viajante"])
-	var last := s.cards[&"vida_3"] as Button
-	assert_eq(last.get_node(last.focus_neighbor_bottom), s.back_button, "down from the last row reaches Voltar")
-	# a click on a card asks, the focus goes to Comprar; Cancelar goes back to the card; Voltar closes
-	(s.cards[&"vida_1"] as Button).pressed.emit()
+	assert_true((s.buds[&"vida_1"] as Button).has_focus(), "the first root that can grow has the focus")
+	for id: StringName in s.buds:
+		assert_eq((s.buds[id] as Button).focus_mode, Control.FOCUS_ALL, "%s walkable" % id)
+	var b := s.buds[&"vida_1"] as Button
+	assert_eq(b.get_node(b.focus_neighbor_top), s.buds[&"vida_2"], "up grows")
+	assert_eq(b.get_node(b.focus_neighbor_right), s.buds[&"viajante"], "right passes to the next branch on the same step")
+	# a click on a bud that can grow sends the focus to Regar; cancel goes back to the bud
+	(s.buds[&"vida_1"] as Button).pressed.emit()
 	await wait_process_frames(2)
 	assert_eq(s.pending, &"vida_1")
-	assert_true(s.buy_button.has_focus())
-	var closed := [false]
-	s.closed.connect(func() -> void: closed[0] = true)
+	assert_true(s.water_button.has_focus())
 	s.cancel()
 	await wait_process_frames(2)
-	assert_true((s.cards[&"vida_1"] as Button).has_focus(), "the focus goes back to the card")
-	s.back_button.pressed.emit()
-	assert_true(closed[0])
+	assert_true((s.buds[&"vida_1"] as Button).has_focus(), "the focus goes back to the bud")
+	assert_eq(s.pending, &"")
 
 
-func test_it_fits_the_screen() -> void:
+func test_from_the_last_branch_the_right_arrow_reaches_regar() -> void:
+	var s := _screen(_data(50, 10))
+	await wait_process_frames(2)
+	s._show(&"prata")
+	assert_false(s.water_button.disabled)
+	var b := s.buds[&"prata"] as Button
+	assert_eq(b.get_node(b.focus_neighbor_right), s.water_button)
+	assert_eq(s.water_button.get_node(s.water_button.focus_neighbor_left), b)
+
+
+func test_it_fits_the_screen_and_reads_without_scrolling() -> void:
 	var s := _screen(_data(50, 10))
 	await wait_process_frames(3)
 	var view := s.get_viewport().get_visible_rect().size
-	var page := s.find_child("page", true, false) as Control
-	assert_lte(page.get_global_rect().end.x, view.x, "inside across")
-	assert_lte(page.get_global_rect().end.y, view.y - ActionBar.HEIGHT, "inside down, over the bar")
-	for id: StringName in s.cards:
-		var r := (s.cards[id] as Control).get_global_rect()
-		assert_true(Rect2(Vector2.ZERO, view).encloses(r), "%s on the screen" % id)
-		assert_gt(r.size.x, 150.0, "%s wide enough to read" % id)
+	var stage := s.find_child("stage", true, false) as Control
+	assert_true(Rect2(Vector2.ZERO, view).encloses(Rect2(stage.global_position, stage.size * stage.scale)), "the stage inside the window")
+	var panel := s.find_child("panel", true, false) as Control
+	assert_gte(panel.size.y, panel.get_combined_minimum_size().y, "the panel holds all its lines")
+
+
+# ---------- the layout and the numbers ----------
+
+func test_the_focus_walks_up_to_grow_and_across_to_the_next_branch() -> void:
+	var v := Vine.new(Vine.load_catalog())
+	assert_eq(VineLayout.neighbor(v, &"vida_1", Vector2.UP), &"vida_2")
+	assert_eq(VineLayout.neighbor(v, &"vida_3", Vector2.UP), &"vida_3", "the top stays")
+	assert_eq(VineLayout.neighbor(v, &"vida_1", Vector2.DOWN), &"vida_1")
+	assert_eq(VineLayout.neighbor(v, &"vida_2", Vector2.RIGHT), &"estoque")
+	assert_eq(VineLayout.neighbor(v, &"memoria", Vector2.LEFT), &"estoque")
+	assert_eq(VineLayout.neighbor(v, &"vida_2", Vector2.LEFT), &"vida_2", "no branch to the left of Vida")
+	assert_eq(VineLayout.neighbor(v, &"materiais", Vector2.RIGHT), &"materiais")
+
+
+func test_the_first_focus_is_the_lowest_root_that_can_grow() -> void:
+	var v := Vine.new(Vine.load_catalog())
+	assert_eq(VineLayout.first_focus(v, _data(0, 0)), &"vida_1", "nothing can grow: Seiva")
+	var d := _data(30, 10)
+	d.vine.bought = ["vida_1", "vida_2"]
+	assert_eq(VineLayout.first_focus(v, d), &"viajante", "the first rows come before Vida's third")
+
+
+func test_a_branch_path_passes_through_its_buds() -> void:
+	for b in Vine.BRANCHES:
+		var pts := VineLayout.path(b)
+		assert_eq(pts[0], VineLayout.FORK)
+		for step in range(1, 4):
+			assert_lt(pts[step * VineLayout.SAMPLES].distance_to(VineLayout.bud(b, step)), 0.01)
+		var hull := Rect2(VineLayout.FORK, Vector2.ZERO)
+		for step in range(1, 4):
+			hull = hull.expand(VineLayout.bud(b, step))
+		for p in pts:
+			assert_true(hull.grow(45.0).has_point(p), "%s does not run past its buds" % b)
+
+
+func test_the_life_total_and_what_is_missing_come_from_the_data() -> void:
+	var v := Vine.new(Vine.load_catalog())
+	assert_eq(v.life_total(&"vida_1"), 5)
+	assert_eq(v.life_total(&"vida_3"), 15)
+	assert_eq(v.life_total(&"prata"), 0, "only Vida gives life")
+	assert_eq(v.missing(_data(3, 0), &"vida_1"), 2)
+	assert_eq(v.missing(_data(30, 0), &"vida_1"), 0)
 
 
 # ---------- the hub ----------

@@ -5,7 +5,7 @@ extends Node
 ## open their panels over the art, hosted by a ScreenHost (shared with the hub).
 ## Test switches that ask for a run (--bot, --shot, --smoke, --start, --stress, --play) skip straight to it, past the
 ## title and the hub; --hub goes straight to the hub (with --shot too).
-## --title --screen=options|music|moves|howto|hero|gifts|dons|book|codex|juramentos|map opens a panel at once (hero, gifts and
+## --title --screen=options|music|moves|howto|hero|gifts|dons|vine|book|codex|juramentos|map opens a panel at once (hero, gifts and
 ## book: the Livro de Ahk on the Warrior, the Gifts or the opening). --hero-xp=N and --hero-equip=a,b set the
 ## Warrior's Mastery and Gifts for captures, in Save.data (Save.gd).
 ## Save slots (the Daniel, 2026-11-21): the title comes first; Iniciar opens the choice of save (SaveSlotScreen) over
@@ -64,6 +64,8 @@ func _ready() -> void:
 			_open_hero(HeroScreen.Chapter.OPENING)
 		"howto":
 			_open(HowToScreen.new(), TitleButton.Kind.HOWTO)
+		"vine":
+			_open(VineScreen.new(), TitleButton.Kind.HERO, [_vine_view()])
 		"juramentos":
 			_open_juramentos(Juramentos.unlocked(Save.data))
 	if Dev.has("shot"):
@@ -200,6 +202,20 @@ func _open(screen: Control, opener: TitleButton.Kind, args: Array = []) -> void:
 	_menu.visible = false
 	_backdrop.dim(true)
 	_host.open(screen, args)
+
+
+## The save the Videira shows with --title --screen=vine: --vine=N has the first N roots grown, with a purse of Prata
+## (--silver, 12 by default) and Memória (--memory, 3) so the four states show; without --vine the person's save as it is.
+func _vine_view() -> Dictionary:
+	if not Dev.has("vine"):
+		return Save.data
+	var view: Dictionary = Save.data.duplicate(true)
+	var ids: Array = []
+	for id in Vine.new(Vine.load_catalog()).first(int(Dev.num("vine", 0))):
+		ids.append(String(id))
+	view["vine"] = {"bought": ids}
+	view["materials"] = {"silver": int(Dev.num("silver", 12)), "memory": int(Dev.num("memory", 3))}
+	return view
 
 
 ## Closes the panel on show (the host gives the menu back: _closed_sub).
