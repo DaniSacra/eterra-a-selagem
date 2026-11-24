@@ -80,7 +80,8 @@ const POT_BELLY := 0.38
 const OBELISK_CRACKS := 0.3
 const OBELISK_FRAME := 0.08
 ## The niche's darkness (cycle 9: the niche is dressed stone too, so it opens round the paladin with the rest).
-const OBELISK_NICHE := Color(0.025, 0.025, 0.035)
+## AD-09: lifted from a near black (the hall's south stone hid the paladin in a hole of luma 0) to a recessed stone, luma 30+.
+const OBELISK_NICHE := Color(0.13, 0.13, 0.17)
 const WAX := Color(1.0, 0.8, 0.55)
 ## The wax lit from inside by its flame, so its shaded side stays amber under the cold teal air (not olive): strongest
 ## at the top, this share of it at the foot. The pool of wax run down round the foot (times the candle's radius).

@@ -371,6 +371,8 @@ func set_state(s: Vector3, asleep := false, spent := 0.0) -> void:
 		hot = EMBER_PEAK
 	elif s.z > 0.0:
 		hot = lerpf(EMBER_REST, EMBER_PEAK, s.z)
+	if kind == Kind.SLIT:
+		hot = GroundLook.piece_light(GroundLook.PIECE_BLADE if _blade != null else GroundLook.PIECE_SLIT, s)
 	_ember = hot
 	var open := s.x if s.x > 0.0 else 1.0 if s.y > 0.0 else s.z
 	for m in _cracks:
@@ -1186,9 +1188,9 @@ func _on_state(s: Vector3, spent: float) -> void:
 			var rise := 0.0
 			var tear := 0.0
 			if s.x > 0.0:
-				rise = s.x * BREATH_HIGH / BREATH_GUST
+				rise = GroundLook.piece_light(GroundLook.PIECE_BREATH, s)
 			elif s.y > 0.0:
-				rise = 1.0
+				rise = GroundLook.piece_light(GroundLook.PIECE_BREATH, s)
 				tear = 1.0 - s.y
 			elif s.z > 0.0:
 				rise = s.z * BREATH_HIGH / BREATH_GUST
