@@ -294,7 +294,7 @@ func _enemies() -> void:
 	var B := EnemyDef.Behavior
 	var T := EnemyDef.Tell
 	# the foot soldier: walks up, raises its blade 0.9 s and lunges (Hades: the common melee shade)
-	_pair({"id": &"skeleton", "model": &"skeleton", "behavior": B.RUNNER, "size": 1.15, "hp": 95.0, "speed": 300.0 / U, "damage": 5.0, "radius": 0.5,
+	_pair({"id": &"skeleton", "model": &"skeleton", "behavior": B.RUNNER, "size": 1.15, "hp": 95.0, "speed": 300.0 / U, "damage": 4.0, "radius": 0.5,
 		"attack_damage": 5.0, "attack_range": 290.0 / U, "attack_cooldown": 1.4, "attack_windup": 0.75, "lunge_speed": 700.0 / U, "lunge_time": 0.3,
 		"rating": 5.0, "role": &"pressure", "big_version": &"skeleton_big", "tell": T.GLINT, "tell_at": Vector3(0.1, 1.9, -1.0), "vivid": -0.1,
 		# at most 3 soldiers wind up at once, never two in the same 0.35 s (C1)
@@ -340,7 +340,7 @@ func _enemies() -> void:
 	# the crossbowman (Hades: the Screamer's life and rating; it has no shot there, a cone held on itself): a fast
 	# orange bolt along a line marked on the floor (the aim locks there) from 12 m, Daniel's request of 2026-11-16;
 	# from Hades, after each attack it runs 8.75 m from him for 1.5 to 1.75 s, and at most 2 wind up at once; 3.6 m/s
-	_pair({"id": &"archer", "model": &"archer", "behavior": B.ARCHER, "size": 1.27, "hp": 180.0, "speed": 290.0 / U, "damage": 5.0, "radius": 0.55,
+	_pair({"id": &"archer", "model": &"archer", "behavior": B.ARCHER, "size": 1.27, "hp": 180.0, "speed": 290.0 / U, "damage": 4.0, "radius": 0.55,
 		"attack_damage": 5.0, "attack_range": 12.0, "attack_cooldown": 2.6, "attack_windup": 0.8, "magic_color": CROSSBOW_ORANGE,
 		"shot_speed": 16.0, "shot_line": true, "shot_ticks": 2, "shot_interval": 0.75, "shot_relock": 0.4, "keep_away": 0.65, "retreat_far": 700.0 / U, "retreat_time": Vector2(1.5, 1.75), "max_attackers": 2,
 		# T5-05: the crossbow rises to the shoulder over its settle (it rose in 0.1 s)
@@ -394,9 +394,9 @@ func _enemies() -> void:
 	# (was 1.0), the line follows him until 0.15 s before it leaves, lunge 24 m/s for 0.6 s (14.4 m); the close blow 0.5 s (was
 	# 0.8). Armor 1220 barely feels the light blows (armor_soft), the strong ones take it whole. A priority list with a
 	# cooldown a move (AttackList): the shield throw from the start, the charges in rows of 1, 2 and 3 as his toughness falls.
-	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 450.0, "speed": 200.0 / U, "damage": 16.0, "radius": 1.1,
-		"heavy": true, "elite": true, "armor": 1700.0, "armor_stagger": 2.5, "attack_damage": 8.0, "attack_range": 14.0, "attack_cooldown": 2.4,
-		"attack_windup": 0.6, "lunge_speed": 24.0, "lunge_time": 0.6, "close_damage": 8.0, "close_range": 3.2, "close_windup": 0.5,
+	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 380.0, "speed": 200.0 / U, "damage": 10.0, "radius": 1.1,
+		"heavy": true, "elite": true, "armor": 1100.0, "armor_stagger": 2.5, "attack_damage": 6.0, "attack_range": 14.0, "attack_cooldown": 2.4,
+		"attack_windup": 0.6, "lunge_speed": 24.0, "lunge_time": 0.6, "close_damage": 6.0, "close_range": 3.2, "close_windup": 0.5,
 		"exact_windup": true,
 		"charges": 1, "recharge_windup": 0.45, "aim_lock": 0.15, "raise_count": 3, "raise_max": 6, "escort": [&"mage", &"mage"] as Array[StringName],
 		"armor_soft": 0.3,
@@ -408,8 +408,8 @@ func _enemies() -> void:
 		] as Array[KnightMove],
 		# the shield throw: 0.5 s of wind-up, a second in the air (the mark follows him until 0.35 s before it lands), 16 where it
 		# lands; the wave leaves 0.25 s later at 12 m/s (the hero sprints 11), a band 0.8 m wide, 14 damage; only the dodge crosses it
-		"throw_windup": 0.5, "throw_flight": 1.0, "throw_lock": 0.35, "throw_half": 2.4, "throw_damage": 8.0, "throw_open": 1.8,
-		"ring_speed": 12.0, "ring_thick": 0.8, "ring_reach": 32.0, "ring_delay": 0.25, "ring_damage": 6.0,
+		"throw_windup": 0.5, "throw_flight": 1.0, "throw_lock": 0.35, "throw_half": 2.4, "throw_damage": 6.0, "throw_open": 1.8,
+		"ring_speed": 12.0, "ring_thick": 0.8, "ring_reach": 32.0, "ring_delay": 0.25, "ring_damage": 5.0,
 		# T5-07: braced behind its shield in three beats (it stood idle), the last 0.25 s held with a tremble
 		"windup_settle": 0.1, "windup_hold": 0.25, "windup_shake": 0.03,
 		# it stood stunned 0.8 s after its charge (a stun drawn idle); E1c: the same 0.8 s as its recovery, the end of the blow held
@@ -418,10 +418,10 @@ func _enemies() -> void:
 		# it 1.0 s; K3 every 14 s, with the armor over half, the shield up 4 s (70% stopped in front, x1.5 behind), 0.6 s to raise it
 		"wall_stun": 1.5, "ward_open": 1.0, "front_block": 0.7, "front_open": 4.0, "guard_up_time": 4.0, "guard_up_every": 14.0,
 		"guard_up_windup": 0.6, "guard_up_armor": 0.5, "guard_up_walk": 0.6, "guard_up_hit_every": 1.6, "guard_up_hit_range": 1.6,
-		"guard_up_hit_damage": 8.0, "guard_up_hit_windup": 0.6, "guard_back_mult": 1.5,
+		"guard_up_hit_damage": 6.0, "guard_up_hit_windup": 0.6, "guard_back_mult": 1.5,
 		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35), "material": &"armor"})
-	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest_elder", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 510.0, "speed": 2.0,
-		"damage": 12.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 10.0, "attack_range": 9.0,
+	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest_elder", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 420.0, "speed": 2.0,
+		"damage": 9.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 900.0, "armor_stagger": 2.5, "attack_damage": 5.0, "attack_range": 9.0,
 		"attack_cooldown": 3.9, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA, "shot_orb": true, "shot_speed": 6.0,
 		"escort": [&"guard"] as Array[StringName],
 		# Daniel 2026-11-23: it calls two archers at a time to the floor's edge, away from him (3 standing at most, one call every 10 to 14 s),
@@ -2047,7 +2047,7 @@ func _hero() -> void:
 	h.model = &"hero_explorer"
 	h.combos = "res://data/combos/paladin.tres"
 	var numbers := {
-		"max_hp": 30.0, "hurt_time": 0.18, "hurt_invuln": 0.7, "dodge_charges": 1, "dodge_recharge": 0.8,
+		"max_hp": 40.0, "hurt_time": 0.18, "hurt_invuln": 0.7, "dodge_charges": 1, "dodge_recharge": 0.8,
 		"magick_max": 50.0, "circle": false,
 		"cast_charge": 0.25, "cast_slow": 0.6, "cast_cooldown": 6.0, "cast_attack_lock": 8.0 / 60.0, "cast_omega_time": 0.6,
 		"cast_omega_cost": 20.0, "cast_radius": 5.4, "cast_time": 3.0, "cast_burst": 150.0,

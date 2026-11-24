@@ -643,3 +643,24 @@ Passos medidos: vida 9000 com dano de antes e lâminas 13: 0 de 12 (fase 4 em 4 
 Leitura: o que mais mata Morvath-cedo são os invocados do ritual e as lâminas (fase 2: `adds` 240 e `blades` 197 de vida perdida em 12 lutas); o evoluído morre mais na Rajada (fase 4). A vida maior deu o tempo de luta pedido; o dano menor devolveu a vitória. Com 8 Bênçãos e sem a descida (perfil artificial: sem as Bênçãos extras, Dons e vida de coração) ninguém vence: isso é desejado como "exceção".
 Pendente (depende do Daniel): o novato quase não chega (2 de 12; meta "chega ao guardião e às vezes vence" só vale para quem joga bem); recalibrar com o `runs.jsonl`. O Daniel acha Morvath fácil, mas o robô evoluído só vence 25%: se a mão dele ainda o achar fácil, subir a vida para 10000 antes de subir o dano. `ritual_cap` 5 não mudou nada medido contra 4 (reforço só entra quando alguém morre).
 Testes ajustados: `test_boss` (vida, `ritual_cap`, contas de `summon_count`), `test_boss_refine` (teto 14). `tools/check.gd` limpo.
+
+## Urgente 2026-11-23 (noite): todos morreram na sala 5, primeira metade mais justa
+Observado (`runs.jsonl`, `tools/runs_report.py --since=2026-11-23T15:00`): 7 partidas, 0 vitórias; 4 mortes na sala 5 (Cavaleiro 2x à tarde, Esqueleto e Ancião à noite), 1 na 9, 1 na 2, 1 na 1 (Maga). A sala 5 é o primeiro guardião (`st.miniboss_depth_min/max = 5`; Cavaleiro ou Ancião; a fonte vem como uma das duas portas da sala 4, `RunMap` GP-2, e quem a pula chega sem cura). Vida ao entrar na sala 5: 20, 11, 4, 5, 19, 12 e 52 (de 30 a 40 máximos). Os golpes levados: esqueleto 5, mago 4, arqueiro 5, Cavaleiro 5 a 12, Ancião 10. O herói tem 30 de vida e não há cura entre salas fora da fonte, do coração e do Respiro (Maestria 20); o dano das salas 1 a 4 se acumula e o guardião acaba o resto. Desde 461c414 o `make_data.gd` quase não mexeu no Cavaleiro e no Ancião (só tempos e `throw_half`); o que mudou foi o contexto (14 salas, avisos de chão, Maga), então a sensação de mais difícil vem sobretudo da vida 30 e da falta de cura, não de um número que subiu.
+Réguas (12 sementes, 1 a 12, `smoke.sh 700 --bot-reaction=R --ultimate=cleave`, uma partida por vez): R 0,25 (o robô habitual, esquiva bem) e R 0,6 (proxy de criança: avisos lidos tarde, morre onde o registro mostra).
+| Número (`make_data.gd`) | Antes | Depois |
+|---|---|---|
+| Guerreiro, vida (`_hero`) | 30 | 40 |
+| Esqueleto e Arqueiro, dano | 5 | 4 |
+| Cavaleiro: vida / armadura | 450 / 1700 | 380 / 1100 |
+| Cavaleiro: investida / ataque / corpo a corpo / arremesso / onda / escudo erguido | 16 / 8 / 8 / 8 / 6 / 8 | 10 / 6 / 6 / 6 / 5 / 6 |
+| Ancião: vida / armadura | 510 / 1450 | 420 / 900 |
+| Ancião: dano de orbe (`attack_damage`) / `damage` | 10 / 12 | 5 / 9 |
+| Medida | Antes | Depois |
+|---|---|---|
+| Robô 0,25: passa da sala 5 (de 12) | 8 | 12 |
+| Robô 0,25: sala média de morte | 8,6 | 11,8 |
+| Robô 0,25: chega a Morvath | 2 | 6 (0 vitórias; Maestria e Dons não entram) |
+| Robô 0,6 (criança): passa da sala 5 | 0 | 9 |
+| Robô 0,6: sala média de morte | 4,7 | 7,3 (salas 5 a 11) |
+Passos medidos: vida 40 e golpes do Cavaleiro e do Ancião menores: 0,25 passou de 8 a 10 de 12 (o Ancião seguia matando o robô com 4 sementes); orçamento das salas 1 a 4 em 0,5 a 0,7 (era 0,65 a 0,85): sem efeito acima do ruído, voltou; vida e armadura menores dos guardiões (luta mais curta, mais atordoamento): criança de 5 para 9 de 12. Ruído entre rodadas: 1 a 3 sementes (o `RunMap` e os sorteios mudam com a mudança de gasto de orçamento).
+Leitura e limites: o robô 0,25 agora passa sempre e chega a Morvath em 6 de 12 sem Maestria nem Dons; isso é mais generoso que a meta antiga ("chega ao guardião e às vezes vence") de propósito, a pedido do Daniel (criança passa da sala 5 e chega perto do meio), mas a primeira vitória sobre Morvath (0 de 12) e os Juramentos continuam sendo o teto. Se o Daniel (Maestria 18) achar fácil demais, o primeiro número a voltar é a vida do Guerreiro (40 para 35). Não mexi na Maga (30) nem em Morvath. Não resolvido: o jogador que pula a fonte da sala 4 chega ao guardião com pouca vida; um Respiro base (cura de 2 a 3 por sala vencida) é a próxima alavanca e pede código (`room_heal` hoje só vem da Maestria). Recalibrar com o `runs.jsonl` da próxima noite.
