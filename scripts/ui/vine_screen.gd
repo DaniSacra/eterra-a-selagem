@@ -282,7 +282,8 @@ func _fill(id: StringName) -> void:
 	_step.text = T.t(&"vine_step", {"b": T.t(StringName("vine_branch_%s" % n.branch)), "n": n.step})
 	_desc.text = BoonCard.strong_numbers(T.t(n.desc_key))
 	var life := vine.life_total(id)
-	_life.visible = life > 0
+	# the total only says something new from the second step on (the first one repeats the description)
+	_life.visible = life > Vine.own_life(n)
 	_life.text = BoonCard.strong_numbers(T.t(&"vine_life_total", {"n": life})) if life > 0 else ""
 	_cost.set_id(n.material)
 	_cost.set_amount(n.cost)
@@ -293,6 +294,7 @@ func _fill(id: StringName) -> void:
 	_have.text = T.t(&"vine_have", {"n": held})
 	var word := _state_word(n, st)
 	_state.text = word
+	_state.visible = can_water(st)  # otherwise the button already says it (B7: "Faltam N" three times)
 	_state.add_theme_color_override(&"font_color", _state_color(st))
 	var can := st == Vine.State.AVAILABLE
 	water_button.disabled = not can
@@ -300,6 +302,10 @@ func _fill(id: StringName) -> void:
 		if can else word
 	if bar != null:
 		bar.item(&"ui_accept").set_verb(T.t(&"bar_water") if can else word)
+
+
+static func can_water(st: Vine.State) -> bool:
+	return st == Vine.State.AVAILABLE
 
 
 func _state_word(n: VineNode, st: Vine.State) -> String:

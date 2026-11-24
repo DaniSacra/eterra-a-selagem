@@ -275,7 +275,7 @@ func _head_right() -> Control:
 	_bar.name = "mastery"
 	_bar.paper = true
 	v.add_child(_bar)
-	_next = Book.label("", Book.GILT, 16)
+	_next = Book.label("", Book.GILT.darkened(0.2), 18)
 	_next.name = "next"
 	v.add_child(_next)
 	row.add_child(v)

@@ -69,6 +69,14 @@ static func disc(ci: CanvasItem, c: Vector2, r: float) -> void:
 	ci.draw_arc(c, r * 0.6, 0.0, TAU, 20, UiKit.OLD_GOLD, 1.2, true)
 
 
+## The empty setting of a Vaga: a hollow gold diamond (never the Ouro coin).
+static func socket(ci: CanvasItem, c: Vector2, r: float) -> void:
+	var pts := PackedVector2Array([c + Vector2(0, -r), c + Vector2(r * 0.8, 0), c + Vector2(0, r), c + Vector2(-r * 0.8, 0), c + Vector2(0, -r)])
+	ci.draw_colored_polygon(pts.slice(0, 4), Color(UiKit.INK, 0.85))
+	ci.draw_polyline(pts, UiKit.GOLD, 2.0, true)
+	ci.draw_circle(c, r * 0.22, Color(UiKit.GOLD, 0.7))
+
+
 static func shader_material(blur: float, dark: float, vignette: float, edge_fade: float, warm: float = 0.0) -> ShaderMaterial:
 	var m := ShaderMaterial.new()
 	m.shader = load("res://assets/shaders/dons_art.gdshader")

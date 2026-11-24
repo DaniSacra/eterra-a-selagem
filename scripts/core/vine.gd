@@ -160,6 +160,15 @@ func buy(data: Dictionary, id: StringName) -> bool:
 
 ## The max life the branch gives up to and with this root (0 when it gives none): the screen's second line. Read from
 ## the mods, so a data change shows by itself.
+## The maximum life this one node gives by itself.
+static func own_life(n: VineNode) -> int:
+	var total := 0.0
+	for mod in n.mods:
+		if mod.stat == &"max_hp":
+			total += mod.base
+	return int(total)
+
+
 func life_total(id: StringName) -> int:
 	var n := find(id)
 	if n == null:
