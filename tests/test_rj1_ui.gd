@@ -191,9 +191,10 @@ func test_the_meeting_is_the_encounter_screen_with_two_seals() -> void:
 	assert_not_null(meet, "the Encontro, not the provisional one")
 	assert_false(game._screen is AngelChoice)
 	assert_eq(meet.buttons.size(), 2)
-	for b in meet.buttons:
-		assert_not_null(b.find_child("seal", true, false) as AngelSeal)
-		assert_not_null(b.find_child("held", true, false) as Label)
+	# BC-3: a stage a side (the painting and its effect); the seal and the held count are in the speech box
+	assert_eq(meet.stages.size(), 2)
+	assert_not_null(meet.find_child("seal", true, false) as AngelSeal)
+	assert_not_null(meet.find_child("held", true, false) as Label)
 	await wait_process_frames(1)
 	assert_true(meet.buttons[0].has_focus(), "the first in focus: one press")
 
