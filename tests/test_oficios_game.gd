@@ -132,9 +132,12 @@ func test_the_forjador_restores_and_the_vendedor_takes_the_order() -> void:
 	assert_eq(Hub.station_line(HubPlan.SMITH), &"oficio_has_order")
 	hub.use(HubPlan.SMITH)
 	var f := hub.host.screen as ForgeScreen
-	assert_not_null(f, "the Forja, on the Oficina's bookmark")
+	assert_not_null(f, "the Forja, on the Oficina's bench")
 	assert_eq(f.tab, ForgeScreen.Tab.WORKSHOP)
-	assert_true(f.restore())
+	for k in 3:
+		f.press()
+		f.release()
+	assert_true(Oficios.has_tool(Save.data, d))
 	assert_true(Oficios.has_tool(Save.data, d))
 	assert_eq(MaterialPurse.amount(Save.data, MaterialPurse.SILVER), 40)
 	await wait_process_frames(2)

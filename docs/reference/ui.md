@@ -273,13 +273,25 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   `DoorGlyph.material(ci, kind, centro, altura)` desenha a marca em qualquer canvas. `MaterialCount`
   (`scripts/ui/material_count.gd`): marca e número no `UiKit.number_font` (nunca Cinzel), `named` acrescenta "Prata",
   `plus` escreve "+3"; `MaterialCount.purse(data)` é a Bolsa (Prata e Memória lado a lado) e `refresh(row, data)`.
-- **Forja da Emeth** (`ForgeScreen`, `scripts/ui/forge_screen.gd`, aberta pelo Forjador em `Hub._open_forge` pelo `ScreenHost`):
-  `BookSpread` de duas páginas. Esquerda: título, uma linha do que a Forja faz, "Temperar" com uma entrada por posto
-  (`Book.index_entry`, marca de Prata e o custo, "Forjado" quando já tem) e a Bolsa no pé. Direita: o posto em foco com
-  Efeito, Custo (`MaterialCount` com o nome), Estado e Próximo passo (pelo `Forge.problem`: pronto, falta Prata com quanto,
-  pede o anterior, forjado), Forjar (ação principal, só habilitado e focável quando pode) e Voltar. Mover o foco só mostra;
-  Enter numa entrada leva ao Forjar; comprar gasta (`Forge.buy`), grava (`Save.write`, só nos dados do jogo), emite
-  `forged` e passa ao próximo posto. `forge_done` sem "nesta versão".
+- **Forja da Emeth, a bancada (3b, 2026-11-24; `docs/art/forge_spec.md`)**: `ForgeScreen` (`scripts/ui/forge_screen.gd`, aberta pelo Forjador em
+  `Hub._open_forge`) deixou de ser livro. Um palco de 1280 x 720 centrado (o resto é fundo; `canvas_items` escala tudo, 1920 x 1080 sai x1,5). Pano com a
+  **Emeth deitada** (`EmethView.setup(px, true)`: ponta à direita, sem balanço, dentro do `ForgeBench`) e **quatro pontos** na arma (`ForgeBench.AT`,
+  ajustados ao modelo real, não ao esboço da spec): Despertar no pomo, Refinar nos dois braços da guarda (Ataque em cima, Especial embaixo), Inscrever no
+  plano da lâmina, Temperar nos três entalhes do gume (acendem por posto). O que se forjou aparece na arma: pedra desperta no engaste, anéis com a letra,
+  linhas gravadas. Ponto sem ferramenta: pano cinza com cadeado. Duas **bancadas** (`Tab.EMETH`, `Tab.WORKSHOP` com a Picareta deitada; LB/RB, `_turn`);
+  Despertar e Inscrever só com `arts_open()`.
+  **Leitura em 3 segundos**: faixa de **fichas** (`ForgeChip`, 176 x 56, seis estados por desenho e palavra: brasa, preço vermelho, tracejada "Depois de",
+  "Guardado", "Na lâmina", cadeado) e **placa** (`ForgePlate`: o quê, o que muda com números em negrito, quanto e "você tem N", botão "Martelar ● ○ ○ ou segure").
+  As palavras de cada escolha vêm de `ForgeInfo` (`scripts/core/forge_info.gd`, puro: `of(forge, data, rank)`, `pick(data, def)`; `Look` e `Action`).
+  **Gesto**: `ForgeHammer` (`scripts/core/forge_hammer.gd`, puro, usa `HoldGauge`): um aperto é uma martelada, a peça esfria em 1,2 s, B esfria sem gastar,
+  segurar 1,2 s dá as três (a segunda na metade); a terceira chama `Forge.buy` ou `Oficios.restore` (nenhuma regra nova), grava e emite `forged` ou `restored`.
+  Usar, Despertar e Adormecer são de um aperto, sem brasa. Mudar o foco esfria. Entrada por ações (setas e direcional andam nos pontos e na faixa, para baixo
+  entra na faixa, para cima volta, na guarda cima e baixo trocam o braço; `ui_accept`, `ui_cancel`, `tab_prev/next`) e mouse (passar dá o foco, clicar martela).
+  Efeitos no `ForgeBench` (tranco de 3 px, clarão, faíscas, calor de 25% e 50%, vapor na terceira; sem faíscas na Compatibility). Arte final: `ForgeArt` lê
+  `assets/ui/forge/*.png` (ligados: `bg`, `cloth`, `emeth_flat`, `pick_whole`, `pick_head`; o resto da lista em `ForgeArt.FILES`). Captura:
+  `--title --screen=forge [--forge-mark=temper|attack|special|awaken|inscribe]` (dados de demonstração em `ForgeScreen.demo_data()`). Testes:
+  `tests/test_forge_bench.gd` e os da Forja em `test_ui_fatia2`, `test_fatia3_ui`, `test_rj1_ui`, `test_oficios_ui`.
+  Pendente: sons de bigorna e chiado próprios (hoje `mat_armor` com tons), arte final do ChatGPT, a Maga com trilhas do cajado.
 - **Abrir Dom com Memória** (`HeroScreen`, `TalentNode`): o Dom revelado e não aberto (`HeroLoadout.State.SEALED`) mostra o
   glifo a meia força e, embaixo, a folha da Memória com o preço (`TalentNode.SEALED_GLYPH`, `MEMORY_MARK`, `MEMORY_SIZE`) no
   lugar dos losangos de Devoção. O painel diz "Abrir: N de Memória" no Custo, "Revelado pela Maestria, ainda fechado" no

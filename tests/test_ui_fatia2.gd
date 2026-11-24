@@ -120,45 +120,63 @@ func _forge(d: Dictionary) -> ForgeScreen:
 	return f
 
 
-func test_the_forge_shows_temper_three_and_the_refine_choices() -> void:
-	var f := _forge(_data())
-	var ids := f.ranks.map(func(r: ForgeRank) -> StringName: return r.id)
-	assert_true(ids.has(&"temper_3"), "Temperar III")
-	assert_eq(f.ranks.filter(func(r: ForgeRank) -> bool: return r.track == Forge.REFINE).size(), 6, "three on each action")
-	assert_true((f.find_child("tool", true, false) as Label).text.contains(T.t(&"forge_tool_missing")))
+## Three presses: the three strikes of the hammer.
+func _hammer(f: ForgeScreen) -> void:
+	for k in 3:
+		f.press()
+		f.release()
+
+
+func test_the_forge_offers_temper_three_and_the_refine_choices() -> void:
+	var f := _forge(_data(100, true))
+	f.focus_mark(&"temper")
+	assert_eq(f.infos.size(), 3, "Temperar I to III")
+	assert_eq(f.infos[2].id, &"temper_3")
+	f.focus_mark(&"attack")
+	assert_eq(f.infos.size(), 3, "three choices on the Ataque")
+	f.focus_mark(&"special")
+	assert_eq(f.infos.size(), 3, "and three on the Especial")
 
 
 func test_without_the_tool_the_refine_waits() -> void:
 	var f := _forge(_data(100))
+	f.focus_mark(&"attack")
 	var fio := f.forge.find(&"refine_fio")
-	f._show(fio)
-	assert_true(f.buy_button.disabled)
+	assert_eq(f.shown, fio)
+	assert_eq(f.info.look, ForgeInfo.Look.NO_TOOL)
+	assert_eq(f.info.action, ForgeInfo.Action.NONE)
 	assert_eq((f.find_child("state", true, false) as Label).text, T.t(&"forge_state_no_tool"))
 	assert_eq((f.find_child("step", true, false) as Label).text, T.t(&"forge_no_tool"))
-	assert_eq((f._entry_of(fio).find_child("mark", false, false) as ForgeScreen.Mark).look, ForgeScreen.Mark.Look.LOCKED)
+	assert_true(f.bench.sealed[&"attack"], "the cloth with the lock over the guard")
+	var silver := MaterialPurse.amount(f._data, MaterialPurse.SILVER)
+	_hammer(f)
+	assert_eq(MaterialPurse.amount(f._data, MaterialPurse.SILVER), silver, "nothing to hammer")
 
 
 func test_refine_buys_puts_on_and_changes_for_free() -> void:
-	var d := _data(100, true)
+	var d := _data(200, true)
 	var f := _forge(d)
-	assert_true((f.find_child("tool", true, false) as Label).text.contains(T.t(&"forge_tool_found")))
 	var fio := f.forge.find(&"refine_fio")
 	var peso := f.forge.find(&"refine_peso")
-	f._show(fio)
-	assert_eq(f.buy_button.text, T.t(&"forge_do"))
-	f.buy_button.pressed.emit()
+	f.focus_mark(&"attack")
+	f.focus_chip(0)
+	assert_eq(f.shown, fio)
+	assert_eq(f.info.action, ForgeInfo.Action.HAMMER)
+	_hammer(f)
 	assert_true(f.forge.is_on(d, fio), "the first on its action goes on")
-	assert_eq(f.buy_button.text, T.t(&"forge_refine_in_use"))
-	assert_true(f.buy_button.disabled)
-	assert_eq((f._entry_of(fio).find_child("mark", false, false) as ForgeScreen.Mark).look, ForgeScreen.Mark.Look.ON)
-	f._show(peso)
-	f.buy_button.pressed.emit()
+	assert_eq(f.info.look, ForgeInfo.Look.ON)
+	assert_eq(f.info.action, ForgeInfo.Action.NONE)
+	assert_eq(f.bench.rings[&"attack"], "F", "the ring of the guard carries its letter")
+	f.focus_chip(1)
+	_hammer(f)
 	assert_true(f.forge.is_on(d, fio), "the second is kept, the first stays on")
-	assert_eq(f.buy_button.text, T.t(&"forge_refine_use"))
-	assert_eq((f.find_child("step", true, false) as Label).text, T.t(&"forge_step_use", {"name": T.t(fio.name_key)}))
+	assert_eq(f.info.look, ForgeInfo.Look.STORED)
+	assert_eq(f.info.action, ForgeInfo.Action.USE)
+	assert_eq(f.info.detail, T.t(&"forge_instead", {"name": T.t(fio.name_key)}))
 	var silver := MaterialPurse.amount(d, MaterialPurse.SILVER)
-	f.buy_button.pressed.emit()
-	assert_true(f.forge.is_on(d, peso), "Usar puts it on")
+	f.press()
+	f.release()
+	assert_true(f.forge.is_on(d, peso), "Usar puts it on in one press")
 	assert_false(f.forge.is_on(d, fio))
 	assert_eq(MaterialPurse.amount(d, MaterialPurse.SILVER), silver, "for free")
 
@@ -171,11 +189,12 @@ func test_the_forge_fits_720_lines() -> void:
 	box.add_child(f)
 	f.open(_data(100, true))
 	await wait_process_frames(3)
-	assert_lt(f.back_button.get_global_rect().end.y, 720.0 - ActionBar.RESERVE, "the buttons over the action bar")
-	var last := f.entries.back() as Control
-	assert_lt(last.get_global_rect().end.y, (f.find_child("effect", true, false) as Control).get_global_rect().position.y)
-	var page := f.find_child("rank", true, false) as Control
-	assert_lte(page.get_combined_minimum_size().y, page.size.y + 0.5, "nothing pushed past the page")
+	var stage := Rect2(f._stage.global_position, ForgeScreen.STAGE)
+	for c: Control in [f.plate, f.bench.emeth]:
+		assert_true(stage.encloses(c.get_global_rect()), "%s inside the 1280 x 720 stage" % c.name)
+	var bar := f.find_child("action_bar", true, false) as Control
+	assert_lt(f.plate.get_global_rect().end.y, bar.get_global_rect().position.y + 1.0, "the plate over the action bar")
+	assert_lt(f.chips.back().get_global_rect().end.y, f.plate.get_global_rect().position.y, "the strip over the plate")
 
 
 # ---------- the Esmeralda ----------

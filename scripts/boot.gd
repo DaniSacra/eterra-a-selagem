@@ -66,6 +66,8 @@ func _ready() -> void:
 			_open(HowToScreen.new(), TitleButton.Kind.HOWTO)
 		"vine":
 			_open(VineScreen.new(), TitleButton.Kind.HERO, [_vine_view()])
+		"forge":
+			_open(ForgeScreen.new(), TitleButton.Kind.HERO, [ForgeScreen.demo_data()])
 		"juramentos":
 			_open_juramentos(Juramentos.unlocked(Save.data))
 	if Dev.has("shot"):

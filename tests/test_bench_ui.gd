@@ -280,21 +280,22 @@ func test_the_glossary_names_the_words_of_the_card_in_focus() -> void:
 
 # ---------- the Forja ----------
 
-func test_the_forge_shows_the_emeth_with_its_rank_by_the_button() -> void:
+func test_the_forge_shows_the_emeth_with_its_rank_on_the_blade() -> void:
 	var d := SaveData.defaults()
 	MaterialPurse.give(d, MaterialPurse.SILVER, 20)
 	var f := ForgeScreen.new()
 	add_child_autofree(f)
 	f.open(d)
-	assert_not_null(f.emeth, "the Emeth itself on the page")
-	assert_eq(f.emeth.rank, 0.0)
-	assert_eq((f.find_child("rank_now", true, false) as Label).text, T.t(&"forge_current_none"))
-	f.buy_button.pressed.emit()
-	assert_eq(f.emeth._target, 1.0, "the new rank grows on the blade")
-	assert_eq((f.find_child("rank_now", true, false) as Label).text, T.t(&"forge_temper_1"))
-	var deal := f.find_child("deal", true, false) as Control
-	assert_not_null(deal.find_child("cost", true, false), "the cost by the button")
-	assert_not_null(deal.find_child("purse", true, false), "and what he has")
+	assert_not_null(f.bench.emeth, "the Emeth itself on the cloth")
+	assert_true(f.bench.emeth.flat, "lying, the tip to the right")
+	assert_eq(f.bench.emeth.rank, 0.0)
+	for k in 3:
+		f.press()
+		f.release()
+	assert_eq(f.bench.emeth._target, 1.0, "the new rank grows on the blade")
+	assert_eq(f.bench.temper, 1, "and lights a notch of the edge")
+	assert_not_null(f.plate.find_child("cost", true, false), "the price on the plate")
+	assert_not_null(f.plate.find_child("have", true, false), "and what he has")
 
 
 func test_new_texts_in_portuguese_without_dash() -> void:
