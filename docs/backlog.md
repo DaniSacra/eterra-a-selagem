@@ -1,5 +1,48 @@
 # Backlog de A Selagem
 
+## Próximas fases (organizado com o Daniel, 2026-11-23 22h30; LER PRIMEIRO)
+Uma fase por vez; cada fase fecha com exe nas duas pastas e captura na GPU do que mudou. No máximo 4 agentes ao mesmo tempo (o WSL caiu
+às 21h24 de 23/11). A lista "Aberto de verdade" abaixo está toda feita, menos o item 9 (vai para a Fase 4).
+
+**Fase 0, agora: exe do teste com as crianças** (sessão principal). Exe de 22h27 com Maga M2, PT-10 (anjos, Bênção com a tecla na frase,
+Encanto com o ichthys, portas com anel, selo e caixa), dicas da primeira descida, bugs 1 a 4, Armadilheiro, bastão aceso, Trinca e Varredor,
+Dons em medalhão (substitui a aba do Livro). Fica de fora: PT-6 e PT-11 (salas por baixo, loja na parede).
+
+**Fase 1, o que as crianças mostrarem** (precisa do Daniel: o registro `runs.jsonl` do PC do teste e as anotações dele).
+- `python3 -I tools/runs_report.py --since=2026-11-23T22:00`; resumo do que mudar (`balance-designer`).
+- Recalibrar Morvath (`BOSS_DAMAGE` 1,3, golpe máximo abaixo de 30), o segundo minichefe brando, o ataque em 44% do dano.
+- Se travou ou confundiu: bugs primeiro (`qa-performance` para reproduzir, `gameplay-engineer` ou `ui-ux-designer` para corrigir).
+
+**Fase 2, salas** (`room-designer`, `environment-artist`).
+- Juntar PT-6 (entrada por baixo, saída por cima; guardião e ondas nascem ao norte) e PT-11 (loja na parede) depois do robô provar que a
+  sala 5 não ficou mais difícil (9 sementes antes e depois).
+- Arte: portal de entrada ao sul e fim dos arcos selados do oeste; coluna esculpida e plaquinha de pergaminho da loja.
+- Captura GPU de 3 salas e da loja.
+
+**Fase 3, uma identidade por sistema da meta** (`docs/art/meta_identities.md`; Daniel: "totalmente diferentes entre si"). Cada item:
+spec do `art-director`, pedido ao ChatGPT para o Daniel, tela pelo `ui-ux-designer` com placeholder, peça do Santuário pelo `environment-artist`,
+captura GPU.
+- **3a Dons (medalhão)**: FEITO o principal (`DonsScreen`, aba do Livro removida). Falta: arte do ChatGPT (pedido em
+  `Downloads\Pedido-ChatGPT-medalhao-dos-Dons.txt`), sons (nota ao segurar, sino ao equipar), Memória voando ao contador, linhas dos ramos
+  mais fortes, ícone do cristal de Memória, a Maga em captura, a estação do Santuário como medalhão de bronze num pedestal.
+- **3b Forja** (arma deitada, ferro e brasa, três marteladas).
+- **3c Loja da descida e Vendedor** (pano e balança, pôr no prato).
+- **3d Videira** (planta que cresce, regar; a estação já cresce, falta a tela no mesmo espírito).
+- **3e Livro de Ahk** (pergaminho, virar a página; só Abertura, O Guerreiro e Ofícios agora).
+- **3f Alquimista** (estante, vidro e cobre, verter): só depois do Daniel decidir para que serve (Q-OF7).
+
+**Fase 4, revisão de arte** (`art-director`, só lê capturas que a sessão principal tira, uma por vez): item 9 abaixo (Canalizador, luz de
+Morvath, película e relógio da Suspensão, GR-8, GR-17 a GR-20, GR-26, GR-27) mais o que entrou hoje sem captura GPU (portas, encontro dos
+anjos, Bênção com a tecla, Encanto, dicas, bastão, Trinca e Varredor).
+
+**Fase 5, conteúdo que espera respostas do Daniel**
+- Maga M3: as 9 perguntas no fim de `docs/design/heroes/maga_m3.md` (a principal: sistema de armas; recomendação B, focos só da Maga).
+- C6, os outros cinco anjos, e o 8C dos Elos.
+- Heróis novos (Ladina, Paladino), Meshy, Steam: depois.
+
+**Perguntas abertas para o Daniel**: as 9 da M3; Alquimista (Q-OF7); se a estação dos Dons vira medalhão no pedestal (recomendado);
+opção de vida maior para crianças (modo fácil) se o teste mostrar necessidade.
+
 ## Aberto de verdade (2026-11-23 noite)
 Conferido no código e no `git log` até `7058ed0` (game-director). Fora desta lista de propósito: o que já está em andamento (PT-10 telas e
 portas, PT-6 salas, PT-11 loja, Maga M2 a integrar, Videira V3); o que espera o Daniel (C6, os outros cinco anjos, e o 8C dos Elos que
@@ -38,11 +81,11 @@ está aqui foi feito (marcado FEITO com o commit) ou espera o Daniel.
    15% dos golpes levados nas salas 9 em diante (`RESULT.hurt_by`).
 
 **Arte e leitura**
-7. **Fogo âmbar nas duas pontas do bastão** (`technical-artist`, P). Pendente desde a M1c (`maga_staff.gd` só tem a malha). Um brilho
+7. **FEITO (2026-11-23, `staff_glow.gdshader`, sobe ao conjurar)** **Fogo âmbar nas duas pontas do bastão** (`technical-artist`, P). Pendente desde a M1c (`maga_staff.gd` só tem a malha). Um brilho
    âmbar contido no orbe de cada cabeça, mais forte ao conjurar; nada de partícula sobre o herói nem clarão branco. Arquivos:
    `scripts/render/maga_staff.gd` e um shader novo em `assets/shaders/`. Aceite: captura na GPU pela sessão principal
    (`tools/gpu.sh shot x.png --hero=maga --bot --shot-at=9`), Compatibility sem erro, mesmo `RESULT`.
-8. **Trinca e Varredor com silhueta própria** (`technical-artist`, M). Os dois usam corpos provisórios (`gameplay.md`, "Pendente: silhueta
+8. **FEITO em parte (2026-11-23, `CrowdRenderer.BUILD`, escala por modelo; falta captura e aval do art-director)** **Trinca e Varredor com silhueta própria** (`technical-artist`, M). Os dois usam corpos provisórios (`gameplay.md`, "Pendente: silhueta
    lado a lado com os seis"). Reassar em `tools/bake.gd` sem créditos. **Risco**: os assados estão em 68,55 de 70 MB (`a1b5be6`); cortar poses
    antes. Aceite: os oito comuns lado a lado numa captura (sessão principal) e aprovação do `art-director`; teto de 70 MB mantido pelo teste.
 9. **Revisão de arte do que entrou sem olhar** (`art-director`, P; só lê capturas, a sessão principal captura uma por vez). Canalizador
