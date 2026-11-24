@@ -283,13 +283,16 @@ static func aim(m: ShaderMaterial) -> void:
 const GUST_COLOR := Color(0.58, 0.68, 0.82)
 const GUST_STRENGTH := 0.6
 const GUST_RIM_M := 0.08
-const GUST_FILL := 0.12
+const GUST_FILL := 0.08
+## Its edges melt into the floor over this many meters (N5, art review 2026-11-24).
+const GUST_SOFT_M := 0.4
 static func gust(m: ShaderMaterial) -> void:
 	put(m, &"color", GUST_COLOR)
 	put(m, &"strength", GUST_STRENGTH)
 	put(m, &"rim_m", GUST_RIM_M)
 	put(m, &"fill_early", GUST_FILL * 0.5)
 	put(m, &"fill_max", GUST_FILL)
+	put(m, &"soft_edge_m", GUST_SOFT_M)
 
 
 ## The Canalizador's beam held on the floor (art review 2026-11-23, item 18): a thin bright core of BEAM_CORE_M and a

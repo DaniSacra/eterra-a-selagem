@@ -407,7 +407,7 @@ func _cloth_material(glow: Color) -> StandardMaterial3D:
 ## value: the biome patches and the mottled shade of floor_biome.gdshaderinc, SW-G1 and SW-G2); a material with the meta PAINT_OWN takes those values on top (bone that must not
 ## turn to stone: OWN_KEEP).
 func paint_look(style := {}) -> void:
-	var swaps := {Masonry.SHADER: Masonry.PAINT_SHADER, FLOOR_SHADER: FLOOR_PAINT, MOSS_SHADER: MOSS_PAINT,
+	var swaps := {Masonry.SHADER: Masonry.PAINT_SHADER, Masonry.FADE_SHADER: Masonry.FADE_PAINT_SHADER, FLOOR_SHADER: FLOOR_PAINT, MOSS_SHADER: MOSS_PAINT,
 		RUNE_FLOOR: RUNE_FLOOR_PAINT}
 	var seen := {}
 	var kit_paint: Material = KAYKIT_PAINT

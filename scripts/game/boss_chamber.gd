@@ -844,7 +844,7 @@ func _under() -> void:
 
 func _perimeter() -> void:
 	var front := m.stone(0.0).duplicate() as ShaderMaterial
-	front.set_shader_parameter(&"see_through", 1.0)
+	Masonry.see_fade(front)
 	var plain := m.stone(0.0)
 	# the ledge round the floor's edge (the candles stand on it), and the balustrade in runs between its pieces
 	for run in RAILS:
@@ -1008,7 +1008,7 @@ func _see_through(stone: ShaderMaterial, bearing: float) -> ShaderMaterial:
 	var key := stone.get_instance_id()
 	if not _open_stone.has(key):
 		var open := stone.duplicate() as ShaderMaterial
-		open.set_shader_parameter(&"see_through", 1.0)
+		Masonry.see_fade(open)
 		_open_stone[key] = open
 	return _open_stone[key]
 

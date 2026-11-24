@@ -45,3 +45,28 @@ bool see_through_hole(vec3 vertex, vec2 frag, mat4 view, mat4 projection, float 
 	return t < smoothstep(0.0, 1.0, open);
 #endif
 }
+
+// Real fade (GR-8, art review 2026-11-24 N1): for the masonry twins that set SEE_FADE (masonry_fade, masonry_paint_fade:
+// a transparent pipeline with an opaque depth prepass, so only the pixels that fade blend). Returns the piece's alpha
+// at this pixel: 1 everywhere except where it really stands between the eye and him (his line of sight, at his depth,
+// within the radius), easing to SEE_FADE_MIN in the middle over a SEE_FADE_EDGE m rim. A piece beside him stays whole.
+const float SEE_FADE_MIN = 0.35;
+const float SEE_FADE_EDGE = 0.6;
+const float SEE_FADE_RADIUS = 1.3;
+
+float see_through_alpha(vec3 vertex, mat4 view, mat4 projection, float amount, float radius, float height, float gap) {
+	if (amount <= 0.0 || projection[3][3] >= 0.5 || abs(projection[1][1]) <= 1.5) {
+		return 1.0;
+	}
+	radius = min(radius, SEE_FADE_RADIUS);
+	float open = 0.0;
+	for (int k = 0; k < 2; k++) {
+		vec3 who = k == 0 ? hero_pos : boss_pos;
+		vec3 hv = (view * vec4(who + vec3(0.0, height, 0.0), 1.0)).xyz;
+		if (vertex.z > hv.z + gap) {
+			float d = length(vertex.xy * (hv.z / vertex.z) - hv.xy);
+			open = max(open, 1.0 - smoothstep(radius - SEE_FADE_EDGE, radius, d));
+		}
+	}
+	return mix(1.0, SEE_FADE_MIN, open * amount);
+}

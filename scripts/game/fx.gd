@@ -115,6 +115,11 @@ const CRESCENT_HEAD := 0.75
 const CRESCENT_TAIL := 0.2
 const CRESCENT_PALE := 0.8
 const CRESCENT_BODY := 0.5
+## N4 (art review 2026-11-24): the spin's ribbon is the Emeth's green (not the gold blend), added to the floor, under this
+## screen peak (the paladin stays the lightest thing), its ends fading over CRESCENT_SPIN_TIPS of the swing.
+const CRESCENT_SPIN_GREEN := Color(0.3, 0.85, 0.55)
+const CRESCENT_SPIN_PEAK := 0.36
+const CRESCENT_SPIN_TIPS := 0.12
 const KICK_METERS := 0.35
 const GOLD := Color(1.0, 0.82, 0.38)
 const SLASH_POOL := 18
@@ -900,6 +905,14 @@ func crescent(origin: Vector2, dir: Vector2, reach: float, width_deg: float, col
 	mat.set_shader_parameter(&"body_light", CRESCENT_BODY)
 	mat.set_shader_parameter(&"sweep", clampf(Feel.live().slash_sweep_time / CRESCENT_TIME, 0.05, 0.5))
 	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(gold.lerp(Color.WHITE, 0.45)))
+	mat.set_shader_parameter(&"additive", 0.0)
+	mat.set_shader_parameter(&"tip_fade", 0.0)
+	if deg >= CRESCENT_SPIN and family_of(color) < 0:
+		mat.set_shader_parameter(&"color", CRESCENT_SPIN_GREEN)
+		mat.set_shader_parameter(&"peak", CRESCENT_SPIN_PEAK)
+		mat.set_shader_parameter(&"edge_pale", 0.2)
+		mat.set_shader_parameter(&"additive", 1.0)
+		mat.set_shader_parameter(&"tip_fade", CRESCENT_SPIN_TIPS)
 	if deg < CRESCENT_SPIN:
 		_crescent_echo(origin, dir, r * CRESCENT_ECHO_SIZE, deg, height, mat)
 
@@ -911,6 +924,8 @@ func _crescent_echo(origin: Vector2, dir: Vector2, reach: float, deg: float, hei
 	(e.node as Node3D).scale = Vector3.ONE
 	e.time = CRESCENT_TIME
 	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"additive", 0.0)
+	mat.set_shader_parameter(&"tip_fade", 0.0)
 	mat.set_shader_parameter(&"color", GOLD)
 	mat.set_shader_parameter(&"t", 0.0)
 	mat.set_shader_parameter(&"ink_opacity", 0.0)
