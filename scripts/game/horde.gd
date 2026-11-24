@@ -1615,6 +1615,7 @@ func _behave_beam(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.blows = 0
 				var beam := _mark(e, ground.add_line_warning(e.pos, e.aim, d.attack_range, d.attack_width, 1.0, 0.0))
 				beam.life = BEAM_FILL
+				GroundLook.beam(beam.mat, d.attack_width * 0.5)
 				beam.tags.append(BEAM_TAG)
 				e.warning = beam
 		Enemy.State.ATTACK:

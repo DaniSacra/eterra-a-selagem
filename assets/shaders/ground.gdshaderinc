@@ -23,6 +23,9 @@ uniform float fade = 1.0;
 // in meters: the rim stays thin on big areas instead of growing with them. The area itself is the attack's.
 uniform float size_m = 1.0;
 uniform float rim_m = 0.28;
+// How much of a line's half width its rim may take (0.2: every warning's; the Canalizador's beam, a narrow line with a
+// thin ring of its own, asks for more).
+uniform float rim_cap = 0.2;
 // A line warning's length in meters (its chevrons keep their size on short and long lines).
 uniform float length_m = 4.0;
 // The paladin's circle (style 2): how much of its light fills the inside, and how many marks turn inside its rim.
@@ -225,7 +228,7 @@ void fragment() {
 		}
 		float side_m = abs(uv.x) * (size_m + pad_m);
 		float side = side_m / size_m;
-		float rim = clamp(rim_m / size_m, 0.04, 0.2);
+		float rim = clamp(rim_m / size_m, 0.04, rim_cap);
 		float edge = smoothstep(1.0 - rim, 1.0 - rim * 0.3, side);
 		if (side > 1.0) {
 			// past the lane's long sides: only the signature
@@ -354,6 +357,13 @@ void fragment() {
 			float lane = 1.0 - rim * 6.0;
 			mark *= smoothstep(lane - rim * 1.1, lane - rim * 0.6, d) * (1.0 - smoothstep(lane + rim * 0.1, lane + rim * 0.6, d));
 			a = ring * circle_rim + mark * circle_mark_light + circle_veil * (0.6 + 0.4 * d);
+		} else if (style == 4) {
+			// the hero's own fire (Bênção trail, Passo embers): never a flat disc. A soft glow of at most 0.35 that dies
+			// away well inside the edge (no hard rim), with small embers drifting up through it
+			float n = noise(uv * 3.0 + vec2(TIME * 0.5, -TIME * 0.4));
+			float glow = (0.12 + 0.18 * n) * (1.0 - smoothstep(0.3, 0.95, d));
+			float sparks = smoothstep(0.74, 0.88, noise(uv * 11.0 + vec2(0.0, TIME * 1.6))) * (1.0 - smoothstep(0.5, 0.9, d));
+			a = min(glow + sparks * 0.22, 0.35);
 		} else {
 			float n = noise(uv * 4.0 + vec2(TIME * 0.7, -TIME * 0.5)) * 0.6 + noise(uv * 9.0 - TIME) * 0.4;
 			float edge = smoothstep(1.0 - clamp(rim_m * 2.0 / size_m, 0.06, 0.25), 1.0, d);

@@ -31,12 +31,12 @@ Coordenadas em pixels da própria captura (x, y a partir do canto de cima à esq
 | 15 | Luz morna da Câmara de Morvath | FEITO | - | - |
 | 16 | GR-17 letras do golpe de Morvath | SAI (Morvath sem marca no chão, `159f206`) | - | - |
 | 17 | GR-19 fio da mira | SAI (`besteiro.png`: sem linha) | - | - |
-| 18 | Faixa do Canalizador opaca e chapada | AJUSTAR | P1 | `technical-artist` |
-| 19 | Rastro de fogo da Bênção: discos laranja opacos | AJUSTAR | P1 | `technical-artist` |
+| 18 | Faixa do Canalizador opaca e chapada | FEITO (falta captura) | P1 | `technical-artist` |
+| 19 | Rastro de fogo da Bênção: discos laranja opacos | FEITO (falta captura) | P1 | `technical-artist` |
 | 20 | GR-26 duas barras no guardião | AJUSTAR | P2 | `ui-ux-designer` |
 | 21 | GR-27 dano por tempo pequeno e cinza | AJUSTAR | P2 | `combat-feel-director` |
 | 22 | Portas: ponto preto no medalhão da recompensa | AJUSTAR | P2 | `ui-ux-designer` |
-| 23 | Trinca: silhueta baixa não lê | AJUSTAR | P2 | `technical-artist` |
+| 23 | Trinca: silhueta baixa não lê | FEITO (falta captura) | P2 | `technical-artist` |
 | 24 | Varredor, Canalizador (modelo), portas (resto), Livro de Ahk | FEITO | - | - |
 | 25 | GR-18 besta | SAI provisório (sem palitos em repouso) | - | - |
 | 26 | Suspensão Absoluta, GR-20 arco do giro, laje armada, GR-8 | SEM CAPTURA útil | - | lista no fim |
@@ -44,6 +44,7 @@ Coordenadas em pixels da própria captura (x, y a partir do canto de cima à esq
 ## Itens
 
 ### 1. Laje armada vira tapete vermelho (P0, `technical-artist`)
+**Causa real do retângulo que sobrou (2026-11-24):** não era laje. Semente 5, sala 2 (Salão das Fendas): `BandFloor` da respiração da fenda (`band_source` `breath`, banda 2,3 x 6 m em (2,9; -4)) desenhada pelo `Ground.add_band` com o vermelho de perigo (`HAZARD_COLOR`) apesar de empurrar com dano 0. Corrigido com `GroundLook.gust`: bruma azul acinzentada, aro de 0,08 m, preenchimento até 0,12.
 **FEITO (2026-11-23, falta captura GPU):** `GroundLook.set_plate` mantém a pedra, a fissura acende âmbar (1,0; 0,62; 0,25, preenchimento até 0,25) e o vermelho é só um aro de 0,12 m (uniform `plate_red` em `ground.gdshaderinc`) nos últimos `Feel.bang_lead` do preparo e no golpe.
 `porta_caixa.png` (1410..1580, 200..330): retângulo vermelho saturado e opaco, com chevrons ">>" ao lado, perto da saída.
 Pela posição e pelos chevrons é a laje que empurra (RP-13): `GroundLook.set_plate` leva `PLATE_REST_COLOR` até
@@ -146,6 +147,7 @@ chapado; esperam a arte do ChatGPT (`assets/ui/shop/`).
 ## Segunda rodada (capturas GPU de 2026-11-23, `docs/gallery/review_2026-11-23/`)
 
 ### 18. Faixa do Canalizador opaca (P1, `technical-artist`)
+**FEITO (2026-11-24, falta captura GPU):** `GroundLook.beam` (aro 0,08 m, preenchimento até 0,2, que com o ganho 1,5 do estilizado dá 0,3; sem chão base), chamado em `Horde._behave_beam`; novo uniform `rim_cap` no `ground.gdshaderinc`.
 `canalizador.png` (570..1130, 485..800): faixa magenta-vermelha de cerca de 1 m, opaca, sem borda nem textura, do
 Canalizador até atrás do herói. Tem `ground_warning` (o PT-1 permite), mas lê como fita adesiva sobre o chão e é a
 coisa mais saturada da tela, acima do herói. Pedido: estilo de aviso da casa (preenchimento com alfa até 0,3, aro de
@@ -154,6 +156,7 @@ o chão aparece sob a faixa (luma do chão visível, juntas de pedra legíveis) 
 O modelo (orbes nos punhos, capuz) está FEITO: lê diferente do feiticeiro.
 
 ### 19. Rastro de fogo da Bênção (P1, `technical-artist`)
+**FEITO (2026-11-24, falta captura GPU):** `GroundLook.Style.EMBERS` (estilo 4 do `ground.gdshaderinc`) para toda zona `Kind.EMBER`: brilho aditivo de no máximo 0,35 que se apaga antes da borda, com brasas subindo; sem aro.
 `numeros_dot.png` (850..1280, 470..900): sete discos laranja opacos em fila, cada um com cerca de 2,5 m. Efeito do
 herói com a cara de área de perigo inimiga e cobrindo inimigos e o chão. Pedido: efeito do herói em modo aditivo,
 alfa até 0,35 no miolo, borda que se desfaz (sem aro duro), labaredas ou brasas pequenas em vez de disco liso, na cor
@@ -176,6 +179,7 @@ Forja (engaste vazio deve ser bronze, não preto). O medalhão do Ouro (1430..15
 de Dons do HUD; aceitável, a câmera muda.
 
 ### 23. Trinca e Varredor
+**FEITO (2026-11-24, falta captura GPU):** `CrowdRenderer.BUILD` da Trinca em 1,45 x 0,8 x 1,45.
 `trinca_varredor.png`: o Varredor (as duas figuras altas de lâmina longa, 610..750, 520..840 e 790..930, 380..690) é
 FEITO: silhueta própria e arma que diz "varre". A Trinca (a figura baixa ao lado do herói, 420..540, 600..720) não lê
 como "baixa, larga, três corcundas": cola no herói e parece um esqueleto agachado. P2, `technical-artist`: aumentar a

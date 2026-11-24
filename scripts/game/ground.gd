@@ -302,6 +302,8 @@ func add_band(from: Vector2, dir: Vector2, length: float, width: float, time: fl
 	z.by = &""
 	z.offscreen = 0
 	GroundLook.hazard(z.node, from, z.dir, length, width, z.node.position.y)
+	if source == BREATH_SOURCE:
+		GroundLook.gust(z.mat)
 	z.node.visible = drawn
 	return z
 
@@ -589,8 +591,8 @@ func _add(kind: Kind, shape: Shape, at: Vector2, dir: Vector2, radius: float, wi
 	z.node.visible = true
 	# the Psalms' areas (E4) are drawn as the circle of light (a fine rim and a veil): a full area that size would cover him
 	var circle := kind == Kind.BIND or kind == Kind.SHELTER or kind == Kind.STONE
-	var style := GroundLook.Style.WARNING if kind == Kind.WARNING else GroundLook.Style.CIRCLE if circle else GroundLook.Style.AREA
-	GroundLook.dress(z.node, style, shape, z.color, WARNING_STRENGTH if kind == Kind.WARNING else BIND_STRENGTH if circle else AREA_STRENGTH,
+	var style := GroundLook.Style.WARNING if kind == Kind.WARNING else GroundLook.Style.CIRCLE if circle else GroundLook.Style.EMBERS if kind == Kind.EMBER else GroundLook.Style.AREA
+	GroundLook.dress(z.node, style, shape, z.color, WARNING_STRENGTH if kind == Kind.WARNING else BIND_STRENGTH if circle else 1.0 if kind == Kind.EMBER else AREA_STRENGTH,
 		RIM_METERS, at, z.dir, radius, width, 0.06 + zones.size() * 0.0005)
 	z.mat.set_shader_parameter(&"circle_veil", BIND_VEIL)
 	z.mat.set_shader_parameter(&"circle_marks", BIND_MARKS)
