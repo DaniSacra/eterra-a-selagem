@@ -372,11 +372,11 @@ func _tell(id: StringName) -> void:
 		MedallionNodeDef.Kind.ULT:
 			var u := _ult_info(id, n)
 			panel.tell_node(u)
-			view.caption = short_line(u.reason if u.reason != "" else u.desc)
+			view.caption = short_line(u.reason) if u.reason != "" else String(u.name)
 		_:
 			var g := _gift_info(id, n)
 			panel.tell_node(g)
-			view.caption = short_line(g.reason if g.reason != "" else g.desc)
+			view.caption = short_line(g.reason) if g.reason != "" else String(g.name)
 
 
 ## The first sentence of a text, cut at MedallionView.CAPTION_MAX characters on a word.
