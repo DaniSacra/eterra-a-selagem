@@ -2154,9 +2154,9 @@ func _maga_talents() -> void:
 	# Piromancia: the detonated Selo leaves a burn (3 s of 4 a second on it and within 1.5 m); the shots burn (2 a second,
 	# the third 5); the Explosão burns what the Selo did not take and grows by a quarter; the amplified Explosão leaves 4 s of embers
 	_talent(0, &"brasa_viva", B.PIRO, T.ENTRY, 2, 1, {"mods": [_raw(&"seal_burn", 4.0)] as Array[BoonMod]})
-	_talent(1, &"pavio_longo", B.PIRO, T.MIDDLE, 2, 5, {"slot": S.ATTACK, "mods": [_raw(&"burn_dps", 2.0, [], &"light"), _raw(&"burn_dps", 3.0, [], &"seal")] as Array[BoonMod]})
-	_talent(2, &"combustao", B.PIRO, T.MIDDLE, 3, 7, {"slot": S.SPECIAL, "mods": [_raw(&"burn_dps", 4.0, [], &"blast"), _raw(&"cast_size_pct", 0.25, [], &"blast")] as Array[BoonMod]})
-	_talent(3, &"inferno_runico", B.PIRO, T.APEX, 4, 16, {"partner": B.ARCA, "mods": [_raw(&"inferno_dps", 10.0), _raw(&"inferno_time", 4.0)] as Array[BoonMod]})
+	_talent(1, &"pavio_longo", B.PIRO, T.MIDDLE, 2, 5, {"slot": S.ATTACK, "mods": [_raw(&"burn_dps", 2.0, [], &"light"), _raw(&"burn_dps", 2.0, [], &"seal")] as Array[BoonMod]})
+	_talent(2, &"combustao", B.PIRO, T.MIDDLE, 3, 7, {"slot": S.SPECIAL, "mods": [_raw(&"burn_dps", 3.0, [], &"blast"), _raw(&"cast_size_pct", 0.25, [], &"blast")] as Array[BoonMod]})
+	_talent(3, &"inferno_runico", B.PIRO, T.APEX, 4, 16, {"partner": B.ARCA, "mods": [_raw(&"inferno_dps", 8.0), _raw(&"inferno_time", 4.0)] as Array[BoonMod]})
 	# Arcanismo: a Selo gives 1 more Magia; the Selo comes a shot sooner (the third shot 5 weaker); a second Selo on one enemy
 	# (the blast's bonus x1.4); a detonated Selo leaps to the nearest enemy without one
 	_talent(4, &"eco_arcano", B.ARCA, T.ENTRY, 2, 2, {"mods": [_raw(&"seal_magick", 1.0)] as Array[BoonMod]})
@@ -2172,7 +2172,7 @@ func _maga_talents() -> void:
 	# bridges: the third shot burns (5 a second); a blast on 3 Selos or more throws a second at half; the Círculo lays a Selo
 	# on all inside when it closes; the Círculo and the Suspensão recharge a quarter sooner; the Círculo burns when it closes
 	# (12 and 4 a second); the Passo leaves a flash where she was and embers where she lands
-	_talent(12, &"chama_que_marca", B.BRIDGE, T.BRIDGE, 3, 11, {"joins": PA, "mods": [_raw(&"burn_dps", 5.0, [], &"seal")] as Array[BoonMod]})
+	_talent(12, &"chama_que_marca", B.BRIDGE, T.BRIDGE, 3, 11, {"joins": PA, "mods": [_raw(&"burn_dps", 4.0, [], &"seal")] as Array[BoonMod]})
 	_talent(13, &"brasa_gemea", B.BRIDGE, T.BRIDGE, 3, 19, {"joins": PA, "mods": [_raw(&"twin_blast", 0.5)] as Array[BoonMod]})
 	_talent(14, &"selo_no_chao", B.BRIDGE, T.BRIDGE, 3, 12, {"joins": AC, "mods": [_raw(&"circle_seal", 1.0)] as Array[BoonMod]})
 	_talent(15, &"leitura_rapida", B.BRIDGE, T.BRIDGE, 3, 14, {"joins": AC, "mods": [_raw(&"cooldown_pct", -0.25, [], &"shout"), _raw(&"cooldown_pct", -0.25, [], &"dome")] as Array[BoonMod]})
@@ -2213,7 +2213,7 @@ func _maga() -> void:
 	d.name_key = &"ult_dome_abs"
 	d.desc_key = &"ult_dome_abs_desc"
 	var dome_numbers := {"charge": 100.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 6, "gesture": 0.3,
-		"anim": &"Cast", "anim_peak": PEAK[&"Cast"], "radius": 5.5, "duration": 8.0, "dome_shot_pct": 0.3, "dome_blast_cost": 5.0}
+		"anim": &"Cast", "anim_peak": PEAK[&"Cast"], "radius": 5.5, "duration": 8.0, "dome_shot_pct": 0.2, "dome_blast_cost": 5.0}
 	for k: String in dome_numbers:
 		d.set(k, dome_numbers[k])
 	d.tags = [&"ultimate", &"cast"] as Array[StringName]

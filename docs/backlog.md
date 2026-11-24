@@ -79,9 +79,8 @@ Meta: um exe estável e justo para quem nunca jogou, com o registro das partidas
   4. **Maga M1c** (modelo no jogo; o Daniel quis depois do teste): esqueleto e animações no Meshy (~5 + 3 por ação) e o cajado (~30),
      estimar e pedir o ok antes de gastar; saldo 371. Modelo pronto em `assets/models/meshy/hero_maga_img/`.
   5. **Maga M2**: **FEITO (2026-11-23, no worktree, sem o Daniel ter testado)** seguindo as recomendações do plano (Suspensão Absoluta, árvore em triângulo, 1 Selo
-     na Tempestade, ramo "Selos"): Maestria própria, 23 Dons, 2ª ultimate e Bênçãos afinadas (`docs/reference/meta.md`, "A Maga, M2"). Faltam: a tela da árvore em
-     triângulo desenhada pelo `art-director` (hoje só os eixos a 120 graus), escudo e cura do domo e rastro do Passo (Bênçãos), película e relógio da Suspensão Absoluta,
-     equilíbrio com 12 sementes (seção 5 do plano), Bênçãos novas.
+     na Tempestade, ramo "Selos"): Maestria própria, 23 Dons, 2ª ultimate e Bênçãos afinadas (`docs/reference/meta.md`, "A Maga, M2"). Depois (mesmo dia): escudo e cura do domo, empurrão da borda, rastro do Passo nos dois pontos, película com hexágonos e relógio da Suspensão Absoluta, XP do primeiro Selo detonado e equilíbrio com 12 sementes (`docs/design/balance.md`, "Equilíbrio da Maga"). Faltam: a tela da árvore em
+     triângulo desenhada pelo `art-director` (hoje só os eixos a 120 graus), uma captura GPU da película e do relógio (sessão principal), Bênçãos novas de Shomael na E (precisa de uma Bênção própria sem mudar o baralho do Guerreiro).
   6. Abertos de combate e arte: luta de Morvath longa, ataque 44% do dano, placa do Armadilheiro, revisões na GPU; C6 (anjos) espera o Daniel.
 - Regras de hoje: imagens para o Daniel ver vão para `C:\Users\danie\Downloads`; cópias de segurança no disco (`~/games/eterra-backups`),
   nunca em `/tmp` (tmpfs de 3,9 GB); robô na tela dele só com o exe e uma janela por vez.

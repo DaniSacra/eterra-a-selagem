@@ -15,7 +15,7 @@ by_rarity = false
 script = ExtResource("1_0emub")
 stat = &"burn_dps"
 tag = &"seal"
-base = 3.0
+base = 2.0
 per_level = PackedFloat32Array()
 by_rarity = false
 
