@@ -5,7 +5,7 @@ extends Node
 ## open their panels over the art, hosted by a ScreenHost (shared with the hub).
 ## Test switches that ask for a run (--bot, --shot, --smoke, --start, --stress, --play) skip straight to it, past the
 ## title and the hub; --hub goes straight to the hub (with --shot too).
-## --title --screen=options|music|moves|howto|hero|gifts|book|codex|juramentos|map opens a panel at once (hero, gifts and
+## --title --screen=options|music|moves|howto|hero|gifts|dons|book|codex|juramentos|map opens a panel at once (hero, gifts and
 ## book: the Livro de Ahk on the Warrior, the Gifts or the opening). --hero-xp=N and --hero-equip=a,b set the
 ## Warrior's Mastery and Gifts for captures, in Save.data (Save.gd).
 ## Save slots (the Daniel, 2026-11-21): the title comes first; Iniciar opens the choice of save (SaveSlotScreen) over
@@ -62,6 +62,8 @@ func _ready() -> void:
 			_open_hero(HeroScreen.Chapter.GIFTS)
 		"book":
 			_open_hero(HeroScreen.Chapter.OPENING)
+		"dons":
+			_open(DonsScreen.new(), TitleButton.Kind.HERO)
 		"howto":
 			_open(HowToScreen.new(), TitleButton.Kind.HOWTO)
 		"juramentos":

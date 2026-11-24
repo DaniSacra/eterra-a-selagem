@@ -55,7 +55,7 @@ const COMBO_PUSH := [2.5, 3.0]
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
 	# the hero last: it points at the talents, ultimates and Mastery written before it
-	for part in ["combos", "enemies", "mods", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants", "oficios", "obras", "vine", "hub_guide", "maga"]:
+	for part in ["combos", "enemies", "mods", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants", "oficios", "obras", "vine", "hub_guide", "maga", "medallion"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -3152,3 +3152,46 @@ func _angels() -> void:
 	_angel(4, &"velael", F.VEU, 4, Color(0.7, 0.66, 0.6))
 	_angel(5, &"galael", F.MARE, 5, Color(0.3, 0.48, 0.78))
 	_angel(6, &"qeshael", F.MARCA, 6, Color(0.66, 0.58, 0.3))
+
+
+# ---------- the Gifts medallion (docs/art/dons_medallion_spec.md 3) ----------
+
+## Node places per hero: [id, angle (degrees from twelve o'clock, clockwise), radius, diameter]. The ring is 254, a spur 200
+## or 308; the crown and the apexes are the big ones (64), the rest 42. A new Gift is a new row here.
+const MEDALLION_WARRIOR := [
+	[&"crown", 0, 254, 64], [&"cleave", 331, 254, 42], [&"vortex", 29, 254, 42],
+	[&"firmeza", 50, 254, 42], [&"respiro", 63, 254, 42], [&"ainda_de_pe", 76, 254, 42], [&"fio_do_passo", 89, 254, 42],
+	[&"corte_crescente", 102, 254, 42], [&"fio_longo", 116, 254, 42], [&"onda_atravessante", 131, 254, 64],
+	[&"onda_carregada", 147, 254, 42], [&"lamina_faminta", 160, 254, 42], [&"reserva", 172, 254, 42],
+	[&"coracao_da_emeth", 186, 254, 64], [&"sangue_quente", 202, 254, 42], [&"impeto", 215, 254, 42],
+	[&"avanco_feroz", 228, 254, 42], [&"voz_larga", 228, 308, 42], [&"escudo_de_guerra", 228, 200, 42],
+	[&"furia_plena", 243, 254, 64], [&"investida", 258, 254, 42], [&"folego_de_guerra", 258, 308, 42],
+	[&"quarto_corte", 272, 254, 42], [&"passo_encadeado", 286, 254, 42], [&"ferro_na_investida", 286, 308, 42],
+	[&"golpe_sem_fim", 301, 254, 64],
+]
+const MEDALLION_MAGA := [
+	[&"crown", 0, 254, 64], [&"storm", 331, 254, 42], [&"dome_abs", 29, 254, 42],
+	[&"firmeza", 46, 254, 42], [&"reserva", 59, 254, 42], [&"respiro", 72, 254, 42], [&"passo_longo", 85, 254, 42],
+	[&"ainda_de_pe", 65, 308, 42], [&"circulo_expandido", 100, 254, 42], [&"prisao_sigilada", 113, 254, 42],
+	[&"suspensao_larga", 113, 308, 42], [&"contencao_perfeita", 128, 254, 64], [&"selo_no_chao", 144, 254, 42],
+	[&"leitura_rapida", 144, 308, 42], [&"eco_arcano", 158, 254, 42], [&"cadeia_curta", 170, 254, 42],
+	[&"selo_duplo", 170, 200, 42], [&"ruptura", 184, 254, 64], [&"chama_que_marca", 200, 254, 42],
+	[&"brasa_gemea", 200, 308, 42], [&"brasa_viva", 214, 254, 42], [&"pavio_longo", 227, 254, 42],
+	[&"combustao", 227, 308, 42], [&"inferno_runico", 242, 254, 64], [&"brasa_que_prende", 280, 254, 42],
+	[&"passo_de_brasa", 295, 254, 42],
+]
+
+
+func _medallion() -> void:
+	for pair: Array in [["warrior", MEDALLION_WARRIOR, [&"cleave", &"vortex"]], ["maga", MEDALLION_MAGA, [&"storm", &"dome_abs"]]]:
+		var m := MedallionDef.new()
+		m.hero = StringName(pair[0])
+		for row: Array in pair[1]:
+			var n := MedallionNodeDef.new()
+			n.id = row[0]
+			n.kind = MedallionNodeDef.Kind.CROWN if n.id == MedallionDef.CROWN_ID else (MedallionNodeDef.Kind.ULT if (pair[2] as Array).has(n.id) else MedallionNodeDef.Kind.GIFT)
+			n.angle = float(row[1])
+			n.radius = float(row[2])
+			n.diameter = float(row[3])
+			m.nodes.append(n)
+		_save(m, MedallionDef.path_of(String(pair[0])))

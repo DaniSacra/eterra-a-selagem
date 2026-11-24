@@ -1,0 +1,150 @@
+[gd_resource type="Resource" script_class="MedallionDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/medallion_node_def.gd" id="1_bkdpb"]
+[ext_resource type="Script" path="res://scripts/core/medallion_def.gd" id="2_sdean"]
+
+[sub_resource type="Resource" id="Resource_2ayql"]
+script = ExtResource("1_bkdpb")
+id = &"crown"
+kind = 0
+diameter = 64.0
+
+[sub_resource type="Resource" id="Resource_ov5dw"]
+script = ExtResource("1_bkdpb")
+id = &"cleave"
+kind = 2
+angle = 331.0
+
+[sub_resource type="Resource" id="Resource_bmlb3"]
+script = ExtResource("1_bkdpb")
+id = &"vortex"
+kind = 2
+angle = 29.0
+
+[sub_resource type="Resource" id="Resource_rdfn3"]
+script = ExtResource("1_bkdpb")
+id = &"firmeza"
+angle = 50.0
+
+[sub_resource type="Resource" id="Resource_56jj5"]
+script = ExtResource("1_bkdpb")
+id = &"respiro"
+angle = 63.0
+
+[sub_resource type="Resource" id="Resource_2elhg"]
+script = ExtResource("1_bkdpb")
+id = &"ainda_de_pe"
+angle = 76.0
+
+[sub_resource type="Resource" id="Resource_iele5"]
+script = ExtResource("1_bkdpb")
+id = &"fio_do_passo"
+angle = 89.0
+
+[sub_resource type="Resource" id="Resource_a457m"]
+script = ExtResource("1_bkdpb")
+id = &"corte_crescente"
+angle = 102.0
+
+[sub_resource type="Resource" id="Resource_fcufg"]
+script = ExtResource("1_bkdpb")
+id = &"fio_longo"
+angle = 116.0
+
+[sub_resource type="Resource" id="Resource_3tvy6"]
+script = ExtResource("1_bkdpb")
+id = &"onda_atravessante"
+angle = 131.0
+diameter = 64.0
+
+[sub_resource type="Resource" id="Resource_vpj7u"]
+script = ExtResource("1_bkdpb")
+id = &"onda_carregada"
+angle = 147.0
+
+[sub_resource type="Resource" id="Resource_4piio"]
+script = ExtResource("1_bkdpb")
+id = &"lamina_faminta"
+angle = 160.0
+
+[sub_resource type="Resource" id="Resource_cdbws"]
+script = ExtResource("1_bkdpb")
+id = &"reserva"
+angle = 172.0
+
+[sub_resource type="Resource" id="Resource_a7x76"]
+script = ExtResource("1_bkdpb")
+id = &"coracao_da_emeth"
+angle = 186.0
+diameter = 64.0
+
+[sub_resource type="Resource" id="Resource_ky7dm"]
+script = ExtResource("1_bkdpb")
+id = &"sangue_quente"
+angle = 202.0
+
+[sub_resource type="Resource" id="Resource_jye1h"]
+script = ExtResource("1_bkdpb")
+id = &"impeto"
+angle = 215.0
+
+[sub_resource type="Resource" id="Resource_u45qo"]
+script = ExtResource("1_bkdpb")
+id = &"avanco_feroz"
+angle = 228.0
+
+[sub_resource type="Resource" id="Resource_6b16h"]
+script = ExtResource("1_bkdpb")
+id = &"voz_larga"
+angle = 228.0
+radius = 308.0
+
+[sub_resource type="Resource" id="Resource_fewrs"]
+script = ExtResource("1_bkdpb")
+id = &"escudo_de_guerra"
+angle = 228.0
+radius = 200.0
+
+[sub_resource type="Resource" id="Resource_v1dur"]
+script = ExtResource("1_bkdpb")
+id = &"furia_plena"
+angle = 243.0
+diameter = 64.0
+
+[sub_resource type="Resource" id="Resource_yaqs8"]
+script = ExtResource("1_bkdpb")
+id = &"investida"
+angle = 258.0
+
+[sub_resource type="Resource" id="Resource_gpgvy"]
+script = ExtResource("1_bkdpb")
+id = &"folego_de_guerra"
+angle = 258.0
+radius = 308.0
+
+[sub_resource type="Resource" id="Resource_1ef8i"]
+script = ExtResource("1_bkdpb")
+id = &"quarto_corte"
+angle = 272.0
+
+[sub_resource type="Resource" id="Resource_yhk7j"]
+script = ExtResource("1_bkdpb")
+id = &"passo_encadeado"
+angle = 286.0
+
+[sub_resource type="Resource" id="Resource_150mh"]
+script = ExtResource("1_bkdpb")
+id = &"ferro_na_investida"
+angle = 286.0
+radius = 308.0
+
+[sub_resource type="Resource" id="Resource_x7nhg"]
+script = ExtResource("1_bkdpb")
+id = &"golpe_sem_fim"
+angle = 301.0
+diameter = 64.0
+
+[resource]
+script = ExtResource("2_sdean")
+hero = &"warrior"
+nodes = Array[ExtResource("1_bkdpb")]([SubResource("Resource_2ayql"), SubResource("Resource_ov5dw"), SubResource("Resource_bmlb3"), SubResource("Resource_rdfn3"), SubResource("Resource_56jj5"), SubResource("Resource_2elhg"), SubResource("Resource_iele5"), SubResource("Resource_a457m"), SubResource("Resource_fcufg"), SubResource("Resource_3tvy6"), SubResource("Resource_vpj7u"), SubResource("Resource_4piio"), SubResource("Resource_cdbws"), SubResource("Resource_a7x76"), SubResource("Resource_ky7dm"), SubResource("Resource_jye1h"), SubResource("Resource_u45qo"), SubResource("Resource_6b16h"), SubResource("Resource_fewrs"), SubResource("Resource_v1dur"), SubResource("Resource_yaqs8"), SubResource("Resource_gpgvy"), SubResource("Resource_1ef8i"), SubResource("Resource_yhk7j"), SubResource("Resource_150mh"), SubResource("Resource_x7nhg")])
