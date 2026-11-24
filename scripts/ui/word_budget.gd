@@ -2,12 +2,14 @@ class_name WordBudget
 extends RefCounted
 ## UX-08: how many floating words (a reaction's name, the Apogeu) the screen may take, pure so a horde never spams
 ## them. Two rules: a word's NAME shows only its first NAMED_MAX times in a run (after that Fx shows the small number
-## alone), and at most PER_SECOND words are admitted in any second, the ones past it dropped.
+## alone), and at most MAX_LIVE words are alive at once (a word lives LIFE seconds, as a damage number), the ones past it dropped.
 ##   if budget.admit(now, &"react_thermal"): fx.word(pos, T.t(key) if budget.named(&"react_thermal") else "", color)
 ## `named` counts a use, so call it once per word shown. Fx calls reset() on a new run.
 
 const NAMED_MAX := 3
-const PER_SECOND := 6
+const MAX_LIVE := 6
+## Seconds a word stays on screen.
+const LIFE := NumberTally.LIFE
 
 var _named := {}
 var _stamps: Array[float] = []
@@ -20,9 +22,9 @@ func reset() -> void:
 
 ## True when a word may be shown at time `now` (seconds, the run clock); records it.
 func admit(now: float) -> bool:
-	while not _stamps.is_empty() and now - _stamps[0] >= 1.0:
+	while not _stamps.is_empty() and now - _stamps[0] >= LIFE:
 		_stamps.pop_front()
-	if _stamps.size() >= PER_SECOND:
+	if _stamps.size() >= MAX_LIVE:
 		return false
 	_stamps.append(now)
 	return true

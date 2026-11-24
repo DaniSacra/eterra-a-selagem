@@ -89,10 +89,10 @@ func _backdrop() -> void:
 		return
 	draw_rect(Rect2(Vector2.ZERO, VineLayout.STAGE), UiKit.INK)
 	# the trellis of thin iron lozenges inside the arch (x 120..900, y 80..600), clipped to it
-	var line := Color(UiKit.OLD_GOLD, 0.3)
+	var line := Color(0.30, 0.31, 0.34, 0.55)  # thin iron, dark, so the roots and the tags read over it
 	var box := Rect2(120, 80, 780, 520)
-	var step := 64.0
-	for i in range(-12, 24):
+	var step := 96.0
+	for i in range(-8, 16):
 		var x := box.position.x + i * step
 		_clipped(Vector2(x, box.position.y), Vector2(x + box.size.y, box.end.y), box, line)
 		_clipped(Vector2(x + box.size.y, box.position.y), Vector2(x, box.end.y), box, line)
@@ -123,10 +123,32 @@ func _clipped(a: Vector2, b: Vector2, r: Rect2, c: Color) -> void:
 			else:
 				t1 = minf(t1, t)
 	if t0 < t1:
-		draw_line(a + d * t0, a + d * t1, c, 1.5, true)
+		draw_line(a + d * t0, a + d * t1, c, 1.0, true)
 
 
 # ---- vase, trunk, branches ----
+
+## The stand-in vase: a round clay pot (belly, rolled rim, soil, shadow on the floor), not a box.
+func _clay_vase(vase: Rect2) -> void:
+	var c := vase.get_center()
+	draw_set_transform(Vector2(c.x, vase.end.y - 2.0), 0.0, Vector2(1.0, 0.18))
+	draw_circle(Vector2.ZERO, 82.0, Color(0, 0, 0, 0.4))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	var belly := PackedVector2Array()
+	for i in 17:
+		var t := float(i) / 16.0
+		var half := lerpf(60.0, 38.0, t) * (1.0 + 0.1 * sin(t * PI))
+		belly.append(Vector2(c.x - half, vase.position.y + 18.0 + t * 88.0))
+	for i in range(16, -1, -1):
+		var t := float(i) / 16.0
+		var half := lerpf(60.0, 38.0, t) * (1.0 + 0.1 * sin(t * PI))
+		belly.append(Vector2(c.x + half, vase.position.y + 18.0 + t * 88.0))
+	draw_colored_polygon(belly, CLAY)
+	draw_polyline(belly, CLAY_DARK, 2.5, true)
+	draw_rect(Rect2(c.x - 70, vase.position.y + 8, 140, 16), CLAY.lightened(0.08))
+	draw_rect(Rect2(c.x - 70, vase.position.y + 8, 140, 16), CLAY_DARK, false, 2.5)
+	draw_rect(Rect2(c.x - 60, vase.position.y + 8, 120, 5), UiKit.INK.lightened(0.05))
+	draw_arc(c + Vector2(-8, 18), 44.0, 1.9, 2.8, 12, CLAY.lightened(0.25), 4.0, true)
 
 func _vase_and_trunk() -> void:
 	var tex := VineArt.texture("vase.png")
@@ -134,10 +156,7 @@ func _vase_and_trunk() -> void:
 	if tex != null:
 		draw_texture_rect(tex, vase, false)
 	else:
-		draw_rect(Rect2(vase.position.x + 14, vase.position.y + 18, 122, 92), CLAY)
-		draw_rect(Rect2(vase.position.x, vase.position.y, 150, 22), CLAY.darkened(0.12))
-		draw_rect(Rect2(vase.position.x, vase.position.y + 18, 150, 6), CLAY_DARK)
-		draw_rect(Rect2(vase.position.x + 8, vase.position.y + 3, 134, 7), UiKit.INK.lightened(0.05))
+		_clay_vase(vase)
 	# the trunk, a little crooked, thinner towards the fork
 	var base := VineLayout.TRUNK_BASE
 	var pts := PackedVector2Array()

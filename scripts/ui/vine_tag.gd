@@ -4,10 +4,13 @@ extends Button
 ## the price in rubric when it is out of reach. A root that has grown turns the tag over: a greener back that keeps the
 ## name with a small check beside it (no price). A mouse-only button: the bud beside it carries the keyboard and gamepad focus, the tag only points at it.
 
-const FACE := Color("9a6a48")
-const BURNT := Color("5a3a24")
+const FACE := Color("e8dab8")
+const FACE_BACK := Color("cfdba0")
+const BURNT := Color("7a5236")
 const DARK_INK := Color("2a1a10")
 const RUBRIC_LIT := Color(0.55, 0.10, 0.08)
+## The least contrast (WCAG ratio) the name and the price keep against the tag face.
+const MIN_CONTRAST := 4.5
 const GREEN_BACK := Color(0.78, 1.08, 0.72)
 const CHECK_W := 20.0
 const CHECK := Color("5f6b2e")
@@ -89,9 +92,19 @@ func _draw() -> void:
 	if tex != null:
 		draw_texture_rect(tex, r, false, GREEN_BACK if owned else Color.WHITE)
 	else:
-		draw_rect(r, FACE if not owned else Color(0.36, 0.42, 0.26))
+		draw_rect(Rect2(r.position + Vector2(2, 3), r.size), Color(0, 0, 0, 0.35))
+		draw_rect(r, FACE_BACK if owned else FACE)
 		draw_rect(r, BURNT, false, 2.0)
-		draw_circle(Vector2(size.x * 0.5, 6.0), 2.5, BURNT.darkened(0.5))
+		draw_circle(Vector2(size.x * 0.5, 6.0), 2.5, BURNT)
 	if owned:
 		var c := Vector2(PAD + 10.0, r.get_center().y)
 		draw_polyline(PackedVector2Array([c + Vector2(-5, 0), c + Vector2(-1, 4), c + Vector2(6, -5)]), CHECK, 2.5, true)
+
+
+## WCAG contrast ratio of two colours (1 to 21).
+static func contrast(a: Color, b: Color) -> float:
+	var la := a.srgb_to_linear()
+	var lb := b.srgb_to_linear()
+	var ya := 0.2126 * la.r + 0.7152 * la.g + 0.0722 * la.b
+	var yb := 0.2126 * lb.r + 0.7152 * lb.g + 0.0722 * lb.b
+	return (maxf(ya, yb) + 0.05) / (minf(ya, yb) + 0.05)
