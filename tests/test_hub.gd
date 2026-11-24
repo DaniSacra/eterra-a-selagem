@@ -318,14 +318,17 @@ func test_interact_opens_a_station_and_esc_closes_it_without_leaking() -> void:
 	assert_false(hub.host.is_open(), "and Esc closes it")
 
 
-func test_the_tree_and_the_book_open_the_livro() -> void:
+func test_the_tree_opens_the_medallion_and_the_book_the_livro() -> void:
 	_hub()
-	for pair: Array in [[HubPlan.TREE, HeroScreen.Chapter.GIFTS], [HubPlan.BOOK, HeroScreen.Chapter.HERO]]:
-		hub.use(pair[0])
-		assert_true(hub.host.screen is HeroScreen, "%s opens the Livro" % pair[0])
-		assert_eq(int(hub.host.screen.get(&"chapter")), int(pair[1]))
-		hub.host.close()
-		await _frames(1)
+	hub.use(HubPlan.TREE)
+	assert_true(hub.host.screen is DonsScreen, "the Árvore de Dons opens the Gifts medallion")
+	hub.host.close()
+	await _frames(1)
+	hub.use(HubPlan.BOOK)
+	assert_true(hub.host.screen is HeroScreen)
+	assert_eq(int(hub.host.screen.get(&"chapter")), int(HeroScreen.Chapter.HERO))
+	hub.host.close()
+	await _frames(1)
 
 
 func test_the_hub_menu_goes_back_to_the_title() -> void:

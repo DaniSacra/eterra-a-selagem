@@ -2,29 +2,25 @@ class_name HeroScreen
 extends Control
 ## "O Guerreiro" on the title: the Livro de Ahk (E2-06; art pack stage 2, boards 04, 05 and 09). An open book
 ## (BookSpread) with the hero's medallion, "O Guerreiro" and "Livro de Ahk" at the head of the left page and his Mastery
-## (MasteryBar, with what the next level brings) and Devotion at the head of the right one, and three chapters behind
+## (MasteryBar, with what the next level brings) and Devotion at the head of the right one, and its chapters behind
 ## the bookmarks above it:
 ## - Abertura: Ahk's words from the canon (his testimony) and the descent in three steps (the same signs and words as
 ##   Como Jogar), with a straight way down ("Descer às catacumbas": the descend signal, the title's Iniciar);
 ## - O Guerreiro: the playable hero (the only one: the cast comes from the data, HeroDef.warrior) painted on the left
 ##   page; on the right his weapon, his way of fighting and his abilities with the HUD's own marks (the four actions,
 ##   the ultimate the descent plays and the passive); from here, the Gifts or the way down;
-## - Dons: the Gift tree on a slate inset (TalentTree) and, on the right page, the focused Gift or ultimate: where it
-##   sits, its effect, its cost and the action it takes, what it needs, its state and the next step to open it (in the
-##   words of Talents' rules: HeroLoadout.why, next_step), and the choice of ultimate.
-## Enter, A or a click puts a Gift on or takes it off (taking one off takes what needed it too) and chooses an
-## ultimate; it is written to the save at once (heroes.<id>.equipped, ultimate). The bookmarks are tabs (focus shows
-## the chapter, like the Compendium's). Esc or B goes back (the title closes the screen on ui_cancel, like its other
-## panels).
+## The Gifts are not in the book any more (PT-12): the hero page's "Dons" button opens the medallion (DonsScreen) over it.
+## The bookmarks are tabs (focus shows the chapter, like the Compendium's). Esc or B goes back (the title closes the
+## screen on ui_cancel, like its other panels).
 
 signal closed
 ## The way down from the book (the title starts the descent as Iniciar does, Juramentos first after a victory).
 signal descend
 
-enum Chapter { OPENING, HERO, GIFTS, OFICIOS }
+enum Chapter { OPENING, HERO, OFICIOS }
 
-const CHAPTER_KEY: Array[StringName] = [&"book_chapter_opening", &"title_hero", &"hero_gifts", &"chapter_oficios"]
-const CHAPTER_NAME: Array[String] = ["chapter_opening", "chapter_hero", "chapter_gifts", "chapter_oficios"]
+const CHAPTER_KEY: Array[StringName] = [&"book_chapter_opening", &"title_hero", &"chapter_oficios"]
+const CHAPTER_NAME: Array[String] = ["chapter_opening", "chapter_hero", "chapter_oficios"]
 ## Screen margins round the book and the bookmarks' width, px at 720 lines.
 ## (12 px over the bookmarks at the top: UI review d2ff05d, P1-5.)
 const OUTER := Vector2(22, 12)
@@ -58,8 +54,6 @@ void fragment() {
 """
 
 var loadout: HeroLoadout
-var codex: CodexBook
-var ults: Array[UltCard] = []
 var chapter := Chapter.HERO
 var chapters: Array[Button] = []
 var _data: Dictionary
@@ -69,19 +63,11 @@ var _left: Array[Control] = []
 var _right: Array[Control] = []
 var _bar: MasteryBar
 var _next: Label
-var _devotion: Candles
 var _devotion_count: Label
-var _name: Label
-var _place: Label
-var _desc: Label
-var _cost: Label
-var _needs: Label
-var _status: Label
-var _step: Label
-var _parts: Dictionary = {}
 ## The keys at the foot (benchmark P0-2): chapters on the left, the press and the way back on the right.
 var bar: ActionBar
 var _to_gifts: Button
+var _dons: DonsScreen
 var _down: Button
 var _down_hero: Button
 ## Opened in the hub (the Livro de Ahk at its lectern): no way down from the book, the Portal is the way down (UI
@@ -91,9 +77,7 @@ var in_hub := false
 var _codex: CodexScreen
 var _codex_button: Button
 ## What the panel tells now (a TalentDef, an UltDef or null for the centre).
-var _shown: Variant = null
 ## False until the first refresh: the book opens with its capitals already filled (nothing animates at the start).
-var _ready_once := false
 ## Abrir with Memória (Rejogabilidade, Fatia 1): the sealed Gift asked to open, waiting for the second press that
 ## confirms it on this page (no sheet over the book), for CONFIRM_TIME seconds; moving the focus forgets it.
 const CONFIRM_TIME := 3.0
@@ -152,8 +136,8 @@ func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = fals
 	col.add_child(_book)
 	var left := _page_column(_book.left, _head_left())
 	var right := _page_column(_book.right, _head_right())
-	_left = [_opening_left(), _hero_left(), _gifts_left(), _oficios_left()]
-	_right = [_opening_right(), _hero_right(), _gifts_right(), _oficios_right()]
+	_left = [_opening_left(), _hero_left(), _oficios_left()]
+	_right = [_opening_right(), _hero_right(), _oficios_right()]
 	# every chapter's content in the page's column, one shown (a column skips what is hidden)
 	for i in _left.size():
 		_left[i].size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -168,15 +152,7 @@ func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = fals
 		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
 	_refresh()
 	_show(start)
-	# --ribbon=N opens the Gifts on that ribbon (captures: Pontes, Poder maior)
-	if Dev.has("ribbon") and start == Chapter.GIFTS:
-		var ribbon := clampi(int(Dev.num("ribbon", 0)), 0, codex.ribbons.size() - 1)
-		codex.show_chapter(ribbon)
-		var first := codex.first_of(ribbon)
-		var target: Control = first if first != null else codex.ribbons[ribbon]
-		target.grab_focus.call_deferred()
-	else:
-		_first_focus().grab_focus.call_deferred()
+	_first_focus().grab_focus.call_deferred()
 	# the book opens: a breath of the pages coming up
 	_book.modulate.a = 0.0
 	create_tween().tween_property(_book, ^"modulate:a", 1.0, 0.22)
@@ -255,9 +231,6 @@ func _head_right() -> Control:
 	_devotion_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	top.add_child(_devotion_count)
 	dev.add_child(top)
-	_devotion = Candles.new().setup(16.0)
-	_devotion.name = "candles"
-	dev.add_child(_devotion)
 	row.add_child(dev)
 	# the purse: Prata and Memória held (the Memória opens the sealed Gifts), under the Devotion's pips (beside them
 	# it pushed the page's buttons out at 720 lines)
@@ -608,75 +581,6 @@ static func _gap(h: float) -> Control:
 
 # ---- Dons ----
 
-func _gifts_left() -> Control:
-	codex = CodexBook.new().setup(loadout)
-	codex.picked.connect(_pick)
-	codex.focused.connect(_tell)
-	codex.ult_chosen.connect(_choose)
-	ults = codex.ults
-	return codex
-
-
-func _gifts_right() -> Control:
-	var v := VBoxContainer.new()
-	v.name = "gifts_right"
-	v.add_theme_constant_override(&"separation", 3)
-	_name = Book.label("", GiftArt.title_ink(loadout.hero), NAME_SIZE, UiKit.TITLE_FONT)
-	_name.name = "gift_name"
-	v.add_child(_name)
-	var rule := GoldRule.new()
-	rule.tint = Book.GILT
-	rule.custom_minimum_size = Vector2(300, 10)
-	rule.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	v.add_child(rule)
-	_place = Book.label("", Book.FADED, META_SIZE)
-	v.add_child(_place)
-	_desc = _part(v, &"effect", &"hero_effect", DESC_SIZE)
-	_desc.custom_minimum_size.y = 46
-	# cost and what it asks side by side, label over value in bold (ciclo visual 2026-11-20: read at a glance)
-	var glance := HBoxContainer.new()
-	glance.name = "glance"
-	glance.add_theme_constant_override(&"separation", 24)
-	v.add_child(glance)
-	var cols: Array[VBoxContainer] = []
-	for i in 2:
-		var col := VBoxContainer.new()
-		col.add_theme_constant_override(&"separation", 1)
-		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		col.size_flags_stretch_ratio = 1.0
-		glance.add_child(col)
-		cols.append(col)
-	_cost = _part(cols[0], &"cost", &"hero_cost_head", META_SIZE + 1, UiKit.BOLD_FONT)
-	_needs = _part(cols[1], &"needs", &"hero_needs_head", META_SIZE + 1, UiKit.BOLD_FONT)
-	_status = _part(v, &"state", &"hero_state_head", META_SIZE + 1, UiKit.BOLD_FONT)
-	_status.name = "status"
-	_step = Book.text("", Book.FADED, META_SIZE)
-	_step.name = "step"
-	v.add_child(_step)
-	var gap := Control.new()
-	gap.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	v.add_child(gap)
-	return v
-
-
-## A part of the panel: its head ("◆ EFEITO") and its words; the pair hides together (part_visible).
-func _part(v: VBoxContainer, id: StringName, key: StringName, size: int, font: Font = null) -> Label:
-	var head := Book.section(T.t(key), 15)
-	head.name = "head_" + String(id)
-	v.add_child(head)
-	var l := Book.text("", Book.INK, size)
-	if font:
-		l.add_theme_font_override(&"font", font)
-	v.add_child(l)
-	_parts[id] = [head, l]
-	return l
-
-
-func _part_visible(id: StringName, on: bool) -> void:
-	for c: Control in _parts[id]:
-		c.visible = on
-
-
 func _footer() -> Control:
 	var row := HBoxContainer.new()
 	row.name = "foot"
@@ -686,7 +590,7 @@ func _footer() -> Control:
 	row.add_child(fill)
 	# one row at the foot of the right page, to its right (P1-4): Dons (on the Warrior's chapter), Compêndio, Voltar
 	row.add_theme_constant_override(&"separation", 10)
-	_to_gifts = Book.button(T.t(&"hero_gifts"), func() -> void: _open_chapter(Chapter.GIFTS), FOOT_WIDTH)
+	_to_gifts = Book.button(T.t(&"hero_gifts"), _open_dons, FOOT_WIDTH)
 	_to_gifts.name = "to_gifts"
 	row.add_child(_to_gifts)
 	_codex_button = Book.button(T.t(&"pause_moves"), _open_codex, FOOT_WIDTH + 24.0)
@@ -724,10 +628,37 @@ func _close_codex() -> void:
 	_codex_button.grab_focus.call_deferred()
 
 
+## The Gifts medallion over the book (the Gifts left the book, PT-12): Esc and B close it and give the focus back.
+func _open_dons() -> void:
+	if is_instance_valid(_dons):
+		return
+	_dons = DonsScreen.new()
+	for c in get_children():
+		(c as CanvasItem).visible = false
+	add_child(_dons)
+	_dons.open(_data)
+
+
+func _close_dons() -> void:
+	if not is_instance_valid(_dons):
+		return
+	_dons.queue_free()
+	_dons = null
+	for c in get_children():
+		if not c.is_queued_for_deletion():
+			(c as CanvasItem).visible = true
+	_to_gifts.grab_focus.call_deferred()
+
+
 # ---- chapters and focus ----
 
 ## LB and RB (PageUp, PageDown) turn to the chapter before or after (DT-103).
 func _unhandled_input(event: InputEvent) -> void:
+	if is_instance_valid(_dons):
+		if event.is_action_pressed(&"ui_cancel"):
+			get_viewport().set_input_as_handled()
+			_close_dons()
+		return
 	if is_instance_valid(_codex):
 		# the Compêndio is on show: Esc and B close it (its own tabs read LB and RB)
 		if event.is_action_pressed(&"ui_cancel"):
@@ -745,8 +676,6 @@ func _show(c: int) -> void:
 		_left[i].visible = i == c
 		_right[i].visible = i == c
 	_to_gifts.visible = chapter == Chapter.HERO
-	_next.visible = chapter != Chapter.GIFTS
-	_name_keys(Controls.using_pad)
 
 
 ## Opens a chapter from inside the book (a button), with the focus on its first control.
@@ -772,41 +701,7 @@ func _chapter_focus(c: Chapter) -> Control:
 			# the Discernimento's next grade, else its bookmark holds the focus
 			var d := _discern_focus()
 			return d if d != null else chapters[Chapter.OFICIOS]
-	# the Gifts: the first that can go on, else the first one on, else the first ribbon
-	return codex.first_focus()
-
-
-func _pick(t: TalentDef) -> void:
-	if loadout.state(t) == HeroLoadout.State.SEALED:
-		_open_sealed(t)
-		return
-	if loadout.toggle(t.id):
-		Audio.play(&"ui_ok")
-		_save()
-	else:
-		codex.entry(t.id).refuse()
-	_refresh()
-
-
-## A sealed Gift: the first press asks (the panel says what it costs), the second within CONFIRM_TIME opens it with
-## Memória and writes the save; without enough Memória the node refuses and the panel says what is missing.
-func _open_sealed(t: TalentDef) -> void:
-	if loadout.can_open(t) != Talents.Problem.OK:
-		arming = &""
-		codex.entry(t.id).refuse()
-		_tell(t)
-		return
-	if arming != t.id:
-		arming = t.id
-		_arm_t = CONFIRM_TIME
-		Audio.play(&"ui_move")
-		_tell(t)
-		return
-	arming = &""
-	if loadout.open(t.id):
-		Audio.play(&"ui_ok")
-		_save()
-	_refresh()
+	return chapters[c]
 
 
 func _process(delta: float) -> void:
@@ -815,19 +710,7 @@ func _process(delta: float) -> void:
 	_arm_t -= delta
 	if _arm_t <= 0.0:
 		arming = &""
-		_tell(_shown)
 		_refresh_discern()
-
-
-func _choose(u: UltDef) -> void:
-	if loadout.choose_ult(u.id):
-		Audio.play(&"ui_ok")
-		_save()
-	else:
-		for c in ults:
-			if c.def == u:
-				c.grab_focus()
-	_refresh()
 
 
 func _save() -> void:
@@ -836,28 +719,10 @@ func _save() -> void:
 
 
 func _refresh() -> void:
-	codex.refresh(_ready_once)
-	_ready_once = true
 	MaterialCount.refresh(_purse, _data)
-	_devotion.set_counts(loadout.used(), loadout.devotion())
 	_devotion_count.text = T.t(&"hero_devotion_count", {"used": loadout.used(), "max": loadout.devotion()})
 	var next := loadout.next_unlocks()
 	_next.text = T.t(&"hero_next", {"n": loadout.level() + 1, "what": ", ".join(next)}) if not next.is_empty() else ""
-	codex.set_foot(_next.text)
-	_name_keys(Controls.using_pad)
-	_tell(_shown)
-
-
-## The action bar's press says what it does here: on the Gifts' chapter equip or take off (open with Memória on a
-## sealed Gift), elsewhere confirm. Its keys follow the device by themselves (ActionBar).
-func _name_keys(_pad: bool = false) -> void:
-	if bar == null:
-		return
-	var verb := &"bar_confirm"
-	if chapter == Chapter.GIFTS:
-		var sealed := _shown is TalentDef and loadout.state(_shown) == HeroLoadout.State.SEALED
-		verb = &"bar_open" if sealed else &"bar_equip"
-	bar.item(&"ui_accept").set_verb(T.t(verb))
 
 
 ## The control in focus pressed (the action bar's click).
@@ -873,95 +738,4 @@ func _turn(step: int) -> void:
 	if c != chapter:
 		_show(c)
 		chapters[c].grab_focus()
-
-
-## The panel tells a Gift (TalentDef), an ultimate (UltDef) or the passive (null).
-func _tell(what: Variant) -> void:
-	if not (what is TalentDef and (what as TalentDef).id == arming):
-		arming = &""
-	_shown = what
-	_name_keys()
-	if what is TalentDef:
-		_devotion.set_preview((what as TalentDef).cost, loadout.is_equipped((what as TalentDef).id))
-		_tell_gift(what)
-	elif what is UltDef:
-		_devotion.set_preview(0)
-		_tell_ult(what)
-	else:
-		_devotion.set_preview(0)
-		_name.text = T.t(&"hero_passive")
-		_place.text = T.t(&"hero_passive_note")
-		_desc.text = T.t(&"hero_passive_desc")
-		for id: StringName in [&"cost", &"needs", &"state"]:
-			_part_visible(id, false)
-		_step.text = ""
-
-
-func _tell_gift(t: TalentDef) -> void:
-	for id: StringName in [&"cost", &"needs", &"state"]:
-		_part_visible(id, true)
-	_name.text = T.t(t.name_key)
-	_place.text = loadout.place_text(t)
-	_desc.text = T.t(t.desc_key)
-	var cost := T.t(&"hero_cost_devotion", {"n": t.cost})
-	if t.slot != Boon.Slot.NONE:
-		cost += ". " + T.t(&"hero_action", {"action": T.t(HeroLoadout.action_key(loadout.hero, t.slot))})
-	if not loadout.is_open(t) and loadout.open_cost(t) > 0:
-		cost += ". " + T.t(&"hero_cost_memory", {"n": loadout.open_cost(t)})
-	_cost.text = cost
-	var need := loadout.needs_text(t)
-	_needs.text = T.t(need.key, need.args)
-	match loadout.state(t):
-		HeroLoadout.State.EQUIPPED:
-			_set_status(T.t(&"hero_equipped"), Book.OK)
-		HeroLoadout.State.OPEN:
-			_set_status(T.t(&"hero_can_equip"), Book.INK)
-		HeroLoadout.State.LOCKED:
-			_set_status(T.t(&"hero_why_locked", {"n": t.unlock_level}), Book.FADED)
-		HeroLoadout.State.SEALED:
-			_set_status(T.t(&"codex_state_sealed", {"n": loadout.open_cost(t)}), Book.INK)
-		_:
-			var why := loadout.why(t)
-			_set_status(T.t(why.key, why.args) if not why.is_empty() else "", Book.WARN)
-	var step := loadout.next_step(t)
-	_step.add_theme_color_override(&"font_color", Book.FADED)
-	match loadout.state(t):
-		HeroLoadout.State.LOCKED:
-			_step.text = T.t(step.key, step.args)
-		HeroLoadout.State.SEALED:
-			if arming == t.id:
-				_step.text = T.t(&"hero_open_confirm", {"cost": loadout.open_cost(t)})
-				_step.add_theme_color_override(&"font_color", Book.RUBRIC)
-			elif loadout.can_open(t) == Talents.Problem.SHORT:
-				_step.text = T.t(&"hero_open_short", {"n": loadout.open_cost(t) - loadout.memory()})
-				_step.add_theme_color_override(&"font_color", Book.WARN)
-			else:
-				_step.text = T.t(step.key, step.args)
-		_:
-			_step.text = ""
-
-
-func _tell_ult(u: UltDef) -> void:
-	_part_visible(&"cost", true)
-	_part_visible(&"needs", true)
-	_part_visible(&"state", true)
-	_name.text = T.t(u.name_key)
-	_place.text = T.t(&"hero_ultimate")
-	_desc.text = T.t(u.desc_key)
-	_cost.text = T.t(&"hero_ult_charge", {"n": UiKit.format_number(u.charge)})
-	_needs.text = T.t(&"hero_ult_needs", {"n": u.mastery_level})
-	_step.text = ""
-	if not loadout.ult_open(u):
-		_set_status(T.t(&"hero_ult_locked", {"n": u.mastery_level}), Book.FADED)
-		_step.text = T.t(&"hero_step_mastery", {"n": u.mastery_level, "xp": loadout.xp_missing(u.mastery_level)})
-	elif loadout.ultimate() == u.id:
-		_set_status(T.t(&"hero_ult_chosen"), Book.OK)
-	else:
-		_set_status(T.t(&"hero_ult_none") if loadout.ultimate() == &"" else T.t(&"hero_ult_can_choose"), Book.INK)
-
-
-func _set_status(text: String, color: Color) -> void:
-	_status.text = text
-	_status.add_theme_color_override(&"font_color", color)
-
 

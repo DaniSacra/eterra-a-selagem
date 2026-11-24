@@ -29,7 +29,7 @@ func _loadout(xp: int, equipped: Array = []) -> HeroLoadout:
 func _screen(data: Dictionary) -> HeroScreen:
 	var s := HeroScreen.new()
 	add_child_autofree(s)
-	s.open(data, HeroScreen.Chapter.GIFTS)
+	s.open(data, HeroScreen.Chapter.HERO)
 	return s
 
 
@@ -146,46 +146,6 @@ func test_next_level_tells_what_it_brings() -> void:
 
 # ---------- the screen ----------
 
-func test_the_screen_shows_every_gift_and_the_two_ultimates() -> void:
-	var s := _screen(_data(0))
-	assert_eq(s.codex.entries.size(), HeroDef.warrior().talents().catalog.size())
-	assert_eq(s.ults.size(), 2)
-	assert_eq(s.codex.entry(&"impeto").state, HeroLoadout.State.LOCKED)
-	assert_eq(s.codex.entry(&"quarto_corte").state, HeroLoadout.State.OPEN)
-	assert_false(s.ults[0].open)
-	await wait_process_frames(2)
-	var focus := get_viewport().gui_get_focus_owner()
-	assert_eq(focus, s.codex.entry(&"quarto_corte"), "the focus starts on the Gift that can go on")
-
-
-func test_pressing_a_node_equips_it_in_the_save_data() -> void:
-	var d := _data(XP_3)
-	var s := _screen(d)
-	s.codex.entry(&"quarto_corte").pressed.emit()
-	assert_eq(SaveData.hero(d, "warrior").equipped, ["quarto_corte"])
-	assert_eq(s.codex.entry(&"quarto_corte").state, HeroLoadout.State.EQUIPPED)
-	var count := s.find_child("devotion", true, false) as Label
-	assert_eq(count.text, T.t(&"hero_devotion_count", {"used": 3, "max": 8}))
-	s.codex.entry(&"quarto_corte").pressed.emit()
-	assert_eq(SaveData.hero(d, "warrior").equipped, [])
-
-
-## QA of E2: a Gift worn and a Gift only open read apart at a glance (the capital filled against only a line, the
-## gold leaf), and every branch has an ink of its own.
-func test_worn_and_open_gifts_look_apart() -> void:
-	var s := _screen(_data(XP_8, ["quarto_corte"]))
-	var worn := s.codex.entry(&"quarto_corte")
-	var open := s.codex.entry(&"impeto")
-	assert_eq(worn.state, HeroLoadout.State.EQUIPPED)
-	assert_eq(open.state, HeroLoadout.State.OPEN)
-	assert_eq(worn.fill(), 1.0, "the capital of a worn Gift is filled")
-	assert_eq(open.fill(), 0.0, "an open one is only a line")
-	var inks := {}
-	for b in GiftArt.chapters(s.loadout.hero):
-		inks[GiftArt.ink(b)] = true
-	assert_eq(inks.size(), 6, "six branches, six inks")
-
-
 func test_the_hint_names_the_keys_of_the_device_in_hand() -> void:
 	var was := Controls.using_pad
 	Controls.using_pad = false
@@ -199,42 +159,6 @@ func test_the_hint_names_the_keys_of_the_device_in_hand() -> void:
 	Controls.using_pad = false
 	assert_eq(accept.key_text(), UiKit.action_label(&"ui_accept"))
 	Controls.using_pad = was
-
-
-func test_the_panel_says_why_a_gift_cannot_go_on() -> void:
-	var d := _data(XP_8)
-	var s := _screen(d)
-	s.codex.entry(&"passo_encadeado").focus_entered.emit()
-	var status := s.find_child("status", true, false) as Label
-	assert_eq(status.text, T.t(&"hero_why_needs", {"what": T.t(&"talent_quarto_corte")}))
-	s.codex.entry(&"passo_encadeado").pressed.emit()
-	assert_eq(SaveData.hero(d, "warrior").equipped, [], "refused")
-	var name := s.find_child("gift_name", true, false) as Label
-	assert_eq(name.text, T.t(&"talent_passo_encadeado"))
-
-
-func test_choosing_an_ultimate_on_the_screen() -> void:
-	var d := _data(XP_6)
-	var s := _screen(d)
-	assert_true(s.ults[0].open)
-	assert_false(s.ults[1].open)
-	s.ults[0].pressed.emit()
-	assert_eq(SaveData.hero(d, "warrior").ultimate, "cleave")
-	assert_true(s.ults[0].chosen)
-	s.ults[1].pressed.emit()
-	assert_eq(SaveData.hero(d, "warrior").ultimate, "cleave", "the locked one is never chosen")
-
-
-func test_keys_walk_the_page() -> void:
-	var s := _screen(_data(2470))
-	await wait_process_frames(2)
-	var first := s.codex.entry(&"quarto_corte")
-	first.grab_focus()
-	var down := first.find_valid_focus_neighbor(SIDE_BOTTOM)
-	assert_true(down is GiftEntry, "down of the first entry is the next one")
-	assert_eq((down as GiftEntry).def.id, &"passo_encadeado")
-	var up := first.find_valid_focus_neighbor(SIDE_TOP)
-	assert_true(up is GiftRibbon, "up of the first entry is its ribbon")
 
 
 func test_every_text_of_the_screen_is_in_the_table() -> void:
