@@ -1,52 +1,165 @@
 # Backlog de A Selagem
 
-## Próximas fases (organizado com o Daniel, 2026-11-23 22h30; LER PRIMEIRO)
+## Rodada de melhoria (2026-11-24 madrugada)
+Game-director, commit lido `aa161c8`. LER PRIMEIRO.
+Fontes: `docs/qa/ui_review_2026-11-24.md` (UI), `docs/qa/combat_review_2026-11-24.md` (CB), `docs/qa/qa_review_2026-11-24.md` (QA),
+`docs/design/economy_review_2026-11-24.md` (EC), `docs/design/heroes/kits_review_2026-11-24.md` (KT), `docs/art/ART_REVIEW_2026-11-23.md` (AR).
+Conferido no código e no `git log` antes de listar. **Já FEITO, fora da lista**: UI 1 (nome do golpe acima do losango de origem, AR 9,
+`Hud._follow_row`), UI 2 (glifo por Encanto, AR 6), UI 3 em parte (etiqueta comprada com nome, preço sem alcance em rubrica com contorno, AR 5;
+falta só recaptura), UI 4 (nó escuro com leão e legenda, AR 4, visto em `ui_2026-11-24/dons.png` de `3579c6f`), AR 1, 7, 18, 19, 23 (no código,
+faltam capturas). Conferido e **certo**: `title_pad` bate com `Controls.DEFAULT_PAD` (RB Brado, R3 Investida, LB ultimate), sai da lista.
+**Em andamento, não mexer**: `gameplay-engineer` com cura de 3 por sala vencida e PT-6/PT-11 (salas por baixo, loja na parede); ele está em
+`scripts/game/rooms.gd`, no `_stage` do `tools/make_data.gd` e nos arquivos de sala. Contexto: crianças acharam difícil; Guerreiro 40 de vida
+(`79fe4ec`), guardiões encurtados.
+
+**Regras dos lotes**: cada lote só toca os arquivos listados nele. `data/text_pt.tres` é do Lote A (os outros lotes mandam as chaves novas
+no relatório e a sessão principal cola, para não dar conflito no fim do arquivo). `tools/make_data.gd` é só do Lote D, que começa
+**depois** da integração do trabalho em andamento. Capturas: só a sessão principal, uma por vez (Lote F). No máximo 4 lotes juntos:
+**onda 1** A, B, C (com o trabalho em andamento são 4); **onda 2** D e E; **onda 3** F. Ao fim: suíte inteira, 12 sementes uma vez
+(Guerreiro e Maga), mesmo `RESULT` da semente 5 nos lotes sem gameplay (A, B, E), exe nas duas pastas.
+
+### (A) Fazer agora sem perguntar
+
+**Lote A, telas da meta e textos** (`ui-ux-designer`; arquivos: `data/text_pt.tres`, `scripts/ui/dons_screen.gd`, `dons_panel.gd`,
+`medallion_view.gd`, `forge_screen.gd`, `forge_bench.gd`, `vendor_screen.gd`, `vendor_plate.gd`, `vine_screen.gd`, `coin_corner.gd`, `end_screen.gd`)
+1. **Textos errados ou em inglês** (bug de texto, P). UI 13, 14, 17 e o quickwin `dons_do_chosen`. `mouse_1` "Mouse esq." vira "Clique esquerdo"
+   (e o direito igual); `hero_ult_chosen`/`dons_do_chosen` "Escolhida" vira "Equipado"; "Ultimate" vira **"Golpe Supremo"** em `slot_ult`,
+   `action_ultimate`, `howto_ultimate`, `hero_ultimate`, `hud_ult_*`, `end_unlocked_ult*`, descrições de Bênção e Dom (decidido à noite,
+   revisar: o nome é do Daniel); "XP" sai (`hero_xp` "{a} de {b}", `end_xp` "+{n} de Maestria", `jur_xp`, `hero_step_mastery`);
+   `hero_next`/`dons_hero_reveals` "O nível {n} revela" vira "No nível {n} você ganha o Dom {what}" e em ouro do livro, não vermelho.
+   Aceite: `grep -n "Ultimate\|ultimate\| XP\|Mouse esq\|Escolhida" data/text_pt.tres` vazio no texto visível; teste de texto sem travessão passa.
+2. **"Devoção" vira "Vagas"** (UI 5, P; decidido à noite, revisar). `dons_devotion` "Vagas {free} de {max}", `hero_devotion`, `hero_cost_devotion`,
+   `dons_block_devotion`, `hero_why_devotion`, `dons_devotion_note`; o texto explicativo sobe para corpo 18 em creme. Aceite: nenhuma "Devoção" na tela
+   dos Dons nem no Livro; captura no Lote F.
+3. **Dons: dica e caixa de bloqueio** (UI 6 e 7, P). A dica "Faltam N de Memória" ancora fora dos rótulos dos ramos (acima ou abaixo do nó, empurrada
+   como as etiquetas do `MedallionView`); a caixa do painel só vira botão (com a barra do segurar) quando dá para pagar; senão, texto em rubrica sem barra.
+   Aceite: em `dons.png` nenhuma dica sobre "FÚRIA"/"COMBO"; a barra fina não aparece em Dom sem Memória.
+4. **Dons com a barra de chips** (UI 12, P). Trocar a linha solta `dons_hint` pelos chips do rodapé das outras telas (PageUp SETOR ANTERIOR, PageDown
+   SETOR SEGUINTE, troca de herói, Esc VOLTAR). "Voltar" em toda barra (Dons, Livro, Vendedor, Videira, Forja). Aceite: as cinco telas com o mesmo
+   componente de chips e a mesma palavra para sair.
+5. **Enter diz o que faz** (UI 11 e 10, P). Rótulo do Enter vem do foco: Vendedor "TROCAR" (não "Fechar a troca" com a lista em foco), Videira "REGAR",
+   Forja "MARTELAR", Livro "ABRIR"; na Forja `forge_hold_hint` "ou segure" vira uma frase só, "Aperte três vezes ou segure" (o gesto continua o da
+   `forge_spec.md`). Aceite: em cada tela, o chip do Enter e o botão do painel dizem o mesmo verbo.
+6. **Forja: o que cada verbo faz e por que está fechado** (UI 9, M). Subtítulo de uma linha sob Despertar, Refinar, Inscrever, Temperar (o que dá, em
+   palavras de criança); círculo vazio com cadeado e a causa ("Precisa de 2 Esmeraldas"); `forge_state_ready` diz o gesto. Aceite: captura da Forja
+   (Lote F) sem círculo preto sem rótulo; o `art-director` confere junto o engaste de bronze (AR 2).
+7. **Uma moeda, um canto** (UI 8 e 18, M). `CoinCorner` igual em Dons, Videira, Forja, Vendedor e Livro: sempre Prata, Memória, Esmeralda, com o nome
+   curto ao lado (a Esmeralda hoje aparece sem nome). Carimbo "ERGUIDA" do Vendedor vai para a lateral e o preço esmaece (UI 20). Aceite: as cinco
+   capturas com as três moedas na mesma ordem e com nome.
+8. **Fim de descida sem material diz o caminho** (EC 10, P). Quando a descida volta com 0 Prata e 0 Memória, o `EndScreen` mostra uma linha
+   ("Chegue ao guardião para trazer Memória"; o texto final é do Lote A). Aceite: teste GUT do caso 0/0 e do caso com material (sem a linha).
+
+**Lote B, HUD de luta** (`ui-ux-designer`, segunda instância, ou `technical-artist`; arquivos: `scripts/ui/hud.gd`, `hud_bar.gd`, `ability_list.gd`,
+`action_bar.gd`, `action_slot.gd`, `scripts/core/first_tips.gd`; chaves de texto novas vão no relatório)
+9. **HUD sem duplicata, Vida em cima** (UI 15 e 16, M). A coluna da direita mostra só as Bênçãos ganhas com nível; as ações ficam só na barra de baixo.
+   Vida em cima da Magia, cada uma com ícone pequeno (coração, gota). Aceite: captura de luta (Lote F) com uma fonte por informação; mesmo `RESULT`.
+10. **O Golpe Supremo pronto se vê** (KT 3a e 3b, QA 3, P). Enquanto a carga está cheia, o losango pulsa e o chip "Shift" fica aceso (não some depois
+    de `ULT_HINT_TIME`); com vida abaixo de 50% e carga cheia, o pulso fica mais forte. Aceite: teste GUT do estado "cheio e ferido"; captura com a carga cheia.
+11. **O Brado se lê** (KT 1c e quickwin do KT 1, M). Ícone do efeito do Brado com a contagem de 5 s ao lado das barras; a dica "Q: Brado" aparece 1 s quando
+    há 3 inimigos a menos de 4 m e o Brado está pronto (a conta de `Bot.shout_worth`), no máximo 2 vezes por sala e só nas 3 primeiras descidas do save
+    (`FirstTips`). Aceite: teste GUT do limite por sala e por save; o robô e `--autopick` não esperam.
+
+**Lote C, combate em código pequeno e ferramentas** (`gameplay-engineer`; arquivos: `scripts/game/combat.gd`, `scripts/game/projectiles.gd`,
+`scripts/core/run_log.gd`, `scripts/game/bot.gd`, `scripts/game/game.gd` só no bloco do `--stress`, `tools/feel_probe_run.gd`, `tools/feel_probe.gd`, `tests/`)
+12. **A sonda volta a ser regressão** (CB 9, P). Atualizar os alvos velhos (GF-09d, D-44a, GF-03a, GF-07b, D-44c, GF-05, E1c-P1) para o desenho de hoje e
+    reescrever GF-12 para a regra "ninguém é interrompido" (CB 7). Aceite: `feel_probe_run` 41 de 41 (ou os que faltarem com causa escrita).
+13. **Hit stop por golpe, não global** (CB 1, P). `HIT_SLOW_COOLDOWN` 0,3 s vira um cooldown que não bloqueia o golpe seguinte do combo (por nó do combo,
+    ou 0,15 s). Aceite: sonda mostra o hit stop do corte 2 em toda corrente de 3; nenhuma sequência com dois hit stops em menos de 0,15 s.
+14. **Especial e Explosão pesam no contato** (CB 2, KT 4, P). Dano de projétil com estatística de hit stop (2 quadros, 25 ms) e tranco de câmera no especial
+    do Guerreiro e na Explosão da Maga; nada nos tiros 1 e 2. Número fica no dado (o Lote D preenche). Aceite: teste GUT de que o projétil do especial chama o
+    hit stop e o tiro 1 não.
+15. **Registro conta o uso, não só o dano** (KT 9, CB 5, P). `RunLog` grava as vezes de Q, E, Shift e Espaço por partida e os golpes levados com 0 carga de
+    esquiva; `tools/runs_report.py` mostra as duas colunas. Aceite: teste em `tests/test_run_log.gd`; uma partida do robô mostra os números.
+16. **Robô usa o Supremo ferido e o stress não para na escolha** (KT 3, QA 3 e 5, P). `Bot` solta a ultimate com carga cheia e vida abaixo de 40%;
+    `--stress` liga o `--autopick`. Aceite: `tools/smoke.sh 600 --seed=6 --hero=maga` termina com `ult.boss_uses` ou usos maiores que 0; `--stress=300
+    --hero=maga` não fica em `mode CHOICE`.
+
+**Lote D, números** (`balance-designer` com `gameplay-engineer` para os dois campos novos; arquivos: `tools/make_data.gd`, `data/` regerado,
+`scripts/core/stage_def.gd`, `scripts/game/rooms.gd` só em `_room_cleared`, `tests/test_rejogabilidade.gd`; **começa depois** de integrar a cura por
+sala e o PT-6/PT-11, porque toca os mesmos arquivos)
+17. **A criança que morre na sala 5 leva algo para casa** (EC 1 e 2, M; decidido à noite, revisar). Campo novo `StageDef.silver_room` = 1 (Prata por sala
+    de luta vencida) e `memory_guardian_reach` = 1 (Memória ao entrar na sala do guardião); `silver_elite` 1 para 2. Aceite: teste GUT dos dois campos;
+    régua do EC (15 sementes, ou 12 pela regra) com `materials.total.silver` na derrota p50 entre 6 e 15 e Memória 1 ou mais.
+18. **Preços que a criança alcança** (EC 3, 4, 5, 6, 8, P; decidido à noite, revisar). Dons de `unlock` 2 a 5 custam 1 de Memória; Vendedor 5 Prata por 1
+    Memória (era 10); Provisão da Videira 3, 6, 10 (custo por ramo); Perseverança 0,25 (era 0,1); Temperar I e II 20 e 45 (era 15 e 35). Aceite: tabela
+    do EC refeita no `docs/design/balance.md` com o "descidas até o primeiro item" de antes e depois.
+19. **Combate mais justo para quem lê tarde** (CB 4 e 6, KT 3d, P; decidido à noite, revisar). `bang_lead` 0,35 para 0,45; segundo avanço do Cavaleiro com
+    aviso de 0,55 (era 0,45, abaixo do piso de 0,5 dos comuns); carga do Supremo 90 para 75 nos dois heróis até a Maestria 6; hit stop dos projéteis do item 14
+    preenchido (25 ms no especial e na Explosão); `shot3.glint` da Maga 0 para 0,12. Aceite: robô de reação 0,6 em 12 sementes antes e depois, com o
+    Guerreiro chegando mais longe sem que a Maga passe de 5 de 6 vitórias; mortes na 2ª investida do Cavaleiro abaixo de 1 em 3 (`--guardian=knight`).
+    Nota: com a cura base de 3 por sala, o Dom Respiro (`room_heal` 2) e a Provação da Ferida ("cura menor") precisam de uma linha de conferência no `balance.md`.
+
+**Lote E, sensação em arte e som** (`technical-artist`; arquivos: `scripts/render/` do herói, `assets/shaders/` novo se precisar, `assets/audio/`, a tabela de sons)
+20. **Supremo cheio no corpo e tiro 3 da Maga com voz** (KT 3a e 4, CB 3, P). Anel âmbar e ouro no paladino por 1,5 s quando a carga enche, com som próprio
+    (nada de clarão branco nem partícula sobre o herói); o tiro 3 da Maga com o `dart` mais grave e 4 quadros de recuo da mão. Aceite: captura GPU (Lote F)
+    com o anel; a cadência 8, 8, 12 se ouve; Compatibility sem erro; mesmo `RESULT`.
+
+**Lote F, capturas da sessão principal** (uma por vez, `tools/gpu.sh`, estilizado e Perto; depois `art-director` só lê)
+- As 4 que faltam do AR (seção "Capturas que faltam": Suspensão, laje armada, GR-8 raio-x, GR-20 giro) mais Canalizador e rastro de brasa (AR 18, 19) e Trinca (AR 23).
+- Depois dos Lotes A, B e E: Dons, Forja, Videira, Vendedor, HUD de luta com o Supremo cheio, Encanto. Guerreiro com 40 de vida no HUD (CB 10).
+- Aceite: cada item do AR marcado FEITO, ABERTO com dono ou SAI.
+
+### (B) Precisa do Daniel
+1. **O Supremo cura 10% ao começar?** (KT 3c e pergunta 1; estatística nova `UltDef.heal_pct`). Muda o papel do Supremo de "dano final" para "último recurso".
+   Opções: sim; não; só na primeira descida (modo de aprender). Recomendo **sim**, com crianças achando difícil é o jeito mais claro de ensinar Shift.
+2. **O Brado sempre dá Fúria e devolve Magia?** (KT 1a e pergunta 2). Muda o ramo Fúria (hoje a carga só vem com o Dom Ímpeto). Opções: sim (+6 de Magia por
+   inimigo, teto 3, e 1 carga de Fúria); só a Magia; nada. Recomendo **só a Magia agora** (não esvazia o Dom Ímpeto) e a Fúria depois do teste.
+3. **Investida que atravessa, com 0,3 s de proteção e recarga devolvida ao matar** (KT 1b). É mudar o kit do Guerreiro (`warrior_spec.md`) e copia o papel do Dom
+   Investida. Recomendo **proteção 0,3 s sim, atravessar e devolver a recarga não** (ficam com o Dom).
+4. **Guerreiro contra Maga** (QA 1, KT 2 e pergunta 3: Guerreiro morre antes da sala 9 em 3 de 6, Maga chega ao chefe em 5 de 6). Opções: (a) nivelar pela Maga
+   (Suspensão 16 s, Passo 1,3 s); (b) 2ª carga de esquiva no Dom de entrada do ramo Combo do Guerreiro; (c) esperar o registro das crianças. Com crianças achando
+   difícil, recomendo **(b) e (c), sem enfraquecer a Maga agora**.
+5. **Q e E da Maga pagam algo e um Dom de rotação por ramo** (KT 5 e 6: Círculo aplica 1 Selo ao fechar, Suspensão devolve Magia; onda de brasa, salto do tiro 3,
+   Círculo que segue o cursor). Desenho grande do kit dela; recomendo **o Círculo com Selo e a Suspensão com Magia sim**, os Dons de rotação junto da Maga M3.
+6. **Bênção da tecla esquecida** (KT 7: +30% de peso para Bênção do botão menos usado e uma de Q/E garantida na 1ª oferta da sala 3, como o Hades II faz com o
+   Cast). Mexe no sorteio de toda partida. Recomendo **sim**, depois do item 15 dar os números de uso.
+7. **Modo de aprender para crianças** (vida maior ou dano menor, opção no menu). Recomendo **esperar o registro das crianças** (`runs_report.py --since=2026-11-23T22:00`);
+   se a maioria morrer antes da sala 5 mesmo com 40 de vida e cura por sala, uma opção "Descida tranquila" com 25% menos dano recebido, marcada no registro.
+8. **Provação da Ferida mata** (QA 2: 2 de 6 partidas do robô terminam dentro dela). Opções: avisar o risco no cartão; não oferecer Provação antes do guardião;
+   deixar. Recomendo **avisar no cartão** (texto do Lote A, se ele aprovar) e medir de novo com a cura por sala.
+9. **Os nomes decididos à noite**: "Golpe Supremo" para a ultimate e "Vagas" para a Devoção (itens 1 e 2). Trocar é só texto.
+10. Seguem abertas: as 9 da Maga M3, Alquimista (Q-OF7), arte do ChatGPT (Dons, Forja, loja, Videira, Livro, retrato da Maga AR 8), Morvath (espera o registro).
+
+## Próximas fases (organizado com o Daniel, 2026-11-23 22h30; estado atualizado em 2026-11-24 madrugada, commit `aa161c8`)
 Uma fase por vez; cada fase fecha com exe nas duas pastas e captura na GPU do que mudou. No máximo 4 agentes ao mesmo tempo (o WSL caiu
-às 21h24 de 23/11). A lista "Aberto de verdade" abaixo está toda feita, menos o item 9 (vai para a Fase 4).
+às 21h24 de 23/11). A lista "Aberto de verdade" abaixo está toda feita, menos o item 9 (foi para a Fase 4).
 
 **Decisões tomadas na noite de 23/11 sem perguntar (o Daniel pediu; revisar de manhã):**
 - O Discernimento (comprado com Memória) sai do capítulo Ofícios do Livro e vai para a coluna Obras do Vendedor (`book_spec.md` seção 6): o Livro não vende.
 - Dons em medalhão: mais claro em vez de voltar ao livro (nomes dos ramos, instrução fixa, legenda, Devoção e Memória explicadas).
 - Ordem da Fase 3: Videira e Forja, depois Vendedor, depois Livro, por último a loja da descida (espera o PT-6).
 
-**Fase 0, agora: exe do teste com as crianças** (sessão principal). Exe de 22h27 com Maga M2, PT-10 (anjos, Bênção com a tecla na frase,
-Encanto com o ichthys, portas com anel, selo e caixa), dicas da primeira descida, bugs 1 a 4, Armadilheiro, bastão aceso, Trinca e Varredor,
-Dons em medalhão (substitui a aba do Livro). Fica de fora: PT-6 e PT-11 (salas por baixo, loja na parede).
+**Fase 0, exe do teste com as crianças: FEITO** (`ffc355d`, exe de 22h41 com Maga M2, PT-10, dicas da primeira descida, Armadilheiro, Dons em medalhão).
 
-**Fase 1, o que as crianças mostrarem** (precisa do Daniel: o registro `runs.jsonl` do PC do teste e as anotações dele).
-- `python3 -I tools/runs_report.py --since=2026-11-23T22:00`; resumo do que mudar (`balance-designer`).
-- Recalibrar Morvath (`BOSS_DAMAGE` 1,3, golpe máximo abaixo de 30), o segundo minichefe brando, o ataque em 44% do dano.
-- Se travou ou confundiu: bugs primeiro (`qa-performance` para reproduzir, `gameplay-engineer` ou `ui-ux-designer` para corrigir).
+**Fase 1, o que as crianças mostrarem: FEITO EM PARTE.** Feito: primeira metade mais justa (`79fe4ec`: Guerreiro 40 de vida, Cavaleiro e Ancião mais
+brandos, esqueleto e arqueiro 4 de dano), guardiões encurtados; em andamento a cura de 3 por sala vencida (`gameplay-engineer`). Falta: o registro
+`runs.jsonl` do PC do teste e as anotações do Daniel (`python3 -I tools/runs_report.py --since=2026-11-23T22:00`), e com ele recalibrar Morvath
+(`BOSS_DAMAGE` 1,3, golpe máximo abaixo de 30), o segundo minichefe brando e o ataque em 44% do dano.
 
-**Fase 2, salas** (`room-designer`, `environment-artist`).
-- Juntar PT-6 (entrada por baixo, saída por cima; guardião e ondas nascem ao norte) e PT-11 (loja na parede) depois do robô provar que a
-  sala 5 não ficou mais difícil (9 sementes antes e depois).
-- Arte: portal de entrada ao sul e fim dos arcos selados do oeste; coluna esculpida e plaquinha de pergaminho da loja.
-- Captura GPU de 3 salas e da loja.
+**Fase 2, salas: EM ANDAMENTO** (`gameplay-engineer` juntando PT-6, entrada por baixo e saída por cima, e PT-11, loja na parede). Aceite que segue valendo:
+o robô prova que a sala 5 não ficou mais difícil (9 sementes antes e depois). Depois: arte do portal ao sul, fim dos arcos selados do oeste, coluna e
+plaquinha da loja (`environment-artist`), captura GPU de 3 salas e da loja.
 
-**Fase 3, uma identidade por sistema da meta** (`docs/art/meta_identities.md`; Daniel: "totalmente diferentes entre si"). Cada item:
-spec do `art-director`, pedido ao ChatGPT para o Daniel, tela pelo `ui-ux-designer` com placeholder, peça do Santuário pelo `environment-artist`,
-captura GPU.
-- **3a Dons (medalhão)**: FEITO o principal (`DonsScreen`, aba do Livro removida). Falta: arte do ChatGPT (pedido em
-  `Downloads\Pedido-ChatGPT-medalhao-dos-Dons.txt`), sons (nota ao segurar, sino ao equipar), Memória voando ao contador, linhas dos ramos
-  mais fortes, ícone do cristal de Memória, a Maga em captura. Estação do Santuário como medalhão de bronze num pedestal: FEITA (`HubLook._tree`; falta captura GPU).
-- **3b Forja** (arma deitada, ferro e brasa, três marteladas): FEITO (tela em bancada, `ForgeScreen` refeita pela `forge_spec.md`; detalhe em `docs/reference/ui.md`). Falta: captura GPU, arte do ChatGPT (`assets/ui/forge/`), sons de bigorna e chiado, estação do Santuário se a arte mudar.
-- **3c Loja da descida e Vendedor**: Vendedor FEITO (`VendorScreen` como balança, `VendorOffer`, Discernimento saiu do Livro para a coluna Obras; `--title --screen=vendor`, ver `docs/reference/ui.md`). Falta: loja da descida (Parte A, outro agente nas salas), arte do ChatGPT (`assets/ui/shop/`), sons de moedas e balança, balcão fechado (B.5), captura GPU.
-- **3d Videira**: FEITO o principal (`VineScreen` como planta, etiquetas de barro, painel de leitura e Regar; `--title --screen=vine`). Falta: arte do ChatGPT (`assets/ui/vine/`), sons de água e folhas, captura GPU.
-- **3e Livro de Ahk**: FEITO o principal (2026-11-23: duas páginas iguais, três fitas, virada de página de 0,35 s com LB/RB, rodinha, orelha e fita, página do herói segue o herói com os Dons equipados só para leitura e "Ver os Dons", sem Devoção nem bolsa, `docs/reference/ui.md`). Falta: arte do ChatGPT (`assets/ui/book/`), shader de enrolar a folha, sons de papel e couro, captura GPU.
-- **3f Alquimista** (estante, vidro e cobre, verter): só depois do Daniel decidir para que serve (Q-OF7).
+**Fase 3, uma identidade por sistema da meta: FEITO O PRINCIPAL** (`docs/art/meta_identities.md`).
+- **3a Dons (medalhão)**: FEITO (`DonsScreen`; estação de bronze no pedestal `ca006c9`, captura `f942580`; correções da revisão `a63944c`, captura `3579c6f`).
+  Falta: arte do ChatGPT, sons, Memória voando ao contador, a Maga em captura; textos e dicas na Rodada de melhoria (Lote A).
+- **3b Forja**: FEITO (`a360be4`, captura `4c9d50d`; engaste de bronze `9e935d6`). Falta: arte do ChatGPT, sons, verbos explicados (Lote A item 6), recaptura.
+- **3c Vendedor**: FEITO (`d842092`, captura `1b2d16e`). Falta: loja da descida (Fase 2), arte do ChatGPT, sons, balcão fechado (B.5).
+- **3d Videira**: FEITO (`0884753`, captura `e5dfd64`; etiqueta comprada com nome `9e935d6`). Falta: arte do ChatGPT, sons, recaptura.
+- **3e Livro de Ahk**: FEITO (`eeb5c99`, captura `55153b4`; trilho da Maestria em pergaminho `9e935d6`). Falta: arte do ChatGPT, shader da folha, sons.
+- **3f Alquimista**: só depois do Daniel decidir para que serve (Q-OF7).
 
-**Fase 4, revisão de arte** (`art-director`, só lê capturas que a sessão principal tira, uma por vez): item 9 abaixo (Canalizador, luz de
-Morvath, película e relógio da Suspensão, GR-8, GR-17 a GR-20, GR-26, GR-27) mais o que entrou hoje sem captura GPU (portas, encontro dos
-anjos, Bênção com a tecla, Encanto, dicas, bastão, Trinca e Varredor).
+**Fase 4, revisão de arte: FEITO O PRINCIPAL** (`b548fa9` primeira passada, `a6f5e0d` segunda; correções `f78ab47` laje, `a63944c`/`9e935d6` interface,
+`d4a8285` e `da7a9e2`/`8e70998` Canalizador, rastro de brasa, Trinca, faixa da fenda). Falta: as capturas do Lote F da Rodada de melhoria (Suspensão, laje,
+GR-8, GR-20, Canalizador, brasa, Trinca, telas refeitas) e o retrato da Maga no HUD (AR 8, pede arte do ChatGPT).
 
 **Fase 5, conteúdo que espera respostas do Daniel**
 - Maga M3: as 9 perguntas no fim de `docs/design/heroes/maga_m3.md` (a principal: sistema de armas; recomendação B, focos só da Maga).
 - C6, os outros cinco anjos, e o 8C dos Elos.
+- As decisões de kit da Rodada de melhoria (B1 a B6).
 - Heróis novos (Ladina, Paladino), Meshy, Steam: depois.
 
-**Perguntas abertas para o Daniel**: as 9 da M3; Alquimista (Q-OF7); se a estação dos Dons vira medalhão no pedestal (recomendado);
-opção de vida maior para crianças (modo fácil) se o teste mostrar necessidade.
+**Perguntas abertas para o Daniel**: as da Rodada de melhoria (B); as 9 da M3; Alquimista (Q-OF7); modo de aprender para crianças (B7).
 
 ## Aberto de verdade (2026-11-23 noite)
 Conferido no código e no `git log` até `7058ed0` (game-director). Fora desta lista de propósito: o que já está em andamento (PT-10 telas e
