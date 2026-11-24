@@ -126,11 +126,10 @@ func _book(d: Dictionary) -> HeroScreen:
 	return s
 
 
-func test_the_book_shows_the_purse() -> void:
+func test_the_book_sells_nothing_and_holds_no_purse() -> void:
 	var s := _book(_data(1, 7, 4))
-	var purse := s.find_child("purse", true, false)
-	assert_not_null(purse)
-	assert_eq((purse.get_child(1) as MaterialCount).amount, 4)
+	assert_null(s.find_child("purse", true, false))
+	assert_eq(s.find_children("*", "MaterialCount", true, false).size(), 0)
 
 
 # ---------- the Encontro ----------

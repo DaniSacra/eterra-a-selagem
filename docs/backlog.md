@@ -33,7 +33,7 @@ captura GPU.
 - **3b Forja** (arma deitada, ferro e brasa, três marteladas): FEITO (tela em bancada, `ForgeScreen` refeita pela `forge_spec.md`; detalhe em `docs/reference/ui.md`). Falta: captura GPU, arte do ChatGPT (`assets/ui/forge/`), sons de bigorna e chiado, estação do Santuário se a arte mudar.
 - **3c Loja da descida e Vendedor**: Vendedor FEITO (`VendorScreen` como balança, `VendorOffer`, Discernimento saiu do Livro para a coluna Obras; `--title --screen=vendor`, ver `docs/reference/ui.md`). Falta: loja da descida (Parte A, outro agente nas salas), arte do ChatGPT (`assets/ui/shop/`), sons de moedas e balança, balcão fechado (B.5), captura GPU.
 - **3d Videira**: FEITO o principal (`VineScreen` como planta, etiquetas de barro, painel de leitura e Regar; `--title --screen=vine`). Falta: arte do ChatGPT (`assets/ui/vine/`), sons de água e folhas, captura GPU.
-- **3e Livro de Ahk** (pergaminho, virar a página; só Abertura, O Guerreiro e Ofícios agora).
+- **3e Livro de Ahk**: FEITO o principal (2026-11-23: duas páginas iguais, três fitas, virada de página de 0,35 s com LB/RB, rodinha, orelha e fita, página do herói segue o herói com os Dons equipados só para leitura e "Ver os Dons", sem Devoção nem bolsa, `docs/reference/ui.md`). Falta: arte do ChatGPT (`assets/ui/book/`), shader de enrolar a folha, sons de papel e couro, captura GPU.
 - **3f Alquimista** (estante, vidro e cobre, verter): só depois do Daniel decidir para que serve (Q-OF7).
 
 **Fase 4, revisão de arte** (`art-director`, só lê capturas que a sessão principal tira, uma por vez): item 9 abaixo (Canalizador, luz de

@@ -621,3 +621,29 @@ cada contador (Devoção: vagas que voltam ao tirar; Memória: gasta uma vez par
 grossas; cadeado e custo só no Dom selado (pede Memória), número da Maestria no nó escuro; linha curta com o efeito, ou o
 motivo ("Pede: X", "Faltam N de Memória"), ao lado do nó em foco; o foco começa no primeiro Dom que dá para equipar.
 Porta: `DoorTip.near_door` usa `Arena.exit_at`, o mesmo teste de `Rooms.usable` e do interagir, sem alcance próprio.
+
+## Livro de Ahk refeito (3e, 2026-11-23; `docs/art/book_spec.md`, `docs/art/meta_identities.md` 2)
+`HeroScreen` (`scripts/ui/hero_screen.gd`) agora é um livro aberto sobre uma mesa que **só se lê**: duas páginas iguais
+(`SPINE` 0,5), três fitas (`BookRibbon`: Abertura sépia com pena, o herói na tinta dele com o leão ou a estrela de 8 pontas,
+Ofícios ocre com martelo; a aberta cai sobre a página com o nome na vertical), folio no pé (`FOLIO`: i ii, 1 2, 3 4) e orelhas
+dobradas nos cantos de fora (`BookRibbon.ear`, clique vira). Cabeçalho: nome do capítulo com capitular em rubrica à esquerda
+(`name_cap`, `name_rest`) e a Maestria à direita (`MasteryBar` e "O nível N revela: X"); **sem Devoção, sem bolsa, sem lugares
+selados, sem rosto de Ahk**. `BookDesk`: mesa 1a120c com veio, vinheta e luz; as velas só aparecem onde sobra mesa ao lado do
+livro (o livro não passa de 1,9 alturas de largura, `BookDesk.side_room`, ou seja, telas mais largas que 16:9 ultralargas).
+- **Página do herói segue o herói** (`SaveData.picked_hero` ou `--hero=maga`): retrato (`warrior_page.png`; Maga
+  `hero_maga_img.png`; `assets/ui/book/warrior_ink.png` e `maga_ink.png` quando chegarem), arma, jeito, habilidades com as marcas
+  do HUD (`Hud.MAGA_GLYPHS` para ela), os **Dons equipados** só para leitura (`gifts_equipped`, 3 por linha, `TalentGlyph`; vazio:
+  "Nenhum Dom equipado.") e dois botões: **Ver os Dons** (`to_gifts`, abre o `DonsScreen`, foco inicial) e **Compêndio**. Textos da
+  Maga em chaves `*_maga` (`hero_weapon_name_maga`, `hero_skill_*_maga`, `hero_passive_maga`; `HeroScreen._hk`). Não há mais
+  "Descer" nem "Voltar" nessa página: descer é só da Abertura (`descend`, único botão de destaque), voltar é Esc ou B.
+- **Virar a página** (`BookTurn`, `HeroScreen.go`): LB/RB e PageUp/PageDown (`tab_prev`, `tab_next`), rodinha, orelha, fita (uma
+  virada de 0,25 s por capítulo de distância; `BookTurn.route`) e direcional que não achou vizinho (`HeroScreen.page_step`); em
+  laço (Ofícios para Abertura). A virada é uma folha: captura das duas páginas (`get_image`), a folha que sai fecha contra a
+  lombada e a que chega abre por cima da antiga em 0,35 s, escurecendo ao ficar de pé; o conteúdo novo já está embaixo (a troca
+  é síncrona, `chapter` muda na hora; a captura da página nova sai de `RenderingServer.force_draw(false)`, sem piscar). Sem tela
+  (headless) e no navegador a troca é instantânea (`BookTurn.can_animate`). Pendente: shader de enrolar a folha (curva e sombra
+  projetada), som de papel e de couro, fita que sobe e desce com animação, capa que abre.
+- **Discernimento**: só leitura na página dos Ofícios (compra no Vendedor, `Discern.buy`), como já estava. Arte final em
+  `assets/ui/book/` (`desk.png`, `spread.png`, `ribbon.png`, `ribbon_marks.png`, `opening_desk.png`, `warrior_ink.png`,
+  `maga_ink.png`, `candle.png`, `pick_ink.png`, `pick_ink_broken.png`); hoje tudo é `_draw`. Testes: `tests/test_book.gd` (fim) e
+  `test_hero_screen.gd`. Captura: `RES=1280x720 tools/gpu.sh shot out.png --title --screen=hero [--hero=maga]`.
