@@ -19,8 +19,7 @@ Dons em medalhão (substitui a aba do Livro). Fica de fora: PT-6 e PT-11 (salas 
 - Se travou ou confundiu: bugs primeiro (`qa-performance` para reproduzir, `gameplay-engineer` ou `ui-ux-designer` para corrigir).
 
 **Fase 2, salas** (`room-designer`, `environment-artist`).
-- Juntar PT-6 (entrada por baixo, saída por cima; guardião e ondas nascem ao norte) e PT-11 (loja na parede) depois do robô provar que a
-  sala 5 não ficou mais difícil (9 sementes antes e depois).
+- FEITO 2026-11-24: PT-6 e PT-11 juntados na `arpg-3d` junto com a cura base por sala (3 de vida, `StageDef.room_heal_base`); robô em 12 sementes não piorou (tabela em `docs/design/balance.md`, "Cura base e PT-6/PT-11").
 - Arte: portal de entrada ao sul e fim dos arcos selados do oeste; coluna esculpida e plaquinha de pergaminho da loja.
 - Captura GPU de 3 salas e da loja.
 

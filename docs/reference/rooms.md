@@ -625,3 +625,6 @@ altar em no máximo
   lugar das lanternas de braço da fila antiga. Os quebráveis do Salão ficam a 3 m ou mais dos pontos (testes `test_breakables`, `test_breakable_rules`).
 - Provisório (arte): coluna é caixa de pedra; falta a coluna fina esculpida e a plaquinha de pergaminho com a moeda do `environment-artist`.
 - Captura: `tools/gpu.sh shot x.png --start=shop --gold=400 --bot --autopick --seed=5 --shot-at=4` (a sessão principal).
+
+## Cura base e PT-6/PT-11 juntados (2026-11-24)
+PT-6 e PT-11 entraram na `arpg-3d` (merge sem conflito, dados regerados sem diferença). Junto veio a cura base por sala vencida: `Rooms._room_cleared` chama `Rooms.base_room_heal(room.kind, stage.room_heal_base)` (3 de vida em `COMBAT` e `MINIBOSS`, 0 nas demais), além do `hero_gifts.room_won()` (Respiro). Medida e tabela em `docs/design/balance.md`.
