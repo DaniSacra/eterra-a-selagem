@@ -21,7 +21,7 @@ guia `--guide=tree`, Santuário), ajustar alturas pelo que se vê, exe nas duas 
 - **PT-5 Explicar cada coisa nova no Santuário** (`ui-ux-designer`): na primeira vez que algo destrava (árvore de Dons, Forja, Encantos,
   anjos, escolha de herói, Videira), a câmera aproxima do lugar, uma seta/brilho aponta e uma frase curta diz o que fazer ("Clique aqui
   e conheça os Dons"). Uma vez por save, pular com qualquer tecla.
-- **PT-6 Salas entrando por baixo e saindo por cima** (todas as salas; grande, mexe em layouts e câmera). **Daniel: só marcar, fazer depois.**
+- **PT-6 Salas entrando por baixo e saindo por cima** (feito 2026-11-23, `room-designer`: `docs/reference/rooms.md` "PT-6", `tests/test_pt6_rooms.gd`; falta a arte do portal de entrada ao sul e dos arcos selados do oeste, `environment-artist`). Daniel: ver 3 salas (`--arena=crypt`, `rift`, `garden`) para julgar.
 - **PT-7 Anjos maiores na escolha** (`BoonChoice`/`EncounterScreen`): figura do anjo bem maior; junta com o BC-1 (anjo grande à esquerda).
 - **PT-8 Portas de guardião diferentes** (`room-designer`): hoje as duas portas de guardião dão a mesma coisa. Cada porta mostra **o anjo
   que vai abençoar** (dois anjos diferentes), e o jogador escolhe a luta pelo anjo.

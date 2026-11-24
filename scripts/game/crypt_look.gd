@@ -413,7 +413,7 @@ func dress_steps() -> Array[Callable]:
 		func() -> void:
 			wall_fill(WALL_FILL_COLOR, WALL_FILL_ENERGY)
 			if layout.guardian_home:
-				entry = Vector2(layout.hero_spawn.y - 2.0, layout.hero_spawn.y + 2.0)
+				entry = Vector2(-2.0, 2.0)  # PT-6: the old west arch stays (sealed); he now comes in from the south
 			var b := layout.floor.polys[0]
 			var box := Rect2(b[0], Vector2.ZERO)
 			for p in b:

@@ -59,9 +59,9 @@ func test_cut_corners_doors_and_the_quiet_stone_never_light() -> void:
 	var a := _hazard(0, 1)
 	for c: Vector2i in [Vector2i(0, 0), Vector2i(9, 0), Vector2i(0, 7), Vector2i(9, 7)]:
 		assert_eq(a.live[c.y * 10 + c.x], 0, "the chamfered corner %s never lights" % c)
-	# the east door (15, 0): the two tiles of the east edge beside it
-	assert_eq(a.live[3 * 10 + 9], 0, "a door's tile never lights")
-	assert_eq(a.live[4 * 10 + 9], 0)
+	# PT-6: the north door at x -2.5: the tile of the north edge before it
+	assert_eq(a.live[0 * 10 + 4], 0, "a door's tile never lights")
+	assert_eq(a.live[0 * 10 + 7], 0, "and the one of the door at 8.5")
 	var b := _hazard(1, 1)
 	for r in [3, 4]:
 		for c in [4, 5]:
