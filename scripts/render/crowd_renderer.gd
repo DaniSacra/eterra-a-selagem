@@ -182,7 +182,7 @@ class Kind:
 ## Build of a baked model on top of the def's size (x and z, y), so a body shared with another enemy gets its own
 ## silhouette without a new bake (the assets are at 68.55 of 70 MB): the Trinca squat and broad, the Varredor taller,
 ## narrower, its pole longer. Draw only: the simulation never reads it.
-const BUILD := {&"trio": Vector3(1.25, 0.88, 1.25), &"sweeper": Vector3(0.84, 1.14, 0.84)}
+const BUILD := {&"trio": Vector3(1.45, 0.8, 1.45), &"sweeper": Vector3(0.84, 1.14, 0.84)}
 
 ## Visual layers of everything drawn here (torches skip the crowd's layer).
 var layers := 1

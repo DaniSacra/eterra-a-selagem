@@ -9,7 +9,7 @@ const SHADER := preload("res://assets/shaders/ground.gdshader")
 const FILL_SHADER := preload("res://assets/shaders/ground_fill.gdshader")
 ## ground.gdshader's styles, and its shapes (the same order as Ground.Shape; this file does not name Ground, which
 ## needs the game's autoloads).
-enum Style { WARNING, AREA, CIRCLE, HAZARD }
+enum Style { WARNING, AREA, CIRCLE, HAZARD, EMBERS }
 enum Shape { CIRCLE, LINE, ARC }
 ## An enemy's warning: its red, how strongly it is drawn (bright enough to read on the dark floor) and the meters of
 ## its bright rim (its size is always the attack's).
@@ -153,6 +153,7 @@ static func dress(node: MeshInstance3D, style: Style, shape: int, color: Color, 
 	put(m, &"strength", strength)
 	put(m, &"size_m", maxf(0.1, width * 0.5 if line else radius))
 	put(m, &"rim_m", rim_m)
+	put(m, &"rim_cap", 0.2)
 	put(m, &"length_m", radius if line else 1.0)
 	match shape:
 		Shape.LINE:
@@ -273,6 +274,32 @@ static func aim(m: ShaderMaterial) -> void:
 	put(m, &"fill_early", 0.0)
 	put(m, &"fill_max", AIM_FILL)
 	put(m, &"fill_late", AIM_FILL_LATE)
+	put(m, &"base_fill", 0.0)
+
+
+## The rift's breath (RP-08, art review 2026-11-23 laje_armada): it pushes and never hurts, so no warning red: a pale
+## grey-blue haze (the mist rising) with a thin rim, a faint fill; the red stays for what hurts (PT-1).
+const GUST_COLOR := Color(0.58, 0.68, 0.82)
+const GUST_STRENGTH := 0.6
+const GUST_RIM_M := 0.08
+const GUST_FILL := 0.12
+static func gust(m: ShaderMaterial) -> void:
+	put(m, &"color", GUST_COLOR)
+	put(m, &"strength", GUST_STRENGTH)
+	put(m, &"rim_m", GUST_RIM_M)
+	put(m, &"fill_early", GUST_FILL * 0.5)
+	put(m, &"fill_max", GUST_FILL)
+
+
+## The Canalizador's beam on the floor (art review 2026-11-23, item 18): a floor that shows through (the fill never past
+## BEAM_FILL_MAX, 0.3 after the stylized gain of 1.5) inside a thin warning ring of BEAM_RIM_M, not an opaque tape.
+const BEAM_RIM_M := 0.08
+const BEAM_FILL_MAX := 0.2
+static func beam(m: ShaderMaterial, half_width: float) -> void:
+	put(m, &"rim_m", BEAM_RIM_M)
+	put(m, &"rim_cap", BEAM_RIM_M / maxf(half_width, 0.01))
+	put(m, &"fill_early", BEAM_FILL_MAX)
+	put(m, &"fill_max", BEAM_FILL_MAX)
 	put(m, &"base_fill", 0.0)
 
 
