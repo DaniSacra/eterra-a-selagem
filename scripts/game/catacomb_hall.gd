@@ -524,6 +524,9 @@ const STY_FRAMES: Array[Array] = [
 const DECAL_SHADER := preload("res://assets/shaders/floor_decal.gdshader")
 const SHOP_RUG := Vector2(2.6, 1.8)
 const SHOP_RUG_Y := 0.012
+## PT-11: the column behind each wall item (size) and how far behind the item it stands.
+const SHOP_COLUMN := Vector3(0.45, 2.4, 0.45)
+const SHOP_COLUMN_BACK := 1.1
 ## The shop's lanterns: from the item's point, how far back (away from the camera) and to the right the bracket's rod
 ## stands on the reliquary's side, how far the arm reaches on into the gap; the arm's height, where the lantern's
 ## foot hangs, its little post (none to speak of), its lamp (warm, a little past a candle's reach, SHOP_LAMP_RANGE, and
@@ -786,9 +789,7 @@ func dress_shop(points: Array[Vector2]) -> void:
 	ArenaKit.style_only(node)
 	var mason := Masonry.new(node)
 	var tomb := TombKit.new(mason)
-	var yaw := deg_to_rad(Feel.live().cam_yaw)
 	var right := Feel.screen_to_floor(Vector2.RIGHT, Feel.live().cam_yaw)
-	var away := Vector2(-sin(yaw), -cos(yaw))
 	var rug := ShaderMaterial.new()
 	rug.shader = DECAL_SHADER
 	rug.set_shader_parameter(&"rug_size", SHOP_RUG)
@@ -802,19 +803,12 @@ func dress_shop(points: Array[Vector2]) -> void:
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mi.transform = Transform3D(Basis(Vector3.UP, atan2(-right.y, right.x)), Vector3(p.x, SHOP_RUG_Y, p.y))
 		node.add_child(mi)
-		if k == points.size() - 1:
-			continue
-		# the bracket: an iron rod up from the reliquary's side, an arm out into the gap, the lantern hanging from it
-		var side := p + away * SHOP_LANTERN.x + right * SHOP_LANTERN.y
-		var hang := side + right * SHOP_LANTERN.z
-		var ir := tomb.iron()
-		tomb.bar(Vector3(side.x, SHOP_ARM * 0.5 + RewardGem.RELIQUARY.y * 0.5, side.y), Vector3(0.04, SHOP_ARM - RewardGem.RELIQUARY.y, 0.04), 0.0, ir)
-		var mid := (side + hang) * 0.5
-		tomb.bar(Vector3(mid.x, SHOP_ARM, mid.y), Vector3(SHOP_LANTERN.z + 0.04, 0.04, 0.04), atan2(-right.y, right.x), ir)
-		var l := tomb.lantern(Vector3(hang.x, SHOP_LANTERN_FOOT, hang.y), yaw, ir, SHOP_LAMP, ~Arena.CROWD_LAYER, SHOP_LANTERN_POST)
-		var roof := SHOP_LANTERN_FOOT + SHOP_LANTERN_POST.y + TombKit.LANTERN_CAGE.y + TombKit.LANTERN_ROOF * 0.5
-		tomb.bar(Vector3(hang.x, (roof + SHOP_ARM) * 0.5, hang.y), Vector3(SHOP_LINK, SHOP_ARM - roof, SHOP_LINK), 0.0, ir)
-		l.shadow_enabled = false
+		if k == 0:
+			continue  # the highlight stands free on the medallion
+		# PT-11: a thin stone column behind the item, against the nearest wall (back or side), under its bubble of light
+		var wall := Vector2(0.0, -1.0) if p.y < -8.0 else Vector2(signf(p.x), 0.0)
+		var c := p + wall * SHOP_COLUMN_BACK
+		mason.box(Vector3(c.x, SHOP_COLUMN.y * 0.5, c.y), SHOP_COLUMN, 0.0, mason.stone(0.0, SHOP_CLOTH), false)
 	# the provisions under their cloth
 	for c: Vector4 in SHOP_CLOTHS:
 		mason.box(Vector3(c.x, c.w, c.y), Vector3(c.z, 0.04, c.z * 0.7), 0.4, mason.stone(0.0, SHOP_CLOTH), false)

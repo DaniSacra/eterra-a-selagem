@@ -269,7 +269,7 @@ func edge(a: Vector2, b: Vector2, out: Vector2, kind: Edge, faces: SurfaceTool) 
 		return
 	broken_edge(a, b, out, faces)
 	var mid := (a + b) * 0.5
-	if out.x < -0.9 and absf(mid.y - layout.hero_spawn.y) < ENTRY_WIDE * 0.5 + 0.2:
+	if out.x < -0.9 and absf(mid.y) < ENTRY_WIDE * 0.5 + 0.2:
 		return
 	# RS-C7: the end posts where an edge meets a deck or a door's mouth stepped back off the walkable floor
 	balustrade_edge(a, b, out, false, null, true)
@@ -415,7 +415,7 @@ func piece(o: ArenaObstacle) -> void:
 ## The way in (spec 2.4): a landing and stairs coming up from the west to the edge, posts beside them, the gold sill.
 func _entry() -> void:
 	var west := layout.floor.bounds().position.x
-	var mid := layout.hero_spawn.y
+	var mid := 0.0  # PT-6: the west arch stays as it was (sealed); he now comes in from the south
 	var w := ENTRY_WIDE
 	m.block(Vector3(west - 1.2, -0.62, mid), Vector3(2.4, 0.6, w), 0.0, stone(), false)
 	m.stairs(Vector3(west - 2.4 - 0.45 * ENTRY_STEPS, -0.02 - 0.2 * ENTRY_STEPS, mid), Vector2(1, 0), w, ENTRY_STEPS, 0.2, 0.45)

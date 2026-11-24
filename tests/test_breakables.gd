@@ -96,7 +96,7 @@ func test_where_they_stand() -> void:
 				if id == &"hall":
 					assert_gte(p.at.distance_to(Rooms.FOUNTAIN_SPOT), 5.0, "%s: 5 m off the fountain (AT-FO3)" % name)
 					for k in 5:
-						var item := right * ((k - 2) * Rooms.SHOP_STEP - Rooms.SHOP_SHIFT)
+						var item := Rooms.SHOP_SLOTS[k]
 						assert_gte(p.at.distance_to(item), 3.0, "%s: off the shop's items" % name)
 			for g in groups:
 				assert_between(int(groups[g]), 2, 5, "%s: groups of 2 to 5" % name)

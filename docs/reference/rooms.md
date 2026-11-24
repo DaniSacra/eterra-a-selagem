@@ -599,3 +599,29 @@ altar em no máximo
   do Santuário (`Ambience.BY_ARENA`). Falta arte própria (colunas e braseiros de guardião, laje de espinhos como peça) com o environment-artist.
 - Medida (robô, 12 sementes, `--start=miniboss`): ver `docs/design/rooms_progression.md`, "Salas dos guardiões".
 - **PT-2, medalhão no arco da porta** (`ArenaExit.medal_up` 3,8, `medal_in`, `sign_up` 0,9; `Arena.door_anchor/door_sign_y`): o disco da recompensa pende do arco da própria porta ou sobre a escada (`RewardGem.DOOR_SCALE` 0,8, haste do coroamento), no vão de 4 m e sob a coroa de 5,2 m, e o texto da `DoorSign` começa logo abaixo dele. `Arena.door_label` segue como ponto de uso e exclusão no chão. Imagem de cada recompensa, tipo de sala e anjo: `RewardIcon` (`assets/ui/rewards/<id>.png`, 512x512, ids em `LEIAME.txt`); sem arquivo vale o desenho de hoje. `tests/test_pt2_door_medallion.gd`.
+
+## PT-6, o herói entra por baixo e sai por cima (2026-11-23; `tests/test_pt6_rooms.gd`)
+- Regra: em toda sala o herói nasce na borda sul (a mais perto da câmera) olhando para o norte (`hero_spawn`, `hero_facing` (0,-1)) e as portas
+  ficam no norte (o terço de cima do piso). `_gate(l, spawn, norte, xs)` em `tools/make_data.gd` põe a entrada e as portas na parede norte
+  (`_doors` para as variantes: a Cripta B tem portas próprias por causa do muro divisório). O teste vale para toda arena, toda variante, a
+  Provação e o Altar: entrada no terço sul, portas no terço norte (o Altar, com o altar na parede toda, tem só duas portas, nas laterais da
+  metade norte), a entrada alcança toda porta (`nav.reachable`). O Salão (fonte e loja) e a Câmara do Selo já eram assim (entrada sul, saída
+  e Morvath ao norte).
+- Salas largas (Fendas, Ponte, Santuário) entram no canto sul de um lado e saem pelo norte do lado de lá (a travessia continua a pergunta da
+  sala). A Ponte ganhou a quina NE reta na plataforma leste (cabem duas portas ao norte e uma na parede leste); a câmera dela cobre mais ao sul
+  (`cam_bounds` 4 m de altura).
+- Portas a 6 m ou mais uma da outra (as lanternas ficam a 3,6 m da porta); os braseiros que ladeiam uma porta (`_bowl`) ficam na que a `look`
+  desenhava (Cripta, Fendas, Jardim, Santuário, Runas) e a `look` põe lanterna nas outras. Lajes, jarros, lajes de espinhos, pedras, armadilhas,
+  relíquia, quebráveis e as casas rúnicas "quietas" (`RUNES_ENTRY`) foram refeitos para ficar a 6 m ou mais da entrada nova e fora das portas.
+- Provisório (arte, `environment-artist`): as `look`s ainda desenham o arco da entrada antigo na parede oeste (agora selado, em posição fixa,
+  `entry` de `CryptLook`/`RunesLook`/`GuardianLook`/`BridgeLook`); falta o portal de entrada na borda sul (e o `_front_walls` da `CryptLook` já corre inteiro, sem vão ao sul).
+  O Altar não aceita porta ao norte sem a `AltarLook` abrir o nicho.
+
+## PT-11, loja junto da parede (2026-11-23; `tests/test_shop_wall.gd`)
+- `Rooms.SHOP_SLOTS` (5 pontos no chão do Salão, na ordem em que enchem; a loja da rota usa os 3 primeiros): o 1º (a Bênção, destaque) fica um pouco
+  à frente, sobre o medalhão gravado (-2,5; 1); os outros ao longo da parede norte (-3,5 e -8,8; z -10,8/-10,2) e das laterais (-11,6; -3,2) e (11,6; -7,5).
+  O meio fica livre, a entrada (sul) e a porta (norte, x 2,8) ficam a 5 m ou mais de qualquer item. Cada um mantém a bolha de luz (`RewardShaft`) e a
+  plaquinha de preço (`DoorSign.shop`); a `dress_shop` põe um tapete pequeno e uma coluna de pedra fina (`SHOP_COLUMN`) atrás de cada item de parede, no
+  lugar das lanternas de braço da fila antiga. Os quebráveis do Salão ficam a 3 m ou mais dos pontos (testes `test_breakables`, `test_breakable_rules`).
+- Provisório (arte): coluna é caixa de pedra; falta a coluna fina esculpida e a plaquinha de pergaminho com a moeda do `environment-artist`.
+- Captura: `tools/gpu.sh shot x.png --start=shop --gold=400 --bot --autopick --seed=5 --shot-at=4` (a sessão principal).
