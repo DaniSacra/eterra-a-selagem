@@ -158,6 +158,7 @@ const AHEAD_GAP := 14
 const ULT_HINT_TIME := 1.8
 
 var game: Game
+var door_tip: DoorTip
 var _crest: HeroCrest
 ## The hero whose face the crest shows (the Maga has her own portrait).
 var _crest_hero: StringName = &""
@@ -281,6 +282,10 @@ func _ready() -> void:
 	for i in POINTERS:
 		_pointers.append(_pointer())
 	# the moment an Elo forms: in the notices' place under the clock, well above the paladin
+	# the open doors' seals and, near one, what it holds (DoorTip)
+	door_tip = DoorTip.new()
+	door_tip.game = game
+	add_child(door_tip)
 	_elo_banner = EloBanner.new()
 	add_child(_elo_banner)
 	_place(_elo_banner, Control.PRESET_CENTER_TOP, Vector2(0, 92), Vector2(420, 100))

@@ -147,6 +147,11 @@ static func make(parent: Node3D, reward: RunMap.Reward, kind: RunMap.Kind, color
 	halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	halo.sorting_offset = -1.0
 	frame.add_child(halo)
+	# a door's medallion pulses in a ring of its room's colour (DoorRing; DoorTip makes it burn when he is near)
+	if stand == Stand.FLOAT and door_of(parent) >= 0:
+		var ring := DoorRing.make(door_of(parent), color, s)
+		ring.position = held + Vector3(0, lift, 0)
+		frame.add_child(ring)
 	# the disc: rim and two faces (and the cradle that holds it), swaying (each its own way, by where it stands)
 	var spin := Sway.new()
 	spin.position = held + Vector3(0, lift, 0)

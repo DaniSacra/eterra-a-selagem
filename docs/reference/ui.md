@@ -443,6 +443,13 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   medalhão por botão (esquerdo, direito, Q, E, Shift, Espaço) com o nível ("Nv. 2") na cor da raridade; vazio em cinza com o
   símbolo do botão (E e Shift ainda não têm slot de Bênção); embaixo os Elos e o Salmo. Fica translúcida quando alguém está atrás
   (mesma regra dos losangos). As setas de borda respeitam `Hud.EDGE_RIGHT`.
+- **Portas com anel, selo e caixa (PT-10)** (`DoorRing`, `DoorSeal`, `DoorTip`, `door_ring.gdshader`; teste `test_door_tip`): a
+  moldura de cada porta aberta ganha um anel aditivo de energia na cor da sala (pulsa devagar, acende e alarga quando o herói chega
+  a 7,5 m da porta, cheio a 4,2 m). `DoorSeal` é o selo pequeno do modificador principal (crânio = inimigo maior, crânio coroado =
+  guardião, losango rachado = Provação, marca do anjo, gema = achado) no canto inferior direito do medalhão. A porta mais perto
+  dentro de `DoorTip.NEAR` (4,2 m) mostra ao lado do medalhão uma caixa escura ("Recompensa: X", uma linha por modificador com o seu
+  selo, e a tecla de interagir); some em 0,15 s, foge do herói, dos outros medalhões e da borda. Só leitura: `DoorTip.describe` é
+  puro e testado. A porta de guardião mostra o anjo (PT-8). A coluna de Bênçãos da borda (acima) já cumpria o `build_column.png`.
 - **Moedas no canto inferior direito** (`CoinCorner`): ouro (ou Abatidos no modo horda), Prata e Memória só depois de ter; o
   aviso de coleta ("+10 Prata", soma enquanto aparece) saiu do banner do topo para cá (`Hud._greet_materials` chama `pickup`).
   Os dons que agem sozinhos sobem 40 px, acima das moedas. O relógio com chefe vai para o canto superior direito (o ouro saiu de lá).
