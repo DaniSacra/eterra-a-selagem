@@ -294,3 +294,47 @@ código ou nos dados. Disco 1,16 MB, pacote 1,30 MB. Ogg 44,1 kHz (115 mono, 10 
 `assets/models/LICENSE_KayKit_{Adventurers,Dungeon,Dungeon_Remastered,Skeletons}.txt`,
 `assets/models/anim/LICENSE_Quaternius_UAL.txt`, `assets/textures/rock_surface/LICENSE.txt`,
 `assets/fonts/OFL_*.txt`, `audio/LICENSE-kenney-impact-sounds.txt`, `audio/LICENSES.md`, `CREDITOS.txt`.
+
+## 13. Revisão 2026-11-24 (Lote R10: Maga elemental, pips, Videira, órfãos e origens sem uso)
+
+Medido no worktree do R10 (`du`, leitura dos cabeçalhos PNG, grep em `scripts/`, `data/`, `scenes/`, `tools/`).
+
+**Entrou desde a revisão anterior (sem arquivo de imagem, modelo ou som novo; tudo vem de código ou de dados):**
+| Asset | Origem e licença | Uso | Disco | Estado |
+|---|---|---|---|---|
+| Cores dos três elementos (`scripts/render/element_look.gd`, fogo, frio, raio) | síntese do projeto, constantes de cor, sem IA de imagem | Maga elemental (`ElementBook`, golpes, pips) | 0 | provisório (`art-director` aprova a paleta; distância mínima travada em `tests/test_element_look.gd`) |
+| Pips de estado (`scripts/render/state_pips.gd`) | síntese do projeto, um `MultiMesh` desenhado em código | ícones sobre cada inimigo com estado de elemento | 0 | provisório |
+| Maga (modelo, bastão, clipes) | Meshy (imagem para 3D e texto para 3D), clipes Quaternius CC0; declarado em `docs/steam-ia.md` | `hero_maga_img/` e `w_maga_staff/`, `maga_anims.res` | ver família Meshy acima | provisório (Meshy preview antes do final, decisão do Daniel) |
+| Videira (`assets/ui/book/`, shaders novos de 2026-11-23) | síntese do projeto (shader e código); sem imagem de IA | Videira dos Dons no Livro de Ahk | 8 KB (arte), shaders pequenos | definitivo no desenho, ajustes de UI pendentes |
+
+**Medalhões e UI (TA-08):** `assets/ui/boons` 77 PNG de 512 x 512 (22 MB), `rewards` 25 de 512 x 512 (7,6 MB), `events` 4 de
+384 x 384, `hud` 2 de 256, `hero` 330 x 400. Nenhum medalhão passa de 512 px: nada a reduzir. Os dois únicos PNG de UI
+acima de 512 px são `title/title_bg.png` (1672 x 941, fundo da tela de título, usado em tela cheia, fica) e
+`title/title_screen_reference.png` (referência do PO, 2,6 MB, já no `exclude_filter`, só lida por `tools/make_title_bg.gd` e
+`tools/title_menu_lab.gd`).
+
+**Assados (TA-07):** `assets/baked` 69 MB (teto 70). `morvath.res` 11,0 MB com 214 poses de 16 clipes (cerca de 51 KB por
+pose; cada pose guarda posição em meia precisão RGBAH, 8 bytes, e normal RG8, 2 bytes, por vértice). Cortar quadros nos
+clipes dele rende pouco: tirar 25 % dos quadros dá cerca de 2,7 MB, longe dos 9 MB que levariam o total a 60 MB.
+Proposta, não feita (muda o `BakedModel` em `scripts/render/` e reassa tudo): guardar a posição em 3 x 16 bits (RGB sem o
+canal alfa, 6 bytes) ou quantizada pela caixa do modelo (RGBA8 + 2 bytes), que corta 25 a 45 % de todos os assados
+(17 a 30 MB no total) sem tocar nos clipes; reassar só o `morvath` com `BODY_TRIANGLES` menor (3 900 para 3 000, cerca de
+-2,5 MB) é a opção barata, com risco visual no rosto.
+
+**Origens sem uso no jogo e fora do pacote (TA-05, TA-06; só a lista, nada movido):**
+- Cópias soltas da textura que o GLB já carrega embutida: `assets/models/meshy/*/*_0.jpg` e `*-rigged_Image_0.jpg`, 32 arquivos,
+  65 MB no disco. Ninguém as referencia (nem `bake.gd`, nem cena, nem `.tres`; só o `tools/asset_probe.gd` lê uma). No
+  `exclude_filter` já estão os dos inimigos e da Maga; os do Guerreiro (`hero_explorer_Image_0.jpg`, 3,5 MB) e da Emeth
+  (`emeth_0.jpg`) entram no jogo por importação do GLB, ver a regra de cada um antes de mover. Candidato a ir para
+  `assets/models/meshy_src/` com `.gdignore`: 32 arquivos, cerca de 65 MB.
+- Miniaturas e prévias do Meshy (`*-preview*.png`, `enemy_*.png`, `w_*.png`, `hero_maga/*`, `lion_seated-preview.png`,
+  `statue_hooded-preview.png`): cerca de 3 MB, já excluídas do pacote.
+- Os nove `enemy_*-rigged.glb` (5,0 a 5,7 MB) e os `w_*.glb` (cleaver, staff, knight, morvath_scythe: 2,3 a 3,6 MB) são só matéria-prima
+  do `tools/bake.gd` (carregados por `MESHY` e `meshy/%s/%s.glb`, por isso o grep literal não os acha): ficam, fonte.
+  Os `-walk`/`-run` de que o plano falava já não existem na pasta.
+- KayKit: `assets/models/characters` (29 MB), `anim` (15 MB), `weapons` (292 KB) só alimentam o `tools/bake.gd` e o
+  `bake_hero.gd` (todos no `exclude_filter`), fonte. `assets/models/dungeon` e `dungeon_r` são carregados por nome
+  montado em código (`arena_kit.gd`, `arena.gd`), então o grep por arquivo dá falso positivo; uma auditoria por peça fica
+  para o R10b. Manter `LICENSE_KayKit_*.txt` e `anim/LICENSE_Quaternius_UAL.txt`.
+- `.uid` órfãos (arquivo de origem inexistente) apagados: `tests/test_c2_tree.gd.uid`, `test_codex_book.gd.uid`,
+  `test_maga_tree_ui.gd.uid` (os três `.gd` já não existem). Nenhum `.import` órfão, nenhum outro `.uid` órfão.

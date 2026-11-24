@@ -87,3 +87,8 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   Rock Surface (Amal Kumar, Poly Haven, CC0).
 - Sons gravados: Kenney (CC0), Iwan Gabovitch (qubodup, CC0), rubberduck (CC0), Little Robot Sound Factory (CC BY 3.0);
   músicas de Kevin MacLeod (CC BY 4.0). Lista completa por arquivo em `audio/LICENSES.md`.
+
+- **Revisão de 2026-11-24 (R10)**: nada de imagem, modelo ou som novo por IA desde a Maga (acima). A Maga elemental
+  (`ElementBook`, `ElementLook`, pips de estado `StatePips`), a Videira dos Dons e os 12 Dons provisórios são código e dados escritos
+  por um assistente de IA (Claude), sem gerador de imagem nem de áudio; as cores dos três elementos são constantes no código. O modelo
+  da Maga continua o do Meshy já declarado, ainda uma prévia a refazer antes do final.
