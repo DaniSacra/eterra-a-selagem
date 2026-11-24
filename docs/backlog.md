@@ -4,6 +4,11 @@
 Uma fase por vez; cada fase fecha com exe nas duas pastas e captura na GPU do que mudou. No máximo 4 agentes ao mesmo tempo (o WSL caiu
 às 21h24 de 23/11). A lista "Aberto de verdade" abaixo está toda feita, menos o item 9 (vai para a Fase 4).
 
+**Decisões tomadas na noite de 23/11 sem perguntar (o Daniel pediu; revisar de manhã):**
+- O Discernimento (comprado com Memória) sai do capítulo Ofícios do Livro e vai para a coluna Obras do Vendedor (`book_spec.md` seção 6): o Livro não vende.
+- Dons em medalhão: mais claro em vez de voltar ao livro (nomes dos ramos, instrução fixa, legenda, Devoção e Memória explicadas).
+- Ordem da Fase 3: Videira e Forja, depois Vendedor, depois Livro, por último a loja da descida (espera o PT-6).
+
 **Fase 0, agora: exe do teste com as crianças** (sessão principal). Exe de 22h27 com Maga M2, PT-10 (anjos, Bênção com a tecla na frase,
 Encanto com o ichthys, portas com anel, selo e caixa), dicas da primeira descida, bugs 1 a 4, Armadilheiro, bastão aceso, Trinca e Varredor,
 Dons em medalhão (substitui a aba do Livro). Fica de fora: PT-6 e PT-11 (salas por baixo, loja na parede).
