@@ -519,7 +519,7 @@ func _paint_material(mat: Material, swaps: Dictionary, seen: Dictionary, style :
 	if not swaps.has(sm.shader):
 		return
 	var values := {&"shader": swaps[sm.shader]}
-	var keys: Dictionary = STONE_KEYS if sm.shader == Masonry.SHADER else (MOSS_KEYS if sm.shader == MOSS_SHADER else FLOOR_KEYS)
+	var keys: Dictionary = STONE_KEYS if sm.shader == Masonry.SHADER or sm.shader == Masonry.FADE_SHADER else (MOSS_KEYS if sm.shader == MOSS_SHADER else FLOOR_KEYS)
 	for k: StringName in keys:
 		if style.has(k):
 			values[StringName("shader_parameter/" + keys[k])] = style[k]

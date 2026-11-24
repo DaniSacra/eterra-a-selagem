@@ -55,7 +55,7 @@ func stone_see(base_y := 0.0) -> ShaderMaterial:
 	var key := snappedf(base_y, 0.5)
 	if not _see.has(key):
 		var m := stone.ashlar(key).duplicate() as ShaderMaterial
-		m.set_shader_parameter(&"see_through", 1.0)
+		Masonry.see_fade(m)
 		_see[key] = m
 	return _see[key]
 
