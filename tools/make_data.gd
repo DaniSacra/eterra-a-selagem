@@ -519,10 +519,10 @@ func _beam_and_trap() -> void:
 		"tell_at": Vector3(-0.96, 2.0, 0.58), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "poise": POISE})
 	# the Armadilheiro: 110 life, 3.8 m/s (4.8 running), keeps 5 to 7 m off; every 2.6 s a 0.5 s stoop and a plate of 1.6 m across where the
 	# paladin stands, or where his last dodge ended if under 3 s ago: an X for 1.0 s, then 10 damage to whoever is on it (the dodge's
-	# protection passes over it); at most 4 lie at once. Room 9.
+	# protection passes over it) and the spikes stand 0.5 s more; the plate lies dormant until 6 s after it was laid; at most 4 lie at once. Room 9.
 	_enemy({"id": &"armadilheiro", "model": &"trapper", "behavior": B.SUPPORT, "size": 1.2, "hp": 110.0, "speed": 3.8, "damage": 4.0, "radius": 0.5,
 		"attack_range": 7.0, "attack_cooldown": 2.6, "attack_windup": 0.5, "retreat_far": 5.0, "flee_speed": 4.8, "plate_damage": 10.0,
-		"plate_time": 1.0, "plate_half": 0.8, "plate_max": 4, "plate_window": 3.0, "magic_color": Color(0.96, 0.92, 0.78),
+		"plate_time": 1.0, "plate_half": 0.8, "plate_max": 4, "plate_window": 3.0, "plate_spikes": 0.5, "plate_life": 6.0, "magic_color": Color(0.96, 0.92, 0.78),
 		"tint": Color(0.7, 0.8, 0.5), "vivid": -0.05, "rating": 16.0, "role": &"trap", "per_room": 1, "tell": T.RITUAL,
 		"tell_at": Vector3(0.0, 1.0, 0.45), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "poise": POISE})
 
@@ -632,8 +632,9 @@ func _skill(kind: SkillDef.Kind, props: Dictionary) -> SkillDef:
 
 ## BO-2 (C4): the Blessings of Chama and Geada that left the draw when the two angels were cut to six, one a button: kept
 ## (the file, the Compêndio, an old save) and never offered. They come back one by one, by a button of their own.
+## Vigia Firme (stun_pct) joined the reserve: with StunRule.NONE Combat zeroes stun_scale, so it did nothing until C6 redoes Shomael.
 const RESERVE: Array[StringName] = [&"brasas", &"lamina_ardente", &"omega_brasa", &"chuva_brasas", &"estilhaco", &"peso_inverno",
-	&"geada_final", &"omega_geada"]
+	&"geada_final", &"omega_geada", &"vigia_firme"]
 
 
 func _boon(n: int, id: StringName, family: Boon.Family, icon: int, mods: Array[BoonMod], skill: SkillDef = null, slot: Boon.Slot = Boon.Slot.NONE) -> void:

@@ -739,8 +739,9 @@ nele, 0 vence; evoluído (4 Dons, Forja 2, conta 6) 12 chegam, 1 morre nele, 5 v
   esquerda, 3,5 MB), tinta oliva, 1,2; vida 110, anda 3,8, mantém 5 a 7 m e foge a menos de 5 (`retreat_far`). A cada 2,6 s (x0,9) abaixa 0,5 s e planta uma placa de
   1,6 m onde o herói pisa, ou onde terminou a última esquiva se foi há menos de 3 s (`Player.last_dodge_end`, `dodge_age`, `Horde.dodge_end`;
   `TrapRules.spot`); no máximo 4 (`plate_max`, `TrapRules.may_lay`, afastadas 1,28 m). A placa é uma zona de linha quadrada de 1,0 s (`Ground.PLATE_TAG`, seu preenchimento vermelho escondido) cujo aviso é um X
-  fino marfim com as quatro bordas (`C1eMarks._put_plate`, que fica mais claro até o fim); ao fim fere 10 em quem está nela (a invulnerabilidade da esquiva passa por cima) e levanta poeira. Não tem os
-  espinhos de 0,5 s depois do X nem o "some em 6 s" do documento: o dano é um golpe só no fim do aviso. Papel `trap`, `per_room` 1; a sala da corrente (RP-11) proíbe o papel.
+  fino marfim com as quatro bordas (`C1eMarks._put_plate`, que fica mais claro até o fim); ao fim fere 10 em quem está nela (a invulnerabilidade da esquiva passa por cima) e levanta poeira. Depois do X os
+  espinhos ficam de pé 0,5 s (`plate_spikes`; ferem uma vez quem pisa neles e não foi ferido no pouso, a esquiva passa por cima) e a placa fica dormente (X apagado, ainda conta no máximo de 4)
+  até 6 s depois de plantada (`plate_life`; `TrapRules.phase`, `TrapRules.Plate`, `Horde.plates_laid`, `_step_plates`; `C1eMarks._put_plate`). Papel `trap`, `per_room` 1; a sala da corrente (RP-11) proíbe o papel.
 - **Modificadores** (`ModDef`): **Regenerante** (anel azul-claro, `regen_hp` 12 a cada `regen_after` 3 s sem golpe: `Enemy.calm_t`, zerado em `Horde.damage`;
   `SupportRules.mended`) e **Eco** (anel cinza, `echo_time` 3,5, `echo_share` 0,4: a primeira morte deixa um monte invulnerável que se ergue sozinho com 40% da vida, uma vez,
   e perde o anel; `Enemy.echoed`, `_lie_down` e `_step_down` do monte da Trinca; `SupportRules.echo_hp`, `echo_rises`; não conta como morte até cair de vez). O sorteio

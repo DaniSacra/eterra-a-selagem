@@ -598,6 +598,7 @@ func _step(dt: float) -> void:
 	horde.target_alive = player.alive() and mode == Mode.PLAY
 	horde.dodge_end = player.last_dodge_end
 	horde.dodge_age = player.dodge_age
+	horde.target_safe = player.invulnerable()
 	horde.step(dt)
 	_lap(&"horde")
 	if boss:
@@ -1810,7 +1811,9 @@ func log_run(outcome: String) -> void:
 	var gain := mastery_gain(outcome, Save.data)
 	var e := run_entry(outcome, gain)
 	RunAward.keep(self, outcome, gain)
-	if Dev.has("runlog"):
+	if not RunLog.worth_keeping(outcome, rooms.won.size(), float(e.get("time", 0.0))):
+		pass  # entered the Portal and left: nothing to read in it
+	elif Dev.has("runlog"):
 		RunLog.append(RunLog.PATH if Dev.arg("runlog") == "1" else Dev.arg("runlog"), e)
 	elif Save.enabled and bot == null:
 		RunLog.append(RunLog.PATH, e)

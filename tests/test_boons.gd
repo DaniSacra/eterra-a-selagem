@@ -326,3 +326,10 @@ func test_each_action_has_a_gift_of_its_families() -> void:
 					var own: bool = m.tag == Boon.SLOT_TAG[slot] or m.tag == &"" or (slot == Boon.Slot.ATTACK and m.tag == &"spin")
 					assert_true(own, "%s rides on %s but changes '%s'" % [b.id, Boon.SLOT_KEY[slot], m.tag])
 		assert_eq(families.size(), want[slot], "slot %s" % Boon.SLOT_KEY[slot])
+
+
+func test_vigia_firme_is_in_the_reserve_and_never_offered() -> void:
+	var b := state.find(&"vigia_firme")
+	assert_not_null(b)
+	assert_true(b.reserve, "Vigia Firme does nothing under StunRule.NONE, so it waits in the reserve")
+	assert_false(state.offerable(b))

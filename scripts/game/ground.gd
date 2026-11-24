@@ -561,6 +561,15 @@ func _land(z: Zone) -> void:
 	zone_landed.emit(z)
 
 
+## A plate's spikes hurt the paladin who stepped on them (Horde): the same hit as a landing zone, from the Armadilheiro.
+func plate_strike(power: float, center: Vector2, by: StringName, warn: float) -> void:
+	last_source = &""
+	last_by = by
+	last_warn = warn
+	last_offscreen = horde.screen_flag(horde.acting_pos) if horde else -1
+	hit_player.emit(power, center)
+
+
 func _add(kind: Kind, shape: Shape, at: Vector2, dir: Vector2, radius: float, width: float, time: float, power: float) -> Zone:
 	var z := Zone.new()
 	z.kind = kind

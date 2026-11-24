@@ -12,7 +12,7 @@ func before_each() -> void:
 
 
 func after_each() -> void:
-	_combat.free()
+	_combat = null  # RefCounted: freed when the last reference goes
 
 
 func _take(id: StringName) -> void:

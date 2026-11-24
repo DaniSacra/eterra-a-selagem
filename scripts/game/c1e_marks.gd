@@ -84,10 +84,8 @@ func step() -> void:
 		if e.alive and e.away_t > 0.0 and e.away_t < 90.0 and e.def.throw_flight > 0.0:
 			if _put_shield(shield_n, e, e.shield_lies, 0.0, ThrownShield.flight_basis(e.def.throw_flight, e.def.throw_flight)):
 				shield_n += 1
-	if ground != null:
-		for z in ground.zones:
-			if z.tags.has(Ground.PLATE_TAG) and z.life > 0.0:
-				bar_n = _put_plate(bar_n, z)
+	for p in horde.plates_laid:
+		bar_n = _put_plate(bar_n, p)
 	_hide_from(_rings, ring_n)
 	_hide_from(_bars, bar_n)
 	_hide_from(_shield_nodes, shield_n)
@@ -110,17 +108,25 @@ func _put_corners(bar_n: int, at: Vector2, c: float, color: Color) -> int:
 	return bar_n
 
 
-## The plate's X and square (a plate is the zone's line: `radius` along, `width` across), returning the bars used so far.
-func _put_plate(bar_n: int, z: Ground.Zone) -> int:
-	var c := z.pos + z.dir * z.radius * 0.5
-	var half := z.width * 0.5
-	var alpha := 0.55 + 0.45 * clampf(1.0 - z.life / maxf(z.total, 0.001), 0.0, 1.0)
+## The plate's X and square (inimigos_c1e.md 6): the X brightens through its warning, the spikes stand thick and whole, and the dormant plate
+## lies dim and fades out over its last second. Returns the bars used so far.
+func _put_plate(bar_n: int, p: TrapRules.Plate) -> int:
+	var c := p.at
+	var half := p.half
+	var alpha := 0.55 + 0.45 * clampf(p.age / maxf(p.warn, 0.001), 0.0, 1.0)
+	var thick := 1.0
+	match p.phase():
+		TrapRules.Phase.SPIKES:
+			alpha = 1.0
+			thick = 2.4
+		TrapRules.Phase.DORMANT:
+			alpha = 0.4 * clampf(p.life - p.age, 0.0, 1.0)
 	for sign in [1.0, -1.0]:
 		var m := _node(_bars, bar_n, false, Color(PLATE_COLOR, alpha))
 		bar_n += 1
 		m.position = Vector3(c.x, 0.075, c.y)
 		m.rotation = Vector3(0.0, sign * PI * 0.25, 0.0)
-		m.scale = Vector3(half * 1.4 / X_ARM, 1.0, 1.0)
+		m.scale = Vector3(half * 1.4 / X_ARM, 1.0, thick)
 	for k in 4:
 		var m := _node(_bars, bar_n, false, Color(PLATE_COLOR, alpha * 0.8))
 		bar_n += 1
@@ -128,7 +134,7 @@ func _put_plate(bar_n: int, z: Ground.Zone) -> int:
 		var at := c + side * half
 		m.position = Vector3(at.x, 0.075, at.y)
 		m.rotation = Vector3(0.0, 0.0 if k % 2 == 1 else PI * 0.5, 0.0)
-		m.scale = Vector3(half / X_ARM, 1.0, 1.0)
+		m.scale = Vector3(half / X_ARM, 1.0, thick)
 	return bar_n
 
 
