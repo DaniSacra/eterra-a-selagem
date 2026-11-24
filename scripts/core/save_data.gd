@@ -67,7 +67,7 @@ static func defaults() -> Dictionary:
 
 
 static func hub_defaults() -> Dictionary:
-	return {"presented": [], "guided": []}
+	return {"presented": [], "guided": [], "tips": []}
 
 
 ## The Juramentos block (E6): the ranks chosen for the next descent (id: rank; read through Juramentos.set_all) and the
