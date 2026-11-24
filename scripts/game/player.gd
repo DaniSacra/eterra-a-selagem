@@ -218,6 +218,8 @@ var curse := CurseState.new()
 var _curse_aura: CurseAura
 var _blade_mat: ShaderMaterial
 var _shown_corrupt := -1.0
+## The Maga's staff glow lift last set (MagaStaff.set_cast): 1 while the Cast clip plays, else 0; -1 before the first.
+var _staff_cast := -1.0
 ## The ultimate chosen for this descent (null: none) and whether its charge is full (both set by Ultimates).
 var ult: UltDef = null
 var ult_ready := false
@@ -1228,4 +1230,9 @@ func _play(anim: StringName, speed: float = 1.0, from: float = -1.0, blend: floa
 		_anim.seek(from, true)
 	elif _current_anim != anim or not _anim.is_playing():
 		_anim.play(anim, blend, speed)
+	var lift := 1.0 if anim == &"Cast" else 0.0
+	if _sword and lift != _staff_cast:
+		_staff_cast = lift
+		if _sword.find_child("Glow", true, false) != null:
+			MagaStaff.set_cast(_sword, lift)
 	_current_anim = anim
