@@ -78,14 +78,6 @@ var _codex: CodexScreen
 var _codex_button: Button
 ## What the panel tells now (a TalentDef, an UltDef or null for the centre).
 ## False until the first refresh: the book opens with its capitals already filled (nothing animates at the start).
-## Abrir with Memória (Rejogabilidade, Fatia 1): the sealed Gift asked to open, waiting for the second press that
-## confirms it on this page (no sheet over the book), for CONFIRM_TIME seconds; moving the focus forgets it.
-const CONFIRM_TIME := 3.0
-var arming: StringName = &""
-var _arm_t := 0.0
-## The Discernimento's buttons, one per grade (Fatia 3).
-var discern_buttons: Array[Button] = []
-const DISCERN_BUTTON := 200.0
 ## The materials held, in the head of the right page (MaterialCount.purse).
 var _purse: HBoxContainer
 
@@ -371,13 +363,15 @@ func _oficios_right() -> Control:
 	return v
 
 
-# ---- Discernimento (Fatia 3; Discern): bought with Memória on the Ofícios' page, in order, two presses ----
+# ---- Discernimento (Fatia 3; Discern): only read here since 2026-11-23, it is bought at the Vendedor's counter ----
 
-## The Discernimento's grades: each its name and what it does, and a paper button that opens the next one.
+## The Discernimento's grades as the book reads them: each its name and what it does, open (in green ink) or still to
+## open at the Vendedor. Nothing is bought in the book (docs/art/book_spec.md 6).
 func _discern_part(v: VBoxContainer) -> void:
 	v.add_child(Book.section(T.t(&"discern_title")))
-	v.add_child(Book.text(T.t(&"discern_lead"), Book.FADED, 15))
+	v.add_child(Book.text(T.t(&"discern_at_vendor"), Book.FADED, 15))
 	for n in range(1, Discern.COSTS.size() + 1):
+		var open := Discern.level(_data) >= n
 		var row := HBoxContainer.new()
 		row.name = "discern_row_%d" % n
 		row.add_theme_constant_override(&"separation", 10)
@@ -387,64 +381,12 @@ func _discern_part(v: VBoxContainer) -> void:
 		words.add_child(Book.label(T.t("discern_%d" % n), Book.INK, 18, UiKit.BOLD_FONT))
 		words.add_child(Book.text(T.t("discern_%d_desc" % n), Book.FADED, 15))
 		row.add_child(words)
-		var b := Book.button("", _press_discern.bind(n), DISCERN_BUTTON)
-		b.name = "discern_%d" % n
-		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		row.add_child(b)
-		discern_buttons.append(b)
+		var state := Book.label(T.t(&"discern_owned" if open else &"discern_closed"), Book.OK if open else Book.FADED, 15,
+			UiKit.BOLD_FONT)
+		state.name = "state"
+		state.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(state)
 		v.add_child(row)
-	_refresh_discern()
-
-
-## Each grade's button as the save stands: Aberto, "Abrir · N" (and asking again while armed), or why not.
-func _refresh_discern() -> void:
-	for i in discern_buttons.size():
-		var n := i + 1
-		var b := discern_buttons[i]
-		var problem := Discern.problem(_data, n)
-		var can := problem == Discern.Problem.OK
-		match problem:
-			Discern.Problem.OWNED:
-				b.text = T.t(&"discern_owned")
-			Discern.Problem.NEEDS:
-				b.text = T.t(&"discern_needs", {"name": T.t("discern_%d" % (n - 1))})
-			Discern.Problem.SHORT:
-				b.text = T.t(&"discern_short", {"n": Discern.cost(n) - MaterialPurse.amount(_data, MaterialPurse.MEMORY)})
-			_:
-				b.text = T.t(&"discern_confirm" if arming == StringName("discern_%d" % n) else &"discern_open_cost",
-					{"n": Discern.cost(n)})
-		b.disabled = not can
-		b.focus_mode = Control.FOCUS_ALL if can else Control.FOCUS_NONE
-		if can:
-			Book.primary(b)
-
-
-## The first press asks (the button says what it costs), the second within CONFIRM_TIME opens it and writes the save.
-func _press_discern(n: int) -> void:
-	var id := StringName("discern_%d" % n)
-	if Discern.problem(_data, n) != Discern.Problem.OK:
-		return
-	if arming != id:
-		arming = id
-		_arm_t = CONFIRM_TIME
-		Audio.play(&"ui_move")
-		_refresh_discern()
-		return
-	arming = &""
-	if Discern.buy(_data):
-		Audio.play(&"ui_ok")
-		_save()
-	_refresh()
-	_refresh_discern()
-	var next := _discern_focus()
-	(next if next != null else chapters[Chapter.OFICIOS]).grab_focus()
-
-
-func _discern_focus() -> Control:
-	for b in discern_buttons:
-		if not b.disabled:
-			return b
-	return null
 
 
 ## A line of the Ofícios: an optional mark, the name in bold ink with a count at the right in lining figures, and a
@@ -698,19 +640,8 @@ func _chapter_focus(c: Chapter) -> Control:
 		Chapter.HERO:
 			return _to_gifts
 		Chapter.OFICIOS:
-			# the Discernimento's next grade, else its bookmark holds the focus
-			var d := _discern_focus()
-			return d if d != null else chapters[Chapter.OFICIOS]
+			return chapters[Chapter.OFICIOS]
 	return chapters[c]
-
-
-func _process(delta: float) -> void:
-	if arming == &"":
-		return
-	_arm_t -= delta
-	if _arm_t <= 0.0:
-		arming = &""
-		_refresh_discern()
 
 
 func _save() -> void:

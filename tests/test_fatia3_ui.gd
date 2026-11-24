@@ -78,55 +78,101 @@ func test_no_reroll_button_without_it() -> void:
 			assert_null((n as BoonChoice).reroll_item)
 
 
-func test_the_book_sells_the_discernimento_in_two_presses() -> void:
+func test_the_book_only_reads_the_discernimento() -> void:
 	var d := _data()
 	MaterialPurse.give(d, MaterialPurse.MEMORY, 10)
 	var s := HeroScreen.new()
 	add_child_autofree(s)
 	s.open(d, HeroScreen.Chapter.OFICIOS)
-	assert_eq(s.discern_buttons.size(), 2)
-	var one := s.discern_buttons[0]
-	var two := s.discern_buttons[1]
-	assert_false(one.disabled)
-	assert_true(two.disabled, "the second asks for the first")
-	one.pressed.emit()
-	assert_eq(Discern.level(d), 0, "the first press only asks")
-	assert_eq(one.text, T.t(&"discern_confirm", {"n": Discern.cost(1)}))
-	one.pressed.emit()
-	assert_eq(Discern.level(d), 1)
-	assert_eq(one.text, T.t(&"discern_owned"))
-	assert_eq(two.text, T.t(&"discern_short", {"n": Discern.cost(2) - 2}))
+	assert_not_null(s.find_child("discern_row_1", true, false), "the grades are still read")
+	assert_null(s.find_child("discern_1", true, false), "but nothing is bought in the book")
+	assert_eq(Discern.level(d), 0)
 
 
-func test_the_vendor_stall_builds_and_trades() -> void:
-	var d := _data()
-	var def := OficiosDef.live()
-	Oficios.block(d).orders[String(def.order)] = "done"
-	MaterialPurse.give(d, MaterialPurse.SILVER, 200)
-	MaterialPurse.give(d, MaterialPurse.MEMORY, 20)
-	MaterialPurse.give(d, MaterialPurse.EMERALD, 5)
+func _stall(d: Dictionary) -> VendorScreen:
 	var v := VendorScreen.new()
 	add_child_autofree(v)
 	v.open(d)
-	assert_eq(v.build_buttons.size(), Vendor.load_catalog().size())
-	var o := v.catalog[0]
+	return v
+
+
+func _open_stall_data() -> Dictionary:
+	var d := _data()
+	Oficios.block(d).orders[String(OficiosDef.live().order)] = "done"
+	return d
+
+
+func _offer(v: VendorScreen, id: StringName) -> VendorOffer:
+	for o in v.offers:
+		if o.id() == id:
+			return o
+	return null
+
+
+func test_the_vendor_stall_builds_with_two_presses() -> void:
+	var d := _open_stall_data()
+	MaterialPurse.give(d, MaterialPurse.SILVER, 200)
+	MaterialPurse.give(d, MaterialPurse.MEMORY, 20)
+	MaterialPurse.give(d, MaterialPurse.EMERALD, 5)
+	var v := _stall(d)
+	assert_eq(v.offers.size(), OficiosDef.live().trades.size() + Vendor.load_catalog().size() + Discern.COSTS.size())
+	var o := _offer(v, v.catalog[0].id)
 	watch_signals(v)
-	assert_true(v.build(o))
+	v.press_tag(o)
+	assert_eq(v.placed, o, "the first press only puts it on the plate")
+	assert_false(Vendor.made(d, v.catalog[0]))
+	assert_true(v.close_button.visible)
+	v.press_close()
 	assert_signal_emitted(v, "built")
-	assert_true(Vendor.made(d, o))
-	assert_false((v.build_buttons[o.id] as Button).visible, "made: Erguida, no button")
+	assert_true(Vendor.made(d, v.catalog[0]))
+	assert_null(v.placed)
+	assert_eq(o.state(d, v.def), VendorOffer.State.MADE)
+
+
+func test_the_vendor_stall_trades_and_takes_back_without_spending() -> void:
+	var d := _open_stall_data()
+	MaterialPurse.give(d, MaterialPurse.SILVER, 200)
+	var v := _stall(d)
+	var t := _offer(v, &"trade_0")
 	var silver := MaterialPurse.amount(d, MaterialPurse.SILVER)
-	assert_true(v.trade(0))
-	assert_eq(MaterialPurse.amount(d, MaterialPurse.SILVER), silver - int(def.trades[0]["give_n"]))
-	var poor := _data()
-	Oficios.block(poor).orders[String(def.order)] = "done"
-	var w := VendorScreen.new()
-	add_child_autofree(w)
-	w.open(poor)
-	for id: Variant in w.build_buttons:
-		assert_true((w.build_buttons[id] as Button).disabled)
-	for b in w.trade_buttons:
-		assert_true(b.disabled)
+	v.press_tag(t)
+	v.cancel()
+	assert_null(v.placed)
+	assert_eq(MaterialPurse.amount(d, MaterialPurse.SILVER), silver, "B takes it off the plate and spends nothing")
+	v.press_tag(t)
+	v.press_tag(t)
+	assert_eq(MaterialPurse.amount(d, MaterialPurse.SILVER), silver - int(v.def.trades[0]["give_n"]), "the second press trades once")
+	assert_false(v.press_close(), "nothing is left on the plate to close")
+
+
+func test_the_vendor_stall_sells_the_discernimento_in_order() -> void:
+	var d := _open_stall_data()
+	MaterialPurse.give(d, MaterialPurse.MEMORY, 10)
+	var v := _stall(d)
+	var one := _offer(v, &"discern_1")
+	var two := _offer(v, &"discern_2")
+	assert_eq(one.state(d, v.def), VendorOffer.State.CAN)
+	assert_eq(two.state(d, v.def), VendorOffer.State.NEEDS, "the second asks for the first")
+	v.put(two)
+	assert_true(v.close_button.disabled, "put on the plate, but the button says why not")
+	assert_false(v.press_close())
+	v.put(one)
+	v.press_close()
+	assert_eq(Discern.level(d), 1)
+	assert_eq(one.state(d, v.def), VendorOffer.State.MADE)
+	assert_eq(two.state_text(d, v.def), T.t(&"vendor_short", {"list": VendorOffer.short_list({MaterialPurse.MEMORY: Discern.cost(2) - 2})}))
+
+
+func test_the_vendor_stall_without_means_spends_nothing() -> void:
+	var d := _open_stall_data()
+	var v := _stall(d)
+	for o in v.offers:
+		if o.state(d, v.def) == VendorOffer.State.MADE:
+			continue
+		v.put(o)
+		assert_true(v.close_button.disabled, str(o.id()))
+		assert_false(v.press_close())
+	assert_eq(MaterialPurse.amount(d, MaterialPurse.SILVER), 0)
 
 
 func test_the_codex_has_the_angels() -> void:

@@ -218,11 +218,27 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - **Sortear de novo** na escolha de Bênçãos (Discernimento I): com `Game.can_reroll()` a `BoonChoice` põe
   "Sortear de novo (N)" na `ActionBar` (`reroll_item`, `reroll()` chama `Game.reroll_choice`); ação de menu
   `menu_reroll` em `Controls.MENU_KEYS` (Y no controle, R no teclado, só nos menus).
-- **Discernimento** no capítulo Ofícios do Livro: um botão por grau (`HeroScreen.discern_buttons`), dois apertos como
-  abrir um Dom ("Confirmar: N de Memória"), `Discern.buy` e grava; o II diz que pede o I.
-- **Banca do Vendedor** (`VendorScreen`, `scripts/ui/vendor_screen.gd`): aberta pelo Vendedor depois da encomenda
-  entregue (`Hub._use_vendor`); à esquerda as Obras (custo com marcas, o que falta em rubrica, Erguer, "Erguida"), à
-  direita as trocas (Dá, seta, Recebe, Trocar) e o Saldo; sinais `built`, `traded`.
+- **Discernimento** só se lê no capítulo Ofícios do Livro (`HeroScreen._discern_part`: nome, o que faz, "Aberto" em
+  tinta verde ou "Fechado", e a linha `discern_at_vendor`); a compra passou para a banca do Vendedor (2026-11-23).
+- **Banca do Vendedor, a balança** (`VendorScreen`, `docs/art/shop_spec.md` B e C, `meta_identities.md` 4): palco de
+  1280 x 720 em escala uniforme (como a Videira), toldo listrado vinho e terra, balcão de madeira, balança de latão no
+  meio (`VendorScale`: ângulo `angle`, `put`/`take`/`settle`, pratos que carregam o que se dá e o que se recebe, prévia a
+  40%), à esquerda as **Trocas** e à direita as **Obras** com o Discernimento I e II no fim (5 etiquetas, sem rolar),
+  placa de leitura no centro (`VendorPlate`: nome e estado em palavra e cor, o que muda com números em negrito, preço
+  com "Você tem N"). As etiquetas são `ShopTag` (couro 5a3424, pesponto, ilhó, carimbo "Erguida"; avançam 10 px com aro
+  de ouro velho no foco). Lógica toda em `VendorOffer` (core, testado: junta troca, Obra e grau do Discernimento e só
+  pergunta a `Vendor` e `Discern`; `state`, `cost`, `gain`, `missing`, `tilt`, `commit`). **Gesto**: 1o aperto (Enter, A,
+  clique) `press_tag`/`put` põe no prato e a balança pende (4 a 10 graus para o lado do que se dá), o foco vai ao botão
+  do meio ("Fechar a troca", "Erguer a Obra", "Abrir o grau"; sem material fica desligado com o motivo); 2o aperto
+  `press_close` faz a troca por `VendorOffer.commit`, grava o save e esvazia os pratos (`settle`); B/Esc tira do prato
+  sem gastar (`cancel`), com o prato vazio fecha. Direcionais: cima e baixo na coluna, esquerda e direita trocam de
+  coluna na mesma linha (e pelo botão do meio aceso), LB/RB e PageUp/PageDown também; o mouse dá o foco (prévia) e
+  clica para pôr. Abre na primeira troca que se paga, senão na primeira Obra. Sinais `built`, `traded`, `discerned`.
+  Captura: `--title --screen=vendor [--silver=N --memory=N --emerald=N --made=obra_altar --discern=N --place=<índice>]`
+  (save de teste, nunca o do jogador). Arte final por caminho previsto em `assets/ui/shop/` (`ShopArt.texture`:
+  `counter_bg`, `awning`, `obra_*`, `stamp_built`...; sem arquivo, o desenho provisório de `ShopArt`). O vermelho dos
+  preços sem fundos é e8806c (o c05040 da spec some no couro). Falta (spec B.5): o balcão fechado antes da primeira
+  encomenda ainda é a folha do `HubPanel`; sons de moedas e rangido; contagem dos números na bolsa.
 - **Compêndio**: aba Anjos (`CodexScreen.Tab.ANGELS`, nona, antes de Golpes; `AngelCodex`): selo aceso, nome na cor
   do anjo, frase e vezes encontrado, escolhido e Bênçãos levadas; nunca encontrado, selo apagado e "???".
 - **Esboço a tinta no Compêndio** (AP-4, peça do technical-artist): o `FigureView` chama `FigureSketch.apply(renderer,

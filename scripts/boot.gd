@@ -5,7 +5,7 @@ extends Node
 ## open their panels over the art, hosted by a ScreenHost (shared with the hub).
 ## Test switches that ask for a run (--bot, --shot, --smoke, --start, --stress, --play) skip straight to it, past the
 ## title and the hub; --hub goes straight to the hub (with --shot too).
-## --title --screen=options|music|moves|howto|hero|gifts|dons|vine|book|codex|juramentos|map opens a panel at once (hero, gifts and
+## --title --screen=options|music|moves|howto|hero|gifts|dons|vine|vendor|book|codex|juramentos|map opens a panel at once (hero, gifts and
 ## book: the Livro de Ahk on the Warrior, the Gifts or the opening). --hero-xp=N and --hero-equip=a,b set the
 ## Warrior's Mastery and Gifts for captures, in Save.data (Save.gd).
 ## Save slots (the Daniel, 2026-11-21): the title comes first; Iniciar opens the choice of save (SaveSlotScreen) over
@@ -66,6 +66,8 @@ func _ready() -> void:
 			_open(HowToScreen.new(), TitleButton.Kind.HOWTO)
 		"vine":
 			_open(VineScreen.new(), TitleButton.Kind.HERO, [_vine_view()])
+		"vendor":
+			_open(VendorScreen.new(), TitleButton.Kind.HERO, [_vendor_view()])
 		"juramentos":
 			_open_juramentos(Juramentos.unlocked(Save.data))
 	if Dev.has("shot"):
@@ -215,6 +217,22 @@ func _vine_view() -> Dictionary:
 		ids.append(String(id))
 	view["vine"] = {"bought": ids}
 	view["materials"] = {"silver": int(Dev.num("silver", 12)), "memory": int(Dev.num("memory", 3))}
+	return view
+
+
+## The save the Vendedor's counter shows with --title --screen=vendor: the order delivered (the stall open), a purse of Prata
+## (--silver, 120 by default), Memória (--memory, 6) and Esmeralda (--emerald, 1), --made=<obra id> an Obra already built and
+## --discern=N the Discernimento's grades open; the person's save is never touched.
+func _vendor_view() -> Dictionary:
+	var view: Dictionary = Save.data.duplicate(true)
+	var def := OficiosDef.live()
+	Oficios.block(view).orders[String(def.order)] = "done"
+	view["materials"] = {"silver": int(Dev.num("silver", 120)), "memory": int(Dev.num("memory", 6)),
+		"emerald": int(Dev.num("emerald", 1))}
+	if Dev.has("made"):
+		(Oficios.block(view).recipes as Array).append(Dev.arg("made"))
+	if Dev.has("discern"):
+		SaveData.hero(view, SaveData.FIRST_HERO)["discern"] = int(Dev.num("discern", 0))
 	return view
 
 
