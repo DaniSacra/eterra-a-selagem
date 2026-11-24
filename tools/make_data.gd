@@ -3158,28 +3158,28 @@ func _angels() -> void:
 # ---------- the Gifts medallion (docs/art/dons_medallion_spec.md 3) ----------
 
 ## Node places per hero: [id, angle (degrees from twelve o'clock, clockwise), radius, diameter]. The ring is 254, a spur 200
-## or 308; the crown and the apexes are the big ones (64), the rest 42. A new Gift is a new row here.
+## or 308; the crown and the apexes are the big ones (72), the rest 48 (bigger since the children's test, 2026-11-23). A new Gift is a new row here.
 const MEDALLION_WARRIOR := [
-	[&"crown", 0, 254, 64], [&"cleave", 331, 254, 42], [&"vortex", 29, 254, 42],
-	[&"firmeza", 50, 254, 42], [&"respiro", 63, 254, 42], [&"ainda_de_pe", 76, 254, 42], [&"fio_do_passo", 89, 254, 42],
-	[&"corte_crescente", 102, 254, 42], [&"fio_longo", 116, 254, 42], [&"onda_atravessante", 131, 254, 64],
-	[&"onda_carregada", 147, 254, 42], [&"lamina_faminta", 160, 254, 42], [&"reserva", 172, 254, 42],
-	[&"coracao_da_emeth", 186, 254, 64], [&"sangue_quente", 202, 254, 42], [&"impeto", 215, 254, 42],
-	[&"avanco_feroz", 228, 254, 42], [&"voz_larga", 228, 308, 42], [&"escudo_de_guerra", 228, 200, 42],
-	[&"furia_plena", 243, 254, 64], [&"investida", 258, 254, 42], [&"folego_de_guerra", 258, 308, 42],
-	[&"quarto_corte", 272, 254, 42], [&"passo_encadeado", 286, 254, 42], [&"ferro_na_investida", 286, 308, 42],
-	[&"golpe_sem_fim", 301, 254, 64],
+	[&"crown", 0, 254, 72], [&"cleave", 331, 254, 48], [&"vortex", 29, 254, 48],
+	[&"firmeza", 50, 254, 48], [&"respiro", 63, 254, 48], [&"ainda_de_pe", 76, 254, 48], [&"fio_do_passo", 89, 254, 48],
+	[&"corte_crescente", 102, 254, 48], [&"fio_longo", 116, 254, 48], [&"onda_atravessante", 131, 254, 72],
+	[&"onda_carregada", 147, 254, 48], [&"lamina_faminta", 160, 254, 48], [&"reserva", 172, 254, 48],
+	[&"coracao_da_emeth", 186, 254, 72], [&"sangue_quente", 202, 254, 48], [&"impeto", 215, 254, 48],
+	[&"avanco_feroz", 228, 254, 48], [&"voz_larga", 228, 308, 48], [&"escudo_de_guerra", 228, 200, 48],
+	[&"furia_plena", 243, 254, 72], [&"investida", 258, 254, 48], [&"folego_de_guerra", 258, 308, 48],
+	[&"quarto_corte", 272, 254, 48], [&"passo_encadeado", 286, 254, 48], [&"ferro_na_investida", 286, 308, 48],
+	[&"golpe_sem_fim", 301, 254, 72],
 ]
 const MEDALLION_MAGA := [
-	[&"crown", 0, 254, 64], [&"storm", 331, 254, 42], [&"dome_abs", 29, 254, 42],
-	[&"firmeza", 46, 254, 42], [&"reserva", 59, 254, 42], [&"respiro", 72, 254, 42], [&"passo_longo", 85, 254, 42],
-	[&"ainda_de_pe", 65, 308, 42], [&"circulo_expandido", 100, 254, 42], [&"prisao_sigilada", 113, 254, 42],
-	[&"suspensao_larga", 113, 308, 42], [&"contencao_perfeita", 128, 254, 64], [&"selo_no_chao", 144, 254, 42],
-	[&"leitura_rapida", 144, 308, 42], [&"eco_arcano", 158, 254, 42], [&"cadeia_curta", 170, 254, 42],
-	[&"selo_duplo", 170, 200, 42], [&"ruptura", 184, 254, 64], [&"chama_que_marca", 200, 254, 42],
-	[&"brasa_gemea", 200, 308, 42], [&"brasa_viva", 214, 254, 42], [&"pavio_longo", 227, 254, 42],
-	[&"combustao", 227, 308, 42], [&"inferno_runico", 242, 254, 64], [&"brasa_que_prende", 280, 254, 42],
-	[&"passo_de_brasa", 295, 254, 42],
+	[&"crown", 0, 254, 72], [&"storm", 331, 254, 48], [&"dome_abs", 29, 254, 48],
+	[&"firmeza", 46, 254, 48], [&"reserva", 59, 254, 48], [&"respiro", 72, 254, 48], [&"passo_longo", 85, 254, 48],
+	[&"ainda_de_pe", 65, 308, 48], [&"circulo_expandido", 100, 254, 48], [&"prisao_sigilada", 113, 254, 48],
+	[&"suspensao_larga", 113, 308, 48], [&"contencao_perfeita", 128, 254, 72], [&"selo_no_chao", 144, 254, 48],
+	[&"leitura_rapida", 144, 308, 48], [&"eco_arcano", 158, 254, 48], [&"cadeia_curta", 170, 254, 48],
+	[&"selo_duplo", 170, 200, 48], [&"ruptura", 184, 254, 72], [&"chama_que_marca", 200, 254, 48],
+	[&"brasa_gemea", 200, 308, 48], [&"brasa_viva", 214, 254, 48], [&"pavio_longo", 227, 254, 48],
+	[&"combustao", 227, 308, 48], [&"inferno_runico", 242, 254, 72], [&"brasa_que_prende", 280, 254, 48],
+	[&"passo_de_brasa", 295, 254, 48],
 ]
 
 

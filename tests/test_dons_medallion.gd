@@ -137,12 +137,17 @@ func test_hold_gauge_fills_in_a_second_and_drains_when_let_go() -> void:
 
 # ---------- the screen ----------
 
-func test_screen_opens_on_the_crown_with_both_counters() -> void:
+func test_screen_opens_on_a_gift_that_can_go_on_and_says_what_each_counter_is() -> void:
 	var s := _screen("warrior", _data("warrior", XP_TOP, 7))
-	assert_eq(s.focus_id, MedallionDef.CROWN_ID)
+	assert_eq(s.focus_id, &"quarto_corte", "the first Dom that can be equipped now")
+	assert_eq(_screen("warrior", _data("warrior", 0)).focus_id, &"quarto_corte")
+	assert_not_null(s.find_child("howto", true, false))
+	assert_eq(s.find_child("notes", true, false).get_child_count(), 2, "one sentence for Devoção, one for Memória")
+	assert_string_contains(s.find_child("howto", true, false).text, "Segure")
 	var texts: Array[String] = s._counters.texts()
 	assert_string_contains(texts[0], "Devoção")
 	assert_string_contains(texts[1], "Memória 7")
+	s._focus(MedallionDef.CROWN_ID)
 	assert_string_contains(s.panel._name.text, "Guerreiro")
 
 
@@ -237,10 +242,16 @@ func test_the_other_hero_has_her_own_medallion() -> void:
 	s.swap_hero()
 	assert_eq(s.hero_id, "maga")
 	assert_eq(s.view.def.hero, &"maga")
-	assert_eq(s.focus_id, MedallionDef.CROWN_ID)
+	assert_eq(s.focus_id, s.first_focus())
 	var locked := _screen("warrior", _data("warrior", XP_TOP, 0, 0))
 	locked.swap_hero()
 	assert_eq(locked.hero_id, "warrior", "the Maga stays behind Morvath's seal")
+
+
+func test_the_short_line_cuts_on_a_word() -> void:
+	assert_eq(DonsScreen.short_line("Cura 2 de vida. Mais texto."), "Cura 2 de vida")
+	var cut := DonsScreen.short_line("Cada abate dá uma carga, até três, que some em 3 s sem abate: golpes mais rápidos")
+	assert_true(cut.ends_with("...") and cut.length() <= MedallionView.CAPTION_MAX + 3, cut)
 
 
 func test_text_of_the_screen_has_no_dash() -> void:

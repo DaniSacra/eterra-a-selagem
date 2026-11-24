@@ -7,143 +7,165 @@
 script = ExtResource("1_iai08")
 id = &"crown"
 kind = 0
-diameter = 64.0
+diameter = 72.0
 
 [sub_resource type="Resource" id="Resource_t4mjh"]
 script = ExtResource("1_iai08")
 id = &"storm"
 kind = 2
 angle = 331.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_ar47v"]
 script = ExtResource("1_iai08")
 id = &"dome_abs"
 kind = 2
 angle = 29.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_jmfgj"]
 script = ExtResource("1_iai08")
 id = &"firmeza"
 angle = 46.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_wfgim"]
 script = ExtResource("1_iai08")
 id = &"reserva"
 angle = 59.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_i05ou"]
 script = ExtResource("1_iai08")
 id = &"respiro"
 angle = 72.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_ftrow"]
 script = ExtResource("1_iai08")
 id = &"passo_longo"
 angle = 85.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_7utln"]
 script = ExtResource("1_iai08")
 id = &"ainda_de_pe"
 angle = 65.0
 radius = 308.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_u7pa0"]
 script = ExtResource("1_iai08")
 id = &"circulo_expandido"
 angle = 100.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_0gqi1"]
 script = ExtResource("1_iai08")
 id = &"prisao_sigilada"
 angle = 113.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_y0nvg"]
 script = ExtResource("1_iai08")
 id = &"suspensao_larga"
 angle = 113.0
 radius = 308.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_a2ms4"]
 script = ExtResource("1_iai08")
 id = &"contencao_perfeita"
 angle = 128.0
-diameter = 64.0
+diameter = 72.0
 
 [sub_resource type="Resource" id="Resource_1t4hd"]
 script = ExtResource("1_iai08")
 id = &"selo_no_chao"
 angle = 144.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_r4raj"]
 script = ExtResource("1_iai08")
 id = &"leitura_rapida"
 angle = 144.0
 radius = 308.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_pwqtm"]
 script = ExtResource("1_iai08")
 id = &"eco_arcano"
 angle = 158.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_x8doi"]
 script = ExtResource("1_iai08")
 id = &"cadeia_curta"
 angle = 170.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_rvioo"]
 script = ExtResource("1_iai08")
 id = &"selo_duplo"
 angle = 170.0
 radius = 200.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_jroch"]
 script = ExtResource("1_iai08")
 id = &"ruptura"
 angle = 184.0
-diameter = 64.0
+diameter = 72.0
 
 [sub_resource type="Resource" id="Resource_mf5nl"]
 script = ExtResource("1_iai08")
 id = &"chama_que_marca"
 angle = 200.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_q3m5n"]
 script = ExtResource("1_iai08")
 id = &"brasa_gemea"
 angle = 200.0
 radius = 308.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_k4782"]
 script = ExtResource("1_iai08")
 id = &"brasa_viva"
 angle = 214.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_pns27"]
 script = ExtResource("1_iai08")
 id = &"pavio_longo"
 angle = 227.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_v61ru"]
 script = ExtResource("1_iai08")
 id = &"combustao"
 angle = 227.0
 radius = 308.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_sfrfw"]
 script = ExtResource("1_iai08")
 id = &"inferno_runico"
 angle = 242.0
-diameter = 64.0
+diameter = 72.0
 
 [sub_resource type="Resource" id="Resource_1cw16"]
 script = ExtResource("1_iai08")
 id = &"brasa_que_prende"
 angle = 280.0
+diameter = 48.0
 
 [sub_resource type="Resource" id="Resource_534l8"]
 script = ExtResource("1_iai08")
 id = &"passo_de_brasa"
 angle = 295.0
+diameter = 48.0
 
 [resource]
 script = ExtResource("2_q8gre")

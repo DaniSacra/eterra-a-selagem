@@ -42,3 +42,17 @@ func test_ring_eases_toward_target() -> void:
 	assert_lt(ring.near, 1.0)
 	ring._process(1.0)
 	assert_eq(ring.near, 1.0)
+
+
+## Daniel 2026-11-23: the box showed 4 m from the door while F only worked at it. It follows the interact's own test.
+func test_the_box_shows_only_where_the_key_enters() -> void:
+	var a := Arena.new()
+	autofree(a)
+	a.exits = [Vector2(-8.5, -34.0), Vector2(8.5, -34.0)] as Array[Vector2]
+	var at_door := Vector2(8.5, -33.0)
+	var four_m_off := Vector2(8.5, -29.0)
+	assert_eq(DoorTip.door_at(a, at_door, 2), a.exit_at(at_door), "at the door")
+	assert_eq(DoorTip.door_at(a, at_door, 2), 1)
+	assert_eq(DoorTip.door_at(a, four_m_off, 2), a.exit_at(four_m_off), "same answer as the key's test")
+	assert_eq(DoorTip.door_at(a, four_m_off, 2), -1, "close but not at it: no box")
+	assert_eq(DoorTip.door_at(a, at_door, 1), -1, "a door that is not open")

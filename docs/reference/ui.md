@@ -580,3 +580,10 @@ velas, lacres) são histórico.
 - **Pendências conhecidas**: som (nota que sobe ao segurar, sino ao equipar, tom ao abrir) e o cristal que voa para o
   contador; o traço do nó ao painel só sai dos nós da metade direita (da esquerda cruzaria a figura); a estação do
   Santuário ainda é a árvore de pedra (o medalhão de bronze é peça do `environment-artist`).
+
+### Dons em medalhão, clareza (teste com crianças, 2026-11-23)
+Nome de cada ramo escrito dentro do aro; instrução fixa e legenda de quatro estados na coluna da direita; uma frase sobre
+cada contador (Devoção: vagas que voltam ao tirar; Memória: gasta uma vez para abrir); nós maiores (48 e 72) e linhas mais
+grossas; cadeado e custo só no Dom selado (pede Memória), número da Maestria no nó escuro; linha curta com o efeito, ou o
+motivo ("Pede: X", "Faltam N de Memória"), ao lado do nó em foco; o foco começa no primeiro Dom que dá para equipar.
+Porta: `DoorTip.near_door` usa `Arena.exit_at`, o mesmo teste de `Rooms.usable` e do interagir, sem alcance próprio.

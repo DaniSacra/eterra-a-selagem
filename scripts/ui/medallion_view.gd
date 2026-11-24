@@ -26,6 +26,8 @@ const DEEP := Color("2a2620")
 const SHELL := Color("b8b4aa")
 const IVORY := Color(0.97, 0.93, 0.84)
 const LINE := Color("8e7444")
+const LABEL_R := 138.0
+const CAPTION_MAX := 46
 
 var def: MedallionDef
 var nav: MedallionNav
@@ -40,6 +42,9 @@ var reveal := 1.0:
 		reveal = v
 		queue_redraw()
 var glow: Control
+## The short line under the focused node (what it does, or what it asks), set by the screen.
+var caption := ""
+var _labels: Array = []
 var _t := 0.0
 var _pop: Dictionary = {}
 var _shake: Dictionary = {}
@@ -53,6 +58,7 @@ func setup(p_loadout: HeroLoadout) -> MedallionView:
 	def = MedallionDef.of(String(loadout.hero.id))
 	nav = MedallionNav.new(def, loadout.book.catalog)
 	_edges = nav.edges()
+	_labels = _sector_labels()
 	name = "medallion_view"
 	custom_minimum_size = Vector2(1280, 720)
 	size = custom_minimum_size
@@ -174,13 +180,15 @@ func _draw() -> void:
 		return
 	draw_set_transform(MedallionDef.CENTER, _turn(), Vector2.ONE)
 	_draw_frame()
-	draw_arc(Vector2.ZERO, MedallionDef.RING, 0.0, TAU, 160, Color(LINE, 0.45), 2.0, true)
+	draw_arc(Vector2.ZERO, MedallionDef.RING, 0.0, TAU, 160, Color(LINE, 0.6), 3.0, true)
 	for e: Array in _edges:
 		_draw_edge(self, e[0], e[1], false)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	_draw_labels()
 	for n in def.nodes:
 		_draw_node(n)
 	_draw_focus()
+	_draw_caption()
 
 
 func _draw_glow() -> void:
@@ -243,12 +251,12 @@ func _draw_edge(ci: CanvasItem, a: StringName, b: StringName, glow_pass: bool) -
 	if glow_pass and not lit:
 		return
 	var tint := tint_of(a)
-	var col := tint.lightened(0.15).lerp(UiKit.GOLD, 0.5) if lit else Color(tint, 0.5)
+	var col := tint.lightened(0.15).lerp(UiKit.GOLD, 0.5) if lit else Color(tint, 0.75)
 	if glow_pass:
 		col = Color(tint.lightened(0.3), 0.3 * _appear(a))
 	var na := def.find(a)
 	var nb := def.find(b)
-	var w := (8.0 if glow_pass else 3.0) if lit else 2.0
+	var w := (12.0 if glow_pass else 5.0) if lit else 3.5
 	if absf(na.radius - nb.radius) < 1.0:
 		var a1 := deg_to_rad(na.angle - 90.0)
 		var a2 := deg_to_rad(nb.angle - 90.0)
@@ -315,12 +323,17 @@ func _draw_node(n: MedallionNodeDef) -> void:
 		draw_arc(c, r + 3.5, 0.0, TAU, 28, Color(UiKit.GOLD, 0.9 * a), 1.5, true)
 	# what it shows
 	if st == HeroLoadout.State.LOCKED:
-		ActionSlot.padlock(self, c, r * 0.5, Color(MUTE, a))
+		# not reached yet: dark, with the Mastery level that reaches it (the padlock is the sealed Gift's, the one that asks Memória)
+		var lvl := str(t.unlock_level) if t != null else str(loadout.hero.ultimate(id).mastery_level)
+		var f := UiKit.BOLD_FONT
+		var fs := int(r * 0.95)
+		draw_string(f, c + Vector2(-f.get_string_size(lvl, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x * 0.5, (f.get_ascent(fs) - f.get_descent(fs)) * 0.5), lvl, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(MUTE, a))
 	else:
 		MedallionView.draw_icon(self, loadout.hero, id, n, c, r * 0.5, icon * mod, fill)
 	if st == HeroLoadout.State.SEALED and t != null:
+		ActionSlot.padlock(self, c + Vector2(-r * 0.62, r * 0.66), r * 0.34, Color(SHELL, a))
 		var at := c + Vector2(r * 0.72, r * 0.72)
-		DonsArt.memory_mark(self, at, 16.0)
+		DonsArt.memory_mark(self, at, 20.0)
 		var f := UiKit.BOLD_FONT
 		var s := str(t.memory_cost)
 		draw_string_outline(f, at + Vector2(-3.0 - f.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x * 0.5 + 2.0, 20.0), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, 4, Color(UiKit.INK, a))
@@ -357,3 +370,53 @@ func _draw_focus() -> void:
 	draw_arc(c, r, 0.0, TAU, 40, Color(1.0, 0.96, 0.8, 0.95), 3.0, true)
 	if hold_id == focus_id and hold_progress > 0.0:
 		draw_arc(c, r + 5.0, -PI * 0.5, -PI * 0.5 + TAU * hold_progress, 48, UiKit.GOLD, 4.0, true)
+
+
+## The name of every branch written on the inside of the ring at the middle of its sector (Combo, Fúria, Magia, Emeth,
+## Sustento; the bridges have no name of their own): [{text, pos, ink}].
+func _sector_labels() -> Array:
+	var sums := {}
+	for n in def.nodes:
+		var t := nav.talent(n.id)
+		if t == null or t.branch == TalentDef.Branch.BRIDGE:
+			continue
+		var s: Dictionary = sums.get(t.branch, {"sum": 0.0, "n": 0})
+		s.sum += n.angle
+		s.n += 1
+		sums[t.branch] = s
+	var out: Array = []
+	for b: int in sums:
+		var mid: float = sums[b].sum / sums[b].n
+		out.append({"text": T.t(HeroLoadout.BRANCH_KEY[b]), "angle": mid, "ink": GiftArt.ink(b).lightened(0.45)})
+	return out
+
+
+func _draw_labels() -> void:
+	var f := UiKit.TITLE_FONT
+	for l: Dictionary in _labels:
+		var p := spot_at(l.angle, LABEL_R)
+		var w := f.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+		var box := Rect2(p - Vector2(w * 0.5 + 8.0, 12.0), Vector2(w + 16.0, 24.0))
+		draw_style_box(UiKit.box(Color(0.03, 0.025, 0.035, 0.78 * clampf(reveal * 2.0, 0.0, 1.0)), Color(l.ink, 0.7), 1, 0, 11), box)
+		draw_string(f, p + Vector2(-w * 0.5, 5.5), l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, l.ink)
+
+
+## A place on the ring's plane by angle and radius, with the entrance's turn.
+func spot_at(angle: float, radius: float) -> Vector2:
+	return MedallionDef.CENTER + (MedallionDef.place(angle, radius) - MedallionDef.CENTER).rotated(_turn())
+
+
+## The short effect (or reason) of the focused node, on the inside of the ring beside it, over the figure and clear of
+## the other nodes.
+func _draw_caption() -> void:
+	if caption == "" or focus_id == &"" or not nav.pos.has(focus_id) or reveal < 1.0:
+		return
+	var n := def.find(focus_id)
+	var c := spot(focus_id)
+	var inward := (MedallionDef.CENTER - c).normalized()
+	var f := UiKit.TEXT_FONT
+	var w := minf(f.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x, 260.0)
+	var p := c + inward * (n.diameter * 0.5 + 62.0)
+	var box := Rect2(p - Vector2(w * 0.5 + 8.0, 13.0), Vector2(w + 16.0, 26.0))
+	draw_style_box(UiKit.box(Color(0.03, 0.025, 0.035, 0.92), UiKit.OLD_GOLD, 1, 0, 4), box)
+	draw_string(f, p + Vector2(-w * 0.5, 5.5), caption, HORIZONTAL_ALIGNMENT_LEFT, w, 15, UiKit.PALE)

@@ -3,14 +3,14 @@ extends Control
 ## What an exit door tells (Daniel 2026-11-23, principle from another game, nothing copied). While the descent's doors
 ## stand open, each one's medallion carries the small seal of its main modifier at the lower right (DoorSeal: a skull
 ## for a bigger enemy, the crowned skull for a guardian, the Provação's diamond, the angel's mark, a find), and its
-## ring of energy (DoorRing) burns stronger as the hero comes near. The nearest door within NEAR metres also shows a
+## ring of energy (DoorRing) burns stronger as the hero comes near. The door the hero stands at (the one F enters, Arena.exit_at) also shows a
 ## dark box beside its medallion: "Recompensa: <name>" with its mark, one line per modifier with its seal and what it
 ## means, and the key that enters. The box fades in and out in FADE seconds, stays off the hero and off the other
 ## medallions. Display only: it reads the rooms' public values and never touches the run.
 ##   describe(room, silver, angel_family) -> {title, glyph, mods: [{id, text, family?}]}   (pure, tested)
 
+## Metres from a door's use spot where the ring is full and where it starts to answer (the box itself follows Arena.exit_at).
 const NEAR := 4.2
-## Metres from a door's use spot where the ring starts to answer (it is full at NEAR).
 const RING_FAR := 7.5
 const FADE := 0.15
 const WIDTH := 270.0
@@ -78,17 +78,16 @@ func _doors() -> Array[RunMap.Room]:
 	return game.rooms.next_rooms
 
 
-## The nearest door to the hero within NEAR metres of its use spot (-1: none).
+## The door the key works on now (-1: none): the same test as Rooms.usable and the interact press, the exit zone the hero
+## stands in (Arena.exit_at), so the box shows exactly while F enters.
 func near_door() -> int:
-	var rooms := _doors()
-	var best := -1
-	var best_d := NEAR
-	for i in rooms.size():
-		var d := game.player.pos.distance_to(game.arena.door_label(i))
-		if d < best_d:
-			best_d = d
-			best = i
-	return best
+	return door_at(game.arena, game.player.pos, _doors().size())
+
+
+## The test itself (pure): the exit zone of `pos` when it is one of the `count` open doors, else -1.
+static func door_at(arena: Arena, pos: Vector2, count: int) -> int:
+	var door := arena.exit_at(pos)
+	return door if door >= 0 and door < count else -1
 
 
 ## Whether the box shows now (tests).

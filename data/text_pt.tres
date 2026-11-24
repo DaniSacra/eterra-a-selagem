@@ -1383,5 +1383,12 @@ entries = {
 "dons_phrase_warrior": "Toma a iniciativa: corre até o inimigo, planta os pés e abre o grupo com combos.",
 "dons_phrase_maga": "Estudiosa dos selos que escreve o campo com fogo.",
 "dons_hint": "{prev} e {next}: setor. {swap}: trocar de herói. {back}: fechar.",
-"dons_hint_one": "{prev} e {next}: setor. {back}: fechar."
+"dons_hint_one": "{prev} e {next}: setor. {back}: fechar.",
+"dons_howto": "Escolha um Dom. Aperte {key} para equipar. Segure {key} para abrir um Dom selado.",
+"dons_devotion_note": "Devoção: vagas para equipar. Voltam quando você tira o Dom.",
+"dons_memory_note": "Memória: gasta uma vez para abrir um Dom selado.",
+"dons_legend_equipped": "Equipado",
+"dons_legend_open": "Aberto: pode equipar",
+"dons_legend_sealed": "Selado: abre com Memória",
+"dons_legend_dark": "Escuro: falta Maestria ou outro Dom"
 }

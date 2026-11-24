@@ -19,6 +19,7 @@ const ENTER_TIME := 0.6
 const COUNT_TIME := 0.3
 const BANNER := Rect2(460, 48, 320, 48)
 const PANEL_AT := Vector2(962, 175)
+const PANEL_SIZE_X := 302.0
 const TRACE_Y := Vector2(190, 470)
 const DIRS := {&"ui_left": Vector2.LEFT, &"ui_right": Vector2.RIGHT, &"ui_up": Vector2.UP, &"ui_down": Vector2.DOWN}
 
@@ -58,8 +59,8 @@ func _build() -> void:
 		_content.queue_free()
 	hold = HoldGauge.new(HOLD_TIME, HOLD_DRAIN)
 	_hold_node = &""
-	focus_id = MedallionDef.CROWN_ID
 	loadout = HeroLoadout.new(HeroDef.maga() if hero_id == "maga" else HeroDef.warrior(), _data)
+	focus_id = first_focus()
 	_content = Control.new()
 	_content.name = "content"
 	_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -100,6 +101,9 @@ func _build() -> void:
 	panel.pressed.connect(func() -> void: press(focus_id))
 	panel.released.connect(release)
 	_stage.add_child(panel)
+	_stage.add_child(_notes())
+	_stage.add_child(_howto())
+	_stage.add_child(Legend.new())
 	_stage.add_child(_hint())
 	_mem_shown = loadout.memory()
 	# --dons-focus=id puts the focus on a node at once (captures)
@@ -108,6 +112,15 @@ func _build() -> void:
 		view.focus_id = focus_id
 	_refresh()
 	_enter()
+
+
+## Where the focus starts: the first Dom that can be equipped now, else the crown (the screen never opens on a closed door).
+func first_focus() -> StringName:
+	var def := MedallionDef.of(hero_id)
+	for n in def.nodes:
+		if n.kind == MedallionNodeDef.Kind.GIFT and loadout.state(loadout.book.find(n.id)) == HeroLoadout.State.OPEN:
+			return n.id
+	return MedallionDef.CROWN_ID
 
 
 func _place_stage() -> void:
@@ -163,6 +176,34 @@ func _hint() -> Control:
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.text = T.t(&"dons_hint" if SaveData.open_heroes(_data).size() > 1 else &"dons_hint_one", {"prev": UiKit.action_label(&"tab_prev"),
 		"next": UiKit.action_label(&"tab_next"), "swap": UiKit.action_label(&"menu_reroll"), "back": UiKit.action_label(&"ui_cancel")})
+	return l
+
+
+## One plain sentence of what each counter is (the children's test: the two currencies were mixed up).
+func _notes() -> Control:
+	var box := VBoxContainer.new()
+	box.name = "notes"
+	box.position = Vector2(PANEL_AT.x, 78)
+	box.custom_minimum_size.x = PANEL_SIZE_X
+	box.add_theme_constant_override(&"separation", 4)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for key: StringName in [&"dons_devotion_note", &"dons_memory_note"]:
+		var l := UiKit.label(T.t(key), UiKit.PALE, 14)
+		l.custom_minimum_size.x = PANEL_SIZE_X
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.add_theme_constant_override(&"outline_size", 3)
+		box.add_child(l)
+	return box
+
+
+## The one fixed instruction, under the panel.
+func _howto() -> Control:
+	var l := UiKit.label(T.t(&"dons_howto", {"key": UiKit.action_label(&"ui_accept")}), UiKit.STRONG, 16)
+	l.name = "howto"
+	l.position = Vector2(PANEL_AT.x, 502)
+	l.custom_minimum_size.x = PANEL_SIZE_X
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
 
 
@@ -327,10 +368,24 @@ func _tell(id: StringName) -> void:
 	match n.kind:
 		MedallionNodeDef.Kind.CROWN:
 			panel.tell_hero(_hero_info())
+			view.caption = ""
 		MedallionNodeDef.Kind.ULT:
-			panel.tell_node(_ult_info(id, n))
+			var u := _ult_info(id, n)
+			panel.tell_node(u)
+			view.caption = short_line(u.reason if u.reason != "" else u.desc)
 		_:
-			panel.tell_node(_gift_info(id, n))
+			var g := _gift_info(id, n)
+			panel.tell_node(g)
+			view.caption = short_line(g.reason if g.reason != "" else g.desc)
+
+
+## The first sentence of a text, cut at MedallionView.CAPTION_MAX characters on a word.
+static func short_line(text: String) -> String:
+	var first := text.split(". ")[0].trim_suffix(".")
+	if first.length() <= MedallionView.CAPTION_MAX:
+		return first
+	var cut := first.substr(0, MedallionView.CAPTION_MAX)
+	return cut.substr(0, maxi(cut.rfind(" "), 12)) + "..."
 
 
 func _paint(id: StringName, n: MedallionNodeDef) -> Callable:
@@ -527,3 +582,33 @@ class Trace:
 		var to := Vector2(DonsScreen.PANEL_AT.x, clampf(c.y, DonsScreen.TRACE_Y.x, DonsScreen.TRACE_Y.y))
 		var from := c + (to - c).normalized() * (n.diameter * 0.5 + 8.0)
 		draw_line(from, to, UiKit.GOLD, 2.0, true)
+
+
+## The four looks of a node in words and drawing, under the instruction.
+class Legend:
+	extends Control
+
+	const ROW := 24.0
+
+	func _init() -> void:
+		name = "legend"
+		position = Vector2(DonsScreen.PANEL_AT.x, 566)
+		size = Vector2(DonsScreen.PANEL_SIZE_X, ROW * 4)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var rows: Array = [[&"dons_legend_equipped", 0], [&"dons_legend_open", 1], [&"dons_legend_sealed", 2], [&"dons_legend_dark", 3]]
+		var f := UiKit.TEXT_FONT
+		for i in rows.size():
+			var c := Vector2(12.0, ROW * i + 12.0)
+			var kind: int = rows[i][1]
+			var rim: Color = [UiKit.GOLD, MedallionView.LINE, MedallionView.LINE, MedallionView.IRON][kind]
+			var fill: Color = [Color("9a5a2a"), Color("6a3d1c"), Color("4a4540"), MedallionView.DEEP][kind]
+			draw_circle(c, 10.0, Color(UiKit.INK, 0.9))
+			draw_circle(c, 9.0, rim)
+			draw_circle(c, 6.5, fill)
+			if kind == 2:
+				ActionSlot.padlock(self, c, 4.0, MedallionView.SHELL)
+			elif kind == 0:
+				draw_arc(c, 12.0, 0.0, TAU, 20, Color(UiKit.GOLD, 0.35), 2.0, true)
+			draw_string(f, Vector2(30.0, ROW * i + 17.0), T.t(rows[i][0]), HORIZONTAL_ALIGNMENT_LEFT, size.x - 34.0, 14, UiKit.PALE)
