@@ -482,13 +482,19 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - Só interface: mesma semente dá o mesmo `RESULT`. Capturar: Fonte com o Ancião e uma sala de luta, 720 e 1080.
 
 ## A Videira e a escolha de herói, telas (V2 e PT-9, 2026-11-23; testes em `tests/test_videira_v2.gd`, `tests/test_hero_station.gd`)
-- **`VineScreen`** (`scripts/ui/vine_screen.gd`, `host.open(VineScreen.new(), [Save.data])`): uma folha larga do Livro (`BookSpread` single,
-  `ActionBar` Escolher e Voltar). Título "A Videira" com a linha "Raízes que fortalecem todas as jornadas" e, à direita, o Saldo
-  (`MaterialCount.purse`: Prata e Memória). Três colunas (Vida, Provisão, Perseverança), cada uma com os 3 nós como cartões de papel
-  (`Book.button` com nome em Cinzel, efeito, custo na moeda do nó e estado: Comprada em verde, Falta material em vermelho, "Precisa de: X"
-  apagado). Comprar **pergunta antes**: clicar ou confirmar num cartão comprável abre no pé "Comprar X por N Prata?" com Comprar e Cancelar
-  (nada gasto até Comprar; Esc e B cancelam a pergunta primeiro e fecham a tela depois). Foco: setas andam nas colunas, para baixo da última
-  linha vai a Voltar; o mouse toma o foco ao passar. Sinal `bought(id)`; grava o save sozinha. Sem citação bíblica.
+- **`VineScreen`** (3d, `scripts/ui/vine_screen.gd`, `host.open(VineScreen.new(), [Save.data])`; spec `docs/art/vine_spec.md`): a planta que
+  cresce, palco 1280 x 720 em escala uniforme e centrado (`_place_stage`). Peças: `VinePlant` (desenho: arco e latada, vaso, tronco, três
+  ramos Catmull-Rom de `VineLayout.path`, brotos por estado, anel de foco, regador e gotas), `VineTag` (etiqueta de barro com nome e preço;
+  comprada vira o verso com ✓; só mouse), um broto-botão por raiz (o que leva o foco) e o painel de leitura à direita (nome, "Ramo · Nª raiz",
+  palavra do estado, o que muda com números em negrito, "Vida máxima: +N com esta", preço grande, "você tem N" e o botão **Regar · N Prata**;
+  desligado mostra o motivo no lugar do verbo). Sem pergunta: Regar é a confirmação. Lógica em `Vine` (`state`, `buy`, novos `life_total`
+  e `missing`); posições e vizinhança do foco em `VineLayout` (`BUD`, `TAG`, `neighbor`, `first_focus`; um ramo de 4 nós pede só uma linha nova).
+  Entrada: setas (cima cresce, lados trocam de ramo, à direita do último ramo vai ao Regar), Enter/clique no broto que pode crescer leva o foco
+  ao Regar, Enter ali rega, Esc/B volta ao broto e depois fecha, LB/RB trocam de ramo, rodinha sobe e desce. Abrir: a planta cresce do vaso
+  em 0,6 s; regar: regador, gotas e o broto abre em 0,6 s (a compra é uma só). Sinal `bought(id)`; grava o save sozinha.
+  Arte final em `assets/ui/vine/` (`VineArt`: bg, vase, bud_dry, bud_closed, bud_ready, cluster, tag, tag_back, panel) entra sozinha por caminho.
+  Captura: `--title --screen=vine [--vine=N --silver=N --memory=N]` (N raízes já crescidas e bolsa para ver os quatro estados).
+  Pendente: sons (água, folhas, madeira), saldo descendo contando, Compatibility sem brilho, arte do ChatGPT (bark, leaf, can, drops).
 - **`HeroPickScreen`** (`scripts/ui/hero_pick_screen.gd`): folha pequena centralizada com um cartão por herói (`SaveData.HEROES`): nome, uma
   frase, estado (Escolhido / Escolher / Travada). A Maga travada leva o cadeado (`SealedMark`) e a frase "Ela é liberada quando você selar
   Morvath pela primeira vez."; clicar nela não faz nada. Escolher grava `data.hero` na hora (vale para a próxima descida) e sinal `picked(id)`.

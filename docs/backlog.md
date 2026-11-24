@@ -27,7 +27,7 @@ captura GPU.
   mais fortes, ícone do cristal de Memória, a Maga em captura, a estação do Santuário como medalhão de bronze num pedestal.
 - **3b Forja** (arma deitada, ferro e brasa, três marteladas).
 - **3c Loja da descida e Vendedor** (pano e balança, pôr no prato).
-- **3d Videira** (planta que cresce, regar; a estação já cresce, falta a tela no mesmo espírito).
+- **3d Videira**: FEITO o principal (`VineScreen` como planta, etiquetas de barro, painel de leitura e Regar; `--title --screen=vine`). Falta: arte do ChatGPT (`assets/ui/vine/`), sons de água e folhas, captura GPU.
 - **3e Livro de Ahk** (pergaminho, virar a página; só Abertura, O Guerreiro e Ofícios agora).
 - **3f Alquimista** (estante, vidro e cobre, verter): só depois do Daniel decidir para que serve (Q-OF7).
 
