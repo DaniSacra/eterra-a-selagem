@@ -22,7 +22,7 @@ está aqui foi feito (marcado FEITO com o commit) ou espera o Daniel.
    `runs.jsonl` (`Game._exit_tree` chama `log_run("quit")`, `scripts/game/game.gd:498`; achado em `docs/qa/playtest_2026-11-23.md`), o que
    suja o `tools/runs_report.py` justo na leitura do teste com usuários. Aceite: sem sala vencida e com menos de 10 s, não grava; teste em
    `tests/test_run_log.gd`.
-4. **Suíte libera um RefCounted à mão** (dívida de teste; `gameplay-engineer`, P). `tests/test_blow_family.gd:15` chama `_combat.free()`
+4. **FEITO (2026-11-23)** **Suíte libera um RefCounted à mão** (dívida de teste; `gameplay-engineer`, P). `tests/test_blow_family.gd:15` chama `_combat.free()`
    e `Combat` é `RefCounted` (3 `SCRIPT ERROR` por suíte, `docs/qa/c1_c3_qa.md`). Aceite: `-gselect=test_blow_family` sem `SCRIPT ERROR`.
 5. **Quatro dicas na primeira descida** (GP-9 e 10B-2, aprovado em 2026-11-22; `ui-ux-designer`, P). Não existe nada além do guia do
    Santuário (PT-5) e da linha do Como Jogar. Uma vez por save, curtas, sem pausar: bater e esquivar; segurar o especial; a barra amarela
