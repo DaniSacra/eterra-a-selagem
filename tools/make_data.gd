@@ -632,8 +632,9 @@ func _skill(kind: SkillDef.Kind, props: Dictionary) -> SkillDef:
 
 ## BO-2 (C4): the Blessings of Chama and Geada that left the draw when the two angels were cut to six, one a button: kept
 ## (the file, the Compêndio, an old save) and never offered. They come back one by one, by a button of their own.
+## Vigia Firme (stun_pct) joined the reserve: with StunRule.NONE Combat zeroes stun_scale, so it did nothing until C6 redoes Shomael.
 const RESERVE: Array[StringName] = [&"brasas", &"lamina_ardente", &"omega_brasa", &"chuva_brasas", &"estilhaco", &"peso_inverno",
-	&"geada_final", &"omega_geada"]
+	&"geada_final", &"omega_geada", &"vigia_firme"]
 
 
 func _boon(n: int, id: StringName, family: Boon.Family, icon: int, mods: Array[BoonMod], skill: SkillDef = null, slot: Boon.Slot = Boon.Slot.NONE) -> void:

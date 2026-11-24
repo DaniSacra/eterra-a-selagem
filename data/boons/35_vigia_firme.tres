@@ -15,4 +15,5 @@ script = ExtResource("2_xkyhn")
 id = &"vigia_firme"
 family = 3
 icon = 9
+reserve = true
 mods = Array[ExtResource("1_4gsir")]([SubResource("Resource_t8kh3")])

@@ -14,7 +14,7 @@ está aqui foi feito (marcado FEITO com o commit) ou espera o Daniel.
    tirar do pacote o `hero_maga_img/hero_maga_img.glb` e o `.png` sem esqueleto (cerca de 5 MB, não usados). Arquivos: `export_presets.cfg`,
    `tests/test_export_settings.gd`. Aceite: um teste que falha se algum caminho `res://` carregado por `scripts/` cair num `exclude_filter`;
    exe Linux exportado com `--smoke=60 --hero=maga --seed=5 --nosave` sem `SCRIPT ERROR` e com o mesmo `RESULT` do editor.
-2. **Vigia Firme não faz nada** (resto do BH-4; `gameplay-engineer`, P). Com o padrão `StunRule.NONE`, `Combat` zera `horde.stun_scale`
+2. **FEITO (2026-11-23)** **Vigia Firme não faz nada** (resto do BH-4; `gameplay-engineer`, P). Com o padrão `StunRule.NONE`, `Combat` zera `horde.stun_scale`
    (`scripts/game/combat.gd:695`), então `stun_pct` não tem efeito, e a carta (`make_data.gd:728`, "Seus golpes atordoam por mais tempo")
    segue no sorteio de Shomael. Mandar para a `RESERVE` (dado) até o C6 refazer Shomael. Arquivos: `tools/make_data.gd`, `data/boons/`.
    Aceite: `BoonState.offerable` sem ela, teste GUT; `RESULT` muda só pelo sorteio (anotar a semente 5 antes e depois).
