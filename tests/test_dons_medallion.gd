@@ -47,11 +47,8 @@ func test_every_gift_and_ultimate_has_one_place() -> void:
 			ids[n.id] = n
 		for t in hero.talents().catalog:
 			assert_true(ids.has(t.id), "%s: %s has no place" % [h, t.id])
-		# the Warrior's Supremo is fixed (redesign A.3): no ULT nodes; the Maga's still has hers until GE-4
-		var ults := hero.ultimates.size() if h == "maga" else 0
-		if h == "maga":
-			for u in hero.ultimates:
-				assert_true(ids.has(u.id) and ids[u.id].kind == MedallionNodeDef.Kind.ULT, "%s: ultimate %s" % [h, u.id])
+		# the Supremo is fixed to the weapon (redesign A.3): no ULT node for either hero
+		var ults := 0
 		assert_true(ids.has(MedallionDef.CROWN_ID))
 		assert_eq(def.nodes.size(), hero.talents().catalog.size() + ults + 1, h)
 

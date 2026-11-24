@@ -781,3 +781,11 @@ Daniel viu o robô lutar: o Cavaleiro e Morvath faziam um golpe e ficavam muito 
 - **Morvath um golpe de cada vez**: `BossAttack.layers` ficou vazio em todos os ataques (erupções e mortos por cima da foice, lâminas, maldição e tempestade saíram); o mecanismo continua no código e os testes de segurança dele (`BossLayersFixture`) usam uma cópia com as camadas.
 - **Cavaleiro**: dano da investida e do golpe de perto 14 para 8, arremesso 10 para 8, anel 7 para 6, golpe com a guarda 10 para 8, para o novato (30 de vida) continuar vencendo cerca de metade das lutas com a pausa curta.
 - **Ancião chama arqueiros** (`EnemyDef.raise_kind` `archer`, `raise_count` 2, `raise_max` 2, `raise_cd_min`/`max` 10 a 14 s, `raise_first` 4 s; `Horde.edge_spots`): no lugar dos esqueletos de perto, de 10 a 14 s ele para, ergue o cajado (a pose `summon`) e dois arqueiros nascem na borda do chão, o mais longe do herói e um do outro, no máximo 2 de pé. As colunas da sala barram as flechas deles como as do Ancião (`shots_blocked`). Os leques e a salva de orbes ficam.
+
+## A Maga elemental (GE-4, 2026-11-24)
+`scripts/game/arcane.gd` aplica o que o `ElementBook` (puro) responde: `apply_element(e, el)` põe Queimadura/Frio/Eletrizado, trata a reação
+(Choque Térmico, Sobrecarga, Cristalização; nunca encadeia) e o congelamento (3º acerto de Frio, `thaw_t`). Kit: Centelha (`shot_landed`,
+3 acertos em 4 s acendem), Combustão (CHARGE_LIGHT, explode no 1º inimigo), Estilhaço (heavy, atravessa, 4 s), Geada (CHARGE, `Patch`),
+Arco (`Effect.ARC`), domo e Passo preservados. Convergência: `Ultimates._step_converge` + `ConvergePlan`. Dano elemental entra por
+`Horde.damage` com fonte `elemental` (sem Magia, sem Apogeu). `Horde.crack` desgasta a Postura do chefe ou a Quebra de comum (fonte `crystal`).
+`StatePips` desenha os estados. Números em `ArcaneKit`, gerados por `_maga` em `tools/make_data.gd`. Os 12 Dons são provisórios (docs/backlog.md).

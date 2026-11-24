@@ -342,7 +342,9 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			ground.add_zone(Ground.Kind.MARK, origin + dir * reach * 0.55, node.effect_radius, node.effect_time, node.effect_power, MARK_TAGS)
 		ComboNode.Effect.WAVE:
 			throw_wave(node, origin, dir, color, tags)
-		ComboNode.Effect.BLAST, ComboNode.Effect.CONTAIN, ComboNode.Effect.DOME:
+			if arcane != null:
+				arcane.thrown(node)
+		ComboNode.Effect.FROST, ComboNode.Effect.ARC, ComboNode.Effect.DOME:
 			if arcane != null:
 				arcane.cast(node, origin, dir)
 		ComboNode.Effect.SHOUT:

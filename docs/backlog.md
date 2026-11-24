@@ -12,6 +12,17 @@ Ordem: **A** infraestrutura comum (Supremo por arma, 3 ramos de 4 Dons, sustento
 **B** Guerreiro (01) com exe; **C** Maga elemental (02) com exe e proposta dos 12 Dons dela para aprovação (não fechar sem o Daniel).
 Começar pelo `hero-designer` conferindo o pacote contra o código (HeroDef, ComboTree, ArcaneKit, KitFeed, GiftState, UltDef/UltCharge, saves, Videira).
 
+**GE-4 feito (2026-11-24, Maga elemental): PROVISÓRIO, aguarda o Daniel.** Os 12 Dons da Maga (C.4: Faísca Persistente, Orvalho Gélido,
+Reação Amplificada, Fissão Térmica; Geada Demorada, Chão Ardente, Suspensão Ampla, Campo Elementar; Eco Elétrico, Fluxo de Magia,
+Estilhaço Gêmeo, Tempestade Contida) estão no jogo como dado, mas nomes, efeitos, níveis e custos NÃO foram aprovados (o texto do jogador
+não leva "(provisório)"; a marca está aqui). `suspensao_larga` virou `suspensao_ampla` (o id legado não pode ser reusado). Todos os
+números do kit (`ArcaneKit`: Centelha 8, Combustão 35 raio 2, Estilhaço 6, Geada 3/s, Arco 12 x 3 alvos, Queimadura 4/s por 3 s,
+Choque Térmico 20, Sobrecarga 15, Cristalização 0,8 s, Convergência 90 em 4,5 s) são de protótipo; o `balance-designer` valida.
+Decisões de implementação: a lentidão do Frio continua a do jogo (55% por `slow_t`); o stat `slow_pct` (Orvalho Gélido) alonga
+a duração em vez de mudar a velocidade; a Quebra da Cristalização usa o peso de fonte `crystal` (0,25) das `poise_weights`;
+Estilhaço Gêmeo guarda cargas por `Arcane` (devolve a recarga na 1ª conjuração); o primeiro "Selo" de Maestria (`first_seal`) agora conta a
+primeira reação elemental.
+
 ## Rodada de backlog 2026-11-24 noite
 Game-director, commit lido `58c843e` com a árvore em mudança (GE-3 do Guerreiro no disco, sem commit). Fontes: `docs/backlog_proposals/` (CF combate,
 RD salas, AD arte, HD heróis, BL equilíbrio, UX interface, EA cenário, TA arte técnica; cerca de 80 itens, os arquivos ficam como fonte do detalhe e do aceite).

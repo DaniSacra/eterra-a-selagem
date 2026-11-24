@@ -406,7 +406,7 @@ func _select(id: StringName) -> void:
 		_detail_mark = _motif(t, open)
 		figure.get_parent().add_child(_detail_mark)
 		_detail_name.text = T.t(t.name_key) if open else UNKNOWN
-		_detail_line.text = T.t(t.desc_key) if open else T.t(&"codex_locked", {"n": t.unlock_level})
+		_detail_line.text = (T.t(t.desc_key) + needs_line(t, hero.talents().catalog)) if open else T.t(&"codex_locked", {"n": t.unlock_level})
 		_detail_count.text = ""
 
 
@@ -463,12 +463,22 @@ func _gifts() -> void:
 		name.name = &"Name"
 		name.custom_minimum_size.x = NAME_WIDTH
 		row.add_child(name)
-		var desc := UiKit.label(T.t(t.desc_key) if open else T.t(&"codex_locked", {"n": t.unlock_level}), Book.INK if open else Book.FADED, ROW_SIZE - 1)
+		var desc := UiKit.label(T.t(t.desc_key) + needs_line(t, hero.talents().catalog) if open else T.t(&"codex_locked", {"n": t.unlock_level}), Book.INK if open else Book.FADED, ROW_SIZE - 1)
 		desc.name = &"Desc"
 		desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		row.add_child(desc)
 		_list.add_child(row)
+
+
+## UX-01: "\nPede X equipado." for a Gift that needs another (the redesign's `needs`), "" for any other.
+static func needs_line(t: TalentDef, catalog: Array[TalentDef]) -> String:
+	if t.needs == &"":
+		return ""
+	for x in catalog:
+		if x.id == t.needs:
+			return "\n" + T.t(&"hero_why_needs", {"what": T.t(x.name_key)})
+	return ""
 
 
 ## The game's gifts (Elos or not), by family and then by name, as they are in data/boons.

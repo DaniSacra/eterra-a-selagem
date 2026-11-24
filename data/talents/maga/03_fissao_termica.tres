@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_wdc7p"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_n83jq"]
+
+[sub_resource type="Resource" id="Resource_6q3oo"]
+script = ExtResource("1_wdc7p")
+stat = &"react_splash"
+base = 0.5
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_n83jq")
+id = &"fissao_termica"
+name_key = &"talent_fissao_termica"
+desc_key = &"talent_fissao_termica_desc"
+branch = 3
+tier = 2
+cost = 4
+unlock_level = 17
+memory_cost = 4
+needs = &"reacao_amplificada"
+mods = Array[ExtResource("1_wdc7p")]([SubResource("Resource_6q3oo")])

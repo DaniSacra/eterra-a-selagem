@@ -413,6 +413,9 @@ func _gift_info(id: StringName, n: MedallionNodeDef) -> Dictionary:
 		"key": UiKit.action_label(&"ui_accept"), "slot": int(t.slot) if t.slot != Boon.Slot.NONE else -1,
 		"sub": _place(t), "cost_kind": "devotion", "cost_n": t.cost,
 		"verb": "", "enabled": false, "reason": "", "hold": false}
+	var need := loadout.needs(t)
+	if t.needs != &"" and not need.is_empty():
+		info["needs"] = T.t(need.key, need.args)
 	match st:
 		HeroLoadout.State.LOCKED:
 			info.reason = T.t(&"dons_locked", {"n": t.unlock_level})

@@ -27,6 +27,8 @@ var react_pct := 0.0
 var now := 0.0
 ## key -> {burn: s, cold: s, hits: int, volt: s, last: float}
 var _s: Dictionary = {}
+## key -> {n: hits, t: when the window opened} (count_hit)
+var _h: Dictionary = {}
 
 
 func _row(key: Object) -> Dictionary:
@@ -140,8 +142,31 @@ func tick(dt: float) -> Dictionary:
 ## Death of one enemy.
 func clear(key: Object) -> void:
 	_s.erase(key)
+	_h.erase(key)
 
 
 ## Room change.
 func clear_all() -> void:
 	_s.clear()
+	_h.clear()
+
+
+## Every key holding a state (the caller forgets the dead ones).
+func keys() -> Array:
+	return _s.keys()
+
+
+## Counts one hit on `key` inside a window of `window` seconds (it restarts when the window ran out). True on the `need`-th
+## hit, and the count starts over (Centelha: three hits put Queimadura on the target).
+func count_hit(key: Object, need: int, window: float) -> bool:
+	var h: Dictionary = _h.get(key, {"n": 0, "t": -1000.0})
+	if now - float(h["t"]) > window:
+		h["n"] = 0
+	if int(h["n"]) == 0:
+		h["t"] = now
+	h["n"] = int(h["n"]) + 1
+	if int(h["n"]) >= need:
+		_h.erase(key)
+		return true
+	_h[key] = h
+	return false

@@ -7,8 +7,8 @@ extends Resource
 ## any state may start (docs/design/heroes/guerreiro.md).
 enum In { LIGHT, HEAVY, CHARGE, CHARGE_LIGHT, SHOUT, RUSH }
 enum Shape { ARC, CIRCLE, LINE }
-## BLAST, CONTAIN, DOME: the Maga's Explosão Rúnica, Círculo de Contenção and Suspensão Arcana (Arcane, maga.md 2).
-enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, SHOUT, BLAST, CONTAIN, DOME }
+## FROST, ARC, DOME: the Maga's Geada, Arco Voltaico and Suspensão Arcana (Arcane, 04_PLANO C.1).
+enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, SHOUT, FROST, ARC, DOME }
 
 @export var id: StringName
 ## The input that leads here from the previous node: E (light), D (heavy) or a released charge.

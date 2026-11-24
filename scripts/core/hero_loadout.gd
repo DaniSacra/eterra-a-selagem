@@ -27,18 +27,14 @@ static func action_key(hero: HeroDef, slot: Boon.Slot) -> StringName:
 	return StringName("%s_maga" % key) if hero != null and hero.arcane != null else key
 ## Text keys of the branches (TalentDef.Branch).
 const BRANCH_KEY := {
-	TalentDef.Branch.COMBO: &"hero_branch_combo", TalentDef.Branch.FURIA: &"hero_branch_furia",
-	TalentDef.Branch.EMETH: &"hero_branch_emeth", TalentDef.Branch.MAGIA: &"hero_branch_magia",
-	TalentDef.Branch.BRIDGE: &"hero_branch_bridge", TalentDef.Branch.SUSTAIN: &"hero_branch_sustain",
-	TalentDef.Branch.PIRO: &"hero_branch_piro", TalentDef.Branch.ARCA: &"hero_branch_arca", TalentDef.Branch.CTRL: &"hero_branch_ctrl",
+	TalentDef.Branch.COMBO: &"hero_branch_combo",
 	TalentDef.Branch.IMPETO: &"hero_branch_impeto", TalentDef.Branch.DOMINIO: &"hero_branch_dominio",
 	TalentDef.Branch.ELEMENTALISMO: &"hero_branch_elementalismo", TalentDef.Branch.CONJURACAO: &"hero_branch_conjuracao",
 	TalentDef.Branch.FEITICARIA: &"hero_branch_feiticaria",
 }
 const TIER_KEY := {
 	TalentDef.Tier.ENTRY: &"hero_tier_entry", TalentDef.Tier.MIDDLE: &"hero_tier_middle",
-	TalentDef.Tier.APEX: &"hero_tier_apex", TalentDef.Tier.BRIDGE: &"hero_tier_bridge",
-	TalentDef.Tier.SUSTAIN: &"hero_tier_sustain",
+	TalentDef.Tier.APEX: &"hero_tier_apex",
 }
 
 var hero: HeroDef
@@ -182,16 +178,7 @@ func short_why(t: TalentDef) -> Dictionary:
 		Talents.Problem.SLOT_TAKEN:
 			return {"key": &"codex_block_slot", "args": {"action": T.t(action_key(hero, t.slot)), "name": _name(_slot_holder(t.slot))}}
 		Talents.Problem.NEEDS:
-			if t.needs != &"":
-				return {"key": &"codex_block_needs", "args": {"what": _name(book.find(t.needs))}}
-			match t.tier:
-				TalentDef.Tier.APEX:
-					return {"key": &"codex_block_apex", "args": {"middle": _name(of(t.branch, TalentDef.Tier.MIDDLE)),
-						"branch": T.t(BRANCH_KEY[t.partner])}}
-				TalentDef.Tier.BRIDGE:
-					return {"key": &"codex_block_bridge", "args": {"a": _name(of(t.joins[0], TalentDef.Tier.ENTRY)),
-						"b": _name(of(t.joins[1], TalentDef.Tier.ENTRY))}}
-			return {"key": &"codex_block_needs", "args": {"what": _name(of(t.branch, TalentDef.Tier.ENTRY))}}
+			return {"key": &"codex_block_needs", "args": {"what": _name(book.find(t.needs))}}
 	return {}
 
 
@@ -220,19 +207,10 @@ func xp_missing(n: int) -> int:
 	return maxi(hero.mastery.total_to(n) - xp(), 0)
 
 
-## What a Gift needs by its place in the tree ({} for an entry or a sustain Gift).
+## What a Gift needs equipped ({} for an entry): the Gift it names.
 func needs(t: TalentDef) -> Dictionary:
-	if t.needs != &"":  # the redesign: the Gift it names, whatever its place
+	if t.needs != &"":
 		return {"key": &"hero_why_needs", "args": {"what": _name(book.find(t.needs))}}
-	match t.tier:
-		TalentDef.Tier.MIDDLE:
-			return {"key": &"hero_why_needs", "args": {"what": _name(of(t.branch, TalentDef.Tier.ENTRY))}}
-		TalentDef.Tier.APEX:
-			return {"key": &"hero_why_apex", "args": {"middle": _name(of(t.branch, TalentDef.Tier.MIDDLE)),
-				"branch": T.t(BRANCH_KEY[t.partner])}}
-		TalentDef.Tier.BRIDGE:
-			return {"key": &"hero_why_bridge", "args": {"a": _name(of(t.joins[0], TalentDef.Tier.ENTRY)),
-				"b": _name(of(t.joins[1], TalentDef.Tier.ENTRY))}}
 	return {}
 
 
@@ -253,11 +231,9 @@ func all_of(branch: TalentDef.Branch, tier: TalentDef.Tier) -> Array[TalentDef]:
 	return out
 
 
-## True when two Gifts share a place in the tree: same branch and tier, and for a bridge the same two branches.
+## True when two Gifts share a place in the tree: same branch and tier.
 static func same_place(a: TalentDef, b: TalentDef) -> bool:
-	if a.tier != b.tier or a.branch != b.branch:
-		return false
-	return a.tier != TalentDef.Tier.BRIDGE or (a.joins == b.joins)
+	return a.tier == b.tier and a.branch == b.branch
 
 
 func _slot_holder(slot: Boon.Slot) -> TalentDef:
@@ -288,12 +264,8 @@ func unlocks_at(n: int) -> Array[String]:
 	return out
 
 
-## "Combo, entrada" or "Ponte de Combo e Fúria": where a Gift sits.
+## "Combo, entrada": where a Gift sits.
 func place_text(t: TalentDef) -> String:
-	if t.tier == TalentDef.Tier.BRIDGE and t.joins.size() == 2:
-		return T.t(TIER_KEY[t.tier], {"a": T.t(BRANCH_KEY[t.joins[0]]), "b": T.t(BRANCH_KEY[t.joins[1]])})
-	if t.tier == TalentDef.Tier.SUSTAIN:
-		return T.t(BRANCH_KEY[TalentDef.Branch.SUSTAIN])
 	return T.t(BRANCH_KEY[t.branch]) + ", " + T.t(TIER_KEY[t.tier])
 
 

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UltDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/ult_def.gd" id="1_jscro"]
+
+[resource]
+script = ExtResource("1_jscro")
+id = &"converge"
+name_key = &"ult_converge"
+desc_key = &"ult_converge_desc"
+kind = 2
+charge = 75.0
+damage_charge = 0.03
+hurt_charge = 1.0
+weapon = &"bastao"
+tags = Array[StringName]([&"ultimate", &"cast"])
+anim = &"Cast"
+anim_peak = 0.1
+knockback = 0.0
+aim_max = 9.0
+radius = 5.0
+radius_cap = 6.5
+duration = 4.5
+tick = 0.5

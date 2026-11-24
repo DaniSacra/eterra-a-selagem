@@ -6,12 +6,10 @@ extends Resource
 ## shapes and the pull are the pure functions below (tests/test_ultimate.gd).
 
 ## CLEAVE: a band in front of the hero (U-1). VORTEX: an area thrown ahead that pulls the pack in a spiral and
-## implodes (U-2, the Voragem). STORM: the Maga's Tempestade dos Selos (maga.md 2): an area at the cursor that lays a Selo
-## on everyone in it, ticks, and at the end detonates every Selo (read from the Vortex fields: ahead, aim_max, radius,
-## duration, tick, tick_damage; plus the Storm group).
-## DOME: the Maga's Suspensão Absoluta (maga_m2.md 3.2): a dome around her that walks with her (radius, duration), where her shots
-## lay a Selo and hit harder and the Explosão costs less.
-enum Kind { CLEAVE, VORTEX, STORM, DOME }
+## implodes (U-2, the Voragem, in reserve). CONVERGE: the Maga's Convergência Elemental (04_PLANO C.3): an area at the cursor
+## where ice, fire and volt fall in phases (the plan is ConvergePlan; read from the Vortex fields: ahead, aim_max, radius,
+## duration, tick; the damage is ArcaneKit.converge_damage).
+enum Kind { CLEAVE, VORTEX, CONVERGE }
 
 @export var id: StringName
 @export var name_key: StringName
@@ -73,23 +71,17 @@ enum Kind { CLEAVE, VORTEX, STORM, DOME }
 @export var elite_pull := 0.5
 @export var guardian_pull := 0.25
 
-@export_group("Storm")
-## Damage of the detonation to each enemy at the end, the share of the ticks and of it an elite and a guardian take.
-@export var detonate_damage := 110.0
+@export_group("Converge")
+## The share of the damage an elite and a guardian take (Morvath: ArcaneKit.converge_boss_share).
 @export var elite_share := 0.5
 @export var guardian_share := 0.25
 
-@export_group("Dome")
-## The Suspensão Absoluta: the share more her shots hit with inside it, and what the Explosão costs there (Magia).
-@export var dome_shot_pct := 0.3
-@export var dome_blast_cost := 5.0
 
-
-## The share of the Storm's damage a body takes: Morvath the ticks only (none of the detonation), a guardian guardian_share,
-## an elite elite_share, the rest all of it.
-func storm_share(boss: bool, guardian: bool, elite: bool, detonation: bool) -> float:
+## The share of the Convergência's damage a body takes: a guardian guardian_share, an elite elite_share, the rest all of it
+## (Morvath: `boss_share`).
+func converge_share(boss: bool, guardian: bool, elite: bool, boss_share: float = 1.0) -> float:
 	if boss:
-		return 0.0 if detonation else 1.0
+		return boss_share
 	if guardian:
 		return guardian_share
 	return elite_share if elite else 1.0

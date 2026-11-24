@@ -94,8 +94,12 @@ func test_the_proposed_places_link_each_branch_and_do_not_touch() -> void:
 		cat.append(_gift(WARRIOR_12[k * 4 + 1], br, TalentDef.Tier.MIDDLE))
 		cat.append(_gift(WARRIOR_12[k * 4 + 2], br, TalentDef.Tier.MIDDLE))
 		cat.append(_gift(WARRIOR_12[k * 4 + 3], br, TalentDef.Tier.APEX))
+		# what a Gift needs is a named Gift (04_PLANO A.1): the middles the entry, the apex the second middle
+		cat[-3].needs = cat[-4].id
+		cat[-2].needs = cat[-4].id
+		cat[-1].needs = cat[-2].id
 	var edges := MedallionNav.new(def, cat).edges()
-	assert_gte(edges.size(), 12, "entry to two middles and apex to two middles, per branch")
+	assert_gte(edges.size(), 9, "entry to two middles and the apex to its middle, per branch")
 
 
 func _gift(id: StringName, branch: int, tier: int) -> TalentDef:

@@ -209,10 +209,6 @@ var omega_cost_pct := 0.0
 var charge_time_pct := 0.0
 var dash_pierce := false
 var _piercing := false
-## The Maga's amplified Explosão costs no Magia (Arcane sets it while the Ressonância is full).
-var free_special := false
-## The share off the Explosão's Magia (the Maga's Suspensão Absoluta: half; Arcane sets it each step).
-var blast_discount := 0.0
 ## The Passo Etéreo ended this step: bodies of the crowd do not hold her where she came out (the dash goes through them).
 var _blinked := false
 var _charge_discount := 0.0
@@ -793,7 +789,7 @@ func _press_special() -> void:
 ## True when the special's tap is paid for (it costs nothing, or the Magia is there).
 func _special_paid() -> bool:
 	var node := ComboTree.find(tree.neutral, ComboNode.In.HEAVY)
-	return node == null or node.magick_cost <= 0.0 or (free_special and node.has_tag(&"blast")) or magick.can_pay(cost_of(node, blast_discount if node.has_tag(&"blast") else omega_discount))
+	return node == null or node.magick_cost <= 0.0 or magick.can_pay(cost_of(node, omega_discount))
 
 
 ## A press of an attack button plays the move at once (as in Hades II). Holding the button on charges its Omega
@@ -1024,8 +1020,8 @@ func _step_move_sound(dt: float) -> void:
 
 func _on_move_started(node: ComboNode) -> void:
 	facing = _strike_dir()
-	if node.magick_cost > 0.0 and not (free_special and node.has_tag(&"blast")):
-		magick.spend(cost_of(node, _charge_discount if node.has_tag(&"omega") else blast_discount if node.has_tag(&"blast") else 0.0))
+	if node.magick_cost > 0.0:
+		magick.spend(cost_of(node, _charge_discount if node.has_tag(&"omega") else 0.0))
 	_anim.speed_scale = 1.0
 	_sound_node = null
 	if hero.id == &"maga" and node.has_tag(&"finisher") and node.has_tag(&"bolt"):

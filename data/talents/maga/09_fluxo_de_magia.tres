@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_8rra7"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_1wp36"]
+
+[sub_resource type="Resource" id="Resource_um24p"]
+script = ExtResource("1_8rra7")
+stat = &"shot_magick_add"
+base = 0.5
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_1wp36")
+id = &"fluxo_de_magia"
+name_key = &"talent_fluxo_de_magia"
+desc_key = &"talent_fluxo_de_magia_desc"
+branch = 5
+tier = 1
+cost = 2
+unlock_level = 8
+memory_cost = 2
+needs = &"eco_eletrico"
+mods = Array[ExtResource("1_8rra7")]([SubResource("Resource_um24p")])

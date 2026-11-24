@@ -303,3 +303,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - `RESULT` e registro (`RunLog.VERSION` 6): `oficios` (`finds`, `find_by`, `marked`, `gather`: `veins`, `stones`,
   `gather_s`, `noted`; `pity`: `due`, `passed_guardian`).
 
+
+## Coragem e cura do Supremo (2026-11-24)
+- Coragem (`scripts/core/courage.gd`, BL-02): cada morte na sala 5 ou antes dá à descida seguinte +3 de vida máxima e 1 romã (a primeira Bênção pega cresce um nível), até 3 pilhas; zera ao passar da sala 5, ao vencer ou com Juramento. Salvo por herói em `heroes.<id>.courage` (sem migração); nunca no robô nem em `--nosave`. Linha no início: `courage_start`.
+- O Supremo cura `Game.ULT_HEAL` (10%) da vida máxima ao começar (`player.ult_started` em `game.gd`).

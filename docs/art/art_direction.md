@@ -37,6 +37,7 @@ abaixo do limiar do glow, 1,3, `Game.GLOW_THRESHOLD`); "UI" é cor de interface 
 | Esmeralda corrompido | escudo do ritual, colunas, runas de Morvath | `BossShield.COLOR` (0,315; 0,7; 0,604), saturação 0,55, valor 0,7 | 165 | `boss_shield.gd`, `spectral_column.gdshader` |
 | Violeta de Morvath | o corpo, as meias-luas, a fase 4 | `Boss.VIOLET` (0,62; 0,22; 1,2), `SOUL_VIOLET` (0,62; 0,44; 1,3) | 253 a 265 | `boss.gd`, `soul_crescent.gdshader` |
 | Violeta da maldição | aura no herói, selo do HUD | `CurseAura.COLOR` (0,62; 0,32; 0,95) | 269 | `curse_aura.gd` |
+| Elementos da Maga (AD-01) | Fogo, Frio e Raio nos estados dos inimigos e nos golpes da Maga; nunca em perigo de sala nem aviso | `ElementLook.FIRE` (1,0; 0,42; 0,0) laranja, `COLD` (0,35; 0,88; 1,0) ciano, `VOLT` (1,0; 0,97; 0,78) branco-ouro, luz | 25, 192, 48 | `element_look.gd`, `state_pips.gd`; teste `test_element_look.gd` trava distância RGB mínima de 0,25 entre os três e o vermelho do perigo, o âmbar do perigo, o petróleo, o anel do Supremo, a Emeth, o espectral e os violetas. Sem violeta e sem esmeralda. O fogo se distingue do âmbar do perigo e do anel do Supremo também pela forma (losango pequeno sobre o inimigo, nunca no chão) |
 
 Regras:
 - Duas cores reservadas que podem aparecer juntas ficam a **30 graus de matiz ou mais**, ou separadas por valor (0,2 ou

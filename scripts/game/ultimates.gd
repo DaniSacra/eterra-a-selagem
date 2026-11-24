@@ -72,8 +72,10 @@ class Vortex:
 	## Who it already cut out of a wind-up (once on entering).
 	var held: Dictionary = {}
 	var node: MeshInstance3D
-	## The Tempestade: it is one (its tick lays Selos and its end detonates them).
-	var storm := false
+	## The Convergência: it is one (ConvergePlan decides what each tick does) and the tick it is at.
+	var converge := false
+	var plan: ConvergePlan
+	var step_i := 0
 
 var game: Game
 var def: UltDef
@@ -132,8 +134,8 @@ func step(dt: float) -> void:
 			_warn.visible = false
 	_step_rift(dt)
 	if vortex != null:
-		if vortex.storm:
-			_step_storm(dt)
+		if vortex.converge:
+			_step_converge(dt)
 		else:
 			_step_vortex(dt)
 
@@ -182,9 +184,8 @@ func worth(from: Vector2, dir: Vector2) -> bool:
 	if def == null or dir.length_squared() < 0.0001:
 		return false
 	var n := 0
-	var dome := def.kind == UltDef.Kind.DOME
-	var at := from if dome else def.vortex_at(from, dir)
-	var size := def.radius if dome else def.vortex_radius(game.boons.stat(&"cast_size_pct", def.tags))
+	var at := def.vortex_at(from, dir)
+	var size := def.vortex_radius(game.boons.stat(&"cast_size_pct", def.tags))
 	for e: Enemy in game.horde.list:
 		if not e.alive or e.invulnerable:
 			continue
@@ -198,6 +199,8 @@ func worth(from: Vector2, dir: Vector2) -> bool:
 
 
 func _on_started(dir: Vector2) -> void:
+	if def == null:  # no Supremo equipped (tests emit the signal bare)
+		return
 	charge.use()
 	uses += 1
 	if game.boss != null:
@@ -208,8 +211,6 @@ func _on_started(dir: Vector2) -> void:
 	if def.kind == UltDef.Kind.CLEAVE:
 		_floor_mark(GroundLook.Style.WARNING, GroundLook.Shape.LINE, p, dir, def.length, def.width)
 		GroundLook.put(_warn.material_override as ShaderMaterial, &"progress", 0.0)
-	elif def.kind == UltDef.Kind.DOME:
-		return  # (the Suspensão Absoluta is round her: nothing to mark on the floor)
 	else:
 		_target = _land_spot(def.vortex_at(p, dir, game.aim_floor() if Controls.aims_with_mouse() else Vector2.INF))
 		var size := def.vortex_radius(game.boons.stat(&"cast_size_pct", def.tags))
@@ -222,8 +223,6 @@ func _on_landed(dir: Vector2) -> void:
 		_warn.visible = false
 	if def.kind == UltDef.Kind.CLEAVE:
 		_cleave(game.player.pos, dir)
-	elif def.kind == UltDef.Kind.DOME:
-		game.arcane.open_absolute(def)
 	else:
 		_open_vortex(_target)
 
@@ -360,11 +359,13 @@ func _open_vortex(at: Vector2) -> void:
 	if vortex != null:
 		vortex.node.queue_free()
 	var v := Vortex.new()
-	v.storm = def.kind == UltDef.Kind.STORM
+	v.converge = def.kind == UltDef.Kind.CONVERGE
+	if v.converge:
+		v.plan = game.hero.arcane.converge_plan()
 	v.at = at
 	v.radius = def.vortex_radius(game.boons.stat(&"cast_size_pct", def.tags))
 	v.life = def.duration
-	v.tick = def.tick
+	v.tick = 0.0 if v.converge else def.tick
 	v.node = _vortex_node(at, v.radius, _color())
 	vortex = v
 	game.fx.ring(at, v.radius, _color(), 0.3, 0.15, true)
@@ -490,54 +491,54 @@ func _implode(v: Vortex) -> void:
 
 # ---------- the Maga's Tempestade dos Selos ----------
 
-## The ultimate's colour: the Emeth's emerald for the Warrior's, amber for the Maga's Tempestade.
+## The ultimate's colour: the Emeth's emerald for the Warrior's, the fire's for the Maga's Convergência.
 func _color() -> Color:
-	return Arcane.AMBER if def.kind == UltDef.Kind.STORM or def.kind == UltDef.Kind.DOME else Combat.EMETH
+	return ElementLook.FIRE if def.kind == UltDef.Kind.CONVERGE else Combat.EMETH
 
 
-## Every `tick` seconds each enemy inside takes the tick and a Selo (its clock restarts); at the end every Selo inside
-## detonates (UltDef.storm_share: elites half, guardians a quarter, Morvath the ticks only and keeps his Selo).
-func _step_storm(dt: float) -> void:
+## Every `tick` seconds (the first at once) each enemy inside takes the tick's damage and the elements of its phase: ice, fire,
+## volt, the last two ticks of the volt phase reapplying fire and ice (ConvergePlan). The elements go through Arcane (one
+## reaction per target and `react_gap`; a boss takes `converge_boss_share`, elites and guardians their shares).
+func _step_converge(dt: float) -> void:
 	var v := vortex
 	v.life -= dt
 	_draw_vortex(v, dt)
 	v.tick -= dt
-	var ticking := false
-	if v.tick <= 0.0:
+	if v.tick <= 0.0 and v.step_i < v.plan.count():
 		v.tick += def.tick
-		ticking = true
-	if ticking:
-		game.horde.in_circle(v.at, v.radius, _found)
-		for e: Enemy in _found.duplicate():
-			if not e.alive or e.invulnerable:
-				continue
-			var boss := e.def.behavior == EnemyDef.Behavior.BOSS
-			if game.arcane.lay(e, 1):  # (one Selo, whatever the Gifts: the Selo Duplo does not double the storm's detonation)
-				game.arcane.tally.storm_seals += 1
-			_hit(e, def.tick_damage * def.storm_share(boss, not boss and e.def.stun_time <= 0.0, e.def.elite, false), Vector2.ZERO, 0.0, 0.0)
+		_converge_tick(v)
+		v.step_i += 1
 	if v.life <= 0.0:
-		_detonate_storm(v)
+		_end_converge(v)
 
 
-func _detonate_storm(v: Vortex) -> void:
+func _converge_tick(v: Vortex) -> void:
+	var kit := game.hero.arcane
+	var color := _phase_color(ConvergePlan.PHASES[v.plan.phase_of(v.step_i)])
+	game.horde.in_circle(v.at, v.radius, _found)
+	for e: Enemy in _found.duplicate():
+		if not e.alive or e.invulnerable:
+			continue
+		var boss := e.def.behavior == EnemyDef.Behavior.BOSS
+		var share := def.converge_share(boss, not boss and e.def.stun_time <= 0.0, e.def.elite, kit.converge_boss_share)
+		if not _hit(e, v.plan.damage_per_tick() * share, Vector2.ZERO, 0.0, 0.0):
+			for el in v.plan.elements_at(v.step_i):
+				game.arcane.apply_element(e, el)
+	game.fx.ring(v.at, v.radius * 0.8, color, 0.25, 0.1, true)
+
+
+static func _phase_color(element: StringName) -> Color:
+	return ElementLook.COLD if element == ElementBook.ICE else ElementLook.FIRE if element == ElementBook.FIRE else ElementLook.VOLT
+
+
+func _end_converge(v: Vortex) -> void:
 	vortex = null
 	v.node.visible = false
 	v.node.queue_free()
-	game.horde.in_circle(v.at, v.radius, _found)
-	var n := 0
-	for e: Enemy in _found.duplicate():
-		var boss := e.def.behavior == EnemyDef.Behavior.BOSS
-		if boss or not e.alive or not game.arcane.detonate(e):
-			continue
-		n += 1
-		var away := (e.pos - v.at).normalized() if e.pos.distance_to(v.at) > 0.01 else Vector2.RIGHT
-		_hit(e, def.detonate_damage * def.storm_share(false, e.def.stun_time <= 0.0, e.def.elite, true), away, def.knockback, 0.0)
-	game.arcane.resonance.add(mini(n, game.hero.arcane.storm_resonance))
 	var fx := game.fx
-	fx.ring(v.at, v.radius, Arcane.AMBER, 0.3, 0.15, true)
-	fx.ring(v.at, v.radius * 0.6, Arcane.IVORY, 0.25)
-	fx.burst(&"fire", Vector3(v.at.x, 0.6, v.at.y))
-	fx.shake(2.5)
+	fx.ring(v.at, v.radius, ElementLook.VOLT, 0.3, 0.15, true)
+	fx.burst(&"spark", Vector3(v.at.x, 0.6, v.at.y))
+	fx.shake(2.0)
 	Audio.play(CombatSounds.EVENTS[&"ult_implode"])
 
 

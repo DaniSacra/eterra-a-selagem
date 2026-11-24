@@ -102,8 +102,7 @@ func sector_step(from: StringName, step: int) -> StringName:
 	return runs[posmod(at + step, runs.size())]
 
 
-## The prerequisite lines: pairs [a, b] of node ids (a Middle to its Entry, an Apex to its Middle, a Bridge to the two
-## Entries it joins, a spur to the ring node at its angle), only between neighbours of the ring.
+## The prerequisite lines: pairs [a, b] of node ids (a Gift to the one it needs, a spur to the ring node at its angle), only between neighbours of the ring.
 func edges() -> Array:
 	var out: Array = []
 	var seen := {}
@@ -111,12 +110,9 @@ func edges() -> Array:
 		if not pos.has(t.id):
 			continue
 		var wants: Array[TalentDef] = []
-		if t.needs != &"":
-			for o in catalog:
-				if o.id == t.needs:
-					wants.append(o)
-		else:
-			wants = _wants_by_place(t)
+		for o in catalog:
+			if o.id == t.needs:
+				wants.append(o)
 		for w in wants:
 			if pos.has(w.id) and (pos[t.id] as Vector2).distance_to(pos[w.id]) <= EDGE_MAX:
 				_add(out, seen, t.id, w.id)
@@ -125,28 +121,6 @@ func edges() -> Array:
 			if n.id != m.id and absf(n.angle - m.angle) < SPUR_ANGLE and absf(n.radius - MedallionDef.RING) > 1.0 \
 					and absf(m.radius - MedallionDef.RING) < 1.0:
 				_add(out, seen, n.id, m.id)
-	return out
-
-
-## What a Gift without `needs` wants by its place (the Maga's old tree until GE-4).
-func _wants_by_place(t: TalentDef) -> Array[TalentDef]:
-	var wants: Array[TalentDef] = []
-	match t.tier:
-		TalentDef.Tier.MIDDLE:
-			wants = _of(t.branch, TalentDef.Tier.ENTRY)
-		TalentDef.Tier.APEX:
-			wants = _of(t.branch, TalentDef.Tier.MIDDLE)
-		TalentDef.Tier.BRIDGE:
-			for b in t.joins:
-				wants.append_array(_of(b, TalentDef.Tier.ENTRY))
-	return wants
-
-
-func _of(b: TalentDef.Branch, tier: TalentDef.Tier) -> Array[TalentDef]:
-	var out: Array[TalentDef] = []
-	for t in catalog:
-		if t.branch == b and t.tier == tier:
-			out.append(t)
 	return out
 
 

@@ -366,7 +366,7 @@ func step(dt: float, game: Game) -> void:
 	if spring != null:
 		pad.move = ((spring as Vector2) - p).normalized()
 	if game.arcane != null:
-		_arcane_step(game, p, target)
+		_arcane_step(game, p, target, dt)
 		return
 	if not Dev.has("bot-mouse") and _ult_now(game, p, pad.aim):
 		# the ultimate as soon as it is full and worth it (the pack in the band or the Voragem, or a big one)
@@ -430,31 +430,42 @@ func step(dt: float, game: Game) -> void:
 			_wait = 0.2
 
 
-## The Maga's robot (maga.md 2.1): it keeps ARC_NEAR to ARC_FAR m from the nearest enemy and plays the loop: three shots
-## mark, the Círculo gathers a pack, the Explosão detonates when ARC_SEALS Selos stand (or the last enemies are marked), the
-## Suspensão answers shots and a crowd at its feet, the Tempestade when it is worth it. The Passo is the danger code's.
+## The Maga's robot (04_PLANO C): it keeps ARC_NEAR to ARC_FAR m from the nearest enemy and plays the loop below; the
+## Convergência goes by `_ult_now`. The Passo is the danger code's.
 const ARC_NEAR := 5.5
 const ARC_FAR := 9.0
-const ARC_SEALS := 3
-const ARC_CIRCLE_PACK := 3
+## Enemies close enough for the Arco, the Geada and the Combustão to be worth their cost, and how long their button is held (s).
+const ARC_VOLT_PACK := 2
+const ARC_FROST_PACK := 3
+const ARC_COMBUST_PACK := 3
+const ARC_CHARGE_HOLD := 0.9
 const ARC_DOME_SHOT := 6.0
 const ARC_DOME_CROWD := 2.5
 
 
-func _arcane_step(game: Game, p: Vector2, target: Vector2) -> void:
+## The Maga's loop: keep her distance, the Suspensão under shots or a crowd, the Arco on two or more, the Geada and the Combustão
+## (held) on a pack when there is Magia, the Estilhaço when it is ready, the Centelha otherwise (three of them set the target alight).
+func _arcane_step(game: Game, p: Vector2, target: Vector2, dt: float) -> void:
 	var a := game.arcane
 	var player := game.player
 	var to := target - p
 	var dist := to.length()
 	var dir := to.normalized() if dist > 0.01 else Vector2.DOWN
-	pad.aim = dir
-	pad.release(&"heavy_attack")
+	var holding := _hold > 0.0
+	if not holding:
+		pad.aim = dir
+		pad.release(&"heavy_attack")
 	if dist > ARC_FAR:
 		pad.move = _steer(game, p, _way(game, p, target, 0.0))
 	elif dist < ARC_NEAR:
 		pad.move = _steer(game, p, -dir)
 	else:
 		pad.move = Vector2.ZERO
+	if holding:
+		_hold -= dt
+		if _hold <= 0.0:
+			pad.release(_held)
+		return
 	if player.state != Player.State.MOVE:
 		return
 	if _ult_now(game, p, dir):
@@ -463,8 +474,9 @@ func _arcane_step(game: Game, p: Vector2, target: Vector2) -> void:
 	if _wait > 0.0:
 		return
 	var runner := player.runner
+	var busy := runner.is_attacking()
 	# the Suspensão: a shot flying at it, or the crowd on top of it
-	if runner.cooldown_left(&"dome") <= 0.0 and not runner.is_attacking() and a.dome == null:
+	if runner.cooldown_left(&"dome") <= 0.0 and not busy and a.dome == null:
 		var near: Array[Enemy] = []
 		game.horde.in_circle(p, ARC_DOME_CROWD, near)
 		var shot := false
@@ -476,28 +488,40 @@ func _arcane_step(game: Game, p: Vector2, target: Vector2) -> void:
 			pad.press(&"rush")
 			_wait = 0.3
 			return
-	# the Círculo on a pack
-	if runner.cooldown_left(&"circle") <= 0.0 and not runner.is_attacking() and dist <= a.kit.circle_range:
-		var pack: Array[Enemy] = []
-		game.horde.in_circle(target, a.kit.circle_radius, pack)
-		if pack.size() >= ARC_CIRCLE_PACK:
+	# the Arco on two or more within its reach
+	if runner.cooldown_left(&"arc") <= 0.0 and not busy:
+		var close: Array[Enemy] = []
+		game.horde.in_circle(p, a.kit.arc_range, close)
+		if close.size() >= ARC_VOLT_PACK:
 			pad.press(&"shout")
 			_wait = 0.3
 			return
-	# the Explosão on the Selos
-	var marked := a.seals.total()
-	if marked > 0 and runner.cooldown_left(&"blast") <= 0.0 and not runner.is_attacking() \
-			and (marked >= mini(ARC_SEALS, game.horde.count()) or a.resonance.full()) and (player.free_special or player.magick.can_pay(Player.omega_cost(10.0, player.blast_discount))):
-		var best: Enemy = null
-		for e: Enemy in a.seals.keys():
-			if e.alive and (best == null or e.pos.distance_squared_to(p) < best.pos.distance_squared_to(p)):
-				best = e
-		if best != null and best.pos.distance_to(p) <= a.kit.blast_range:
-			pad.aim = (best.pos - p).normalized()
+	var in_range := dist <= a.kit.spark_range
+	var pack: Array[Enemy] = []
+	game.horde.in_circle(target, a.kit.frost_radius, pack)
+	var magick := player.magick
+	# the Geada on a pack (held), the Combustão on a pack (held)
+	if not busy and in_range and dist <= a.kit.frost_range and pack.size() >= ARC_FROST_PACK and magick.can_pay(20.0):
+		pad.aim = dir
+		pad.press(&"heavy_attack")
+		_held = &"heavy_attack"
+		_hold = ARC_CHARGE_HOLD
+		_wait = 0.6
+		return
+	if not busy and in_range and pack.size() >= ARC_COMBUST_PACK and magick.can_pay(15.0):
+		pad.press(&"light_attack")
+		_held = &"light_attack"
+		_hold = ARC_CHARGE_HOLD
+		_wait = 0.6
+		return
+	# the Estilhaço when it is ready, the Centelha otherwise
+	if in_range:
+		if runner.cooldown_left(&"shard") <= 0.0 and not busy:
 			pad.press(&"heavy_attack")
-			_wait = 0.5
+			_hold = 0.06
+			_held = &"heavy_attack"
+			_wait = 0.3
 			return
-	if dist <= a.kit.blast_range + 0.5:
 		pad.press(&"light_attack")
 		_wait = 0.2
 

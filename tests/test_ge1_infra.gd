@@ -21,11 +21,11 @@ func test_needs_replaces_the_tier_rule() -> void:
 	assert_true(Talents.needs_met(entry, [] as Array[TalentDef]), "no needs: free")
 
 
-func test_old_catalog_rules_still_hold() -> void:
+func test_a_gift_naming_nothing_is_free_whatever_its_tier() -> void:
 	var middle := TalentDef.new()
 	middle.tier = TalentDef.Tier.MIDDLE
 	middle.branch = TalentDef.Branch.COMBO
-	assert_false(Talents.needs_met(middle, [] as Array[TalentDef]))
+	assert_true(Talents.needs_met(middle, [] as Array[TalentDef]), "the place in the tree no longer decides (04_PLANO A.1)")
 
 
 func test_the_fixed_ultimate_of_each_weapon() -> void:

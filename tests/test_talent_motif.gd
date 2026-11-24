@@ -5,7 +5,11 @@ extends GutTest
 
 func test_every_gift_has_a_motif_that_draws() -> void:
 	for id in TalentGlyph.IDS:
-		assert_true(TalentMotif.has(id), "%s has a motif" % id)
+		# the Warrior's twelve (2026-11-24) draw their glyph until they get a painted motif
+		if not TalentMotif.has(id):
+			assert_true(TalentGlyph.has(id), "%s falls back to its glyph" % id)
+			assert_false(TalentMotif.draw(Control.new(), id, Vector2.ZERO, 30.0), "%s: no motif, caller draws the glyph" % id)
+			continue
 		for part: Dictionary in TalentMotif.shapes(id):
 			assert_false(Geometry2D.triangulate_polygon(part.p).is_empty(), "%s: every shape triangulates" % id)
 	assert_false(TalentMotif.has(&"nope"))
@@ -42,13 +46,14 @@ func test_paint_stays_on_the_paper() -> void:
 		var c := TalentMotif.tone(key)
 		assert_lte(c.s, 0.6, key)
 		assert_lte(maxf(c.r, maxf(c.g, c.b)) * TalentMotif.LIGHT, 1.0, key)
-	# emerald only in the Emeth branch and the Coração da Emeth
+	# emerald only in the Coração da Emeth and the Quarto Corte
 	for id in TalentGlyph.IDS:
 		var branch := TalentMotif.branch_of(id)
+		if branch < 0:
+			continue  # the old 19 left the data; their motifs wait for a reuse
 		for part: Dictionary in TalentMotif.shapes(id):
 			if part.k == "emerald":
-				assert_true(branch == TalentDef.Branch.EMETH or id == &"coracao_da_emeth" or id == &"quarto_corte"
-					or branch == TalentDef.Branch.BRIDGE, "%s: emerald only where the Emeth is" % id)
+				assert_true(id == &"coracao_da_emeth" or id == &"quarto_corte", "%s: emerald only where the Emeth is" % id)
 
 
 func test_under_the_lod_it_draws_the_glyph() -> void:

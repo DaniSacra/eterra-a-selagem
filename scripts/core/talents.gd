@@ -2,9 +2,7 @@ class_name Talents
 extends RefCounted
 ## The rules of a hero's Gifts (TalentDef), pure: what a Mastery level unlocks, the Devotion a loadout takes and
 ## whether a loadout (the ids equipped before the descent) is valid. docs/design/warrior_spec.md 4.1:
-## - an entry needs only the centre (always on); a middle needs the entry of its branch; an apex needs the middle of
-##   its branch and a Gift of its neighbouring partner branch; a bridge needs the entries of the two branches it joins;
-##   sustain needs only the centre;
+## - an entry needs only the centre (always on); every other Gift names the Gift it needs (TalentDef.needs);
 ## - a requirement counts only when EQUIPPED, not just unlocked;
 ## - one Gift per action (TalentDef.slot); the loadout fits the Devotion (5 + Mastery level).
 ## Rejogabilidade, Fatia 1 (sistemas.md 1.4): the Mastery level reveals a Gift, the Memória opens it (once, its
@@ -76,33 +74,12 @@ func cost(ids: Array) -> int:
 	return total
 
 
-## True when the Gifts in equipped (TalentDefs) give t what its place in the tree asks for.
+## True when the Gifts in equipped give t what it needs: the Gift it names (an entry names none).
 static func needs_met(t: TalentDef, equipped: Array[TalentDef]) -> bool:
-	if t.needs != &"":
-		for o in equipped:
-			if o.id == t.needs:
-				return true
-		return false
-	match t.tier:
-		TalentDef.Tier.MIDDLE:
-			return _has(equipped, t.branch, TalentDef.Tier.ENTRY)
-		TalentDef.Tier.APEX:
-			if not _has(equipped, t.branch, TalentDef.Tier.MIDDLE) or not TalentDef.neighbours(t.branch, t.partner):
-				return false
-			for o in equipped:
-				if o.branch == t.partner:
-					return true
-			return false
-		TalentDef.Tier.BRIDGE:
-			if t.joins.size() != 2:
-				return false
-			return _has(equipped, t.joins[0], TalentDef.Tier.ENTRY) and _has(equipped, t.joins[1], TalentDef.Tier.ENTRY)
-	return true
-
-
-static func _has(equipped: Array[TalentDef], branch: TalentDef.Branch, tier: TalentDef.Tier) -> bool:
+	if t.needs == &"":
+		return true
 	for o in equipped:
-		if o.branch == branch and o.tier == tier:
+		if o.id == t.needs:
 			return true
 	return false
 

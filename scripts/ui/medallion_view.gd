@@ -410,9 +410,29 @@ func _draw_focus() -> void:
 	var c := spot(focus_id)
 	var pulse := 0.5 + 0.5 * sin(_t * TAU / PULSE)
 	var r := n.diameter * 0.5 + FOCUS_GAP + pulse * 1.5
+	_draw_needs(c, r)
 	draw_arc(c, r, 0.0, TAU, 40, Color(1.0, 0.96, 0.8, 0.95), 3.0, true)
 	if hold_id == focus_id and hold_progress > 0.0:
 		draw_arc(c, r + 5.0, -PI * 0.5, -PI * 0.5 + TAU * hold_progress, 48, UiKit.GOLD, 4.0, true)
+
+
+## The Gift the focused one needs (TalentDef.needs) when it is on this medallion, else &"".
+func needs_of(id: StringName) -> StringName:
+	var t := nav.talent(id)
+	return t.needs if t != null and t.needs != &"" and nav.pos.has(t.needs) else &""
+
+
+## UX-01: the prerequisite of the focused Gift marked in gold (a dashed ring on it and a line to the focus), so a child
+## sees where a Dom comes from without reading.
+func _draw_needs(focus_c: Vector2, focus_r: float) -> void:
+	var need := needs_of(focus_id)
+	if need == &"":
+		return
+	var c := spot(need)
+	var r := def.find(need).diameter * 0.5 + FOCUS_GAP
+	var dir := (c - focus_c).normalized()
+	draw_line(focus_c + dir * focus_r, c - dir * r, Color(UiKit.GOLD, 0.8), 3.0, true)
+	_dashed(c, r, UiKit.GOLD, 4.0)
 
 
 ## The name of every branch written on the inside of the ring at the middle of its sector (the hero's three branches): [{text, pos, ink}].

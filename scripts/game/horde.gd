@@ -2542,6 +2542,19 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 	return false
 
 
+## The Maga's Cristalização on a boss or an armoured body: it takes the poise `source` weighs (Feel.poise_weights), the boss his
+## Postura (Boss listens to boss_blow), a common its Quebra. No damage.
+func crack(e: Enemy, source: StringName) -> void:
+	if not e.alive or e.invulnerable:
+		return
+	dealing = source
+	if e.def.behavior == EnemyDef.Behavior.BOSS:
+		boss_blow.emit(e, source)
+	else:
+		_wear_poise(e, Vector2.RIGHT)
+	dealing = &""
+
+
 ## C1b (Poise): a blow of the paladin wears the poise by its button (Feel.poise_weights, by `dealing`); at 0 it breaks.
 func _wear_poise(e: Enemy, from_dir: Vector2) -> void:
 	var d := e.def

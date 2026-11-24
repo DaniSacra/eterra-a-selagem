@@ -32,7 +32,7 @@ static func result(g: Game) -> Dictionary:
 	if g.arcane != null:
 		# the Maga only: the Warrior's RESULT stays as it was
 		out["hero"] = String(g.hero.id)
-		out["arcane"] = g.arcane.stats().merged({"resonance": g.arcane.resonance.points, "dodges": g.dodges})
+		out["arcane"] = g.arcane.stats().merged({"dodges": g.dodges})
 	return out
 
 

@@ -29,6 +29,8 @@ const MAGICK_PER_KILL := 1.0
 const ENCHANT_SALT := 5813
 const MAGICK_PER_ELITE := 40.0
 const WAVES := "res://data/waves/catacombs.tres"
+## The Supremo heals this share of the max life as it starts (Q6).
+const ULT_HEAL := 0.10
 const FOUNTAIN_HEAL := 0.4
 ## Each new level, the gift arrives with a little of the companions' strength.
 const LEVEL_HEAL := 0.15
@@ -128,6 +130,9 @@ var breaks: BreakFloor
 var marks: BattleMarks
 ## Life gained from hearts (kept when gifts change the life bar).
 var life_bonus := 0.0
+## Coragem (Courage): the pomegranates still owed to the descent; the first Blessing taken grows (a pomegranate needs one held).
+var courage_poms := 0
+var courage_stacks := 0
 var boss: Boss
 ## The boss fight in numbers (Boss.stats; kept after he falls), for RESULT.
 var boss_stats := {}
@@ -309,7 +314,9 @@ func _ready() -> void:
 		if omega:
 			omegas += 1)
 	player.struck.connect(func(node: ComboNode, _o: Vector2, _d: Vector2) -> void: _count_slot(node))
-	player.ult_started.connect(func(_dir: Vector2) -> void: _use(&"shift"))
+	player.ult_started.connect(func(_dir: Vector2) -> void:
+		player.heal(player.max_hp * ULT_HEAL)  # the Supremo gives back a tenth of the life as it starts
+		_use(&"shift"))
 	player.glinted.connect(combat.glint)
 	player.cast_released.connect(combat.cast)
 	# was_hurt is emitted before died: the blow is counted before the run ends (BUG-014)
@@ -361,6 +368,7 @@ func _ready() -> void:
 		arcane.setup(self)
 		combat.arcane = arcane
 	_swear_juramentos()
+	_start_courage()
 	psalms = Psalms.new(Psalms.load_catalog())
 	psalms.circle = hero.circle
 	psalm_play = PsalmPlay.new(self, psalms)
@@ -741,6 +749,7 @@ func rebuild_room(layout: RoomLayout, exits: int, seed_: int, wait := Callable()
 	_trace_cam_cut()
 	ground.clear()
 	ults.clear()
+	combat.apogee.clear()  # (the Apogeu's books go with the room)
 	if arcane != null:
 		arcane.clear()
 	psalm_play.clear()
@@ -1161,6 +1170,9 @@ func _take(b: Boon) -> void:
 	var hp_bonus := boons.stat(&"max_hp")
 	player.max_hp = _base_max_hp() + hp_bonus + life_bonus
 	player.heal(hp_bonus - old_hp_bonus)
+	if courage_poms > 0:
+		courage_poms -= 1
+		grow_random()
 	# (vfx_pass_spec.md 6 and 5.3: no column over him; the family's own form on the floor, a plain ring for an Elo)
 	if Fx.MARK_FORM.has(b.family):
 		fx.family_mark(b.family, player.pos, 3.0, b.color(), 0.6)
@@ -1832,6 +1844,7 @@ func log_run(outcome: String) -> void:
 	var gain := mastery_gain(outcome, Save.data)
 	var e := run_entry(outcome, gain)
 	RunAward.keep(self, outcome, gain)
+	_keep_courage(outcome)
 	if not RunLog.worth_keeping(outcome, rooms.won.size(), float(e.get("time", 0.0))):
 		pass  # entered the Portal and left: nothing to read in it
 	elif Dev.has("runlog"):
@@ -1839,6 +1852,16 @@ func log_run(outcome: String) -> void:
 	elif Save.enabled and bot == null:
 		RunLog.append(RunLog.PATH, e)
 	run_logged.emit(outcome, e)
+
+
+## Coragem after the descent: one more stack for an early death, none past the room or on a win or under a Juramento.
+func _keep_courage(outcome: String) -> void:
+	if bot != null or not Save.enabled or rooms == null:
+		return
+	var vowed := juramentos != null and juramentos.weight() > 0
+	var next := 0 if vowed else Courage.after(Courage.stacks_of(Save.data, String(hero.id)), outcome, rooms.depth())
+	Courage.set_stacks(Save.data, String(hero.id), next)
+	Save.write()
 
 
 ## Whether a run's materials go into the save (RunAward.banks_materials).
@@ -1967,6 +1990,23 @@ func _equip_vine() -> void:
 ## The Juramentos of this descent (E6): --juramentos=id:rank,... (any, for tests and the robot), else a person's
 ## saved choice once Morvath was sealed once (never without a save: --nosave, the tests); none for the robot. Their numbers on the enemies' life go to the horde
 ## now; the rest is read where it acts (Rooms, Boss, _take).
+## Coragem: after early deaths, +3 life and a pomegranate each (Courage), only for a person's save and without a Juramento.
+func _start_courage() -> void:
+	if bot != null or not Save.enabled:
+		return
+	var hero_id := String(hero.id)
+	var stacks := Courage.active(Courage.stacks_of(Save.data, hero_id), juramentos.weight() > 0)
+	courage_stacks = stacks
+	if stacks == 0:
+		return
+	courage_poms = Courage.pomegranates(stacks)
+	life_bonus += Courage.life(stacks)
+	player.max_hp += Courage.life(stacks)
+	player.hp = player.max_hp
+	var line := T.t(&"courage_start_1") % int(Courage.life(stacks)) if courage_poms == 1 else T.t(&"courage_start_n") % [int(Courage.life(stacks)), courage_poms]
+	fx.word(Vector3(player.pos.x, 3.2, player.pos.y), line, Color(1.0, 0.8, 0.4))
+
+
 func _swear_juramentos() -> void:
 	var chosen := {}
 	if Dev.has("juramentos"):

@@ -18,7 +18,7 @@ extends RefCounted
 ## older file opens with none bought; nothing else changes.
 ## 12 (A Videira, V1, replaced "O Preparo"): vine (bought: ids of the nodes, Vine) in place of account. What a file had
 ## bought of the old tree comes back as the material it paid (Prata or Memória, exact, LEGACY_PREPARO), the old block is left.
-const VERSION := 13
+const VERSION := 14
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
@@ -162,9 +162,11 @@ static func merged(loaded: Variant) -> Dictionary:
 	if version < 12:
 		refund_preparo(out, loaded.get("account"))
 	# files before version 13 (the Warrior's redesign, GE-3): his old Gifts give their Memória back and the Vagas are free again.
-	# The Maga keeps hers until her own redesign (GE-4 adds the same step for her, as version 14)
 	if version < 13:
 		migrate_redesign(out, ["warrior"])
+	# files before version 14 (the Maga's redesign, GE-4): the same for her (her 12 new Gifts, the elements, one ultimate)
+	if version < 14:
+		migrate_redesign(out, ["maga"])
 	# version 8 (Ofícios): nothing to move, an older file opens with the empty block (defaults)
 	out.version = VERSION
 	return out

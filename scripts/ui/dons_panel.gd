@@ -24,6 +24,7 @@ var _name: Label
 var _sub: Label
 var _mark_holder: Control
 var _desc: Label
+var _needs: Label
 var _rule: ColorRect
 var _cost: HBoxContainer
 var _cost_icon: CostIcon
@@ -75,6 +76,13 @@ func _init() -> void:
 	_desc.max_lines_visible = 5
 	_desc.add_theme_constant_override(&"outline_size", 0)
 	col.add_child(_desc)
+	# UX-01: "Pede X equipado." in gold bold under the effect line, only for a Gift that needs another
+	_needs = UiKit.label("", UiKit.GOLD, BODY, UiKit.BOLD_FONT)
+	_needs.name = "needs"
+	_needs.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_needs.add_theme_constant_override(&"outline_size", 0)
+	_needs.visible = false
+	col.add_child(_needs)
 	_bar = MasteryBar.new()
 	_bar.name = "mastery"
 	col.add_child(_bar)
@@ -126,6 +134,8 @@ func tell_node(info: Dictionary) -> void:
 	_name.text = info.name
 	_sub.text = info.sub
 	_desc.text = info.desc
+	_needs.text = info.get("needs", "")
+	_needs.visible = _needs.text != ""
 	_set_mark(int(info.get("slot", -1)))
 	var kind: String = info.get("cost_kind", "")
 	_cost.visible = kind != ""
@@ -162,6 +172,7 @@ func _set_hero_mode(on: bool) -> void:
 	_bar.visible = on
 	_phrase.visible = on
 	_desc.visible = not on
+	_needs.visible = false
 	_cost.visible = not on
 	_rule.visible = not on
 	_verb.visible = not on

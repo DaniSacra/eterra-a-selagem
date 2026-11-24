@@ -288,7 +288,7 @@ const ENEMY_RECOVER := {"skeleton": [1.2, 1.0], "runner": [1.35, 0.5], "guard": 
 ## 0.15 (about 7 blows, as many as it takes to kill it), the rest 1 or 2.
 const POISE := 100.0
 const POISE_WEIGHTS := {"attack": 0.15, "special": 0.6, "dash": 0.5, "omega_attack": 0.7, "omega_special": 0.7,
-	"cast_omega": 0.7, "shout": 0.6, "ultimate": 1.0}
+	"cast_omega": 0.7, "shout": 0.6, "ultimate": 1.0, "crystal": 0.25}
 
 
 func _enemies() -> void:
@@ -2071,38 +2071,39 @@ func _hero() -> void:
 # ---------- the Maga (docs/design/heroes/maga.md, M1a) ----------
 
 const MAGA_COMBOS := "res://data/combos/maga.tres"
-const MAGA_ULT := "res://data/ultimates/maga/00_storm.tres"
-const MAGA_ULT2 := "res://data/ultimates/maga/01_dome_abs.tres"
+const MAGA_ULT := "res://data/ultimates/maga/00_converge.tres"
 const MAGA_TALENTS := "res://data/talents/maga/"
 const MAGA_AMBER := Color(1.0, 0.62, 0.18)
 
 
-## The Maga's tree (maga.md 2): the attack is three shots that end on the first enemy (8, 8, 12; the 2nd lays the Selo inside
-## the Círculo, the 3rd always), the special the Explosão Rúnica at the cursor, Q the Círculo de Contenção, E the Suspensão
-## Arcana. Times: windup, recovery (the next shot starts there) and legs held, as maga.md 2's table. No blow here is struck
-## by a blade: damage 0 and the effect does it (as the Warrior's bolt).
+## The Maga's tree (redesign 2026-11-24, 04_PLANO C.1): the attack is the Centelha (a fire bolt, no chain), held it is the
+## Combustão (a ball that bursts on the first enemy, 15 Magia); the special is the Estilhaço (an ice bolt through the crowd, 4 s),
+## held the Geada (an area at the cursor, 20 Magia); Q the Arco Voltaico, E the Suspensão Arcana. No blow here is struck by a
+## blade: damage 0 and the effect does it (as the Warrior's bolt). The elements are Arcane's (ElementBook).
 func _maga_tree() -> ComboTree:
 	var shot := {"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "chain_window": 0.4, "hit_stop_ms": 0.0,
 		"shake": 0.2, "move_scale": 0.0, "sound": &"dart", "effect": ComboNode.Effect.WAVE, "effect_radius": 11.0, "wave_bolt": true,
-		"wave_speed": 30.0, "wave_stops": true, "wave_color": MAGA_AMBER, "knockback": 2.0}
-	var shot3 := _move(&"bolt3", L, &"Cast", [&"light", &"bolt", &"arcane", &"seal", &"finisher"],
-		shot.merged({"effect_power": 15.0, "effect_size": 0.9, "windup": 0.14, "recovery": 0.20, "move_hold": 0.30, "shake": 0.4}), [], &"move_bolt3")
-	var shot2 := _move(&"bolt2", L, &"Cast", [&"light", &"bolt", &"arcane", &"seal2"],
-		shot.merged({"effect_power": 10.0, "effect_size": 0.7, "windup": 0.10, "recovery": 0.13, "move_hold": 0.20}), [shot3])
-	var shot1 := _move(&"bolt1", L, &"Cast", [&"light", &"bolt", &"arcane"],
-		shot.merged({"effect_power": 10.0, "effect_size": 0.7, "windup": 0.08, "recovery": 0.13, "move_hold": 0.18}), [shot2])
-	shot3.glint = 0.12  # (a finisher of the passive: a short glint on the hand so a slow reader sees the third shot coming; balance 2026-11-24)
-	# right button: Explosão Rúnica, 10 Magia (0 when amplified), 0.6 s between, at the cursor up to 10 m
-	var blast := _move(&"blast", H, &"Cast", [&"heavy", &"blast", &"arcane", &"finisher"],
+		"wave_speed": 30.0, "wave_stops": true, "wave_color": ElementLook.FIRE, "knockback": 2.0}
+	var spark := _move(&"spark", L, &"Cast", [&"light", &"bolt", &"arcane", &"fire"],
+		shot.merged({"effect_power": 8.0, "effect_size": 0.7, "windup": 0.10, "recovery": 0.15, "move_hold": 0.20}), [], &"move_spark")
+	# held: the Combustão (the bolt that bursts on the first enemy; tag omega: Força/Concentração of the Gifts do not reach the Maga, her cost is 15)
+	var combust := _move(&"combust", CL, &"Cast", [&"omega", &"light", &"bolt", &"arcane", &"fire"],
+		shot.merged({"effect_power": 35.0, "effect_size": 1.0, "windup": 0.14, "recovery": 0.25, "move_hold": 0.30, "magick_cost": 15.0,
+		"charge_time": 0.6, "shake": 0.5, "hit_stop_ms": 20.0, "wave_speed": 24.0}, true), [], &"move_combust")
+	# right button: the Estilhaço, 4 s between, through everyone on its way
+	var shard := _move(&"shard", H, &"Cast", [&"heavy", &"bolt", &"arcane", &"ice"],
+		shot.merged({"effect_power": 6.0, "effect_size": 0.8, "windup": 0.16, "recovery": 0.22, "move_hold": 0.30, "cooldown": 4.0,
+		"wave_stops": false, "wave_color": ElementLook.COLD, "wave_speed": 26.0, "hit_stop_ms": 25.0}, true), [], &"move_shard")
+	# held: the Geada at the cursor, 20 Magia
+	var frost := _move(&"frost", C, &"Cast", [&"omega", &"heavy", &"cast", &"arcane", &"ice"],
 		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.18, "recovery": 0.25, "move_hold": 0.35,
-		"chain_window": 0.2, "cooldown": 0.6, "magick_cost": 10.0, "hit_stop_ms": 25.0, "shake": 0.3, "move_scale": 0.0,
-		"sound": &"dart", "effect": ComboNode.Effect.BLAST}, [], &"move_blast")
-	blast.glint = 0.0
-	# Q: Círculo de Contenção, recharge 10 s, within 8 m
-	var circle := _move(&"circle", SH, &"Cast", [&"shout", &"cast", &"arcane"],
+		"chain_window": 0.2, "magick_cost": 20.0, "charge_time": 0.6, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0,
+		"sound": &"wave_omega", "effect": ComboNode.Effect.FROST}, [], &"move_frost")
+	# Q: the Arco Voltaico, recharge 8 s
+	var arc := _move(&"arc", SH, &"Cast", [&"shout", &"cast", &"arcane", &"volt"],
 		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.20, "recovery": 0.15, "move_hold": 0.25,
-		"chain_window": 0.4, "cooldown": 10.0, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "sound": &"wave_omega",
-		"effect": ComboNode.Effect.CONTAIN}, [], &"move_circle")
+		"chain_window": 0.4, "cooldown": 8.0, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "sound": &"wave_omega",
+		"effect": ComboNode.Effect.ARC}, [], &"move_arc")
 	# E: Suspensão Arcana, recharge 14 s
 	# (the tag dash is what the Blessings of the E read, and sets off the skills of the RUSH button: Boon.SLOT_TAG, Skills.trigger_of)
 	var dome := _move(&"dome", RU, &"Cast", [&"dash", &"arcane", &"dome"],
@@ -2110,7 +2111,7 @@ func _maga_tree() -> ComboTree:
 		"chain_window": 0.4, "cooldown": 14.0, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "sound": &"wave_omega",
 		"effect": ComboNode.Effect.DOME}, [], &"move_dome")
 	var tree := ComboTree.new()
-	tree.neutral = [shot1, blast, circle, dome]
+	tree.neutral = [spark, combust, shard, frost, arc, dome]
 	tree.dodge_window = 0.0
 	return tree
 
@@ -2125,14 +2126,10 @@ func _raw(stat: StringName, base: float, per_level: Array = [], tag: StringName 
 	return m
 
 
-## The Maga's tree of Gifts (docs/design/heroes/maga_m2.md 2): three branches in a triangle (Piromancia, Arcanismo, Selos:
-## each a neighbour of the other two), six bridges, five sustain Gifts, 23 in all. An entry needs the centre, a middle its
-## branch's entry, an apex a middle and a Gift of a neighbour (Inferno Rúnico with Arcanismo, Ruptura with Selos, Contenção
-## Perfeita with Piromancia); one Gift a button (ATTACK, SPECIAL, CAST, RUSH the Suspensão, DASH the Passo). Every number is a
-## stat of its mods (BoonState.stat, read by Arcane and Combat); a tag limits it to the moves that carry it. The attack's shots
-## carry light and bolt, the third also seal; the Explosão heavy and blast; the Círculo shout and cast; the Suspensão cast
-## and dome. Brasa Viva comes open at Mastery 1; the others open with Memória as the Warrior's. The burn lasts the game's
-## 3 s whatever a Gift asks (Combat.BURN_TIME): Pavio Longo's 2 s are 3.
+## The Maga's 12 Gifts (redesign 2026-11-24, 04_PLANO C.4; PROVISIONAL, the Daniel has not approved them: docs/backlog.md):
+## Elementalismo (the reactions), Conjuração (the ground and the dome), Feitiçaria (the Arco and the Magia), each an entry, two
+## middles and an apex; `needs` is the Gift that must be equipped. No Gift takes a button. Every number is a stat of its mods
+## (BoonState.stat, read by Arcane); no id repeats one of SaveData.LEGACY_DONS.
 func _maga_talents() -> void:
 	_talent_dir = MAGA_TALENTS
 	DirAccess.make_dir_recursive_absolute(MAGA_TALENTS)
@@ -2140,43 +2137,24 @@ func _maga_talents() -> void:
 		DirAccess.remove_absolute(MAGA_TALENTS + f)
 	var B := TalentDef.Branch
 	var T := TalentDef.Tier
-	var S := Boon.Slot
-	var PA: Array[TalentDef.Branch] = [B.PIRO, B.ARCA]
-	var AC: Array[TalentDef.Branch] = [B.ARCA, B.CTRL]
-	var PC: Array[TalentDef.Branch] = [B.PIRO, B.CTRL]
-	# Piromancia: the detonated Selo leaves a burn (3 s of 4 a second on it and within 1.5 m); the shots burn (2 a second,
-	# the third 5); the Explosão burns what the Selo did not take and grows by a quarter; the amplified Explosão leaves 4 s of embers
-	_talent(0, &"brasa_viva", B.PIRO, T.ENTRY, 2, 1, {"mods": [_raw(&"seal_burn", 4.0)] as Array[BoonMod]})
-	_talent(1, &"pavio_longo", B.PIRO, T.MIDDLE, 2, 5, {"slot": S.ATTACK, "mods": [_raw(&"burn_dps", 2.0, [], &"light"), _raw(&"burn_dps", 2.0, [], &"seal")] as Array[BoonMod]})
-	_talent(2, &"combustao", B.PIRO, T.MIDDLE, 3, 7, {"slot": S.SPECIAL, "mods": [_raw(&"burn_dps", 3.0, [], &"blast"), _raw(&"cast_size_pct", 0.25, [], &"blast")] as Array[BoonMod]})
-	_talent(3, &"inferno_runico", B.PIRO, T.APEX, 4, 16, {"partner": B.ARCA, "mods": [_raw(&"inferno_dps", 8.0), _raw(&"inferno_time", 4.0)] as Array[BoonMod]})
-	# Arcanismo: a Selo gives 1 more Magia; the Selo comes a shot sooner (the third shot 5 weaker); a second Selo on one enemy
-	# (the blast's bonus x1.4); a detonated Selo leaps to the nearest enemy without one
-	_talent(4, &"eco_arcano", B.ARCA, T.ENTRY, 2, 2, {"mods": [_raw(&"seal_magick", 1.0)] as Array[BoonMod]})
-	_talent(5, &"cadeia_curta", B.ARCA, T.MIDDLE, 2, 4, {"slot": S.ATTACK, "mods": [_raw(&"seal_at", -1.0), _raw(&"damage_pct", -1.0 / 3.0, [], &"seal")] as Array[BoonMod]})
-	_talent(6, &"selo_duplo", B.ARCA, T.MIDDLE, 3, 8, {"mods": [_raw(&"seal_cap", 1.0)] as Array[BoonMod]})
-	_talent(7, &"ruptura", B.ARCA, T.APEX, 4, 18, {"partner": B.CTRL, "mods": [_raw(&"seal_leap", 1.0)] as Array[BoonMod]})
-	# Selos (control): the Círculo 0.8 m wider; it roots the commons 0.6 s when it closes; the Suspensão 0.8 m wider and 1 s
-	# longer; the Círculo 2 s longer and the Selo on the first shot inside it
-	_talent(8, &"circulo_expandido", B.CTRL, T.ENTRY, 2, 3, {"mods": [_raw(&"cast_size_pct", 0.25, [], &"shout")] as Array[BoonMod]})
-	_talent(9, &"prisao_sigilada", B.CTRL, T.MIDDLE, 3, 6, {"slot": S.CAST, "mods": [_raw(&"circle_root", 0.6)] as Array[BoonMod]})
-	_talent(10, &"suspensao_larga", B.CTRL, T.MIDDLE, 3, 9, {"slot": S.RUSH, "mods": [_raw(&"dome_size_pct", 0.31), _raw(&"dome_time", 1.0)] as Array[BoonMod]})
-	_talent(11, &"contencao_perfeita", B.CTRL, T.APEX, 4, 20, {"partner": B.PIRO, "mods": [_raw(&"circle_time", 2.0), _raw(&"circle_seal_at", -1.0)] as Array[BoonMod]})
-	# bridges: the third shot burns (5 a second); a blast on 3 Selos or more throws a second at half; the Círculo lays a Selo
-	# on all inside when it closes; the Círculo and the Suspensão recharge a quarter sooner; the Círculo burns when it closes
-	# (12 and 4 a second); the Passo leaves a flash where she was and embers where she lands
-	_talent(12, &"chama_que_marca", B.BRIDGE, T.BRIDGE, 3, 11, {"joins": PA, "mods": [_raw(&"burn_dps", 4.0, [], &"seal")] as Array[BoonMod]})
-	_talent(13, &"brasa_gemea", B.BRIDGE, T.BRIDGE, 3, 19, {"joins": PA, "mods": [_raw(&"twin_blast", 0.5)] as Array[BoonMod]})
-	_talent(14, &"selo_no_chao", B.BRIDGE, T.BRIDGE, 3, 12, {"joins": AC, "mods": [_raw(&"circle_seal", 1.0)] as Array[BoonMod]})
-	_talent(15, &"leitura_rapida", B.BRIDGE, T.BRIDGE, 3, 14, {"joins": AC, "mods": [_raw(&"cooldown_pct", -0.25, [], &"shout"), _raw(&"cooldown_pct", -0.25, [], &"dome")] as Array[BoonMod]})
-	_talent(16, &"brasa_que_prende", B.BRIDGE, T.BRIDGE, 3, 13, {"joins": PC, "mods": [_raw(&"circle_burst", 12.0), _raw(&"burn_dps", 4.0, [], &"shout")] as Array[BoonMod]})
-	_talent(17, &"passo_de_brasa", B.BRIDGE, T.BRIDGE, 3, 15, {"joins": PC, "slot": S.DASH, "mods": [_raw(&"step_flash", 12.0)] as Array[BoonMod]})
-	# sustain, off the branches
-	_talent(18, &"firmeza", B.SUSTAIN, T.SUSTAIN, 2, 10, {"mods": [_raw(&"max_hp", 10), _raw(&"magick_max", 10)] as Array[BoonMod]})
-	_talent(19, &"reserva", B.SUSTAIN, T.SUSTAIN, 3, 12, {"mods": [_raw(&"magick_max", 20)] as Array[BoonMod]})
-	_talent(20, &"respiro", B.SUSTAIN, T.SUSTAIN, 3, 13, {"mods": [_raw(&"room_heal", 2)] as Array[BoonMod]})
-	_talent(21, &"passo_longo", B.SUSTAIN, T.SUSTAIN, 2, 17, {"mods": [_raw(&"blink_pct", 0.18)] as Array[BoonMod]})
-	_talent(22, &"ainda_de_pe", B.SUSTAIN, T.SUSTAIN, 5, 17, {"mods": [_raw(&"rise_share", 0.5)] as Array[BoonMod]})
+	# Elementalismo: the Queimadura lasts 2 s more and hurts 25% more; the Frio freezes a hit sooner and slows 15% more; the Choque
+	# Térmico and the Sobrecarga hit 50% harder; both also reach 2 m around at half (no state, no chain)
+	_talent(0, &"faisca_persistente", B.ELEMENTALISMO, T.ENTRY, 2, 1, {"mods": [_raw(&"burn_time_add", 2.0), _raw(&"burn_dps_pct", 0.25)] as Array[BoonMod]})
+	_talent(1, &"orvalho_gelido", B.ELEMENTALISMO, T.MIDDLE, 2, 5, {"needs": &"faisca_persistente", "mods": [_raw(&"cold_freeze_at", -1.0), _raw(&"slow_pct", 0.15)] as Array[BoonMod]})
+	_talent(2, &"reacao_amplificada", B.ELEMENTALISMO, T.MIDDLE, 3, 10, {"needs": &"faisca_persistente", "mods": [_raw(&"react_pct", 0.5)] as Array[BoonMod]})
+	_talent(3, &"fissao_termica", B.ELEMENTALISMO, T.APEX, 4, 17, {"needs": &"reacao_amplificada", "mods": [_raw(&"react_splash", 0.5)] as Array[BoonMod]})
+	# Conjuração: the Geada 2 s longer and 0.5 m wider; the Combustão leaves the ground burning 3 s; the dome 0.6 m wider and 1 s
+	# longer; inside the dome her shots and areas hit 30% harder
+	_talent(4, &"geada_demorada", B.CONJURACAO, T.ENTRY, 2, 2, {"mods": [_raw(&"geada_time_add", 2.0), _raw(&"geada_radius_add", 0.5)] as Array[BoonMod]})
+	_talent(5, &"chao_ardente", B.CONJURACAO, T.MIDDLE, 3, 7, {"needs": &"geada_demorada", "mods": [_raw(&"ember_floor", 1.0)] as Array[BoonMod]})
+	_talent(6, &"suspensao_ampla", B.CONJURACAO, T.MIDDLE, 3, 12, {"needs": &"geada_demorada", "mods": [_raw(&"dome_size_pct", 0.23), _raw(&"dome_time", 1.0)] as Array[BoonMod]})
+	_talent(7, &"campo_elementar", B.CONJURACAO, T.APEX, 4, 18, {"needs": &"suspensao_ampla", "mods": [_raw(&"dome_shot_pct", 0.3)] as Array[BoonMod]})
+	# Feitiçaria: the Arco hits one more; +0.5 Magia a hit of the Centelha and the Estilhaço; the Estilhaço has two charges and
+	# comes back a quarter sooner; the Arco jumps two more and the Convergência charges 25% faster
+	_talent(8, &"eco_eletrico", B.FEITICARIA, T.ENTRY, 2, 3, {"mods": [_raw(&"arc_targets", 1.0)] as Array[BoonMod]})
+	_talent(9, &"fluxo_de_magia", B.FEITICARIA, T.MIDDLE, 2, 8, {"needs": &"eco_eletrico", "mods": [_raw(&"shot_magick_add", 0.5)] as Array[BoonMod]})
+	_talent(10, &"estilhaco_gemeo", B.FEITICARIA, T.MIDDLE, 3, 13, {"needs": &"eco_eletrico", "mods": [_raw(&"shard_charges", 1.0), _raw(&"cooldown_pct", -0.25, [], &"ice")] as Array[BoonMod]})
+	_talent(11, &"tempestade_contida", B.FEITICARIA, T.APEX, 4, 19, {"needs": &"eco_eletrico", "mods": [_raw(&"arc_targets", 2.0), _raw(&"ult_charge_pct", 0.25)] as Array[BoonMod]})
 	_talent_dir = TALENT_DIR
 
 
@@ -2184,36 +2162,23 @@ func _maga() -> void:
 	_save(_maga_tree(), MAGA_COMBOS)
 	_maga_talents()
 	DirAccess.make_dir_recursive_absolute(MAGA_ULT.get_base_dir())
-	# the Tempestade dos Selos: 6 m at the cursor (up to 9) for 4 s, a Selo on all at the first tick, 8 every 0.5 s,
-	# 110 to each Selo at the end; 90 charge (the Voragem's way: Magia spent, damage dealt, life lost), Mastery 2
+	for f in DirAccess.get_files_at(MAGA_ULT.get_base_dir()):
+		DirAccess.remove_absolute(MAGA_ULT.get_base_dir() + "/" + f)
+	# the Convergência Elemental (04_PLANO C.3): 5 m at the cursor (up to 9) for 4.5 s, ice then fire then volt, a tick every
+	# 0.5 s, 90 of damage in all (ArcaneKit.converge_*); 75 charge (Magia spent, damage dealt, life lost), Mastery 2
 	var u := UltDef.new()
-	u.id = &"storm"
-	u.kind = UltDef.Kind.STORM
-	u.name_key = &"ult_storm"
-	u.desc_key = &"ult_storm_desc"
+	u.id = &"converge"
+	u.kind = UltDef.Kind.CONVERGE
+	u.name_key = &"ult_converge"
+	u.desc_key = &"ult_converge_desc"
 	var numbers := {"charge": 75.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 2, "gesture": 0.3, "weapon": &"bastao",
-		"anim": &"Cast", "anim_peak": PEAK[&"Cast"], "knockback": 4.0, "ahead": 4.0, "aim_max": 9.0, "radius": 6.0, "radius_cap": 7.5,
-		"duration": 4.0, "tick": 0.5, "tick_damage": 8.0, "detonate_damage": 110.0, "elite_share": 0.5, "guardian_share": 0.25, "armor_mult": 2.0}
+		"anim": &"Cast", "anim_peak": PEAK[&"Cast"], "knockback": 0.0, "ahead": 4.0, "aim_max": 9.0, "radius": 5.0, "radius_cap": 6.5,
+		"duration": 4.5, "tick": 0.5, "elite_share": 0.5, "guardian_share": 0.25}
 	for k: String in numbers:
 		u.set(k, numbers[k])
 	u.tags = [&"ultimate", &"cast"] as Array[StringName]
 	_save(u, MAGA_ULT)
-	# the Suspensão Absoluta (maga_m2.md 3.2): a dome of 5.5 m that walks with her for 8 s; every shot that lands inside lays a
-	# Selo and hits 30% harder, the Explosão costs 5; enemy shots of commons and elites hang in the air; 100 charge, Mastery 6
-	var d := UltDef.new()
-	d.id = &"dome_abs"
-	d.kind = UltDef.Kind.DOME
-	d.name_key = &"ult_dome_abs"
-	d.desc_key = &"ult_dome_abs_desc"
-	var dome_numbers := {"charge": 100.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 6, "gesture": 0.3, "weapon": &"", "reserve": true,
-		"anim": &"Cast", "anim_peak": PEAK[&"Cast"], "radius": 5.5, "duration": 8.0, "dome_shot_pct": 0.2, "dome_blast_cost": 5.0}
-	for k: String in dome_numbers:
-		d.set(k, dome_numbers[k])
-	d.tags = [&"ultimate", &"cast"] as Array[StringName]
-	_save(d, MAGA_ULT2)
-	var kit := ArcaneKit.new()  # (every number of ArcaneKit is its default: maga.md 2 and 3)
-	kit.blast_damage = 32.0  # 2026-11-23 balance: the Maga dealt 28/s against the Warrior 42/s (was 25 and 35 with the Selo)
-	kit.blast_seal_damage = 44.0
+	var kit := ArcaneKit.new()  # (every number of ArcaneKit is its default: 04_PLANO C.1 to C.3, prototype numbers)
 	var h := HeroDef.new()
 	h.id = &"maga"
 	h.name_key = &"hero_maga"
@@ -2227,8 +2192,7 @@ func _maga() -> void:
 	h.passive_tags = [&"finisher"] as Array[StringName]
 	h.passive_never = [&"ultimate"] as Array[StringName]
 	h.arcane = kit
-	h.ultimates = [ResourceLoader.load(MAGA_ULT, "", ResourceLoader.CACHE_MODE_REPLACE),
-		ResourceLoader.load(MAGA_ULT2, "", ResourceLoader.CACHE_MODE_REPLACE)] as Array[UltDef]
+	h.ultimates = [ResourceLoader.load(MAGA_ULT, "", ResourceLoader.CACHE_MODE_REPLACE)] as Array[UltDef]
 	h.weapon = &"bastao"
 	h.talents_dir = MAGA_TALENTS
 	h.mastery = ResourceLoader.load(MAGA_MASTERY_PATH, "", ResourceLoader.CACHE_MODE_REPLACE)
@@ -3149,20 +3113,15 @@ const MEDALLION_WARRIOR := [
 	[&"investida_implacavel", 320, 254, 72],
 ]
 const MEDALLION_MAGA := [
-	[&"crown", 0, 254, 72], [&"storm", 331, 254, 48], [&"dome_abs", 29, 254, 48],
-	[&"firmeza", 46, 254, 48], [&"reserva", 59, 254, 48], [&"respiro", 72, 254, 48], [&"passo_longo", 85, 254, 48],
-	[&"ainda_de_pe", 65, 308, 48], [&"circulo_expandido", 100, 254, 48], [&"prisao_sigilada", 113, 254, 48],
-	[&"suspensao_larga", 113, 308, 48], [&"contencao_perfeita", 128, 254, 72], [&"selo_no_chao", 144, 254, 48],
-	[&"leitura_rapida", 144, 308, 48], [&"eco_arcano", 158, 254, 48], [&"cadeia_curta", 170, 254, 48],
-	[&"selo_duplo", 170, 200, 48], [&"ruptura", 184, 254, 72], [&"chama_que_marca", 200, 254, 48],
-	[&"brasa_gemea", 200, 308, 48], [&"brasa_viva", 214, 254, 48], [&"pavio_longo", 227, 254, 48],
-	[&"combustao", 227, 308, 48], [&"inferno_runico", 242, 254, 72], [&"brasa_que_prende", 280, 254, 48],
-	[&"passo_de_brasa", 295, 254, 48],
+	[&"crown", 0, 254, 72], [&"faisca_persistente", 40, 254, 48], [&"orvalho_gelido", 60, 254, 48], [&"reacao_amplificada", 60, 308, 48],
+	[&"fissao_termica", 80, 254, 72], [&"geada_demorada", 160, 254, 48], [&"chao_ardente", 180, 254, 48], [&"suspensao_ampla", 180, 308, 48],
+	[&"campo_elementar", 200, 254, 72], [&"eco_eletrico", 280, 254, 48], [&"fluxo_de_magia", 300, 254, 48], [&"estilhaco_gemeo", 300, 308, 48],
+	[&"tempestade_contida", 320, 254, 72],
 ]
 
 
 func _medallion() -> void:
-	for pair: Array in [["warrior", MEDALLION_WARRIOR, []], ["maga", MEDALLION_MAGA, [&"storm", &"dome_abs"]]]:
+	for pair: Array in [["warrior", MEDALLION_WARRIOR, []], ["maga", MEDALLION_MAGA, []]]:
 		var m := MedallionDef.new()
 		m.hero = StringName(pair[0])
 		for row: Array in pair[1]:

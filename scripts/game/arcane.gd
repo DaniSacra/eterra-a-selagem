@@ -1,60 +1,33 @@
 class_name Arcane
 extends Node3D
-## The Maga's kit in play (docs/design/heroes/maga.md; HeroDef.arcane): the Selo on the enemies, the Explosão Rúnica
-## that detonates it, the Círculo de Contenção, the Suspensão Arcana and the Ressonância. The numbers are ArcaneKit's, the
-## rules SealBook and Resonance (pure, tested); this node does what they answer in the room. Her shots go through
-## Combat.on_shot_hit (shot_landed), her spells through the combo tree's effects (cast), the Tempestade through
-## Ultimates (lay, detonate). Nothing here draws with a new shader: flat unlit pieces in amber and ivory (maga.md 2.4).
+## The Maga's kit in play (redesign 2026-11-24, 04_PLANO C; HeroDef.arcane): Centelha (fire bolt), Combustão (ball that bursts),
+## Estilhaço (ice bolt through the crowd), Geada (cold area), Arco Voltaico (volt chain), the Suspensão Arcana and the Passo.
+## The states (Queimadura, Frio, Eletrizado) and their reactions are ElementBook (pure, tested); this node applies what the
+## book answers in the room. Her bolts go through Combat.on_shot_hit (shot_landed), her spells through the combo tree's
+## effects (cast), the Convergência through Ultimates (apply_element). A reaction never applies a state, so none chains.
 
-const AMBER := Color(1.0, 0.62, 0.18)
 const IVORY := Color(0.95, 0.88, 0.7)
-const GOLD := Color(0.95, 0.72, 0.3)
-## The Selo's glyph: a hexagon over the head, its radius, height over the floor, turn (rad/s).
-const GLYPH_RADIUS := 0.24
-const GLYPH_HEIGHT := 2.4
-const GLYPH_SPIN := 1.4
-## The Círculo's six sigils: their size, and the seconds they blink at the end.
-const SIGILS := 6
-const SIGIL_RADIUS := 0.3
-const SIGIL_BLINK := 0.8
 ## How far ahead of her a spell falls when she has no mouse and nothing is near, as a share of the kit's range.
 const AHEAD_SHARE := 0.6
-## The half angle (degrees) of the cone in which a stick or the robot finds the Selo to detonate, and the furthest one.
+## The half angle (degrees) of the cone in which a stick or the robot finds the nearest enemy.
 const CONE := 65.0
-## What the Círculo's tags are (the Blessings and Gifts that read the Q's size, burn and so on count on them), and the Passo's flash.
-const CIRCLE_TAGS: Array[StringName] = [&"shout", &"cast", &"arcane"]
-const STEP_TAGS: Array[StringName] = [&"dash", &"arcane", &"blink"]
-## Brasa Viva's burn spreads this far from the Selo detonated; the Ruptura's leap and the Passo de Brasa's flash reach this far (m).
-const SEAL_BURN_SPREAD := 1.5
-const LEAP_RANGE := 4.0
-## How long the Selo a leap lays lives (s).
-const LEAP_SECONDS := 4.0
-const FLASH_RADIUS := 2.2
-## The Passo de Brasa's embers where she lands: radius, seconds, damage a second (and the burn it sets).
-const STEP_EMBERS := Vector3(1.2, 2.0, 4.0)
-const STEP_BURN := 4.0
-## The Brasa Gêmea's second blast comes this long after the first (s).
-const TWIN_DELAY := 0.5
-## The Suspensão Absoluta blinks its last seconds.
-const ULTRA_BLINK := 2.0
+const SHOT_TAGS: Array[StringName] = [&"cast", &"arcane"]
+const ARC_TAGS: Array[StringName] = [&"shout", &"cast", &"arcane", &"volt"]
+const FROST_TAGS: Array[StringName] = [&"cast", &"arcane", &"ice"]
+## Queimadura damage is dealt in steps of at least this much (not one number a frame).
+const BURN_STEP := 2.0
+## What Fissão Térmica reaches around the target (m), and the metres the Chão Ardente burns (radius), and how often it sets fire.
+const SPLASH_RADIUS := 2.0
+const EMBER_STEP := 0.5
+const EMBER_SECONDS := 3.0
 ## The dome's rim (the share of the radius from which Galael's shove acts), its speed at push_pct 1 and the Lumael heal's cap in enemies.
 const DOME_RIM := 0.7
 const DOME_PUSH := 4.0
 const DOME_HEAL_CAP := 6
-## The embers the Passo lays at both ends (Rastro and its kin).
-const FILM := preload("res://assets/shaders/dome_film.gdshader")
-const CLOCK := preload("res://assets/shaders/dome_clock.gdshader")
+## The embers the Passo lays at both ends (Rastro and its kin): radius, seconds, unused.
 const STEP_TRAIL := Vector3(1.4, 2.5, 0.0)
-
-class Circle:
-	var at := Vector2.ZERO
-	var life := 0.0
-	var pull_left := 0.0
-	var refunded := 0.0
-	var pulled: Array[Enemy] = []
-	var sigils: Array[MeshInstance3D] = []
-	## The pull is over: the Gifts that act when it closes have acted (Prisão Sigilada, Selo no Chão, Brasa que Prende, the Blessings).
-	var closed := false
+## Seconds of immunity to a new freeze after one (so the Geada does not hold a body frozen for good).
+const THAW := 1.0
 
 class Dome:
 	var life := 0.0
@@ -63,62 +36,56 @@ class Dome:
 	var tags: Array[StringName] = []
 	var touched: Dictionary = {}
 	var node: MeshInstance3D
-	## The Suspensao Absoluta's clock on the rim (a ring on the floor that empties), null in the E's dome.
-	var clock: MeshInstance3D
 	var span := 1.0
 	var held: Array[Projectiles.Shot] = []
 
-## The Brasa Gêmea's second blast, waiting.
-class Twin:
-	var left := 0.5
+## A standing area on the floor: the Geada and the Chão Ardente.
+class Patch:
 	var at := Vector2.ZERO
-	var radius := 3.2
-	var share := 0.5
-	var amplified := false
-	var tags: Array[StringName] = []
-	## What the first blast did to each enemy it hit (the second does a share of it).
-	var first: Dictionary = {}
+	var radius := 2.5
+	var life := 0.0
+	var tick := 0.0
+	var node: MeshInstance3D
 
 var game: Game
 var kit: ArcaneKit
-var seals: SealBook
-var resonance: Resonance
-var circle: Circle
+var book: ElementBook
 var dome: Dome
-## The Suspensão Absoluta (the second ultimate) and its numbers; null when it is not up.
-var ultra: Dome
-var ultra_def: UltDef
-var _twins: Array[Twin] = []
-## Where the last Explosão fell (a Blessing's skill of the special falls there; INF: none this room) and where the Círculo stands.
-var last_blast := Vector2.INF
+var frost: Patch
+var _embers: Array[Patch] = []
+var pips: StatePips
+## How many reaction names the screen takes (UX-08): the first three of each, six words a second.
+var words := WordBudget.new()
 ## What the kit did in this run (RESULT arcane).
-var tally := {"seals": 0, "blasts": 0, "amplified": 0, "detonated": 0, "circles": 0, "domes": 0, "held": 0, "storm_seals": 0, "ultras": 0, "twins": 0, "leaps": 0}
-var _glyphs: Dictionary = {}
-var _boss_gap := 0.0
-var _turn := 0.0
+var tally := {"sparks": 0, "combusts": 0, "shards": 0, "frosts": 0, "arcs": 0, "domes": 0, "held": 0, "freezes": 0,
+	"thermal": 0, "overload": 0, "crystal": 0, "burn_damage": 0.0, "reactions": 0}
+var _burn_acc: Dictionary = {}
+var _shards_used := 0
+var _shard_t := 0.0
 var _found: Array[Enemy] = []
 var _near: Array[Enemy] = []
-var _unlit: StandardMaterial3D
 
 
 func setup(g: Game) -> void:
 	game = g
 	kit = g.hero.arcane
-	seals = SealBook.new(kit.seal_time, kit.seal_cap)
-	resonance = Resonance.new(kit.resonance_max)
+	book = kit.make_book()
+	pips = StatePips.new()
+	add_child(pips)
 	g.player.dodged.connect(_on_dodged)
 
 
-## A new room (or the run's end): the Selos, the Círculo and the Suspensão go (the Ressonância stays: it zeroes with the descent).
+## A new room (or the run's end): the states, the Geada, the embers and the Suspensão go.
 func clear() -> void:
-	seals.clear()
-	for e in _glyphs.keys():
-		_drop_glyph(e)
-	_end_circle()
+	book.clear_all()
+	_burn_acc.clear()
+	_end_frost()
+	for p in _embers:
+		p.node.queue_free()
+	_embers.clear()
 	_end_dome()
-	_end_ultra()
-	_twins.clear()
-	last_blast = Vector2.INF
+	_shards_used = 0
+	_shard_t = 0.0
 
 
 ## A Gift's or a Blessing's number for this hero now (BoonState.stat; the tags limit it to the moves that carry them).
@@ -126,320 +93,327 @@ func _stat(stat_name: StringName, tags: Array[StringName] = []) -> float:
 	return game.boons.stat(stat_name, tags)
 
 
+## The book with the Gifts' numbers on top of the kit's.
+func _configure() -> void:
+	book.burn_time = kit.burn_time + _stat(&"burn_time_add")
+	book.burn_dps = kit.burn_dps * (1.0 + _stat(&"burn_dps_pct"))
+	book.cold_freeze_at = maxi(1, kit.cold_freeze_at + int(_stat(&"cold_freeze_at")))
+	book.react_pct = _stat(&"react_pct")
+
+
 func step(dt: float) -> void:
-	var p := game.player
-	p.free_special = resonance.full()
-	_boss_gap = maxf(0.0, _boss_gap - dt)
-	_turn += dt * GLYPH_SPIN
-	for e: Enemy in seals.keys():
-		if not e.alive:
-			seals.forget(e)
-	seals.cap = kit.seal_cap + int(_stat(&"seal_cap"))  # (Selo Duplo)
-	p.blast_discount = _ultra_discount() if ultra != null else 0.0
-	seals.step(dt, func(e: Enemy) -> bool: return _in_circle(e.pos) or _in_dome(e.pos) or _in_ultra(e.pos))
-	_step_glyphs()
-	_step_circle(dt)
+	_configure()
+	for k in book.keys():
+		if not (k as Enemy).alive:
+			book.clear(k)
+			_burn_acc.erase(k)
+	var burns := book.tick(dt)
+	for e: Enemy in burns:
+		if e.alive:
+			_burn_hurt(e, float(burns[e]))
+	_step_frost(dt)
+	_step_embers(dt)
 	_step_dome(dt)
-	_step_ultra(dt)
-	_step_twins(dt)
+	_step_shard(dt)
+	pips.update(game.horde.list, book)
 
 
-# ---------- the Selo ----------
+## Queimadura: the damage is gathered and dealt in BURN_STEP pieces (no Magia, no Apogeu, no combo: Horde.dealing "elemental").
+func _burn_hurt(e: Enemy, dmg: float) -> void:
+	var acc: float = float(_burn_acc.get(e, 0.0)) + dmg
+	if acc < BURN_STEP:
+		_burn_acc[e] = acc
+		return
+	_burn_acc.erase(e)
+	_elemental_hit(e, acc, ElementLook.FIRE)
+	tally.burn_damage += acc
 
-## A shot of hers touched an enemy (Combat.on_shot_hit): the Magia of the hit, and the Selo when the shot is the one that lays it.
-func shot_landed(e: Enemy, shot: Projectiles.Shot) -> void:
-	game.player.magick.gain(game.hero_gifts.feed.take(kit.shot_magick))
+
+## One hit of an element's own (a reaction, a burn tick): through Horde.damage, as source "elemental".
+func _elemental_hit(e: Enemy, amount: float, color: Color) -> void:
 	if not e.alive or e.invulnerable:
 		return
-	var shift := int(_stat(&"seal_at"))
-	var circle_shift := int(_stat(&"circle_seal_at"))
-	if kit.lays_seal(ArcaneKit.chain_step(shot.tags), _in_circle(e.pos), shift, circle_shift, _in_ultra(e.pos)) and lay(e):
-		game.player.magick.gain(kit.seal_lay_magick)
-		game.fx.burst(&"light", Vector3(e.pos.x, 1.4, e.pos.y))
+	var horde := game.horde
+	horde.dealing = &"elemental"
+	horde.damage(e, maxf(1.0, roundf(amount)), Vector2.ZERO, 0.0, color, true, false, false)
+	horde.dealing = &""
 
 
-## The share more her shots hit with inside the Suspensão Absoluta (Combat.on_shot_hit): 1 outside it.
-func shot_mult(shot: Projectiles.Shot) -> float:
-	return 1.0 + (ultra_def.dome_shot_pct if ultra != null and shot.tags.has(&"arcane") and _in_ultra(shot.pos) else 0.0)
+# ---------- the elements ----------
 
-
-## Lays a Selo on an enemy (the third shot, the Tempestade). True when it is a new one. `most` holds the number the enemy may
-## hold down for this Selo (the Tempestade lays one); `seconds` is how long it lives (the book's, when it is 0 or less).
-func lay(e: Enemy, most: int = -1, seconds: float = -1.0) -> bool:
+## Puts an element on an enemy (a bolt, the Geada, the Arco, the Convergência) and plays what comes of it: the reaction (one
+## at most, and it applies no state), the Frio's slow and the freeze at the third hit. True when it took.
+func apply_element(e: Enemy, element: StringName) -> bool:
 	if not e.alive or e.invulnerable:
 		return false
-	var fresh := seals.lay(e, most, seconds)
-	if fresh:
-		tally.seals += 1
-	return fresh
+	var resists := e.def.behavior == EnemyDef.Behavior.BOSS or e.armor > 0.0
+	var reactions := book.apply(e, element, resists)
+	if element == ElementBook.ICE:
+		_chill(e, resists)
+	for r in reactions:
+		_react(r)
+	return true
 
 
-func sealed_spots() -> Array[Vector2]:
-	var out: Array[Vector2] = []
-	for e: Enemy in seals.keys():
-		out.append(e.pos)
-	return out
+## Frio: slowed (the Gifts lengthen it) and, at the third hit, frozen if it is a common body (a boss never; thaw_t spaces freezes).
+func _chill(e: Enemy, resists: bool) -> void:
+	if e.def.behavior != EnemyDef.Behavior.BOSS:
+		e.slow_t = maxf(e.slow_t, kit.shard_slow_time * (1.0 + _stat(&"slow_pct") / maxf(kit.slow_pct, 0.01)))
+	if book.cold_full(e) and not resists and e.thaw_t <= 0.0 and e.frozen_t <= 0.0:
+		var time := kit.freeze_time * (0.4 if e.def.heavy else 1.0)
+		e.frozen_t = time
+		e.thaw_t = time + THAW
+		tally.freezes += 1
+		game.fx.burst(&"frost", Vector3(e.pos.x, 1.0, e.pos.y))
 
 
-# ---------- the spells (ComboNode.Effect BLAST, CONTAIN, DOME) ----------
+func _react(r: Reaction) -> void:
+	var e := r.target as Enemy
+	tally.reactions += 1
+	var at := Vector3(e.pos.x, 1.0 + e.y, e.pos.y)
+	var fx := game.fx
+	match r.kind:
+		Reaction.Kind.THERMAL:
+			tally.thermal += 1
+			_elemental_hit(e, r.damage, ElementLook.COLD)
+			fx.burst(&"fire", at)
+			fx.burst(&"frost", at)
+		Reaction.Kind.OVERLOAD:
+			tally.overload += 1
+			_elemental_hit(e, r.damage, ElementLook.VOLT)
+			_around(e, r.damage, r.radius, 1.0, 0.0)
+			fx.ring(e.pos, r.radius, ElementLook.VOLT, 0.3, 0.15, true)
+			fx.burst(&"spark", at)
+		Reaction.Kind.CRYSTAL:
+			tally.crystal += 1
+			if r.freeze > 0.0 and e.thaw_t <= 0.0 and e.frozen_t <= 0.0:
+				e.frozen_t = r.freeze * (0.4 if e.def.heavy else 1.0)
+				e.thaw_t = r.freeze + THAW
+			elif r.poise > 0.0:
+				game.horde.crack(e, &"crystal")  # Quebra instead of a freeze (the boss's Postura, a common's poise)
+			fx.burst(&"frost", at)
+			fx.burst(&"spark", at)
+	var word_key := &"word_react_thermal" if r.kind == Reaction.Kind.THERMAL else &"word_react_overload" if r.kind == Reaction.Kind.OVERLOAD else &"word_react_crystal"
+	if words.admit(book.now):
+		fx.word(at + Vector3(0.0, 0.8, 0.0), T.t(word_key) if words.named(word_key) else "", ElementLook.VOLT)
+	var splash := _stat(&"react_splash")  # Fissão Térmica: the same damage, a share of it, 2 m around (no state, no chain)
+	if splash > 0.0 and r.kind != Reaction.Kind.CRYSTAL:
+		_around(e, r.damage * splash, SPLASH_RADIUS, 1.0, r.radius)
+
+
+## Damage to the enemies within `radius` of `e` (not `e`, not those within `skip` m of it: they took it already).
+func _around(e: Enemy, amount: float, radius: float, _share: float, skip: float) -> void:
+	game.horde.in_circle(e.pos, radius, _near)
+	for n: Enemy in _near.duplicate():
+		if n != e and n.alive and n.pos.distance_to(e.pos) > skip:
+			_elemental_hit(n, amount, ElementLook.VOLT)
+
+
+# ---------- the bolts (Combat.on_shot_hit) ----------
+
+## A bolt of hers touched an enemy: the Magia of the hit and the element of the bolt (Centelha: fire at the third hit in 4 s;
+## Combustão: fire on all in the burst; Estilhaço: ice).
+func shot_landed(e: Enemy, shot: Projectiles.Shot) -> void:
+	var tags := shot.tags
+	var spark := tags.has(&"fire") and not tags.has(&"omega")
+	var gain := (kit.shot_magick if spark else 0.0)
+	if spark or tags.has(&"ice"):
+		gain += _stat(&"shot_magick_add")
+	if gain > 0.0:
+		game.player.magick.gain(game.hero_gifts.feed.take(gain))
+	if not e.alive or e.invulnerable:
+		return
+	if spark:
+		tally.sparks += 1
+		if book.count_hit(e, kit.spark_hits, kit.spark_window):
+			apply_element(e, ElementBook.FIRE)
+	elif tags.has(&"fire"):
+		_combust(e, shot)
+	elif tags.has(&"ice"):
+		tally.shards += 1
+		apply_element(e, ElementBook.ICE)
+
+
+## The share more her bolts and areas hit with inside the dome (Campo Elementar): 1 outside it.
+func shot_mult(shot: Projectiles.Shot) -> float:
+	return 1.0 + (_stat(&"dome_shot_pct") if _in_dome(shot.pos) else 0.0)
+
+
+## The Combustão bursts on the first enemy: the same damage to all within combust_radius, Queimadura on every one, and the Chão
+## Ardente's floor when the Gift is on.
+func _combust(first: Enemy, shot: Projectiles.Shot) -> void:
+	tally.combusts += 1
+	var mult := shot_mult(shot)
+	var at := first.pos
+	apply_element(first, ElementBook.FIRE)
+	game.horde.in_circle(at, kit.combust_radius, _found)
+	for n: Enemy in _found.duplicate():
+		if n == first or not n.alive or n.invulnerable:
+			continue
+		var away := (n.pos - at).normalized() if n.pos.distance_to(at) > 0.01 else Vector2.RIGHT
+		if not game.combat.hit_enemy(n, shot.damage * mult, shot.tags, away, kit.combust_knockback, false, true):
+			apply_element(n, ElementBook.FIRE)
+	var fx := game.fx
+	fx.ring(at, kit.combust_radius, ElementLook.FIRE, 0.35, 0.15, true)
+	fx.burst(&"fire", Vector3(at.x, 0.6, at.y))
+	fx.shake(1.6)
+	Audio.play(CombatSounds.EVENTS[&"circle_burst"])
+	if _stat(&"ember_floor") > 0.0:
+		_lay_embers(at)
+
+
+# ---------- the spells (ComboNode.Effect FROST, ARC, DOME) ----------
 
 func cast(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	match node.effect:
-		ComboNode.Effect.BLAST:
-			_blast(node, origin, dir)
-		ComboNode.Effect.CONTAIN:
-			_contain(origin, dir)
+		ComboNode.Effect.FROST:
+			_frost(origin, dir)
+		ComboNode.Effect.ARC:
+			_arc(node, origin, dir)
 		ComboNode.Effect.DOME:
 			_suspend(node)
 
 
-## Where a Blessing's skill of this button falls instead of at her feet: the Explosão's spot for the special, the Círculo's for
-## the Q (INF: at her feet, as the Warrior's).
-func spot_of(trigger: SkillDef.Trigger) -> Vector2:
-	if trigger == SkillDef.Trigger.SPECIAL:
-		return last_blast
-	if trigger == SkillDef.Trigger.SHOUT and circle != null:
-		return circle.at
-	return Vector2.INF
-
-
-## Where a spell falls: the mouse on the floor; without it (stick, robot) the Selo within the cone (when `seals_first`), else
-## the nearest enemy in the cone, else ahead of her.
-func cursor(origin: Vector2, dir: Vector2, seals_first: bool) -> Vector2:
+## Where a spell falls: the mouse on the floor; without it (stick, robot) the nearest enemy in the cone, else ahead of her.
+func cursor(origin: Vector2, dir: Vector2, reach: float) -> Vector2:
 	if Controls.aims_with_mouse():
 		var m := game.aim_floor()
 		if m != Vector2.INF:
 			return m
-	var half := deg_to_rad(CONE)
-	if seals_first:
-		var best: Enemy = null
-		for e: Enemy in seals.keys():
-			if e.alive and absf(dir.angle_to(e.pos - origin)) < half and e.pos.distance_to(origin) <= kit.blast_range \
-					and (best == null or e.pos.distance_squared_to(origin) < best.pos.distance_squared_to(origin)):
-				best = e
-		if best != null:
-			return best.pos
-	var near := game.horde.nearest_ahead(origin, dir, kit.blast_range, half)
-	return near.pos if near != null else origin + dir * kit.blast_range * AHEAD_SHARE
+	var near := game.horde.nearest_ahead(origin, dir, reach, deg_to_rad(CONE))
+	return near.pos if near != null else origin + dir * reach * AHEAD_SHARE
 
 
-func _blast(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
-	var amplified := resonance.take_amplified()
-	var at := kit.blast_at(origin, cursor(origin, dir, true), sealed_spots())
-	var radius := kit.blast_size(amplified) * (1.0 + _stat(&"cast_size_pct", node.tags) + _stat(&"wave_size_pct", node.tags))
-	game.horde.in_circle(at, radius, _found)
-	last_blast = at
-	var hits := 0
-	var detonated := 0  # Selos (Selo Duplo: an enemy may hold two)
-	var struck := {}  # enemy -> the base damage it took (the Brasa Gêmea's second blast does a share of it)
-	var marked: Array[Enemy] = []  # enemies whose Selo went off
-	var burn := _stat(&"seal_burn")
-	var combat := game.combat
-	for e: Enemy in _found.duplicate():
-		if e.invulnerable:
-			continue
-		var held := seals.count(e)
-		var bonus := held
-		if held > 0 and e.def.behavior == EnemyDef.Behavior.BOSS:
-			bonus = held if _boss_gap <= 0.0 else 0
-			if bonus > 0:
-				_boss_gap = kit.boss_seal_gap
-		var away := (e.pos - at).normalized() if e.pos.distance_to(at) > 0.01 else Vector2.RIGHT
-		seals.take(e)
-		var damage := kit.blast_hit_n(bonus, amplified)
-		struck[e] = damage
-		combat.hit_enemy(e, damage, node.tags, away, kit.blast_knockback, false, true)
-		hits += 1
-		if held > 0:
-			detonated += held
-			marked.append(e)
-			if burn > 0.0:
-				_burn_near(e.pos, burn)  # Brasa Viva
-	var fx := game.fx
-	if hits > 0:
-		combat.shot_weight(Combat.shot_stop_ms(node), dir)  # the Explosão weighs on contact (CB 2)
-	fx.ring(at, radius, AMBER, 0.35, 0.15, true)
-	fx.ring(at, radius * 0.55, IVORY, 0.25)
-	fx.burst(&"fire", Vector3(at.x, 0.6, at.y))
-	fx.shake(1.6 if not amplified else 2.6)
-	Audio.play(CombatSounds.EVENTS[&"circle_burst"])
-	tally.blasts += 1
-	tally.amplified += int(amplified)
-	tally.detonated += detonated
-	if detonated > 0:
-		game.player.magick.gain((kit.seal_magick + _stat(&"seal_magick")) * mini(detonated, kit.seal_magick_cap))  # Eco Arcano
-		if not amplified:
-			resonance.add(kit.resonance_per_seal * detonated)
-		_refund_circle(detonated)
-	if amplified and _stat(&"inferno_dps") > 0.0:
-		# Inferno Rúnico: the amplified blast leaves embers where it fell
-		game.ground.add_zone(Ground.Kind.EMBER, at, kit.blast_radius, _stat(&"inferno_time"), _stat(&"inferno_dps"))
-	if _stat(&"seal_leap") > 0.0:
-		for e in marked:
-			_leap(e)  # Ruptura
-	var twin := _stat(&"twin_blast")
-	if twin > 0.0 and detonated >= 3:
-		var t := Twin.new()
-		t.left = TWIN_DELAY
-		t.at = at
-		t.radius = radius
-		t.share = twin
-		t.amplified = amplified
-		t.tags = node.tags
-		t.first = struck
-		_twins.append(t)
-	if hits > 0:
-		combat.landed.emit(null, node.tags, hits)  # the finisher of the passive
-
-
-## Brasa Viva: the Selo's burn on the enemy that held it and on those within SEAL_BURN_SPREAD m of it.
-func _burn_near(p: Vector2, dps: float) -> void:
-	game.horde.in_circle(p, SEAL_BURN_SPREAD, _near)
-	for n: Enemy in _near:
-		if n.alive:
-			game.combat.ignite(n, dps)
-
-
-## Ruptura: a Selo that went off jumps once to the nearest enemy without one within LEAP_RANGE m (a boss is never chosen) and lives 4 s.
-func _leap(from: Enemy) -> void:
-	game.horde.in_circle(from.pos, LEAP_RANGE, _near)
-	var best: Enemy = null
-	for n: Enemy in _near:
-		if n == from or not n.alive or n.invulnerable or seals.has(n) or n.def.behavior == EnemyDef.Behavior.BOSS:
-			continue
-		if best == null or n.pos.distance_squared_to(from.pos) < best.pos.distance_squared_to(from.pos):
-			best = n
-	if best != null and lay(best, -1, LEAP_SECONDS):
-		tally.leaps += 1
-		game.fx.burst(&"light", Vector3(best.pos.x, 1.4, best.pos.y))
-
-
-func _step_twins(dt: float) -> void:
-	for t in _twins.duplicate():
-		t.left -= dt
-		if t.left <= 0.0:
-			_twins.erase(t)
-			_twin_blast(t)
-
-
-## The Brasa Gêmea: the same place again, a share of what each enemy took the first time (those that came in since take the share
-## of a bare blast). No Magia, no Ressonância, no Selo.
-func _twin_blast(t: Twin) -> void:
-	game.horde.in_circle(t.at, t.radius, _found)
-	for e: Enemy in _found.duplicate():
-		if e.invulnerable or not e.alive:
-			continue
-		var away := (e.pos - t.at).normalized() if e.pos.distance_to(t.at) > 0.01 else Vector2.RIGHT
-		var damage: float = t.first.get(e, kit.blast_hit_n(0, t.amplified))
-		game.combat.hit_enemy(e, damage * t.share, t.tags, away, kit.blast_knockback * 0.5, false, true)
-	game.fx.ring(t.at, t.radius * 0.8, AMBER, 0.3, 0.15, true)
-	game.fx.burst(&"fire", Vector3(t.at.x, 0.6, t.at.y))
-	Audio.play(CombatSounds.EVENTS[&"circle_burst"])
-	tally.twins += 1
-
-
-## The Q's recharge gets a second back for each Selo detonated (at most circle_refund_cap a cast; never under cd_floor).
-func _refund_circle(detonated: int) -> void:
-	if circle == null:
-		return
-	var ask := minf(kit.circle_refund * detonated, kit.circle_refund_cap - circle.refunded)
-	circle.refunded += game.player.refund_shout(ask)
-
-
-func _contain(origin: Vector2, dir: Vector2) -> void:
-	_end_circle()
-	var c := Circle.new()
-	c.at = game.arena.resolve(kit.circle_at(origin, cursor(origin, dir, false)), 0.5) if game.arena else origin
-	c.life = kit.circle_time + _stat(&"circle_time")  # Contenção Perfeita
-	c.pull_left = kit.circle_pull_time
-	var size := _circle_size()
-	game.horde.in_circle(c.at, size, _found)
-	for e: Enemy in _found:
-		if Combat.is_common(e.def):
-			c.pulled.append(e)
-	for k in SIGILS:
-		var a := TAU * k / SIGILS
-		var m := _flat(SIGIL_RADIUS, GOLD)
-		m.position = Vector3(c.at.x + cos(a) * size * 0.95, 0.08, c.at.y + sin(a) * size * 0.95)
-		add_child(m)
-		c.sigils.append(m)
-	circle = c
-	tally.circles += 1
-	game.fx.ring(c.at, size, GOLD, 0.4, 0.15, true)
-	game.fx.burst(&"light", Vector3(c.at.x, 0.4, c.at.y))
+## The Geada: an area at the cursor (up to frost_range), Frio on all inside every frost_step, frost_dps a second.
+func _frost(origin: Vector2, dir: Vector2) -> void:
+	_end_frost()
+	var p := Patch.new()
+	p.at = game.arena.resolve(ArcaneKit.spot(origin, cursor(origin, dir, kit.frost_range), kit.frost_range), 0.5) if game.arena else origin
+	p.radius = kit.frost_radius + _stat(&"geada_radius_add")
+	p.life = kit.frost_time + _stat(&"geada_time_add")
+	p.tick = 0.0
+	p.node = _disc(p.radius, ElementLook.COLD, 0.28)
+	p.node.position = Vector3(p.at.x, 0.05, p.at.y)
+	frost = p
+	tally.frosts += 1
+	game.fx.ring(p.at, p.radius, ElementLook.COLD, 0.4, 0.15, true)
+	game.fx.burst(&"frost", Vector3(p.at.x, 0.4, p.at.y))
 	Audio.play(CombatSounds.EVENTS[&"circle"])
 
 
-## The Círculo's radius with the Blessings' and the Gifts' size (Círculo Expandido).
-func _circle_size() -> float:
-	return kit.circle_radius * (1.0 + _stat(&"cast_size_pct", CIRCLE_TAGS))
-
-
-func _in_circle(p: Vector2) -> bool:
-	return circle != null and p.distance_to(circle.at) <= _circle_size() + 0.4
-
-
-func _step_circle(dt: float) -> void:
-	var c := circle
-	if c == null:
+func _step_frost(dt: float) -> void:
+	var p := frost
+	if p == null:
 		return
-	c.life -= dt
-	if c.life <= 0.0:
-		_end_circle()
+	p.life -= dt
+	if p.life <= 0.0:
+		_end_frost()
 		return
-	var shown := 1.0 if c.life > SIGIL_BLINK or int(c.life * 8.0) % 2 == 0 else 0.0
-	for s in c.sigils:
-		s.visible = shown > 0.0
-		s.rotation.y = _turn
-	if c.pull_left > 0.0:
-		var step_dt := minf(dt, c.pull_left)
-		c.pull_left -= dt
-		for e in c.pulled:
-			if e.alive:
-				var to := e.pos + kit.pull_step(e.pos, c.at, step_dt) * (1.0 + _stat(&"push_pct", CIRCLE_TAGS))  # (Galael: the pull draws further)
-				e.pos = game.arena.sweep(e.pos, to, e.def.radius) if game.arena else to
-	if c.pull_left <= 0.0 and not c.closed:
-		_close_circle(c)
-	game.horde.in_circle(c.at, _circle_size(), _found)
-	for e: Enemy in _found:
-		if e.def.behavior != EnemyDef.Behavior.BOSS:
-			e.slow_t = maxf(e.slow_t, kit.circle_slow)
-
-
-## The pull is over: what the Gifts and the Blessings of the Q do to everyone inside. Brasa que Prende hurts them, Selo no Chão
-## marks the commons and the elites, Prisão Sigilada roots the commons, and the statuses of the Q's tags (burn, frost, weakness,
-## mark) are put on all, so the Blessings of the Q have something to act on (the Círculo strikes nothing itself).
-func _close_circle(c: Circle) -> void:
-	c.closed = true
-	var burst := _stat(&"circle_burst")
-	var root := _stat(&"circle_root")
-	var mark := _stat(&"circle_seal") > 0.0
-	game.horde.in_circle(c.at, _circle_size(), _found)
+	p.tick -= dt
+	if p.tick > 0.0:
+		return
+	p.tick += kit.frost_step
+	game.horde.in_circle(p.at, p.radius, _found)
 	for e: Enemy in _found.duplicate():
 		if not e.alive or e.invulnerable:
 			continue
-		if burst > 0.0 and game.combat.hit_enemy(e, burst, CIRCLE_TAGS, Vector2.ZERO, 0.0, false):
-			continue
-		game.combat.touch(e, CIRCLE_TAGS)
-		if mark and not (e.def.heavy or e.def.behavior == EnemyDef.Behavior.BOSS):
-			lay(e)
-		if root > 0.0 and Combat.is_common(e.def):
-			e.stun_t = maxf(e.stun_t, root)
+		var dealt := kit.frost_dps * kit.frost_step * (1.0 + (_stat(&"dome_shot_pct") if _in_dome(p.at) else 0.0))
+		if not game.combat.hit_enemy(e, dealt, FROST_TAGS, Vector2.ZERO, 0.0, false):
+			apply_element(e, ElementBook.ICE)
 
 
-func _end_circle() -> void:
-	if circle == null:
+func _end_frost() -> void:
+	if frost != null:
+		frost.node.queue_free()
+		frost = null
+
+
+## The Arco Voltaico: the nearest enemy to her, then the nearest to it not yet hit, up to arc_targets (the Gifts add); Eletrizado on each.
+func _arc(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
+	var count := kit.arc_targets + int(_stat(&"arc_targets"))
+	var hit: Array[Enemy] = []
+	var from := origin
+	var reach := kit.arc_range
+	var mult := 1.0 + (_stat(&"dome_shot_pct") if _in_dome(origin) else 0.0)
+	var fx := game.fx
+	for _i in count:
+		var best: Enemy = null
+		game.horde.in_circle(from, reach, _near)
+		for n: Enemy in _near:
+			if n.alive and not n.invulnerable and not hit.has(n) and (best == null or n.pos.distance_squared_to(from) < best.pos.distance_squared_to(from)):
+				best = n
+		if best == null:
+			break
+		var at := Vector3(best.pos.x, 1.0 + best.y, best.pos.y)
+		fx.burst(&"spark", at)
+		fx.ring(best.pos, 0.8, ElementLook.VOLT, 0.2, 0.1, true)
+		hit.append(best)
+		var away := (best.pos - from).normalized() if best.pos.distance_to(from) > 0.01 else dir
+		if not game.combat.hit_enemy(best, kit.arc_damage * mult, node.tags, away, 0.0, false):
+			apply_element(best, ElementBook.VOLT)
+		from = best.pos
+		reach = kit.arc_jump
+	tally.arcs += 1
+	if not hit.is_empty():
+		fx.shake(1.0)
+		Audio.play(CombatSounds.EVENTS[&"circle"])
+
+
+## A bolt of hers was thrown (Combat.strike, effect WAVE). Estilhaço Gêmeo: a second charge. The first cast gives its recharge
+## back at once; the next one runs it; a charge comes back every recharge (_step_shard).
+func thrown(node: ComboNode) -> void:
+	if not node.has_tag(&"ice"):
 		return
-	for s in circle.sigils:
-		s.queue_free()
-	circle = null
+	var charges := 1 + int(_stat(&"shard_charges"))
+	_shards_used += 1
+	if _shards_used < charges:
+		game.player.runner.cooldown_refund(node.id, 99.0, 0.0)
+
+
+func _step_shard(dt: float) -> void:
+	if _shards_used <= 0:
+		return
+	var node := ComboTree.find(game.player.tree.neutral, ComboNode.In.HEAVY)
+	if node == null or game.player.runner.cooldown_left(node.id) > 0.0:
+		return
+	_shard_t += dt
+	if _shard_t >= node.cooldown * (1.0 - clampf(-_stat(&"cooldown_pct", node.tags), 0.0, 0.5)):
+		_shard_t = 0.0
+		_shards_used -= 1
+
+
+## Chão Ardente: the floor burns EMBER_SECONDS; Queimadura on whoever stands in it every EMBER_STEP (it does not renew itself).
+func _lay_embers(at: Vector2) -> void:
+	var p := Patch.new()
+	p.at = at
+	p.radius = kit.combust_radius
+	p.life = EMBER_SECONDS
+	p.node = _disc(p.radius, ElementLook.FIRE, 0.3)
+	p.node.position = Vector3(at.x, 0.05, at.y)
+	_embers.append(p)
+
+
+func _step_embers(dt: float) -> void:
+	for p in _embers.duplicate():
+		p.life -= dt
+		if p.life <= 0.0:
+			_embers.erase(p)
+			p.node.queue_free()
+			continue
+		p.tick -= dt
+		if p.tick <= 0.0:
+			p.tick += EMBER_STEP
+			game.horde.in_circle(p.at, p.radius, _found)
+			for e: Enemy in _found.duplicate():
+				if e.alive:
+					apply_element(e, ElementBook.FIRE)
 
 
 func _suspend(node: ComboNode) -> void:
 	_end_dome()
 	var d := Dome.new()
 	d.tags = node.tags
-	d.life = kit.dome_time + _stat(&"dome_time")  # Suspensão Larga
+	d.life = kit.dome_time + _stat(&"dome_time")  # Suspensão Ampla
 	d.radius = kit.dome_radius * (1.0 + _stat(&"dome_size_pct"))
 	d.node = _dome_node(d.radius, 0.1)
 	dome = d
@@ -447,7 +421,7 @@ func _suspend(node: ComboNode) -> void:
 	if _stat(&"dome_shield", d.tags) > 0.0 and not game.player.shield_ready:
 		game.player.shield_ready = true  # (Shomael: the dome opens with the shield ready)
 		game.fx.burst(&"heal", Vector3(game.player.pos.x, 1.2, game.player.pos.y))
-	game.fx.ring(game.player.pos, d.radius, IVORY, 0.35, 0.15, true)
+	game.fx.ring(game.player.pos, d.radius, ElementLook.VOLT, 0.35, 0.15, true)
 	Audio.play(CombatSounds.EVENTS[&"circle"])
 
 
@@ -463,28 +437,6 @@ func _dome_heals(d: Dome) -> void:
 	if n > 0:
 		game.player.heal(per * mini(n, DOME_HEAL_CAP))
 		game.fx.burst(&"heal", Vector3(game.player.pos.x, 1.2, game.player.pos.y))
-
-
-## The film of the big dome: ivory with a gold hexagon net and an amber rim (dome_film.gdshader).
-func _film_material() -> ShaderMaterial:
-	var m := ShaderMaterial.new()
-	m.shader = FILM
-	return m
-
-
-## The clock on the floor at the big dome's rim: it follows her and empties with the seconds (`_step_ultra`).
-func _clock_node(radius: float) -> MeshInstance3D:
-	var mi := MeshInstance3D.new()
-	var quad := QuadMesh.new()
-	quad.size = Vector2.ONE * radius * 2.0
-	quad.orientation = PlaneMesh.FACE_Y
-	mi.mesh = quad
-	var m := ShaderMaterial.new()
-	m.shader = CLOCK
-	mi.material_override = m
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(mi)
-	return mi
 
 
 ## The dome's ball: a pale ivory skin of this radius and alpha, put in the room.
@@ -522,7 +474,7 @@ func _step_dome(dt: float) -> void:
 		return
 	var at := game.player.pos
 	d.node.position = Vector3(at.x, 1.1, at.y)
-	_hold_shots(d, at, false)
+	_hold_shots(d, at)
 	game.horde.in_circle(at, d.radius, _found)
 	var push := _stat(&"push_pct", d.tags)  # (Galael: the rim shoves outward)
 	for e: Enemy in _found:
@@ -536,24 +488,14 @@ func _step_dome(dt: float) -> void:
 			game.combat.touch(e, d.tags)  # (burn, frost, weakness, mark of the Blessings of the E, once to each that comes in)
 
 
-## Enemy shots that reach the dome stop in the air (`sparing`: not a guardian's nor the boss's, the Suspensão Absoluta's rule).
-func _hold_shots(d: Dome, at: Vector2, sparing: bool) -> void:
+## Enemy shots that reach the dome stop in the air.
+func _hold_shots(d: Dome, at: Vector2) -> void:
 	for s in game.projectiles.shots:
 		if Projectiles.hostile(s) and not s.frozen and s.life > 0.0 and s.pos.distance_to(at) <= d.radius + s.radius:
-			if sparing and _spared(s):
-				continue
 			s.frozen = true
 			d.held.append(s)
 			tally.held += 1
 			game.fx.burst(&"spark", Vector3(s.pos.x, Projectiles.HEIGHT, s.pos.y))
-
-
-## A shot the Suspensão Absoluta does not hold: Morvath's own (no shooter kind) and a guardian's (a heavy kind).
-func _spared(s: Projectiles.Shot) -> bool:
-	if s.by == &"":
-		return true
-	var def := game.horde.def(s.by)
-	return def != null and def.heavy
 
 
 ## The dome falls: what it held goes out with it.
@@ -569,143 +511,40 @@ func _release(d: Dome) -> void:
 		s.life = 0.0
 		s.frozen = false
 	d.node.queue_free()
-	if d.clock != null:
-		d.clock.queue_free()
 
-
-# ---------- the Suspensão Absoluta (the second ultimate) ----------
-
-## Ultimates lets it go: a big dome that walks with her for the ultimate's seconds.
-func open_absolute(def: UltDef) -> void:
-	_end_ultra()
-	var d := Dome.new()
-	d.life = def.duration
-	d.radius = def.radius
-	d.span = maxf(def.duration, 0.1)
-	d.node = _dome_node(d.radius, 0.08)
-	d.node.material_override = _film_material()
-	d.clock = _clock_node(d.radius)
-	ultra = d
-	ultra_def = def
-	tally.ultras += 1
-	game.fx.ring(game.player.pos, d.radius, IVORY, 0.4, 0.15, true)
-	game.fx.ring(game.player.pos, d.radius * 0.6, AMBER, 0.3)
-	Audio.play(CombatSounds.EVENTS[&"ult_vortex"])
-
-
-func _in_ultra(p: Vector2) -> bool:
-	return ultra != null and p.distance_to(game.player.pos) <= ultra.radius + 0.4
-
-
-## The share off the Explosão's price inside it: its own price (dome_blast_cost) over the move's.
-func _ultra_discount() -> float:
-	var node := ComboTree.find(game.player.tree.neutral, ComboNode.In.HEAVY)
-	if node == null or node.magick_cost <= 0.0:
-		return 0.0
-	return clampf(1.0 - ultra_def.dome_blast_cost / node.magick_cost, 0.0, 1.0)
-
-
-func _step_ultra(dt: float) -> void:
-	var d := ultra
-	if d == null:
-		return
-	d.life -= dt
-	if d.life <= 0.0:
-		_end_ultra()
-		return
-	var at := game.player.pos
-	d.node.position = Vector3(at.x, 1.1, at.y)
-	d.node.visible = d.life > ULTRA_BLINK or int(d.life * 6.0) % 2 == 0
-	d.clock.position = Vector3(at.x, 0.12, at.y)
-	d.clock.visible = d.node.visible
-	(d.clock.material_override as ShaderMaterial).set_shader_parameter(&"left", d.life / d.span)
-	_hold_shots(d, at, true)
-	game.horde.in_circle(at, d.radius, _found)
-	for e: Enemy in _found:
-		e.slow_t = maxf(e.slow_t, kit.dome_slow)  # (Morvath too: only slowed)
-
-
-func _end_ultra() -> void:
-	if ultra == null:
-		return
-	_release(ultra)
-	ultra = null
-	ultra_def = null
-	game.player.blast_discount = 0.0
 
 
 # ---------- the Passo ----------
 
-## Passo de Brasa: a flash where she was (it hurts and burns whoever stood there) and embers where she came out.
+## Rastro: embers where she left and where she came out (a Blessing's, stat dodge_ember_dps).
 func _on_dodged(_dir: Vector2) -> void:
 	var trail := _stat(&"dodge_ember_dps")
-	if trail > 0.0:  # (Rastro: embers where she left and where she came out, not a line ahead as the roll's)
+	if trail > 0.0:
 		game.ground.add_zone(Ground.Kind.EMBER, game.player.last_blink_from, STEP_TRAIL.x, STEP_TRAIL.y, trail, Combat.EMBER_TAGS)
 		game.ground.add_zone(Ground.Kind.EMBER, game.player.pos, STEP_TRAIL.x, STEP_TRAIL.y, trail, Combat.EMBER_TAGS)
-	var flash := _stat(&"step_flash")
-	if flash <= 0.0:
-		return
-	var from := game.player.last_blink_from
-	game.horde.in_circle(from, FLASH_RADIUS, _found)
-	for e: Enemy in _found.duplicate():
-		if not e.alive or e.invulnerable:
-			continue
-		var away := (e.pos - from).normalized() if e.pos.distance_to(from) > 0.01 else Vector2.RIGHT
-		if not game.combat.hit_enemy(e, flash, STEP_TAGS, away, 3.0, false):
-			game.combat.ignite(e, STEP_BURN)
-	game.fx.ring(from, FLASH_RADIUS, AMBER, 0.3, 0.15, true)
-	game.fx.burst(&"fire", Vector3(from.x, 0.5, from.y))
-	game.ground.add_zone(Ground.Kind.EMBER, game.player.pos, STEP_EMBERS.x, STEP_EMBERS.y, STEP_EMBERS.z)
 
 
-# ---------- the Tempestade ----------
-
-## The Tempestade's detonation of one enemy: its Selo is consumed (true when it held one).
-func detonate(e: Enemy) -> bool:
-	return seals.take(e) > 0
-
-
-# ---------- the Selo drawn ----------
-
-func _flat(radius: float, color: Color) -> MeshInstance3D:
+## A flat disc on the floor (the Geada's and the embers' area): unlit, translucent.
+func _disc(radius: float, color: Color, alpha: float) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	var disc := CylinderMesh.new()
 	disc.top_radius = radius
 	disc.bottom_radius = radius
 	disc.height = 0.02
-	disc.radial_segments = 6
+	disc.radial_segments = 24
 	disc.rings = 1
 	mi.mesh = disc
-	if _unlit == null:
-		_unlit = StandardMaterial3D.new()
-		_unlit.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	var m := _unlit.duplicate() as StandardMaterial3D
-	m.albedo_color = color * 0.9
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = Color(color.r, color.g, color.b, alpha)
 	mi.material_override = m
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
 	return mi
 
 
-func _step_glyphs() -> void:
-	for e: Enemy in _glyphs.keys():
-		if not seals.has(e):
-			_drop_glyph(e)
-	for e: Enemy in seals.keys():
-		if not _glyphs.has(e):
-			var g := _flat(GLYPH_RADIUS, IVORY)
-			add_child(g)
-			_glyphs[e] = g
-		var g: MeshInstance3D = _glyphs[e]
-		g.position = Vector3(e.pos.x, GLYPH_HEIGHT + e.y, e.pos.y)
-		g.rotation = Vector3(deg_to_rad(25.0), _turn, 0.0)
-
-
-func _drop_glyph(e: Enemy) -> void:
-	var g: MeshInstance3D = _glyphs.get(e)
-	if g != null:
-		g.queue_free()
-	_glyphs.erase(e)
-
-
 func stats() -> Dictionary:
-	return tally.duplicate()
+	var out := tally.duplicate()
+	out.burn_damage = roundi(float(tally.burn_damage))
+	return out

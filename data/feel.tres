@@ -22,6 +22,7 @@ hit_stop_scale = 1.0
 poise_weights = {
 "attack": 0.15,
 "cast_omega": 0.7,
+"crystal": 0.25,
 "dash": 0.5,
 "omega_attack": 0.7,
 "omega_special": 0.7,

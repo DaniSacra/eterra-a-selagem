@@ -152,8 +152,6 @@ const SLOTS: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.
 ## The Maga's marks over the diamonds that carry no Blessing (M1b); Q and E always wear theirs.
 const MAGA_GLYPHS := {&"light_attack": BoonIcon.BOLT_GLYPH, &"heavy_attack": BoonIcon.BLAST_GLYPH, &"shout": BoonIcon.ACTION_GLYPH + Boon.Slot.CAST,
 	&"rush": BoonIcon.DOME_GLYPH}
-## The Resonância's colour (the Maga's amber).
-const RESONANCE_COLOR := Color(1.0, 0.62, 0.18)
 ## Where the ultimate's diamond stands among them: before the dodge.
 const ULT_AT := 4
 ## Between the room's number and what lies beyond the doors.
@@ -831,11 +829,6 @@ func _update_slots(p: Player) -> void:
 				s.locked = p.curse.ratio()
 				# the Pastor (E4): the lights gathered, over the special's diamond
 				var flock := game.psalms.holding(PsalmDef.Effect.FLOCK) if game.psalms else null
-				if arcane and game.arcane != null:
-					# the Maga's Ressonância: three diamonds of two points (a diamond lights with its first point)
-					var r := game.arcane.resonance
-					s.show_lights((r.points + 1) / 2, r.max_points / 2, RESONANCE_COLOR)
-					continue
 				s.show_lights(game.psalms.lights if flock else 0, flock.count if flock else 0, PsalmIcon.tint(flock).lightened(0.2) if flock else UiKit.OLD_GOLD)
 			_:
 				s.refresh(b, 0.0, 0, 0, starved)

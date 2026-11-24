@@ -37,9 +37,8 @@ func test_the_special_and_the_explosion_weigh_the_light_shots_do_not() -> void:
 	var warrior := HeroDef.warrior()
 	var maga := HeroDef.maga()
 	assert_eq(Combat.shot_stop_ms(_node(warrior, &"bolt")), Combat.SHOT_STOP_MS, "the special")
-	assert_eq(Combat.shot_stop_ms(_node(maga, &"blast")), Combat.SHOT_STOP_MS, "the Explosão")
-	assert_eq(Combat.shot_stop_ms(_node(maga, &"bolt1")), 0.0, "shot 1")
-	assert_eq(Combat.shot_stop_ms(_node(maga, &"bolt2")), 0.0, "shot 2")
+	assert_eq(Combat.shot_stop_ms(_node(maga, &"shard")), Combat.SHOT_STOP_MS, "the Explosão")
+	assert_eq(Combat.shot_stop_ms(_node(maga, &"spark")), 0.0, "the Centelha")
 	assert_almost_eq(Combat.SHOT_STOP_MS, 25.0, 0.01, "2 frames")
 
 

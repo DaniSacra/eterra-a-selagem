@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_fnbde"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_rgyu5"]
+
+[sub_resource type="Resource" id="Resource_fr3fe"]
+script = ExtResource("1_fnbde")
+stat = &"burn_time_add"
+base = 2.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_3uh3i"]
+script = ExtResource("1_fnbde")
+stat = &"burn_dps_pct"
+base = 0.25
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_rgyu5")
+id = &"faisca_persistente"
+name_key = &"talent_faisca_persistente"
+desc_key = &"talent_faisca_persistente_desc"
+branch = 3
+cost = 2
+mods = Array[ExtResource("1_fnbde")]([SubResource("Resource_fr3fe"), SubResource("Resource_3uh3i")])
