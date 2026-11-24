@@ -58,3 +58,16 @@ static func pick(data: Dictionary, ctx: Dictionary) -> StringName:
 	if not fighting and int(ctx.get("boons", 0)) >= 2 and int(ctx.get("elos", 0)) == 0 and open(data, &"elo"):
 		return &"elo"
 	return &""
+
+
+## UI 11 (Lote B): the "Q: Brado" word over the Q diamond. At most SHOUT_PER_ROOM times in a room and only in the save's
+## first SHOUT_RUNS descents; the robot, a smoke run and --nosave never see it (enabled()).
+const SHOUT_PER_ROOM := 2
+const SHOUT_RUNS := 3
+## Seconds the word stays.
+const SHOUT_TIME := 1.0
+
+
+## Whether the Brado's word may show now: worth it, told fewer than SHOUT_PER_ROOM times in this room, save still new.
+static func shout_due(data: Dictionary, told_in_room: int, worth: bool) -> bool:
+	return worth and told_in_room < SHOUT_PER_ROOM and int(data.get("runs", 0)) < SHOUT_RUNS

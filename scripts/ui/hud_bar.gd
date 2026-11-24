@@ -69,6 +69,14 @@ var _trail_t := 0.0
 var _tip := 0.0
 var _over := 0.0
 var _text := ""
+## A small mark at the bar's left end (UI 16): none, a heart (life) or a drop (Magia).
+enum Mark { NONE, HEART, DROP }
+const MARK_SIZE := 5.0
+const MARK_PAD := 11.0
+var icon := Mark.NONE:
+	set(v):
+		icon = v
+		queue_redraw()
 
 
 ## color is the top of the fill; bottom the lower edge of the gradient (by default the same colour, darker).
@@ -191,6 +199,8 @@ func _draw() -> void:
 		_draw_mark(body, m)
 	for i in ritual_total:
 		_draw_seal(i)
+	if icon != Mark.NONE:
+		_draw_icon(Vector2(MARK_PAD, size.y * 0.5))
 	if _text != "":
 		var font := UiKit.number_font()
 		var w := font.get_string_size(_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
@@ -198,6 +208,20 @@ func _draw() -> void:
 		UiKit.draw_shadow(self, font, at, _text, font_size)
 		draw_string_outline(font, at, _text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, UiKit.INK)
 		draw_string(font, at, _text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiKit.PALE)
+
+
+## The heart or the drop, a pale shape over an ink one.
+func _draw_icon(c: Vector2) -> void:
+	for pass_i in 2:
+		var k := MARK_SIZE + (1.2 if pass_i == 0 else 0.0)
+		var col := Color(UiKit.INK, 0.9) if pass_i == 0 else UiKit.PALE
+		if icon == Mark.HEART:
+			draw_circle(c + Vector2(-k * 0.5, -k * 0.3), k * 0.55, col)
+			draw_circle(c + Vector2(k * 0.5, -k * 0.3), k * 0.55, col)
+			draw_colored_polygon(PackedVector2Array([c + Vector2(-k * 1.02, -k * 0.1), c + Vector2(k * 1.02, -k * 0.1), c + Vector2(0, k * 1.05)]), col)
+		else:
+			draw_circle(c + Vector2(0, k * 0.35), k * 0.72, col)
+			draw_colored_polygon(PackedVector2Array([c + Vector2(-k * 0.66, k * 0.2), c + Vector2(k * 0.66, k * 0.2), c + Vector2(0, -k * 1.1)]), col)
 
 
 ## A boss's phase mark: a dark notch ahead of his life; once passed, old gold with a small diamond over the frame,

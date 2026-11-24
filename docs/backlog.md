@@ -51,11 +51,11 @@ no relatório e a sessão principal cola, para não dar conflito no fim do arqui
 
 **Lote B, HUD de luta** (`ui-ux-designer`, segunda instância, ou `technical-artist`; arquivos: `scripts/ui/hud.gd`, `hud_bar.gd`, `ability_list.gd`,
 `action_bar.gd`, `action_slot.gd`, `scripts/core/first_tips.gd`; chaves de texto novas vão no relatório)
-9. **HUD sem duplicata, Vida em cima** (UI 15 e 16, M). A coluna da direita mostra só as Bênçãos ganhas com nível; as ações ficam só na barra de baixo.
+9. **FEITO (Lote B, `ui_lote_b`)** **HUD sem duplicata, Vida em cima** (UI 15 e 16, M). A coluna da direita mostra só as Bênçãos ganhas com nível; as ações ficam só na barra de baixo.
    Vida em cima da Magia, cada uma com ícone pequeno (coração, gota). Aceite: captura de luta (Lote F) com uma fonte por informação; mesmo `RESULT`.
-10. **O Golpe Supremo pronto se vê** (KT 3a e 3b, QA 3, P). Enquanto a carga está cheia, o losango pulsa e o chip "Shift" fica aceso (não some depois
+10. **FEITO (Lote B)** **O Golpe Supremo pronto se vê** (KT 3a e 3b, QA 3, P). Enquanto a carga está cheia, o losango pulsa e o chip "Shift" fica aceso (não some depois
     de `ULT_HINT_TIME`); com vida abaixo de 50% e carga cheia, o pulso fica mais forte. Aceite: teste GUT do estado "cheio e ferido"; captura com a carga cheia.
-11. **O Brado se lê** (KT 1c e quickwin do KT 1, M). Ícone do efeito do Brado com a contagem de 5 s ao lado das barras; a dica "Q: Brado" aparece 1 s quando
+11. **FEITO (Lote B)** **O Brado se lê** (KT 1c e quickwin do KT 1, M). Ícone do efeito do Brado com a contagem de 5 s ao lado das barras; a dica "Q: Brado" aparece 1 s quando
     há 3 inimigos a menos de 4 m e o Brado está pronto (a conta de `Bot.shout_worth`), no máximo 2 vezes por sala e só nas 3 primeiras descidas do save
     (`FirstTips`). Aceite: teste GUT do limite por sala e por save; o robô e `--autopick` não esperam.
 

@@ -158,16 +158,16 @@ func test_the_rajada_shows_its_cost_and_says_without_magia() -> void:
 	assert_eq(special.caption, "")
 
 
-func test_the_buff_shows_while_the_brado_runs_over_its_diamond() -> void:
+func test_the_buff_shows_while_the_brado_runs_beside_the_bars() -> void:
 	var hud := await _run()
 	assert_false(hud._buff.visible)
 	game.player.gifts.rally(5.0, 0.2, 0.15, 0)
 	await wait_process_frames(2)
 	assert_true(hud._buff.visible)
-	var q: Rect2 = hud._slots[2].get_global_rect()
+	var bars: Rect2 = hud._life.get_global_rect()
 	var b := hud._buff.get_global_rect()
-	assert_almost_eq(b.position.x + BuffMark.SIDE * 0.5, q.get_center().x, 2.0, "over the Q diamond")
-	assert_lt(b.end.y, hud._action_row.get_global_rect().position.y, "over the row")
+	assert_gt(b.position.x, bars.end.x, "beside the bars")
+	assert_almost_eq(b.get_center().y, bars.get_center().y, 2.0)
 	assert_false(b.intersects(hud._ult_slot.get_global_rect()))
 
 

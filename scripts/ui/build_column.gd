@@ -66,6 +66,7 @@ class Entry extends Control:
 var entries: Array[Entry] = []
 var _foot: VBoxContainer
 var _alpha := 1.0
+var _held := 0
 
 
 func setup() -> BuildColumn:
@@ -88,17 +89,17 @@ func setup() -> BuildColumn:
 	_foot.add_theme_constant_override(&"separation", 2)
 	_foot.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_child(_foot)
-	_fit(0)
+	_fit(0, 0)
 	return self
 
 
 ## The column's height with this many rows under the buttons' six (an Elo's, the Psalm's).
-static func height_for(foot_rows: int) -> float:
-	return PAD * 2.0 + ROW_H * BUTTONS.size() + (FOOT_ICON + 2.0) * foot_rows + TAIL
+static func height_for(foot_rows: int, button_rows: int = BUTTONS.size()) -> float:
+	return PAD * 2.0 + ROW_H * button_rows + (FOOT_ICON + 2.0) * foot_rows + TAIL
 
 
-func _fit(foot_rows: int) -> void:
-	custom_minimum_size = Vector2(WIDTH, height_for(foot_rows))
+func _fit(foot_rows: int, button_rows: int = BUTTONS.size()) -> void:
+	custom_minimum_size = Vector2(WIDTH, height_for(foot_rows, button_rows))
 	size = custom_minimum_size
 	queue_redraw()
 
@@ -107,6 +108,7 @@ func _fit(foot_rows: int) -> void:
 ## ult_glyph: the ultimate's mark for Shift's button (-1: the generic one).
 func show_build(boons: BoonState, ult_glyph: int = -1, psalm: PsalmDef = null) -> void:
 	var by_button := {}
+	var held := 0
 	var elos: Array[Boon] = []
 	for b in boons.owned():
 		if b.is_duo():
@@ -120,6 +122,9 @@ func show_build(boons: BoonState, ult_glyph: int = -1, psalm: PsalmDef = null) -
 		if i == ULT_AT and ult_glyph >= 0:
 			glyph = ult_glyph
 		entries[i].show_entry(b, boons.level(b.id) if b else 0, boons.rarity(b.id) if b else Boon.Rarity.COMMON, glyph)
+		# UI 15: the actions live in the bottom row only; here just the Blessings gained
+		entries[i].visible = b != null
+		held += 1 if b != null else 0
 	for c in _foot.get_children():
 		_foot.remove_child(c)
 		c.queue_free()
@@ -140,7 +145,13 @@ func show_build(boons: BoonState, ult_glyph: int = -1, psalm: PsalmDef = null) -
 		holder.add_child(PsalmIcon.new().setup(psalm, FOOT_ICON))
 		_foot.add_child(holder)
 		rows += 1
-	_fit(rows)
+	_held = held
+	_fit(rows, held)
+
+
+## Whether the column has anything to show (a Blessing, an Elo or the Psalm).
+func has_content() -> bool:
+	return _held > 0 or _foot.get_child_count() > 0
 
 
 ## The glyph ids the entries show now, in order (tests).

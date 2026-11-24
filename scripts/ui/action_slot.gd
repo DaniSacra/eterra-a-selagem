@@ -61,6 +61,10 @@ const READY_GAP := 3.0
 const READY_W := 2.0
 const READY_COLOR := Color(0.72, 1.0, 0.86)
 const READY_BREATH := 0.2
+## The urgent ring (full charge, hero hurt): deeper breath, thicker line, faster.
+const URGENT_BREATH := 0.55
+const URGENT_W := 3.5
+const URGENT_SPEED := 2.0
 const PULSE_PERIOD := 1.6
 const READY_PULSE := 0.55
 const PULSE_REACH := 12.0
@@ -147,6 +151,8 @@ var pulse := false:
 			_ready_pulse = 1.0 if v else 0.0
 			set_process(true)
 			queue_redraw()
+## UI 10: full and the hero hurt (below Hud.ULT_HURT): the ring breathes harder, wider and faster.
+var urgent := false
 var _pulse_t := 0.0
 ## 1 -> 0 over READY_PULSE seconds after it fills.
 var _ready_pulse := 0.0
@@ -205,7 +211,7 @@ func busy() -> bool:
 func _process(delta: float) -> void:
 	_flash = maxf(0.0, _flash - delta / READY_FLASH)
 	_release = maxf(0.0, _release - delta / RELEASE)
-	_pulse_t = fmod(_pulse_t + delta, PULSE_PERIOD)
+	_pulse_t = fmod(_pulse_t + delta * (URGENT_SPEED if urgent else 1.0), PULSE_PERIOD)
 	_ready_pulse = maxf(0.0, _ready_pulse - delta / READY_PULSE)
 	if _flash == 0.0 and _release == 0.0 and not pulse:
 		set_process(false)
@@ -298,9 +304,10 @@ func _draw_cost(at: Vector2, half: float) -> void:
 ## breathing a little, and, just after it fills, one pulse running out of it.
 func _draw_ready(c: Vector2, r: float) -> void:
 	var ring := _closed(_diamond(c, r + 2.0 + READY_GAP))
-	var breath := 1.0 - READY_BREATH * (0.5 + 0.5 * cos(TAU * _pulse_t / PULSE_PERIOD))
-	draw_polyline(ring, Color(UiKit.INK, 0.8), READY_W + 2.0, true)
-	draw_polyline(ring, Color(READY_COLOR, breath), READY_W, true)
+	var breath := 1.0 - (URGENT_BREATH if urgent else READY_BREATH) * (0.5 + 0.5 * cos(TAU * _pulse_t / PULSE_PERIOD))
+	var width := URGENT_W if urgent else READY_W
+	draw_polyline(ring, Color(UiKit.INK, 0.8), width + 2.0, true)
+	draw_polyline(ring, Color(READY_COLOR, breath), width, true)
 	if _ready_pulse > 0.0:
 		var k := 1.0 - _ready_pulse
 		draw_polyline(_closed(_diamond(c, r + 2.0 + READY_GAP + PULSE_REACH * ease(k, 0.4))), Color(READY_COLOR, 0.9 * _ready_pulse), 2.0, true)
@@ -336,18 +343,22 @@ func _draw_key(at: Vector2) -> void:
 	if _mouse in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]:
 		_draw_mouse(at)
 		return
-	key_plate(self, at, _key, KEY_FONT, KEY_H)
+	# UI 10: a ready ultimate keeps its chip lit (the line in the ring's colour), whatever the caption does
+	if pulse and not busy():
+		key_plate(self, at, _key, KEY_FONT, KEY_H, false, READY_COLOR, READY_COLOR.darkened(0.72))
+	else:
+		key_plate(self, at, _key, KEY_FONT, KEY_H)
 
 
 ## A key's name on a small dark plate with the old gold line, centred at `at` (the HUD's diamonds, the hub's sign);
 ## round when it is a gamepad's face button (one letter, rounded: true). Returns the plate's width.
 static func key_plate(ci: CanvasItem, at: Vector2, text: String, font_size: int, h: float, rounded: bool = false,
-		line: Color = UiKit.OLD_GOLD) -> float:
+		line: Color = UiKit.OLD_GOLD, fill: Color = Color(0.04, 0.03, 0.05, 0.95)) -> float:
 	var font := UiKit.BOLD_FONT
 	var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 	var w := maxf(h, tw + 8.0)
 	var plate := Rect2(at - Vector2(w * 0.5, h * 0.5), Vector2(w, h))
-	ci.draw_style_box(UiKit.box(Color(0.04, 0.03, 0.05, 0.95), line, int(UiKit.FRAME), 0, int(h * 0.5) if rounded else 3), plate)
+	ci.draw_style_box(UiKit.box(fill, line, int(UiKit.FRAME), 0, int(h * 0.5) if rounded else 3), plate)
 	var base := Vector2(at.x - tw * 0.5, at.y + (font.get_ascent(font_size) - font.get_descent(font_size)) * 0.5)
 	ci.draw_string(font, base, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiKit.PALE)
 	return w

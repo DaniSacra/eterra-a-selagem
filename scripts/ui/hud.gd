@@ -65,8 +65,8 @@ const BAR_GAP := 2.0 * UiKit.FRAME + 1.0
 const COLUMN_MID := 0.46
 const EDGE_RIGHT := BuildColumn.WIDTH + 22.0
 const PASSIVE_LIFT := 40.0
-## The Brado's buff over its diamond: how far above the row's top (the ultimate's caption stands over its own).
-const BUFF_RISE := 6.0
+## The Brado's buff beside the life bar: the gap right of it.
+const BUFF_GAP := 12.0
 ## The vignette stands from this share of life down (the medallion's ring warns from the same).
 const DANGER_FROM := 0.3## The hit count right of the last diamond, and the bottom of the edge chevrons' frame over the whole block.
 const ROW_COUNT_GAP := 12.0
@@ -160,6 +160,8 @@ const ULT_AT := 4
 const AHEAD_GAP := 14
 ## Seconds the ultimate's caption shows after a refused press or when it fills (T5).
 const ULT_HINT_TIME := 1.8
+## UI 10: with the charge full and life below this share the ready ring pulses harder.
+const ULT_HURT := 0.5
 
 var game: Game
 var door_tip: DoorTip
@@ -227,6 +229,9 @@ var _ult_was_ready := false
 ## The how-to-charge notice shows once a run, on the first refused press.
 var _ult_told := false
 var _ult_heard := false
+var _shout_tip_t := 0.0
+var _shout_told := 0
+var _shout_room: RunMap.Room
 var _passives: HBoxContainer
 var _arrow: Label
 var _arrow_mark: HudMark
@@ -462,10 +467,12 @@ func _build_life() -> void:
 	_place(_charge, Control.PRESET_BOTTOM_LEFT, Vector2(x, -low), CHARGE)
 	_life = HudBar.new().setup(LIFE_COLOR, LIFE, LIFE_FONT, false, LIFE_BOTTOM)
 	add_child(_life)
-	_place(_life, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + CHARGE.y + BAR_GAP)), LIFE)
+	_life.icon = HudBar.Mark.HEART
+	_place(_life, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + CHARGE.y + MAGICK.y + 2.0 * BAR_GAP)), LIFE)
 	_magick = HudBar.new().setup(MAGICK_COLOR, MAGICK_WIDE, MAGICK_FONT, false, MAGICK_BOTTOM)
 	add_child(_magick)
-	_place(_magick, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + CHARGE.y + LIFE.y + 2.0 * BAR_GAP)), MAGICK_WIDE)
+	_magick.icon = HudBar.Mark.DROP
+	_place(_magick, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + CHARGE.y + BAR_GAP)), MAGICK_WIDE)
 	_crest = HeroCrest.new().setup(CREST)
 	add_child(_crest)
 	_place(_crest, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN, -MARGIN), Vector2(CREST, CREST))
@@ -834,6 +841,28 @@ func _update_slots(p: Player) -> void:
 				s.refresh(b, 0.0, 0, 0, starved)
 	_update_ult(p)
 	_update_buff(p)
+	_update_shout_tip(p)
+
+
+## UI 11: "Q: Brado" over the Q diamond for a second when the Brado is ready and a pack stands close (Bot.shout_worth), a
+## couple of times a room and only in the save's first descents (FirstTips.shout_due); never for the robot or --nosave.
+func _update_shout_tip(p: Player) -> void:
+	var q := _slots[ACTIONS.find(&"shout")]
+	if game.rooms != null and game.rooms.room != _shout_room:
+		_shout_room = game.rooms.room
+		_shout_told = 0
+	if _shout_tip_t > 0.0:
+		_shout_tip_t -= get_process_delta_time()
+		if _shout_tip_t <= 0.0:
+			q.caption = ""
+		return
+	if not q.visible or game.bot != null or not FirstTips.enabled() or game.mode != Game.Mode.PLAY:
+		return
+	if FirstTips.shout_due(Save.data, _shout_told, Bot.shout_worth(game, p.pos)):
+		_shout_told += 1
+		_shout_tip_t = FirstTips.SHOUT_TIME
+		q.caption = T.t(&"hud_shout_tip", {"key": UiKit.action_label(&"shout")})
+		q.caption_color = UiKit.PALE
 
 
 ## The Brado's buff (its 5 s of faster blows and less damage taken) over the Q diamond while it runs.
@@ -842,8 +871,9 @@ func _update_buff(p: Player) -> void:
 	var left := p.gifts.rally_left if p.gifts != null and node != null else 0.0
 	_buff.show_left(left, node.effect_time if node != null else 1.0, p.gifts != null and p.gifts.ward > 0)
 	if _buff.visible:
-		var q := _slots[ACTIONS.find(&"shout")].get_global_rect()
-		_buff.global_position = Vector2(q.get_center().x - BuffMark.SIDE * 0.5, _action_row.get_global_rect().position.y - ActionSlot.CAPTION_RISE - BuffMark.SIDE - BUFF_RISE)
+		# UI 11: beside the bars (right of the life bar), the Brado's icon with its seconds
+		var bars := _life.get_global_rect()
+		_buff.global_position = Vector2(bars.end.x + BUFF_GAP, bars.get_center().y - BuffMark.SIDE * 0.5)
 
 
 ## The build column reads the Blessings, the Elos and the Psalm again when one of them changed.
@@ -856,7 +886,11 @@ func _update_column() -> void:
 		return
 	_build_key = key
 	_column.show_build(game.boons, BoonIcon.ULT_GLYPH + kind if kind >= 0 else -1, psalm)
-	_column.visible = true
+	# UI 15: only the Blessings gained; the banner is as tall as they are, around the same middle
+	var h := _column.custom_minimum_size.y
+	_column.offset_top = -h * 0.5
+	_column.offset_bottom = h * 0.5
+	_column.visible = _column.has_content()
 
 
 ## The ultimate's diamond (T5): sealed with the Mastery level it needs, or its charge; a refused press shows why for
@@ -889,8 +923,14 @@ func _update_ult(p: Player) -> void:
 	_ult_slot.refresh(null, 1.0 - game.ults.ratio() if ult != null else 0.0)
 	_ult_slot.sealed = ult == null
 	_ult_slot.pulse = full
+	_ult_slot.urgent = ult_urgent(full, p.hp / p.max_hp)
 	_ult_slot.caption = ult_caption(ult != null, full, game.ults.ratio(), first, _ult_hint_t > 0.0)
 	_ult_slot.caption_color = UiKit.PALE if _ult_hint_t > 0.0 else UiKit.DIM
+
+
+## Charge full and the hero hurt: the ready ring pulses harder.
+static func ult_urgent(full: bool, hp_ratio: float) -> bool:
+	return full and hp_ratio < ULT_HURT
 
 
 ## The text over the ultimate's diamond: none (sealed) -> "Maestria N" always; full -> "Pronta" while hinting;
@@ -1085,12 +1125,12 @@ func _follow_row() -> void:
 	if not is_equal_approx(_combo_row.offset_left, x):
 		_combo_row.offset_left = x
 		_combo_row.offset_right = x + LIFE.x
-	# art review 2026-11-23 (9): the move's name stands over the diamond it came from (over the Brado's buff too)
+	# art review 2026-11-23 (9): the move's name stands over the diamond it came from 
 	var src: Control = _slots[maxi(ACTIONS.find(_move_action), 0)]
 	var cx := src.get_global_rect().get_center().x - get_global_rect().position.x
 	_move.offset_left = cx - MOVE_W * 0.5
 	_move.offset_right = cx + MOVE_W * 0.5
-	var lift := ActionSlot.CAPTION_RISE + 2.0 + (BuffMark.SIDE + BUFF_RISE if _move_action == &"shout" else 0.0)
+	var lift := ActionSlot.CAPTION_RISE + 2.0
 	_move.offset_bottom = _action_row.offset_top - lift
 	_move.offset_top = _move.offset_bottom - COMBO_WORD - 6.0
 
