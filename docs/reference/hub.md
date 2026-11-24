@@ -294,7 +294,7 @@ arco da Videira, estandarte dos heróis, banca do Alquimista), reposicionadas.
   estandartes, o da Maga cinza travada) idem, `HubLook.show_heroes(save)`.
 - **V3 (2026-11-23, `tests/test_videira_v3.gd`)**: `VineStation` virou videira procedural: tronco retorcido do vaso (sempre, com um broto) e três ramos
   (Vida a oeste, Provisão ao centro, Perseverança a leste) de 3 estágios cada (`PATHS`, Catmull-Rom; tubo e folhas esferoides achatadas fundidos em uma malha
-  por estágio; estágio 3 com cachos e flores âmbar emissivos); musgo escuro (`LEAF_A/B`). Mesma `grown()`. `HeroStation`: estandartes de pano em travessa de ferro
+  por estágio; estágio 3 com cachos e flores âmbar emissivos); musgo escuro (`LEAF_A/B`). Mesma `grown()`; depois da primeira chamada, cada estágio que aparece cresce de escala 0,15 a 1 em 1,1 s (`_swell`, `GROW_FROM`, `GROW_TIME`) ao voltar da tela de compra. `HeroStation`: estandartes de pano em travessa de ferro
   (`BAR_Y`), Guerreiro vermelho com leão dourado, Maga âmbar com estrela de 8 pontas; Maga travada = pano cinza enrolado (`rolls`, `ROLLED`) sem emblema, abre
   com `hero_open`; pé com suporte de espada e de cajado. A estante do Livro (`SHELF`, `SHOW`) foi para (15,1; -3,1) para não cobrir a Videira na câmera Perto.
   Ver: `tools/gpu.sh shot x.png --hub --look=stylized --cam=near --vine=9` (e `--vine=0`).

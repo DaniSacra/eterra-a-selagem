@@ -38,11 +38,16 @@ const PATHS := [
 	[Vector2(0, 0.95), Vector2(0.2, 1.2), Vector2(0.45, 1.4), Vector2(0.65, 1.65), Vector2(0.85, 1.85),
 		Vector2(0.88, 2.1), Vector2(0.9, 2.35), Vector2(0.75, 2.6), Vector2(0.45, 2.72), Vector2(0.15, 2.7)],
 ]
+## A new stage swells from this scale to full over GROW_TIME seconds, with a small overshoot.
+const GROW_FROM := 0.15
+const GROW_TIME := 1.1
 const PART_KEYS: Array[String] = ["wood", "a", "b", "fruit", "flower"]
 
 ## The branches' stages (Node3D each, shown up to the bought count) and the last count given.
 var stages: Dictionary = {}
 var bought: Dictionary = {}
+## True after the first `grown` call: later calls animate the stages that appear (the first one is the room loading).
+var _shown_once := false
 
 static var _round: SphereMesh
 
@@ -247,7 +252,19 @@ func grown(branches_bought: Dictionary) -> void:
 		var n := clampi(int(bought.get(branch, bought.get(String(branch), 0))), 0, STEPS)
 		var list: Array = stages[branch]
 		for k in list.size():
-			(list[k] as Node3D).visible = k < n
+			var st := list[k] as Node3D
+			var show := k < n
+			if show and not st.visible and _shown_once and is_inside_tree():
+				_swell(st)
+			st.visible = show
+	_shown_once = true
+
+
+## Grows a stage that just appeared from its base (the purchase screen was just closed).
+func _swell(st: Node3D) -> void:
+	st.scale = Vector3.ONE * GROW_FROM
+	var tw := create_tween()
+	tw.tween_property(st, "scale", Vector3.ONE, GROW_TIME).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 ## How many stages show now in all (0 to 9).
