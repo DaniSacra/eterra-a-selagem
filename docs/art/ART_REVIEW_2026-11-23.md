@@ -224,3 +224,87 @@ Se `--shot-on=spin` ou `--shot-on=reward` não existirem com esse nome, `--shot-
 - **21 FEITO** (GR-27) `Fx.number(tick)`: dano por tempo com altura mínima de 70% do direto, cor de família com valor mínimo 0,75 (cinza vira o verde da Emeth) e contorno de 3 px.
 - **24 FEITO** `MasteryBar` sobre pergaminho: trilho de tinta (contorno 1,5 px, fundo do papel 15% mais escuro).
 - **8** (retrato da Maga) fica para a arte do ChatGPT.
+
+## Revisão de 2026-11-24 (build 1342184)
+Capturas GPU (Forward+, estilizado, Perto, 1672 x 941): `docs/gallery/round_2026-11-24/` (`raiox.png`, `giro.png`,
+`sala1_portal.png`, `ult_ring_hud.png`, `shop_wall.png`, `forge.png`, `dons.png`, `vine.png`, `vendor.png`, `book.png`,
+`end_none.png`) e as posteriores às correções em `review_2026-11-23/` (`canalizador3.png`, `sala2_bruma.png`). Texto e
+layout de interface ficam na `docs/qa/ui_review_2026-11-24b.md` (não repetidos aqui).
+
+### Itens anteriores
+| # | Estado | Evidência / nota |
+|---|--------|------------------|
+| 1 Laje / faixa vermelha da sala 2 | FEITO | `sala2_bruma.png` (1390..1560, 195..320): a respiração da fenda virou bruma azul, nenhum vermelho cheio. Laje de verdade armada ainda não capturada; ver N5 para a bruma. |
+| 2 Forja, disco preto | FEITO | `forge.png`: pomo (235..305, 305..380) e anel "F" (610..670, 240..300 e 395..440) são cavidade de bronze com a silhueta escura dentro; não leem como furo. |
+| 3 Dons, etiqueta dos ramos | FEITO | `dons.png`: Sustento, Emeth, Fúria e Magia junto do próprio ramo. Distância das etiquetas ao aro é a B14 da revisão de UI. |
+| 4 Dons, nó escuro | FEITO | Nós escuros do mesmo tamanho dos abertos; o maior elemento do anel é o leão aceso no topo. Tamanho do número é a B3 da UI. |
+| 5 Videira, broto comprado | SEM CAPTURA | `vine.png` mostra 0 de 9. Vaso e treliça seguem placeholder (540..740, 790..935). |
+| 6 Encanto, glifo por carta | SEM CAPTURA | |
+| 7 GR-8 raio-x | ABERTO, P1, `technical-artist` | Ver N1. |
+| 8 Retrato da Maga | ABERTO, P1, asset | `suspensao.png` (30..125, 815..910) ainda fotográfico. Espera pedido ao ChatGPT. |
+| 9 Nome do golpe no losango | FEITO | `giro.png` (Giro da Alvorada), `sala1_portal.png` (Investida). |
+| 10 HUD no encontro dos anjos | SEM CAPTURA | |
+| 11 Vendedor | FEITO (placeholder) | `vendor.png`: toldo listrado com dobras, balcão de tábuas, trilho com rebites. Coerente com o Santuário; espera arte final. |
+| 18 Canalizador | FEITO | `canalizador3.png` (580..1120, 490..795): núcleo fino com halo, o chão aparece, herói segue o ponto mais claro. Ver N6. |
+| 19 Rastro de fogo | SEM CAPTURA | |
+| 20 GR-26 barra dupla do guardião | SEM CAPTURA | |
+| 21 GR-27 dano por tempo | SEM CAPTURA | O "5" vermelho de `ult_ring_hud.png` é a B15 da UI. |
+| 22 Ponto preto na porta | SEM CAPTURA | |
+| 23 Trinca | SEM CAPTURA | |
+| 24 Barra de Maestria do Livro | FEITO | `book.png` (1037..1292, 145..162): trilho de tinta sobre o papel, sem bloco preto. |
+| 26 Suspensão Absoluta | SEM CAPTURA | Nenhum quadro com a cúpula. |
+| GR-20 arco do giro | FEITO | `giro.png` (425..955, 410..620): arco de quase uma volta, lê como giro em volta do herói. Cor na N4. |
+
+### Problemas novos
+
+**N1. GR-8 continua pontilhado, e aparece com o herói ao lado da peça (P1, `technical-artist`).**
+`raiox.png` (695..745, 480..520) e `giro.png` (ampliado: 470..640, 430..520): o topo do bloco ao sul se desfaz em
+pontos grossos e quadrados, de 1 a 2 px, bem visíveis no Forward+. Em `raiox.png` o herói está ao lado do bloco, não
+atrás, e mesmo assim o pé dele abre um buraco pontilhado na peça. O ruído médio não resolveu: é o passo seguinte que a
+própria nota do item 7 previa. Pedido: (a) no Forward+ trocar o descarte por esmaecimento real (alfa até 0,35 no
+miolo, borda suave de 0,6 m), nem que seja só nas peças altas que podem cobrir o herói (bloco do sul, balaustrada, pilar),
+com um segundo material transparente trocado por proximidade; (b) só abrir a peça quando ela está entre a câmera e o
+herói (teste de profundidade do herói na tela), não por distância no plano. Aceite: captura GPU com o herói atrás
+(ao norte) do bloco, sem grade de pontos, e `raiox.png` repetida sem buraco nenhum no bloco.
+
+**N2. Bloco do sul com vão preto no meio da tela (P1, `environment-artist`).**
+A peça alta ao sul do centro da sala 1 (`raiox.png` 600..830, 490..740; mesma peça em `ult_ring_hud.png`
+980..1240, 600..850, `shop_wall.png` 900..1160, 600..830 e `suspensao.png`) tem um vão triangular de luma perto de 0
+(`raiox.png` 680..720, 580..615; `shop_wall.png` 1020..1090, 720..760). É o ponto mais escuro perto do centro, lê como
+furo na malha, e a peça, alta e em primeiro plano, esconde o herói (`giro.png`) e encosta na barra de ações. Pedido:
+fundo do vão em pedra recuada com luma de pelo menos 35, com uma vela ou brasa fraca dentro (1,0; 0,62; 0,25, energia
+baixa) se for nicho; e baixar a peça para o topo ficar abaixo do peito do herói na câmera Perto (ou recuar 1 m para o
+sul). Aceite: na captura `raiox.png` repetida, nenhum pixel do vão abaixo de luma 30 e o herói inteiro visível
+quando passa ao lado.
+
+**N3. Fundo do oeste mais claro que a luta (P2, `environment-artist`).**
+`ult_ring_hud.png` (0..300, 100..760) e `raiox.png` (0..330, 80..420): a luz fria além dos arcos do oeste é a maior
+área clara da tela; quando a luta encosta na balaustrada oeste (`ult_ring_hud.png`, herói e três inimigos em
+260..560, 500..710) o grupo fica contra esse fundo e perde contraste. Pedido: baixar cerca de 25% a luma do brilho
+além dos arcos e escurecer em gradiente nos 2 m mais perto da balaustrada (bruma escura), para o fundo nunca passar o
+chão iluminado em volta do herói. Aceite: no mesmo quadro, a média de luma do fundo oeste abaixo da do chão sob o herói.
+
+**N4. Arco do giro quase branco e chapado (P2, `technical-artist`).**
+`giro.png` (425..955, 410..620): o arco é verde-limão muito claro, opaco, e é a coisa mais clara da tela, mais que o
+herói; o contorno escuro da peça desenha uma linha poligonal por cima dele (440..620, 435..520). Pedido: cor da Emeth
+(0,30; 0,85; 0,55) em modo aditivo, alfa até 0,6 no miolo, pontas que se desfazem em vez de corte reto; o arco desenha
+por cima do contorno das peças. Aceite: herói ainda o ponto mais claro durante o giro e o arco lido como verde da Emeth.
+
+**N5. Bruma da fenda como placa retangular (P2, `technical-artist`).**
+`sala2_bruma.png` (1390..1560, 195..320): sem vermelho, mas um retângulo azul-claro de borda dura com chevrons, que lê
+como painel ou tapete. Pedido: bordas que se desfazem em 0,4 m, preenchimento até 0,08, os chevrons andando no
+sentido do empurrão. Aceite: na mesma captura não há quina reta visível na bruma.
+
+**N6. Feixe do Canalizador fino demais para a área de dano? (P2, `technical-artist`, conferir)**
+`canalizador3.png`: o núcleo tem 0,12 m e o halo some rápido. Se a área que machuca tem cerca de 1 m de largura, o
+desenho subestima o perigo. Pedido: o halo vai até a largura real do dano, com alfa baixo; se a largura do dano já é
+fina, fica como está.
+
+### Capturas que faltam (só a sessão principal, uma por vez)
+1. GR-8 com o herói atrás do bloco: `tools/gpu.sh shot docs/gallery/round_2026-11-24/raiox2.png --bot --autopick --seed=5 --frames=docs/gallery/round_2026-11-24/raiox2 --count=8 --every=0.5 --shot-at=1` (escolher o quadro com o herói ao norte do bloco).
+2. Suspensão, Trinca, rastro de fogo, portas, guardião, encanto: os comandos da lista "Capturas que faltam" acima continuam valendo.
+
+### Veredito
+Nenhum P0 aberto. Do lado da arte, o build pode ir para o teste do Daniel; ficam abertos N1 (pontilhado do raio-x) e
+N2 (vão preto do bloco do sul) como P1 do próximo lote. Retrato da Maga, vaso da Videira e vendedor seguem
+provisórios.
