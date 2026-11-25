@@ -24,11 +24,12 @@ void fragment() {
 	float d = abs(r - radius - 0.01 * pulse);
 	float band = smoothstep(w, w * 0.25, d);
 	float glow = exp(-d * d / (w * w * 14.0)) * 0.45;
-	float k = (band + glow) * (0.55 + 0.45 * pulse) * (0.55 + 0.45 * near);
+	// the glow fades to nothing before the quad's edge (else its square shows)
+	float k = (band + glow) * (0.55 + 0.45 * pulse) * (0.55 + 0.45 * near) * smoothstep(1.0, 0.86, r);
 	vec3 c = color / max(max(color.r, max(color.g, color.b)), 0.001) * peak;
 	// the light-up: the band burns brighter and a wave leaves it outwards (SW-C9)
 	float wave_r = radius + (1.0 - flare) * 0.2;
-	float wave = smoothstep(w * 2.0, 0.0, abs(r - wave_r)) * flare * step(r, 0.99);
+	float wave = smoothstep(w * 2.0, 0.0, abs(r - wave_r)) * flare * smoothstep(0.98, 0.9, r);
 	k = k * (1.0 + 1.2 * flare) + wave * 0.9;
 	ALBEDO = c * k;
 }

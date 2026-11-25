@@ -16,7 +16,7 @@ extends Resource
 ## floor, meters inward from the edge (0: in the arch's plane) and the height where its sign's text starts, under it.
 @export var medal_up := 4.7
 @export var medal_in := 0.0
-@export var sign_up := 1.9
+@export var sign_up := 2.5
 ## The spot on the floor's edge, in the middle of the opening, when the mouth is not given (at_edge puts `at` this far
 ## out of the room: 0.75 of its 2.4 m).
 const EDGE_FROM_SPOT := 1.8
@@ -54,6 +54,30 @@ func edge() -> Vector2:
 func medal_anchor() -> Vector3:
 	var p := edge() + inward * medal_in
 	return Vector3(p.x, medal_up, p.y)
+
+
+## SW-C9: keeps the discs of neighbouring doors apart ON THE SCREEN. Seen from the camera (yaw, pitch in degrees) two
+## anchors are `across` (to the camera's right) and `up` (screen height: depth times sin(pitch) plus height times
+## cos(pitch)) apart; when that is under `min_gap` (two disc diameters and a breath) the later door's anchor slides along
+## the camera's right (horizontal in the world, depth unchanged) the way it already lies, just enough. Pure, in order.
+static func spread(anchors: Array[Vector3], yaw: float, pitch: float, min_gap: float) -> Array[Vector3]:
+	var y := deg_to_rad(yaw)
+	var right := Vector3(cos(y), 0.0, -sin(y))
+	var depth := Vector3(-sin(y), 0.0, -cos(y))
+	var out: Array[Vector3] = []
+	for a in anchors:
+		var p := a
+		for q in out:
+			var d := p - q
+			var across := d.dot(right)
+			var up := d.dot(depth) * sin(deg_to_rad(pitch)) + d.y * cos(deg_to_rad(pitch))
+			if absf(up) >= min_gap or Vector2(across, up).length() >= min_gap:
+				continue
+			var need := sqrt(min_gap * min_gap - up * up)
+			var sd := -1.0 if across < 0.0 else 1.0
+			p += right * sd * (need - absf(across))
+		out.append(p)
+	return out
 
 
 func mirrored() -> ArenaExit:

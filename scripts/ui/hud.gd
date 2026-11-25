@@ -741,7 +741,7 @@ func _process(delta: float) -> void:
 		c.visible = SHOW_HITS and _combo_count >= 3 and not over
 	_move.visible = not over
 	# the curse's badge stands on the life bar's line: the count climbs over it meanwhile
-	_elo_banner.held = over or entrance_shown()
+	_elo_banner.held = over or entrance_shown() or door_tip.hero_by_doors()
 	_clock.text = SaveData.format_time(game.time)
 	_coins.tick(delta)
 	# the footer of the Blessing and angel screens stands where the gold does: it waits meanwhile

@@ -25,7 +25,7 @@ func test_every_anchor_is_in_the_arch_of_its_door() -> void:
 		for i in a.exits.size():
 			var m := a.door_anchor(i)
 			var edge := l.exits[i].edge()
-			assert_lt(Vector2(m.x, m.z).distance_to(edge), 1.0, "%s door %d: on the door's edge" % [l.id, i])
+			assert_lt(Vector2(m.x, m.z).distance_to(edge), 2.5, "%s door %d: on the door's edge" % [l.id, i])
 			assert_gt(m.y, 3.0, "%s door %d: above the paladin's head and the passage" % [l.id, i])
 			assert_lt(m.y - RewardGem.RADIUS * RewardGem.DOOR_SCALE, ArenaRoom.WALL_DOOR.y, "%s door %d: floats over the lintel, its foot under the crown" % [l.id, i])
 			assert_lt(a.door_sign_y(i), m.y - RewardGem.RADIUS * RewardGem.DOOR_SCALE + 0.01, "%s door %d: text starts under the disc" % [l.id, i])
@@ -85,3 +85,39 @@ func test_icons_fall_back_to_the_painting_of_today() -> void:
 	assert_eq(RewardGem.painting(RunMap.Reward.POM, RunMap.Kind.COMBAT), RewardIcon.texture(&"pom"))
 	assert_null(RewardIcon.texture(&""))
 	assert_null(RewardIcon.texture(&"no_such_reward"))
+
+
+func _disc_px(cam: Camera3D, p: Vector3) -> Rect2:
+	var c := cam.unproject_position(p)
+	var r := c.distance_to(cam.unproject_position(p + cam.global_transform.basis.x * RewardGem.RADIUS * RewardGem.DOOR_SCALE))
+	return Rect2(c - Vector2(r, r), Vector2(r, r) * 2.0)
+
+
+## SW-C9: with the standard camera (near) the projected discs of no two doors overlap, in every room and in the Hall.
+func test_projected_discs_never_overlap() -> void:
+	var f := Feel.live()
+	var cam := Camera3D.new()
+	add_child_autofree(cam)
+	cam.fov = f.cam_fov
+	var yaw := deg_to_rad(f.cam_yaw)
+	var pitch := deg_to_rad(f.cam_pitch)
+	cam.rotation = Vector3(-pitch, yaw, 0.0)
+	var arenas: Array[Arena] = []
+	for l in stage.layouts:
+		arenas.append(_arena(l, mini(3, l.exits.size())))
+	var hall := Arena.new()
+	add_child_autofree(hall)
+	hall.exits.append_array([Vector2(10.5, -13.8), Vector2(14.2, -11.8)])
+	hall.exit_inward.append_array([Vector2(0, 1), Vector2(-1, 0)])
+	arenas.append(hall)
+	for a in arenas:
+		var all := a.door_anchors()
+		if all.size() < 2:
+			continue
+		var target := Vector3(all[0].x, 0.0, all[0].z)
+		cam.position = target + (cam.global_transform.basis.z) * f.cam_distance_near
+		for i in all.size():
+			for k in range(i + 1, all.size()):
+				var ri := _disc_px(cam, all[i])
+				var rk := _disc_px(cam, all[k])
+				assert_false(ri.intersects(rk), "doors %d and %d: discs apart on the screen" % [i, k])

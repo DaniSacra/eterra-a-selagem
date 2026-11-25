@@ -545,13 +545,29 @@ func door_label(i: int) -> Vector2:
 	return exits[i] + inward * 2.6
 
 
+## Air between two door discs on the screen, meters at the disc's depth (SW-C9).
+const DISC_GAP := 0.5
+
+
 ## PT-2: where door i's medallion hangs (x, height, z): on its arch or over its stairs, from the layout's ArenaExit
 ## (the Hall has none: the defaults of ArenaExit).
 func door_anchor(i: int) -> Vector3:
-	if layout != null and i < layout.exits.size():
-		return layout.exits[i].medal_anchor()
-	var e := ArenaExit.make(exits[i], exit_inward[i] if i < exit_inward.size() else Vector2(0, 1), Rect2())
-	return e.medal_anchor()
+	var all := door_anchors()
+	if i < all.size():
+		return all[i]
+	return layout.exits[i].medal_anchor() if layout != null and i < layout.exits.size() else ArenaExit.new().medal_anchor()
+
+
+## All the doors' medallion spots, spread so their discs never touch on the screen (ArenaExit.spread, the standard camera).
+func door_anchors() -> Array[Vector3]:
+	var raw: Array[Vector3] = []
+	for i in exits.size():
+		if layout != null and i < layout.exits.size():
+			raw.append(layout.exits[i].medal_anchor())
+		else:
+			raw.append(ArenaExit.make(exits[i], exit_inward[i] if i < exit_inward.size() else Vector2(0, 1), Rect2()).medal_anchor())
+	var f := Feel.live()
+	return ArenaExit.spread(raw, f.cam_yaw, f.cam_pitch, 2.0 * RewardGem.RADIUS * RewardGem.DOOR_SCALE + DISC_GAP)
 
 
 ## The height where the text of door i's sign starts (under its medallion).

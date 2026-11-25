@@ -82,6 +82,18 @@ func _doors() -> Array[RunMap.Room]:
 
 ## The door the key works on now (-1: none): the same test as Rooms.usable and the interact press, the exit zone the hero
 ## stands in (Arena.exit_at), so the box shows exactly while F enters.
+## SW-C9: the hero is by the open doors (within BANNER_RANGE m of a door's sign): the HUD's greetings wait, so they never
+## hide the medallions he is choosing between.
+const BANNER_RANGE := 9.0
+
+
+func hero_by_doors() -> bool:
+	for i in _doors().size():
+		if game.player.pos.distance_to(game.arena.door_label(i)) <= BANNER_RANGE:
+			return true
+	return false
+
+
 func near_door() -> int:
 	var doors := _doors()
 	var i := door_at(game.arena, game.player.pos, doors.size())

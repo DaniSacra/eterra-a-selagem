@@ -221,6 +221,9 @@ static func _door_mount(parent: Node3D, frame: Node3D, spin: Node3D) -> void:
 		# SW-C9: a disc that floats over the lintel (its top over the crown) hangs from nothing: no rod
 		if m.y + RADIUS * spin.scale.y > DOOR_ARCH_TOP:
 			return
+	elif a.door_anchor(i).y - RADIUS * spin.scale.y > DOOR_POST.y + 1.0:
+		# SW-C9: a disc floating high over stairs hangs from nothing too (a rod from the low post crossed the hero's screen)
+		return
 	else:
 		var half := Arena.STAIRS_HALF_WIDTH
 		var base := 0.0
