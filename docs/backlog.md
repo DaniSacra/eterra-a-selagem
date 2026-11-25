@@ -1,5 +1,23 @@
 # Backlog de A Selagem
 
+## Grande ajuste de layout das salas (pedido do Daniel, 2026-11-25, depois do pente fino)
+Todas as salas da descida serão refeitas, uma por vez, a partir de pacotes do ChatGPT no modelo
+`docs/art/requests/MODELO_especificacao_sala_ChatGPT.md` (pintura aprovada, planta com medidas em JSON, essencial x clima,
+paleta e luz, portas). Os pacotes ficam só locais em `docs/art/ref/salaNN_<data>/` (pasta fora do git); as capturas antes e
+depois vão para `docs/gallery/`.
+- **SL-01, Sala 01 Salão das Catacumbas (`hall`), o teste do método.** Pacote `docs/art/ref/sala01_2026-11-25/`
+  (`PROMPT-CLAUDE-CODE.md` manda). Em resumo:
+  - tirar o leão e a moldura do piso, os brasões aliados e a estátua gigante oeste (território inimigo);
+  - duas portas na parede norte, em D1 (7,6; -15) e D2 (11,8; -15), com pedra entre elas, sem escada nem portal, e só a escolhida abre;
+  - água rasa andável no oeste e entulho baixo O1 a O3;
+  - paleta "Último Esplendor", mais clara que as salas fundas;
+  - manter piso de 32 x 30 m, entrada sul, os 10 quebráveis, câmera e as salas que reusam o `hall` (fonte, loja, Antessala);
+  - capturas antes e depois na GPU, na mesma câmera.
+  - Começa depois de integrar o pente fino (o lote C mexe no `hall`). Dono: `environment-artist` com o `gameplay-engineer`
+    para portas e colisão. Zero créditos Meshy.
+- **SL-02 em diante:** as outras 13 salas, na ordem que o Daniel mandar os pacotes. Depois da SL-01 aprovada, o padrão de
+  portas da SL-01 vira a regra das salas novas.
+
 ## Plano SWORN, "copia mas não faz igual" (2026-11-25, LER PRIMEIRO)
 Pedido do Daniel (2026-11-25): "chegou o momento que a gente vai ter que copiar um pouco SWORN para depois mudarmos e adaptarmos, pois ainda não está muito
 gostoso de jogar e não tem um onboarding interessante". Copiamos **mecânica, tempos, números, estrutura da partida e onboarding**; nunca arte, personagens, nomes,
