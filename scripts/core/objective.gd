@@ -32,8 +32,8 @@ static func pick(ctx: Dictionary) -> StringName:
 		return &""
 	var kind: StringName = ctx.get("kind", &"")
 	var fighting: bool = ctx.get("fighting", false)
-	if kind == &"boss":
-		return &"obj_morvath"
+	if kind == &"boss" and (fighting or (not bool(ctx.get("reward_waiting", false)) and int(ctx.get("doors_open", 0)) == 0)):
+		return &"obj_morvath"  # (not after the victory: the reward and the doors speak then; sweep P1-2)
 	if kind == &"miniboss" and (fighting or (not bool(ctx.get("reward_waiting", false)) and int(ctx.get("doors_open", 0)) == 0)):
 		return &"obj_guardian"
 	if fighting:

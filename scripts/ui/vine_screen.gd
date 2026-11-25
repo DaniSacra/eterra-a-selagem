@@ -95,14 +95,19 @@ func open(data: Dictionary = {}) -> void:
 		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), _back)])
 	_refresh()
 	var first := VineLayout.first_focus(vine, _data)
+	# --vine-zoom=vida|provisao|perseveranca opens already closed on a figure (captures); the focus is that figure's first
+	# star from the start (the deferred grab below took the camera to the figure of the save's first focus: sweep P0)
+	var zoom_to := StringName(Dev.arg("vine-zoom")) if Dev.has("vine-zoom") else &""
+	if VineLayout.CENTER.has(zoom_to):
+		first = buds_of(zoom_to)[0]
+	else:
+		zoom_to = &""
 	_show(first)
 	_place()
 	(buds[first] as Button).grab_focus.call_deferred()
 	_opening()
-	# --vine-zoom=vida|provisao|perseveranca opens already closed on a figure (captures)
-	if Dev.has("vine-zoom") and VineLayout.CENTER.has(StringName(Dev.arg("vine-zoom"))):
-		_show(buds_of(StringName(Dev.arg("vine-zoom")))[0])
-		zoom_in(StringName(Dev.arg("vine-zoom")))
+	if zoom_to != &"":
+		zoom_in(zoom_to)
 		cam.snap()
 		_place()
 
@@ -525,9 +530,10 @@ func _back() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"ui_cancel") and (water_button.has_focus() or pending != &""):
+	if event.is_action_pressed(&"ui_cancel") and (water_button.has_focus() or pending != &"" or zoomed != &""):
+		# (sweep P0-1: with a figure open Esc goes back to the sky; it never reaches the host, which closes the screen)
 		get_viewport().set_input_as_handled()
-		cancel()
+		_back()
 		return
 	if event is InputEventMouseButton and event.pressed:
 		var wheel := (event as InputEventMouseButton).button_index

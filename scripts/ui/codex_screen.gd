@@ -542,13 +542,13 @@ func _boons() -> void:
 
 ## SW-B3: a Blessing's family and, under it, what it asks before it is offered (BoonNeeds: a move, the ultimate open).
 func _family_and_needs(b: Boon) -> String:
-	var lines := BoonNeeds.lines(b, _catalog.catalog)
+	var lines := BoonNeeds.lines(b, _catalog.catalog, Hud.ult_open())
 	return T.t(Boon.FAMILY_KEY[b.family]) + ("\n" + "\n".join(lines) if not lines.is_empty() else "")
 
 
 ## SW-B3: an Elo's two Blessings and, under them, the lists it asks one of each from.
 func _recipe_and_needs(b: Boon, from: Array[Boon]) -> String:
-	var lines := BoonNeeds.lines(b, _catalog.catalog)
+	var lines := BoonNeeds.lines(b, _catalog.catalog, Hud.ult_open())
 	return EloLink.caption(from) + ("\n" + "\n".join(lines) if not lines.is_empty() else "")
 
 

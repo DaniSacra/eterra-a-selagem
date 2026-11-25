@@ -23,7 +23,9 @@ var _alone: Label
 var _tint := Color.WHITE
 
 
-func setup(width: float) -> AbilityList:
+## ult_open: whether the Golpe Supremo's milestone is open in this save; closed, its line (Shift) is not listed (sweep
+## 2026-11-25, P1-4: it showed a key that does nothing yet).
+func setup(width: float, ult_open: bool = Hud.ult_open()) -> AbilityList:
 	name = "abilities"
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	custom_minimum_size.x = width
@@ -65,6 +67,8 @@ func setup(width: float) -> AbilityList:
 		line.add_child(BoonCard.key_plaque(action))
 		col.add_child(line)
 		_lines[action] = line
+		if action == &"ultimate" and not ult_open:
+			line.visible = false
 	_alone = UiKit.label(T.t(&"list_alone"), UiKit.DIM, 15, UiKit.BOLD_FONT)
 	_alone.name = &"Alone"
 	_alone.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
