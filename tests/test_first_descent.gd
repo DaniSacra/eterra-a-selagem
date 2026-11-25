@@ -367,3 +367,27 @@ func test_the_data_of_the_guided_descent_is_in_the_milestone_and_guide_files() -
 	var g := load("res://data/hub_guide/05_ult.tres") as HubGuideDef
 	assert_eq(g.station, HubPlan.TREE)
 	assert_eq(g.text_key, &"guide_ult")
+
+
+func test_the_arrival_is_set_on_a_clear_spot_of_the_antessala_and_the_hero_stands_on_it() -> void:
+	var a := Arena.new()
+	add_child_autofree(a)
+	a.build(_ante(), 1, 1406)
+	var at := ArrivalScene.birth_spot(a)
+	assert_true(ArrivalScene.is_clear(a, at), "nothing within the crystals' reach")
+	assert_gte(a.shape().clamp(at, ArrivalScene.CLEAR_RADIUS).distance_to(at), 0.0)
+	assert_lt(at.distance_to(a.start), 14.0, "near the way in")
+	assert_lte(absf(at.y) + ArrivalScene.CRYSTAL_RING, a.half.y - Arena.WALL + 0.01, "the crystals inside the hall's balustrades")
+	assert_lte(absf(at.x) + ArrivalScene.CRYSTAL_RING, a.half.x - Arena.WALL + 0.01, "and its west balustrade")
+	for p in a.pillars:
+		assert_gte(at.distance_to(Vector2(p.x, p.y)), p.z + ArrivalScene.CRYSTAL_RING, "no pillar at the crystals")
+	for bx in a.boxes:
+		assert_gte(at.distance_to(at.clamp(bx.position, bx.end)), ArrivalScene.CRYSTAL_RING, "no block or balustrade at the crystals")
+	for r: Rect2 in _ante().hazard.plates:
+		assert_false(r.grow(ArrivalScene.RING_RADIUS).has_point(at), "no slab under the ring")
+	# the hero parked on it (what the scene does each frame) is where he is drawn
+	var pl := Player.new()
+	add_child_autofree(pl)
+	pl.arena = a
+	pl.place(at)
+	assert_lt(pl.pos.distance_to(at), 0.01, "the floor keeps him where the scene is")

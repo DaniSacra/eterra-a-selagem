@@ -589,7 +589,7 @@ func _play_arrival() -> bool:
 	_arrival = scene
 	_arrival_t = 0.0
 	add_child(scene)
-	scene.call(&"play", game, game.arena.start)
+	scene.call(&"play", game, ArrivalScene.birth_spot(game.arena))
 	if scene.has_signal(&"finished"):
 		scene.connect(&"finished", func() -> void:
 			if is_instance_valid(_arrival):

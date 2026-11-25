@@ -11,7 +11,7 @@ extends Node3D
 ## Use (the descent's first arrival, Rooms):
 ##   var scene := ArrivalScene.new()
 ##   game.add_child(scene)
-##   scene.play(game, game.arena.start)
+##   scene.play(game, ArrivalScene.birth_spot(game.arena))
 ##   await scene.finished        # the hero may move (second 4.0); a press after 1.0 s skips to there (skip())
 ## While it runs the hero is parked on `at`, unseen and unhurtable, and the HUD is hidden (the cover is above it). The
 ## crystals stay in the node: free it with the room. Dev: --arrival plays it at the start of the first room;
@@ -33,7 +33,9 @@ const STAR_END_HEIGHT := 1.6
 const DIM_BRIGHTNESS := 0.7
 ## The beam of the reward is a faint one that falls away round the paladin; here it is his own light, so its body is
 ## stronger and it keeps most of its strength round him (reward_shaft.gdshader uniforms, only on this node's shaft).
-const BEAM_BODY := 0.6
+const BEAM_BODY := 0.9
+## The light of Elun is gold and warm (RewardShaft's own tint is a pale ivory that reads beige on the floor).
+const BEAM_TINT := Color(1.0, 0.78, 0.34)
 const BEAM_NEAR_KEEP := 1.0
 const BEAM_HERO_KEEP := 0.5
 ## The seal: radius (m) of the ring of runes, its colour (old gold), strength and the share it opens from.
@@ -58,6 +60,14 @@ const MOTES_SIZE := 0.16
 const MOTES_LIGHT := 1.2
 const MOTES_END := 1.3
 const MOTES_SPREAD := 0.25
+## The crystals' own light: a brighter peak, paler edges and a lit deep face, so they are not flat green.
+const CRYSTAL_GAIN := 1.2
+const CRYSTAL_DEEP := 0.55
+const CRYSTAL_EDGE := 0.75
+## The birth spot's clearance (m): no stone, balustrade or floor edge nearer than this (the crystals stand at
+## CRYSTAL_RING and are as thick as CRYSTAL_THICK), and how far along the way to the room's middle it is looked for (m).
+const CLEAR_RADIUS := 3.2
+const CLEAR_STEP := 0.5
 const MOTES_COLOR := Color(0.3, 1.0, 0.55)
 ## The hero's forming: a little above his height so the band leaves the head; the painting's light share of the shader.
 const FORM_OVER := 0.3
@@ -124,8 +134,35 @@ static func dev(g: Game) -> ArrivalScene:
 		return null
 	var s := ArrivalScene.new()
 	g.add_child(s)
-	s.play(g, g.arena.start)
+	s.play(g, birth_spot(g.arena))
 	return s
+
+
+## Where the scene is set in this arena: the room's way in (Arena.start) when it is clear all round, else the first
+## clear point from it toward the middle of the room (the Salão's way in is a narrow landing by the balustrades and the
+## stairs, no place for a ring of crystals). Both the hero and the dressing use it.
+static func birth_spot(arena: Arena) -> Vector2:
+	var from := arena.start
+	var steps := int(from.length() / CLEAR_STEP)
+	for i in steps + 1:
+		var p := from.lerp(Vector2.ZERO, float(i) / maxf(float(steps), 1.0))
+		if is_clear(arena, p):
+			return p
+	return from
+
+
+## Whether a ring and crystals fit at `p`: the room's own floor (its edge, balustrades and walls, not the walkable
+## strips added for a way in) CLEAR_RADIUS round, and no pillar or block within CRYSTAL_RING of it.
+static func is_clear(arena: Arena, p: Vector2) -> bool:
+	if arena.shape().clamp(p, CLEAR_RADIUS).distance_to(p) > 0.01:
+		return false
+	for c in arena.pillars:
+		if p.distance_to(Vector2(c.x, c.y)) < c.z + CRYSTAL_RING:
+			return false
+	for bx in arena.boxes:
+		if p.distance_to(p.clamp(bx.position, bx.end)) < CRYSTAL_RING:
+			return false
+	return true
 
 
 ## Starts the scene on `spot` (x, z in meters, the birth spot): black at once, the hero parked and unseen.
@@ -155,6 +192,10 @@ func play(g: Game, spot: Vector2) -> void:
 		_env = g.air.env.environment
 		_env_brightness = _env.adjustment_brightness
 	g.player.visible = false
+	# the camera looks at the birth spot the whole scene, free of the room's margins and of where the hero is drawn
+	g.cam.lean = spot
+	g.cam.lean_free = true
+	g.cam.snap()
 	_build_ring()
 	_build_crystals()
 	_hold_hero()
@@ -243,7 +284,7 @@ func _dim(share: float) -> void:
 
 func _dress_beam(s: Dictionary) -> void:
 	if s[&"beam_on"] and _shaft == null and not _taken:
-		_shaft = RewardShaft.make(self, Vector3(at.x, 0.0, at.y))
+		_shaft = RewardShaft.make(self, Vector3(at.x, 0.0, at.y), BEAM_TINT)
 		# a skip past the descent: the light is there at once
 		_shaft.appear(0.0, clock > ArrivalTimeline.T_OPEN + RewardShaft.DOWN + RewardShaft.LAND)
 		_shaft_look()
@@ -315,6 +356,8 @@ func _build_crystals() -> void:
 		mat.set_shader_parameter(&"color", Combat.EMETH)
 		mat.set_shader_parameter(&"shatter", 0.99)  # (never breaks: life stays 0)
 		mat.set_shader_parameter(&"life", 0.0)
+		mat.set_shader_parameter(&"deep", CRYSTAL_DEEP)
+		mat.set_shader_parameter(&"edge_pale", CRYSTAL_EDGE)
 		mi.material_override = mat
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mi.visible = false
@@ -349,7 +392,7 @@ func _dress_crystals(rise: float, glow: float) -> void:
 		b.y = up * tall
 		var foot := base.origin - up * base.basis.y.length() * 0.5
 		mi.transform = Transform3D(b, foot + up * tall * 0.5)
-		_crystal_mats[i].set_shader_parameter(&"peak", _crystal_peak * glow)
+		_crystal_mats[i].set_shader_parameter(&"peak", _crystal_peak * CRYSTAL_GAIN * glow)
 
 
 # ---------- the hero ----------
@@ -357,6 +400,7 @@ func _dress_crystals(rise: float, glow: float) -> void:
 ## Parked on the spot, unseen and unhurtable until he may walk.
 func _hold_hero() -> void:
 	game.player.place(at)
+	game.player.position = Vector3(game.player.pos.x, 0.0, game.player.pos.y)  # (the body is drawn only when stepped)
 	game.player.invuln = maxf(game.player.invuln, 1.0)
 
 
@@ -428,12 +472,19 @@ func _end_form() -> void:
 
 func _give_control() -> void:
 	_gave_control = true
+	_release_camera()
 	game.player.visible = true
 	if game.ui != null:
 		game.ui.visible = _ui_was_visible
 	if skipped:
 		_caption(SKIPPED_SECONDS)
 	finished.emit()
+
+
+func _release_camera() -> void:
+	if game != null and is_instance_valid(game) and game.cam != null and game.cam.lean_free:
+		game.cam.lean = Vector2.INF
+		game.cam.lean_free = false
 
 
 func _caption(seconds: float) -> void:
@@ -459,6 +510,7 @@ func _end() -> void:
 
 ## Everything the scene borrowed goes back as it was (also when the room is left in the middle of it).
 func _restore() -> void:
+	_release_camera()
 	if _env != null:
 		_env.adjustment_brightness = _env_brightness
 		_env = null
