@@ -1326,6 +1326,8 @@ static func _angel_line(r: RunMap.Room) -> String:
 func _leave(next: RunMap.Room) -> void:
 	_log_leaving(next)
 	phase = Phase.LEAVING
+	# SL-01: the hall's door he chose opens on its black inside (the other stays shut); the fade takes him through
+	game.arena.open_exit(next_rooms.find(next))
 	var t := _fade_tween()
 	t.tween_property(_fade, "color:a", 1.0, FADE)
 	t.tween_callback(func() -> void: _go(next))
