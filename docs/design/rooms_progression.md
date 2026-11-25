@@ -1673,3 +1673,13 @@ Quem pagar o Cavaleiro mais caro deve mexer em `HOUSE_FROM`, no tempo entre pedr
   atingido; dano ao herói 0 em todas. Próximo passo: laje que arma por tempo no lugar do pisão (o bando não pisa nela sozinho).
 - Provação: `StageDef.trial_min_hp_frac` 0,6; a laje não aparece com vida abaixo de 60% (`Trials.healthy`, antes de `open_at`: o
   descanso não começa) e o cartão traz a linha `trial_slab_risk`.
+
+### R8 (2026-11-25, RD2-01 a RD2-04 e RD2-07)
+- Ancião: colunas do norte em (±7,5, -2,5), fora da linha da câmera até o chefe (`ELDER_COLUMNS`); `tests/test_spawn_points.gd`
+  trava que nenhuma coluna fica entre y -9 e -3 com |x| < 6 e que nenhum ponto de nascimento de nenhuma arena cai em colisão.
+- Fim da sala de luta: `Rooms._warn_exits` acende as luzes de todas as portas de uma vez (dourado) com o tique `ult_ready`
+  quando a última onda cai, antes do prêmio; posição das portas intacta.
+- Raízes: faixa 4 m, acorda com toque de inimigo (0,05 s), aviso 1,5 s. Planta: alcance 2,5 m, 0,05 s, 1,5 s. Pedras: 2,4 m, uma a
+  cada 3 s, 40% mirada no herói. O sopro das Fendas continua só empurrando (`test_breath` trava 0 de dano; o dano em inimigo
+  pedido no RD2-04 (c) ficou de fora: muda a regra da sala).
+- Runas: aviso 1,5 s e no máximo 30% das lajes acesas (era 1,2 s e 35%), para o dano do herói cair abaixo de 15% do da sala 7.

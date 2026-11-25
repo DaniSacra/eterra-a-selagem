@@ -131,3 +131,10 @@ func test_hall_doors_follow_the_count() -> void:
 		add_child_autofree(arena)
 		arena.build(stage.layouts[0], n, 7)
 		assert_eq(arena.exits.size(), n)
+
+
+func test_rd2_03_fight_rooms_warn_exits_together() -> void:
+	assert_true(Rooms.warns_exits(RunMap.Kind.COMBAT, 2))
+	assert_true(Rooms.warns_exits(RunMap.Kind.MINIBOSS, 2))
+	assert_false(Rooms.warns_exits(RunMap.Kind.COMBAT, 0))
+	assert_false(Rooms.warns_exits(RunMap.Kind.SHOP, 2))
