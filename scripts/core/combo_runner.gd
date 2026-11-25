@@ -307,7 +307,7 @@ func _cancel_into() -> bool:
 			return false
 	elif _buffered == ComboNode.In.HEAVY or _buffered == ComboNode.In.SHOUT or _buffered == ComboNode.In.RUSH:
 		var move := ComboTree.find(tree.neutral, _buffered as ComboNode.In)
-		if _since < node.cancel_special_from or move == null or _cooldowns.has(move.id):
+		if _since < node.cancel_special_from or move == null or move == node or _cooldowns.has(move.id):
 			return false
 	else:
 		return false
