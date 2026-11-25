@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_62loe"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_8bl0r"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_3earu"]
+
+[sub_resource type="Resource" id="Resource_j3imp"]
+script = ExtResource("3_3earu")
+kind = 5
+trigger = 7
+duration = PackedFloat32Array(4)
+gap = PackedFloat32Array(0)
+cooldown = PackedFloat32Array(4)
+damage = PackedFloat32Array(6, 9, 13)
+count = PackedFloat32Array(1)
+radius = PackedFloat32Array(3.5, 4, 4.5)
+status = &"slow"
+status_power = PackedFloat32Array(4)
+
+[resource]
+script = ExtResource("2_8bl0r")
+id = &"ultimo_firme"
+family = 3
+icon = 11
+slot = 6
+skill = SubResource("Resource_j3imp")

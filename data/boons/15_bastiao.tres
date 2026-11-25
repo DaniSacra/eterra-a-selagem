@@ -15,5 +15,5 @@ id = &"bastiao"
 family = 4
 icon = 15
 max_level = 1
-requires_sets = Array[PackedStringArray]([PackedStringArray("escudo"), PackedStringArray("consolo", "onda_maior", "flagelo", "golpe_radiante", "pesado_radiante", "circulo_radiante", "passo_radiante", "final_radiante", "onda_clara")])
+requires_sets = Array[PackedStringArray]([PackedStringArray("escudo"), PackedStringArray("consolo", "onda_maior", "flagelo", "golpe_radiante", "pesado_radiante", "circulo_radiante", "passo_radiante", "final_radiante", "onda_clara", "ultimo_radiante", "passo_claro")])
 mods = Array[ExtResource("1_cu6uw")]([SubResource("Resource_i21av")])

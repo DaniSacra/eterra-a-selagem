@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_dra4b"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_oktcs"]
+
+[sub_resource type="Resource" id="Resource_v3jga"]
+script = ExtResource("1_dra4b")
+stat = &"damage_pct"
+tag = &"ultimate"
+base = 0.3
+per_level = PackedFloat32Array(0.15, 0.15)
+
+[sub_resource type="Resource" id="Resource_pi076"]
+script = ExtResource("1_dra4b")
+stat = &"ult_charge_pct"
+base = 0.15
+per_level = PackedFloat32Array(0.08, 0.08)
+by_rarity = false
+
+[resource]
+script = ExtResource("2_oktcs")
+id = &"ultimo_radiante"
+icon = 8
+slot = 6
+mods = Array[ExtResource("1_dra4b")]([SubResource("Resource_v3jga"), SubResource("Resource_pi076")])

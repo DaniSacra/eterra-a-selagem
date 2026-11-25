@@ -16,5 +16,5 @@ id = &"passo_frio"
 family = 4
 icon = 17
 max_level = 1
-requires_sets = Array[PackedStringArray]([PackedStringArray("passos", "escudo", "firmeza", "golpe_firme", "pesado_firme", "circulo_firme", "vigia_firme", "vigilia_longa", "guarda_atenta"), PackedStringArray("toque_geada", "estilhaco", "peso_inverno", "golpe_geada", "circulo_geada", "passo_geada", "geada_final", "floco_errante", "omega_geada", "ultimo_geada")])
+requires_sets = Array[PackedStringArray]([PackedStringArray("passos", "escudo", "firmeza", "golpe_firme", "pesado_firme", "circulo_firme", "vigia_firme", "vigilia_longa", "guarda_atenta", "investida_firme", "ultimo_firme"), PackedStringArray("toque_geada", "estilhaco", "peso_inverno", "golpe_geada", "circulo_geada", "passo_geada", "geada_final", "floco_errante", "omega_geada", "ultimo_geada")])
 mods = Array[ExtResource("1_msjli")]([SubResource("Resource_mloeq")])
