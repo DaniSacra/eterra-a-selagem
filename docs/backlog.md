@@ -9,7 +9,7 @@
 - PT-25-6: Espólios na `EndScreen` (salas vencidas, ouro, "Liberado nesta descida", botão Continuar). PT-25-7: chegada como cometa. PT-25-8/9: Antessala ensina um gesto por vez, riacho só com esquiva (`GapRule`, `RoomLayout.gaps`), Bênção de Sarael antes da sala 1 (Cripta A virou Ouro).
 - Textos a aprovar: `lesson_*`, `obj_dodge`, `killer_gap`, `angel_few`, `end_rooms`, `end_unlocked_head`, `end_open_*`, `end_menu` ("Continuar"), `vine_water`.
 - Pendências: arte final do riacho (environment-artist, E4); inimigos ainda atravessam o riacho andando (decidir na E4); dicas longas na linha de objetivo em 720p a conferir; `lesson_special` muda se a E6 trocar o botão direito.
-Estado: tudo commitado e enviado, exe atual `30fe9deb` nas duas pastas. O Daniel pediu "só backlog": nada começa sem ele mandar.
+Estado: tudo commitado e enviado, exe atual `e2a59f82` (E1 a E3) nas duas pastas. O Daniel pediu "só backlog": nada começa sem ele mandar.
 Cada entrega é um lote fechado com exe no fim, capturas na GPU e push. O detalhe de cada item está nas seções abaixo (PT-25, SL, SV-R).
 
 | # | Entrega | Itens | Donos | Depende de |
