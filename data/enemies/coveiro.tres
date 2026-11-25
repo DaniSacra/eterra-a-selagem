@@ -26,6 +26,7 @@ attack_windup = 0.7200000000000001
 recharge_windup = 0.6400000000000001
 raise_count = 2
 raise_kind = &"skeleton_raised"
+roar_marks = PackedFloat32Array()
 guard_up_hit_windup = 0.68
 volley_windup = 0.8
 retreat_far = 7.0

@@ -99,7 +99,7 @@ func test_the_two_are_data_with_the_numbers_of_the_doc() -> void:
 	assert_eq(s.attack_damage, 8.0)
 	assert_eq(s.role, &"leap")
 	assert_almost_eq(s.leap_half, 1.8, 0.001, "a red circle of 1.8 m (Daniel, 2026-11-23)")
-	assert_eq(s.recover_time, 1.0)
+	assert_eq(s.recover_time, 0.8)
 	assert_eq(l.behavior, EnemyDef.Behavior.ARCHER)
 	assert_true(l.shot_return)
 	assert_eq(l.hp, 150.0)

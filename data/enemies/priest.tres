@@ -26,6 +26,7 @@ attack_range = 22.5
 attack_cooldown = 2.9250000000000003
 attack_windup = 0.6400000000000001
 recharge_windup = 0.6400000000000001
+roar_marks = PackedFloat32Array()
 guard_up_hit_windup = 0.68
 volley_windup = 0.8
 ward_count = 3

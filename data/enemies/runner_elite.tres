@@ -41,6 +41,7 @@ strike_at = 0.1
 strikes = 2
 strike_gap = 0.5
 recharge_windup = 0.6400000000000001
+roar_marks = PackedFloat32Array()
 guard_up_hit_windup = 0.68
 volley_windup = 0.8
 death_burst = 0.7

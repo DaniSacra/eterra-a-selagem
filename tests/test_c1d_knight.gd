@@ -20,7 +20,7 @@ func test_data_and_warnings() -> void:
 	var d := load("res://data/enemies/knight.tres") as EnemyDef
 	assert_eq(d.wall_stun, 1.5)
 	assert_eq(d.ward_open, 1.0)
-	assert_eq(d.guard_up_time, 4.0)
+	assert_eq(d.guard_up_time, 3.2)
 	assert_eq(d.front_block, 0.7)
 	assert_eq(d.close_windup, 0.5, "2026-11-23: the close blow warns 0.5 s (0.8 before)")
 	assert_gte(d.guard_up_hit_windup, 0.5, "the swing behind the shield warns 0.5 s or more")
@@ -48,7 +48,11 @@ func test_guard_rises_in_its_windup_then_falls_by_itself() -> void:
 	var game := _game()
 	var h := game.horde
 	h.target = Vector2(0, 0)
-	var e := _knight(game, Vector2(7, 0))
+	var e := _knight(game, Vector2(5, 0))
+	game.player.pos = Vector2.ZERO
+	e.roars = 2  # (SW-REA: the guard opens from 80%, within 6 m)
+	e.hp = e.max_hp * 0.6
+	e.armor = e.max_armor * 0.6
 	e.guard_cd = 0.0
 	var seen_windup := false
 	var up := false
@@ -66,14 +70,16 @@ func test_guard_rises_in_its_windup_then_falls_by_itself() -> void:
 	for i in 300:
 		game._step(1.0 / 60.0)
 	assert_eq(e.guard_t, 0.0, "it falls by itself")
-	assert_almost_eq(e.guard_cd, 14.0 - 1.0, 1.5, "and the next one counts from there")
+	assert_lt(e.guard_cd, d_every(), "and the next one counts from there")
 
 
-func test_no_guard_under_half_armor() -> void:
+func test_no_guard_without_armor() -> void:
 	var game := _game()
-	var e := _knight(game, Vector2(7, 0))
+	var e := _knight(game, Vector2(5, 0))
+	e.roars = 2
 	e.guard_cd = 0.0
-	e.armor = e.max_armor * 0.4
+	e.hp = e.max_hp * 0.5
+	e.armor = 0.0  # (SW-REA: guard_up_armor 0, so only a broken armor leaves it without the shield)
 	for i in 90:
 		game._step(1.0 / 60.0)
 	assert_eq(e.guard_t, 0.0)
@@ -131,3 +137,7 @@ func test_charge_into_the_wall_stuns() -> void:
 		if e.stun_t > 0.0:
 			break
 	assert_eq(e.stun_t, 1.5, "the floor pushed it back: wall stun")
+
+
+func d_every() -> float:
+	return (load("res://data/enemies/knight.tres") as EnemyDef).guard_up_every

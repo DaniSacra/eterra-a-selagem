@@ -391,7 +391,7 @@ func test_the_storm_crescents_leave_one_at_a_time() -> void:
 	var fired := [0]
 	var before := [0]
 	var wave := def.storm_windup * BossDef.by_phase(def.windup_scale, 4) + def.storm_stagger * (def.storm_count - 1) + def.storm_gap
-	_run(wave * def.storm_waves + 0.6, func() -> void:
+	_run(wave * def.storm_waves + 0.2, func() -> void:
 		var now := game.projectiles.shots.filter(func(s: Projectiles.Shot) -> bool: return s.kind == Projectiles.Kind.SOUL).size()
 		if now > before[0]:
 			most[0] = maxi(most[0], now - before[0])

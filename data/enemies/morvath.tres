@@ -24,3 +24,4 @@ radius = 1.4
 heavy = true
 material = &"spectral"
 attack_damage = 16.0
+roar_marks = PackedFloat32Array()
