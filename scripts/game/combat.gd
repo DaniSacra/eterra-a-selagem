@@ -347,6 +347,10 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			_apogee_weight(node, dir)
 		var omega := node.has_tag(OMEGA_TAG)
 		fx.kick(dir, kick_of(node))
+		if kick_of(node) >= KICK_FINISHER:
+			fx.punch(1.5 if omega else 1.0)
+		if shout:
+			Music.blow()
 		var buzz := RUMBLE_OMEGA if omega else RUMBLE_FINISHER if finisher else RUMBLE_COMMON
 		fx.buzz(buzz.x, buzz.y, buzz.z)
 		if finisher:
@@ -539,6 +543,8 @@ func _apogee_weight(node: ComboNode, dir: Vector2) -> void:
 	fx.blow_stop(maxf(node.hit_stop_ms, APOGEE_STOP_MS) * Feel.live().hit_stop_scale, APOGEE_SLOW_MS)
 	fx.shake(APOGEE_SHAKE)
 	fx.kick(dir, KICK_OMEGA)
+	fx.punch(1.5)
+	Music.blow()
 	Audio.play(CombatSounds.EVENTS[&"apogee"])
 
 

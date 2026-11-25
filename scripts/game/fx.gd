@@ -127,6 +127,10 @@ const CRESCENT_SPIN_GREEN := Color(0.3, 0.85, 0.55)
 const CRESCENT_SPIN_PEAK := 0.5
 const CRESCENT_SPIN_TIPS := 0.12
 const KICK_METERS := 0.35
+## CF2-03: zoom punch of a strong blow (2.5% closer, 3.75% at 1.5), up in 0.04 s and back in 0.07 s (under 0.12 s in all).
+const PUNCH_ZOOM := 0.025
+const PUNCH_IN := 0.04
+const PUNCH_OUT := 0.07
 const GOLD := Color(1.0, 0.82, 0.38)
 ## 2026-11-24 strength pass: a short point light on a strong blow (Forward+ only; Compatibility keeps no light, it would
 ## recompile every material). At most LIGHT_POOL at once, the oldest is taken; energy and range in the call.
@@ -348,6 +352,8 @@ var _pulse := 0.0
 var _glints: Array[Dictionary] = []
 var _crescents: Array[Dictionary] = []
 var _kick := Vector3.ZERO
+var _punch_t := 99.0
+var _punch_peak := 0.0
 var _rings: Array[Dictionary] = []
 ## Rings waiting their turn (ring_later).
 var _later_rings: Array[Dictionary] = []
@@ -1078,6 +1084,29 @@ func kick(dir: Vector2, amount: float) -> void:
 	_kick += Vector3(dir.x, 0, dir.y) * KICK_METERS * amount * shake_scale * Feel.live().kick_scale
 
 
+## CF2-03: the camera's zoom punch on a strong blow: closes in by PUNCH_ZOOM (times power) over PUNCH_IN, back over
+## PUNCH_OUT (both real seconds). Off with the shake option; never added to the slow motion's zoom (the larger wins).
+func punch(power: float = 1.0) -> void:
+	if shake_scale <= 0.0:
+		return
+	_punch_peak = maxf(_punch_peak * float(_punch_t < PUNCH_IN + PUNCH_OUT), PUNCH_ZOOM * power)
+	_punch_t = 0.0
+
+
+## The zoom the camera takes this frame: the slow motion's, or the punch's if it is larger (CF2-03).
+func cam_zoom() -> float:
+	return maxf(zoom, 1.0 + punch_amount(_punch_t, _punch_peak))
+
+
+## How much the punch closes in, t seconds after it began (0..peak): a quick rise, then an ease back.
+static func punch_amount(t: float, peak: float) -> float:
+	if t < 0.0 or t >= PUNCH_IN + PUNCH_OUT:
+		return 0.0
+	if t < PUNCH_IN:
+		return peak * t / PUNCH_IN
+	return peak * (1.0 - (t - PUNCH_IN) / PUNCH_OUT)
+
+
 ## A flat shockwave growing to radius. thin: only a fine line, nothing inside it.
 ## A short point light where a strong blow lands (energy 1 to 3, range in meters, `time` seconds, fading quadratically).
 ## Never more than LIGHT_POOL at once; none on Compatibility. Only for looks: nothing reads it.
@@ -1482,6 +1511,7 @@ func tick(delta: float) -> Vector3:
 	_shake = maxf(0.0, _shake - delta * (0.6 + _shake * 6.0))
 	split = maxf(0.0, split - delta * 3.0)
 	frame_left = maxf(0.0, frame_left - delta)
+	_punch_t += delta
 	_kick *= maxf(0.0, 1.0 - delta * 14.0)
 	if _shake <= 0.0:
 		return _kick

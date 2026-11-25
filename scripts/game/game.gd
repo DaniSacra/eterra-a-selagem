@@ -1661,7 +1661,7 @@ func _cam_placed(p: Vector2) -> void:
 
 func _follow(delta: float, shake: Vector3) -> void:
 	cam.focus = focus
-	cam.follow(delta, shake, fx.zoom)
+	cam.follow(delta, shake, fx.cam_zoom())
 
 
 ## The floor point the camera looks at, for the point it follows (CamRig.look_at).
