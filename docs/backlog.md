@@ -18,7 +18,7 @@
   - "Q para o Brado de Guerra" e "E para a Investida", dizendo o que cada um faz.
   - Ele já pode começar a descida com uma Bênção (uma escolha de Bênção na Antessala, antes da primeira sala).
   - Textos a aprovar pelo Daniel. Junta com o SW-O (linha de objetivo e dicas) e com o PT-25-6.
-- **PT-25-9, travessias só com esquiva** (ideia do SWORN): áreas que só se atravessam com Espaço, como riachos estreitos, vãos e fendas de 2 a 4 m que a esquiva (5,6 m) vence e o andar não. Caminhos curtos que recompensam a esquiva, com um quebrável ou um baú do outro lado; nunca obrigatórias para sair da sala. Dono: `room-designer`, com o padrão das salas novas (SL).
+- **PT-25-9, travessias só com esquiva** (ideia do SWORN): áreas que só se atravessam com Espaço, como riachos estreitos, vãos e fendas de 2 a 4 m que a esquiva (5,6 m) vence e o andar não. Caminhos curtos que recompensam a esquiva, com um quebrável ou um baú do outro lado. Nas salas comuns nunca obrigatórias; **na Antessala é obrigatória** (Daniel, 2026-11-25): um riacho ou fenda entre o jogador e a saída, que só se passa com Espaço, junto da dica "Aperte Espaço para se esquivar" (PT-25-8). Dono: `room-designer`, com o padrão das salas novas (SL).
 - **PT-25-10, escala como no SWORN** (imagem em `docs/design/ref_sworn/escala_portas_perigos_2026-11-25.png`):
   - perigos mais localizados, como a laje de pisar de 2 x 2 placas (4 quadrados, e não 2 como a nossa), bem desenhada no chão e com área curta e clara;
   - obstáculos com volume (o pilar com vaso);
