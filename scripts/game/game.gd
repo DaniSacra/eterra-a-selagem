@@ -77,6 +77,8 @@ var boons: BoonState
 ## its ranks summed in boons.stat), the meetings with the angels (encounters) and the Gifts open at the start.
 var materials := MaterialPurse.new()
 var materials_banked := {}
+## The milestones the save had when the run began (PT-25-6: the end screen tells what the descent opened).
+var milestones_before: Array[StringName] = []
 ## Ofícios, Roteiro A: the descent's part (OficiosRun: the pick, the head wanted, what was found and extracted), its
 ## numbers (OficiosDef) and what went into the save at the end (Oficios.bank).
 var oficios: OficiosRun
@@ -258,6 +260,7 @@ func _ready() -> void:
 	_build_world()
 	_build_ui()
 	first_run = FirstDescent.active(Save.data, FirstDescent.flags_now(Save.enabled)) and not Dev.has("horde") and FirstDescentDef.live() != null
+	milestones_before = Milestones.reached(Save.data)
 	boons = BoonState.new(BoonState.load_catalog())
 	combat = Combat.new()
 	combat.horde = horde
@@ -1569,7 +1572,9 @@ func _open_end(victory: bool, new_best: bool) -> void:
 	_screen = end
 	ui.add_child(end)
 	end.open(victory, {"first_done": first_won, "time": time, "level": level if rooms == null else 0, "kills": kills, "best_combo": combat.best_combo, "boons": boons.owned().size(),
-		"defeated_by": defeated_by() if not victory and not last_hurt.is_empty() else &"", "mastery": mastery_report}, new_best)
+		"defeated_by": defeated_by() if not victory and not last_hurt.is_empty() else &"", "mastery": mastery_report,
+		"rooms_won": rooms.won.size() if rooms != null else 0, "gold": rooms.gold if rooms != null else 0,
+		"opened": RunSpoils.opened(milestones_before, Milestones.reached(Save.data))}, new_best)
 	if first_run or (Save.enabled and int(Save.data.runs) <= 1):
 		# a new save's first descent ends in the Santuário, seen for the first time (boot.gd first_scene)
 		end.home_only()

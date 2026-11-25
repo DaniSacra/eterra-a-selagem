@@ -127,6 +127,9 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 	if int(stats.get("level", 0)) > 0: # the old horde mode has levels; the room run does not
 		_stat(grid, T.t(&"end_level"), str(stats.level))
 	_stat(grid, T.t(&"end_kills"), str(stats.kills))
+	_stat_rooms(grid, stats)
+	if int(stats.get("gold", 0)) > 0:
+		_stat(grid, T.t(&"hud_gold"), str(stats.gold))
 	if not shows_gifts: # the medallions above already count them
 		_stat(grid, T.t(&"end_boons"), str(stats.boons))
 	var best: Array = Save.data.best_times
@@ -137,6 +140,7 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 		nb.name = "new_best"
 		nb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(nb)
+	_opened(v, stats)
 	_hide_hud()
 	_ways(v, false)
 
@@ -177,6 +181,7 @@ func _open_victory(stats: Dictionary, new_best: bool) -> void:
 	var grid := _grid(s)
 	_stat(grid, T.t(&"end_time"), SaveData.format_time(stats.time), UiKit.GOLD if new_best else UiKit.PALE)
 	_stat(grid, T.t(&"end_kills"), str(stats.kills))
+	_stat_rooms(grid, stats)
 	var game := _game()
 	_hide_hud()
 	if game and game.rooms:
@@ -188,6 +193,7 @@ func _open_victory(stats: Dictionary, new_best: bool) -> void:
 		nb.name = "new_best"
 		nb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		s.add_child(nb)
+	_opened(s, stats)
 	_ways(s, true)
 	# the sealing alone first, over the summary's place
 	_sealing = Control.new()
@@ -458,6 +464,32 @@ func _stat(row: HBoxContainer, key: String, value: String, color: Color = UiKit.
 	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cell.add_child(n)
 	row.add_child(cell)
+
+
+## "Salas vencidas": the rooms won in the run (stats "rooms_won", else the Game's); nothing outside a room run.
+func _stat_rooms(row: HBoxContainer, stats: Dictionary) -> void:
+	var game := _game()
+	var won := int(stats.get("rooms_won", game.rooms.won.size() if game != null and game.rooms != null else -1))
+	if won >= 0:
+		_stat(row, T.t(&"end_rooms"), str(won))
+
+
+## "Liberado nesta descida" (PT-25-6): one line for each Santuário piece the run opened (stats "opened": milestone ids,
+## RunSpoils); nothing when the run opened none.
+func _opened(parent: Control, stats: Dictionary) -> void:
+	var ids: Array = stats.get("opened", [])
+	if ids.is_empty():
+		return
+	var col := VBoxContainer.new()
+	col.name = "opened"
+	col.add_theme_constant_override(&"separation", 2)
+	parent.add_child(_head(T.t(&"end_unlocked_head")))
+	for id in ids:
+		var l := UiKit.shadow(UiKit.label(T.t(RunSpoils.text_key(StringName(id))), UiKit.GOLD, BROUGHT_SIZE - 4, UiKit.BOLD_FONT))
+		l.name = "open_%s" % id
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		col.add_child(l)
+	parent.add_child(col)
 
 
 ## The save's first descent over (the Daniel, 2026-11-21): the Santuário is first seen now, so the only way on is to it.
