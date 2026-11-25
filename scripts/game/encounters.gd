@@ -123,7 +123,7 @@ func cards_of(angel: AngelDef) -> Array[BoonState.Card]:
 	var room := game.rooms.room
 	var rng := Encounter.cards_dice(game.run_seed(), room.id if room else -1, room.depth if room else 0, angel.id)
 	var stage := game.rooms.stage
-	var cards := Encounter.cards(game.boons, angel, rng, 3, _chances, stage.elo_chance, stage.trade_chance)
+	var cards := Encounter.cards(game.boons, angel, rng, 3, _chances, stage.elo_now(game.boons.owned().size()), stage.trade_chance)
 	game.fill_psalm(cards, _psalm, rng)
 	return cards
 
@@ -133,7 +133,7 @@ func reroll_cards(angel: AngelDef) -> Array[BoonState.Card]:
 	var room := game.rooms.room
 	var rng := Encounter.cards_dice(game.run_seed(), (room.id if room else -1) + 7919, room.depth if room else 0, angel.id)
 	var stage := game.rooms.stage
-	var cards := Encounter.cards(game.boons, angel, rng, 3, _chances, stage.elo_chance, stage.trade_chance)
+	var cards := Encounter.cards(game.boons, angel, rng, 3, _chances, stage.elo_now(game.boons.owned().size()), stage.trade_chance)
 	game.fill_psalm(cards, _psalm, rng)
 	return cards
 

@@ -183,6 +183,8 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var guardian_rarity_chance: Array[float] = Boon.RARITY_CHANCE_GUARDIAN
 ## Chance a card is an Elo (when one can be formed) and chance it is a trade (E3-01).
 @export var elo_chance := Boon.ELO_CHANCE
+## SW-B2: the share of elo_chance by Blessings held (Boon.ELO_RAMP).
+@export var elo_ramp: Array[float] = Boon.ELO_RAMP
 @export var trade_chance := Boon.TRADE_CHANCE
 ## Chance a card is a Psalm when one can be offered (E4, Psalms.fill): a room's and the guardian's.
 @export var psalm_chance := Psalms.CHANCE
@@ -223,3 +225,8 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var altar_life_cost := 10.0
 @export var altar_gold_cost := 75
 @export var altar_magick := 25.0
+
+
+## The chance a card is an Elo with this many Blessings held (SW-B2).
+func elo_now(held: int) -> float:
+	return BoonState.elo_chance_at(held, elo_chance, elo_ramp)

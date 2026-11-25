@@ -78,6 +78,8 @@ static func belongs(state: BoonState, b: Boon, family: Boon.Family) -> bool:
 ## BO-2: how many cards an angel must be able to put on the table to be met (six Blessings a family, one held for each
 ## button: the second meeting still shows three).
 const CARDS := 3
+## SW-B2: the weight of an angel the hand already holds a Blessing of, against 1 of a new one (SWORN's fairies, 3 to 1).
+const HELD_WEIGHT := 3.0
 
 
 ## How many cards the angel could offer the hand: a Blessing not held and offerable (fresh, a trade or an Elo that can be
@@ -103,12 +105,7 @@ static func eligible(state: BoonState, angel: AngelDef) -> bool:
 ## The angels met: SIZE different ones drawn among the eligible (all shuffled on rng, the first eligible kept), the
 ## forced ones first (--angels; an ineligible forced one is skipped). Fewer when fewer are eligible.
 func pair(state: BoonState, rng: RandomNumberGenerator, forced: Array = []) -> Array[AngelDef]:
-	var order: Array[AngelDef] = catalog.duplicate()
-	for i in range(order.size() - 1, 0, -1):
-		var j := rng.randi() % (i + 1)
-		var t := order[i]
-		order[i] = order[j]
-		order[j] = t
+	var order := weighted_order(state, catalog, rng)
 	var out: Array[AngelDef] = []
 	for id: Variant in forced:
 		var a := find(StringName(id))
@@ -120,6 +117,29 @@ func pair(state: BoonState, rng: RandomNumberGenerator, forced: Array = []) -> A
 		if not out.has(a) and eligible(state, a):
 			out.append(a)
 	return out
+
+
+## SW-B2 (the SWORN's fairies: one you already have weighs 3 against 1 of a new one): the angels in a random order where
+## each one's chance of coming first is its weight over the sum (a weighted draw without replacement: key = u^(1/w),
+## highest first). One die each, in the catalog's order.
+static func weighted_order(state: BoonState, angels: Array[AngelDef], rng: RandomNumberGenerator, held_weight: float = HELD_WEIGHT) -> Array[AngelDef]:
+	var keyed: Array = []
+	for a in angels:
+		var w := held_weight if holds(state, a) else 1.0
+		keyed.append([pow(maxf(rng.randf(), 0.000001), 1.0 / w), a])
+	keyed.sort_custom(func(x: Array, y: Array) -> bool: return x[0] > y[0])
+	var out: Array[AngelDef] = []
+	for k in keyed:
+		out.append(k[1])
+	return out
+
+
+## True when the hand holds a Blessing of the angel's family (an Elo counting for both of its families).
+static func holds(state: BoonState, angel: AngelDef) -> bool:
+	for b in state.owned():
+		if belongs(state, b, angel.family):
+			return true
+	return false
 
 
 ## The angel's cards: BoonState.draw over its family only, with the stage's chances; short of n, the rest are one level

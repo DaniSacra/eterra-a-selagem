@@ -818,3 +818,23 @@ Robô, `smoke.sh 900 --seed=N`, sementes 1 a 6 (antes = HEAD `94e74f5`; depois =
 | 6 | 14, morreu fase 3, 709 s | 8, morreu, 416 s |
 
 `stuck` 0 nas 12 partidas. Chegaram a Morvath 4 de 6 nas duas medições, uma vitória em cada. Mortes antes de Morvath: 2 antes (salas 11 e 12), 3 depois (salas 6, 8 e 8: arqueiros, Cavaleiro e Ancião levaram a vida no robô). Dano levado por tipo (soma das 6 partidas, só inimigos e hazards; vida do herói 40): antes arqueiro 93, mago 93, Cavaleiro 55, Ancião 33, Canalizador 33, guarda de elite 29, guarda 10, esqueleto 5; depois arqueiro 60, mago 85, Cavaleiro 45, Ancião 18, guarda 16, esqueleto 15, Armadilheiro 8, corredor 7, arqueiro de elite 5. Os ratos não aparecem entre os que ferem (a mordida de 3 quase nunca acerta o robô), nem o Capitão (2 lutas, 0 de dano). Sinal de saúde: no começo direto na sala do guardião (`--start=miniboss`, sementes 3, 4 e 7, 200 s) a vida levada pelo Cavaleiro caiu de 23 para 5 e a do Ancião de 12 para 6, porque a barra de atordoamento de 3,5 s quebra com especial e Investida (as quebras do robô: especial 4 e Investida 2 contra 0 antes). Seis sementes são pouco para separar ruído de efeito: a morte na sala 6 da semente 3 é a luta do Cavaleiro com 36 de vida na entrada e 28 de dano levado, e o início direto na mesma luta deu o contrário. Se o Daniel achar a descida mais fácil ou difícil, os botões são `poise_mult` (quantas pancadas quebram) e `poise_stun` em `tools/make_data.gd`.
+
+
+## SW-B2: sorteio das Bênçãos (2026-11-25)
+
+Referência: `docs/design/sworn_rea_kingswood_2026-11-25.md` (raridades 79,5 / 14 / 4,5 / 1,5 / 0,5; fada já tida pesa 3 contra 1;
+dupla de 0 a 50% entre 2 e 10 Bênçãos; mesmo passo por raridade).
+
+| | antes | depois | SWORN |
+|---|---|---|---|
+| `rarity_chance` (rara, épica, lendária) | 10 / 5 / 1% | 16 / 6 / 2% | |
+| comum / rara / épica / lendária | 84,6 / 9,4 / 5,0 / 1,0 | 77,4 / 14,7 / 5,9 / 2,0 | 79,5 / 14 / 4,5 / 1,5+0,5 |
+| épicas+lendárias oferecidas por descida (24 cartas) | 1,4 | 1,9 | |
+| tomadas pelo robô por descida (6 sementes, 900 s) | 5,5 / 2,3 / 0,17 / 0,17 | 5,3 / 1,3 / 0,67 / 0,67 | |
+| Elo por carta | 12% fixo | 0 com menos de 3 Bênçãos, 6% com 3, 50% com 10 | 0 a 50% |
+| anjo já tido | peso 1 | peso 3 contra 1 | 3 contra 1 |
+
+O guardião (90 / 7 / 3%) e a Provação (40 / 10 / 0%) ficam como estavam. Passo por raridade: multiplicadores 1 / 1,5 / 2 / 2,5
+(mesmo passo de 0,5 do primeiro nível), e o teste `test_every_rarity_adds_one_step_to_every_scaled_number` confirma que todo
+número que escala com a raridade cresce de comum a lendária; nada precisou mudar. A amostra do robô é pequena (6 descidas, ruído
+grande); a conta exata está em `BoonState.rarity_odds`.

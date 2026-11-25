@@ -26,14 +26,14 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - **Bênçãos e economia da E3 (Hades II; regras, números e decisões em `docs/design/e3_blessings.md`, métricas do robô em
   `docs/qa/e3_metrics.md`)**: as portas tiram cartas de um baralho sem repor que volta inteiro quando nada serve
   (`StageDef.reward_deck`, `RewardDeck`: 6 Bênçãos, 2 romãs, 2 corações, 2 Magia, 2 ouro). Raridade em sequência
-  (`BoonState.roll_rarity`: rara 10%, épica 5%, 85,5 / 9,5 / 5; guardião rara 90%, épica 7%), quatro raridades
+  (`BoonState.roll_rarity`: rara 16%, épica 6%, lendária 2%, ou 77,4 / 14,7 / 5,9 / 2 (SW-B2; era 10 / 5 / 1); guardião rara 90%, épica 7%), quatro raridades
   comum 1, rara 1,5, épica 2 e lendária 2,5 (D-52, D-53), a lendária só pela troca (E3-01: 10% por carta, a Bênção de
   uma ação ocupada troca por outra uma raridade acima e no nível dela, `BoonState.trade_card`). Cada carta é
   `BoonState.Card` (`Game.offer_cards`: raridade, `trade`, `replaces`, `level`); Bênção que já se tem não volta nas
   cartas (cresce pela romã). Romã: cada número tem `base` (nível 1, vezes a raridade) e `per_level` (ganho fixo por
   nível, o último se repete, sem raridade; `BoonMod.at`, `SkillDef.damage_at`); teto de nível 3 mantido (E3-D1). Elo
-  12% por carta (`elo_chance`), pede uma Bênção de cada lista (`Boon.requires_sets`), sem raridade e sem nível
-  (BUG-017). Sem bônus de sequência de golpes (C13-07, D-10). Ouro cai dos inimigos (`GoldPurse`: teto de 10 a 15 +
+  de 0 a 50% por carta (SW-B2: `StageDef.elo_chance` é o teto e `elo_ramp` a fração por Bênçãos na mão; nada com menos de 3, 50% com 10; `StageDef.elo_now`), pede uma Bênção de cada lista (`Boon.requires_sets`), sem raridade e sem nível
+  (BUG-017). Sorteio dos anjos (SW-B2): o anjo de cuja família a mão já tem uma Bênção pesa 3 contra 1 de um novo (`Encounter.weighted_order`, `HELD_WEIGHT`), para o par das salas e o anjo das portas. Sem bônus de sequência de golpes (C13-07, D-10). Ouro cai dos inimigos (`GoldPurse`: teto de 10 a 15 +
   0,5 por profundidade, 70% por inimigo da parte dele), recompensa de ouro 100; loja em 3 grupos (`StageDef.shop_groups`,
   `ShopGroup.count`: Bênção 150; cura 50 e coração 125; dois de Magia 100, romã 100 e fatia de romã 50,
   `RunMap.Reward.POM_SLICE`), 5 itens como a última loja antes do chefe final (`Rooms.shop()` para a tela). O robô
