@@ -141,6 +141,11 @@ func warn(seconds: float) -> void:
 	air.warn(seconds)
 
 
+## CF2-06: the music dips about 3 dB for 0.3 s under the Apogeu's and the Brado's blow.
+func blow() -> void:
+	mix.blow()
+
+
 ## Morvath's phase n (1 to 4): his piece, at level n (our own adds a layer a phase, a recorded one plays its section).
 func boss_phase(n: int) -> void:
 	Audio.log_event(["boss", n])

@@ -252,6 +252,7 @@ func _cleave(origin: Vector2, dir: Vector2) -> void:
 	_show_rift(origin, dir)
 	var fx := game.fx
 	fx.kick(dir, Combat.KICK_FINISHER)
+	fx.punch(1.5)
 	fx.shake(3.0)
 	fx.buzz(Combat.RUMBLE_OMEGA.x, Combat.RUMBLE_OMEGA.y, Combat.RUMBLE_OMEGA.z)
 	for k in 5:
@@ -487,6 +488,7 @@ func _implode(v: Vortex) -> void:
 	fx.ring(v.at, def.implode_radius * 1.6, Combat.EMETH, 0.35, 0.15, true)
 	fx.burst(&"light", Vector3(v.at.x, 0.6, v.at.y))
 	fx.kick((v.at - game.player.pos).normalized() if v.at.distance_to(game.player.pos) > 0.1 else Vector2.DOWN, Combat.KICK_FINISHER)
+	fx.punch(1.5)
 	fx.shake(2.5)
 	Audio.play(CombatSounds.EVENTS[&"ult_implode"])
 

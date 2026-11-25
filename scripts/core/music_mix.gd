@@ -20,6 +20,10 @@ const DUCK_FADE := 0.6
 ## the warning, back slowly, so his tell is heard over the drums.
 const WARN_DUCK := 0.5
 const WARN_ATTACK := 0.06
+const BLOW_DUCK := 0.71
+const BLOW_TIME := 0.3
+const BLOW_ATTACK := 0.03
+const BLOW_RELEASE := 0.15
 const WARN_RELEASE := 0.5
 ## A one-shot track calls its `then` this long before it ends, so the next one is in before it is gone.
 const HANDOVER := 2.0
@@ -61,6 +65,9 @@ var duck := 1.0
 ## The warning's duck (1 = none) and how long it still holds.
 var warn_duck := 1.0
 var warn_hold := 0.0
+## CF2-06: the short dip under the Apogeu's and the Brado's blow (about -3 dB for BLOW_TIME).
+var blow_duck := 1.0
+var blow_hold := 0.0
 ## Decks started and dropped since the last call to take_changes (Music makes and frees their players).
 var started: Array[Deck] = []
 var dropped: Array[Deck] = []
@@ -191,6 +198,11 @@ func step(dt: float) -> void:
 		warn_duck = move_toward(warn_duck, WARN_DUCK, dt * (1.0 - WARN_DUCK) / WARN_ATTACK)
 	else:
 		warn_duck = move_toward(warn_duck, 1.0, dt * (1.0 - WARN_DUCK) / WARN_RELEASE)
+	blow_hold = maxf(blow_hold - dt, 0.0)
+	if blow_hold > 0.0:
+		blow_duck = move_toward(blow_duck, BLOW_DUCK, dt * (1.0 - BLOW_DUCK) / BLOW_ATTACK)
+	else:
+		blow_duck = move_toward(blow_duck, 1.0, dt * (1.0 - BLOW_DUCK) / BLOW_RELEASE)
 
 
 ## One of Morvath's warnings: the bed ducks under it for `seconds` (a longer one already holding is kept).
@@ -198,9 +210,14 @@ func warn(seconds: float) -> void:
 	warn_hold = maxf(warn_hold, seconds)
 
 
+## The Apogeu or the Brado lands: the bed dips a little for BLOW_TIME.
+func blow() -> void:
+	blow_hold = BLOW_TIME
+
+
 ## What a layer of a bed deck is heard at (the duck included).
 func heard(d: Deck, layer: int) -> float:
-	return d.gain(layer) * (1.0 if d.sting else duck * warn_duck)
+	return d.gain(layer) * (1.0 if d.sting else duck * warn_duck * blow_duck)
 
 
 ## The loudest thing playing, linear: 0 is silence.

@@ -2725,6 +2725,8 @@ func clear_crowd() -> void:
 const BARS_FOR_ALL := 24
 ## A blow tips the body back, away from the paladin, for an instant (radians at a full flash; a heavy body less).
 const RECOIL_TILT := 0.2
+## CF2-04: a common body (not heavy) tips back further, so the blow reads without an interrupt (only drawn).
+const RECOIL_TILT_COMMON := 0.35
 ## The pale trails on the life bars (only drawn).
 var bar_trails := BarTrails.new()
 
@@ -2978,7 +2980,7 @@ func render(render_dt := 1.0 / 60.0) -> void:
 			tells.eyes(EnemyFx.anchor(e.pos, e.y, e.yaw(), d.size, kind.model.point("head", anim, t)), e.yaw(), d.size,
 				e.state == Enemy.State.WINDUP, e.helpless())
 		var fade := _fade(e, anim, render_dt, fade_len)
-		e.drawn_row = renderer.add_kind(kind, d, anim, t, at + Vector3(0, 0.18 * give, 0), e.yaw(), state, squash, -RECOIL_TILT * give, lean, e.fade_row, fade)
+		e.drawn_row = renderer.add_kind(kind, d, anim, t, at + Vector3(0, 0.18 * give, 0), e.yaw(), state, squash, -(RECOIL_TILT if d.heavy else RECOIL_TILT_COMMON) * give, lean, e.fade_row, fade)
 		# the thin life bar over the head (the boss has its own at the top of the screen); with a big crowd only
 		# the hurt and the armored show one, thinner and fainter, so the screen stays clear
 		if d.behavior != EnemyDef.Behavior.BOSS and e != top_bar_for and e.state != Enemy.State.DOWN and (few or e.hp < e.max_hp or e.armor > 0.0):
