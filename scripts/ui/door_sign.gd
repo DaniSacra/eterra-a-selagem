@@ -69,7 +69,7 @@ const LAYER := 2
 static var keep_out := Rect2()
 const KEEP_GAP := 8.0
 ## How far from the screen's edge a sign may stand, and the shop price's size (readable for a child at 720 lines).
-const EDGE_MARGIN := 8.0
+const EDGE_MARGIN := 22.0
 const PRICE_SIZE := 18
 
 var title: Label

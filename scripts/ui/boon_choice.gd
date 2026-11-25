@@ -176,6 +176,11 @@ func _page(title_text: String = "", hint_text: String = "", lead_text: String = 
 		page.add_child(line)
 	else:
 		page.add_child(row)
+	# air between the last card and the footer (art review 2026-11-25 sweep: 19 px at 720 lines)
+	var air := Control.new()
+	air.custom_minimum_size.y = 12.0
+	air.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	page.add_child(air)
 	page.add_child(hint)
 	bar = ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_choose"), _press_focus)])
 	if hint_text == "":

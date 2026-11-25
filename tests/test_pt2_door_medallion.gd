@@ -4,6 +4,7 @@ extends GutTest
 
 const STAGE := "res://data/stages/catacombs.tres"
 const SEED := 1406
+const GAP_PX := 24.0
 
 var stage: StageDef
 
@@ -116,6 +117,8 @@ func test_projected_discs_never_overlap() -> void:
 	var pitch := deg_to_rad(f.cam_pitch)
 	cam.rotation = Vector3(-pitch, yaw, 0.0)
 	var checked := 0
+	# at least GAP_PX between the rings (px of the 720-line base canvas, scaled to the viewport the test has)
+	var gap := GAP_PX * get_viewport().get_visible_rect().size.y / 720.0
 	for a in _all_arenas():
 		var all := a.door_anchors()
 		if all.size() < 2:
@@ -127,6 +130,30 @@ func test_projected_discs_never_overlap() -> void:
 				var ri := _disc_px(cam, all[i])
 				var rk := _disc_px(cam, all[k])
 				var tag := "%s (%d doors): doors %d and %d" % [a.name_key, all.size(), i, k]
-				assert_false(ri.intersects(rk), tag + ": discs apart on the screen")
+				assert_gte(ri.get_center().distance_to(rk.get_center()), ri.size.x * 0.5 + rk.size.x * 0.5 + gap, tag + ": rings %d px apart on the screen" % int(GAP_PX))
 				checked += 1
 	assert_gt(checked, 20, "many rooms checked")
+
+
+## Nothing of a medallion is cut by the screen's sides: pull_in slides it in until its ring clears the margin.
+func test_pull_in_keeps_the_ring_inside_the_screen() -> void:
+	var f := Feel.live()
+	var cam := Camera3D.new()
+	add_child_autofree(cam)
+	cam.fov = f.cam_fov
+	cam.rotation = Vector3(-deg_to_rad(f.cam_pitch), deg_to_rad(f.cam_yaw), 0.0)
+	cam.position = cam.global_transform.basis.z * f.cam_distance_near
+	var screen := get_viewport().get_visible_rect().size
+	var margin := 22.0
+	var right := cam.global_transform.basis.x
+	right.y = 0.0
+	right = right.normalized()
+	for dx: float in [0.0, 6.0, 12.0, 25.0, -25.0]:
+		var at := Vector3(0, 4.7, 0) + right * dx
+		var pulled := at + RewardGem.pull_in(cam, at, screen, margin)
+		var c := cam.unproject_position(pulled)
+		var reach := RewardGem.RADIUS * RewardGem.DOOR_SCALE * RewardGem.RING_REACH
+		var px := c.distance_to(cam.unproject_position(pulled + right * reach))
+		assert_gte(c.x - px, margin - 0.5, "dx %s: left edge clear" % dx)
+		assert_lte(c.x + px, screen.x - margin + 0.5, "dx %s: right edge clear" % dx)
+	assert_eq(RewardGem.pull_in(cam, Vector3(0, 4.7, 0), screen, margin), Vector3.ZERO, "a medallion in the middle stays")

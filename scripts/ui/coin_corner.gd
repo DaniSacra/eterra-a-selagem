@@ -136,7 +136,8 @@ static func corner(host: Control, row: HBoxContainer, margin: float = 16.0) -> P
 	plate.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	plate.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	plate.offset_right = -margin
-	plate.offset_top = margin
+	# half the margin from the top: at the full margin the plate sat on the Livro's frame (UI review P2-7)
+	plate.offset_top = margin * 0.5
 	return plate
 
 

@@ -465,7 +465,8 @@ func _sector_labels() -> Array:
 		var w := UiKit.TITLE_FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_FS).x
 		var c := MedallionDef.place(apex.angle, apex.radius)
 		var out_dir := (c - MedallionDef.CENTER).normalized()
-		var at := c + Vector2(apex.diameter * 0.5 + LABEL_NEAR + w * 0.5, 0.0) if out_dir.y < -0.3 \
+		# the top branch's name stands to the LEFT of its apex: to the right it lay over the hero's hair
+		var at := c - Vector2(apex.diameter * 0.5 + LABEL_NEAR + w * 0.5, 0.0) if out_dir.y < -0.3 \
 				else c + Vector2(0.0, apex.diameter * 0.5 + LABEL_NEAR + LABEL_FS * 0.6)
 		out.append({"text": text, "at": at, "w": w, "ink": tint_of(apex.id).lightened(0.25)})
 	return out
@@ -495,16 +496,19 @@ func label_boxes() -> Array[Rect2]:
 ## toward the node) until its box clears every branch label (UI 6: the hint sat over "FÚRIA" and "COMBO").
 func caption_spot(c: Vector2, inward: Vector2, start: float, box_size: Vector2) -> Vector2:
 	var boxes := label_boxes()
-	for step: float in [0.0, 28.0, 56.0, -28.0, 84.0, -56.0]:
-		var p := c + inward * (start + step)
-		var r := Rect2(p - box_size * 0.5, box_size).grow(4.0)
-		var clear := true
-		for b in boxes:
-			if r.intersects(b):
-				clear = false
-				break
-		if clear:
-			return p
+	# along the inward line first, then turned aside (a node standing in the way is walked around, not covered)
+	for turn: float in [0.0, 35.0, -35.0, 70.0, -70.0]:
+		var dir := inward.rotated(deg_to_rad(turn))
+		for step: float in [0.0, 28.0, 56.0, -28.0, 84.0, -56.0]:
+			var p := c + dir * (start + step)
+			var r := Rect2(p - box_size * 0.5, box_size).grow(4.0)
+			var clear := true
+			for b in boxes:
+				if r.intersects(b):
+					clear = false
+					break
+			if clear:
+				return p
 	return c + inward * start
 
 

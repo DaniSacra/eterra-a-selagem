@@ -109,6 +109,8 @@ const CLOCK_BOX := Vector2(120, 30)
 const CLOCK_Y := 7.0
 const CLOCK_BOSS_Y := 7.0
 const BOSS_TOP := 42.0
+## Where the centred notice stands (px from the top) when no boss bar is up.
+const NOTICE_Y := 110.0
 const BOSS_TOP_ALONE := 12.0
 ## The hit count (VX-12): its digits stay under 48 px tall at 1080 lines even at the top of the pop, and the move's
 ## name under it is dimmed, so neither competes with the fight.
@@ -333,7 +335,7 @@ func _ready() -> void:
 	_build_actions()
 	_build_combo()
 	_build_column()
-	_notice = _label("", UiKit.PALE, FONT_TEXT + 3, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, 110))
+	_notice = _label("", UiKit.PALE, FONT_TEXT + 3, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, NOTICE_Y))
 	_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_notice.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_arrow = _label(T.t(&"hud_fountain"), UiKit.PALE, FONT_SMALL + 1, UiKit.BOLD_FONT, Control.PRESET_TOP_LEFT, Vector2.ZERO)
@@ -801,7 +803,11 @@ func _process(delta: float) -> void:
 	var meeting := game._screen is EncounterScreen
 	_clock.visible = not meeting
 	_room.visible = not meeting
-	if meeting:
+	# the Blessing screen has its own column of buttons and glossary on the right and its footer over the row of
+	# diamonds: the pile of Blessings and the diamonds wait under it (art review 2026-11-25 sweep)
+	var picking := game._screen is BoonChoice
+	_action_row.visible = not picking
+	if meeting or picking:
 		_column.visible = false
 		_column_hidden = true
 	elif _column_hidden:
@@ -1502,6 +1508,8 @@ func show_notice(text: String, time: float = 2.5) -> void:
 	_notice.add_theme_font_override(&"font", UiKit.number_font() if UiKit.has_digit(text) else UiKit.TITLE_FONT)
 	_notice.size = Vector2.ZERO
 	_notice.position.x = (get_viewport_rect().size.x - _notice.get_combined_minimum_size().x) * 0.5
+	# under the arena's name when a fight's bar and name stand up there (the guardian's hall), never over them
+	_notice.position.y = BOSS_TOP + 40.0 + 2.0 + 44.0 + 6.0 if _boss_box.visible else NOTICE_Y
 	_notice_t = time
 
 

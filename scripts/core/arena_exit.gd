@@ -67,15 +67,21 @@ static func spread(anchors: Array[Vector3], yaw: float, pitch: float, min_gap: f
 	var out: Array[Vector3] = []
 	for a in anchors:
 		var p := a
-		for q in out:
-			var d := p - q
-			var across := d.dot(right)
-			var up := d.dot(depth) * sin(deg_to_rad(pitch)) + d.y * cos(deg_to_rad(pitch))
-			if absf(up) >= min_gap or Vector2(across, up).length() >= min_gap:
-				continue
-			var need := sqrt(min_gap * min_gap - up * up)
-			var sd := -1.0 if across < 0.0 else 1.0
-			p += right * sd * (need - absf(across))
+		# a push away from one neighbour may land on another: go over them again until none is touched (at most 4 times)
+		for _pass in 4:
+			var moved := false
+			for q in out:
+				var d := p - q
+				var across := d.dot(right)
+				var up := d.dot(depth) * sin(deg_to_rad(pitch)) + d.y * cos(deg_to_rad(pitch))
+				if absf(up) >= min_gap or Vector2(across, up).length() >= min_gap:
+					continue
+				var need := sqrt(min_gap * min_gap - up * up)
+				var sd := -1.0 if across < 0.0 else 1.0
+				p += right * sd * (need - absf(across))
+				moved = true
+			if not moved:
+				break
 		out.append(p)
 	return out
 
