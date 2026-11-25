@@ -378,7 +378,7 @@ func test_the_end_screen_and_the_pause_go_back_to_the_hub() -> void:
 	game._open_end(false, false)
 	var end := game.find_children("*", "EndScreen", true, false)[0] as EndScreen
 	var to_menu := end.find_child("menu", true, false) as Button
-	assert_eq(to_menu.text, "Voltar ao " + T.t(&"hub_name"), "the place's name from its one key")
+	assert_eq(to_menu.text, "Continuar", "PT-25-6: the Espólios' Continuar goes on to the hub")
 	to_menu.pressed.emit()
 	(end.find_child("retry", true, false) as Button).pressed.emit()
 	assert_eq(went, [SceneGo.HUB, SceneGo.GAME] as Array[String], "Voltar goes to the hub, Descer de novo still goes down")
