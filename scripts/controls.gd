@@ -253,12 +253,17 @@ func reset_bindings() -> void:
 
 ## Label of what is bound to an action on the device in use ("Espaço", "Mouse esq.", "B").
 func label(action: StringName) -> String:
+	return label_for(action, using_pad)
+
+
+## The same for the keyboard and mouse (pad false) or the gamepad (true),.
+func label_for(action: StringName, pad: bool) -> String:
 	for ev in InputMap.action_get_events(action):
-		if using_pad and ev is InputEventJoypadButton:
+		if pad and ev is InputEventJoypadButton:
 			return T.t("pad_%d" % (ev as InputEventJoypadButton).button_index)
-		if not using_pad and ev is InputEventKey:
+		if not pad and ev is InputEventKey:
 			return OS.get_keycode_string((ev as InputEventKey).physical_keycode)
-		if not using_pad and ev is InputEventMouseButton:
+		if not pad and ev is InputEventMouseButton:
 			return T.t("mouse_%d" % (ev as InputEventMouseButton).button_index)
 	return "?"
 

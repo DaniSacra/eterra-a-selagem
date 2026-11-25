@@ -274,6 +274,26 @@ static func action_label(action: StringName) -> String:
 	return T.t("key_" + label) if T.table.entries.has("key_" + label) else label
 
 
+## The name of an action's key or button for the keyboard (pad false) or the gamepad (true), read from the bindings,
+## never fixed text. Used by the controls lines (title_controls, title_pad).
+static func bound_name(action: StringName, pad: bool) -> String:
+	var label := Controls.label_for(action, pad)
+	return T.t("key_" + label) if T.table.entries.has("key_" + label) else label
+
+
+## The controls line (`title_controls` keyboard and mouse, `title_pad` gamepad) with the real bindings.
+static func controls_line(pad: bool) -> String:
+	var p := {}
+	for a: StringName in [&"light_attack", &"heavy_attack", &"dodge", &"shout", &"rush", &"ultimate", &"interact", &"pause"]:
+		p[String(a)] = bound_name(a, pad)
+	p["supremo"] = p["ultimate"]
+	var move := ""
+	for a: StringName in [&"move_up", &"move_left", &"move_down", &"move_right"]:
+		move += bound_name(a, false)
+	p["move"] = move
+	return T.t(&"title_pad" if pad else &"title_controls", p)
+
+
 ## The mouse button bound to an action (0 when it is a key, or the gamepad is in use): the HUD draws a mouse for it.
 static func action_mouse_button(action: StringName) -> int:
 	if Controls.using_pad:

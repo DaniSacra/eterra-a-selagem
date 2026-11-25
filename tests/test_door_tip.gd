@@ -56,3 +56,10 @@ func test_the_box_shows_only_where_the_key_enters() -> void:
 	assert_eq(DoorTip.door_at(a, four_m_off, 2), a.exit_at(four_m_off), "same answer as the key's test")
 	assert_eq(DoorTip.door_at(a, four_m_off, 2), -1, "close but not at it: no box")
 	assert_eq(DoorTip.door_at(a, at_door, 1), -1, "a door that is not open")
+
+
+## U-1: nothing before the doors open and nothing farther than TIP_RANGE from the door.
+func test_the_tip_needs_open_doors_and_the_hero_close() -> void:
+	assert_false(DoorTip.tip_allowed(false, 1.0), "doors still shut (before door_open)")
+	assert_true(DoorTip.tip_allowed(true, DoorTip.TIP_RANGE - 0.1))
+	assert_false(DoorTip.tip_allowed(true, DoorTip.TIP_RANGE + 0.1), "too far")
