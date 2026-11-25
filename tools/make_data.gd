@@ -422,7 +422,7 @@ func _enemies() -> void:
 		"guard_up_hit_damage": 6.0, "guard_up_hit_windup": 0.6, "guard_back_mult": 1.5,
 		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35), "material": &"armor"})
 	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest_elder", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 420.0, "speed": 2.0,
-		"damage": 9.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 900.0, "armor_stagger": 2.5, "attack_damage": 4.0, "attack_range": 9.0,
+		"damage": 9.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 900.0, "armor_stagger": 2.5, "attack_damage": 3.0, "attack_range": 9.0,
 		"attack_cooldown": 3.9, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA, "shot_orb": true, "shot_speed": 6.0,
 		"escort": [&"guard"] as Array[StringName],
 		# Daniel 2026-11-23: it calls two archers at a time to the floor's edge, away from him (3 standing at most, one call every 10 to 14 s),
