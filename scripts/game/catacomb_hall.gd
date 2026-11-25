@@ -44,14 +44,14 @@ const DOOR_CLEAR := Vector2(2.4, 3.6)
 const DOOR_FRAME := 0.35
 const DOOR_ARC := 0.8
 const DOOR_WALL_Z := -HALF.y - 0.3
-const DOOR_SIGN := Vector2(2.0, 6.5)
+const DOOR_SIGN := Vector2(2.0, 6.0)
 ## The warm light on the doors' wall: where it hangs (between the two doors, in front of the wall), colour (#F3C47D
 ## leaning amber), energy and reach. No shadow, never on the crowd.
 const DOOR_TORCH_AT := Vector3(9.7, 3.4, -HALF.y + 1.6)
 const DOOR_TORCH := Color(1.0, 0.74, 0.42)
 const DOOR_TORCH_ENERGY := 2.4
 const DOOR_TORCH_RANGE := 7.5
-const DOOR_SIGN_TEXT := 0.5
+const DOOR_SIGN_TEXT := 3.9
 const DOOR_ZONE := Vector2(3.0, 2.6)
 ## How far the door's black face and its leaves stand in front of the wall's face, a leaf's thickness.
 const DOOR_FACE_OUT := 0.12
