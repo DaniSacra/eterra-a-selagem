@@ -545,8 +545,7 @@ func door_label(i: int) -> Vector2:
 	return exits[i] + inward * 2.6
 
 
-## Air between two door discs on the screen, meters at the disc's depth (SW-C9): wide enough that their halos (HALO) and rings
-## do not touch either (the Provação's two doors, 4.2 m apart, read as one glowing mass at 0.5).
+## Air between two door discs on the screen, meters at the disc's depth (SW-C9).
 const DISC_GAP := 0.5
 
 
