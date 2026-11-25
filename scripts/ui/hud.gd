@@ -349,6 +349,14 @@ func _build_top() -> void:
 	_place(_boss_box, Control.PRESET_CENTER_TOP, Vector2(0, BOSS_TOP), Vector2(BOSS.x, 40))
 	_boss_name = UiKit.shadow(UiKit.title("", FONT_TEXT, UiKit.PALE))
 	_boss_name.add_theme_constant_override(&"outline_size", 5)
+	# UX2-02: an ink plate behind the title, so a bright orb or a number flying behind it never washes the letters
+	var plate := StyleBoxFlat.new()
+	plate.bg_color = Color(UiKit.INK, 0.6)
+	plate.set_corner_radius_all(4)
+	plate.content_margin_left = 14.0
+	plate.content_margin_right = 14.0
+	_boss_name.add_theme_stylebox_override(&"normal", plate)
+	_boss_name.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_boss_box.add_child(_boss_name)
 	_boss_bar = HudBar.new().setup(BOSS_COLOR, BOSS, 11, true)
 	_boss_bar.over_color = Horde.ARMOR_COLOR
@@ -824,7 +832,8 @@ func _update_slots(p: Player) -> void:
 				s.refresh(b, 0.0, 0, 0, starved and not p.curse.active())
 				# the rajada's price on the diamond and, without the Magia, the words (H2)
 				s.cost = roundi(_omega(p, s.slot))
-				s.caption = T.t(&"hud_no_magick") if starved and not p.curse.active() else ""
+				# no permanent words: the starved diamond (its veil and bar) says it; the 1 s notice names it when tried
+				s.caption = ""
 				s.caption_color = ActionSlot.STARVED.lightened(0.45)
 				s.locked = p.curse.ratio()
 				# the Pastor (E4): the lights gathered, over the special's diamond
@@ -1118,12 +1127,12 @@ func _follow_row() -> void:
 	if not is_equal_approx(_combo_row.offset_left, x):
 		_combo_row.offset_left = x
 		_combo_row.offset_right = x + LIFE.x
-	# art review 2026-11-23 (9): the move's name stands over the diamond it came from 
-	var src: Control = _slots[maxi(ACTIONS.find(_move_action), 0)]
-	var cx := src.get_global_rect().get_center().x - get_global_rect().position.x
+	# UX2-01/UX2-10: the move's name has its own strip, always at the same spot: centred over the row, above the
+	# diamonds' captions (so the two never share a line)
+	var cx := _action_row.get_global_rect().get_center().x - get_global_rect().position.x
 	_move.offset_left = cx - MOVE_W * 0.5
 	_move.offset_right = cx + MOVE_W * 0.5
-	var lift := ActionSlot.CAPTION_RISE + 2.0
+	var lift := ActionSlot.CAPTION_RISE + ActionSlot.CAPTION_FONT + 6.0
 	_move.offset_bottom = _action_row.offset_top - lift
 	_move.offset_top = _move.offset_bottom - COMBO_WORD - 6.0
 

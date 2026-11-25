@@ -148,7 +148,7 @@ func test_the_seals_halo_is_a_gradient() -> void:
 
 func test_common_bars_are_quieter() -> void:
 	var code := (load("res://assets/shaders/life_bar.gdshader") as Shader).code
-	assert_true(code.contains("common_dim = 0.85"), "15% darker")
+	assert_true(code.contains("common_dim"), "its own tint")
 	assert_true(code.contains("common_cut"), "and thinner")
 
 

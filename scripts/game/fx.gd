@@ -167,8 +167,8 @@ const BEAM_POOL := 24
 const NUMBER_POOL := 32
 ## Damage numbers and floating words: font sizes in pixels at 720 lines (small and white, as in the references)
 ## and the dark outline around them.
-const NUMBER_SIZE := 17
-const NUMBER_BIG := 24
+const NUMBER_SIZE := 22
+const NUMBER_BIG := 30
 ## GR-27: damage over time keeps this share of a direct number's height at least, a colour of this value and edge.
 const TICK_SHARE := 0.7
 const TICK_VALUE := 0.75
@@ -1852,7 +1852,7 @@ func _show_label(i: int, text: String, color: Color, size: int, outline: int = 0
 
 
 func _jitter() -> Vector3:
-	return Vector3(_rng.randf_range(-0.4, 0.4), 0, _rng.randf_range(-0.2, 0.2))
+	return Vector3(_rng.randf_range(-0.2, 0.2), 0, _rng.randf_range(-0.1, 0.1))
 
 
 ## Ring sector mesh: UV.x along the swing, UV.y from the inner (inner_frac of reach) to the outer edge. Cached by size.

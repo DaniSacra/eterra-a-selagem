@@ -24,7 +24,7 @@ const GROUP_FROM := 6
 ## A total keeps taking the next frames' overflow for this many seconds (one swing that sweeps over a few frames).
 const GROUP_JOIN := 0.15
 ## Font size Fx draws a total with (pixels at 720 lines): a little over a plain number, under a big one.
-const GROUP_SIZE := 20
+const GROUP_SIZE := 26
 ## Pixels (at 720 lines) a number keeps from the paladin's head on screen.
 const HERO_CLEAR := 60.0
 

@@ -152,7 +152,8 @@ func test_the_rajada_shows_its_cost_and_says_without_magia() -> void:
 	assert_eq(special.caption, "", "paid: no words")
 	game.player.magick.value = 0.0
 	await wait_process_frames(2)
-	assert_eq(special.caption, T.t(&"hud_no_magick"))
+	assert_eq(special.caption, "", "UX2-01: no permanent words, the diamond is starved instead")
+	assert_true(special.starved)
 	game.player.magick.value = game.player.magick.max_value
 	await wait_process_frames(2)
 	assert_eq(special.caption, "")

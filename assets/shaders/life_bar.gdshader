@@ -9,22 +9,22 @@ shader_type spatial;
 // the armor's own strip on top, a line of ink, the life under it; both read whole.
 render_mode unshaded, cull_disabled, depth_test_disabled, shadows_disabled;
 
-uniform vec3 life_color : source_color = vec3(0.86, 0.12, 0.14);
+uniform vec3 life_color : source_color = vec3(0.86, 0.2, 0.18);  // UiKit.RED, the HUD's life red
 uniform vec3 armor_color : source_color = vec3(1.0, 0.82, 0.25);
-uniform vec3 back_color : source_color = vec3(0.04, 0.03, 0.05);
+uniform vec3 back_color : source_color = vec3(0.047, 0.039, 0.055);  // UiKit.INK
 uniform vec3 trail_color : source_color = vec3(1.0, 0.9, 0.78);
 // PT-0 (2026-11-23): the Quebra's gauge in its own light blue (the life is red, the armor gold, the trail white)
 uniform vec3 poise_color : source_color = vec3(0.45, 0.78, 1.0);
 uniform vec3 elite_frame : source_color = vec3(0.56, 0.45, 0.27);
 // Meters of the frame on each side (as thick on the ends as on the long sides, and on a tall armored bar).
-uniform float frame_m = 0.03;
+uniform float frame_m = 0.04;
 // The armored bar's split: the armor's strip takes this share of the inside (from the top).
 uniform float armor_share = 0.42;
 // ART-02.6: a common enemy's bar (not an elite nor armored) is quieter than the hero's own: its life 15% darker and
 // the bar thinner, its top kept where it was (the share of the quad's height cut from the top). Elites keep their
 // frame and their full bar.
-uniform float common_dim = 0.85;
-uniform float common_cut = 0.25;
+uniform float common_dim = 1.0;
+uniform float common_cut = 0.1;
 
 varying vec3 fill;
 varying float fade;
@@ -65,21 +65,26 @@ void fragment() {
 	float fy = frame_m / max(tall, 0.001);
 	float fx = frame_m / max(size_m.x, 0.001);
 	vec3 c = mix(back_color, elite_frame, elite);
+	float well = 1.0;
 	bool inside = uv.x > fx && uv.x < 1.0 - fx && uv.y > fy && uv.y < 1.0 - fy;
 	if (inside) {
 		float x = (uv.x - fx) / (1.0 - 2.0 * fx);
 		float y = (uv.y - fy) / (1.0 - 2.0 * fy);
-		c = back_color * 2.5;
+		c = back_color * 1.6;
+		well = 0.7;
 		if (poise_gauge > 0.5) {
 			if (x < fill.r) {
 				c = poise_color;
+				well = 1.0;
 			}
 		} else if (armored && y < armor_share) {
 			// the armor's own strip; a line of ink under it
 			if (y > armor_share - 0.12) {
 				c = back_color;
+				well = 1.0;
 			} else if (x < fill.g) {
 				c = armor_color;
+				well = 1.0;
 			}
 			if (ticks > 0.5 && y <= armor_share - 0.12) {
 				float px = max(fwidth(x), 0.0001);
@@ -92,11 +97,13 @@ void fragment() {
 		} else {
 			if (x < fill.r) {
 				c = life_color * (common ? common_dim : 1.0);
+				well = 1.0;
 			} else if (x < fill.b) {
 				c = trail_color;
+				well = 1.0;
 			}
 		}
 	}
 	ALBEDO = c;
-	ALPHA = 0.95 * fade;
+	ALPHA = 0.95 * fade * well;
 }
