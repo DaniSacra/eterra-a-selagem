@@ -3066,32 +3066,32 @@ variants = Array[ExtResource("6_0uifc")]([SubResource("Resource_qaow4")])
 
 [sub_resource type="Resource" id="Resource_8jbjk"]
 script = ExtResource("1_63so8")
-at = Vector2(-10.4, -0.4)
+at = Vector2(-10.4, -4.4)
 
 [sub_resource type="Resource" id="Resource_oft4f"]
 script = ExtResource("1_63so8")
 form = 1
-at = Vector2(-10.4, 0.4)
+at = Vector2(-10.4, -3.6)
 radius = 0.384
 height = 0.8
 
 [sub_resource type="Resource" id="Resource_4e6bu"]
 script = ExtResource("1_63so8")
 form = 2
-at = Vector2(10.4, 0.6)
+at = Vector2(10.4, 3.6)
 radius = 0.2
 height = 0.4
 group = 1
 
 [sub_resource type="Resource" id="Resource_m3eui"]
 script = ExtResource("1_63so8")
-at = Vector2(10.4, 1.4)
+at = Vector2(10.4, 4.4)
 group = 1
 
 [sub_resource type="Resource" id="Resource_r6kte"]
 script = ExtResource("1_63so8")
 form = 1
-at = Vector2(-5.2, 10.4)
+at = Vector2(-4.4, 10.4)
 radius = 0.384
 height = 0.8
 group = 2
@@ -3099,7 +3099,7 @@ group = 2
 [sub_resource type="Resource" id="Resource_sxjqq"]
 script = ExtResource("1_63so8")
 form = 2
-at = Vector2(-4.4, 10.4)
+at = Vector2(-4.4, 9.6)
 radius = 0.2
 height = 0.4
 group = 2

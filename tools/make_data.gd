@@ -1532,9 +1532,9 @@ func _place_breakables(st: StageDef) -> void:
 			# 2026-11-23: the guardians' houses, by the west wall either side of the way in, the north wall and the south-east
 			&"knight_hall":
 				l.breakables = _breakable_groups([
-					[[F.VASE, -10.4, -0.4, 0.6], [F.URN, -10.4, 0.4, 0.8]],
-					[[F.OFFERING, 10.4, 0.6, 0.4], [F.VASE, 10.4, 1.4, 0.6]],
-					[[F.URN, -5.2, 10.4, 0.8], [F.OFFERING, -4.4, 10.4, 0.4]],
+					[[F.VASE, -10.4, -4.4, 0.6], [F.URN, -10.4, -3.6, 0.8]],
+					[[F.OFFERING, 10.4, 3.6, 0.4], [F.VASE, 10.4, 4.4, 0.6]],
+					[[F.URN, -4.4, 10.4, 0.8], [F.OFFERING, -4.4, 9.6, 0.4]],
 				])
 			&"elder_hall":
 				l.breakables = _breakable_groups([
