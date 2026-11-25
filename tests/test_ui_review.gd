@@ -258,7 +258,7 @@ func test_every_setting_is_one_kind_of_row_with_its_tip() -> void:
 		assert_not_null(b.find_child(b.name + "_1", true, false), "%s has its chevrons" % b.name)
 		assert_ne(OptionsScreen.tip_text(b.name), "", "%s says what it does" % b.name)
 	# Vídeo: window, full screen, quality, camera and the visual style (DT-RS2)
-	assert_eq(rows, OptionsScreen.VOLUMES.size() + 5 + OptionsScreen.COMFORT.size())
+	assert_eq(rows, OptionsScreen.VOLUMES.size() + 5 + OptionsScreen.COMFORT.size() + 1)  # + the objective's
 
 
 func test_the_window_is_greyed_with_the_full_screen() -> void:

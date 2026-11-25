@@ -31,6 +31,14 @@ const MAGICK_COLOR := Color("2a8fb8")
 const MAGICK_BOTTOM := Color("14506a")
 const BOSS_COLOR := Color(0.62, 0.22, 0.85)
 const MARGIN := 22.0
+## SW-O2: the objective line stands under "Sala N de M"; how often the context is read, and the seconds of standing still
+## in the Antessala before the line blinks once.
+const OBJ_TOP := 42.0
+const OBJ_EVERY := 0.2
+const OBJ_IDLE := 25.0
+## Metres: the hero this near the slabs has crossed them once he is this far past their middle.
+const PLATES_PAST := 1.5
+const MILESTONES := "res://scripts/core/milestones.gd"
 const CREST := 76.0
 const LIFE := Vector2(244, 19)
 const MAGICK := Vector2(196, 15)
@@ -189,6 +197,19 @@ const ULT_HURT := 0.5
 var game: Game
 var door_tip: DoorTip
 var tip_toast: TipToast
+## SW-O1: the arrival's one line at the foot (the ArrivalScene calls arrival_caption.show_line).
+var arrival_caption: ArrivalCaption
+## SW-O2: the objective at the top left, under the room's count; fed every OBJ_EVERY seconds by _update_objective.
+var objective: ObjectiveLine
+var _obj_t := 0.0
+var _obj_still := 0.0
+var _obj_last_pos := Vector2.ZERO
+## The side of the Antessala's slabs the hero came from (0 until he is near them): crossing them flips it.
+var _plate_side := 0
+var _plates_crossed := false
+## The room whose "two doors" line was shown (the next room ends the "first choice"), and whether it was told.
+var _door_told_in: RunMap.Room
+var _door_told := false
 var _crest: HeroCrest
 ## The hero whose face the crest shows (the Maga has her own portrait).
 var _crest_hero: StringName = &""
@@ -333,6 +354,8 @@ func _ready() -> void:
 	tip_toast = TipToast.new()
 	tip_toast.game = game
 	add_child(tip_toast)
+	arrival_caption = ArrivalCaption.new()
+	add_child(arrival_caption)
 	_elo_banner = EloBanner.new()
 	add_child(_elo_banner)
 	_place(_elo_banner, Control.PRESET_CENTER_TOP, Vector2(0, 92), Vector2(420, 100))
@@ -365,6 +388,9 @@ func _build_top() -> void:
 	ahead.name = "ahead"
 	ahead.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top_left.add_child(ahead)
+	objective = ObjectiveLine.new()
+	add_child(objective)
+	_place(objective, Control.PRESET_TOP_LEFT, Vector2(MARGIN, OBJ_TOP), Vector2(380, ObjectiveLine.HEIGHT))
 	_clock = _label("0:00", UiKit.PALE, FONT_CLOCK, UiKit.number_font(), Control.PRESET_CENTER_TOP, Vector2.ZERO)
 	_clock.name = "clock"
 	_clock.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -767,6 +793,7 @@ func _process(delta: float) -> void:
 		_trial_seal.carry(game.rooms.trials.active, game.rooms.trials.left)
 		_trial_seal.hide_name = _curse_badge.shown() > 0.0
 	_update_slots(p)
+	_update_objective(delta)
 	_update_column()
 	# art review 2026-11-23 (10): the angels' meeting is a stage of its own: no clock, room count or Blessing column over it
 	var meeting := game._screen is EncounterScreen
@@ -816,6 +843,93 @@ func _process(delta: float) -> void:
 		show_entrance(T.t(&"room_boss"))
 	_update_entrance(delta)
 	_update_veil(delta)
+
+
+## SW-O2: the objective line. Every OBJ_EVERY seconds the room's state is read into a context (Objective.pick); over a
+## screen, the pause or for the robot the line is hidden and keeps its words for when it comes back.
+func _update_objective(delta: float) -> void:
+	_obj_t -= delta
+	if _obj_t > 0.0:
+		return
+	_obj_t = OBJ_EVERY
+	var r := game.rooms
+	var on := r != null and r.room != null and game.bot == null and game.mode == Game.Mode.PLAY \
+			and Objective.enabled(Save.data, Objective.tutorial())
+	objective.visible = on
+	if not on:
+		return
+	var ctx := objective_context(r)
+	var key := Objective.pick(ctx)
+	if key == &"obj_door" and _door_told_in == null:
+		_door_told_in = r.room
+	elif _door_told_in != null and _door_told_in != r.room:
+		_door_told = true
+	objective.set_key(key)
+	_idle_pulse(ctx, OBJ_EVERY)
+
+
+## What Objective.pick reads, from the room the hero stands in.
+func objective_context(r: Rooms) -> Dictionary:
+	var kind := StringName(String(RunMap.Kind.keys()[r.room.kind]).to_lower())
+	var doors := r.next_rooms.size() if r.phase == Rooms.Phase.OPEN else 0
+	var ctx := {"place": &"run", "kind": kind, "screen": &"", "fighting": r.phase == Rooms.Phase.FIGHT and kind != &"ante",
+		"reward_waiting": r.phase == Rooms.Phase.REWARD, "doors_open": doors,
+		"first_choice": doors >= 2 and not _door_told, "near_plates": false, "near_breakable": false,
+		"crossed_plates": false, "broke_one": false}
+	if kind != &"ante":
+		return ctx
+	var at := game.player.pos
+	var plates: Array[Vector2] = []
+	if r.plates != null:
+		for n in r.plates.nodes:
+			plates.append(Vector2(n.global_position.x, n.global_position.z))
+	ctx.near_plates = _within(plates, at, Objective.DODGE_NEAR)
+	if not plates.is_empty():
+		_plates_seen(plates, at)
+	ctx.crossed_plates = _plates_crossed
+	if game.breaks != null and game.breaks.rules != null:
+		var rules := game.breaks.rules
+		ctx.broke_one = rules.broken_count() > 0
+		var pieces: Array[Vector2] = []
+		for i in rules.count():
+			if not rules.broken(i):
+				pieces.append(rules.pieces[i].at)
+		ctx.near_breakable = _within(pieces, at, Objective.BREAK_NEAR)
+	return ctx
+
+
+static func _within(points: Array[Vector2], at: Vector2, metres: float) -> bool:
+	for p in points:
+		if p.distance_to(at) <= metres:
+			return true
+	return false
+
+
+## Crossing the slabs: the side of their middle the hero was last near them on; the other side, PLATES_PAST past it, is crossed.
+func _plates_seen(plates: Array[Vector2], at: Vector2) -> void:
+	var mid := 0.0
+	for p in plates:
+		mid += p.y
+	mid /= plates.size()
+	var off := at.y - mid
+	if _plate_side == 0:
+		if _within(plates, at, Objective.DODGE_NEAR):
+			_plate_side = 1 if off > 0.0 else -1
+	elif absf(off) > PLATES_PAST and (1 if off > 0.0 else -1) != _plate_side:
+		_plates_crossed = true
+
+
+## The Antessala has no clock: a hero who stands still OBJ_IDLE seconds makes the line blink once.
+func _idle_pulse(ctx: Dictionary, step: float) -> void:
+	var at := game.player.pos
+	if ctx.kind != &"ante" or at.distance_to(_obj_last_pos) > 0.3:
+		_obj_still = 0.0
+	else:
+		_obj_still += step
+		if _obj_still >= OBJ_IDLE:
+			_obj_still = 0.0
+			objective.pulse()
+	_obj_last_pos = at
 
 
 func _update_life(p: Player) -> void:
@@ -959,8 +1073,10 @@ func _update_ult(p: Player) -> void:
 	_ult_hint_t = maxf(0.0, _ult_hint_t - get_process_delta_time())
 	var ult := game.ults.def if game.ults else null
 	var first := game.hero.first_ult_level() if game.hero else 0
-	_ult_slot.visible = ult != null or (first > 0 and game.bot == null)
-	_charge_shown = ult != null and game.bot == null
+	# SW-O5: the fifth diamond only shows once the milestone of the Golpe Supremo is open
+	var open := ult_open()
+	_ult_slot.visible = open and (ult != null or (first > 0 and game.bot == null))
+	_charge_shown = open and ult != null and game.bot == null
 	_charge.visible = _charge_shown and game.mode != Game.Mode.PAUSE
 	if ult != null:
 		_charge.show_value(game.ults.ratio())
@@ -982,6 +1098,14 @@ func _update_ult(p: Player) -> void:
 	_ult_slot.urgent = ult_urgent(full, p.hp / p.max_hp)
 	_ult_slot.caption = ult_caption(ult != null, full, game.ults.ratio(), first, _ult_hint_t > 0.0)
 	_ult_slot.caption_color = UiKit.PALE if _ult_hint_t > 0.0 else UiKit.DIM
+
+
+## SW-O5: whether the Golpe Supremo's milestone is open in this save (Milestones.ult_open, the 3A2 lote). Open while the
+## script is not there and without a save (captures, the robot), so nothing hides by accident.
+static func ult_open() -> bool:
+	if not Save.enabled or not ResourceLoader.exists(MILESTONES):
+		return true
+	return bool((load(MILESTONES) as GDScript).call(&"ult_open", Save.data))
 
 
 ## Charge full and the hero hurt: the ready ring pulses harder.

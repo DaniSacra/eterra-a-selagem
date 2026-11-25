@@ -129,6 +129,8 @@ func _build() -> void:
 	_list = pages[Tab.COMFORT]
 	for option in COMFORT:
 		_toggle("opt_" + option, option)
+	# SW-O2 (D-O3 b): the objective line in the first descents; a save without the key reads it on
+	_toggle("opt_objective", "objective")
 	_list = pages[Tab.CONTROLS]
 	var keys := GridContainer.new()
 	keys.columns = 2
@@ -393,9 +395,9 @@ func _setting(text_key: String, value: String, change: Callable, enabled: bool =
 
 ## A switch: a setting whose value is Sim or Não (gold when on); any step flips it.
 func _toggle(text_key: String, option: String) -> void:
-	var on: bool = Save.option(option)
+	var on: bool = bool(Save.data.options.get(option, true))
 	var b := _setting(text_key, T.t(&"on" if on else &"off"), func(_dir: int) -> void:
-		Save.set_option(option, not Save.option(option))
+		Save.set_option(option, not bool(Save.data.options.get(option, true)))
 		App.apply_options()
 		if option == "rumble" and Save.option(option):
 			for pad in Input.get_connected_joypads():
