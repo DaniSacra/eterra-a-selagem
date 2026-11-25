@@ -78,7 +78,8 @@ func test_a_swing_in_the_air_shows_no_hit() -> void:
 		before_each()
 		combat.strike(node, Vector2.ZERO, Vector2.RIGHT)
 		var ways := 2 if node.both_ways else 1
-		_assert_no_hit_effects(String(node.id), Combat.SWING_MOTES.y * ways)
+		# (2026-11-24: the Brado's shock throws up to SHOCK_CHIPS.y stones and the Investida's trail 6 slivers)
+		_assert_no_hit_effects(String(node.id), Combat.SWING_MOTES.y * ways + Fx.SHOCK_CHIPS.y)
 		if node.shape != ComboNode.Shape.CIRCLE:
 			assert_eq(fx.showing(&"rings"), 0, "%s: no ring" % node.id)
 		assert_eq(combat.combo, 0, "%s: no blow counted" % node.id)
@@ -116,7 +117,7 @@ func test_a_finisher_that_lands_adds_one_ring_and_a_mild_split() -> void:
 		horde.spawn(horde.def(&"skeleton"), Vector2(2.0, i - 1.0), false)
 	combat.strike(node, Vector2.ZERO, Vector2.RIGHT)
 	assert_eq(fx.showing(&"gashes"), 3)
-	assert_eq(fx.showing(&"rings"), 1, "one ring for the blow, not one for each enemy")
+	assert_eq(fx.showing(&"rings"), 3, "one ring and the shock's two for the blow, not one set for each enemy")
 	assert_almost_eq(fx.split, Combat.FINISHER_SPLIT, 0.001)
 	assert_lte(Combat.FINISHER_SPLIT, 0.5)
 
@@ -254,3 +255,17 @@ func test_tick_numbers_are_never_grey_nor_dim() -> void:
 		assert_gte(Fx.tick_color(c).v, Fx.TICK_VALUE, "value at least 0.75")
 	assert_eq(Fx.tick_color(Color(1.0, 0.5, 0.2)).h, Color(1.0, 0.5, 0.2).h, "a family colour keeps its hue")
 	assert_gte(ceili(Fx.NUMBER_BIG * Fx.TICK_SHARE), 17, "a tick is 70% of a big number at least")
+
+
+func test_hit_lights_are_capped_and_fade() -> void:
+	for i in 10:
+		fx.hit_light(Vector3(i, 1, 0), Color.WHITE, 2.0)
+	var lit := 0
+	for n in fx.get_children():
+		if n is OmniLight3D and (n as OmniLight3D).visible:
+			lit += 1
+	assert_lte(lit, Fx.LIGHT_POOL, "never more than the pool lit")
+	fx.animate(1.0)
+	for n in fx.get_children():
+		if n is OmniLight3D:
+			assert_false((n as OmniLight3D).visible, "a hit light is gone after its time")

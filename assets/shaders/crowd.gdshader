@@ -98,9 +98,9 @@ uniform vec3 flash_ivory : source_color = vec3(0.95, 0.9, 0.8);
 uniform float flash_cap = 1.0;
 // SR-G4 (stylized only): a struck figure flashes as a warm silhouette, red-orange in the body and gold in the strong
 // blow's first frame (hit_warm, hit_gold), its floor hit_floor so dark cloth is a shape and not a smudge; still under flash_cap.
-uniform vec3 hit_warm : source_color = vec3(1.0, 0.5, 0.22);
-uniform vec3 hit_gold : source_color = vec3(1.0, 0.78, 0.36);
-uniform float hit_floor = 0.2;
+uniform vec3 hit_warm : source_color = vec3(1.0, 0.56, 0.26);
+uniform vec3 hit_gold : source_color = vec3(1.0, 0.84, 0.46);
+uniform float hit_floor = 0.32;
 // C17, QW-104 (CF-06; Hades II clears the body toward white in the last 0.5 s of a wind-up): in the hold of its wind-up
 // (the last tell_hold of it, EnemyDef.windup_hold) the body itself grows lighter and warmer, the flash's light at
 // tell_light of its strength at the end, under flash_cap like the flash: "it is about to strike", read on the body.

@@ -257,6 +257,8 @@ func _cleave(origin: Vector2, dir: Vector2) -> void:
 	for k in 5:
 		var at := origin + dir * def.length * (k + 0.5) / 5.0
 		fx.burst(&"dust", Vector3(at.x, 0.2, at.y))
+		if k % 2 == 0:
+			fx.shock(at, 1.5, Combat.EMETH, 1.0)
 	_spikes(origin, dir)
 	Audio.play(CombatSounds.EVENTS[&"ult_cleave"])
 	if struck > 0:

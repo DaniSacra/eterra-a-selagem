@@ -30,10 +30,10 @@ const SPIKE_SCREEN := 215
 ## with room under the rule's 226 for the bloom and what lies under them.
 const CONTACT_SCREEN := 210
 const GASH_SCREEN := 210
-const CONTACT_TIME := 0.05
-const CONTACT_GROW := 1.25
-const CONTACT_SPIKES := Vector2(0.25, 0.6)
-const CONTACT_SPIKES_HEAVY := Vector2(0.4, 0.9)
+const CONTACT_TIME := 0.08
+const CONTACT_GROW := 1.4
+const CONTACT_SPIKES := Vector2(0.4, 0.9)
+const CONTACT_SPIKES_HEAVY := Vector2(0.6, 1.4)
 ## An enemy's blow landing (smoke_ring): how many may show at once, the screen's ceiling of its rim (V-12: 205) and the
 ## dirty embers and smoke it leaves.
 const SMOKE_RING_POOL := 12
@@ -95,12 +95,12 @@ const CRESCENT_POOL := 8
 const CRESCENT_ECHO_SIZE := 1.2
 const CRESCENT_ECHO_SWEEP := 1.35
 ## A finisher's crescent flies out to this many times the reach of the blow while it fades.
-const CRESCENT_GROW := 1.5
+const CRESCENT_GROW := 1.7
 ## Seconds it lasts (the light edge goes in the first half, the ink lingers).
-const CRESCENT_TIME := 0.3
+const CRESCENT_TIME := 0.34
 ## Where its band starts, as a share of the reach (lower is a broader sweep): a thin blade of a wave, under a
 ## meter across when it has flown out.
-const CRESCENT_INNER := 0.6
+const CRESCENT_INNER := 0.5
 ## The longest reach it is drawn with: the wave of a long thrust stays a crescent at the paladin, not across the room.
 const CRESCENT_MAX_REACH := 5.5
 ## Share of the ink opacity (Feel.ink_opacity) its dark body keeps: lighter than a blow, so the white edge leads.
@@ -114,22 +114,34 @@ const CRESCENT_GOLD := 0.6
 const CRESCENT_HEAD := 0.75
 const CRESCENT_TAIL := 0.2
 const CRESCENT_PALE := 0.8
-const CRESCENT_BODY := 0.5
+const CRESCENT_BODY := 0.65
 ## N4 (art review 2026-11-24): the spin's ribbon is the Emeth's green (not the gold blend), added to the floor, under this
 ## screen peak (the paladin stays the lightest thing), its ends fading over CRESCENT_SPIN_TIPS of the swing.
 const CRESCENT_SPIN_GREEN := Color(0.3, 0.85, 0.55)
-const CRESCENT_SPIN_PEAK := 0.36
+const CRESCENT_SPIN_PEAK := 0.5
 const CRESCENT_SPIN_TIPS := 0.12
 const KICK_METERS := 0.35
 const GOLD := Color(1.0, 0.82, 0.38)
+## 2026-11-24 strength pass: a short point light on a strong blow (Forward+ only; Compatibility keeps no light, it would
+## recompile every material). At most LIGHT_POOL at once, the oldest is taken; energy and range in the call.
+const LIGHT_POOL := 3
+const LIGHT_TIME := 0.14
+const LIGHT_WARM := Color(1.0, 0.78, 0.45)
+## The pieces of stone and bone dust a shock throws (grey brown, under the glow), its rings, in meters per radius.
+const STONE := Color(0.5, 0.45, 0.38)
+const SHOCK_CHIPS := Vector2i(7, 14)
+const SHOCK_OUTER := 1.45
+## 2026-11-24: the cut on a struck enemy is this much longer and lingers this much more.
+const GASH_BOOST := 1.3
+const GASH_LIFE := 1.25
 const SLASH_POOL := 18
 ## Where the ink of a sword arc starts, as a share of its reach (lower is a fatter crescent of ink). C12d (VX-01): the
 ## mesh runs from near the paladin; the shaders draw only up to the blade's edge (BLADE_REACH), so the band no longer
 ## sets where the cut shows.
-const INK_INNER := 0.12
+const INK_INNER := 0.05
 ## Where the mesh of the light of a cut starts, as a share of the reach (slash.gdshader draws a fine edge at
 ## BLADE_REACH and a soft core just inside it, nothing past the tip).
-const SLASH_INNER := 0.12
+const SLASH_INNER := 0.05
 ## Meters from the paladin to the Emeth's tip in a swing, on the floor: where the edge of every cut of his is drawn
 ## (reach_m and blade_m in slash.gdshader and slash_ink.gdshader). Measured on the model in the swing frames of cut1
 ## to cut3 (the tip, EmethSword.TIP, from 2.3 m as it drops through to 2.85 m level with the waist; C12d).
@@ -142,8 +154,10 @@ const SLASH_LEAD := 1.0 / 60.0
 const SLASH_TAIL := 0.8
 const SLASH_TAIL_DEGREES := 170.0
 ## SR-G4: how far the plain cut's colour goes toward gold, and its core's depth and light (slash.gdshader core_depth, core_light).
-const SLASH_GOLD := 0.45
-const SLASH_CORE := Vector2(0.7, 0.4)
+const SLASH_GOLD := 0.3
+const SLASH_CORE := Vector2(0.82, 0.62)
+## 2026-11-24 (strength pass): the cut's light is this much brighter than Feel.slash_intensity (the shader's own cap keeps it under the screen's 226).
+const SLASH_BOOST := 1.35
 const RING_POOL := 16
 ## How a ring of the pool ages: it opens and fades on its own (a burst), the caller moves it (a wave), or it fades where it is.
 const RING_OPEN := 0
@@ -196,7 +210,7 @@ const SHAKE_METERS := 0.12
 ## upward acceleration (m/s2, negative falls). fire also leaves FIRE_SMOKE dark wisps.
 const BURSTS := {
 	&"spark": [Color(0.95, 0.9, 0.78), 8, 9.0, -6.0, 0.16, 0.16, 50.0, &"chip"],
-	&"bone": [Color(0.55, 0.52, 0.46), 8, 5.5, -16.0, 0.2, 0.6, 70.0, &"chip"],
+	&"bone": [Color(0.6, 0.56, 0.48), 12, 6.5, -16.0, 0.26, 0.7, 75.0, &"chip"],
 	&"fire": [Color(0.95, 0.57, 0.15), 10, 4.0, 3.0, 0.3, 0.5, 80.0, &"chip"],
 	&"frost": [Color(0.48, 0.78, 0.95), 8, 6.0, -8.0, 0.24, 0.35, 80.0, &"chip"],
 	# the paladin's light (a gift taken, an Omega charged, the circle): ivory slivers rising, under the glow, never a
@@ -323,6 +337,7 @@ var _contacts: Array[Dictionary] = []
 var _spikes: Array[Dictionary] = []
 var _marks: Array[Dictionary] = []
 var _beams: Array[Dictionary] = []
+var _lights: Array[Dictionary] = []
 ## The last pillar raised (beam): where, its intensity and cap (tests of GP-01).
 var last_beam := {}
 ## One label per entry of the tally.
@@ -477,6 +492,15 @@ func setup(cam: Camera3D, over: Control) -> void:
 	cyl.cap_bottom = false
 	for i in BEAM_POOL:
 		_beams.append(_effect_node(BEAM, cyl))
+	if RenderingServer.get_current_rendering_method() != "gl_compatibility":
+		for i in LIGHT_POOL:
+			var l := OmniLight3D.new()
+			l.shadow_enabled = false
+			l.visible = false
+			l.light_energy = 0.0
+			l.omni_range = 5.0
+			add_child(l)
+			_lights.append({"node": l, "mat": null, "life": 1.0, "time": LIGHT_TIME, "energy": 0.0})
 	for i in NUMBER_POOL:
 		var l := Label.new()
 		l.add_theme_font_override(&"font", _font)
@@ -578,7 +602,7 @@ func burst(kind: StringName, pos: Vector3, dir: Vector3 = Vector3.ZERO) -> void:
 		# V-14: a dead one goes up as ash: one dark grey wisp rising about 1 m in 0.6 s
 		wisps(pos, Vector3.UP, DEATH_ASH, 1, 1.4, 0.55, 0.6, 0.2, 0.6)
 		# N2: the bone dust curls up short and settles (a pale wisp, wide, slow, never above the floor's light + 25)
-		wisps(pos - Vector3.UP * 0.3, Vector3.UP, BONE_DUST, 2, 0.9, 0.4, 1.4, 1.6, 0.15)
+		wisps(pos - Vector3.UP * 0.3, Vector3.UP, BONE_DUST, 3, 1.0, 0.5, 1.5, 1.9, 0.15)
 
 
 ## Smoke wisps (vfx_pass_spec.md 5.6, wisp.gdshader): soft torn cards that rise (rise m/s2 up), widen and come apart,
@@ -708,7 +732,7 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 			var at := Vector3(origin.x + way.x * reach * 0.8, height, origin.y + way.y * reach * 0.8)
 			_spray(at, Vector3.UP, color * 0.95, 1, 1.8, 0.3, 0.4, 0.3, -3.0, false, 0, SHAPE_TONGUE)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep)
-	(s.mat as ShaderMaterial).set_shader_parameter(&"intensity", feel.slash_intensity)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"intensity", feel.slash_intensity * SLASH_BOOST)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"tail", minf(SLASH_TAIL, SLASH_TAIL_DEGREES / maxf(width_deg, 1.0)))
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep / feel.ink_life)
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"opacity", feel.ink_opacity if ink_under else 0.0)
@@ -726,6 +750,8 @@ func _place_arc(e: Dictionary, mesh: Mesh, origin: Vector2, dir: Vector2, height
 func gash(pos: Vector3, axis: Vector3, color: Color, length: float = 1.2, cross: bool = false, time: float = 0.15) -> void:
 	if not budget.allows(&"gashes"):
 		return
+	length *= GASH_BOOST
+	time *= GASH_LIFE
 	var e: Dictionary = _take(_impacts)
 	(e.node as Node3D).position = pos
 	var mat: ShaderMaterial = e.mat
@@ -762,6 +788,8 @@ func contact(pos: Vector3, dir: Vector3, color: Color, heavy: bool = false) -> v
 	mat.set_shader_parameter(&"spike_min_m", spikes.x)
 	mat.set_shader_parameter(&"spike_max_m", spikes.y)
 	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(Color(1.0, 0.97, 0.9), CONTACT_SCREEN))
+	if heavy:
+		hit_light(pos, color, 1.8, 4.0)
 	var aim := Vector2(1, 0)
 	if camera != null and dir.length_squared() > 0.0001:
 		var b := camera.global_transform.basis
@@ -1017,6 +1045,46 @@ func kick(dir: Vector2, amount: float) -> void:
 
 
 ## A flat shockwave growing to radius. thin: only a fine line, nothing inside it.
+## A short point light where a strong blow lands (energy 1 to 3, range in meters, `time` seconds, fading quadratically).
+## Never more than LIGHT_POOL at once; none on Compatibility. Only for looks: nothing reads it.
+func hit_light(pos: Vector3, color: Color, energy: float = 2.0, range_m: float = 5.0, time: float = LIGHT_TIME) -> void:
+	if _lights.is_empty():
+		return
+	var e: Dictionary = _take(_lights)
+	var l: OmniLight3D = e.node
+	l.position = pos
+	l.light_color = color.lerp(LIGHT_WARM, 0.35)
+	l.omni_range = range_m
+	l.light_energy = energy
+	e.energy = energy
+	e.time = time
+
+
+## The ground answering a heavy blow (Golpe Carregado, finishers, the Apogeu, the cleave): a thick ring opening on the
+## floor, a thin one outside it, pieces of stone and bone dust flung up, a puff of dust and a brief light. power 1 is a
+## finisher; 0.6 a held blow; 1.6 an Omega. Drawn only, nothing here moves the game.
+func shock(center: Vector2, radius: float, color: Color, power: float = 1.0) -> void:
+	ring(center, radius, color, 0.4, 0.12)
+	ring(center, radius * SHOCK_OUTER, color, 0.32, 0.14, true)
+	var at := Vector3(center.x, 0.25, center.y)
+	var n := budget.take(&"motes", roundi(lerpf(SHOCK_CHIPS.x, SHOCK_CHIPS.y, clampf(power / 1.6, 0.0, 1.0))))
+	if n > 0:
+		_spray(at, Vector3.UP, STONE, n, 6.0 + 2.0 * power, 0.14, 0.55, 1.1, MOTE_GRAVITY * 1.6, false)
+	burst(&"dust", at)
+	hit_light(at + Vector3.UP * 0.8, color, 1.6 + 1.2 * power, radius * 2.2 + 3.0)
+
+
+## The Investida's trail: dust kicked up along the line it runs and a few slivers of its colour (the thrust is drawn by `thrust`).
+func dash_trail(origin: Vector2, dir: Vector2, reach: float, color: Color) -> void:
+	for k in 3:
+		var at := origin + dir * reach * (0.2 + 0.3 * k)
+		wisps(Vector3(at.x, 0.3, at.y), Vector3.UP, BONE_DUST, 1, 0.8, 0.5, 0.6, 1.0, 0.4)
+	var n := budget.take(&"motes", 6)
+	if n > 0:
+		var mid := origin + dir * reach * 0.5
+		_spray(Vector3(mid.x, 0.5, mid.y), Vector3(-dir.x, 0.3, -dir.y), color.lerp(Color.WHITE, 0.3) * 0.9, n, 7.0, 0.12, 0.35, 0.8, 0.0, false)
+
+
 func ring(center: Vector2, radius: float, color: Color, time: float = 0.35, height: float = 0.15, thin: bool = false) -> void:
 	var r: Dictionary = _take(_rings)
 	var mi: MeshInstance3D = r.node
@@ -1505,6 +1573,10 @@ func animate(delta: float) -> void:
 		if (r.node as Node3D).visible:
 			_age(r, delta)
 			(r.mat as ShaderMaterial).set_shader_parameter(&"life", r.life)
+	for l in _lights:
+		if (l.node as Node3D).visible:
+			_age(l, delta)
+			(l.node as OmniLight3D).light_energy = l.energy * pow(1.0 - l.life, 2.0)
 	for b in _beams:
 		if (b.node as Node3D).visible:
 			_age(b, delta)
