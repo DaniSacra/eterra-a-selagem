@@ -22,6 +22,8 @@ signal combo_dropped
 signal chain_lost
 
 const NO_INPUT := -1
+## The tag of the spin (the combo's last blow; make_data.gd): it holds its windup against the dodge.
+const SPIN_TAG := &"spin"
 
 var tree: ComboTree
 var phase := Phase.IDLE
@@ -115,8 +117,10 @@ func stage() -> Stage:
 
 
 ## A dodge may cut any move, its windup too (Hades II cuts the charge; GF-02): a blow cut before it lands deals nothing.
+## G-2 (CF2-08): the spin is the exception, it cannot be cut before its blow lands (the press waits in the dodge buffer
+## and comes out the moment it has), so the heaviest blow is never dropped half made; after the hit its recovery is cut.
 func can_cancel() -> bool:
-	return true
+	return not (phase == Phase.WINDUP and node != null and node.tags.has(SPIN_TAG))
 
 
 ## The chain of the move under way goes on as if `from` had been played (Passo Encadeado: the Corte Veloz counts as

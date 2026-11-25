@@ -42,8 +42,8 @@ const HEAVY_SQUASH := 0.4
 ## (EnemyDef.sway) follows its stride, stride_lean (T5b, Corredor: it rocked 9 times a second, a tremble, and an uneven
 ## stride played its locked walk from 0 to 2.4 times its pace, the feet skating).
 const SHAKE_HZ := 14.0
-const DEATH_SHOW := 1.5
-const DISSOLVE_FROM := 0.85
+const DEATH_SHOW := DeathWeight.SHOW
+const DISSOLVE_FROM := DeathWeight.DISSOLVE_FROM
 const MAX_DYING := 90
 const DEFS_DIR := "res://data/enemies/"
 const MODS_DIR := "res://data/mods/"
@@ -2528,7 +2528,10 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 			e.dir = -from_dir
 			e.face = Vector2.ZERO
 			if not e.def.heavy and e.def.behavior != EnemyDef.Behavior.BOSS:
-				var power := THROW + knockback * 0.8 + (5.0 if big else 0.0)
+				var power := THROW + DeathWeight.push(knockback, big) * 0.8 + (5.0 if big else 0.0)
+				if e.def.death_burst <= 0.0:  # (a fuse keeps its own time)
+					e.death_show = DeathWeight.show_time(big)
+					e.death_from = DeathWeight.dissolve_from(big)
 				e.push = from_dir * power * _rng.randf_range(0.8, 1.2)
 				e.vy = THROW_UP * _rng.randf_range(0.7, 1.2) + (3.0 if big else 0.0)
 				e.spin = _rng.randf_range(0.6, 1.0)
@@ -2652,7 +2655,7 @@ func _sweep() -> void:
 		i -= 1
 	var j := dying.size() - 1
 	while j >= 0:
-		if dying[j].dead_t > DEATH_SHOW:
+		if dying[j].dead_t > dying[j].death_show:
 			dying.remove_at(j)
 		j -= 1
 	while dying.size() > MAX_DYING:
@@ -2996,8 +2999,8 @@ func render(render_dt := 1.0 / 60.0) -> void:
 		# combate_c1_leitura 4: what bursts is its own fuse: embers and a fiery edge growing, a tremble, a swell, not sinking
 		# nor dissolving until it goes off (the dissolve then starts at the burst, not at DISSOLVE_FROM)
 		var fuse := burst > 0.0 and e.dead_t < burst
-		var from := burst if burst > 0.0 else DISSOLVE_FROM
-		var dissolve := clampf((e.dead_t - from) / (DEATH_SHOW - from), 0.0, 1.0)
+		var from := burst if burst > 0.0 else e.death_from
+		var dissolve := clampf((e.dead_t - from) / (e.death_show - from), 0.0, 1.0)
 		var sink := maxf(0.0, e.dead_t - from) * 1.2
 		var tumble := -e.spin * sin(clampf(e.dead_t * 2.2, 0.0, 1.0) * PI) * 1.1
 		var fall := _fade(e, &"death", render_dt)

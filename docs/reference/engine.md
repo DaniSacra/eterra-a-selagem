@@ -400,3 +400,14 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   em fatias de `MERGE_SLICE` 6000 vértices (`merge_steps`). `Masonry.read_back` conta o que ainda vem da placa (0 nas
   salas). `--trace-build` imprime cada passo (`BUILD sala step N ms`) e cada junção (`MERGE`).
 
+
+## Vida inicial de cada `--start=` e lote G (2026-11-25; testes em `tests/test_lote_g.gd`)
+- **Vida inicial (G-4, QA2-06)**: toda partida de sala (`--start=boss|miniboss|shop|fountain|trial|altar`) começa com a vida cheia
+  do herói (`hero.max_hp`, mais Dons, Videira e Coragem; `--hero-hp=N` troca a base; `--stress` dá 99999). Nenhuma sala de
+  `Rooms.start_at` mexe na vida. Os 10 de vida do fim de `smoke 120 --start=shop` eram desgaste da partida do robô, não o início.
+- **G-1**: a Ruptura de Morvath (`source = &"rupture"`) não estava em `DefeatCause.BOSS_ATTACKS`, então contava como `unknown`;
+  agora tem nome (`killer_rupture`). O teste lê as fontes de `boss.gd` e exige que todas estejam na lista.
+- **G-2**: `ComboRunner.can_cancel()` é falso na preparação do golpe com a tag `spin` (o golpe 3); o apertar da esquiva espera no
+  buffer de 0,15 s (`Player.DODGE_BUFFER`). Do acerto em diante a recuperação é cortada como antes. Tempos não mudaram.
+- **G-3**: morte por finalizador (golpe 3, giro): empurrão 1,5 vez e corpo some em 0,35 s (`DeathWeight`; golpes 1 e 2 mantêm
+  1,5 s). Inimigo com `death_burst` e chefe não mudam.
