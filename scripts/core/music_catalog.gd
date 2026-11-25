@@ -19,7 +19,14 @@ const OPTION := {TITLE: "music_title", HUB: "music_hub", DUNGEON: "music_dungeon
 ## The default of each place: our own music everywhere, the title hearing the walk of the rooms' piece. MUS-1 (the
 ## PO, 2026-11-18: "músicas mais animadas, dinâmicas"): the fight music composed by the project (tools/make_music.gd)
 ## is the default; the pieces of before stay in the list.
-const DEFAULT := {TITLE: &"blade_march", HUB: &"blade_march", DUNGEON: &"blade_march", MORVATH: &"morvath_battle"}
+## MUS-2 (the PO, 2026-11-25): the Santuário has its own piece, and the rooms alternate (ALTERNATE) between two.
+const DEFAULT := {TITLE: &"blade_march", HUB: &"thatched_villagers", DUNGEON: &"alternate", MORVATH: &"morvath_battle"}
+## MUS-2: the rooms' own choice "Alternar": no files, it is the piece of ROTATION that the depth of the room asks for.
+const ALTERNATE := &"alternate"
+## The pieces the descent takes turns with, one for each ROTATION_SPAN rooms: the rooms 1 to 5 the first (the guardian
+## of the 5th included), 6 to 10 the second (the second guardian ends it), 11 to 13 the first again.
+const ROTATION: Array[StringName] = [&"blade_march", &"heroic_age"]
+const ROTATION_SPAN := 5
 ## Where the music files are.
 const DIR := "res://audio/music/"
 
@@ -27,7 +34,9 @@ const DIR := "res://audio/music/"
 ##   name: text key of its name; file: audio/music/<file>.ogg (one layer) or <file>_1.ogg, _2.ogg...
 ##   layers: how many; solo: level n hears only layer n (a recorded piece, its sections never stacked) or, without
 ##   it, the first n together (our own, written in layers); loop; loop_from: seconds the loop goes back to;
-##   then: the place a one-shot hands over to; sting: a short theme over the bed;
+##   then: the place a one-shot hands over to; sting: a short theme over the bed (calm: the bed goes much lower under
+##   it and it can be released, MusicMix); whole: one layer serves the walk and the fight alike; virtual: no files,
+##   it only stands for other pieces (ALTERNATE);
 ##   places: where the player may choose it (a rooms' piece on the title plays its walk); empty: only to listen.
 ## The order is the order of the list on screen.
 const PIECES := {
@@ -40,6 +49,10 @@ const PIECES := {
 	&"tempting_secrets": {"name": "music_tempting_secrets", "file": "title", "layers": 1, "loop": true, "loop_from": 16.0, "places": [TITLE, HUB]},
 	&"gloom_descent": {"name": "music_gloom_descent", "file": "catacombs", "layers": 2, "loop": true, "solo": true, "places": [TITLE, HUB, DUNGEON]},
 	&"clash_defiant": {"name": "music_clash_defiant", "file": "morvath", "layers": 4, "loop": true, "solo": true, "places": [MORVATH]},
+	&"thatched_villagers": {"name": "music_thatched_villagers", "file": "thatched_villagers", "layers": 1, "loop": true, "places": [TITLE, HUB]},
+	&"heroic_age": {"name": "music_heroic_age", "file": "heroic_age", "layers": 1, "loop": true, "whole": true, "places": [TITLE, HUB, DUNGEON]},
+	&"alternate": {"name": "music_alternate", "layers": 0, "loop": true, "virtual": true, "places": [DUNGEON]},
+	&"room_won": {"name": "music_room_won", "file": "room_won", "layers": 1, "loop": false, "sting": true, "calm": true, "places": []},
 	&"victory": {"name": "music_victory", "file": "victory", "layers": 1, "loop": false, "then": DUNGEON, "places": []},
 	&"psalm_sentinel": {"name": "music_psalm_sentinel", "file": "psalm_sentinel", "layers": 1, "loop": false, "sting": true, "places": []},
 	&"psalm_shelter": {"name": "music_psalm_shelter", "file": "psalm_shelter", "layers": 1, "loop": false, "sting": true, "places": []},
@@ -48,6 +61,22 @@ const PIECES := {
 }
 ## How many layers a place needs: the rooms a walk and a fight, Morvath one per phase; the title and the hub any piece.
 const NEEDS := {TITLE: 1, HUB: 1, DUNGEON: 2, MORVATH: 4}
+
+
+## The piece the rooms play at a depth when the choice is ALTERNATE (depth 1 is the first room).
+static func rotation_piece(depth: int) -> StringName:
+	return ROTATION[(maxi(depth, 1) - 1) / ROTATION_SPAN % ROTATION.size()]
+
+
+## A piece of files (not the stand-in ALTERNATE).
+static func is_real(id: StringName) -> bool:
+	return PIECES.has(id) and not bool(PIECES[id].get("virtual", false))
+
+
+## Whether a piece has what a place needs: layers enough, or one whole piece for the walk and the fight.
+static func fits(id: StringName, place: StringName) -> bool:
+	var s := spec(id)
+	return bool(s.get("virtual", false)) or layers(id) >= int(NEEDS[place]) or bool(s.get("whole", false))
 
 
 static func has(id: StringName) -> bool:

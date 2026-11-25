@@ -8,7 +8,9 @@ extends Node
 ## Master before its limiter (Audio.limit_master). The volume is the save's "music" option (Audio.apply_volumes).
 ##   Music.play(&"title")             the title screen (the first room crossfades from it, or goes on when it is the
 ##                                    rooms' own piece)
-##   Music.play(&"catacombs", level)  the rooms: level 1 the walk, 2 the fight
+##   Music.play(&"catacombs", level)  the rooms: level 1 the walk, 2 the fight (Music.room_depth picks the piece when
+##                                    the rooms' choice is "Alternar")
+##   Music.room_won()                 MUS-2: the calm transition over the room won, until the next room's play()
 ##   Music.boss_phase(n)              Morvath: phase n (starts his piece if needed)
 ##   Music.sting(&"sentinel")         a Psalm's theme over the bed (psalm_<id>; the Psalms' front calls it)
 ##   Music.play(&"victory")           the end, which hands over to the rooms' walk
@@ -24,6 +26,9 @@ const PSALM_STING := {&"sentinela": &"psalm_sentinel", &"abrigo": &"psalm_shelte
 ## Room levels.
 const WALK := 1
 const FIGHT := 2
+
+## MUS-2: the depth of the room the descent is in (Rooms sets it): the rooms' "Alternar" asks it which piece to play.
+static var room_depth := 1
 
 var mix: MusicMix
 ## The rooms' air: its own decks (one layer each), the same crossfades.
@@ -51,6 +56,8 @@ func _ready() -> void:
 static func catalog() -> Dictionary:
 	var out := {}
 	for id: StringName in MusicCatalog.PIECES:
+		if not MusicCatalog.is_real(id):
+			continue
 		var spec: Dictionary = MusicCatalog.spec(id).duplicate()
 		var first := stream_of(id, 0)
 		if first == null:
@@ -66,7 +73,8 @@ static func catalog() -> Dictionary:
 static func piece_for(id: StringName) -> StringName:
 	if not MusicCatalog.PLACES.has(id):
 		return id
-	return MusicCatalog.resolve(id, _saved(MusicCatalog.OPTION[id]))
+	var piece := MusicCatalog.resolve(id, _saved(MusicCatalog.OPTION[id]))
+	return MusicCatalog.rotation_piece(room_depth) if piece == MusicCatalog.ALTERNATE else piece
 
 
 ## A save option, read through the tree (static: the tools call this before or without the autoloads).
@@ -114,6 +122,7 @@ func play(id: StringName, level: int = 1) -> void:
 	_place = id
 	_level = level
 	_heard = &""
+	mix.release_calm()  # the transition goes out when the next room's music begins
 	mix.play(piece_for(id), level)
 	_sync()
 
@@ -151,12 +160,24 @@ func boss_phase(n: int) -> void:
 	Audio.log_event(["boss", n])
 	_place = MusicCatalog.MORVATH
 	_level = n
+	mix.release_calm()
 	var piece := piece_for(MusicCatalog.MORVATH)
 	if mix.current_id() != piece:
 		mix.play(piece, n)
 		_sync()
 	else:
 		mix.set_level(n)
+
+
+## MUS-2: the room is won and the doors light up: the fight's layer goes, the calm transition plays over the room's
+## bed (ducked under it) until the next room begins (play releases it) or it ends on its own.
+func room_won() -> void:
+	if mix.current() == null or not mix.catalog.has(&"room_won"):
+		return
+	Audio.log_event(["room_won"])
+	mix.set_level(WALK)
+	mix.sting(&"room_won")
+	_sync()
 
 
 ## A theme over the bed: "psalm_sentinel" or just the Psalm's id, "sentinel".

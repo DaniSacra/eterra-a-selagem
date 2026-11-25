@@ -201,6 +201,15 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   `MusicCatalog.DEFAULT`, `MusicCatalog.resolve`). Os decks do `MusicMix` são as peças; `Music.play(&"title"|&"catacombs"|
   &"morvath")` e `Music.boss_phase` tocam a peça escolhida (`Music.piece_for`; o registro de som guarda o lugar e o
   `tools/mix_replay.gd` resolve igual), a vitória passa à caminhada da masmorra escolhida (`Music.choose` religa).
+  **MUS-2 (o PO, 2026-11-25: "o jogo só tem uma música")**: o Santuário toca "Thatched Villagers" (`thatched_villagers`, laço de 44
+  compassos a 93,75 bpm, 113 s; o título segue na Marcha das Lâminas). As salas **alternam** (`MusicCatalog.ALTERNATE`, o padrão da escolha
+  das salas, peça virtual sem arquivo): salas 1 a 5 a Marcha das Lâminas, 6 a 10 "Heroic Age" (`heroic_age`, 1 camada `whole`: serve a
+  caminhada e a luta, 48 compassos a 130 bpm), 11 a 13 a Marcha de novo (`rotation_piece(depth)`, `ROTATION_SPAN` 5; `Rooms` põe
+  `Music.room_depth` antes do `Music.play`; escolher uma peça na tela Músicas fixa a peça em todas as salas). A **transição** é "Ossuary 5 -
+  Rest" (`room_won`, trecho de 16 s com entrada e saída suaves, sting `calm`): `Rooms._warn_exits` chama `Music.room_won()` quando as portas
+  acendem (a camada de luta sai, a música da sala desce a ~-18 dB, `MusicMix.CALM_DUCK`), e o próximo `Music.play`/`boss_phase` a solta em
+  1,5 s (`release_calm`; os temas dos Salmos não). Save versão 15: quem estava em `blade_march` no Santuário/nas salas (o padrão antigo) passa uma
+  vez para o novo; peça escolhida à mão fica. Pacote de música: 18,3 MB de 18 MiB (teto do teste); `MUS2_ONLY=1 tools/make_music_loops.sh <pasta>` refaz só as três.
   Tela **Músicas** (`MusicRoomScreen`, botão "Músicas" nas Configurações, `--title --screen=music`): à esquerda
   "Título", "Masmorra", "Morvath" com "< peça >" (grava na hora), à direita todas as peças com Ouvir/Parar
   (`Music.listen`, `heard`, `quiet`; tema de Salmo sozinho, vitória sem passar à caminhada) e, nas de camadas, Caminhada

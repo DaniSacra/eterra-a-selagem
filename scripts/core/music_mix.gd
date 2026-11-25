@@ -16,6 +16,10 @@ const LAYER_FADE := 2.0
 ## The bed under a sting, linear (about -7 dB), and how fast it goes down and comes back.
 const DUCK := 0.45
 const DUCK_FADE := 0.6
+## MUS-2: the calm theme over the room won ("calm" in the catalog) takes the bed down much more (about -18 dB), so the
+## two never fight, and goes out in CALM_RELEASE seconds when the next room begins.
+const CALM_DUCK := 0.12
+const CALM_RELEASE := 1.5
 ## E6 (C15-01): the bed under one of Morvath's warnings (Audio.WARN_CUES), linear (about -6 dB): down fast, held for
 ## the warning, back slowly, so his tell is heard over the drums.
 const WARN_DUCK := 0.5
@@ -35,6 +39,9 @@ class Deck:
 	var length := 0.0
 	var then: StringName = &""
 	var sting := false
+	## MUS-2: a calm sting (the transition) ducks the bed to CALM_DUCK and can be released (faded out) early.
+	var calm := false
+	var releasing := false
 	## Level n hears only layer n (T5), not the first n.
 	var solo := false
 	## Each layer's gain now and where it is going; the deck's own fade on top.
@@ -151,6 +158,7 @@ func sting(id: StringName) -> Deck:
 	var d := Deck.new()
 	d.id = id
 	d.sting = true
+	d.calm = spec.get("calm", false)
 	d.loop = false
 	d.length = spec.get("length", 0.0)
 	d.gains = PackedFloat32Array([1.0])
@@ -174,6 +182,21 @@ func cut_stings() -> void:
 	stings.clear()
 
 
+## MUS-2: the calm theme (the transition) fades out for the next room's music; the Psalms' themes are left alone.
+func release_calm() -> void:
+	for s in stings:
+		if s.calm:
+			s.releasing = true
+
+
+## The bed's duck now wanted: the deepest of the stings playing (1: none).
+func _sting_duck() -> float:
+	var want := 1.0
+	for s in stings:
+		want = minf(want, CALM_DUCK if s.calm and not s.releasing else DUCK)
+	return want
+
+
 func step(dt: float) -> void:
 	for d in decks.duplicate():
 		d.time += dt
@@ -189,10 +212,12 @@ func step(dt: float) -> void:
 			dropped.append(d)
 	for s in stings.duplicate():
 		s.time += dt
-		if s.ended():
+		if s.releasing:
+			s.fade = move_toward(s.fade, 0.0, dt / CALM_RELEASE)
+		if s.ended() or (s.releasing and s.fade <= 0.0):
 			stings.erase(s)
 			dropped.append(s)
-	duck = move_toward(duck, DUCK if not stings.is_empty() else 1.0, dt / DUCK_FADE)
+	duck = move_toward(duck, _sting_duck(), dt / DUCK_FADE)
 	warn_hold = maxf(warn_hold - dt, 0.0)
 	if warn_hold > 0.0:
 		warn_duck = move_toward(warn_duck, WARN_DUCK, dt * (1.0 - WARN_DUCK) / WARN_ATTACK)

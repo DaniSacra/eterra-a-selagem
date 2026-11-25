@@ -20,20 +20,20 @@ func after_each() -> void:
 
 func test_the_catalog_is_valid_and_every_file_is_there() -> void:
 	var names := {}
-	for id: StringName in MusicCatalog.PIECES:
+	for id: StringName in MusicCatalog.PIECES.keys().filter(MusicCatalog.is_real):
 		var spec := MusicCatalog.spec(id)
 		var name := T.t(spec.name)
 		assert_ne(name, String(spec.name), "%s has a name for the player" % id)
 		assert_false(names.has(name), "%s: names are not repeated" % id)
 		assert_false(name.contains("—") or name.contains("–"), "%s: no dash" % id)
 		names[name] = true
-		assert_gt(int(spec.layers), 0)
+		assert_true(int(spec.layers) > 0 or spec.get("virtual", false))
 		for i in int(spec.layers):
 			assert_true(ResourceLoader.exists(MusicCatalog.file_of(id, i)), MusicCatalog.file_of(id, i))
 		for place: StringName in spec.places:
 			assert_true(MusicCatalog.PLACES.has(place), "%s: %s is a place" % [id, place])
 			# a place needs its layers: the rooms a walk and a fight, Morvath four phases
-			assert_gte(int(spec.layers), int(MusicCatalog.NEEDS[place]), "%s serves %s" % [id, place])
+			assert_true(MusicCatalog.fits(id, place), "%s serves %s" % [id, place])
 			assert_true(spec.get("loop", false), "%s loops where it is chosen" % id)
 		if spec.has("then"):
 			assert_true(MusicCatalog.PLACES.has(spec.then), "%s hands over to a place" % id)
@@ -51,7 +51,7 @@ func test_the_default_is_our_own_music_everywhere() -> void:
 	# MUS-1: the fight music composed by the project is the default; the title hears the walk of the rooms' piece
 	var opts: Dictionary = SaveData.defaults().options
 	assert_eq(opts.music_title, "blade_march", "the title hears the walk of our rooms' music")
-	assert_eq(opts.music_dungeon, "blade_march")
+	assert_eq(opts.music_dungeon, "alternate", "the rooms take turns (MUS-2)")
 	assert_eq(opts.music_morvath, "morvath_battle")
 	assert_eq(T.t(MusicCatalog.spec(&"blade_march").name), "Marcha das Lâminas")
 	assert_eq(T.t(MusicCatalog.spec(&"morvath_battle").name), "Morvath, a Batalha")
@@ -73,10 +73,10 @@ func test_a_wrong_choice_falls_back_to_the_default() -> void:
 		for bad: Variant in [null, "", "nothing", 3, "victory", "psalm_rock"]:
 			assert_eq(MusicCatalog.resolve(place, bad), MusicCatalog.DEFAULT[place], "%s with %s" % [place, bad])
 	assert_eq(MusicCatalog.resolve(MusicCatalog.MORVATH, "gloom_descent"), &"morvath_battle", "a rooms' piece is not Morvath's")
-	assert_eq(MusicCatalog.resolve(MusicCatalog.DUNGEON, "tempting_secrets"), &"blade_march", "the title's piece has no fight")
+	assert_eq(MusicCatalog.resolve(MusicCatalog.DUNGEON, "tempting_secrets"), MusicCatalog.DEFAULT[MusicCatalog.DUNGEON], "the title's piece has no fight")
 	assert_eq(MusicCatalog.resolve(MusicCatalog.TITLE, "gloom_descent"), &"gloom_descent", "a rooms' piece may play on the title")
 	var merged := SaveData.merged({"options": {"music_dungeon": 7}})
-	assert_eq(merged.options.music_dungeon, "blade_march", "a damaged option")
+	assert_eq(merged.options.music_dungeon, "alternate", "a damaged option")
 	Save.data.options.music_morvath = "nothing"
 	assert_eq(Music.piece_for(&"morvath"), &"morvath_battle")
 
@@ -97,7 +97,7 @@ func test_music_plays_the_chosen_piece() -> void:
 	assert_eq(Array(Music.mix.current().targets), [0.0, 1.0, 0.0, 0.0])
 	assert_eq(MusicCatalog.step(&"title", &"classic_catacombs", 1), &"tempting_secrets")
 	assert_eq(MusicCatalog.step(&"title", &"blade_march", 1), &"deep_drums")
-	assert_eq(MusicCatalog.step(&"title", &"blade_march", -1), &"gloom_descent", "wraps around")
+	assert_eq(MusicCatalog.step(&"title", &"blade_march", -1), MusicCatalog.choices(&"title").back(), "wraps around")
 
 
 func test_listening_and_back_to_the_game() -> void:
@@ -152,7 +152,7 @@ func test_the_screen_opens_chooses_and_closes_by_keys() -> void:
 	assert_true(focus != null and String(focus.name) == "place_title_1", "the focus starts on the title's choice")
 	# every piece is listed with Ouvir
 	for id: StringName in MusicCatalog.PIECES:
-		assert_not_null(room.find_child("listen_" + id, true, false), "%s is listed" % id)
+		assert_true(not MusicCatalog.is_real(id) or room.find_child("listen_" + id, true, false) != null, "%s is listed" % id)
 	await _press(&"ui_accept")
 	assert_eq(Save.data.options.music_title, "deep_drums", "right steps the title's piece and saves it")
 	var shown := room.find_child("place_title", true, false) as Label
