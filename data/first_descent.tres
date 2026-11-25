@@ -122,3 +122,4 @@ objective = &"obj_morvath"
 [resource]
 script = ExtResource("2_n80uf")
 rooms = Array[ExtResource("1_wtt3j")]([SubResource("Resource_g2eut"), SubResource("Resource_b4eqe"), SubResource("Resource_7ae5r"), SubResource("Resource_36qfa"), SubResource("Resource_hdnn7"), SubResource("Resource_5tv1r"), SubResource("Resource_01q8s"), SubResource("Resource_f14k2"), SubResource("Resource_vvv21"), SubResource("Resource_m0e42"), SubResource("Resource_sgh1g")])
+boss_hp_scale = 0.35

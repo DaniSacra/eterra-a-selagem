@@ -3038,6 +3038,7 @@ func _first() -> void:
 	var d := FirstDescentDef.new()
 	d.rooms_total = 8
 	d.arrival_line = &"arrival_line"
+	d.boss_hp_scale = 0.35  # the short Morvath: a newcomer with 4 or 5 Blessings brings his first third down (0.6 killed the robot)
 	var bone5 := ["bone_rat", "bone_rat", "bone_rat", "bone_rat", "bone_rat"]
 	var rooms: Array = [
 		_first_room(0, &"ante", K.ANTE, &"hall", {"variant": 1, "objective": &"obj_explore"}),
