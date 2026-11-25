@@ -9,6 +9,7 @@ id = &"ante"
 kind = 7
 layout_id = &"hall"
 variant = 1
+angel = &"sarael"
 objective = &"obj_explore"
 
 [sub_resource type="Resource" id="Resource_b4eqe"]
@@ -18,8 +19,7 @@ layer = 1
 layout_id = &"crypt"
 variant = 1
 waves = Array[PackedStringArray]([PackedStringArray("skeleton"), PackedStringArray("skeleton", "skeleton")])
-reward = 1
-angel = &"sarael"
+reward = 5
 cap = 3
 tip = &"first_tip_fight"
 objective = &"obj_win"

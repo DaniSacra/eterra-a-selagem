@@ -1,7 +1,7 @@
 extends GutTest
 ## SW-O3 and SW-O4 (docs/design/onboarding_sw_o.md): the guided first descent in data (rooms, waves, doors), when it is the
 ## one played (FirstDescent.active), what ends it (FirstDescent.finish), the save's `first` and its migration, the
-## graph RunMap.scripted draws from the data, the Antessala (the hall's variant "ante": its slabs, its way) and that the
+## graph RunMap.scripted draws from the data, the Antessala (the hall's variant "ante": its stream, its way) and that the
 ## long descent does not feel any of it.
 
 const STAGE := "res://data/stages/catacombs.tres"
@@ -76,10 +76,11 @@ func test_every_enemy_exists_and_the_kinds_come_one_part_at_a_time() -> void:
 			assert_false(String(id).ends_with("_elite") or String(id).ends_with("_big"), "%s: nothing bigger, no elite" % r.id)
 
 
-func test_the_first_blessing_is_in_room_one_with_a_fixed_angel() -> void:
-	var r := _room(&"crypt_a")
-	assert_eq(r.reward, RunMap.Reward.BOON)
-	assert_eq(r.angel, &"sarael")
+func test_the_first_blessing_is_in_the_antessala_with_a_fixed_angel() -> void:
+	# PT-25-8: the descent begins with a Blessing, asked for in the Antessala before the first room (Sarael's)
+	var a := _room(&"ante")
+	assert_eq(a.angel, &"sarael")
+	assert_eq(_room(&"crypt_a").reward, RunMap.Reward.GOLD, "room 1 gives gold, the Blessing came before")
 	assert_eq(_room(&"garden_boon").angel, &"nivael", "the second angel on the first choice")
 	assert_eq(_room(&"garden_pom").reward, RunMap.Reward.POM, "or a pomegranate")
 	assert_true(ResourceLoader.exists("res://data/angels/00_sarael.tres") and ResourceLoader.exists("res://data/angels/01_nivael.tres"))
@@ -217,8 +218,7 @@ func test_the_fight_in_the_graph_is_the_data() -> void:
 	assert_eq(r.fight.waves.size(), 2)
 	assert_eq(r.fight.waves[0], [&"skeleton"])
 	assert_eq(r.fight.waves[1], [&"skeleton", &"skeleton"])
-	assert_eq(r.reward, RunMap.Reward.BOON)
-	assert_eq(r.angel, &"sarael")
+	assert_eq(r.reward, RunMap.Reward.GOLD)
 	assert_eq(r.arena, &"crypt")
 	assert_eq(tutorial_stage.layouts[r.layout].id, &"crypt")
 
@@ -268,69 +268,79 @@ func test_the_antessala_is_no_fight_room() -> void:
 
 # ---------- the Antessala (SW-O3) ----------
 
-func test_the_variant_ante_exists_and_teaches_with_damage_zero() -> void:
+func test_the_variant_ante_exists_and_has_a_stream_across_the_hall() -> void:
 	assert_eq(_hall().variants.size(), 1)
-	var h := _ante().hazard
-	assert_not_null(h)
-	assert_eq(h.kind, HazardDef.Kind.PLATES)
-	assert_eq(h.plates.size(), 3, "three slabs")
-	assert_eq(h.hero_damage, 0.0)
-	assert_eq(h.hero_damage_of(0), 0.0, "the slab strikes him for nothing")
-	assert_eq(h.enemy_damage, 0.0)
-	assert_gt(h.plate_push[0].length(), 0.0, "only a short shove")
-	assert_lt(h.plate_push[0].length(), 1.0)
-	assert_gt(h.auto_cycle, 0.0, "it arms on its own")
-	assert_eq(h.auto_near, 0.0, "whenever it is ready, no enemy needed")
-	assert_almost_eq(h.warn, 1.0, 0.001, "a warning of 1.0 s")
-	assert_eq(h.from_progress, 0.0, "awake from the first second")
-	assert_eq(_hall().hazard, null, "the hall's other uses carry no slab")
+	var l := _ante()
+	assert_null(l.hazard, "no slab: the stream teaches the dodge")
+	assert_eq(l.gaps.size(), 1, "one stream")
+	var g := l.gaps[0]
+	assert_gte(g.size.y, 2.0, "2 m or more across: walking does not hop it")
+	assert_lte(g.size.y, 4.0, "4 m or less: the dodge (5.6 m) crosses it")
+	assert_lte(g.position.x, -_hall().half.x, "from wall to wall: no way round")
+	assert_gte(g.end.x, _hall().half.x)
+	assert_eq(l.gap_fall, 0.0, "it never hurts")
+	assert_eq(_hall().gaps.size(), 0, "the hall's other uses carry no stream")
 
 
-func test_a_slab_of_the_antessala_arms_alone_and_strikes_for_nothing() -> void:
-	var h := PlateHazard.new(_ante().hazard, [], true, 0.0)
-	assert_true(h.auto)
-	var armed := 0
-	for i in 60 * 6:
-		armed += (h.step(1.0 / 60.0, Vector2(-11.6, 18.1), PackedVector2Array()).armed as PackedInt32Array).size()
-	assert_gt(armed, 0, "without anyone on it")
-
-
-func test_the_slabs_are_far_from_the_way_in_and_the_door_and_the_vases() -> void:
+func test_the_stream_is_far_from_the_way_in_the_door_and_the_vases() -> void:
 	var a := Arena.new()
 	add_child_autofree(a)
 	a.build(_ante(), 1, 1406)
-	var rects: Array[Rect2] = _ante().hazard.plates
-	for r in rects:
-		assert_gte(a.start.distance_to(r.get_center()), 6.0, "6 m or more from the way in")
-		for z in a.exit_zones:
-			assert_false(z.grow(0.5).intersects(r), "off the door's mouth")
-			assert_gte(z.get_center().distance_to(r.get_center()), 6.0, "6 m or more from the door")
-		for b in _hall().breakables:
-			assert_gte(b.at.distance_to(r.get_center()), 3.0 + 1.2, "no vase within 3 m of a slab (%s)" % b.at)
-		for p in a.pillars:
-			assert_false(r.grow(0.5).has_point(Vector2(p.x, p.y)), "off every piece of the hall")
-		for bx in a.boxes:
-			assert_false(r.grow(0.5).intersects(bx), "off every block of the hall")
+	assert_eq(a.gaps.size(), 1, "the arena keeps it")
+	var g := a.gaps[0]
+	assert_gt(a.start.y, g.end.y + 6.0, "the way in 6 m or more south of it")
+	for z in a.exit_zones:
+		assert_lt(z.end.y, g.position.y - 1.5, "the door's mouth is 1.5 m and more north of it")
+	for b in _hall().breakables:
+		assert_false(g.grow(0.4).has_point(b.at), "no vase stands in the water (%s)" % b.at)
+	for p in a.pillars:
+		assert_false(g.grow(0.5).has_point(Vector2(p.x, p.y)), "off every piece of the hall")
+	for bx in a.boxes:
+		assert_false(g.grow(0.5).intersects(bx), "off every block of the hall")
 
 
-func test_the_way_in_reaches_the_door_by_the_slabs_or_by_their_sides() -> void:
+func test_the_way_in_reaches_the_door_and_only_the_dash_crosses_the_stream() -> void:
 	var a := Arena.new()
 	add_child_autofree(a)
 	a.build(_ante(), 1, 1406)
 	assert_eq(a.exits.size(), 1, "one door")
 	var seen := _reachable(a, a.start)
-	var through := false
 	var found := false
 	for k: Vector2i in seen:
 		if a.exit_at(Vector2(k) * CELL) == 0:
 			found = true
-	assert_true(found, "the door's zone can be walked to")
-	# the slabs' own floor is walkable (nothing blocks them: he crosses them or goes round)
-	for r in _ante().hazard.plates:
-		through = through or seen.has(Vector2i(roundi(r.get_center().x / CELL), roundi(r.get_center().y / CELL)))
-	assert_true(through, "a slab is on floor he reaches")
+	assert_true(found, "the door's zone can be walked to (the grid ignores the stream: the dash is the way)")
 	var goal := a.resolve(a.door_goal(0), Player.RADIUS)
 	assert_eq(a.exit_at(goal), 0, "the robot's goal leaves by the door")
+	# on foot the stream holds him on his bank
+	var g := a.gaps[0]
+	var bank := Vector2(0.0, g.end.y + 0.5)
+	var on_foot := a.keep_out_of_gaps(bank, bank + Vector2(0.0, -2.0))
+	assert_gt(on_foot.y, g.end.y, "walking into the water stops on the south bank")
+	# and the dash: swept across and not held by it
+	var across := a.sweep(bank, bank + Vector2(0.0, -5.0), Player.RADIUS)
+	assert_lt(across.y, g.position.y, "the sweep itself never holds a dash (the rule is Player.step's)")
+
+
+func test_the_hero_on_foot_never_crosses_and_one_who_dashes_does() -> void:
+	var a := Arena.new()
+	add_child_autofree(a)
+	a.build(_ante(), 1, 1406)
+	var pl := Player.new()
+	add_child_autofree(pl)
+	pl.arena = a
+	var g := a.gaps[0]
+	pl.place(Vector2(2.0, g.end.y + 0.3))
+	for i in 120:
+		pl.step(1.0 / 60.0, Vector2.UP, Vector2.UP)
+	assert_gt(pl.pos.y, g.end.y, "a long walk north ends on the south bank")
+	# a dash from the bank
+	pl.state = Player.State.DODGE
+	pl._dodge_dir = Vector2.UP
+	pl._state_t = 0.0
+	for i in 40:
+		pl.step(1.0 / 60.0, Vector2.ZERO, Vector2.UP)
+	assert_lt(pl.pos.y, g.position.y, "the dash from the bank lands on the north bank")
 
 
 func _reachable(a: Arena, from: Vector2) -> Dictionary:
@@ -383,8 +393,8 @@ func test_the_arrival_is_set_on_a_clear_spot_of_the_antessala_and_the_hero_stand
 		assert_gte(at.distance_to(Vector2(p.x, p.y)), p.z + ArrivalScene.CRYSTAL_RING, "no pillar at the crystals")
 	for bx in a.boxes:
 		assert_gte(at.distance_to(at.clamp(bx.position, bx.end)), ArrivalScene.CRYSTAL_RING, "no block or balustrade at the crystals")
-	for r: Rect2 in _ante().hazard.plates:
-		assert_false(r.grow(ArrivalScene.RING_RADIUS).has_point(at), "no slab under the ring")
+	for r: Rect2 in _ante().gaps:
+		assert_false(r.grow(ArrivalScene.RING_RADIUS).has_point(at), "no stream under the ring")
 	# the hero parked on it (what the scene does each frame) is where he is drawn
 	var pl := Player.new()
 	add_child_autofree(pl)

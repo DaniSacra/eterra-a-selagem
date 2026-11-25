@@ -692,8 +692,8 @@ Números de referência: `docs/design/sworn_rea_kingswood_2026-11-25.md` seçõe
 
 | # | Sala (arena, variante) | Ondas | Recompensa | Portas |
 |---|---|---|---|---|
-| 0 | Antessala (`hall`, 1) | nenhuma | nada | 1: Bênção (Sarael) |
-| 1 | Cripta A (`crypt`, 1, sem perigo) | `[skeleton]`; `[skeleton x2]` | Bênção do Sarael (3 cartas) | 1: Ouro |
+| 0 | Antessala (`hall`, 1; riacho) | nenhuma | a Bênção de Sarael, escolhida ali depois das dicas (PT-25-8) | 1: Ouro |
+| 1 | Cripta A (`crypt`, 1, sem perigo) | `[skeleton]`; `[skeleton x2]` | Ouro (a Bênção veio na Antessala) | 1: Ouro |
 | 2 | Fendas A (`rift`, sem quedas) | `[archer]`; `[archer x2, skeleton]` | Ouro | 2: Bênção (Nivael) ou Romã |
 | 3 | Jardim A (`garden`) | `[bone_rat x5]`; `[runner x2]` | a escolhida | 2: Fonte ou Cripta B (Bênção) |
 | 4 | Fonte (`hall`) ou Cripta B (`crypt`, 0, lajes de aprender) | `[skeleton, archer, bone_rat x3]`; `[guard, skeleton, archer]` | Bênção | 1: o guardião |
@@ -704,10 +704,24 @@ Números de referência: `docs/design/sworn_rea_kingswood_2026-11-25.md` seçõe
 
   Desvio do documento: a Cripta A é a variante 1 (Ossário, sem perigo) e a B a 0 (as lajes de aprender são as da variante 0), para as duas não serem iguais; a Fonte da 4 é uma das portas
   da 3 (o documento a punha "na 3 ou na 4").
-- **Antessala** (`RunMap.Kind.ANTE`): sem luta, `_open_doors` logo na entrada (`phase` OPEN), sem recompensa, sem cura de sala nem Prata, sem aviso "Sala N" (`notice` não sai).
-  As lajes (variante `ante` do `hall`, `docs/design/rooms_progression.md` "Antessala") rodam no `Rooms._step_ante`; ele conta `plates_crossed` (o herói passou do lado norte da faixa),
-  `broke_one` (um quebrável do `BreakFloor.rules` com vida 0) e `idle_blink` (25 s parado); `Rooms.ante_ctx()` dá `near_plates`, `near_breakable`, `crossed_plates`, `broke_one`
-  para o `Objective.pick`.
+- **Antessala** (`RunMap.Kind.ANTE`): sem luta, sem recompensa, sem cura de sala nem Prata, sem aviso "Sala N" (`notice` não sai). Desde o PT-25-8/9 (2026-11-25) ensina e a
+  porta só acende no fim: `phase` OPEN desde a entrada, mas `_open_doors` só roda em `Rooms._open_ante`, quando `AnteLesson.done()`; antes disso `usable()` e a saída pela porta
+  ficam fechados (`_ante_open`).
+  - **Dicas** (`scripts/core/ante_lesson.gd`, pura, `tests/test_ante_lesson.gd`): uma de cada vez, cada uma espera o gesto. Ordem em `AnteLesson.ORDER`: `attack` (3 golpes do
+    ataque, ou o final), `special` (o botão `heavy_attack`), `dodge` (atravessar o riacho), `shout` (Q), `rush` (E), `blessing`. Um gesto fora de hora vale (cruzou o riacho antes do
+    terceiro clique: aquele passo já está feito; a linha pede o primeiro não feito). Sem Brado ou sem Investida na árvore do herói o passo some. `Rooms._on_struck` lê
+    `Skills.trigger_of` do golpe (FINISHER, SPECIAL, SHOUT, RUSH, ou o golpe leve) e alimenta `AnteLesson.feed`; o texto sai pela linha de objetivo (`Objective.pick`, ctx `lesson`,
+    que na Antessala vem antes de tudo; `Rooms.ante_ctx()` dá `lesson`, `near_plates` e os outros; o HUD usa `ante_ctx`). As chaves `lesson_*` usam `{attack}`, `{special}`,
+    `{dodge}`, `{shout}`, `{rush}` de `UiKit.action_label`, então o controle mostra o botão do controle. Quando só falta a Bênção, `Rooms._step_lesson` abre `_give(BOON)` com o anjo
+    `ante.angel` (Sarael) e, escolhida, acende a porta. O robô (`--first`) pula todos os passos menos o riacho e a Bênção. Alvos: os quebráveis do Salão; sem bonecos novos (arte).
+  - **Riacho** (PT-25-9, `scripts/core/gap_rule.gd`, `RoomLayout.gaps`/`gap_fall`, `ArenaVariant.gaps`, `Arena.gaps`, `Arena.keep_out_of_gaps`, `Player.fell_in_gap`): retângulo de
+    chão (2 a 4 m) que o andar não entra e a esquiva (5,6 m) vence; é dado do layout e serve a qualquer sala (as travessias opcionais da E4 usam o mesmo). Na Antessala:
+    `ANTE_GAP` (x -16,5 a 16,5, z -10,6 a -8,0), de parede a parede, entre o jogador (sudoeste) e a porta (nordeste). `Player.step` põe quem anda de volta na margem de onde veio
+    (`GapRule.keep_out`) e quem sai da esquiva dentro dele na margem mais perto; `gap_fall` > 0 fere o que a sala disser (`Ground.GAP_SOURCE`, "Derrotado por: Queda na Fenda"),
+    0 na Antessala. A grade de caminho (`NavGrid`) não vê o riacho (o robô dispara a esquiva da margem com `GapRule.hop`, `Bot`, até 0,9 m da margem); inimigos ainda andam sobre ele
+    (a E4 precisa decidir). Desenho placeholder: `GapFloor` (água escura, espuma nas margens), no `Rooms._enter_with`. `Rooms.plates_crossed` agora diz "passou o riacho".
+    As três lajes de aprender do SW-O3 saíram (o riacho ensina a esquiva no lugar delas).
+  - `idle_blink` (25 s parado) e `broke_one` continuam; `Rooms.ante_ctx()` dá `near_plates` (perto do riacho), `near_breakable`, `crossed_plates`, `broke_one`, `lesson`.
 - **Chegada** (SW-O1): `Rooms._play_arrival` carrega `scripts/game/arrival_scene.gd` se existir (`play(game, at)`, `finished`, `skip()`), uma vez, na Antessala da guiada; o preto de
   `Rooms._fade` abre em `arrival_open_at`/`arrival_open_s` do dado e qualquer ataque, esquiva ou interação depois de `arrival_skip_after` chama `skip()`. Sem o arquivo: a sala abre como as outras.
 - **RESULT** com a guiada: `first` 1, `ante_s` (segundos de jogo até a porta da Antessala) e `first_boon_s` (a primeira Bênção oferecida). Sem a guiada o `RESULT` é o de sempre.

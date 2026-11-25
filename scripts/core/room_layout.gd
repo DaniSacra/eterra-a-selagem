@@ -70,6 +70,10 @@ enum Size { SMALL, MEDIUM, LARGE, LONG }
 ## AT-Q1: what a blow breaks in it (vases, crates, branches; BreakablePiece, played by BreakFloor). Never stops a body
 ## nor a shot. Empty: nothing.
 @export var breakables: Array[BreakablePiece] = []
+## PT-25-9: streams and rifts only a dash crosses (GapRule): rectangles of the floor (2 to 4 m across) that walking does not
+## enter; whoever lands in one is put on its nearest edge and loses `gap_fall` life (0: nothing). Mirrored with the layout.
+@export var gaps: Array[Rect2] = []
+@export var gap_fall := 0.0
 ## OF-08 (Ofícios, the Primeira Picareta): where a vein of Pedra Funda may stand, the floor point he extracts it from
 ## (VeinFloor; the first one; empty: none in this arena).
 @export var gather_spots := PackedVector2Array()
@@ -117,6 +121,11 @@ func variant(n: int) -> RoomLayout:
 		out.hazard = v.hazard
 	if not v.breakables.is_empty():
 		out.breakables = v.breakables.duplicate()
+	if not v.gaps.is_empty():
+		var own: Array[Rect2] = []
+		own.assign(v.gaps)
+		out.gaps = own
+		out.gap_fall = v.gap_fall
 	if not v.gather_spots.is_empty():
 		out.gather_spots = v.gather_spots.duplicate()
 	if not v.areas.is_empty():
@@ -163,6 +172,10 @@ func _mirror() -> void:
 	late_spawns = late
 	if cam_bounds.has_area():
 		cam_bounds = mirror_rect(cam_bounds)
+	var gp: Array[Rect2] = []
+	for r in gaps:
+		gp.append(mirror_rect(r))
+	gaps = gp
 	var brk: Array[BreakablePiece] = []
 	for b in breakables:
 		brk.append(b.mirrored())

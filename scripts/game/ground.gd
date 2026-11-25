@@ -49,6 +49,8 @@ const SAG_SOURCE := &"sag"
 const SPIKES_SOURCE := &"spikes"
 ## 2026-11-23 the spike plate of the Knight's hall (PlateFloor, plate_source &"spikeplate"; the grate's piece).
 const SPIKE_PLATE_SOURCE := &"spikeplate"
+## PT-25-9 the fall into a stream or rift (Rooms, RoomLayout.gap_fall): a short ring where he landed.
+const GAP_SOURCE := &"gap"
 ## Sources of the room's own warnings that count against its two at once (combat_cadence.md 9.2 R9); a column toppling
 ## (the paladin's, hurting only them) and the rift's breath (no harm) do not.
 const ROOM_SOURCES: Array[StringName] = [HAZARD_SOURCE, PLATE_SOURCE, CHAIN_SOURCE, ROOT_SOURCE, SLIT_SOURCE, TRAP_SOURCE,

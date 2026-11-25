@@ -1314,33 +1314,20 @@ func _plates(rects: Array[Rect2], from := 0.0) -> HazardDef:
 	return h
 
 
-## SW-O3 (docs/design/rooms_progression.md, "Antessala"): the slabs of the Antessala, three of 2.4 m side by side across the
-## way from the way in (south-west) to the door (north-east), at z -3.2 to -0.8 and x -1.0 to 6.2: 6 m or more from the way
-## in and the door, 8 m from the nearest vase. They teach the dodge and never hurt: damage 0 to him (a short shove toward
-## the way in and the sound), a 1.0 s warning, a pause of 1.5 s and the next one 2.5 s after the last, on their own and
-## from the first second.
-const ANTE_PLATES := [[-1.0, 1.4], [1.4, 3.8], [3.8, 6.2]]
-const ANTE_Z := [-3.2, -0.8]
-const ANTE_PUSH := Vector2(-0.5, 0.7)
+## PT-25-9 (docs/design/rooms_progression.md, "Antessala"): the Antessala's stream, a band of water the width of the hall
+## (x -16.5 to 16.5, under the balustrades) and 2.6 m across (z -10.6 to -8.0), between the way in (south-west) and the door
+## (north-east, z -17 to -12.6): walking never crosses it, the dodge (5.6 m) does. It lies between the vases of the west wall
+## (z -6.6 and -12.4) and keeps 2 m clear of the door's mouth, so there is room to practise the Brado and the Investida on the
+## far bank. It never hurts (gap_fall 0): one who lands in it is put back on the nearest bank. (SW-O3's three teaching slabs
+## were here until PT-25-9; the stream teaches the dodge in their place.)
+const ANTE_GAP := Rect2(-16.5, -10.6, 33.0, 2.6)
 
 
 func _ante_variant() -> ArenaVariant:
-	var rects: Array[Rect2] = []
-	for x: Array in ANTE_PLATES:
-		rects.append(_rect(x[0], x[1], ANTE_Z[0], ANTE_Z[1]))
-	var h := _plates(rects, 0.0)
-	h.warn = 1.0
-	h.rearm = 1.5
-	h.start_delay = 1.0
-	h.hero_damage = 0.0
-	h.enemy_damage = 0.0
-	h.plate_push = PackedVector2Array([ANTE_PUSH, ANTE_PUSH, ANTE_PUSH])
-	h.auto_cycle = 2.5
-	h.auto_near = 0.0
-	h.auto_until = 1.0
 	var v := ArenaVariant.new()
 	v.depth = Vector2(-1.0, -1.0)  # (no share of the descent holds it: only RunMap.scripted asks for it)
-	v.hazard = h
+	v.gaps = [ANTE_GAP] as Array[Rect2]
+	v.gap_fall = 0.0
 	return v
 
 
@@ -3059,8 +3046,8 @@ func _first() -> void:
 	d.boss_hp_scale = 0.35  # the short Morvath: a newcomer with 4 or 5 Blessings brings his first third down (0.6 killed the robot)
 	var bone5 := ["bone_rat", "bone_rat", "bone_rat", "bone_rat", "bone_rat"]
 	var rooms: Array = [
-		_first_room(0, &"ante", K.ANTE, &"hall", {"variant": 1, "objective": &"obj_explore"}),
-		_first_room(1, &"crypt_a", K.COMBAT, &"crypt", {"variant": 1, "reward": R.BOON, "angel": &"sarael", "cap": 3,
+		_first_room(0, &"ante", K.ANTE, &"hall", {"variant": 1, "angel": &"sarael", "objective": &"obj_explore"}),
+		_first_room(1, &"crypt_a", K.COMBAT, &"crypt", {"variant": 1, "reward": R.GOLD, "cap": 3,
 			"waves": _wave_lists([["skeleton"], ["skeleton", "skeleton"]]),
 			"tip": &"first_tip_fight", "objective": &"obj_win"}),
 		_first_room(2, &"rift_a", K.COMBAT, &"rift", {"reward": R.GOLD, "cap": 3,

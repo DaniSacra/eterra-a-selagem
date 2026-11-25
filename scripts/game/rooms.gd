@@ -63,7 +63,7 @@ func usable() -> bool:
 				if game.player.pos.distance_to(p.at) < TOUCH:
 					return true
 			var door := game.arena.exit_at(game.player.pos)
-			return door >= 0 and door < next_rooms.size()
+			return door >= 0 and door < next_rooms.size() and (room.kind != RunMap.Kind.ANTE or _ante_open)
 	return false
 const FADE := 0.35
 ## The last kill of a room: world speed, seconds held and seconds back to normal (Hades II: 0.35, about 0.6, 0.4).
@@ -162,6 +162,9 @@ var ante_s := -1.0
 var first_boon_s := -1.0
 ## SW-O3, the Antessala: whether the slabs were crossed, a vase broken, and the arrival's scene in play (null: none).
 var ante_crossed := false
+## PT-25-8: the Antessala's tips (AnteLesson; null off it) and whether its door is lit (the lessons and the Blessing are done).
+var lesson: AnteLesson
+var _ante_open := false
 var ante_broke := false
 var _arrival: Node
 var _arrival_t := 0.0
@@ -318,7 +321,8 @@ func step(dt: float) -> void:
 			if room.kind == RunMap.Kind.ANTE:
 				_step_ante(dt)
 			var door := game.arena.exit_at(game.player.pos)
-			if door >= 0 and door < next_rooms.size() and use and not (first_def != null and FirstDescent.arrival_only()):
+			if door >= 0 and door < next_rooms.size() and use and not (first_def != null and FirstDescent.arrival_only()) \
+					and (room.kind != RunMap.Kind.ANTE or _ante_open):
 				_leave(next_rooms[door])
 		Phase.EVENT:
 			_step_spots()
@@ -510,6 +514,8 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 		return
 	_layout = layout
 	_clear_props()
+	if not game.arena.gaps.is_empty():
+		game.arena.add_child(GapFloor.new(game.arena.gaps))  # PT-25-9: the stream a dash crosses (placeholder until the art)
 	game.player.place(game.arena.start)
 	game.player.facing = game.arena.start_facing
 	if Dev.has("hero-at"):
@@ -552,6 +558,9 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 	ante_broke = false
 	_ante_idle = 0.0
 	_ante_last = Vector2.INF
+	lesson = null
+	_ante_open = false
+	_wire_player()
 	if wait.is_valid():
 		await wait.call()  # (the room's own pieces, a shop's or an event's, on a black frame of their own)
 		if not is_inside_tree():
@@ -591,9 +600,11 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 			game.spawn_fountain(FOUNTAIN_SPOT)
 			_open_doors()
 		RunMap.Kind.ANTE:
-			# SW-O3: no fight, the door open at once, its slabs teaching the dodge (damage 0) and nothing given
-			_open_doors()
+			# SW-O3 and PT-25-8: no fight; the tips teach one gesture at a time (the stream asks for the dodge), the Blessing
+			# is offered when they are done and then the door lights (_step_ante); nothing else is given
+			phase = Phase.OPEN
 			_start_hazard(layout)
+			_start_lesson()
 		RunMap.Kind.SHOP:
 			_build_shop()
 			_open_doors()
@@ -679,13 +690,13 @@ func _step_ante(dt: float) -> void:
 				and (Controls.pressed(&"attack") or Controls.pressed(&"dodge") or Controls.pressed(&"interact")):
 			_arrival.call(&"skip")
 	var at := game.player.pos
-	if not ante_crossed and plates != null and plates.hazard.count() > 0:
-		var top := INF
-		for i in plates.hazard.count():
-			top = minf(top, plates.hazard.bounds(i).position.y)
-		if at.y < top - 0.5:
-			ante_crossed = true
-			plates_crossed.emit()
+	if not ante_crossed and not game.arena.gaps.is_empty() and _past_gaps(at):
+		ante_crossed = true
+		plates_crossed.emit()
+		if lesson != null:
+			lesson.feed(&"crossed")
+	if lesson != null and not _ante_open:
+		_step_lesson()
 	if not ante_broke and game.breaks != null:
 		for n in game.breaks.rules.life:
 			if n <= 0:
@@ -702,23 +713,102 @@ func _step_ante(dt: float) -> void:
 	_ante_last = at
 
 
-## What the objective asks of the Antessala (Objective.pick's ctx fields): how near the hero is to the slabs and to a
+## PT-25-8: the Antessala's tips begin (the robot never reads them: it only has the stream to cross) and the player's
+## gestures are listened to (_wire_player).
+func _start_lesson() -> void:
+	if first_def == null:
+		_open_ante()
+		return
+	var tree := game.player.tree
+	lesson = AnteLesson.new(ComboTree.find(tree.neutral, ComboNode.In.SHOUT) != null,
+			ComboTree.find(tree.neutral, ComboNode.In.RUSH) != null)
+	if game.bot != null:
+		for s in lesson.steps:
+			if s != &"dodge" and s != &"blessing":
+				lesson.skip(s)
+	if game.arena.gaps.is_empty():
+		lesson.skip(&"dodge")  # (no stream in this build of the room: nothing to cross)
+
+
+## A step of the tips: when only the Blessing is left it is offered (once, the angel the room's data names), and when it is
+## chosen and the rest is done the door lights.
+func _step_lesson() -> void:
+	if lesson.blessing_due() and game.mode == Game.Mode.PLAY:
+		lesson.feed(&"blessing")
+		_give(RunMap.Reward.BOON, false, true)
+		return
+	if lesson.done() and game.mode == Game.Mode.PLAY:
+		_open_ante()
+
+
+func _open_ante() -> void:
+	_ante_open = true
+	_open_doors()
+
+
+## The hero's gestures that the tips wait for, and his falls into a gap.
+func _wire_player() -> void:
+	var p := game.player
+	if not p.struck.is_connected(_on_struck):
+		p.struck.connect(_on_struck)
+	if not p.fell_in_gap.is_connected(_on_fell_in_gap):
+		p.fell_in_gap.connect(_on_fell_in_gap)
+
+
+func _on_struck(node: ComboNode, _o: Vector2, _d: Vector2) -> void:
+	if lesson == null:
+		return
+	match Skills.trigger_of(node):
+		SkillDef.Trigger.FINISHER:
+			lesson.feed(&"finisher")
+		SkillDef.Trigger.SPECIAL:
+			lesson.feed(&"special")
+		SkillDef.Trigger.SHOUT:
+			lesson.feed(&"shout")
+		SkillDef.Trigger.RUSH:
+			lesson.feed(&"rush")
+		-1:
+			if node.input == ComboNode.In.LIGHT:
+				lesson.feed(&"light")
+
+
+## He came out of a dash inside a stream or rift (the room's `gap_fall`: what it costs, 0 in the Antessala).
+func _on_fell_in_gap(at: Vector2) -> void:
+	var fall := game.arena.gap_fall
+	if fall > 0.0:
+		game.ground.add_round(at, 0.7, 0.1, fall, 0.0, Ground.GAP_SOURCE)
+
+
+## Whether the hero is on the far side of the room's gaps from where he came in (0.5 m past the last edge).
+func _past_gaps(at: Vector2) -> bool:
+	var start := game.arena.start
+	for r in game.arena.gaps:
+		var from_below := start.y > r.get_center().y
+		if from_below and at.y < r.position.y - 0.5:
+			return true
+		if not from_below and at.y > r.end.y + 0.5:
+			return true
+	return false
+
+
+## What the objective asks of the Antessala (Objective.pick's ctx fields): how near the hero is to the stream and to a
 ## vase still whole, and whether he crossed one and broke the other.
 func ante_ctx() -> Dictionary:
 	var near_plates := false
 	var near_breakable := false
 	if room != null and room.kind == RunMap.Kind.ANTE and first_def != null:
 		var at := game.player.pos
-		if plates != null and not ante_crossed:
-			for i in plates.hazard.count():
-				if plates.hazard.bounds(i).grow(first_def.obj_dodge_near).has_point(at):
+		if not ante_crossed:
+			for g in game.arena.gaps:
+				if g.grow(first_def.obj_dodge_near).has_point(at):
 					near_plates = true
 		if game.breaks != null and not ante_broke:
 			var rules := game.breaks.rules
 			for i in rules.pieces.size():
 				if rules.life[i] > 0 and rules.pieces[i].at.distance_to(at) < first_def.obj_break_near:
 					near_breakable = true
-	return {"near_plates": near_plates, "near_breakable": near_breakable, "crossed_plates": ante_crossed, "broke_one": ante_broke}
+	return {"near_plates": near_plates, "near_breakable": near_breakable, "crossed_plates": ante_crossed, "broke_one": ante_broke,
+			"lesson": lesson.key() if lesson != null and not _ante_open else &""}
 
 
 ## The numbers of the guided descent for the RESULT ({} off it).

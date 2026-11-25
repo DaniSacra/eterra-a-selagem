@@ -11,6 +11,8 @@ signal move_shown(node: ComboNode)
 signal was_hurt(amount: float)
 signal died
 signal dodged(dir: Vector2)
+## PT-25-9: he came out of a dash inside a stream or rift and was put back on its edge (Rooms hurts him what the room says).
+signal fell_in_gap(at: Vector2)
 ## AT-CA2: a dodge cut short by stone or the floor's edge, once per dodge (piece: the obstacle's piece, "edge" the floor).
 signal dodge_blocked(piece: String)
 ## C1e: a blow that would have landed in the first moments of the roll (DodgeClose); Game shows the reward.
@@ -656,6 +658,12 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 	# swept from where he stood: a dash or a push never comes out across a hole of the floor (cycle C12)
 	var wanted := pos
 	pos = arena.sweep(start, pos, RADIUS)
+	if not dashing and not arena.gaps.is_empty():
+		# PT-25-9: a stream or rift is crossed by the dash and never on foot; one who lands in it is put on its edge
+		var landed := GapRule.inside(arena.gaps, start) >= 0
+		pos = arena.keep_out_of_gaps(start, pos)
+		if landed:
+			fell_in_gap.emit(pos)
 	if dashing and not _dodge_cut and wanted.distance_to(pos) > 0.05:
 		_dodge_cut = true
 		dodge_blocked.emit(arena.blocker_at(wanted, RADIUS))

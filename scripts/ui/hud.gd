@@ -36,8 +36,6 @@ const MARGIN := 22.0
 const OBJ_TOP := 42.0
 const OBJ_EVERY := 0.2
 const OBJ_IDLE := 25.0
-## Metres: the hero this near the slabs has crossed them once he is this far past their middle.
-const PLATES_PAST := 1.5
 const MILESTONES := "res://scripts/core/milestones.gd"
 const CREST := 76.0
 const LIFE := Vector2(244, 19)
@@ -208,9 +206,6 @@ var objective: ObjectiveLine
 var _obj_t := 0.0
 var _obj_still := 0.0
 var _obj_last_pos := Vector2.ZERO
-## The side of the Antessala's slabs the hero came from (0 until he is near them): crossing them flips it.
-var _plate_side := 0
-var _plates_crossed := false
 ## The room whose "two doors" line was shown (the next room ends the "first choice"), and whether it was told.
 var _door_told_in: RunMap.Room
 var _door_told := false
@@ -892,45 +887,9 @@ func objective_context(r: Rooms) -> Dictionary:
 		"crossed_plates": false, "broke_one": false}
 	if kind != &"ante":
 		return ctx
-	var at := game.player.pos
-	var plates: Array[Vector2] = []
-	if r.plates != null:
-		for n in r.plates.nodes:
-			plates.append(Vector2(n.global_position.x, n.global_position.z))
-	ctx.near_plates = _within(plates, at, Objective.DODGE_NEAR)
-	if not plates.is_empty():
-		_plates_seen(plates, at)
-	ctx.crossed_plates = _plates_crossed
-	if game.breaks != null and game.breaks.rules != null:
-		var rules := game.breaks.rules
-		ctx.broke_one = rules.broken_count() > 0
-		var pieces: Array[Vector2] = []
-		for i in rules.count():
-			if not rules.broken(i):
-				pieces.append(rules.pieces[i].at)
-		ctx.near_breakable = _within(pieces, at, Objective.BREAK_NEAR)
+	# PT-25-8: the Antessala's own state (the tip now, the stream near and crossed, a vase broken) is the room's
+	ctx.merge(r.ante_ctx(), true)
 	return ctx
-
-
-static func _within(points: Array[Vector2], at: Vector2, metres: float) -> bool:
-	for p in points:
-		if p.distance_to(at) <= metres:
-			return true
-	return false
-
-
-## Crossing the slabs: the side of their middle the hero was last near them on; the other side, PLATES_PAST past it, is crossed.
-func _plates_seen(plates: Array[Vector2], at: Vector2) -> void:
-	var mid := 0.0
-	for p in plates:
-		mid += p.y
-	mid /= plates.size()
-	var off := at.y - mid
-	if _plate_side == 0:
-		if _within(plates, at, Objective.DODGE_NEAR):
-			_plate_side = 1 if off > 0.0 else -1
-	elif absf(off) > PLATES_PAST and (1 if off > 0.0 else -1) != _plate_side:
-		_plates_crossed = true
 
 
 ## The Antessala has no clock: a hero who stands still OBJ_IDLE seconds makes the line blink once.

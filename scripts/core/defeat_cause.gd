@@ -12,7 +12,7 @@ extends RefCounted
 ## A1: "crystal" the crystal's discharge (RP-14), "rocks" the stones of the vault (RP-20), "urn" the oil urn's blast
 ## and "oil" its running flame (RP-12); AT-H2 "niche" the skeleton of the niche, AT-H3 "plant" the hostile plant; SR-P2 "sag" the slab that gives, SR-P3 "spikes" the pit grate; 2026-11-23 "spikeplate" the plate that raises spikes; S (2026-11-25) "breath" the rift's breath (only enemies are hurt, the key is there for the tally).
 const BOSS_ATTACKS: Array[StringName] = [&"scythe", &"reap", &"blades", &"storm", &"barrage", &"eruptions", &"ritual", &"rupture", &"curse", &"dash", &"runes",
-	&"plates", &"chain", &"roots", &"slit", &"trap", &"crystal", &"rocks", &"urn", &"oil", &"niche", &"plant", &"sag", &"spikes", &"spikeplate", &"breath"]
+	&"plates", &"chain", &"roots", &"slit", &"trap", &"crystal", &"rocks", &"urn", &"oil", &"niche", &"plant", &"sag", &"spikes", &"spikeplate", &"breath", &"gap"]
 const UNKNOWN := &"killer_unknown"
 
 
