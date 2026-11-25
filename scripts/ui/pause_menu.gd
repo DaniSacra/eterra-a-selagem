@@ -98,6 +98,12 @@ func open() -> void:
 	v.add_child(rule)
 	var foot := UiKit.foot(6)
 	v.add_child(foot)
+	# SW-O4 (D-O2 b): in the guided first descent a player who knows the game can skip it (asks first)
+	if not hub and Objective.tutorial():
+		var skip := _link(T.t(&"pause_skip_first"), _ask_skip)
+		skip.name = "skip_first"
+		foot.add_child(skip)
+		buttons.append(skip)
 	var quit := _link(T.t(&"hub_to_title" if hub else &"pause_quit"), func() -> void:
 		SceneGo.to(get_tree(), SceneGo.TITLE if hub else SceneGo.HUB))
 	quit.name = "quit"
@@ -111,6 +117,35 @@ func open() -> void:
 		buttons.append(leave)
 	_chain()
 	go_on.grab_focus.call_deferred()
+
+
+## The question before skipping the first descent: its own page over the panel, "Voltar" in focus; "Pular" marks the save
+## (FirstTips.mark_skipped, written unless the run is a capture without a save) and goes to the Santuário.
+func _ask_skip() -> void:
+	if _sub != null:
+		return
+	var from := get_viewport().gui_get_focus_owner()
+	var q := AskPage.new().setup(T.t(&"pause_skip_first"), T.t(&"pause_skip_confirm"), T.t(&"pause_skip_yes"), T.t(&"pause_skip_no"))
+	_main.visible = false
+	_sub = q
+	add_child(q)
+	q.answered.connect(func(yes: bool) -> void:
+		if yes:
+			skip_first()
+			return
+		q.queue_free()
+		_sub = null
+		_main.visible = true
+		if from is Control and is_instance_valid(from):
+			(from as Control).grab_focus())
+
+
+## Skips the first descent for good: the save says so and the player goes to the Santuário.
+func skip_first() -> void:
+	FirstTips.mark_skipped(Save.data)
+	if Save.enabled:
+		Save.write()
+	SceneGo.to(get_tree(), SceneGo.HUB)
 
 
 ## A quiet way out at the foot: a link on the ink panel, a small paper button on the hub's leaf.

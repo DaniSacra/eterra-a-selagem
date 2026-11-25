@@ -99,7 +99,7 @@ func context(fighting: bool) -> Dictionary:
 				armored = true
 				break
 	return {"fighting": fighting, "fight_t": _fight_t, "armored": armored,
-			"boons": game.boons.owned().size(), "elos": game.boons.new_elos({}).size()}
+			"boons": game.boons.owned().size(), "elos": game.boons.new_elos({}).size(), "tutorial": Objective.tutorial()}
 
 
 func show_tip(id: StringName) -> void:

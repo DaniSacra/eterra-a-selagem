@@ -39,6 +39,8 @@ var cards: Array[Button] = []
 var erasers: Array[Button] = []
 ## The question on show (null: none) and the slot it asks about.
 var question: Control
+## The new save was made to skip the guided first descent (the answer of the question; false: it will be done).
+var skip_first := false
 var asking := 0
 var _row: HBoxContainer
 ## The keys at the foot (benchmark P0-2).
@@ -143,7 +145,7 @@ func _card(n: int, info: Variant) -> Button:
 		if question != null:
 			return
 		Audio.play(&"ui_ok")
-		chosen.emit(n))
+		_choose(n))
 	b.focus_entered.connect(func() -> void: Audio.play(&"ui_move"))
 	b.mouse_entered.connect(func() -> void:
 		if question == null:
@@ -238,6 +240,58 @@ func _fact(grid: GridContainer, key: StringName, value: String, own: Control = n
 	var v := UiKit.shadow(UiKit.label(value, UiKit.PALE, VALUE_SIZE, UiKit.number_font()))
 	v.name = String(key)
 	grid.add_child(v)
+
+
+## A card chosen. An empty save, when another one has already gone down, first asks whether to do the guided descent
+## (SW-O4, D-O2 b); "Ir direto ao Santuário" marks this save's first descent as skipped before chosen goes out.
+func _choose(n: int) -> void:
+	if needs_first_ask(n, base):
+		_ask_first(n)
+		return
+	chosen.emit(n)
+
+
+## Whether choosing slot n asks about the guided descent: n is empty and another save has descents.
+static func needs_first_ask(n: int, folder: String) -> bool:
+	if SaveSlots.exists(n, folder):
+		return false
+	for i in range(1, SaveSlots.COUNT + 1):
+		var info: Variant = SaveSlots.summary_of(i, folder)
+		if i != n and info != null and int(info.runs) > 0:
+			return true
+	return false
+
+
+func _ask_first(n: int) -> void:
+	var q := AskPage.new().setup(T.t(&"slot_first_ask"), T.t(&"slot_first_line"), T.t(&"slot_first_yes"), T.t(&"slot_first_skip"))
+	q.esc_is_no = false
+	q.focus_yes = true
+	question = q
+	add_child(q)
+	q.cancelled.connect(func() -> void: _close_first(n))
+	q.answered.connect(func(guided: bool) -> void:
+		if not guided:
+			skip_first = true
+			mark_skipped(n)
+		_close_first(n, true))
+
+
+## Marks the new save (created now) as having skipped the first descent; only the game's own saves, never a test folder.
+func mark_skipped(n: int) -> void:
+	if base != Save.base or not Save.enabled:
+		return
+	Save.use(n)
+	FirstTips.mark_skipped(Save.data)
+	Save.write()
+
+
+func _close_first(n: int, go: bool = false) -> void:
+	question.queue_free()
+	question = null
+	if go:
+		chosen.emit(n)
+	else:
+		cards[n - 1].grab_focus.call_deferred()
 
 
 ## The question before erasing: its own small page over the cards, Cancelar in focus.

@@ -5,7 +5,7 @@ extends RefCounted
 ## (`data.hub.tips` keeps the ids shown) and only while the save is new (fewer than FIRST_RUNS descents). The HUD's
 ## TipToast shows them; nothing here touches the run, so the robot, a smoke run or --nosave see none
 ## (--tips forces them for captures, not written).
-##   FirstTips.pick(Save.data, ctx) -> the tip due now (&"" none); ctx: {fighting, fight_t, armored, boons, elos}
+##   FirstTips.pick(Save.data, ctx) -> the tip due now (&"" none); ctx: {fighting, fight_t, armored, boons, elos, tutorial}
 ##   FirstTips.mark(Save.data, id)
 
 const IDS: Array[StringName] = [&"armor", &"fight", &"hold", &"elo"]
@@ -51,9 +51,11 @@ static func pick(data: Dictionary, ctx: Dictionary) -> StringName:
 	var t: float = ctx.get("fight_t", 0.0)
 	if fighting and bool(ctx.get("armored", false)) and open(data, &"armor"):
 		return &"armor"
-	if fighting and t >= FIGHT_AFTER and open(data, &"fight"):
+	# SW-O2: in the guided descent the objective line and the room's own tips teach hitting: no "fight" tip there
+	var tutorial: bool = ctx.get("tutorial", false)
+	if fighting and not tutorial and t >= FIGHT_AFTER and open(data, &"fight"):
 		return &"fight"
-	if fighting and t >= HOLD_AFTER and not open(data, &"fight") and open(data, &"hold"):
+	if fighting and t >= HOLD_AFTER and (tutorial or not open(data, &"fight")) and open(data, &"hold"):
 		return &"hold"
 	if not fighting and int(ctx.get("boons", 0)) >= 2 and int(ctx.get("elos", 0)) == 0 and open(data, &"elo"):
 		return &"elo"
@@ -71,3 +73,10 @@ const SHOUT_TIME := 1.0
 ## Whether the Brado's word may show now: worth it, told fewer than SHOUT_PER_ROOM times in this room, save still new.
 static func shout_due(data: Dictionary, told_in_room: int, worth: bool) -> bool:
 	return worth and told_in_room < SHOUT_PER_ROOM and int(data.get("runs", 0)) < SHOUT_RUNS
+
+
+## SW-O4 (D-O2 b): a player who already knows the game skips the guided descent: `first` 0 (pending) becomes 2 (skipped,
+## it counts as done for the milestones). A done descent (1) stays 1. The pause and the save choice call this; the caller writes.
+static func mark_skipped(data: Dictionary) -> void:
+	if int(data.get("first", 0)) == 0:
+		data["first"] = 2

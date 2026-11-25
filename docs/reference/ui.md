@@ -647,3 +647,28 @@ livro (o livro não passa de 1,9 alturas de largura, `BookDesk.side_room`, ou se
   `assets/ui/book/` (`desk.png`, `spread.png`, `ribbon.png`, `ribbon_marks.png`, `opening_desk.png`, `warrior_ink.png`,
   `maga_ink.png`, `candle.png`, `pick_ink.png`, `pick_ink_broken.png`); hoje tudo é `_draw`. Testes: `tests/test_book.gd` (fim) e
   `test_hero_screen.gd`. Captura: `RES=1280x720 tools/gpu.sh shot out.png --title --screen=hero [--hero=maga]`.
+
+## Objetivo, legenda da chegada e primeira descida (Fase 3, lote 3A3, 2026-11-25; `docs/design/onboarding_sw_o.md`; testes em `tests/test_objective.gd`)
+- **Objetivo (SW-O2).** `Objective` (`scripts/core/objective.gd`, puro): `pick(ctx) -> StringName` devolve a chave `obj_*` da linha
+  (&"" nenhuma); `enabled(data, tutorial)` (tutorial sempre; senão `runs <= 3` e `options.objective`, padrão ligado); `text(key)` troca
+  `{attack}`, `{dodge}`, `{interact}` pelas teclas reais (`UiKit.action_label`); `tutorial()` pergunta a `FirstDescent.active` quando o
+  arquivo existir (senão só `--first`). Precedência: tela aberta esconde (a da Bênção devolve `obj_bless`, que o HUD não mostra);
+  Morvath e guardião nomeiam a sala; luta vence explorar; loja; recompensa no chão vence portas; Antessala: lajes (a 6 m, antes de
+  atravessar), vaso (a 5 m, se nenhum quebrou), depois "Encontre um caminho".
+- **Linha** (`ObjectiveLine`, `scripts/ui/objective_line.gd`): losango de ouro e Alegreya 18 sob "Sala N de M" (`Hud.OBJ_TOP`), a antiga some
+  em 0,2 s, a nova entra em 0,3 s e um filete de ouro corre por baixo (0,5 s); `pulse()` pisca uma vez (herói parado 25 s na Antessala).
+  `Hud._update_objective` lê o contexto a cada 0,2 s (`objective_context`) e esconde a linha sobre telas, pausa e para o robô.
+  Lajes e vasos vêm de `Rooms.plates.nodes` e `Game.breaks.rules`; "atravessou" é a mudança de lado do centro das lajes.
+- **Opção** "Mostrar objetivo" na página Conforto das Configurações (`opt_objective`, lê `options.objective` com `get` e padrão ligado).
+- **Dicas.** `FirstTips.pick` ganha `ctx.tutorial`: na descida guiada a dica `fight` não vem e a `hold` vem sem ela. Chaves das dicas
+  próprias das salas: `first_tip_fight|archer|hold|armor|knight`.
+- **Legenda da chegada** (`ArrivalCaption`, `scripts/ui/arrival_caption.gd`, filho do `Hud` em `Hud.arrival_caption`):
+  `show_line(key, seconds = 0)` (padrão 0,5 + 4,0 + 0,6 s; pulada, `ArrivalCaption.SKIPPED` 2,5 s), `clear()`. Marfim, sombra, sem
+  caixa, 190 px acima da base. O `show` do doc virou `show_line` porque `Control.show()` já existe.
+- **Pular a primeira descida** (D-O2 b): a pausa da descida guiada ganha o link "Pular a primeira descida" (`PauseMenu.skip_first`,
+  pergunta em `AskPage`, "Voltar" em foco); a escolha de save, ao criar um save novo quando outro espaço já tem descidas, pergunta
+  "Fazer a primeira descida guiada?" (`SaveSlotScreen.needs_first_ask`; "Ir direto ao Santuário" grava `first = 2` antes de `chosen`,
+  Esc volta aos cartões). `FirstTips.mark_skipped(data)`: `first` 0 vira 2, 1 fica 1.
+- **Quinto losango** (SW-O5): `Hud.ult_open()` pergunta a `Milestones.ult_open(Save.data)` (aberto sem o arquivo e sem save); fechado, o
+  losango do Golpe Supremo e a carga fina não aparecem (antes aparecia trancado com "Maestria N").
+- Todos os textos novos estão marcados a aprovar pelo Daniel (relatório da fase).
