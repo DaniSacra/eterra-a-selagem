@@ -1,6 +1,14 @@
 # Backlog de A Selagem
 
 ## ENTREGAS (2026-11-25 noite, LER PRIMEIRO na conversa nova)
+
+**E1 a E3 FEITAS (2026-11-25 noite, um exe só; o Daniel testa).** Capturas em `docs/gallery/e1-e3_2026-11-25/`.
+- PT-25-1: a causa do "1 carta" não foi reproduzida (300 descidas, sempre 3); a tela agora avisa quando o anjo traz menos de 3 (`angel_few`). Se voltar, anotar sala, mão e save.
+- PT-25-2: o Santuário não tocava música própria porque as opções do PC (`profile.json`) nunca passaram pela troca do MUS-2 e ficaram em `blade_march`; corrigido (`SaveData.move_music_defaults`, uma vez). 3 candidatas em `Downloads\ASelagem-musicas-santuario` para ele escolher.
+- PT-25-3: Videira compra segurando (`HoldPress`). PT-25-4/11: passinho em todo golpe (0,3 / 0,3 / 0,8 m, `STEP`). PT-25-5: Cavaleiro armadura 1400 para 550, `armor_soft` 0,5 (robô quebra em ~10 s).
+- PT-25-6: Espólios na `EndScreen` (salas vencidas, ouro, "Liberado nesta descida", botão Continuar). PT-25-7: chegada como cometa. PT-25-8/9: Antessala ensina um gesto por vez, riacho só com esquiva (`GapRule`, `RoomLayout.gaps`), Bênção de Sarael antes da sala 1 (Cripta A virou Ouro).
+- Textos a aprovar: `lesson_*`, `obj_dodge`, `killer_gap`, `angel_few`, `end_rooms`, `end_unlocked_head`, `end_open_*`, `end_menu` ("Continuar"), `vine_water`.
+- Pendências: arte final do riacho (environment-artist, E4); inimigos ainda atravessam o riacho andando (decidir na E4); dicas longas na linha de objetivo em 720p a conferir; `lesson_special` muda se a E6 trocar o botão direito.
 Estado: tudo commitado e enviado, exe atual `30fe9deb` nas duas pastas. O Daniel pediu "só backlog": nada começa sem ele mandar.
 Cada entrega é um lote fechado com exe no fim, capturas na GPU e push. O detalhe de cada item está nas seções abaixo (PT-25, SL, SV-R).
 
