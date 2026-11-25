@@ -6,6 +6,9 @@
 global uniform vec3 hero_pos;
 // The Chamber of the Seal (C11): the same hole opens round Morvath too (BossChamber.BOSS_FAR when there is none).
 global uniform vec3 boss_pos;
+// Sweep 2026-11-25: the same hole opens over the nearest warning on the floor (Ground.step sets it; far below when none), so
+// the balustrade nearest the eye never hides the red that is about to land.
+global uniform vec3 warn_pos;
 
 // Interleaved gradient noise (Jimenez): a threshold with no regular grid to it (the 4 x 4 pattern read as a screen of
 // dots at 1080, art review 2026-11-21 item 6).
@@ -25,8 +28,8 @@ bool see_through_hole(vec3 vertex, vec2 frag, mat4 view, mat4 projection, float 
 		return false;
 	}
 	float open = 0.0;
-	for (int k = 0; k < 2; k++) {
-		vec3 who = k == 0 ? hero_pos : boss_pos;
+	for (int k = 0; k < 3; k++) {
+		vec3 who = k == 0 ? hero_pos : (k == 1 ? boss_pos : warn_pos);
 		vec3 hv = (view * vec4(who + vec3(0.0, height, 0.0), 1.0)).xyz;
 		if (vertex.z > hv.z + gap) {
 			// this pixel's line of sight where it crosses his depth, and how far from him that is
@@ -60,8 +63,8 @@ float see_through_alpha(vec3 vertex, mat4 view, mat4 projection, float amount, f
 	}
 	radius = min(radius, SEE_FADE_RADIUS);
 	float open = 0.0;
-	for (int k = 0; k < 2; k++) {
-		vec3 who = k == 0 ? hero_pos : boss_pos;
+	for (int k = 0; k < 3; k++) {
+		vec3 who = k == 0 ? hero_pos : (k == 1 ? boss_pos : warn_pos);
 		vec3 hv = (view * vec4(who + vec3(0.0, height, 0.0), 1.0)).xyz;
 		if (vertex.z > hv.z + gap) {
 			float d = length(vertex.xy * (hv.z / vertex.z) - hv.xy);

@@ -12,6 +12,7 @@ uniform vec3 ink : source_color = vec3(0.05, 0.02, 0.05);
 uniform float rim = 0.21;
 uniform float core_share = 0.6;
 uniform float hot = 0.1;
+uniform float core_tone = 0.5;
 
 varying vec3 local;
 
@@ -25,9 +26,10 @@ void fragment() {
 	float r = sqrt(max(1.0 - f * f, 0.0));
 	float ring = smoothstep(core_share - 0.12, core_share + 0.1, r);
 	float band = 1.0 - smoothstep(0.0, 0.12, abs(r - core_share - 0.08));
-	vec3 orb = mix(ink, hue * rim, ring) + hue * rim * hot * band;
+	// the heart is the hue's own deep shade (sweep 2026-11-25: no black core), the rim and the band brighter
+	vec3 orb = mix(hue * rim * core_tone, hue * rim, ring) + hue * rim * hot * band;
 	// the needle: dark, its front burning
 	float tip = smoothstep(0.35, 0.85, local.z / max(length(local), 0.0001));
-	vec3 bolt = mix(ink * 1.4, hue * rim, tip) + hue * rim * hot * tip * f;
+	vec3 bolt = mix(hue * rim * core_tone * 0.6, hue * rim, tip) + hue * rim * hot * tip * f;
 	ALBEDO = mix(orb, bolt, needle);
 }

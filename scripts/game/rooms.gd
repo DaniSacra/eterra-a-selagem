@@ -2149,7 +2149,7 @@ static func _reward_color(r: RunMap.Reward) -> Color:
 		RunMap.Reward.POM, RunMap.Reward.POM_SLICE:
 			return Color.from_hsv(352.0 / 360.0, 0.5, 1.0)
 		RunMap.Reward.HEART:
-			return Color.from_hsv(340.0 / 360.0, 0.45, 1.0)
+			return Color.from_hsv(8.0 / 360.0, 0.5, 0.95)  # sweep 2026-11-25: a muted heart red, no rose (pink is the curse's)
 		RunMap.Reward.MAGICK:
 			return Color(0.45, 0.65, 1.0)
 		RunMap.Reward.GOLD:

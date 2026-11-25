@@ -28,7 +28,7 @@ const PALE := 0.28
 ## the same thing. A Blessing takes the tone of the angel of its door (AngelSeal.TINT) or ivory (two angels, the guardian).
 const TONE := {
 	RunMap.Reward.POM: Vector2(352, 0.5), RunMap.Reward.POM_SLICE: Vector2(352, 0.5),
-	RunMap.Reward.HEART: Vector2(340, 0.45), RunMap.Reward.HEAL: Vector2(340, 0.45),
+	RunMap.Reward.HEART: Vector2(6, 0.4), RunMap.Reward.HEAL: Vector2(6, 0.4),
 	RunMap.Reward.MAGICK: Vector2(225, 0.5), RunMap.Reward.GOLD: Vector2(40, 0.55),
 	RunMap.Reward.SILVER: Vector2(210, 0.1), RunMap.Reward.MEMORY: Vector2(38, 0.3),
 	RunMap.Reward.ENCHANT: Vector2(135, 0.4), RunMap.Reward.PSALM: Vector2(40, 0.45),

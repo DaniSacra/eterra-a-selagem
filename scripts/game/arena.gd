@@ -183,6 +183,7 @@ func _build(layout: RoomLayout, exit_count: int, seed_: int) -> void:
 	RenderingServer.global_shader_parameter_set(&"floor_round", Vector3.ZERO)
 	# nobody stands for the scenery to open around until a boss does (Boss.step sets it)
 	RenderingServer.global_shader_parameter_set(&"boss_pos", NO_BOSS)
+	RenderingServer.global_shader_parameter_set(&"warn_pos", NO_BOSS)
 	if _bare:
 		return
 	if layout != null and layout.chamber:
