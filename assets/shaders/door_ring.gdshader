@@ -8,8 +8,10 @@ uniform vec3 color : source_color = vec3(1.0, 0.8, 0.4);
 uniform float near = 0.0;
 // The band's middle and half width in the quad's units (1 is the quad's edge), its brightest channel.
 uniform float radius = 0.74;
-uniform float width = 0.035;
-uniform float peak = 0.55;
+uniform float width = 0.045;
+uniform float peak = 0.7;
+// 1 as the door lights, falling to 0: a flash and a second ring spreading out past the first.
+uniform float flare = 0.0;
 
 void vertex() {
 	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0], INV_VIEW_MATRIX[1], INV_VIEW_MATRIX[2], MODEL_MATRIX[3]);
@@ -24,5 +26,9 @@ void fragment() {
 	float glow = exp(-d * d / (w * w * 14.0)) * 0.45;
 	float k = (band + glow) * (0.55 + 0.45 * pulse) * (0.55 + 0.45 * near);
 	vec3 c = color / max(max(color.r, max(color.g, color.b)), 0.001) * peak;
+	// the light-up: the band burns brighter and a wave leaves it outwards (SW-C9)
+	float wave_r = radius + (1.0 - flare) * 0.2;
+	float wave = smoothstep(w * 2.0, 0.0, abs(r - wave_r)) * flare * step(r, 0.99);
+	k = k * (1.0 + 1.2 * flare) + wave * 0.9;
 	ALBEDO = c * k;
 }

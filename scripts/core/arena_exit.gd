@@ -14,9 +14,9 @@ extends Resource
 @export var mouth := Rect2()
 ## PT-2: where the door's medallion hangs, on the door's own arch (or over its stairs): height of its middle over the
 ## floor, meters inward from the edge (0: in the arch's plane) and the height where its sign's text starts, under it.
-@export var medal_up := 3.8
+@export var medal_up := 4.7
 @export var medal_in := 0.0
-@export var sign_up := 0.9
+@export var sign_up := 1.9
 ## The spot on the floor's edge, in the middle of the opening, when the mouth is not given (at_edge puts `at` this far
 ## out of the room: 0.75 of its 2.4 m).
 const EDGE_FROM_SPOT := 1.8

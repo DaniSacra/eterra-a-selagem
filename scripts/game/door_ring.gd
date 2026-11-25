@@ -11,11 +11,15 @@ const SHADER := preload("res://assets/shaders/door_ring.gdshader")
 const SPAN := 3.0
 ## How fast `near` follows `target` (per second).
 const EASE := 7.0
+## SW-C9: the door lights up (the medallion appears, the wave ends): the ring flares and settles in this many seconds.
+const FLARE_TIME := 1.6
 
 var door := -1
 ## 0 (far) to 1 (the hero is by it); `near` follows it.
 var target := 0.0
 var near := 0.0
+## 1 at the moment the door lights, falling to 0 (the shader's flash and the ring spreading out).
+var flare := 0.0
 var _mat: ShaderMaterial
 
 
@@ -33,10 +37,21 @@ static func make(door_index: int, color: Color, scale_to: float) -> DoorRing:
 	r.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	r.sorting_offset = -0.5
 	r.add_to_group(GROUP)
+	r.light_up()
 	return r
 
 
+## The door lights: a flash and a ring spreading out, then the steady pulse.
+func light_up() -> void:
+	flare = 1.0
+	if _mat != null:
+		_mat.set_shader_parameter(&"flare", flare)
+
+
 func _process(delta: float) -> void:
+	if flare > 0.0:
+		flare = maxf(flare - delta / FLARE_TIME, 0.0)
+		_mat.set_shader_parameter(&"flare", flare)
 	if is_equal_approx(near, target):
 		return
 	near = move_toward(near, target, EASE * delta)

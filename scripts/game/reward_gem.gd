@@ -188,7 +188,7 @@ static func make(parent: Node3D, reward: RunMap.Reward, kind: RunMap.Kind, color
 ## door is stairs with no arch, from the top of a low iron post (DOOR_POST: radius, height) beside the mouth, on its
 ## cheek off the floor. The rod meets the disc on its turning axis, so the swaying disc stays on it. Nothing collides.
 ## PT-2: the disc on a door is DOOR_SCALE of its size (the arch's tympanum is 4 m wide).
-const DOOR_SCALE := 0.8
+const DOOR_SCALE := 1.4
 const DOOR_ROD := 0.04
 const DOOR_ARCH_TOP := 4.9
 const DOOR_ARCH_BACK := 0.5
@@ -218,6 +218,9 @@ static func _door_mount(parent: Node3D, frame: Node3D, spin: Node3D) -> void:
 		# the rod hangs straight from the arch's crown to the disc: the crown is over the medallion's own spot
 		var m := a.door_anchor(i)
 		anchor = Vector3(m.x, DOOR_ARCH_TOP, m.z)
+		# SW-C9: a disc that floats over the lintel (its top over the crown) hangs from nothing: no rod
+		if m.y + RADIUS * spin.scale.y > DOOR_ARCH_TOP:
+			return
 	else:
 		var half := Arena.STAIRS_HALF_WIDTH
 		var base := 0.0
