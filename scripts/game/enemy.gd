@@ -35,6 +35,9 @@ var frozen_t := 0.0
 var stun_t := 0.0
 ## C1b (Poise): poise left (full at spawn), seconds since a blow wore it, seconds it is broken (stunned, takes more).
 var poise := 0.0
+## SW-C5: its full poise now (grows with each break, EnemyDef.poise_growth) and the breaks so far.
+var poise_full := 0.0
+var poise_breaks := 0
 var poise_idle := 0.0
 var broken_t := 0.0
 var air_t := 0.0

@@ -240,6 +240,8 @@ entries = {
 "enemy_runner": "Esqueleto corredor",
 "enemy_skeleton_big": "Esqueleto Maior",
 "enemy_runner_big": "Corredor Maior",
+"enemy_bone_rat": "Rato de osso",
+"enemy_capitao": "Capitão esqueleto",
 "enemy_gritador": "Gritador",
 "enemy_coveiro": "Coveiro",
 "enemy_saltador": "Saltador",

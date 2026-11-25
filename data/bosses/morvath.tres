@@ -134,4 +134,6 @@ dash_damage = 19.0
 dash_recovery = 0.6
 rupture_every = 25.0
 posture = 1300.0
+posture_stun = 3.5
 posture_vuln = 0.3
+posture_growth = 1.25

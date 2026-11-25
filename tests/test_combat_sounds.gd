@@ -61,9 +61,13 @@ func test_each_role_has_its_own_windup() -> void:
 		var d: EnemyDef = load("res://data/enemies/" + f)
 		if d.role != &"" and not d.elite:
 			by_role[d.role] = CombatSounds.windup(d)
-	assert_eq(by_role.size(), 14, "fourteen roles")
+	assert_eq(by_role.size(), 16, "sixteen roles")
 	assert_eq(by_role[&"swarm"], by_role[&"pressure"], "the Trinca's lunge is the skeleton's, so it is heard as one")
+	assert_eq(by_role[&"scurry"], by_role[&"pressure"], "the Rato de osso lunges as the skeleton does (SW-C7)")
+	assert_eq(by_role[&"captain"], by_role[&"block"], "the Capitão braces behind its shield as the guard does (SW-C8)")
 	by_role.erase(&"swarm")
+	by_role.erase(&"scurry")
+	by_role.erase(&"captain")
 	var sounds := {}
 	for r in by_role:
 		sounds[by_role[r]] = true

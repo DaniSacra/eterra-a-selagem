@@ -206,6 +206,9 @@ var _back_to := Vector2.ZERO
 var _stagger := 0
 ## C1d, the Postura: what is left of it, seconds since a blow wore it, and the seconds he is exposed (x posture_vuln).
 var _posture := 0.0
+## SW-C5: his full Postura now (each break asks BossDef.posture_growth times more) and the breaks so far.
+var _posture_full := 0.0
+var _posture_breaks := 0
 var _posture_idle := 0.0
 ## C1d, the Ruptura: seconds to the next one (counts down in its phase).
 var _rupture_left := 0.0
@@ -295,7 +298,8 @@ func setup(g: Game, enemy_def: EnemyDef) -> void:
 	g.horde.boss_blow.connect(_on_blow)
 	g.projectiles.curse_cut = def.curse_cut
 	g.projectiles.curse_cut_at.connect(func(_at: Vector2) -> void: stats.curses_cut = int(stats.get("curses_cut", 0)) + 1)
-	_posture = def.posture
+	_posture_full = def.posture
+	_posture = _posture_full
 	_rupture_left = def.rupture_first
 	g.horde.boss_vuln = def.posture_vuln
 	# his entrance stays on the floor (GP-01 of cycle C12c): the cyan column over him left him a black shape for a
@@ -445,7 +449,7 @@ func _advance(dt: float) -> void:
 			if _t >= _stun_time:
 				_stagger = 0
 				e.armor = e.max_armor
-				_posture = def.posture
+				_posture = _posture_full
 				e.broken_t = 0.0
 				_rest(0.5)
 	_step_layers(dt)
@@ -1014,7 +1018,7 @@ func _step_rupture(dt: float) -> void:
 	if _t >= def.rupture_windup:
 		# it landed: he stays exposed, his Postura gone and refilled when the window closes
 		e.broken_t = def.rupture_window
-		_posture = def.posture
+		_posture = _posture_full
 		game.fx.shake(3.0)
 		game.fx.ring(e.pos, 9.0, VIOLET, 0.5, 0.15, true)
 		_recover(def.rupture_window, &"idle")
@@ -1573,6 +1577,8 @@ func _on_blow(target: Enemy, source: StringName) -> void:
 	var breaks: Dictionary = game.horde.breaks
 	breaks[key] = int(breaks.get(key, 0)) + 1
 	stats.posture_breaks = int(stats.get("posture_breaks", 0)) + 1
+	_posture_breaks += 1
+	_posture_full = Poise.full_after(def.posture, _posture_breaks, def.posture_growth)
 	_cancel()
 	e.broken_t = def.posture_stun
 	_stun(def.posture_stun)
@@ -1588,12 +1594,12 @@ func _step_posture(dt: float) -> void:
 		return
 	e.broken_t = maxf(0.0, e.broken_t - dt)
 	_posture_idle += dt
-	_posture = Poise.settle(_posture, def.posture, _posture_idle, def.posture_idle)
+	_posture = Poise.settle(_posture, _posture_full, _posture_idle, def.posture_idle)
 
 
 ## What is left of his Postura, 0 to 1 (the HUD's yellow bar over his life; 0 when he has none).
 func posture_ratio() -> float:
-	return clampf(_posture / def.posture, 0.0, 1.0) if def.posture > 0.0 else 0.0
+	return clampf(_posture / maxf(_posture_full, 0.001), 0.0, 1.0) if def.posture > 0.0 else 0.0
 
 
 func _stun(seconds: float) -> void:

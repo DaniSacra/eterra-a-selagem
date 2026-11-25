@@ -224,6 +224,8 @@ extends Resource
 @export var posture_idle := 5.0
 ## The weights of Feel.poise_weights are shares of a common's 100 poise; for him they count this much.
 @export var posture_mult := 0.5
+## SW-C5: each break after the first asks this many times more of the bar (SWORN 1.25; 1: always the same).
+@export var posture_growth := 1.0
 
 
 ## The value of a per-phase list for this phase (the last value holds after; fallback when empty).

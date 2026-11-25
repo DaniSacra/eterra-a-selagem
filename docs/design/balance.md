@@ -769,3 +769,52 @@ Causa achada (perfil por trecho do passo, `--trace-steps`, mais um relógio dent
 - **Real**: nas descidas medidas o máximo vivo é 6 a 8 (`max_alive`); a 8 acertos por golpe são cerca de 3 ms. O pico de 56 ms é artificial (300 inimigos empilhados no alcance do Brado, que não existe no jogo). **Causa dita e proposta de aceitar** para o jogo; não é regressão.
 - Se um dia houver hordas grandes (modo `--horde`): (1) içar para fora do laço de `Combat.strike` as consultas de `boons.stat(..., tags)` que dependem só das tags do golpe (damage_pct, final_pct, crit_pct, shove_pct, push_pct, stun_pct, freeze_time, weak_time, mark_time, burn_dps, detonate_dmg, shatter_pct: calcular uma vez por golpe num pequeno `StrikeStats`), o que tira a maior parte dos 0,35 ms; (2) limitar a 24 inimigos com número, estrela e efeito por golpe (os demais só recebem o dano). Dono: `gameplay-engineer`, P2; alvo medido: 130 acertos abaixo de 25 ms com a mesma linha.
 - Aviso separado (não é M-4): nas 12 descidas do robô a 0,25 o `step_ms_peak` teve 6 picos de 20 ms a 3,4 s (200 a 3372 ms em 5 delas) com 4 processos em paralelo; é carga de recurso na mudança de sala ou contenção da máquina, não passo de simulação (avg 0,4 a 0,9 ms). Vale uma passada do `qa-performance` na GPU antes de dizer que é aceito.
+
+## SW-C4 a C8 (gameplay-engineer, 2026-11-25): dano e aviso dos inimigos, barra de atordoamento, Rato de osso, Capitão
+Régua: herói de 40 de vida; SWORN: comuns tiram 10 a 20% (4 a 8), aviso 0,5 a 0,7 s; elite, guardião e chefe 0,8 a 1,0 s; área grande 1,2 a 1,6 s. Dano = `attack_damage` (o golpe), aviso = `attack_windup` já com o `_quick` (x0,8, piso 0,5 e 0,6 para pesado). Só `tools/make_data.gd`.
+
+| inimigo | dano antes -> depois | aviso antes -> depois (s) |
+|---|---|---|
+| Esqueleto | 5 -> 5 | 0,60 -> 0,60 |
+| Corredor | 8 -> 8 | 0,68 -> 0,68 |
+| Mago | 6 -> 6 | 0,80 -> 0,70 |
+| Besteiro | 5 -> 5 | 0,64 -> 0,64 |
+| Guarda (investida e golpe curto) | 14 e 11 -> 8 e 8 | 0,92 -> 0,92 |
+| Sacerdote | 10 -> 8 | 0,64 -> 0,64 |
+| Saltador | 12 -> 8 | 0,64 -> 0,64 |
+| Lançador | 9 -> 8 | 0,64 -> 0,64 |
+| Armadilheiro (placa) | 10 -> 8 | 0,50 -> 0,50 |
+| Trinca | 4 -> 4 | 0,72 -> 0,68 |
+| Varredor (área) | 8 -> 8 | 0,72 -> 1,20 |
+| Canalizador (área, 5 pulsos de 5) | 5 -> 5 | 0,72 -> 1,20 |
+| Esqueleto Maior | 7 -> 7 | 0,88 -> 0,88 |
+| Corredor Maior (área) | 9 -> 8 | 1,00 -> 1,20 |
+| Elite esqueleto | 5 -> 5 (2 golpes) | 0,72 -> 0,88 |
+| Elite corredor | 8 -> 8 | 0,80 -> 0,80 |
+| Elite mago | 6 -> 6 | 0,80 -> 0,80 |
+| Elite besteiro | 5 -> 5 | 0,64 -> 0,80 |
+| Elite guarda | 14 -> 8 | 0,92 -> 0,92 |
+| Elite sacerdote | 10 -> 8 | 0,64 -> 0,80 |
+| Elite trinca | 4 -> 4 | 0,72 -> 0,80 |
+| Elite varredor | 8 -> 8 | 0,72 -> 1,20 |
+| Ancião (leque) | 3 -> 3 | 0,80 -> 0,80 |
+| Cavaleiro (investida, golpe, escudo, onda) | 6, 6, 6, 5 -> igual | 0,60 -> 0,60 (exceção: pedido do Daniel de 2026-11-23, o aviso do guardião sobe a 0,8 se ele mandar) |
+| Rato de osso (novo) | 3 | 0,50 |
+| Capitão esqueleto (novo) | 8 (investida e golpe) | 1,20 |
+
+Barra de atordoamento (C5): peso do botão x `poise_mult`; elite 0,5 (13 golpes leves ou 4 especiais; o especial tira 0,3 da barra), Capitão 0,4, guardião 0,3 (ultimate 4 golpes cheios), Morvath a Postura de 1300 x 0,5 como era. Atordoamento: elite e Capitão 2,5 s, guardião e Morvath 3,5 s; +25% de dano enquanto aberto (Morvath +30%); cada quebra seguinte pede 1,25x mais barra, sempre da base (1, 1,25, 1,56, 1,95). Os comuns: 1,2 s, +40%, sem crescer, como antes.
+
+Rato de osso: um pacote de 4 a 6 por onda (`pack_min` 4, `pack_max` 6; sem o teto, a primeira medição pôs 20 a 26 ratos numa sala, só ratos), das salas 3 em diante. Capitão: um por luta, das salas 4 em diante, na última onda, chama 5 soldados fracos.
+
+Robô, `smoke.sh 900 --seed=N`, sementes 1 a 6 (antes = HEAD `94e74f5`; depois = esta entrega; o conteúdo mudou, então as mesmas sementes não repetem as mesmas salas depois da sala 3):
+
+| semente | antes: sala, fim, tempo | depois: sala, fim, tempo |
+|---|---|---|
+| 1 | 14, vivo, 894 s (Morvath fase 3) | 14, morreu na fase 1 de Morvath, 722 s |
+| 2 | 14, morreu fase 2, 728 s | 14, morreu na fase 3, 622 s |
+| 3 | 12, morreu, 519 s | 6, morreu no Cavaleiro, 259 s |
+| 4 | 14, venceu, 772 s | 14, venceu, 813 s |
+| 5 | 11, morreu, 471 s | 8, morreu, 316 s |
+| 6 | 14, morreu fase 3, 709 s | 8, morreu, 416 s |
+
+`stuck` 0 nas 12 partidas. Chegaram a Morvath 4 de 6 nas duas medições, uma vitória em cada. Mortes antes de Morvath: 2 antes (salas 11 e 12), 3 depois (salas 6, 8 e 8: arqueiros, Cavaleiro e Ancião levaram a vida no robô). Dano levado por tipo (soma das 6 partidas, só inimigos e hazards; vida do herói 40): antes arqueiro 93, mago 93, Cavaleiro 55, Ancião 33, Canalizador 33, guarda de elite 29, guarda 10, esqueleto 5; depois arqueiro 60, mago 85, Cavaleiro 45, Ancião 18, guarda 16, esqueleto 15, Armadilheiro 8, corredor 7, arqueiro de elite 5. Os ratos não aparecem entre os que ferem (a mordida de 3 quase nunca acerta o robô), nem o Capitão (2 lutas, 0 de dano). Sinal de saúde: no começo direto na sala do guardião (`--start=miniboss`, sementes 3, 4 e 7, 200 s) a vida levada pelo Cavaleiro caiu de 23 para 5 e a do Ancião de 12 para 6, porque a barra de atordoamento de 3,5 s quebra com especial e Investida (as quebras do robô: especial 4 e Investida 2 contra 0 antes). Seis sementes são pouco para separar ruído de efeito: a morte na sala 6 da semente 3 é a luta do Cavaleiro com 36 de vida na entrada e 28 de dano levado, e o início direto na mesma luta deu o contrário. Se o Daniel achar a descida mais fácil ou difícil, os botões são `poise_mult` (quantas pancadas quebram) e `poise_stun` em `tools/make_data.gd`.
