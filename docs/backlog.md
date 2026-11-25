@@ -19,7 +19,7 @@ depois vão para `docs/gallery/`.
   (`PROMPT-CLAUDE-CODE.md` manda). Em resumo: manter 24 x 21 m; direção C "Ossuário Abandonado" (nichos de ossos, velas,
   piso úmido); duas portas para cima separadas por alvenaria; fonte quebrada com queda d'água e poça andável no canto
   nordeste; miolo livre e passagens de pelo menos 2,4 m; manter os perigos da Cripta (placas, urnas de óleo, espinhos,
-  frestas) e as variantes A e B. Começa depois da SL-01 integrada (reusa o padrão de portas dela).
+  frestas) e as variantes A e B. Começa só depois que o Daniel testar a SL-01 no exe e aprovar (pedido dele, 2026-11-25; reusa o padrão de portas dela).
 - **SL-03 em diante:** as outras 13 salas, na ordem que o Daniel mandar os pacotes. Depois da SL-01 aprovada, o padrão de
   portas da SL-01 vira a regra das salas novas.
 
