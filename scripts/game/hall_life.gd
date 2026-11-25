@@ -59,7 +59,7 @@ static func dress(parent: Node3D, sty: Masonry) -> void:
 
 
 ## SL-01: the stream's damp and moss (used by CatacombHall._ground), a wet stone and a grey-green.
-const WATER_DAMP := Color(0.035, 0.05, 0.06)
+const WATER_DAMP := Color(0.09, 0.085, 0.085)
 const WATER_MOSS := Color(0.13, 0.17, 0.1)
 
 

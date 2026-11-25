@@ -44,7 +44,13 @@ const DOOR_CLEAR := Vector2(2.4, 3.6)
 const DOOR_FRAME := 0.35
 const DOOR_ARC := 0.8
 const DOOR_WALL_Z := -HALF.y - 0.3
-const DOOR_SIGN := Vector2(2.0, 2.6)
+const DOOR_SIGN := Vector2(2.0, 6.5)
+## The warm light on the doors' wall: where it hangs (between the two doors, in front of the wall), colour (#F3C47D
+## leaning amber), energy and reach. No shadow, never on the crowd.
+const DOOR_TORCH_AT := Vector3(9.7, 3.4, -HALF.y + 1.6)
+const DOOR_TORCH := Color(1.0, 0.74, 0.42)
+const DOOR_TORCH_ENERGY := 2.4
+const DOOR_TORCH_RANGE := 7.5
 const DOOR_SIGN_TEXT := 0.5
 const DOOR_ZONE := Vector2(3.0, 2.6)
 ## How far the door's black face and its leaves stand in front of the wall's face, a leaf's thickness.
@@ -158,7 +164,9 @@ const DOOR_BAY := 16.9
 const BANNERS: Array[Vector4] = [Vector4(-2.3, 6.4, 1.9, 4.4), Vector4(14.6, 7.2, 2.3, 5.2)]
 const BANNER_OUT := 1.5
 ## Their cloth: crimson worn dark (the kit's is brighter and lit it salmon).
-const BANNER_CLOTH := Color(0.4, 0.06, 0.08)
+const BANNER_CLOTH := Color(0.17, 0.035, 0.04)
+## ... and the glow its cloth keeps (the kit's is bright enough to light it pink): a faint ember, #5a1a1c worn.
+const BANNER_GLOW := Color(0.07, 0.008, 0.01)
 ## The key light over the hall (the picture's middle of the room is a greyed mauve, its edges dark teal).
 const KEY_LIGHT := Color(0.92, 0.8, 0.78)
 const KEY_ENERGY := 5.6
@@ -408,8 +416,8 @@ const STY_SHAFT_DUST := Vector4(1.4, 9.0, 7.0, 0.14)
 ## colour kept (the near is darker; the far keeps its own).
 const STY_MIST_BRUSH := 1.0
 const STY_MIST_NEAR := 0.7
-const STY_STONE := Color(0.27, 0.35, 0.44)
-const STY_FLOOR_STONE := Color(0.25, 0.325, 0.415)
+const STY_STONE := Color(0.40, 0.385, 0.38)
+const STY_FLOOR_STONE := Color(0.42, 0.395, 0.37)
 const STY_SHADOW := Color(0.78, 0.87, 1.0)
 ## ENV-HB2 (benchmark 4.1; Daniel's two scales): the floor calm at the scale of a few slabs (a 3 x 2 m patch of
 ## bare floor up to 30 of luma from p10 to p90, it was 39 to 72): the joints, cracks and missing corners near the slab's
@@ -436,7 +444,7 @@ const STY_FLOOR_POOL_SATURATION := 1.0
 ## stains with serrated edges all over the field): now ArenaKit.SOFT_PATCHES (fewer, bigger, soft, faint) and the big
 ## washes faint (ArenaKit.CALM_FLOOR). The large scale comes from the fires' pools, the edge, the framed slabs and the
 ## medallion.
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.36, 0.45, 0.55),
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.50, 0.46, 0.40),
 	&"floor_box": Vector4(0.0, 0.0, HALF.x, HALF.y)}
 ## ENV-HB3 (benchmark 4.1): the frame dark and full. The hall's own stone below the floor (the lips, the buttresses and
 ## the cliffs) a deep petrol in the stylized look, so the bottom of the screen is no lighter than the fight; and out in
@@ -566,6 +574,7 @@ func build_steps(exit_count: int) -> Array[Callable]:
 		_dais_props,
 		_north_west,
 		_north_west_props,
+		_corner_braziers,
 		_west,
 		_landing,
 		func() -> void: _south(exit_count >= 3),
@@ -1055,8 +1064,8 @@ func _facade() -> void:
 	_door_wall()
 	m.layers = 1
 	# the worn crimson banners, no insignia
-	kit.banner(Vector3(BANNERS[0].x, y + BANNERS[0].y, FACADE_Z + BANNER_OUT), 0.0, Vector2(BANNERS[0].z, BANNERS[0].w), ArenaKit.FACADE_LAYER, ArenaKit.Emblem.NONE, BANNER_CLOTH)
-	kit.banner(Vector3(BANNERS[1].x, BANNERS[1].y, DOOR_WALL_Z + BANNER_OUT), 0.0, Vector2(BANNERS[1].z, BANNERS[1].w), ArenaKit.FACADE_LAYER, ArenaKit.Emblem.NONE, BANNER_CLOTH)
+	kit.banner(Vector3(BANNERS[0].x, y + BANNERS[0].y, FACADE_Z + BANNER_OUT), 0.0, Vector2(BANNERS[0].z, BANNERS[0].w), ArenaKit.FACADE_LAYER, ArenaKit.Emblem.NONE, BANNER_CLOTH, BANNER_GLOW)
+	kit.banner(Vector3(BANNERS[1].x, BANNERS[1].y, DOOR_WALL_Z + BANNER_OUT), 0.0, Vector2(BANNERS[1].z, BANNERS[1].w), ArenaKit.FACADE_LAYER, ArenaKit.Emblem.NONE, BANNER_CLOTH, BANNER_GLOW)
 	# a cold light from the hall on the facade alone: its stone and statues read dark teal, never black
 	var fill := SpotLight3D.new()
 	arena.add_child(fill)
@@ -1068,6 +1077,14 @@ func _facade() -> void:
 	fill.spot_angle = FACADE_FILL_CONE
 	fill.spot_attenuation = 0.5
 	fill.light_cull_mask = ArenaKit.FACADE_LAYER
+	# the torches' glow on the doors' wall (the painting lights their frames in amber; the fill above misses them)
+	var torch := OmniLight3D.new()
+	arena.add_child(torch)
+	torch.position = DOOR_TORCH_AT
+	torch.light_color = DOOR_TORCH
+	torch.light_energy = DOOR_TORCH_ENERGY
+	torch.omni_range = DOOR_TORCH_RANGE
+	torch.light_cull_mask = ~Arena.CROWD_LAYER
 
 
 ## The doors' wall, east of the dais (x from DAIS_X.y to FACADE_X.y), its face on the floor's edge (DOOR_WALL_Z), from
@@ -1176,6 +1193,16 @@ func _north_west() -> void:
 	kit.statue_glow(Vector3(NW_PIER.x, 1.8, NW_PIER.y), Vector3(NW_PIER.x, 0.6 + NW_STATUE.x * 0.5, NW_PIER.y - 2.4), NW_GLOW.x, NW_GLOW.y, NW_GLOW.z)
 
 
+## SL-01: the picture's three fire bowls on their pedestals in the floor's corners (x, z): by the dais's west foot, on
+## the west balustrade and in the south-east. Each stands off the middle and blocks as a post.
+const CORNER_BRAZIERS: Array[Vector2] = [Vector2(-8.2, -13.3), Vector2(-14.3, -3.6), Vector2(14.2, 12.9)]
+
+
+func _corner_braziers() -> void:
+	for at in CORNER_BRAZIERS:
+		kit.brazier(at)
+
+
 ## The north-west's candles, pots and crates (a step of their own: build_steps, QA P1-1).
 func _north_west_props() -> void:
 	var z := -HALF.y + 0.1
@@ -1217,11 +1244,11 @@ func _west() -> void:
 ## chunks of a rubble heap (how many to the square metre, their size range, how tall at most).
 const WATER_LINE: Array[Vector2] = [Vector2(-9.0, -11.0), Vector2(-6.0, -9.0), Vector2(-8.0, -5.0), Vector2(-10.0, -1.0),
 	Vector2(-9.0, 3.0), Vector2(-12.0, 8.0), Vector2(-11.0, 13.0)]
-const WATER_WIDTH := Vector2(0.55, 1.4)
+const WATER_WIDTH := Vector2(1.15, 1.4)
 const WATER_POOLS: Array[Vector4] = [Vector4(-8.0, -9.0, 4.0, 2.5), Vector4(-11.0, 9.0, 2.6, 2.3)]
 const WATER_Y := 0.016
 const WATER_SMOOTH := 4
-const WATER_BANK := Vector3(1.9, 0.5, 0.012)
+const WATER_BANK := Vector3(1.55, 0.5, 0.012)
 const WATER_MOSS := Vector3(3.0, 0.6, 0.008)
 const RUBBLE_PILES: Array[Vector4] = [Vector4(-11.0, -3.0, 2.8, 2.2), Vector4(10.0, 1.0, 2.5, 1.8), Vector4(8.0, 10.0, 3.0, 2.0)]
 const RUBBLE_TOP := 0.3
@@ -1240,8 +1267,10 @@ func _ground() -> void:
 	ArenaKit.style_only(node)
 	var water := ShaderMaterial.new()
 	water.shader = preload("res://assets/shaders/shallow_water.gdshader")
+	water.set_shader_parameter(&"sheen_at", STY_WARM_AT)
 	if ArenaRoom.compat():
 		water.set_shader_parameter(&"glint", 0.25)
+		water.set_shader_parameter(&"sheen", 0.15)
 	var damp := HallLife.decal(HallLife.WATER_DAMP, WATER_BANK.y)
 	var moss := HallLife.decal(HallLife.WATER_MOSS, WATER_MOSS.y, true)
 	# the stream: its line smoothed, swelling and narrowing
@@ -1262,11 +1291,8 @@ func _ground() -> void:
 	line.append(WATER_LINE[WATER_LINE.size() - 1])
 	widths.append(WATER_WIDTH.x)
 	var wide := PackedFloat32Array()
-	var wider := PackedFloat32Array()
 	for w in widths:
 		wide.append(w * WATER_BANK.x)
-		wider.append(w * WATER_MOSS.x)
-	node.add_child(floor_strip(line, 1.0, WATER_BANK.z + WATER_MOSS.z, moss, false, wider))
 	node.add_child(floor_strip(line, 1.0, WATER_BANK.z, damp, false, wide))
 	node.add_child(floor_strip(line, 1.0, WATER_Y, water, false, widths))
 	# the pools: a lens along x, narrow at both ends
@@ -1277,8 +1303,8 @@ func _ground() -> void:
 		for k in 7:
 			var u := float(k) / 6.0
 			lens.append(Vector2(p.x + (u - 0.5) * p.z, p.y))
-			lens_w.append(p.w * sin(PI * clampf(u, 0.08, 0.92)))
-			lens_wide.append(p.w * sin(PI * clampf(u, 0.08, 0.92)) * WATER_BANK.x * 0.7)
+			lens_w.append(p.w * pow(sin(PI * clampf(u, 0.06, 0.94)), 0.5))
+			lens_wide.append(p.w * pow(sin(PI * clampf(u, 0.06, 0.94)), 0.5) * WATER_BANK.x * 0.8)
 		node.add_child(floor_strip(lens, 1.0, WATER_BANK.z, damp, false, lens_wide))
 		node.add_child(floor_strip(lens, 1.0, WATER_Y + 0.001, water, false, lens_w))
 	# the rubble: chunks within the patch's ellipse, each askew, none over RUBBLE_TOP, on a patch of moss
@@ -1346,7 +1372,6 @@ func _east() -> void:
 	m.balustrade(Vector3(x, 0, HALF.y), Vector3(x, 0, EAST_STONE.y + 1.2), true, _near())
 	m.obelisk(Vector3(EAST_STONE.x, 0, EAST_STONE.y), 5.6, OBELISK_EAST, Vector2(-1, 1).normalized())
 	kit.circles.append(Vector3(EAST_STONE.x - 0.3, EAST_STONE.y, OBELISK_EAST * 0.62))
-	kit.brazier(Vector2(x - 1.7, EAST_STONE.y + 0.6))
 	_field_crate(Vector3(x - 1.9, 0, EAST_STONE.y + 2.6), 0.4, Vector3.ONE * 0.9, 1.0)
 	_candles(Vector3(x - 2.4, 0, EAST_STONE.y + 1.8), 4, false, false, true)
 	# the clutter by the stone stops the way as it reads (C18, ENV P2-6: a phantom of 2.5 m² at x 13 to 15)
