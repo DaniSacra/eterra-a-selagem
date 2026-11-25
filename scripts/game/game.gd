@@ -575,6 +575,7 @@ func _process(delta: float) -> void:
 	_screen_fx.set_shader_parameter(&"split", fx.split)
 	_screen_fx.set_shader_parameter(&"radial", fx.radial)
 	_screen_fx.set_shader_parameter(&"impact", 1.0 if fx.frame_left > 0.0 else 0.0)
+	_screen_fx.set_shader_parameter(&"flash", fx.flash_level())
 	# low life: a slow red pulse at the edges, as strong as a heavy blow at most
 	_screen_fx.set_shader_parameter(&"hurt", maxf(_hurt_tint.red, low * Feel.live().hurt_tint * (0.75 + 0.25 * sin(time * 6.0))))
 	_screen_fx.set_shader_parameter(&"curse", _hurt_tint.violet)

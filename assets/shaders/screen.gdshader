@@ -20,6 +20,8 @@ uniform float vignette_spare_to = 1.0;
 // orange halo round a fire and the violet glow of the abyss are not.
 uniform vec3 vignette_spare_weight = vec3(0.7, 1.0, 0.7);
 uniform float impact = 0.0;
+// A flash of warm white added over the whole picture for a frame or two (Fx.screen_flash: Golpe Carregado, Apogeu, Brado, Supremo).
+uniform float flash = 0.0;
 // Slow motion: blur streaking out from the middle (0..1) and a lift of the bright parts.
 uniform float radial = 0.0;
 // The lift never takes a pixel past this (or past where it already was): the slow motion of the last kill took the
@@ -60,5 +62,6 @@ void fragment() {
 		float lum = dot(c, vec3(0.3, 0.55, 0.15));
 		c = mix(impact_dark, impact_light, smoothstep(impact_threshold - 0.03, impact_threshold + 0.03, lum));
 	}
+	c += vec3(1.0, 0.93, 0.8) * flash;
 	COLOR = vec4(c, 1.0);
 }

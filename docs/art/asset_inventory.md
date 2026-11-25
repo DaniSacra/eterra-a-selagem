@@ -338,3 +338,10 @@ canal alfa, 6 bytes) ou quantizada pela caixa do modelo (RGBA8 + 2 bytes), que c
   para o R10b. Manter `LICENSE_KayKit_*.txt` e `anim/LICENSE_Quaternius_UAL.txt`.
 - `.uid` órfãos (arquivo de origem inexistente) apagados: `tests/test_c2_tree.gd.uid`, `test_codex_book.gd.uid`,
   `test_maga_tree_ui.gd.uid` (os três `.gd` já não existem). Nenhum `.import` órfão, nenhum outro `.uid` órfão.
+
+## 14. Texturas de efeito (2026-11-25, passe de efeitos; síntese do projeto, licença do projeto, IA em código)
+Gerador `tools/make_fx_textures.gd` (rodar com `-s`; saída em `assets/textures/fx/`), tudo em tons de cinza no canal vermelho:
+`star4.png` e `star6.png` (256 px, raios rasgados e núcleo quente, 16 e 20 KB), `puff_sheet.png` (512x256, 4x2 quadros de 128 px,
+43 KB), `brush_streaks.png` (512x128, 66 KB). Uso: `hit_star.gdshader` e `puff.gdshader` e `scorch.gdshader` (`Fx.hit_star`, `Fx.puff`,
+`Fx.scorch`), `slash.gdshader` (`paint`). Total 145 KB no disco; importação padrão (sem VRAM, são pequenas). Estado: definitivo
+para o passe; a conferir na captura da GPU (tamanho e brilho das estrelas).

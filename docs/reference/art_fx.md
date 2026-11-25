@@ -389,3 +389,19 @@ Testes novos em `tests/test_fx_on_hit.gd`: `test_plain_contact_lights_and_sparks
 | E1-6 | Números: pop 1,4x em 0,12 s, contorno 2 px, grandes em ouro velho (`NUMBER_BIG_COLOR`) e 29 px, espalhados de lado até 0,45 m. A altura de nascimento ficou em 1,0 m (o teste de `test_fx_on_hit` exige acima da barra). |
 | E1-7 | Anel do herói sempre petróleo; o amparo do Brado acende um fio esmeralda por dentro (`inner`, `inner_color` em `hero_ring.gdshaderinc`). Regra na §2.1 do `art_direction.md`. |
 | E1-8 | "!" de aviso em ouro velho (0,98; 0,76; 0,28), matiz 41, com contorno de tinta. |
+
+## Passe de efeitos "mais fortes" (2026-11-25, technical-artist; só desenho, `RESULT` do `smoke.sh 900 --seed=5` igual)
+- **Texturas pintadas por código** (`tools/make_fx_textures.gd` → `assets/textures/fx/`): estrelas de 4 e 6 pontas, flipbook de
+  poeira de osso (8 quadros), riscos de pincel. Registro em `docs/steam-ia.md` e inventário seção 14.
+- **Estrela de impacto** `Fx.hit_star` (`hit_star.gdshader`, HDR até 3,2 e 4,6, branco-quente nos primeiros 30% e depois a cor do golpe;
+  `STAR_SIZE` 2,7 e 4,4 m, 0,15 e 0,24 s, no máximo 5 por quadro): chamada em todo `Fx.contact`, no Brado (centro do peito), no Supremo
+  e no centro de todo `Fx.shock`. No Compatibility a luz cai a 1,0.
+- **Poeira de osso e clarão da morte**: `Fx.puff` (`puff.gdshader`, flipbook, `lit` faz os primeiros quadros estourarem quentes) no
+  `burst(&"bone")` junto de uma estrela pequena; também na esquiva (poeira atrás dele) e no `shock`.
+- **Chão escurecido sob o efeito**: `Fx.scorch` (`scorch.gdshader`, mancha irregular do quadro 0 da poeira, 0,55 de opacidade,
+  0,7 s) em todo `shock` (golpe forte, finalizador, Brado, Supremo), para os anéis acesos lerem sobre o chão verde.
+- **Rastro**: o arco do herói ganha riscos de pincel (`paint_amt` 0,75, quebra o miolo e rasga a borda rumo à cauda), a borda mais
+  branca (`edge_white` 0,4; a cor da família fica no fio de `style_wire_glow`, agora 2,4, teto `SLASH_WIRE_CAP` 2,6 acima do limiar do
+  brilho 1,3, só no fio) e o golpe 3 desenhado 22% maior (`FINISHER_SLASH_SCALE`, só desenho: o alcance é do `Combat`).
+- **Clarão de tela** `Fx.screen_flash` (`flash` em `screen.gdshader`, +0,28 no máximo, 0,09 s): só Golpe Carregado (0,7), Omega (1,0),
+  Apogeu (1,0), Brado (0,8) e Supremo (1,3); desligado pelas opções de quadros de impacto e de tremor desligados. Nunca no golpe comum.

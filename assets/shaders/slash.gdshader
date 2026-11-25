@@ -70,6 +70,13 @@ uniform float style_wire_cap = 1.3;
 // E1-2: the paladin's own arc keeps its core off his body: nothing lit within body_clear_m meters of him (soft over a
 // third of that), so no pixel of him is blown out (0: off, for the volleys and bosses).
 uniform float body_clear_m = 0.0;
+// 2026-11-25 (effects pass: painted, not smooth): a strip of dry-brush streaks (tools/make_fx_textures.gd) breaks the core
+// into bristle marks along the swing, and tears the leading edge toward the tail. paint_amt 0: off (volleys, bosses).
+uniform sampler2D paint : hint_default_white, repeat_enable, filter_linear;
+uniform float paint_amt = 0.0;
+// The edge of the paladin's own cut goes this much more toward white (his family colour stays in the fine fringe the
+// wire glow adds), so it reads against the green rooms (0: style_edge_pale alone).
+uniform float edge_white = 0.0;
 
 #include "res://assets/shaders/slash_strokes.gdshaderinc"
 
@@ -138,6 +145,11 @@ void fragment() {
 			core *= smoothstep(body_clear_m * 0.65, body_clear_m, dist);
 		}
 	}
+	if (paint_amt > 0.0) {
+		float brush = texture(paint, vec2(along * 1.6 - k * 0.25, y * 1.3)).r;
+		core *= mix(1.0, 0.25 + 1.1 * brush, paint_amt);
+		wire *= mix(1.0, 0.55 + 0.9 * brush, paint_amt * 0.6 * smoothstep(0.1, 0.7, k));
+	}
 	float glow = pow(1.0 - k, 1.6);
 	float life = pow(1.0 - rest, 1.5);
 	vec3 fam = vec3(0.0);
@@ -177,7 +189,7 @@ void fragment() {
 	ALBEDO = (edge_c * wire * edge_light * (0.55 + 0.45 * glow) + core_c * core * core_light * glow + fam) * life * intensity;
 	ALPHA = 0.0;
 	if (styled) {
-		vec3 ec = mix(color.rgb, vec3(1.0), style_edge_pale);
+		vec3 ec = mix(color.rgb, vec3(1.0), clamp(style_edge_pale + edge_white, 0.0, 1.0));
 		vec3 lit = ec * wire * edge_light * (0.55 + 0.45 * glow) * life * intensity + pale_to(color.rgb, style_core_sat) * core * style_core_light * glow * life * intensity + fam * life * intensity;
 		float peak = max(lit.r, max(lit.g, lit.b));
 		if (peak > style_peak) {
