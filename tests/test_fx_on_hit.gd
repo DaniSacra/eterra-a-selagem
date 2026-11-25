@@ -90,7 +90,7 @@ func test_an_enemy_out_of_reach_shows_no_hit() -> void:
 	var far := horde.spawn(horde.def(&"skeleton"), Vector2(node.reach + 4.0, 0.0), false)
 	var behind := horde.spawn(horde.def(&"skeleton"), Vector2(-2.0, 0.0), false)
 	combat.strike(node, Vector2.ZERO, Vector2.RIGHT)
-	_assert_no_hit_effects("out of reach", Combat.SWING_MOTES.y)
+	_assert_no_hit_effects("out of reach", Combat.SWING_MOTES.y + Fx.ARC_SPARKS)
 	assert_eq(fx.showing(&"rings"), 0, "no finisher ring")
 	assert_eq(far.hp, far.max_hp)
 	assert_eq(behind.hp, behind.max_hp)

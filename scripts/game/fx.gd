@@ -80,7 +80,14 @@ const STAR_TIME := Vector2(0.15, 0.24)
 ## A death: the dust puff (m across, s) and the flash of its first frames.
 const PUFF_SIZE := 2.4
 const PUFF_TIME := 0.7
-const DEATH_STAR_SIZE := 1.6
+const DEATH_STAR_SIZE := 2.4
+## A death's cloud of bone dust: about 2.2 times a skeleton's height across, paler and warmer than the floor's dust, with
+## DEATH_CHIPS splinters of bone thrown out of it.
+const DEATH_PUFF_SIZE := 4.0
+const DEATH_PUFF_TIME := 0.8
+const DEATH_DUST := Color(0.62, 0.56, 0.46)
+const DEATH_CHIPS := 7
+const DEATH_CHIP_COLOR := Color(1.5, 1.3, 0.95)
 ## The floor darkening under a strong effect: radius factor over the effect's, opacity, seconds.
 const SCORCH_GROW := 1.25
 const SCORCH_OPACITY := 0.55
@@ -91,9 +98,11 @@ const SCREEN_FLASH_TIME := 0.09
 ## The third blow's arc, drawn this much larger so the trail is bigger than the paladin (drawing only; the reach is Combat's).
 const FINISHER_SLASH_SCALE := 1.22
 ## The brush streaks' share in the paladin's own arcs, and how much whiter their edge is (family colour stays in the fringe).
+const ARC_SPARKS := 6
+const SLASH_CORE_SAT := 1.0
 const SLASH_PAINT := 0.75
 const SLASH_EDGE_WHITE := 0.4
-const SLASH_WIRE_CAP := 2.6
+const SLASH_WIRE_CAP := 3.8
 const THRUST := preload("res://assets/shaders/emeth_thrust.gdshader")
 const THRUST_POOL := 4
 ## V-04: seconds the thrust's light takes to reach its point and to leave it, and the crystal spikes of the Omega.
@@ -215,7 +224,7 @@ const SLASH_BOOST := 1.35
 ## AD2-02 (art review 2026-11-25): the paladin's own arc in the stylized look (a blade given; the volleys and bosses keep the
 ## shader's defaults): the core's light (it was style_core_light 0.216) and depth (0.6), the veil of its ink (0.72), and a
 ## fine edge past the cap on the wire only (style_wire_glow, nothing past 1.3 in a channel).
-const SLASH_STYLE_CORE_LIGHT := 0.35
+const SLASH_STYLE_CORE_LIGHT := 0.6
 const SLASH_STYLE_CORE_DEPTH := 0.75
 const SLASH_STYLE_VEIL := 1.0
 const SLASH_STYLE_WIRE := 2.4
@@ -224,13 +233,18 @@ const SLASH_STYLE_WIRE := 2.4
 const SLASH_EMERALD := Color(0.28, 0.95, 0.62)
 const SLASH_EDGE_PX := 3.0
 const SLASH_EDGE_LEVELS := [1.0, 1.2, 1.6]
-const SLASH_STYLE_SCREEN := 222
+const SLASH_STYLE_SCREEN := 238
 const SLASH_BODY_CLEAR := 1.0
 ## E1-3: a spin leaves a ring of cut light round him, this many seconds longer than its blow (2 frames at 60).
 const SPIN_DEGREES := 300.0
 const SPIN_RING_EXTRA := 0.034
 ## E1-4: the path of the wave is a band, not a line: its width at least this many meters.
 const WAVE_BAND_MIN := 1.4
+## The Onda de Luz's path: the light of its white core (linear, past the world's GLOW_THRESHOLD of 1.3 so it blooms; in
+## Compatibility, with no glow worth the name, just white) and how many specks of dust and sparks it sheds along the way.
+const WAVE_HDR := 3.2
+const WAVE_HDR_COMPAT := 1.0
+const WAVE_SPARKS := 10
 ## E1-1: the sparks of a landed blow stay within about 0.3 m of what they hit (speed x life), tinted, never solid white.
 const CONTACT_SPARK_SPEED := 2.2
 const CONTACT_SPARK_TINT := Color(0.8, 1.0, 0.88)
@@ -719,7 +733,10 @@ func burst(kind: StringName, pos: Vector3, dir: Vector3 = Vector3.ZERO) -> void:
 		wisps(Vector3(pos.x, maxf(pos.y, BONE_DUST_AT), pos.z), Vector3.UP, BONE_DUST, 3, 1.0, 0.5, 1.5, 1.9, -0.25)
 		# effects pass: the death bursts as light inside a flipbook puff of bone dust (no blood), with a small hot star
 		var at := Vector3(pos.x, maxf(pos.y, BONE_DUST_AT), pos.z)
-		puff(at, PUFF_SIZE, BONE_DUST, 1.0)
+		puff(at, DEATH_PUFF_SIZE, DEATH_DUST, 1.0, DEATH_PUFF_TIME)
+		# bone splinters flying out of it, pale and warm, falling back
+		var n_chips := budget.take(&"motes", DEATH_CHIPS)
+		_spray(at, Vector3.UP, DEATH_CHIP_COLOR, n_chips, 6.5, 0.2, 0.55, 1.2, MOTE_GRAVITY, false)
 		hit_star(at, Color(1.0, 0.9, 0.7), DEATH_STAR_SIZE / STAR_SIZE.x, false)
 
 
@@ -857,6 +874,7 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 	(s.mat as ShaderMaterial).set_shader_parameter(&"style_core_depth", SLASH_STYLE_CORE_DEPTH if own else 0.6)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"style_wire_glow", SLASH_STYLE_WIRE if own else 0.0)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"style_wire_cap", SLASH_WIRE_CAP if own and not _compat else 1.3)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"style_core_sat", SLASH_CORE_SAT if own else 0.65)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"paint_amt", SLASH_PAINT if own else 0.0)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"edge_white", SLASH_EDGE_WHITE if own else 0.0)
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"style_veil", SLASH_STYLE_VEIL if own else 0.72)
@@ -874,9 +892,28 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 	(s.mat as ShaderMaterial).set_shader_parameter(&"tail", minf(SLASH_TAIL, SLASH_TAIL_DEGREES / maxf(width_deg, 1.0)))
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep / feel.ink_life)
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"opacity", feel.ink_opacity if ink_under else 0.0)
+	if own:
+		_arc_end_sparks(origin, dir, blade, width_deg, flip, height, lit)
 	if own and width_deg >= SPIN_DEGREES:
-		# E1-3: the turn all round him leaves a ring of cut light at his waist, lit 2 frames past the arc's own life
-		ring(origin, reach * 0.95, SLASH_EMERALD, time + SPIN_RING_EXTRA, height)
+		# E1-3: the turn all round him leaves a sharp circle of cut light on the floor at his waist (a line, never a disc)
+		ring(origin, reach * 0.95, SLASH_EMERALD, time + SPIN_RING_EXTRA, height, true, true)
+
+
+## Long slivers shed off the point of the blade where the swing ends, thrown the way it was going.
+func _arc_end_sparks(origin: Vector2, dir: Vector2, blade: float, width_deg: float, flip: bool, height: float, color: Color) -> void:
+	var n := budget.take(&"motes", ARC_SPARKS)
+	if n <= 0:
+		return
+	var half := deg_to_rad(minf(width_deg, 359.0)) * 0.5
+	var a := -half if flip else half
+	var yaw := atan2(dir.x, dir.y)
+	var sgn := -1.0 if flip else 1.0
+	var local_pos := Vector2(sin(a), cos(a)) * blade
+	var local_way := Vector2(cos(a), -sin(a)) * sgn
+	var to_world := func(v: Vector2) -> Vector2: return Vector2(v.x * cos(yaw) + v.y * sin(yaw), -v.x * sin(yaw) + v.y * cos(yaw))
+	var at: Vector2 = origin + to_world.call(local_pos)
+	var way: Vector2 = to_world.call(local_way)
+	_spray(Vector3(at.x, height, at.y), Vector3(way.x, 0.25, way.y), color.lerp(Color.WHITE, 0.55) * 2.0, n, 9.0, 0.2, 0.28, 0.5, 2.0, false, MOTE_GOLD_EVERY)
 
 
 func _place_arc(e: Dictionary, mesh: Mesh, origin: Vector2, dir: Vector2, height: float, tilt: float) -> void:
@@ -1026,6 +1063,8 @@ func thrust(origin: Vector2, dir: Vector2, reach: float, width: float, color: Co
 	mat.set_shader_parameter(&"t", 0.0)
 	mat.set_shader_parameter(&"intensity", Feel.live().slash_intensity)
 	mat.set_shader_parameter(&"omega", 1.0 if omega else 0.0)
+	mat.set_shader_parameter(&"band_mode", 1.0 if band else 0.0)
+	mat.set_shader_parameter(&"band_hdr", WAVE_HDR if not _compat else WAVE_HDR_COMPAT)
 	# E1-4: the wave's path is a band, light in the middle and an emerald edge, not a spike
 	mat.set_shader_parameter(&"tip_width", 0.85 if band else 0.15)
 	mat.set_shader_parameter(&"blade_share", 0.5 if band else 0.4)
@@ -1037,6 +1076,16 @@ func thrust(origin: Vector2, dir: Vector2, reach: float, width: float, color: Co
 	mat.set_shader_parameter(&"sweep", clampf(THRUST_IN / time, 0.05, 0.9))
 	mat.set_shader_parameter(&"leave", clampf(THRUST_OUT / time, 0.1, 0.95))
 	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(color.lerp(Color.WHITE, 0.45)))
+	if band:
+		# the wave's wake: sparks flung back and up along the path, dust kicked off the floor where it passed
+		var n_sparks := budget.take(&"motes", WAVE_SPARKS)
+		for k in n_sparks:
+			var at := origin + dir * reach * _rng.randf_range(0.1, 0.95)
+			var back := Vector3(-dir.x, _rng.randf_range(0.2, 0.9), -dir.y)
+			_spray(Vector3(at.x, height, at.y), back, color.lerp(Color.WHITE, 0.5) * 1.8, 1, 5.0, 0.16, 0.3, 0.9, 3.0, false, MOTE_GOLD_EVERY, SHAPE_LENS)
+		for k in 3:
+			var at2 := origin + dir * reach * (0.25 + 0.3 * k)
+			wisps(Vector3(at2.x, 0.2, at2.y), Vector3.UP, BONE_DUST, 1, 0.7, 0.5, 0.5, 1.0, 0.4)
 	if omega:
 		# crystal spikes from the point to the sides (V-04): long slivers, flying out a moment
 		var tip := Vector3(origin.x + dir.x * reach, height, origin.y + dir.y * reach)

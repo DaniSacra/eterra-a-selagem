@@ -29,9 +29,9 @@ void fragment() {
 	float d = mix(frame_at(f, q), frame_at(f + 1.0, q), fract(max(f, 0.0)));
 	float fade = 1.0 - smoothstep(0.65, 1.0, life);
 	float hot = lit * (1.0 - smoothstep(0.0, 0.35, life));
-	vec3 base = color.rgb * (0.6 + 0.4 * d);
-	vec3 glow = vec3(1.0, 0.86, 0.6) * hot * d * 1.6;
-	float alpha = clamp(d * cover * fade, 0.0, 1.0);
+	vec3 base = color.rgb * (0.6 + 0.4 * d) * (1.0 + lit * 0.9 * (1.0 - smoothstep(0.0, 0.6, life)));
+	vec3 glow = vec3(1.0, 0.86, 0.6) * hot * d * 2.4;
+	float alpha = clamp(d * cover * (1.0 + lit * 0.45) * fade, 0.0, 1.0);
 	if (alpha < 0.01 && hot < 0.01) discard;
 	ALBEDO = base * alpha + glow;
 	ALPHA = alpha;
