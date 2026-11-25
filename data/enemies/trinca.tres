@@ -39,5 +39,6 @@ group = 3
 rise_time = 3.5
 close_windup = 0.52
 rating = 12.0
+cost = 5
 role = &"swarm"
 elite_version = &"trinca_elite"

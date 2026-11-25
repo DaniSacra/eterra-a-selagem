@@ -48,6 +48,12 @@ func enter(depth: int, layout: String, hp: float, time: float, boss := false, va
 		boons_at_boss = boons
 
 
+## SW-R1: a field of the current room's entry (the fight's budget, how it is fought: rooms[].budget, rooms[].mode).
+func note(key: String, value: Variant) -> void:
+	if not _rooms.is_empty():
+		_rooms[-1][key] = value
+
+
 ## C1e: a head of the fight rose in the current room (its kind, and its modifier if it had one), for the draw's report.
 func seen(kind: String, mod: String = "") -> void:
 	if _rooms.is_empty():

@@ -333,6 +333,9 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## Weight of this enemy in the room generator (Hades II "DifficultyRating"): a room of difficulty 100 holds
 ## enemies whose ratings add up to about 100.
 @export var rating := 0.0
+## SW-R1: what a head costs in a room's budget (SWORN's scale: small 1, common 3, heavy 5, the Capitao 10; an elite or a bigger one 5 to 7).
+## 0: from the rating (cost_of).
+@export var cost := 0
 ## The part it plays in a fight (EncounterPool.roles): pressure (walks in and keeps the paladin busy), react (fast,
 ## asks for a quick answer), control (closes space from afar), flank (makes him move sideways), block (stands in
 ## front, must be gone around), area (threatens ground). Empty: never drawn into a generated fight.
@@ -343,3 +346,8 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 @export var big_version: StringName
 ## C1b: true for that bigger version (not an elite, no armor): never drawn as a part of a fight, only put in by EncounterGen.add_big.
 @export var big := false
+
+
+## SW-R1: the cost of one head in the room's budget (EncounterGen): `cost`, or about 0.6 of the rating when none is set.
+func cost_of() -> int:
+	return cost if cost > 0 else maxi(1, roundi(rating * 0.6))

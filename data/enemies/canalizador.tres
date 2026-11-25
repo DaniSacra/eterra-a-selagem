@@ -41,4 +41,5 @@ never_with = Array[StringName]([&"sweep"])
 per_room = 1
 close_windup = 0.52
 rating = 18.0
+cost = 5
 role = &"beam"

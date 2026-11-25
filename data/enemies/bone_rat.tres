@@ -37,4 +37,5 @@ windup_gap = 0.25
 max_attackers = 3
 close_windup = 0.52
 rating = 2.0
+cost = 1
 role = &"scurry"

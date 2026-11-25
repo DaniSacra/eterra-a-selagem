@@ -41,5 +41,6 @@ max_attackers = 1
 per_room = 1
 close_windup = 0.6
 rating = 20.0
+cost = 8
 role = &"pressure"
 big = true

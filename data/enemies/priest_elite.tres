@@ -49,4 +49,5 @@ shot_range = 22.5
 shot_low = true
 close_windup = 0.6
 rating = 48.0
+cost = 12
 role = &"area"

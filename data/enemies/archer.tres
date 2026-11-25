@@ -40,5 +40,6 @@ retreat_time = Vector2(1.5, 1.75)
 max_attackers = 2
 close_windup = 0.52
 rating = 13.0
+cost = 4
 role = &"flank"
 elite_version = &"archer_elite"

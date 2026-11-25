@@ -219,6 +219,7 @@ func _enemy(props: Dictionary) -> void:
 			d.volley_windup = _quick(d.volley_windup, d.heavy)
 	if d.name_key == &"":
 		d.name_key = StringName("enemy_" + String(d.id))
+	d.cost = int(ENEMY_COST.get(String(d.id), 0))
 	_save(d, "res://data/enemies/%s.tres" % d.id)
 
 
@@ -299,6 +300,15 @@ const GUARDIAN_POISE_STUN := 3.5
 const POISE_GROWTH := 1.25
 const POISE_WEIGHTS := {"attack": 0.15, "special": 0.6, "dash": 0.5, "omega_attack": 0.7, "omega_special": 0.7,
 	"cast_omega": 0.7, "shout": 0.6, "ultimate": 1.0, "crystal": 0.25}
+
+
+## SW-R1 (SWORN's Kingswood: Snake 1, Hammer Mob/Axe Thrower/Boar 3, Mortoad 5, Major 10): what a head costs in a room's budget
+## (EnemyDef.cost). Small 1, common 3, a shooter 4, heavy 5 (the shield, the priest, the Trinca, the Varredor, the Canalizador), an elite
+## twice its kind (6 to 12), a bigger one 8 or 9, the Capitao 12 (SWORN's 10: ours has 5.5 times the life). The guardians and the summoned ones take none (never drawn).
+const ENEMY_COST := {"bone_rat": 1, "skeleton": 3, "runner": 3, "saltador": 3, "lancador": 3, "gritador": 3, "coveiro": 3, "armadilheiro": 3,
+	"mage": 4, "archer": 4, "guard": 5, "priest": 5, "trinca": 5, "varredor": 5, "canalizador": 5,
+	"skeleton_elite": 6, "runner_elite": 7, "mage_elite": 9, "archer_elite": 9, "guard_elite": 11, "priest_elite": 12, "trinca_elite": 10,
+	"varredor_elite": 11, "skeleton_big": 8, "runner_big": 9, "capitao": 12}
 
 
 func _enemies() -> void:
@@ -953,8 +963,16 @@ func _stage() -> void:
 	st.alive_cap = 20
 	# RD2-06: the rooms that were short (2 to 4, 6 to 9: 15 to 37 s) come in 3 lighter waves, the last with an elite, the heads
 	# rising one by one: 25 to 45 s there, 30 to 55 s in the deeper ones, the same life in all
-	st.long_depths = PackedInt32Array([2, 3, 4, 6, 7, 8, 9])
+	st.long_depths = PackedInt32Array([1, 2, 3, 4, 6, 7, 8, 9, 11, 12])  # (SW-R1: every fight room: the heads rise one by one, the last wave an elite)
 	st.long_fewest = 2
+	# SW-R1 (docs/design/rooms_progression.md, "O orçamento"): Kingswood's curve (4 in the first room, 8 in the 5th, 6 right after the
+	# guardian, 11 from the 11th: sala x 5 here), a room one wave of it, two of 0.75 or a horde of 0.75 + 0.75 (half of them);
+	# the guardians' depths (5, 10) take none
+	st.cost_curve = PackedFloat32Array([20, 28, 30, 34, 34, 14, 18, 21, 27, 27, 20, 22])
+	st.horde_share = 0.5
+	st.two_wave_share = 0.5
+	st.wave_coef_two = 0.6  # (SWORN 0.75: ours waits for the floor to clear between the two, which asks 10 s more)
+	st.wave_most = 20
 	st.long_gap = Vector2(0.45, 0.75)
 	st.long_delay = 0.8
 	st.long_elite_from = 4
@@ -1031,6 +1049,11 @@ func _stage() -> void:
 	st.reward_deck = PackedInt32Array([R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.POM, R.POM,
 		R.HEART, R.HEART, R.MAGICK, R.MAGICK, R.GOLD, R.GOLD, R.GOLD, R.HEART, R.SILVER, R.MEMORY, R.ENCHANT, R.ENCHANT, R.PSALM])
 	st.angel_deck = PackedInt32Array([1, 1, 0, 0, 0, 0])
+	# SW-R2 (Kingswood's fixed rooms: a Blessing in the first two rooms, the heart in the 2nd, the heal and the gold from the 7th and the
+	# 11th): the doors of these rooms give these, in order; the guardians stand in 5 and 10 (the shop in 13 is always the same room),
+	# and the room after each is a rest (a fountain on one of its two doors). The rest are drawn from the deck as ever.
+	st.rest_after_guardian = true
+	st.fixed_rewards = {2: PackedInt32Array([R.BOON, R.HEART]), 7: PackedInt32Array([R.POM, R.MAGICK]), 11: PackedInt32Array([R.BOON, R.GOLD])}
 	# the Psalm's door from the 4th room (a Psalm needs three things of the hand); at most two Encantos on a way, the
 	# second from the 5th room (Hades II's late hammer: past half the run)
 	st.psalm_from_depth = 4
@@ -1699,6 +1722,7 @@ func _rift() -> RoomLayout:
 	# nobody rises on a bridge or in the south way; the first wave across the rift, the west zone from the second
 	l.spawns = [_rect(5, 11, -13.5, -10.5), _rect(16, 19.5, -8, -2), _rect(5, 11, 7, 12)]
 	l.late_spawns = [_rect(-17, -11, -13, -9)]
+	l.far_spawn = 1.5  # SW-R3: the next one rises on the side the paladin is not on (he stood in the east 68 to 82% of the time)
 	l.cam_bounds = _rect(-6, 7, -4, 5)
 	# RP-01: which bridge, or the way round the south
 	_areas(l, ["bridge_n", _rect(-7, 2, -12, -7), "bridge_s", _rect(-7, 2, -1, 4), "south_way", _rect(-8, 3, 9, 15),
@@ -2467,9 +2491,10 @@ func _sanctuary() -> RoomLayout:
 	l.spawns = [_rect(-20, -14, -3, 3), _rect(-19, -15, 8, 11), _rect(-8, -2, -12, -8.5), _rect(4, 12, 8, 12),
 		_rect(-2, 6, -12, -8.5)]
 	l.late_spawns = [_rect(10, 16, 8, 12)]
+	l.far_spawn = 1.5  # SW-R3: west and east of the nave, both aisles: the next one rises far from where he stands
 	l.cam_bounds = _rect(-10, 10, -2, 2)
 	# the question of the room (spec 0.2): the open nave or the aisles behind the columns
-	_areas(l, ["nave", _rect(-22, 22, -5.35, 5.35), "aisles", _rect(-22, 22, -14, -5.35), "aisles", _rect(-22, 22, 5.35, 14)])
+	_areas(l, ["nave", _rect(-22, 22, -5.35, 5.35), "aisle_n", _rect(-22, 22, -14, -5.35), "aisle_s", _rect(-22, 22, 5.35, 14)])
 	# RP-06: the aisles get a price (the nave has the knight's charge, the aisles the slabs): two in each, between the
 	# columns, off the spawns and the doors; B the same (its hole is in the nave)
 	var aisle_slabs: Array[Rect2] = [_rect(-13.5, -10.5, -11.0, -8.0), _rect(10.5, 13.5, -11.0, -8.0),
@@ -2496,7 +2521,7 @@ func _sanctuary() -> RoomLayout:
 	crumble.also = _rocks([_rect(-8.0, 13.0, -5.2, 5.2)])
 	crumble.also.also = _spikes([Vector2(-16.0, -3.0), Vector2(-9.0, -0.5)], 0.55)
 	_areas(l.variants[0], ["hole_edge", _rect(-2.6, 0.4, -1.5, 1.5), "hole_edge", _rect(9.6, 12.6, -1.5, 1.5),
-		"nave", _rect(-22, 22, -5.35, 5.35), "aisles", _rect(-22, 22, -14, -5.35), "aisles", _rect(-22, 22, 5.35, 14)])
+		"nave", _rect(-22, 22, -5.35, 5.35), "aisle_n", _rect(-22, 22, -14, -5.35), "aisle_s", _rect(-22, 22, 5.35, 14)])
 	# A1, RP-18, C "Colunata": the east of the nave becomes a grid of nine low columns (2.5 m: they stop shots and bodies
 	# but never hide a wind-up, combat_cadence.md 9.3), 4 m apart, two of them broken to stumps (bodies, no shots) and one
 	# cracked (RP-09); the west of the nave stays open for the guardian's charge. The question: fight in the grid (cover
@@ -2522,7 +2547,7 @@ func _sanctuary() -> RoomLayout:
 	vc.hazard = _plates(aisle_slabs, PLATES_FROM)
 	vc.hazard.also = _trap(SANCTUARY_TRAPS.slice(0, 2), 0.5, 3.5, 2.8)
 	_areas(vc, ["colonnade", _rect(1.0, 13.0, -5.35, 5.35), "nave", _rect(-22, 22, -5.35, 5.35),
-		"aisles", _rect(-22, 22, -14, -5.35), "aisles", _rect(-22, 22, 5.35, 14)])
+		"aisle_n", _rect(-22, 22, -14, -5.35), "aisle_s", _rect(-22, 22, 5.35, 14)])
 	l.variants.append(vc)
 	return l
 

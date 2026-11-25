@@ -5,7 +5,10 @@ extends RefCounted
 ## how far down the region the room is), the first of them in every wave; each kind's share turned into a head count
 ## by its rating. Few enemies stand at once (Daniel, 2026-11-15: a fight won by skill, not a horde): every wave is
 ## brought into the range of its tier (StageDef.tier_alive) and nothing ever stands past StageDef.alive_cap.
+## SW-R1: the room's size is a budget in head costs (SWORN's Kingswood), and a room is drawn as one wave, two waves or a horde.
 ## Pure: the game spawns what this returns.
+
+enum Mode { WAVES, HORDE }
 
 
 ## What a room's fight is.
@@ -20,6 +23,10 @@ class Fight:
 	var ceiling := 20
 	## C1e: the modifiers (ModDef ids) the first heads of a kind come with: kind id -> Array[StringName] (assign_mods).
 	var mods: Dictionary = {}
+	## SW-R1: how the room is fought (the horde: its two waves are one long queue, the reserve rises behind the first with no wait) and the
+	## budget (head costs, of one wave at coefficient 1.0) it was drawn with.
+	var mode := Mode.WAVES
+	var budget := 0.0
 
 
 static func difficulty(stage: StageDef, depth: int, mult: float = 1.0) -> float:
@@ -77,7 +84,10 @@ static func generate(stage: StageDef, depth: int, defs: Dictionary, rng: RandomN
 	var alive := in_room(alive_range(stage, fight.tier), room)
 	fight.cap = clampi(roundi(lerpf(alive.x, alive.y, progress(stage, depth))), alive.x, alive.y)
 	fight.ceiling = alive.y
-	fight.waves = waves(stage, depth, fight.kinds, alive, defs, rng, mult * budget(stage, depth))
+	var coefs := plan(stage, fight, rng)
+	fight.budget = cost_budget(stage, depth) * mult
+	fight.waves = waves(stage, depth, fight.kinds, alive, defs, rng, fight.budget, coefs)
+	alive.y = maxi(alive.y, stage.wave_most)  # (the queue is not trimmed to the floor: `cap` holds the standing ones)
 	if is_long(stage, depth):
 		elite_last(fight, stage, depth, defs, Vector2i(mini(alive.x, stage.long_fewest), alive.y))
 	limit_per_room(fight.waves, fight.kinds, defs)
@@ -92,7 +102,27 @@ static func generate(stage: StageDef, depth: int, defs: Dictionary, rng: RandomN
 	return fight
 
 
-## RD2-06: whether the rooms of this depth come in 3 lighter, slower waves (StageDef.long_depths).
+## SW-R1: the budget of a fight room, in head costs, at coefficient 1.0 of one wave: StageDef.cost_curve (SWORN's Kingswood: it
+## climbs to the guardian, falls in the room after him, climbs again), or the old difficulty at cost_per_rating past the list.
+static func cost_budget(stage: StageDef, depth: int) -> float:
+	if depth >= 1 and depth <= stage.cost_curve.size():
+		return stage.cost_curve[depth - 1]
+	return difficulty(stage, depth) * budget(stage, depth) * stage.cost_per_rating
+
+
+## SW-R1: how the room is fought, drawn (sets fight.mode): the share of each wave of the budget. Half of the rooms are a
+## horde (0.75 up, 0.75 behind), the rest one wave of 1.0 or two of 0.75 (Kingswood's `combatTypeProbabilities` and `waveCombatData`).
+static func plan(stage: StageDef, fight: Fight, rng: RandomNumberGenerator) -> PackedFloat32Array:
+	if rng.randf() < stage.horde_share:
+		fight.mode = Mode.HORDE
+		return PackedFloat32Array([stage.horde_initial, stage.horde_reserve])
+	fight.mode = Mode.WAVES
+	if rng.randf() < stage.two_wave_share:
+		return PackedFloat32Array([stage.wave_coef_two, stage.wave_coef_two])
+	return PackedFloat32Array([stage.wave_coef_one])
+
+
+## RD2-06: whether the last wave of the rooms of this depth carries an elite, and the heads rise one by one (StageDef.long_depths).
 static func is_long(stage: StageDef, depth: int) -> bool:
 	return stage.long_depths.has(depth)
 
@@ -113,7 +143,7 @@ static func elite_last(fight: Fight, stage: StageDef, depth: int, defs: Dictiona
 			continue
 		var elite := defs[d.elite_version] as EnemyDef
 		wave[wave.find(id)] = elite.id
-		var pay := mini(ceili(elite.rating / _rating(defs, id)) - 1, wave.count(id) - 1)
+		var pay := mini(ceili(float(elite.cost_of()) / _cost(defs, id)) - 1, wave.count(id) - 1)
 		for i in pay:
 			wave.erase(id)
 		var typed: Array[StringName] = []
@@ -187,7 +217,7 @@ static func add_big(fight: Fight, alive: Vector2i, defs: Dictionary, rng: Random
 	if others == 0:
 		return false
 	wave[wave.find(id)] = big_def.id
-	var pay := mini(ceili(big_def.rating / _rating(defs, id)) - 1, wave.count(id) - 1)
+	var pay := mini(ceili(float(big_def.cost_of()) / _cost(defs, id)) - 1, wave.count(id) - 1)
 	for i in pay:
 		wave.erase(id)
 	# kept inside the tier's fewest (the cheapest fills in), never past the ceiling
@@ -322,42 +352,30 @@ static func clashes(d: EnemyDef, chosen: Array[StringName], defs: Dictionary) ->
 	return false
 
 
-## The waves of a fight: the room's difficulty split among them, each brought into the tier's range (alive: fewest,
-## most).
-static func waves(stage: StageDef, depth: int, kinds: Array[StringName], alive: Vector2i, defs: Dictionary, rng: RandomNumberGenerator, mult: float = 1.0) -> Array[Array]:
+## The waves of a fight: `total` head costs, each wave the share `coefs[w]` of it, each brought up to the tier's fewest standing
+## (alive.x; a wave is not trimmed to its most: the queue rises as the floor has room).
+static func waves(stage: StageDef, depth: int, kinds: Array[StringName], alive: Vector2i, defs: Dictionary, rng: RandomNumberGenerator, total: float,
+		coefs: PackedFloat32Array) -> Array[Array]:
 	var out: Array[Array] = []
 	if kinds.is_empty():
 		return out
-	var total := difficulty(stage, depth, mult)
-	var mean_rating := 0.0
-	for id in kinds:
-		mean_rating += _rating(defs, id)
-	mean_rating /= kinds.size()
-	# heads the budget buys: never more waves than it fills with the tier's fewest, never fewer than it needs to keep
-	# each under the tier's most (a big budget comes in more waves, not all at once)
-	var heads := total / mean_rating
-	var most := clampi(floori(heads / maxf(1.0, alive.x)), 1, stage.wave_split.size())
-	var least := clampi(ceili(heads / maxf(1.0, alive.y)), 1, most)
-	var count := clampi(rng.randi_range(stage.min_waves, stage.max_waves), least, most)
-	if is_long(stage, depth):
-		count = 3
-		alive = Vector2i(mini(alive.x, stage.long_fewest), alive.y)
-	var split: PackedFloat32Array = stage.wave_split[count - 1]
+	var count := coefs.size()
+	var range_ := Vector2i(mini(alive.x, stage.long_fewest) if is_long(stage, depth) else alive.x, maxi(alive.y, stage.wave_most))
 	for w in count:
 		# the first kind (the highlight) is in every wave; later waves add the others, the last has them all
 		var n := clampi(w + 1 + kinds.size() - count, 1, kinds.size())
 		var in_wave := kinds.slice(0, n)
 		var wave: Array[StringName] = []
-		var mean := total * split[w] / n
+		var mean := total * coefs[w] / n
 		for id in in_wave:
-			var rating := _rating(defs, id)
-			var slice := maxf(rating, rng.randfn(mean, mean / 3.0))
-			var kind_heads := maxi(ceili(slice / rating), (defs[id] as EnemyDef).pack_min)
+			var cost := _cost(defs, id)
+			var slice := maxf(cost, rng.randfn(mean, mean / 4.0))
+			var kind_heads := maxi(ceili(slice / cost), (defs[id] as EnemyDef).pack_min)
 			if (defs[id] as EnemyDef).pack_max > 0:
 				kind_heads = mini(kind_heads, (defs[id] as EnemyDef).pack_max)  # (a pack of 4 to 6, not a flood: the room's budget is not all rats)
 			for i in kind_heads:
 				wave.append(id)
-		_fit(wave, in_wave, alive, defs)
+		_fit(wave, in_wave, range_, defs)
 		_shuffle(wave, rng)
 		out.append(wave)
 	return out
@@ -373,7 +391,7 @@ static func _fit(wave: Array[StringName], kinds: Array[StringName], alive: Vecto
 			var d := defs[id] as EnemyDef
 			if d.pack_max > 0 and wave.count(id) >= d.pack_max:
 				continue  # (a full pack takes no more)
-			if not found or _rating(defs, id) < _rating(defs, cheapest):
+			if not found or _cost(defs, id) < _cost(defs, cheapest):
 				cheapest = id
 				found = true
 		wave.append(cheapest if found else kinds[0])
@@ -402,6 +420,19 @@ static func _crowded(wave: Array[StringName], kinds: Array[StringName], defs: Di
 
 static func _rating(defs: Dictionary, id: StringName) -> float:
 	return maxf(1.0, (defs[id] as EnemyDef).rating)
+
+
+## SW-R1: what a head of this kind costs in the budget.
+static func _cost(defs: Dictionary, id: StringName) -> float:
+	return float((defs[id] as EnemyDef).cost_of())
+
+
+## SW-R1: the cost of a list of heads.
+static func cost_of(wave: Array, defs: Dictionary) -> float:
+	var n := 0.0
+	for id: StringName in wave:
+		n += _cost(defs, id)
+	return n
 
 
 static func _shuffle(list: Array, rng: RandomNumberGenerator) -> void:

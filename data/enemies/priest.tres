@@ -37,5 +37,6 @@ shot_range = 22.5
 shot_low = true
 close_windup = 0.6
 rating = 22.0
+cost = 5
 role = &"area"
 elite_version = &"priest_elite"

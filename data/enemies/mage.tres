@@ -39,5 +39,6 @@ cover_hug = 3.125
 max_attackers = 3
 close_windup = 0.52
 rating = 12.0
+cost = 4
 role = &"control"
 elite_version = &"mage_elite"

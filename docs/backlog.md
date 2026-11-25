@@ -46,6 +46,8 @@ Dono: `room-designer` (e `balance-designer` nos números). Cerca de meio dia.
   o resto sorteado. Aceite: teste do `RunMap` em 300 descidas.
 - **SW-R3 Zonas mortas** (era o S-6): nascimento dos dois lados nas Fendas e no Santuário.
 
+**Fase 2 feita em 2026-11-25** (`room-designer`): SW-R1 (orçamento em custos, `EnemyDef.cost`, `StageDef.cost_curve`, salas em onda/duas ondas/horda), SW-R2 (descanso depois de cada guardião, portas fixas nas salas 2, 7 e 11), SW-R3 (`far_spawn` nas Fendas e no Santuário). Tabela e medidas em `docs/design/rooms_progression.md` ("Fase 2 SWORN"); suíte 2297/2297; robô 6 sementes: Morvath em 5, `stuck` 0, luta por sala 41 s (76% entre 25 e 55 s). Sobra: o herói ainda fica 77% do tempo no leste das Fendas (precisa de ouro e quebráveis nos cantos), até 4 fontes por caminho (balance-designer olha a cura).
+
 ### Fase 3, a primeira vez e a descida-tutorial (SW-O) — o onboarding
 Donos: `game-director` (roteiro), `gameplay-engineer` (descida fixa em dado), `ui-ux-designer` (objetivo e textos), `environment-artist` (cena de chegada).
 Cerca de 1 a 2 dias.

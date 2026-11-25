@@ -47,4 +47,5 @@ death_burst = 0.7
 attack_width = 2.6
 close_windup = 0.52
 rating = 17.0
+cost = 7
 role = &"react"

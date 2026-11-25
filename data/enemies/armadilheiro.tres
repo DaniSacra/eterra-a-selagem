@@ -34,4 +34,5 @@ plate_damage = 8.0
 per_room = 1
 close_windup = 0.52
 rating = 16.0
+cost = 3
 role = &"trap"

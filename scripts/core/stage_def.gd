@@ -98,6 +98,25 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var long_elite_from := 4
 @export var long_gap := Vector2(0.6, 1.0)
 @export var long_delay := 1.2
+## SW-R1 (the budget, SWORN's Kingswood): a fight room is given a budget in head costs (EnemyDef.cost_of: small 1, common 3, heavy 5,
+## the Capitao 10) by depth: cost_curve[depth - 1] (a depth past the list: the old difficulty at cost_per_rating). Each room is
+## drawn as one wave of the whole budget (wave_coef_one), two waves of wave_coef_two each, or a continuous horde (the first
+## horde_initial of it up at once, the rest, horde_reserve, rising as the fallen make room): horde_share of the rooms are hordes,
+## the others split by two_wave_share. No wave holds more than wave_most heads (the queue rises as the floor has room: cap).
+@export var cost_curve: PackedFloat32Array = PackedFloat32Array()
+@export var cost_per_rating := 0.55
+@export var horde_share := 0.5
+@export var two_wave_share := 0.5
+@export var wave_coef_one := 1.0
+@export var wave_coef_two := 0.75
+@export var horde_initial := 0.75
+@export var horde_reserve := 0.75
+@export var wave_most := 20
+## SW-R2: the rest after a guardian: one of the two doors of the room after it is a fountain (0: none; the guardians' depths are
+## miniboss_depth and miniboss2_depth), and the doors of these depths with a fixed reward (rewards: depth -> Array of RunMap.Reward
+## in slot order; a room of fight takes them in order, the rest are drawn as always).
+@export var rest_after_guardian := false
+@export var fixed_rewards: Dictionary = {}
 
 @export_group("Rewards")
 ## The deck the doors' rewards are drawn from (RunMap.Reward, each card listed once per copy; C13-02, Hades II's

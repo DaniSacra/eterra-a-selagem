@@ -40,5 +40,6 @@ attack_width = 3.4
 per_room = 1
 close_windup = 0.6
 rating = 28.0
+cost = 9
 role = &"react"
 big = true

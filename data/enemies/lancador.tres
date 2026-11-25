@@ -42,4 +42,5 @@ shot_return = true
 per_room = 2
 close_windup = 0.52
 rating = 14.0
+cost = 3
 role = &"throw"
