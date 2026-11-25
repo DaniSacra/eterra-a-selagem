@@ -31,6 +31,9 @@ const FALL_HEIGHT := 7.0
 const FALL_STREAKS := 3
 const ORB_EMBER := Vector2(0.62, 0.13)
 const ORB_SMOKE_EVERY := 0.08
+## The ember's hot heart (kept under the glow threshold like its body) and its tail: size, alpha and distance behind (m).
+const ORB_HEART := Color(1.0, 0.72, 0.28)
+const ORB_TAIL: Array[Vector3] = [Vector3(0.8, 0.42, 0.34), Vector3(0.6, 0.28, 0.62), Vector3(0.4, 0.16, 0.88)]
 
 class Pending:
 	var at := Vector2.ZERO
@@ -297,6 +300,35 @@ func _land(q: Pending) -> void:
 		game.ground.add_zone(Ground.Kind.EMBER, q.at, q.radius * 0.6, 1.6, q.power, q.tags)
 
 
+static func _ember_mesh(scale: float) -> CapsuleMesh:
+	var m := CapsuleMesh.new()
+	m.radius = ORB_EMBER.y * scale
+	m.height = ORB_EMBER.x * (0.6 + 0.4 * scale)
+	m.radial_segments = 8
+	m.rings = 2
+	return m
+
+
+static func _ember_mat(c: Color, glow: bool) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = c
+	if glow:
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		m.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
+	return m
+
+
+static func _ember_part(mesh: Mesh, mat: Material, at: Vector3) -> MeshInstance3D:
+	var part := MeshInstance3D.new()
+	part.mesh = mesh
+	part.material_override = mat
+	part.position = at
+	part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return part
+
+
 ## Orbs of fire turning around the paladin: they burn what they touch every ORBIT_TICK.
 func _step_orbit(b: Boon, dt: float) -> void:
 	var n := 0
@@ -305,19 +337,17 @@ func _step_orbit(b: Boon, dt: float) -> void:
 		lv = game.boons.level(b.id)
 		n = b.skill.get_count(lv)
 	while _orbs.size() < n:
-		# an ember drawn out along its way (vfx_pass_spec.md 5.3), its core amber under the glow, no round halo
+		# an ember (sweep 2026-11-25: no flat orange pill): a deep orange body, a hotter amber heart, a soft additive
+		# glow round both and a short tail of three fading embers behind it (the capsule's axis is its way)
 		var mi := MeshInstance3D.new()
-		var ember := CapsuleMesh.new()
-		ember.radius = ORB_EMBER.y
-		ember.height = ORB_EMBER.x
-		ember.radial_segments = 8
-		ember.rings = 2
-		mi.mesh = ember
-		var m := StandardMaterial3D.new()
-		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.albedo_color = ORB_CORE * 0.85
-		mi.material_override = m
+		mi.mesh = _ember_mesh(1.0)
+		mi.material_override = _ember_mat(ORB_CORE * 0.85, false)
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.add_child(_ember_part(_ember_mesh(0.55), _ember_mat(ORB_HEART, false), Vector3.ZERO))
+		mi.add_child(_ember_part(_ember_mesh(1.9), _ember_mat(Color(ORB_CORE, 0.28), true), Vector3.ZERO))
+		for k in ORB_TAIL.size():
+			var tail := _ember_part(_ember_mesh(ORB_TAIL[k].x), _ember_mat(Color(ORB_CORE, ORB_TAIL[k].y), true), Vector3(0.0, -ORB_TAIL[k].z, 0.0))
+			mi.add_child(tail)
 		add_child(mi)
 		_orbs.append(mi)
 	while _orbs.size() > n:

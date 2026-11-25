@@ -277,7 +277,9 @@ const DEAD_CRIMSON := Color(1.4, 0.16, 0.3)
 ## The crossbowman's bolt and light: the orange of the board of 2026-11-14, never the red of a warning (combate_c1_leitura 1).
 const CROSSBOW_ORANGE := Color(1.2, 0.5, 0.16)
 ## (ART_REVIEW P2: the spec's (1.2, 0.18, 0.85), hue 321, showed 313 on the screen; 333 in the material lands in 320 to 330)
-const DEAD_MAGENTA := Color(1.2, 0.18, 0.64)
+## Sweep 2026-11-25: magenta had no owner and fought the danger's red; the casters' orbs, the priest's vine and the elder's fan
+## are now the dead's sickly yellow green (hue about 100, away from the Emeth's 133 and Morvath's spectral 157); pink is the curse's only.
+const DEAD_MAGENTA := Color(0.5, 1.1, 0.22)
 const STUN_HEAVY := 1.1
 ## E1c (AUDIT.md P2): Hades II's PostAttackDuration of each one's counterpart (study 4.2), the window it stands
 ## still after its blow (EnemyDef.recover_time): Guard 2.1 (elite 1.5), Radiator 1.35 (elite 0.5), Brawler 1.1 after

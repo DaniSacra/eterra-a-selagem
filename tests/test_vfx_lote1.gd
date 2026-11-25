@@ -55,7 +55,8 @@ func test_the_dead_shoot_crimson_and_magenta_and_violet_is_morvath_s() -> void:
 		assert_between(_hue((load("res://data/enemies/%s.tres" % id) as EnemyDef).magic_color), 12.0, 28.0, "%s orange" % id)
 	for id: StringName in [&"mage", &"mage_elite", &"priest", &"priest_elite", &"priest_elder"]:
 		var d: EnemyDef = load("res://data/enemies/%s.tres" % id)
-		assert_between(_hue(d.magic_color), 328.0, 338.0, "%s magenta (333 in the material: 320 to 330 on the screen)" % id)
+		assert_between(_hue(d.magic_color), 90.0, 112.0, "%s sickly green (sweep 2026-11-25: no magenta, pink is the curse's)" % id)
+		assert_gte(_gap(_hue(d.magic_color), _hue(Combat.EMETH)), 25.0, "%s apart from the Emeth" % id)
 	var morvath: EnemyDef = load("res://data/enemies/morvath.tres")
 	assert_ne(_hue(morvath.magic_color), _hue((load("res://data/enemies/mage.tres") as EnemyDef).magic_color), "Morvath's own")
 

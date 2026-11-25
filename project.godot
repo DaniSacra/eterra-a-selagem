@@ -81,6 +81,10 @@ boss_pos={
 "type": "vec3",
 "value": Vector3(0, -1000, 0)
 }
+warn_pos={
+"type": "vec3",
+"value": Vector3(0, -1000, 0)
+}
 floor_round={
 "type": "vec3",
 "value": Vector3(0, 0, 0)

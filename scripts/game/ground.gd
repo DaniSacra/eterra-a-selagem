@@ -448,6 +448,28 @@ func storm_wedge(z: Zone, wedge: Vector2) -> void:
 		GroundLook.storm_wedge(z.node, wedge)
 
 
+## Sweep 2026-11-25: the warning nearest the paladin is told to the scenery (the global warn_pos, see_through.gdshaderinc), which
+## opens over it as it does over him: a balustrade in front never hides what is about to land. Far below when none stands.
+const NO_WARNING := Vector3(0, -1000, 0)
+
+
+func _publish_warning() -> void:
+	var at := NO_WARNING
+	if player != null:
+		var best := INF
+		for z in zones:
+			if z.kind != Kind.WARNING or z.life <= 0.0 or z.node == null or not z.node.visible:
+				continue
+			var c := z.pos
+			if z.shape == Shape.LINE:
+				c += z.dir * z.radius * 0.5
+			var d := c.distance_squared_to(player.pos)
+			if d < best:
+				best = d
+				at = Vector3(c.x, 0.0, c.y)
+	RenderingServer.global_shader_parameter_set(&"warn_pos", at)
+
+
 func clear_warnings() -> void:
 	for z in zones:
 		if z.kind == Kind.WARNING:
@@ -476,6 +498,7 @@ static func inside(z: Zone, p: Vector2, margin: float = 0.0) -> bool:
 
 func step(dt: float) -> void:
 	_step_after(dt)
+	_publish_warning()
 	var i := zones.size() - 1
 	while i >= 0:
 		# a landing blow can end the run and clear every zone
