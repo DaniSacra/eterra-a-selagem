@@ -16,7 +16,7 @@ func test_words_the_children_could_not_read_are_gone() -> void:
 		assert_false(t.contains("—") or t.contains("–"), k)
 	assert_eq(T.t(&"slot_ult"), "Golpe Supremo")
 	assert_eq(T.t(&"dons_do_chosen"), "Equipado")
-	assert_eq(T.t(&"dons_devotion", {"free": 2, "max": 6}), "Vagas 2 de 6")
+	assert_eq(T.t(&"dons_devotion", {"free": 2, "max": 6}), "Vagas livres 2 de 6")
 
 
 func test_no_devotion_anywhere_in_the_text() -> void:

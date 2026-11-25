@@ -133,9 +133,9 @@ func test_magic_colours() -> void:
 	var priest: EnemyDef = load(DIR + "priest.tres")
 	var archer: EnemyDef = load(DIR + "archer.tres")
 	# vfx_pass_spec.md 4 and 5.4 (V-11, Lote 1): the magic of the dead is the danger's, crimson for the bolt and the
-	# burst, magenta for the orbs and the vines (the sorcerer's cold violet of 2026-11-14 went: violet is Morvath's)
-	assert_true(mage.magic_color.r > mage.magic_color.b and mage.magic_color.b > mage.magic_color.g, "the sorcerer's magenta")
-	assert_eq(mage.magic_color, priest.magic_color, "the orbs and the vines one magenta")
+	# burst, sickly green for the orbs and the vines (sweep 2026-11-25: magenta had no owner in the palette; violet is Morvath's)
+	assert_true(mage.magic_color.g > mage.magic_color.r and mage.magic_color.g > mage.magic_color.b, "the sorcerer's sickly green")
+	assert_eq(mage.magic_color, priest.magic_color, "the orbs and the vines one green")
 	assert_true(archer.magic_color.r > archer.magic_color.g and archer.magic_color.g > archer.magic_color.b, "orange bolts (C1)")
 
 

@@ -89,7 +89,9 @@ func test_the_way_down_emits_descend() -> void:
 
 
 func test_the_hero_page_names_his_weapon_and_abilities_with_the_hud_marks() -> void:
-	var s := _book(_data(0))
+	var d := _data(0)
+	HubGate.presented(d).append(String(Milestones.ULT))  # the Ultimate's milestone open (sweep: closed, no line)
+	var s := _book(d)
 	var skills := s.find_child("skills", true, false)
 	var marks := skills.find_children("ActionMark", "Control", true, false)
 	assert_eq(marks.size(), 6, "five actions and the ultimate")
