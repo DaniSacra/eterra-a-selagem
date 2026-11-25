@@ -74,7 +74,11 @@ static func write_profile(active: int, options: Dictionary, base: String = "user
 static func options_of(loaded: Variant) -> Dictionary:
 	if not loaded is Dictionary:
 		return SaveData.defaults().options
-	return SaveData.merged({"version": SaveData.VERSION, "options": loaded}).options
+	var out: Dictionary = SaveData.merged({"version": SaveData.VERSION, "options": loaded}).options
+	# PT-25-2: the profile has no version of its own; MUS-2's move (Santuário off blade_march) once, by a flag
+	if not bool(out.get("music_moved", false)):
+		SaveData.move_music_defaults(out)
+	return out
 
 
 ## Moves the save of before the slots into Save 1, once: its text (and its copy) becomes save_1.json, and the old

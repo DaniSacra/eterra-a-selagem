@@ -113,3 +113,15 @@ func test_old_saves_move_the_old_default_once() -> void:
 	assert_eq(picked.options.music_dungeon, "deep_drums")
 	var now := SaveData.merged({"version": 15, "options": {"music_hub": "blade_march"}})
 	assert_eq(now.options.music_hub, "blade_march", "a current save's choice stays")
+
+
+## PT-25-2: the shared options (profile.json) have no version, so the Santuário stayed on blade_march on old computers.
+func test_the_profile_moves_the_old_default_once() -> void:
+	var old := SaveSlots.options_of({"music_hub": "blade_march", "music_dungeon": "blade_march", "music_title": "blade_march"})
+	assert_eq(old.music_hub, "thatched_villagers")
+	assert_eq(old.music_dungeon, "alternate")
+	assert_eq(old.music_title, "blade_march", "the title keeps its piece")
+	assert_true(old.music_moved)
+	var later := SaveSlots.options_of({"music_hub": "blade_march", "music_moved": true})
+	assert_eq(later.music_hub, "blade_march", "picked by hand after the move, it stays")
+	assert_true(SaveSlots.options_of(null).music_hub == "thatched_villagers")
