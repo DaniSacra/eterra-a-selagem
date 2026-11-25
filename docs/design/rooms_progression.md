@@ -1645,3 +1645,19 @@ e laje que sobe espinhos); Ancião em sala quadrada com só quatro colunas para 
 Com `--bot-reaction=0.25` (8 sementes, novato): Cavaleiro 8 de 8, 58,7 s, dano dele 2,2; Ancião 2 de 8, 90,7 s, dano dele 25,0. Nenhum `stuck`.
 O robô quase não pisa em laje nem fica sob pedra (0 de dano de perigo no herói); quem sofre é o Cavaleiro, que investe por cima das lajes.
 Quem pagar o Cavaleiro mais caro deve mexer em `HOUSE_FROM`, no tempo entre pedras (`drop_every` 4 s) ou no tamanho das zonas, não no aviso.
+
+
+## Lote R6 (2026-11-24): Ancião novato e laje de aprender (BL-01, RD-02)
+- Ancião (`--start=miniboss --guardian=priest_elder`, 12 sementes, novato, sem Maestria). Sem `--bot-reaction`: 12 de 12 vencem, luta 85 s
+  (64 a 112), dano levado 18 em média (soma de `hurt_by`), então a medida antiga de 7 de 12 já está vencida pela câmara nova. Com
+  `--bot-reaction=0.6`: 5 de 12.
+  Escada tentada com R 0,6: colunas a 8 m em vez de 9 m (5 de 12, sem ganho; desfeito); `max_alive` da câmara de (6, 8) para (3, 5)
+  (resultado idêntico, a escolta não depende dele; desfeito); `attack_damage` das orbes do Ancião 5 para 4 (x0,8): **9 de 12**,
+  luta 61 a 96 s, dano do Ancião 8 a 34 (média 22); dano de contato 9 para 7 sem efeito (desfeito); chamado dos arqueiros mais
+  espaçado (14 a 18 s): 8 de 12, pior (desfeito). Ficou só o x0,8 nas orbes. Falta 1 vitória para os 10 de 12 em R 0,6; o resto do
+  dano vem dos arqueiros chamados (comuns, 4 a 20 por luta), que não foram tocados.
+- Laje da Cripta A: acorda desde a fração 0,15 (3a sala da descida) com aviso 1,5 s, 10 no herói e 60 no inimigo (`TEACH_FROM`,
+  `TEACH_WARN`); a Cripta B e as outras lajes seguem em 0,34 com 1,2 s. R 0,6, 12 sementes, até a sala 4: a Cripta aparece em 6
+  descidas (metade na variante B, dormindo), 3 delas com a laje acordada, uma com 3 golpes sem acertar inimigo, dano ao herói 0.
+  O aceite (8 de 12 com golpe em inimigo) não é atingido: a Cripta sai pouco até a sala 4. Próximo passo se importar: lajes de aprender
+  na variante B também, ou em outra sala do início.

@@ -129,7 +129,11 @@ func test_where_the_slabs_lie() -> void:
 			assert_almost_eq(h.enemy_damage, 60.0, 0.001)
 			assert_almost_eq(h.rearm, 5.0, 0.001)
 			assert_almost_eq(h.start_delay, 3.0, 0.001)
-			assert_almost_eq(h.from_progress, 0.34, 0.001)
+			if id == &"crypt" and v == 0:
+				assert_almost_eq(h.from_progress, 0.15, 0.001, "RD-02: the Crypt A teaches from the 3rd room")
+				assert_almost_eq(h.warn, 1.5, 0.001, "RD-02: the long warning")
+			else:
+				assert_almost_eq(h.from_progress, 0.34, 0.001)
 			for i in h.plates.size():
 				var r := h.plates[i]
 				var tag := "%s %d slab %d" % [id, v, i]
@@ -215,7 +219,7 @@ func test_in_a_real_room_it_hurts_both_and_is_counted() -> void:
 	game.player.invuln = 0.0
 	var e := game.horde.spawn(game.horde.def(&"skeleton"), slab.get_center() + Vector2(0.8, 0.8), false)
 	var hp := game.player.hp
-	for i in roundi(4.5 / DT):
+	for i in roundi(5.0 / DT):
 		game.player.place(slab.get_center())
 		e.pos = slab.get_center() + Vector2(0.8, 0.8)
 		pf.step(DT)
@@ -296,3 +300,12 @@ func test_the_crumbling_edge_of_the_sanctuary_b() -> void:
 	assert_eq(l.area_at(h.plates[4].get_center()), "hole_edge")
 	assert_eq(l.area_at(h.plates[5].get_center()), "hole_edge")
 	assert_eq(_layout(&"sanctuary").hazard.plates.size(), 4, "A has no hole: no crumbling edge")
+
+
+## RD-02: the slab to learn from lies awake before the 5th room, and the 3rd room of the descent is past its progress.
+func test_the_teaching_slab_is_awake_before_the_fifth_room() -> void:
+	var h := _layout(&"crypt").hazard
+	assert_lte(h.from_progress, EncounterGen.progress(stage, 3), "awake at the 3rd room")
+	assert_lt(h.from_progress, EncounterGen.progress(stage, 5))
+	assert_gte(h.warn, 1.2, "never under the enemies' warning")
+	assert_gte(h.start_delay, 3.0, "calm at the start")
