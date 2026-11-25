@@ -190,7 +190,7 @@ static func make(parent: Node3D, reward: RunMap.Reward, kind: RunMap.Kind, color
 ## door is stairs with no arch, from the top of a low iron post (DOOR_POST: radius, height) beside the mouth, on its
 ## cheek off the floor. The rod meets the disc on its turning axis, so the swaying disc stays on it. Nothing collides.
 ## PT-2: the disc on a door is DOOR_SCALE of its size (the arch's tympanum is 4 m wide).
-const DOOR_SCALE := 1.4
+const DOOR_SCALE := 0.9  # Daniel 2026-11-25: "ainda muito enormes" (was 1.4)
 ## The share of its size a door's halo keeps (HALO * DOOR_SCALE * this stays under the 4.2 m of the closest doors).
 const DOOR_HALO := 0.85
 const DOOR_ROD := 0.04

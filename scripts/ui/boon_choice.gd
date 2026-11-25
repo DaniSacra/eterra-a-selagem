@@ -17,6 +17,10 @@ const LEAD_SIZE := 20
 ## PT-7 (2026-11-23): larger, the angel a presence beside its Blessings.
 const FIGURE := Vector2(300.0, 450.0)
 const LIST_W := 240.0
+## The tall angel (Daniel 2026-11-25: "o anjo maior, do tamanho da tela, a altura toda"): the share of the screen's width
+## its box takes from the left, and how far left it starts (px), the figure kept in aspect and centred in it.
+const TALL_WIDTH := 0.42
+const TALL_LEFT := -60.0
 ## BC-4: seconds the angel's words stay before the options come by themselves.
 const INTRO_TIME := 2.5
 ## The angel's seal over its cards (by_angel): it stands for the angel while the angels have no figure (ciclo
@@ -252,10 +256,28 @@ func by_angel(a: AngelDef, on_back: Callable = Callable(), held := -1) -> void:
 		line.move_child(col, 0)
 		var tint := AngelSeal.tint(a.family)
 		# AN-1: the angel's painted portrait when it has one (AngelArt), else its seal over a soft light
-		var art := AngelArt.figure(a, FIGURE) if list != null else AngelArt.portrait(a, Vector2(ANGEL_FIGURE, ANGEL_ART_HEIGHT))
-		if art != null:
-			col.add_child(art)
+		var art: Control = null
+		if list != null:
+			# Daniel 2026-11-25: the angel the whole height of the screen, behind its Blessings (the column keeps its place)
+			art = AngelArt.figure(a, Vector2.ZERO)
+			if art != null:
+				art.name = "angel_tall"
+				art.set_anchors_preset(Control.PRESET_LEFT_WIDE)
+				art.anchor_right = TALL_WIDTH
+				art.offset_left = TALL_LEFT
+				art.offset_right = 0
+				add_child(art)
+				move_child(art, mini(3, get_child_count() - 1))
+				var spacer := Control.new()
+				spacer.name = "angel_art"
+				spacer.custom_minimum_size = FIGURE
+				spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				col.add_child(spacer)
 		else:
+			art = AngelArt.portrait(a, Vector2(ANGEL_FIGURE, ANGEL_ART_HEIGHT))
+			if art != null:
+				col.add_child(art)
+		if art == null:
 			var holder := Control.new()
 			holder.name = "angel_seal"
 			holder.custom_minimum_size = Vector2(ANGEL_FIGURE, ANGEL_FIGURE)
