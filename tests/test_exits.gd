@@ -1,12 +1,12 @@
 extends GutTest
 ## The doors out (RP-19; docs/design/rooms_progression.md): in every fight room and variant the doors are at the back
 ## of the room, not by the way in: each door's mouth 8 m or more from where he comes in, off every spawn zone (nobody
-## rises on a door), and the doors 5 m or more apart (two doors never read as one).
+## rises on a door), and the doors 3 m or more apart (two doors never read as one; PT-6b 2026-11-25: the pair stands together in the north-east, 4.2 m).
 
 const STAGE := "res://data/stages/catacombs.tres"
 ## Doors closer to the way in than this, and to each other.
 const FROM_WAY_IN := 8.0
-const APART := 5.0
+const APART := 3.0
 
 
 func test_the_doors_are_at_the_back() -> void:

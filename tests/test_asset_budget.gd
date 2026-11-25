@@ -7,7 +7,7 @@ const BAKE := "res://tools/bake.gd"
 const BAKED := "res://assets/baked/"
 const BAKED_CEILING := 70 * 1024 * 1024
 const MUSIC := "res://audio/music/"
-const MUSIC_CEILING := 18 * 1024 * 1024
+const MUSIC_CEILING := 20 * 1024 * 1024  # MUS-2 (2026-11-25): Santuário, Heroic Age and the room-won cut chosen by Daniel
 ## DT-107: every figure of the crowd at most this many triangles (body after MeshSlim, about 3 870, plus the KayKit
 ## pieces it holds, whole); the hub's people have their own (hub_spec_art.md 3.8). The 4 100 of the backlog holds for
 ## the unarmed and Morvath's 4 281 nearly: the staff (1 519) keeps the sorcerer at 5 530 and the elder at 5 557, and
