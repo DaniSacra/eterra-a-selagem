@@ -555,7 +555,9 @@ func _skills(grid: GridContainer) -> void:
 			var rush: int = int(Hud.MAGA_GLYPHS[&"rush"]) if maga else BoonIcon.RUSH_GLYPH
 			_skill(grid, ActionSlot.glyph_mark(rush, MARK), T.t(&"hero_skill_name_rush_maga" if maga else &"howto_rush"),
 				T.t(_hk("hero_skill_rush")))
-	if MedallionView.has_fixed_ult(loadout.hero):
+	if not Milestones.ult_open(_data):
+		pass  # (sweep 2026-11-25, P1-4: the Golpe Supremo is not announced before its milestone opens)
+	elif MedallionView.has_fixed_ult(loadout.hero):
 		_fixed_ult_row(grid)
 	else:
 		var u := loadout.hero.ultimate(loadout.ultimate())

@@ -12,7 +12,8 @@ const TAG_KEYS := {&"finisher": &"need_tag_finisher", &"spin": &"need_tag_spin"}
 
 
 ## The requirement lines of a Blessing. catalog: every Blessing (to skip the ones kept out of the draw; empty: none skipped).
-static func lines(b: Boon, catalog: Array[Boon] = []) -> PackedStringArray:
+## ult_open: the Golpe Supremo milestone is open; "Pede o Golpe Supremo" shows only while it is closed (sweep P2-8).
+static func lines(b: Boon, catalog: Array[Boon] = [], ult_open := false) -> PackedStringArray:
 	var out := PackedStringArray()
 	if b == null:
 		return out
@@ -30,7 +31,7 @@ static func lines(b: Boon, catalog: Array[Boon] = []) -> PackedStringArray:
 			out.append(T.t(&"need_set", {"names": T.t(&"need_or").join(shown)}))
 	if b.needs_tag != &"" and TAG_KEYS.has(b.needs_tag):
 		out.append(T.t(TAG_KEYS[b.needs_tag]))
-	if b.slot == Boon.Slot.ULT:
+	if b.slot == Boon.Slot.ULT and not ult_open:
 		out.append(T.t(&"need_ult"))
 	return out
 

@@ -216,6 +216,11 @@ const SHIELD_IDLE := [&"ual2", "Idle_Shield", 12, true, SWORD_GUARD]
 ## long stride (90 to 120); the elder's solemn walk.
 const BRUTE_STRIDE := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.92}
 const KNIGHT_STRIDE := {"guard": [[&"ual2", "Idle_Shield", LEFT_ARM], [&"ual", "Sword_Idle", RIGHT_ARM]], "lock": true, "stride": 1.1}
+## Sweep 2026-11-25: the knight moves at 6 m/s (Butcher batch); the formal Walk at that pace was 231 steps a minute, a
+## shuffle. It jogs now (Jog_Fwd, as the soldier does) on a stride that gives 103 to 138 steps a minute, shield arm up,
+## sword arm in guard, the feet locked.
+const KNIGHT_JOG := {"guard": [[&"ual2", "Idle_Shield", LEFT_ARM], [&"ual", "Sword_Idle", RIGHT_ARM]], "lock": true, "stride": 0.66,
+	"lift": 0.3, "plant": 0.5, "stand": 0.15, "bend": {"Spine01": Vector3(-14, 0, 0)}}
 ## E1c (AUDIT.md P6): the elder on a shorter stride, 91 steps a minute (1.2 gave 67, a slow motion).
 const ELDER_STRIDE := {"guard": [&"ual", "Idle_Torch", LEFT_ARM], "lock": true, "stride": 0.9}
 ## E1c (AUDIT.md P6): the soldier's run with the feet locked as the sorcerer's, on a short stride with half the hop: 149
@@ -560,7 +565,7 @@ const MODELS := {
 			{"hand": "Left", "meshy": "w_knight_shield", "triangles": 750, "slot": 1, "scale": 0.9, "at": Vector3(0.046, 0, 0), "rot": Vector3(0, -90, 0), "name": "shield"},
 		],
 		"anims": {
-			"walk": [&"ual", "Walk", 20, true, KNIGHT_STRIDE], "idle": SHIELD_IDLE, "rise": SHIELD_RISE,
+			"walk": [&"ual", "Jog_Fwd", 20, true, KNIGHT_JOG], "idle": SHIELD_IDLE, "rise": SHIELD_RISE,
 			"attack": SWORD_BLOW,
 			# T5-07: its charge braced behind the round shield and run with it (it stood idle with a line on the floor);
 			# A-T5-1: run low behind it (KNIGHT_RUSH)

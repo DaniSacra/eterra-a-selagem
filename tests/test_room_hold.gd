@@ -125,3 +125,47 @@ func test_the_warm_up_note() -> void:
 	assert_eq((words[0] as Label).text, "Preparando as catacumbas")
 	assert_eq(note.layer, 101, "over the warm-up's black")
 	note.free()
+
+
+## Sweep 2026-11-25, P0: the arrival's room (the guided descent's Antessala) never called _fade_in, so its hold stayed up
+## for ever on a screen: the world never stepped, the clock stayed at 0:00, the robot stood still. With a screen
+## (hold-frames forced) the world steps under the scene, the hero is given back and walks.
+func test_the_arrival_gives_the_hero_back_on_a_screen() -> void:
+	Dev.put("hold-frames", "2")
+	Dev.put("first", "1")
+	var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	add_child_autofree(game)
+	var rooms := game.rooms
+	for i in 600:
+		if rooms._arrival != null:
+			break
+		await get_tree().process_frame
+	var scene := rooms._arrival as ArrivalScene
+	assert_not_null(scene, "the scene plays in the Antessala")
+	if scene == null:
+		Dev.drop("first")
+		return
+	for i in 400:
+		if not rooms.holding():
+			break
+		await get_tree().process_frame
+	assert_false(rooms.holding(), "the world is let go under the scene")
+	scene.clock = 1.2
+	scene.skip()
+	var guard := 0
+	while rooms._arrival != null and guard < 600:  # (finished frees it: the control is given)
+		await get_tree().process_frame
+		guard += 1
+	assert_null(rooms._arrival, "the scene finished: the hero is given back")
+	assert_false(game.cam.lean_free, "the camera is free of the scene")
+	assert_true(game.player.visible)
+	var t := game.time
+	var from := game.player.pos
+	Controls.virtual = Controls.VirtualPad.new()
+	Controls.virtual.move = Vector2.RIGHT
+	for i in 30:
+		await get_tree().process_frame
+	Controls.virtual = null
+	assert_gt(game.time, t, "the clock of the world runs")
+	assert_gt(game.player.pos.distance_to(from), 0.3, "and the hero walks")
+	Dev.drop("first")

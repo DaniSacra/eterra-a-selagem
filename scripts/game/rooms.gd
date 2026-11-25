@@ -599,6 +599,8 @@ func _play_arrival() -> bool:
 	_fade.color.a = 1.0
 	_fade_tween().tween_interval(first_def.arrival_open_at)
 	_fading.tween_property(_fade, "color:a", 0.0, first_def.arrival_open_s)
+	# the world steps under the scene's own black (the hero is parked by it, the robot and a skip need the steps)
+	_let_go_of_hold()
 	return true
 
 
@@ -1340,15 +1342,23 @@ func _fade_in() -> void:
 	if _fading != null:
 		_fading.kill()
 	_fade.color.a = 1.0
+	if await _let_go_of_hold():
+		_fade_tween().tween_property(_fade, "color:a", 0.0, FADE)
+
+
+## The room's hold (the world waits, holding()) runs out over hold_frames() drawn frames. False: a newer room took the
+## screen (its own hold counts) or the node left the tree. Without this the arrival's room (no _fade_in) stayed held
+## for ever on a screen and the robot never left the Antessala (sweep 2026-11-25, P0).
+func _let_go_of_hold() -> bool:
 	_hold = hold_frames()
 	_hold_turn += 1
 	var turn := _hold_turn
 	while _hold > 0:
 		await _frame_drawn()
 		if not is_inside_tree() or turn != _hold_turn:
-			return  # (a newer room took the screen: its own hold counts)
+			return false
 		_hold -= 1
-	_fade_tween().tween_property(_fade, "color:a", 0.0, FADE)
+	return true
 
 
 ## A new fade of the screen; the one still running stops (BH-6: a fade-in left running lightened the black of the next

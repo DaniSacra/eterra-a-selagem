@@ -197,3 +197,11 @@ func test_the_save_choice_asks_only_for_a_new_save_when_another_has_descents() -
 
 func test_the_fifth_diamond_is_open_without_a_save_or_the_milestones_file() -> void:
 	assert_true(Hud.ult_open(), "tests run without a save")
+
+
+## Sweep 2026-11-25, P1-2: Morvath line goes with the victory: the reward and the doors speak then.
+func test_morvath_is_asked_before_the_fight_and_in_it_never_after_the_victory() -> void:
+	assert_eq(Objective.pick({"kind": &"boss"}), &"obj_morvath", "before the fight")
+	assert_eq(Objective.pick({"kind": &"boss", "fighting": true}), &"obj_morvath", "in it")
+	assert_eq(Objective.pick({"kind": &"boss", "reward_waiting": true}), &"obj_take", "the reward waits")
+	assert_eq(Objective.pick({"kind": &"boss", "doors_open": 1}), &"obj_find_way", "a door is open")
