@@ -365,3 +365,15 @@ Só visual: nenhum número de jogo mudou; `--smoke=120 --stress=300 --seed=5` d�
 | `Fx.dash_trail` (novo): 3 fiapos de poeira e 6 lascas da cor da Emeth ao longo da Investida | nenhum | em todo golpe com tag `dash` |
 Tetos: as pedras entram no `budget` de motes (40 por quadro) e na reserva de 192; poeira e osso no de rajadas (6). Teste novo `test_hit_lights_are_capped_and_fade`; `test_fx_on_hit` ajustado (o Brado e a Investida agora soltam pedras e lascas, e o final tem 3 anéis: o dele mais os dois do `shock`).
 Para conferir (ver o relatório): a distorção do Brado (refração de tela) não foi feita; fica o anel duplo mais as pedras e a luz.
+
+## Revisão de arte 2026-11-25 (AD2-01, 02, 03, 05, 06 e CF2-07; só visual)
+`--smoke=120 --seed=5` dá o mesmo `RESULT` antes e depois (menos `fps` e `step_ms`). Nenhum shader novo: o aquecimento não muda. Sem captura na GPU; uma captura CPU conferiu o azul da capa (luma 123, matiz 172, saturação 0,48 com `cape_value` 0,5; baixado para 0,42 e cor mais azulada, falta confirmar na GPU).
+| O quê (onde) | Antes | Depois |
+|---|---|---|
+| Capa do herói (`hero_paint.gdshader`: `cape_color`, `cape_value`, `cape_rim`; zona = verde da pintura, `g > r` e `b <= g`) | verde lavado, luma 131 a 158 | petróleo (0,2; 0,55; 0,64) x 0,42, o fio quente da capa a 0,55 |
+| Corte do herói, só com `blade > 0` (`Fx.SLASH_STYLE_*`, `slash.gdshader`, `slash_ink.gdshader`) | `style_core_light` 0,216, `style_core_depth` 0,6, `style_veil` 0,72, sem fio acima do teto | 0,35, 0,75, 1,0, e fio da cor do golpe a 1,5 só no fio (`style_wire_glow`, teto 1,3 num canal). Inimigos e chefes (`blade` 0) ficam como eram. Nota: `style_edge_cap` já não era lido pelo shader |
+| Emeth (`emeth.gdshader`, `HeroBody.EMETH_SCALE`, `EmethSword.CORE_WIDTH`) | teto 0,6, lâmina x1,0, fio fino 0,022 sob a capa | teto 0,72 (0,9 no golpe, `style_cap_swing`), lâmina x1,15 (cajado da Maga igual), fio 0,03 sem teste de profundidade (aparece por cima da capa) |
+| Anéis do `shock` e do Brado (`Fx.ring(..., bright)`, `ring.gdshader` `ivory`) | `intensity` 1,5, marfim 0,4, linha de 3,5 a 8% do raio | 2,4, marfim 0,75, linha de no mínimo 0,14 m, miolo 0,3. Brado: anel fino no alcance real e eco aceso 0,08 s depois (`Fx.ring_later`), mais o par do `shock` |
+| Clarão e luz em todo acerto (`Fx.contact(..., level)`, `CONTACT_LIGHT`) | luz só nos pesados | golpes 1, 2, 3: energia 1,0 / 1,4 / 1,8, alcance 3 m, 0,08 s; 4 lascas brancas de 0,15 s; o ponto é o peito do atingido, 0,15 m para o lado da lâmina (era 0,3) |
+| Pó de osso da morte (`BONE_DUST_AT`) | nascia a 0,3 m do chão e subia | nasce a 1,0 m e desce de leve (-0,25) |
+Testes novos em `tests/test_fx_on_hit.gd`: `test_plain_contact_lights_and_sparks_at_the_target`, `test_brado_echo_ring_comes_later`.

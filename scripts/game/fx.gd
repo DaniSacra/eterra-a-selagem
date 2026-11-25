@@ -31,6 +31,12 @@ const SPIKE_SCREEN := 215
 const CONTACT_SCREEN := 210
 const GASH_SCREEN := 210
 const CONTACT_TIME := 0.08
+## CF2-07: the small light every blow leaves on the one struck (blow 1, 2, 3), its reach and time, and the 4 slivers.
+const CONTACT_LIGHT: Array[float] = [1.0, 1.4, 1.8]
+const CONTACT_LIGHT_RANGE := 3.0
+const CONTACT_LIGHT_TIME := 0.08
+const CONTACT_SPARKS := 4
+const CONTACT_SPARK_LIFE := 0.15
 const CONTACT_GROW := 1.4
 const CONTACT_SPIKES := Vector2(0.4, 0.9)
 const CONTACT_SPIKES_HEAVY := Vector2(0.6, 1.4)
@@ -131,6 +137,10 @@ const LIGHT_WARM := Color(1.0, 0.78, 0.45)
 const STONE := Color(0.5, 0.45, 0.38)
 const SHOCK_CHIPS := Vector2i(7, 14)
 const SHOCK_OUTER := 1.45
+## AD2-05: the lit rings (the shock's and the Brado's): width of the line in m, its light, how far it goes toward ivory.
+const RING_BRIGHT_M := 0.14
+const RING_BRIGHT_LIGHT := 2.4
+const RING_BRIGHT_IVORY := 0.75
 ## 2026-11-24: the cut on a struck enemy is this much longer and lingers this much more.
 const GASH_BOOST := 1.3
 const GASH_LIFE := 1.25
@@ -158,6 +168,13 @@ const SLASH_GOLD := 0.3
 const SLASH_CORE := Vector2(0.82, 0.62)
 ## 2026-11-24 (strength pass): the cut's light is this much brighter than Feel.slash_intensity (the shader's own cap keeps it under the screen's 226).
 const SLASH_BOOST := 1.35
+## AD2-02 (art review 2026-11-25): the paladin's own arc in the stylized look (a blade given; the volleys and bosses keep the
+## shader's defaults): the core's light (it was style_core_light 0.216) and depth (0.6), the veil of its ink (0.72), and a
+## fine edge past the cap on the wire only (style_wire_glow, nothing past 1.3 in a channel).
+const SLASH_STYLE_CORE_LIGHT := 0.35
+const SLASH_STYLE_CORE_DEPTH := 0.75
+const SLASH_STYLE_VEIL := 1.0
+const SLASH_STYLE_WIRE := 1.5
 const RING_POOL := 16
 ## How a ring of the pool ages: it opens and fades on its own (a burst), the caller moves it (a wave), or it fades where it is.
 const RING_OPEN := 0
@@ -332,6 +349,8 @@ var _glints: Array[Dictionary] = []
 var _crescents: Array[Dictionary] = []
 var _kick := Vector3.ZERO
 var _rings: Array[Dictionary] = []
+## Rings waiting their turn (ring_later).
+var _later_rings: Array[Dictionary] = []
 var _smoke_rings: Array[Dictionary] = []
 var _contacts: Array[Dictionary] = []
 var _spikes: Array[Dictionary] = []
@@ -602,7 +621,9 @@ func burst(kind: StringName, pos: Vector3, dir: Vector3 = Vector3.ZERO) -> void:
 		# V-14: a dead one goes up as ash: one dark grey wisp rising about 1 m in 0.6 s
 		wisps(pos, Vector3.UP, DEATH_ASH, 1, 1.4, 0.55, 0.6, 0.2, 0.6)
 		# N2: the bone dust curls up short and settles (a pale wisp, wide, slow, never above the floor's light + 25)
-		wisps(pos - Vector3.UP * 0.3, Vector3.UP, BONE_DUST, 3, 1.0, 0.5, 1.5, 1.9, 0.15)
+		# AD2-06: it was born at the floor and read as a white blob there; now from the body (at least chest height: the
+		# call from the death sits at 0.6) and falling a little, never a solid drop (wisp.gdshader's alpha is its own)
+		wisps(Vector3(pos.x, maxf(pos.y, BONE_DUST_AT), pos.z), Vector3.UP, BONE_DUST, 3, 1.0, 0.5, 1.5, 1.9, -0.25)
 
 
 ## Smoke wisps (vfx_pass_spec.md 5.6, wisp.gdshader): soft torn cards that rise (rise m/s2 up), widen and come apart,
@@ -655,6 +676,8 @@ const NUMBER_POP_TIME := 0.08
 ## V-14: the grey of the wisp a dead one leaves (value 0.25).
 const DEATH_ASH := Color(0.25, 0.24, 0.23)
 const BONE_DUST := Color(0.34, 0.32, 0.28)
+## Where the bone dust of a death is born (m): the chest.
+const BONE_DUST_AT := 1.0
 ## N2: the Quebra's word is smaller than its ring (identidade_c1v 2.3).
 const POISE_WORD_SIZE := 15
 ## P1-4: the most his light slivers rise over where they start (m; the burst starts at 0.4 m, his shoulder is near 2.1)
@@ -722,6 +745,11 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 		(s.mat as ShaderMaterial).set_shader_parameter(&"core_depth", SLASH_CORE.x)
 		(s.mat as ShaderMaterial).set_shader_parameter(&"core_light", SLASH_CORE.y)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"family", family)
+	var own := blade > 0.0
+	(s.mat as ShaderMaterial).set_shader_parameter(&"style_core_light", SLASH_STYLE_CORE_LIGHT if own else 0.216)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"style_core_depth", SLASH_STYLE_CORE_DEPTH if own else 0.6)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"style_wire_glow", SLASH_STYLE_WIRE if own else 0.0)
+	(ink.mat as ShaderMaterial).set_shader_parameter(&"style_veil", SLASH_STYLE_VEIL if own else 0.72)
 	if family == Boon.Family.CHAMA:
 		# the tail's tongues rise off it (vfx_pass_spec.md 5.3): 3 to 5 tongue slivers along the back of the arc
 		var n := budget.take(&"motes", _rng.randi_range(FAMILY_SLASH_TONGUES.x, FAMILY_SLASH_TONGUES.y))
@@ -768,7 +796,7 @@ func gash(pos: Vector3, axis: Vector3, color: Color, length: float = 1.2, cross:
 ## them toward dir (the way the blade went), a small ivory heart, the tips in color; 3 frames growing 1.0 to 1.25, under
 ## the screen's 226. heavy: longer spikes (0.4 to 0.9 m). As many a frame as the gashes (BUDGET_GASHES, own count: on
 ## the gashes' own count a crowd showed half its cuts).
-func contact(pos: Vector3, dir: Vector3, color: Color, heavy: bool = false) -> void:
+func contact(pos: Vector3, dir: Vector3, color: Color, heavy: bool = false, level: int = 0) -> void:
 	if not budget.allows(&"contacts"):
 		return
 	var e: Dictionary = _take(_contacts)
@@ -790,6 +818,12 @@ func contact(pos: Vector3, dir: Vector3, color: Color, heavy: bool = false) -> v
 	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(Color(1.0, 0.97, 0.9), CONTACT_SCREEN))
 	if heavy:
 		hit_light(pos, color, 1.8, 4.0)
+	else:
+		# CF2-07: every blow lights the one it lands on a little (blow 1, 2, 3: 1.0, 1.4, 1.8) and throws 4 white slivers
+		hit_light(pos, color, CONTACT_LIGHT[clampi(level, 0, 2)], CONTACT_LIGHT_RANGE, CONTACT_LIGHT_TIME)
+	var sparks := budget.take(&"motes", CONTACT_SPARKS)
+	if sparks > 0:
+		_spray(pos, Vector3.UP * 0.4, Color(1.0, 0.97, 0.9) * 0.9, sparks, 5.0, 0.1, CONTACT_SPARK_LIFE, 1.2, MOTE_GRAVITY, false)
 	var aim := Vector2(1, 0)
 	if camera != null and dir.length_squared() > 0.0001:
 		var b := camera.global_transform.basis
@@ -1064,8 +1098,8 @@ func hit_light(pos: Vector3, color: Color, energy: float = 2.0, range_m: float =
 ## floor, a thin one outside it, pieces of stone and bone dust flung up, a puff of dust and a brief light. power 1 is a
 ## finisher; 0.6 a held blow; 1.6 an Omega. Drawn only, nothing here moves the game.
 func shock(center: Vector2, radius: float, color: Color, power: float = 1.0) -> void:
-	ring(center, radius, color, 0.4, 0.12)
-	ring(center, radius * SHOCK_OUTER, color, 0.32, 0.14, true)
+	ring(center, radius, color, 0.4, 0.12, false, true)
+	ring(center, radius * SHOCK_OUTER, color, 0.32, 0.14, true, true)
 	var at := Vector3(center.x, 0.25, center.y)
 	var n := budget.take(&"motes", roundi(lerpf(SHOCK_CHIPS.x, SHOCK_CHIPS.y, clampf(power / 1.6, 0.0, 1.0))))
 	if n > 0:
@@ -1085,7 +1119,12 @@ func dash_trail(origin: Vector2, dir: Vector2, reach: float, color: Color) -> vo
 		_spray(Vector3(mid.x, 0.5, mid.y), Vector3(-dir.x, 0.3, -dir.y), color.lerp(Color.WHITE, 0.3) * 0.9, n, 7.0, 0.12, 0.35, 0.8, 0.0, false)
 
 
-func ring(center: Vector2, radius: float, color: Color, time: float = 0.35, height: float = 0.15, thin: bool = false) -> void:
+## A second lit ring at the same radius after `wait` seconds (the Brado's echo: AD2-05).
+func ring_later(center: Vector2, radius: float, color: Color, wait: float) -> void:
+	_later_rings.append({"center": center, "radius": radius, "color": color, "wait": wait})
+
+
+func ring(center: Vector2, radius: float, color: Color, time: float = 0.35, height: float = 0.15, thin: bool = false, bright: bool = false) -> void:
 	var r: Dictionary = _take(_rings)
 	var mi: MeshInstance3D = r.node
 	mi.position = Vector3(center.x, height, center.y)
@@ -1094,8 +1133,14 @@ func ring(center: Vector2, radius: float, color: Color, time: float = 0.35, heig
 	r.mode = RING_OPEN
 	mi.scale = Vector3.ONE * radius * 0.3
 	(r.mat as ShaderMaterial).set_shader_parameter(&"color", color)
-	(r.mat as ShaderMaterial).set_shader_parameter(&"band", 0.035 if thin else 0.08)
-	(r.mat as ShaderMaterial).set_shader_parameter(&"fill", 0.0 if thin else 0.18)
+	var band := 0.035 if thin else 0.08
+	if bright:
+		# AD2-05: a line of at least RING_BRIGHT_M wide, light (additive, ivory over its colour), a fill that lifts the floor
+		band = maxf(band, RING_BRIGHT_M / maxf(radius, 0.1))
+	(r.mat as ShaderMaterial).set_shader_parameter(&"band", band)
+	(r.mat as ShaderMaterial).set_shader_parameter(&"fill", 0.0 if thin else 0.3 if bright else 0.18)
+	(r.mat as ShaderMaterial).set_shader_parameter(&"intensity", RING_BRIGHT_LIGHT if bright else 1.5)
+	(r.mat as ShaderMaterial).set_shader_parameter(&"ivory", RING_BRIGHT_IVORY if bright else 0.4)
 	r.time = time
 
 
@@ -1505,6 +1550,12 @@ func _slow_scale() -> float:
 ## what may start is whole again.
 func animate(delta: float) -> void:
 	budget.reset()
+	for i in range(_later_rings.size() - 1, -1, -1):
+		var w: Dictionary = _later_rings[i]
+		w.wait -= delta
+		if w.wait <= 0.0:
+			_later_rings.remove_at(i)
+			ring(w.center, w.radius, w.color, 0.32, 0.14, false, true)
 	for list: Array[Dictionary] in [_slashes, _inks]:
 		for s in list:
 			if s.life < 1.0 or (s.node as Node3D).visible:

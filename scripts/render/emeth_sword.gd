@@ -33,7 +33,7 @@ const GROUP := &"emeth_blade"
 ## depth in meters (it stands a little out of both faces of the crystal) and the share of the blade it runs along.
 const CORE := Color(0.6, 1.0, 0.75)
 const CORE_GLOW := 1.25
-const CORE_WIDTH := 0.022
+const CORE_WIDTH := 0.03
 const CORE_DEPTH := 0.076
 const CORE_SPAN := Vector2(0.08, 0.86)
 ## Eterra Stylized (STY-06, T22): the pale edge in that look, ivory-mint with no channel past 1.0 (nothing blooms).
@@ -83,6 +83,10 @@ static func make() -> MeshInstance3D:
 	light.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	light.albedo_color = CORE * CORE_GLOW
 	VisualProfile.vary(light, {&"albedo_color": STYLE_CORE})
+	# AD2-03: the pale edge is drawn over the cape too (his back to the camera covers the blade): no depth test, a priority
+	# over the body (it is a thin line, a few pixels over whoever stands in front of him)
+	light.no_depth_test = true
+	light.render_priority = 1
 	core.material_override = light
 	blade.add_child(core)
 	return root

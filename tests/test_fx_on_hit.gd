@@ -269,3 +269,22 @@ func test_hit_lights_are_capped_and_fade() -> void:
 	for n in fx.get_children():
 		if n is OmniLight3D:
 			assert_false((n as OmniLight3D).visible, "a hit light is gone after its time")
+
+
+func test_plain_contact_lights_and_sparks_at_the_target() -> void:
+	var at := Vector3(3.0, 1.0, 2.0)
+	fx.contact(at, Vector3.RIGHT, Color(0.2, 1.0, 0.5), false, 1)
+	var best := 0.0
+	for n in fx.get_children():
+		if n is OmniLight3D and (n as OmniLight3D).visible:
+			best = maxf(best, (n as OmniLight3D).light_energy)
+			assert_eq((n as OmniLight3D).position, at, "the light is on the one struck")
+	assert_almost_eq(best, Fx.CONTACT_LIGHT[1], 0.01, "blow 2 lights it 1.4")
+	assert_gt(fx.showing(&"motes"), 0, "slivers fly from it")
+
+
+func test_brado_echo_ring_comes_later() -> void:
+	fx.ring_later(Vector2.ZERO, 3.0, Color.WHITE, 0.08)
+	assert_eq(fx.showing(&"rings"), 0, "not yet")
+	fx.animate(0.1)
+	assert_eq(fx.showing(&"rings"), 1, "the second ring after its wait")
