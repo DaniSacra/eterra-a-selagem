@@ -4,11 +4,8 @@ extends RefCounted
 ## nodes a prerequisite joins (the lines), where the focus goes on a direction and on LB / RB. Built from the hero's
 ## MedallionDef (places) and Talents catalog (rules); a new Gift or hero needs no code here.
 
-## Half the cone of a direction press, and the farthest an edge of the lines runs along the ring.
+## Half the cone of a direction press.
 const CONE := deg_to_rad(30.0)
-const EDGE_MAX := 130.0
-## Nodes at the same angle with another radius are a spur: always linked to the ring.
-const SPUR_ANGLE := 0.5
 
 var def: MedallionDef
 var catalog: Array[TalentDef]
@@ -18,6 +15,8 @@ var pos: Dictionary = {}
 var sector: Dictionary = {}
 ## Node ids in clockwise order from the crown's left ultimate.
 var order: Array[StringName] = []
+## The branches, clockwise from twelve o'clock by the angle of their innermost node: [{branch, first (the entry's id)}].
+var branches: Array[Dictionary] = []
 
 
 func _init(p_def: MedallionDef, p_catalog: Array[TalentDef]) -> void:
@@ -37,6 +36,7 @@ func _init(p_def: MedallionDef, p_catalog: Array[TalentDef]) -> void:
 			return _clock(na.angle) < _clock(nb.angle)
 		return na.radius < nb.radius)
 	order = ids
+	branches = _branches()
 
 
 ## The angle as a turn that starts a little left of the crown (the left ultimate comes first).
@@ -83,49 +83,48 @@ func nearest(from: StringName) -> StringName:
 	return best
 
 
-## The first node of the next (step 1) or previous (step -1) sector, clockwise; wraps. The crown and the ultimates are one.
-func sector_step(from: StringName, step: int) -> StringName:
-	var runs: Array[StringName] = []  # first node of each run of one sector
-	var cur := 999
-	for id: StringName in order:
-		if sector[id] != cur:
-			cur = sector[id]
-			runs.append(id)
-	var at := 0
-	for i in runs.size():
-		if order.find(from) >= order.find(runs[i]):
-			at = i
-	# the crown's sector (with the ultimates round it) is entered at the crown itself
-	for i in runs.size():
-		if sector[runs[i]] == -1:
-			runs[i] = MedallionDef.CROWN_ID
-	return runs[posmod(at + step, runs.size())]
-
-
-## The prerequisite lines: pairs [a, b] of node ids (a Gift to the one it needs, a spur to the ring node at its angle), only between neighbours of the ring.
-func edges() -> Array:
-	var out: Array = []
-	var seen := {}
-	for t in catalog:
-		if not pos.has(t.id):
-			continue
-		var wants: Array[TalentDef] = []
-		for o in catalog:
-			if o.id == t.needs:
-				wants.append(o)
-		for w in wants:
-			if pos.has(w.id) and (pos[t.id] as Vector2).distance_to(pos[w.id]) <= EDGE_MAX:
-				_add(out, seen, t.id, w.id)
+## The branches of the medallion, clockwise from twelve o'clock: {branch, first (the node nearest the centre)}.
+func _branches() -> Array[Dictionary]:
+	var by: Dictionary = {}
 	for n in def.nodes:
-		for m in def.nodes:
-			if n.id != m.id and absf(n.angle - m.angle) < SPUR_ANGLE and absf(n.radius - MedallionDef.RING) > 1.0 \
-					and absf(m.radius - MedallionDef.RING) < 1.0:
-				_add(out, seen, n.id, m.id)
+		var t := talent(n.id)
+		if t == null:
+			continue
+		if not by.has(t.branch) or n.radius < def.find(by[t.branch]).radius:
+			by[t.branch] = n.id
+	var out: Array[Dictionary] = []
+	for b: int in by:
+		out.append({"branch": b, "first": by[b]})
+	out.sort_custom(func(x: Dictionary, y: Dictionary) -> bool:
+		return posmod(def.find(x.first).angle, 360.0) < posmod(def.find(y.first).angle, 360.0))
 	return out
 
 
-func _add(out: Array, seen: Dictionary, a: StringName, b: StringName) -> void:
-	var key := "%s|%s" % [a, b] if String(a) < String(b) else "%s|%s" % [b, a]
-	if not seen.has(key):
-		seen[key] = true
-		out.append([a, b])
+## The next (step 1) or previous (step -1) branch, clockwise, entered at its first node; the crown at the centre is one
+## stop of the round (LB and RB), and it wraps.
+func sector_step(from: StringName, step: int) -> StringName:
+	var stops: Array[StringName] = [MedallionDef.CROWN_ID]
+	for b in branches:
+		stops.append(b.first)
+	var at := 0
+	if sector.get(from, -1) != -1:
+		for i in branches.size():
+			if branches[i].branch == sector[from]:
+				at = i + 1
+	return stops[posmod(at + step, stops.size())]
+
+
+## The lines "from the centre": each entry to the crown, each middle to its branch's entry, each apex to its branch's
+## middles; pairs [a, b] (the farther node first). Only between nodes this medallion has.
+func edges() -> Array:
+	var out: Array = []
+	for t in catalog:
+		if not pos.has(t.id):
+			continue
+		if t.tier == TalentDef.Tier.ENTRY:
+			out.append([t.id, MedallionDef.CROWN_ID])
+			continue
+		for o in catalog:
+			if o.branch == t.branch and int(o.tier) == int(t.tier) - 1 and pos.has(o.id):
+				out.append([t.id, o.id])
+	return out

@@ -74,37 +74,75 @@ func test_nodes_clear_the_panel_and_the_screen() -> void:
 			assert_lt(p.y + n.diameter * 0.5, 720.0, "%s past the foot" % n.id)
 
 
-func test_place_matches_the_spec_table() -> void:
+func test_places_go_from_the_centre_along_three_axes() -> void:
 	var def := _def("warrior")
-	assert_lt(def.position_of(def.find(&"disciplina")).distance_to(MedallionDef.place(40.0, 254.0)), 1.5)
-	assert_lt(def.position_of(def.find(&"crown")).distance_to(Vector2(620, 124)), 0.5)
-	assert_lt(def.position_of(def.find(&"forca_titanica")).distance_to(MedallionDef.place(200.0, 254.0)), 1.5)
+	assert_lt(def.position_of(def.find(&"crown")).distance_to(MedallionDef.CENTER), 0.5, "the crown is the medallion at the centre")
+	# Combo up, Ímpeto bottom left, Domínio bottom right: entry by the centre, apex at the tip, two middles side by side
+	for row: Array in [[&"disciplina", &"cadencia", &"maestria_marcial", &"apogeu", 0.0],
+			[&"forca_concentrada", &"determinacao", &"concentracao", &"forca_titanica", 240.0],
+			[&"ruptura", &"voz_do_leao", &"imposicao", &"investida_implacavel", 120.0]]:
+		var ax: float = row[4]
+		var entry := def.find(row[0])
+		var apex := def.find(row[3])
+		assert_almost_eq(entry.angle, ax, 0.01)
+		assert_almost_eq(apex.angle, ax, 0.01)
+		assert_lt(entry.radius, def.find(row[1]).radius, "the entry is nearest the centre")
+		assert_lt(def.find(row[1]).radius, apex.radius, "the apex at the tip")
+		assert_almost_eq(def.find(row[1]).radius, def.find(row[2]).radius, 0.01, "the middles side by side")
+		assert_gt(apex.diameter, def.find(row[1]).diameter)
+		assert_gt(def.find(row[1]).diameter, entry.diameter)
 
 
-# ---------- the pure parts ----------
+# ---------- the order of opening, from the centre ----------
 
-func test_nav_edges_follow_the_prerequisites() -> void:
-	var def := _def("warrior")
-	var nav := MedallionNav.new(def, HeroDef.warrior().talents().catalog)
-	var edges := nav.edges()
-	var pairs := {}
-	for e: Array in edges:
-		pairs["%s|%s" % [e[0], e[1]]] = true
-	assert_true(pairs.has("cadencia|disciplina"), "the Middle runs to the Gift it needs")
-	assert_true(pairs.has("apogeu|maestria_marcial"), "the Apex runs to the Gift it needs")
-	assert_true(pairs.has("forca_titanica|forca_concentrada"), "an apex that needs the entry")
-	assert_true(pairs.has("maestria_marcial|cadencia") or pairs.has("maestria_marcial|disciplina"), "a spur is tied to the ring")
-	for e: Array in edges:
-		assert_lte((nav.pos[e[0]] as Vector2).distance_to(nav.pos[e[1]]), 130.0, "no line runs far: %s %s" % [e[0], e[1]])
+func test_open_order_entry_then_a_middle_then_the_apex() -> void:
+	var book := HeroDef.warrior().talents()
+	var memory := 99
+	assert_eq(book.open_problem(&"forca_concentrada", 20, [], memory), Talents.Problem.OK, "an entry opens first")
+	assert_eq(book.open_problem(&"determinacao", 20, [], memory), Talents.Problem.PATH, "a middle waits for the entry")
+	assert_eq(book.open_problem(&"forca_titanica", 20, [], memory), Talents.Problem.PATH, "the apex waits for a middle")
+	assert_eq(book.open_problem(&"forca_titanica", 20, ["forca_concentrada"], memory), Talents.Problem.PATH, "the entry alone is not enough")
+	assert_eq(book.open_problem(&"determinacao", 20, ["forca_concentrada"], memory), Talents.Problem.OK)
+	assert_eq(book.open_problem(&"concentracao", 20, ["forca_concentrada"], memory), Talents.Problem.OK, "either middle")
+	assert_eq(book.open_problem(&"forca_titanica", 20, ["forca_concentrada", "concentracao"], memory), Talents.Problem.OK, "one middle is enough")
+	assert_eq(book.open_problem(&"forca_titanica", 20, ["determinacao"], memory), Talents.Problem.OK, "an older save opened out of order keeps the path")
+	assert_eq(book.open_problem(&"ruptura", 20, [], memory), Talents.Problem.OK, "other branches do not wait for this one")
+	assert_eq(book.open_problem(&"voz_do_leao", 20, ["forca_concentrada"], memory), Talents.Problem.PATH, "nor count for it")
 
 
-func test_nav_direction_goes_to_the_nearest_on_that_side() -> void:
-	var nav := MedallionNav.new(_def("warrior"), HeroDef.warrior().talents().catalog)
-	assert_eq(nav.neighbor(&"crown", Vector2.RIGHT), &"disciplina")
-	assert_eq(nav.neighbor(&"crown", Vector2.LEFT), &"investida_implacavel")
-	var down := nav.neighbor(&"crown", Vector2.DOWN)
-	assert_ne(down, &"crown", "something is always found")
-	assert_ne(nav.neighbor(&"imposicao", Vector2.RIGHT), &"imposicao", "from the spur the arrow goes on")
+func test_open_in_refuses_out_of_order_and_spends_nothing() -> void:
+	var book := HeroDef.warrior().talents()
+	var d := _data("warrior", XP_TOP, 20)
+	assert_false(book.open_in(d, "warrior", &"investida_implacavel", 20))
+	assert_eq(MaterialPurse.amount(d, MaterialPurse.MEMORY), 20)
+	assert_true(book.open_in(d, "warrior", &"ruptura", 20))
+	assert_true(book.open_in(d, "warrior", &"imposicao", 20))
+	assert_true(book.open_in(d, "warrior", &"investida_implacavel", 20))
+
+
+func test_a_gift_open_out_of_order_stays_open_and_the_panel_names_what_is_missing() -> void:
+	var d := _data("warrior", XP_TOP, 20)
+	SaveData.hero(d, "warrior").opened = ["investida_implacavel"]
+	var lo := HeroLoadout.new(HeroDef.warrior(), d)
+	assert_true(lo.is_open(lo.book.find(&"investida_implacavel")), "kept")
+	var imp := lo.book.find(&"imposicao")
+	assert_eq(lo.can_open(imp), Talents.Problem.PATH)
+	var why := lo.next_step(imp)
+	assert_eq(why.key, &"dons_path_need")
+	assert_string_contains(T.t(why.key, why.args), T.t(&"talent_ruptura"))
+	var s := _screen("warrior", d)
+	var info := s._gift_info(&"imposicao", s.view.def.find(&"imposicao"))
+	assert_false(info.enabled, "no hold on a node out of order")
+	assert_eq(info.reason, T.t(why.key, why.args))
+	assert_false(T.t(why.key, why.args).contains("\u2014"))
+
+
+func test_holding_a_gift_out_of_order_opens_nothing() -> void:
+	var d := _data("warrior", XP_TOP, 20)
+	var s := _screen("warrior", d)
+	s.press(&"determinacao")
+	assert_eq(s._hold_node, &"", "no hold starts")
+	assert_eq(Talents.opened_of(SaveData.hero(d, "warrior")).size(), 0)
 
 
 func test_nav_sector_step_walks_the_ring_and_wraps() -> void:

@@ -27,9 +27,13 @@ const SHELL := Color("b8b4aa")
 const IVORY := Color(0.97, 0.93, 0.84)
 const LINE := Color("8e7444")
 const LOCKED_D := 48.0
-const LABEL_GAP := 58.0
+const LABEL_FS := 24
+const LABEL_NEAR := 14.0
+## The three branches of the medallion in the colours of the PO's drawing (Combo terracotta, Impeto blue, Dominio gold).
+const BRANCH_TINT := {
+	TalentDef.Branch.COMBO: Color("b8553a"), TalentDef.Branch.IMPETO: Color("3f7fc0"), TalentDef.Branch.DOMINIO: Color("c9a03c"),
+}
 const NODE_NUM_MIN := 16
-const LABEL_APART := 24.0
 const CAPTION_MAX := 70
 const CAPTION_W := 230.0
 const CAPTION_FS := 16
@@ -182,9 +186,17 @@ func state_of(id: StringName) -> HeroLoadout.State:
 	return loadout.state(nav.talent(id))
 
 
+## A node's place from the medallion's centre (the transform the lines are drawn in).
+func spot_rel(id: StringName) -> Vector2:
+	var n := def.find(id)
+	return MedallionDef.place(n.angle, n.radius) - MedallionDef.CENTER
+
+
 func tint_of(id: StringName) -> Color:
 	var t := nav.talent(id)
-	return GiftArt.ULT_INK if t == null else GiftArt.gift_ink(t)
+	if t == null:
+		return GiftArt.ULT_INK
+	return BRANCH_TINT.get(t.branch, GiftArt.gift_ink(t))
 
 
 # ---- input ----
@@ -223,7 +235,7 @@ func _draw() -> void:
 		return
 	draw_set_transform(MedallionDef.CENTER, _turn(), Vector2.ONE)
 	_draw_frame()
-	draw_arc(Vector2.ZERO, MedallionDef.RING, 0.0, TAU, 160, Color(LINE, 0.6), 3.0, true)
+	draw_arc(Vector2.ZERO, MedallionDef.RING, 0.0, TAU, 160, Color(LINE, 0.45), 1.5, true)
 	for e: Array in _edges:
 		_draw_edge(self, e[0], e[1], false)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
@@ -281,33 +293,29 @@ func _draw_frame() -> void:
 		draw_colored_polygon(PackedVector2Array([at + dir * s * 1.6, at + perp * s * 0.5, at - dir * s * 1.6, at - perp * s * 0.5]), Color(UiKit.GOLD, 0.8))
 
 
-## One prerequisite line between nodes a (the one that asks) and b: along the ring between two ring nodes, straight for a
-## spur. Lit when both are on (3 px, branch ink toward gold, and its glow), half when one side is reached (2 px, half
-## alpha), nothing else (the ring line is the base).
+## One line "from the centre" between nodes a (the farther) and b: the branch colour always, thick and dim as the
+## skeleton; lit when both are on (branch colour toward gold, and its glow), half when one side is reached.
 func _draw_edge(ci: CanvasItem, a: StringName, b: StringName, glow_pass: bool) -> void:
 	var sa := state_of(a)
 	var sb := state_of(b)
 	var lit := sa == HeroLoadout.State.EQUIPPED and sb == HeroLoadout.State.EQUIPPED
 	var half := not lit and (_reached(sa) or _reached(sb))
-	if not lit and not half:
-		return
 	if glow_pass and not lit:
 		return
 	var tint := tint_of(a)
-	var col := tint.lightened(0.15).lerp(UiKit.GOLD, 0.5) if lit else Color(tint, 0.75)
+	var col := Color(tint.darkened(0.1), 0.8)
+	var w := 6.0
+	if lit:
+		col = tint.lightened(0.15).lerp(UiKit.GOLD, 0.35)
+		w = 7.0
+	elif half:
+		col = Color(tint, 0.85)
 	if glow_pass:
 		col = Color(tint.lightened(0.3), 0.3 * _appear(a))
-	var na := def.find(a)
-	var nb := def.find(b)
-	var w := (12.0 if glow_pass else 5.0) if lit else 3.5
-	if absf(na.radius - nb.radius) < 1.0:
-		var a1 := deg_to_rad(na.angle - 90.0)
-		var a2 := deg_to_rad(nb.angle - 90.0)
-		if absf(a2 - a1) > PI:
-			a2 += TAU if a2 < a1 else -TAU
-		ci.draw_arc(Vector2.ZERO, na.radius, a1, a2, 24, col, w, true)
-	else:
-		ci.draw_line(MedallionDef.place(na.angle, na.radius) - MedallionDef.CENTER, MedallionDef.place(nb.angle, nb.radius) - MedallionDef.CENTER, col, w, true)
+		w = 14.0
+	if not glow_pass:
+		ci.draw_line(spot_rel(a), spot_rel(b), Color(UiKit.INK, 0.55), w + 4.0, true)
+	ci.draw_line(spot_rel(a), spot_rel(b), col, w, true)
 
 
 static func _reached(s: HeroLoadout.State) -> bool:
@@ -340,6 +348,10 @@ func _draw_node(n: MedallionNodeDef) -> void:
 		HeroLoadout.State.SEALED:
 			fill = tint.lerp(IRON, 0.7).darkened(0.35)
 			icon = SHELL
+			if t != null and loadout.can_open(t) == Talents.Problem.PATH:
+				fill = fill.lerp(DEEP, 0.5)
+				icon = Color(SHELL, 0.6)
+				rim = IRON
 		HeroLoadout.State.EQUIPPED:
 			rim = UiKit.GOLD
 			fill = tint.lightened(0.1)
@@ -435,56 +447,45 @@ func _draw_needs(focus_c: Vector2, focus_r: float) -> void:
 	_dashed(c, r, UiKit.GOLD, 4.0)
 
 
-## The name of every branch written on the inside of the ring at the middle of its sector (the hero's three branches): [{text, pos, ink}].
+## The name of every branch in big letters in its colour, by the tip of the branch (its apex): below the apex of a
+## bottom branch, beside the one at the top (the banner is above it): [{text, at (the centre of the text), w, ink}].
 func _sector_labels() -> Array:
-	var sums := {}
-	for n in def.nodes:
-		var t := nav.talent(n.id)
-		if t == null or not HeroLoadout.BRANCH_KEY.has(t.branch):
-			continue
-		var s: Dictionary = sums.get(t.branch, {"sum": 0.0, "n": 0, "r": INF, "first": n.id, "at": n.angle})
-		s.sum += n.angle
-		s.n += 1
-		if n.radius < s.r:
-			s.r = n.radius
-			s.first = n.id
-			s.at = n.angle
-		sums[t.branch] = s
 	var out: Array = []
-	for b: int in sums:
-		# right inside the branch's innermost node (its own angle), not at the middle of the sector
-		out.append({"text": T.t(HeroLoadout.BRANCH_KEY[b]), "angle": sums[b].at, "radius": sums[b].r - LABEL_GAP, "first": sums[b].first, "ink": GiftArt.ink(b).lightened(0.45)})
-	# two labels closer than LABEL_APART: the one with the larger angle slides along the arc
-	out.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return x.angle < y.angle)
-	for i in range(1, out.size()):
-		for k in 12:
-			if MedallionDef.place(out[i].angle, out[i].radius).distance_to(MedallionDef.place(out[i - 1].angle, out[i - 1].radius)) >= LABEL_APART:
-				break
-			out[i].angle += 3.0
+	for b in nav.branches:
+		var apex: MedallionNodeDef = null
+		for n in def.nodes:
+			var t := nav.talent(n.id)
+			if t != null and t.branch == b.branch and (apex == null or n.radius > apex.radius):
+				apex = n
+		if apex == null or not HeroLoadout.BRANCH_KEY.has(b.branch):
+			continue
+		var text := T.t(HeroLoadout.BRANCH_KEY[b.branch])
+		var w := UiKit.TITLE_FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_FS).x
+		var c := MedallionDef.place(apex.angle, apex.radius)
+		var out_dir := (c - MedallionDef.CENTER).normalized()
+		var at := c + Vector2(apex.diameter * 0.5 + LABEL_NEAR + w * 0.5, 0.0) if out_dir.y < -0.3 \
+				else c + Vector2(0.0, apex.diameter * 0.5 + LABEL_NEAR + LABEL_FS * 0.6)
+		out.append({"text": text, "at": at, "w": w, "ink": tint_of(apex.id).lightened(0.25)})
 	return out
 
 
 func _draw_labels() -> void:
 	var f := UiKit.TITLE_FONT
+	var a := clampf(reveal * 2.0, 0.0, 1.0)
 	for l: Dictionary in _labels:
-		var p := spot_at(l.angle, l.radius)
-		var w := f.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
-		var to := spot(l.first)
-		var dir := (to - p).normalized()
-		var edge := minf(w * 0.5 + 8.0, 12.0 / maxf(absf(dir.y), 0.01)) if absf(dir.y) > 0.01 else w * 0.5 + 8.0
-		draw_line(p + dir * edge, to - dir * (def.find(l.first).diameter * 0.5 + 1.5), Color(l.ink, 0.5), 1.0, true)
-		var box := Rect2(p - Vector2(w * 0.5 + 8.0, 12.0), Vector2(w + 16.0, 24.0))
-		draw_style_box(UiKit.box(Color(0.03, 0.025, 0.035, 0.78 * clampf(reveal * 2.0, 0.0, 1.0)), Color(l.ink, 0.7), 1, 0, 11), box)
-		draw_string(f, p + Vector2(-w * 0.5, 5.5), l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, l.ink)
+		var at: Vector2 = l.at + Vector2(-l.w * 0.5, LABEL_FS * 0.35)
+		draw_string_outline(f, at, l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_FS, 6, Color(UiKit.INK, 0.9 * a))
+		draw_string(f, at, l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_FS, Color(l.ink, a))
 
 
-## The boxes the branch labels fill now (same size and place as _draw_labels).
+## The boxes the branch names fill now (same place as _draw_labels) and the other nodes' discs: what the caption avoids.
 func label_boxes() -> Array[Rect2]:
 	var out: Array[Rect2] = []
-	var f := UiKit.TITLE_FONT
 	for l: Dictionary in _labels:
-		var w := f.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
-		out.append(Rect2(spot_at(l.angle, l.radius) - Vector2(w * 0.5 + 8.0, 12.0), Vector2(w + 16.0, 24.0)))
+		out.append(Rect2(l.at - Vector2(l.w * 0.5, LABEL_FS * 0.7), Vector2(l.w, LABEL_FS * 1.4)))
+	for n in def.nodes:
+		if n.id != focus_id:
+			out.append(Rect2(spot(n.id) - Vector2.ONE * n.diameter * 0.5, Vector2.ONE * n.diameter))
 	return out
 
 

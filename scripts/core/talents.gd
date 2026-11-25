@@ -15,8 +15,8 @@ extends RefCounted
 ##     OPENED, SHORT); book.open_in(data, hero_id, id, level) -> bool (spends the Memória and keeps it opened; the
 ##     caller writes the save); Talents.opened_of(block) -> Array (the saved ids).
 
-## OPENED: already open (the answer of open_problem); SHORT: not enough Memória to open it; SEALED: revealed, not opened.
-enum Problem { OK, UNKNOWN, TWICE, LOCKED, DEVOTION, SLOT_TAKEN, NEEDS, SEALED, OPENED, SHORT }
+## PATH: an earlier Gift of its branch is not open yet (open_path). OPENED: already open (the answer of open_problem); SHORT: not enough Memória to open it; SEALED: revealed, not opened.
+enum Problem { OK, UNKNOWN, TWICE, LOCKED, DEVOTION, SLOT_TAKEN, NEEDS, SEALED, OPENED, SHORT, PATH }
 
 var catalog: Array[TalentDef] = []
 
@@ -115,7 +115,34 @@ func open_problem(id: StringName, level: int, opened: Array, memory: int) -> Pro
 		return Problem.LOCKED
 	if is_open(t, opened):
 		return Problem.OPENED
+	if not path_open(t, opened):
+		return Problem.PATH
 	return Problem.OK if memory >= t.memory_cost else Problem.SHORT
+
+
+## The Gifts of its own branch that must be open before this one can be opened, "from the centre" (Daniel, 2026-11-25): an
+## entry asks for none, a middle for the branch's entry, an apex for at least one of the branch's middles.
+func path_wanted(t: TalentDef) -> Array[TalentDef]:
+	var out: Array[TalentDef] = []
+	if t.tier == TalentDef.Tier.ENTRY:
+		return out
+	var before := TalentDef.Tier.ENTRY if t.tier == TalentDef.Tier.MIDDLE else TalentDef.Tier.MIDDLE
+	for o in catalog:
+		if o.branch == t.branch and o.tier == before:
+			out.append(o)
+	return out
+
+
+## True when the order of opening is kept for t: nothing wanted, or one of path_wanted is open. Only the step of opening
+## asks it; a Gift already open out of order (an older save) stays open.
+func path_open(t: TalentDef, opened: Variant) -> bool:
+	var wanted := path_wanted(t)
+	if wanted.is_empty():
+		return true
+	for o in wanted:
+		if is_open(o, opened):
+			return true
+	return false
 
 
 ## Opens a Gift in save data: spends its Memória (MaterialPurse) and adds it to heroes.<hero_id>.opened. False when

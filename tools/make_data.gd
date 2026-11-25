@@ -3153,24 +3153,42 @@ func _angels() -> void:
 
 # ---------- the Gifts medallion (docs/art/dons_medallion_spec.md 3) ----------
 
-## Node places per hero: [id, angle (degrees from twelve o'clock, clockwise), radius, diameter]. The ring is 254, a spur 200
-## or 308; the crown and the apexes are the big ones (72), the rest 48 (bigger since the children's test, 2026-11-23). A new Gift is a new row here.
+## Node places per hero, "from the centre" (Daniel, 2026-11-25): the crown (Maestria and the lion) is the medallion at the
+## middle, over the hero's figure; each branch leaves it along its own axis (up, bottom right, bottom left, 120 degrees
+## apart) with four Gifts: a small entry by the crown, two middles side by side, the big apex at the tip.
+## [id, angle (degrees from twelve o'clock, clockwise), radius, diameter]. A new Gift is a new id in a list below.
+const MEDALLION_AXES := [0.0, 120.0, 240.0]
+const MEDALLION_ENTRY := [88.0, 44.0]
+const MEDALLION_MIDDLE := [170.0, 56.0]
+const MEDALLION_SIDE := 14.3
+const MEDALLION_APEX := [240.0, 76.0]
 const MEDALLION_WARRIOR := [
-	[&"crown", 0, 254, 72], [&"disciplina", 40, 254, 48], [&"cadencia", 60, 254, 48], [&"maestria_marcial", 60, 308, 48],
-	[&"apogeu", 80, 254, 72], [&"forca_concentrada", 180, 254, 48], [&"determinacao", 160, 254, 48], [&"concentracao", 160, 308, 48],
-	[&"forca_titanica", 200, 254, 72], [&"ruptura", 280, 254, 48], [&"voz_do_leao", 300, 254, 48], [&"imposicao", 300, 308, 48],
-	[&"investida_implacavel", 320, 254, 72],
+	[&"disciplina", &"cadencia", &"maestria_marcial", &"apogeu"],
+	[&"ruptura", &"voz_do_leao", &"imposicao", &"investida_implacavel"],
+	[&"forca_concentrada", &"determinacao", &"concentracao", &"forca_titanica"],
 ]
 const MEDALLION_MAGA := [
-	[&"crown", 0, 254, 72], [&"faisca_persistente", 40, 254, 48], [&"orvalho_gelido", 60, 254, 48], [&"reacao_amplificada", 60, 308, 48],
-	[&"fissao_termica", 80, 254, 72], [&"geada_demorada", 160, 254, 48], [&"chao_ardente", 180, 254, 48], [&"suspensao_ampla", 180, 308, 48],
-	[&"campo_elementar", 200, 254, 72], [&"eco_eletrico", 280, 254, 48], [&"fluxo_de_magia", 300, 254, 48], [&"estilhaco_gemeo", 300, 308, 48],
-	[&"tempestade_contida", 320, 254, 72],
+	[&"faisca_persistente", &"orvalho_gelido", &"reacao_amplificada", &"fissao_termica"],
+	[&"geada_demorada", &"chao_ardente", &"suspensao_ampla", &"campo_elementar"],
+	[&"eco_eletrico", &"fluxo_de_magia", &"estilhaco_gemeo", &"tempestade_contida"],
 ]
+
+
+## The rows of a hero's branches: [entry, middle left, middle right, apex] on each axis, after the crown at the centre.
+func _medallion_rows(branches: Array) -> Array:
+	var rows: Array = [[&"crown", 0.0, 0.0, 72.0]]
+	for i in branches.size():
+		var ax: float = MEDALLION_AXES[i]
+		var ids: Array = branches[i]
+		rows.append([ids[0], ax, MEDALLION_ENTRY[0], MEDALLION_ENTRY[1]])
+		rows.append([ids[1], ax - MEDALLION_SIDE, MEDALLION_MIDDLE[0], MEDALLION_MIDDLE[1]])
+		rows.append([ids[2], ax + MEDALLION_SIDE, MEDALLION_MIDDLE[0], MEDALLION_MIDDLE[1]])
+		rows.append([ids[3], ax, MEDALLION_APEX[0], MEDALLION_APEX[1]])
+	return rows
 
 
 func _medallion() -> void:
-	for pair: Array in [["warrior", MEDALLION_WARRIOR, []], ["maga", MEDALLION_MAGA, []]]:
+	for pair: Array in [["warrior", _medallion_rows(MEDALLION_WARRIOR), []], ["maga", _medallion_rows(MEDALLION_MAGA), []]]:
 		var m := MedallionDef.new()
 		m.hero = StringName(pair[0])
 		for row: Array in pair[1]:

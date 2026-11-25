@@ -163,9 +163,21 @@ func why(t: TalentDef) -> Dictionary:
 			return {"key": &"hero_why_slot", "args": {"name": _name(holder)}}
 		Talents.Problem.NEEDS:
 			return needs(t)
+		Talents.Problem.PATH:
+			return path_text(t)
 		Talents.Problem.SEALED:
 			return {"key": &"hero_why_sealed", "args": {"cost": t.memory_cost}}
 	return {}
+
+
+## What must be open first, from the centre, as {key, args} for T.t ("Abra antes: Cadência ou Maestria Marcial."), {} when nothing.
+func path_text(t: TalentDef) -> Dictionary:
+	var names: Array[String] = []
+	for o in book.path_wanted(t):
+		names.append(_name(o))
+	if names.is_empty():
+		return {}
+	return {"key": &"dons_path_need", "args": {"what": " ou ".join(names)}}
 
 
 ## The short reason of a BLOCKED Gift, for the codex entry's second line ("Pede: X", "Já há um Dom no botão Y: X",
@@ -198,6 +210,8 @@ func next_step(t: TalentDef) -> Dictionary:
 		State.BLOCKED:
 			return why(t)
 		State.SEALED:
+			if can_open(t) == Talents.Problem.PATH:
+				return path_text(t)
 			return {"key": &"hero_step_open", "args": {"cost": t.memory_cost, "have": memory()}}
 	return {}
 

@@ -1374,6 +1374,8 @@ entries = {
 "dons_do_chosen": "Equipado",
 "dons_locked": "Maestria {n}",
 "dons_block_devotion": "Falta {n} de Vagas",
+"dons_path_need": "Abra antes: {what}.",
+"dons_footer": "{n} Dons · {b} especializações",
 "dons_short_memory": "Faltam {n} de Memória",
 "dons_hero_reveals": "No nível {n} você ganha o Dom {what}",
 "dons_hero_top": "Maestria completa",

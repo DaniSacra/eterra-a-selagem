@@ -102,6 +102,7 @@ func _build() -> void:
 	panel.pressed.connect(func() -> void: press(focus_id))
 	panel.released.connect(release)
 	_stage.add_child(panel)
+	_stage.add_child(_footer())
 	_stage.add_child(_notes())
 	_stage.add_child(_howto())
 	_stage.add_child(Legend.new())
@@ -195,6 +196,18 @@ func _notes() -> Control:
 		l.add_theme_constant_override(&"outline_size", 3)
 		box.add_child(l)
 	return box
+
+
+## "12 Dons · 3 especializações" at the foot of the medallion.
+func _footer() -> Control:
+	var l := UiKit.label(T.t(&"dons_footer", {"n": loadout.book.catalog.size(), "b": view.nav.branches.size()}), UiKit.GOLD, 18, UiKit.TITLE_FONT)
+	l.name = "footer"
+	l.add_theme_constant_override(&"outline_size", 4)
+	l.custom_minimum_size.x = 400.0
+	l.position = Vector2(MedallionDef.CENTER.x - 200.0, 664.0)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return l
 
 
 ## The one fixed instruction, under the panel.
@@ -427,6 +440,11 @@ func _gift_info(id: StringName, n: MedallionNodeDef) -> Dictionary:
 			if loadout.can_open(t) == Talents.Problem.OK:
 				info.verb = T.t(&"dons_do_open")
 				info.enabled = true
+			elif loadout.can_open(t) == Talents.Problem.PATH:
+				# "from the centre": the Dom before it on the branch is not open yet (the node shows its padlock)
+				info.hold = false
+				var why := loadout.path_text(t)
+				info.reason = T.t(why.key, why.args)
 			else:
 				info.reason = T.t(&"dons_short_memory", {"n": t.memory_cost - loadout.memory()})
 		HeroLoadout.State.OPEN:

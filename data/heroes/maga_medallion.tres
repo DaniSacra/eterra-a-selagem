@@ -7,82 +7,90 @@
 script = ExtResource("1_iai08")
 id = &"crown"
 kind = 0
+radius = 0.0
 diameter = 72.0
 
 [sub_resource type="Resource" id="Resource_t4mjh"]
 script = ExtResource("1_iai08")
 id = &"faisca_persistente"
-angle = 40.0
-diameter = 48.0
+radius = 88.0
+diameter = 44.0
 
 [sub_resource type="Resource" id="Resource_ar47v"]
 script = ExtResource("1_iai08")
 id = &"orvalho_gelido"
-angle = 60.0
-diameter = 48.0
+angle = -14.3
+radius = 170.0
+diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_jmfgj"]
 script = ExtResource("1_iai08")
 id = &"reacao_amplificada"
-angle = 60.0
-radius = 308.0
-diameter = 48.0
+angle = 14.3
+radius = 170.0
+diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_wfgim"]
 script = ExtResource("1_iai08")
 id = &"fissao_termica"
-angle = 80.0
-diameter = 72.0
+radius = 240.0
+diameter = 76.0
 
 [sub_resource type="Resource" id="Resource_i05ou"]
 script = ExtResource("1_iai08")
 id = &"geada_demorada"
-angle = 160.0
-diameter = 48.0
+angle = 120.0
+radius = 88.0
+diameter = 44.0
 
 [sub_resource type="Resource" id="Resource_ftrow"]
 script = ExtResource("1_iai08")
 id = &"chao_ardente"
-angle = 180.0
-diameter = 48.0
+angle = 105.7
+radius = 170.0
+diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_7utln"]
 script = ExtResource("1_iai08")
 id = &"suspensao_ampla"
-angle = 180.0
-radius = 308.0
-diameter = 48.0
+angle = 134.3
+radius = 170.0
+diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_u7pa0"]
 script = ExtResource("1_iai08")
 id = &"campo_elementar"
-angle = 200.0
-diameter = 72.0
+angle = 120.0
+radius = 240.0
+diameter = 76.0
 
 [sub_resource type="Resource" id="Resource_0gqi1"]
 script = ExtResource("1_iai08")
 id = &"eco_eletrico"
-angle = 280.0
-diameter = 48.0
+angle = 240.0
+radius = 88.0
+diameter = 44.0
 
 [sub_resource type="Resource" id="Resource_y0nvg"]
 script = ExtResource("1_iai08")
 id = &"fluxo_de_magia"
-angle = 300.0
-diameter = 48.0
+angle = 225.7
+radius = 170.0
+diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_a2ms4"]
 script = ExtResource("1_iai08")
 id = &"estilhaco_gemeo"
-angle = 300.0
-radius = 308.0
-diameter = 48.0
+angle = 254.3
+radius = 170.0
+diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_1t4hd"]
 script = ExtResource("1_iai08")
 id = &"tempestade_contida"
-angle = 320.0
-diameter = 72.0
+angle = 240.0
+radius = 240.0
+diameter = 76.0
 
 [resource]
 script = ExtResource("2_q8gre")

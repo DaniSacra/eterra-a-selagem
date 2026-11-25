@@ -7,82 +7,90 @@
 script = ExtResource("1_bkdpb")
 id = &"crown"
 kind = 0
+radius = 0.0
 diameter = 72.0
 
 [sub_resource type="Resource" id="Resource_ov5dw"]
 script = ExtResource("1_bkdpb")
 id = &"disciplina"
-angle = 40.0
-diameter = 48.0
+radius = 88.0
+diameter = 44.0
 
 [sub_resource type="Resource" id="Resource_bmlb3"]
 script = ExtResource("1_bkdpb")
 id = &"cadencia"
-angle = 60.0
-diameter = 48.0
+angle = -14.3
+radius = 170.0
+diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_rdfn3"]
 script = ExtResource("1_bkdpb")
 id = &"maestria_marcial"
-angle = 60.0
-radius = 308.0
-diameter = 48.0
+angle = 14.3
+radius = 170.0
+diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_56jj5"]
 script = ExtResource("1_bkdpb")
 id = &"apogeu"
-angle = 80.0
-diameter = 72.0
+radius = 240.0
+diameter = 76.0
 
 [sub_resource type="Resource" id="Resource_2elhg"]
 script = ExtResource("1_bkdpb")
-id = &"forca_concentrada"
-angle = 180.0
-diameter = 48.0
+id = &"ruptura"
+angle = 120.0
+radius = 88.0
+diameter = 44.0
 
 [sub_resource type="Resource" id="Resource_iele5"]
 script = ExtResource("1_bkdpb")
-id = &"determinacao"
-angle = 160.0
-diameter = 48.0
+id = &"voz_do_leao"
+angle = 105.7
+radius = 170.0
+diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_a457m"]
 script = ExtResource("1_bkdpb")
-id = &"concentracao"
-angle = 160.0
-radius = 308.0
-diameter = 48.0
+id = &"imposicao"
+angle = 134.3
+radius = 170.0
+diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_fcufg"]
 script = ExtResource("1_bkdpb")
-id = &"forca_titanica"
-angle = 200.0
-diameter = 72.0
+id = &"investida_implacavel"
+angle = 120.0
+radius = 240.0
+diameter = 76.0
 
 [sub_resource type="Resource" id="Resource_3tvy6"]
 script = ExtResource("1_bkdpb")
-id = &"ruptura"
-angle = 280.0
-diameter = 48.0
+id = &"forca_concentrada"
+angle = 240.0
+radius = 88.0
+diameter = 44.0
 
 [sub_resource type="Resource" id="Resource_vpj7u"]
 script = ExtResource("1_bkdpb")
-id = &"voz_do_leao"
-angle = 300.0
-diameter = 48.0
+id = &"determinacao"
+angle = 225.7
+radius = 170.0
+diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_4piio"]
 script = ExtResource("1_bkdpb")
-id = &"imposicao"
-angle = 300.0
-radius = 308.0
-diameter = 48.0
+id = &"concentracao"
+angle = 254.3
+radius = 170.0
+diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_cdbws"]
 script = ExtResource("1_bkdpb")
-id = &"investida_implacavel"
-angle = 320.0
-diameter = 72.0
+id = &"forca_titanica"
+angle = 240.0
+radius = 240.0
+diameter = 76.0
 
 [resource]
 script = ExtResource("2_sdean")
