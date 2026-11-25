@@ -43,6 +43,9 @@ const OMEGA_THICK := 0.4
 const OMEGA_WAKE := 1.4
 ## Brightest channel the wave writes (linear, under Game.GLOW_THRESHOLD 1.3) and its gold thread's share of it.
 const WAVE_PEAK := 1.0
+const WAVE_PATH_TIME := 0.4
+const WAVE_PATH_REACH := 9.0
+const WAVE_PATH_WIDTH := Vector2(0.9, 2.4)
 ## How far the leading edge goes toward white (emeth_wave.gdshader edge_pale; vfx_pass_spec.md V-06: 0.5, it was 0.35).
 const WAVE_EDGE_PALE := 0.5
 const WAVE_GOLD := Color(0.95, 0.72, 0.3)
@@ -195,6 +198,7 @@ func fire_wave(kind: Kind, from: Vector2, dir: Vector2, damage: float, distance:
 	if kind == Kind.BLADE:
 		s.node.scale = Vector3.ONE * size
 		return s
+	_light_path(from, dir, distance, size, color)
 	# the blade wave, flat, its bow along the flight (emeth_wave.gdshader)
 	var omega := kind == Kind.WAVE
 	mat.set_shader_parameter(&"span_m", s.radius * 2.0 if omega else WAVE_SPAN)
@@ -207,6 +211,15 @@ func fire_wave(kind: Kind, from: Vector2, dir: Vector2, damage: float, distance:
 	mat.set_shader_parameter(&"body_light", WAVE_BODY_LIGHT)
 	mat.set_shader_parameter(&"ink", WAVE_INK)
 	return s
+
+
+## The wave flies at 22 to 62 m/s (under two frames at 30 fps), so what it draws as it goes is gone before a capture
+## or a slow eye catches it: it leaves its path lit for WAVE_PATH_TIME s, a broad beam along the flight (Fx.thrust),
+## the way the sword's arc stays. Only the look.
+func _light_path(from: Vector2, dir: Vector2, distance: float, size: float, color: Color) -> void:
+	if fx == null:
+		return
+	fx.thrust(from, dir.normalized(), minf(distance, WAVE_PATH_REACH), clampf(size, WAVE_PATH_WIDTH.x, WAVE_PATH_WIDTH.y), color, WAVE_PATH_TIME, HEIGHT)
 
 
 ## A Gift's wide wave (Corte Crescente on the spin, Onda Carregada, Fio do Passo; Combat._gift_wave) drawn bolder: it

@@ -159,6 +159,9 @@ const BLADE_REACH := 2.6
 ## Seconds of its sweep a cut already shows on the frame of the blow (one frame at 60): it starts with the blade,
 ## never a frame behind it (VX-01).
 const SLASH_LEAD := 1.0 / 60.0
+## The arc lives at least this long whatever the swing's own time (0.12 s was under 4 frames at 30 fps: a capture a frame
+## every 0.1 s never caught the cut; the head still sweeps in Feel.slash_sweep_time, the rest is the tail fading).
+const SLASH_MIN_LIFE := 0.34
 ## The ribbon's tail behind the head of the swing: at most this share of the arc, and at most this many degrees
 ## (a spin all around keeps a blade of light, not a full disc).
 const SLASH_TAIL := 0.8
@@ -717,6 +720,7 @@ func behind(pos: Vector3, meters: float) -> Vector3:
 ## 0: the outer edge of the arc, for a cut that is not the paladin's). The head sweeps the arc in
 ## Feel.slash_sweep_time and is already SLASH_LEAD into it on the frame it starts.
 func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, time: float = 0.2, flip: bool = false, height: float = 0.9, ink_under: bool = true, blade: float = BLADE_REACH) -> void:
+	time = maxf(time, SLASH_MIN_LIFE)
 	var tilt := _rng.randf_range(-0.08, 0.08)
 	var s: Dictionary = _take(_slashes)
 	var ink: Dictionary = _take(_inks)
