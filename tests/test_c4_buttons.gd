@@ -117,8 +117,9 @@ func test_the_shift_blessing_waits_for_the_ultimate() -> void:
 	assert_eq(Encounter.supply(state, sarael), 6)
 
 
-func test_legendary_is_one_percent_and_three_at_the_guardian() -> void:
-	assert_almost_eq(BoonState.rarity_odds(Boon.RARITY_CHANCE)[Boon.Rarity.LEGENDARY], 0.01, 0.0001)
+func test_legendary_is_two_percent_and_three_at_the_guardian() -> void:
+	# SW-B2 (2026-11-25): the curve went 16/6/2 (SWORN's), the guardian's stays 90/7/3
+	assert_almost_eq(BoonState.rarity_odds(Boon.RARITY_CHANCE)[Boon.Rarity.LEGENDARY], 0.02, 0.0001)
 	assert_almost_eq(BoonState.rarity_odds(Boon.RARITY_CHANCE_GUARDIAN)[Boon.Rarity.LEGENDARY], 0.03, 0.0001)
 
 
