@@ -709,6 +709,8 @@ entries = {
 "codex_role_trap": "Planta placas de espinho onde você pisou ou terminou a esquiva: não esquive sempre para o mesmo lugar",
 "codex_role_throw": "Lança um machado que vai e volta pelo mesmo caminho: saia da linha nos dois sentidos",
 "codex_role_sweep": "Fincado, varre uma faixa em volta de si; colado nele não fere",
+"codex_role_scurry": "Vem em bando e cai com um golpe: varra o grupo com o giro",
+"codex_role_captain": "Chama esqueletos e nunca recua: derrube-o antes que a sala encha",
 "codex_role_guardian": "Guardião",
 "codex_morvath_legend": "As fases que você já alcançou na luta contra Morvath.",
 "codex_morvath_count": "Enfrentado {met}x, selado {won}x",

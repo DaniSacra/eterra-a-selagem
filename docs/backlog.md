@@ -34,6 +34,9 @@ Donos: `gameplay-engineer` (código: `combat.gd`, `player.gd`, `horde.gd`, combo
 | SW-C9 | Portas: medalhão maior, mais alto e mais brilhante sobre cada porta (imagem do Daniel) | ícone grande flutuando no arco | medalhão menor, junto da porta | lê de longe na câmera Perto; quickwin junto da fase 1 (`ui-ux-designer` ou `environment-artist`) |
 Aceite da fase: Daniel jogando diz se ficou gostoso; robô em 12 sementes sem `stuck`; `combat_cadence.md` com a matriz nova.
 
+**Fase 1 feita em 2026-11-25** (exe no fim desta rodada): C1 (esquiva, especial, Brado e Investida cortam qualquer golpe desde o quadro 0; G-2 desfeito), C2 (15/15/30, só o giro empurra), C3 (pausa 120 ms em um alvo, 160 ms no giro, 60 ms em grupo; `Combat.PAUSE_*`), C4 (comuns 8 de dano no máximo, avisos por peso; o Cavaleiro fica em 0,6 s a pedido de 2026-11-23), C5 (barra de atordoamento em elites, guardiões e Morvath: 2,5 / 3,5 s, x1,25, +25% de dano quebrado), C6 (nossa esquiva já é igual ou melhor: 5,6 m, 0,2 s, 0,8 s), C7 (Rato de osso, pacotes de 4 a 6), C8 (Capitão esqueleto, 5,5x de vida, chama 5), C9 (medalhões grandes lado a lado na tela). Suíte 2287/2287; robô 6 sementes: Morvath em 4, `stuck` 0. Capturas em `docs/gallery/cycle_2026-11-25_sworn1/`.
+Sobras para afinar: bolinha escura ao lado do medalhão da Bênção; na sala da Provação os dois medalhões ainda se encostam e o título "Provação" aparece duas vezes; o Capitão chama na pose de andar (o guarda não tem animação de chamado).
+
 ### Fase 2, ritmo das salas e da descida (SW-R)
 Dono: `room-designer` (e `balance-designer` nos números). Cerca de meio dia.
 - **SW-R1 Orçamento de inimigos por sala** (substitui contar corpos): curva 4 a 8 até a sala 5, queda para 6 logo depois do minichefe, até 11 no fim; custo por tipo
