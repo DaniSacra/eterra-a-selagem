@@ -422,7 +422,7 @@ func _enemies() -> void:
 		"guard_up_hit_damage": 6.0, "guard_up_hit_windup": 0.6, "guard_back_mult": 1.5,
 		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35), "material": &"armor"})
 	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest_elder", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 420.0, "speed": 2.0,
-		"damage": 9.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 900.0, "armor_stagger": 2.5, "attack_damage": 5.0, "attack_range": 9.0,
+		"damage": 9.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 900.0, "armor_stagger": 2.5, "attack_damage": 4.0, "attack_range": 9.0,
 		"attack_cooldown": 3.9, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA, "shot_orb": true, "shot_speed": 6.0,
 		"escort": [&"guard"] as Array[StringName],
 		# Daniel 2026-11-23: it calls two archers at a time to the floor's edge, away from him (3 standing at most, one call every 10 to 14 s),
@@ -1207,6 +1207,9 @@ func _plates(rects: Array[Rect2], from := 0.0) -> HazardDef:
 
 ## RP-06: the slabs wake from the 4th room (progress 0.34); in the 2nd and 3rd they lie at rest and teach.
 const PLATES_FROM := 0.34
+## RD-02: the Crypt A's slabs wake early (the 2nd or 3rd room) with a longer warning, to teach before the 5th room.
+const TEACH_FROM := 0.15
+const TEACH_WARN := 1.5
 ## A1 (Daniel, 2026-11-20: the game must get harder): every room hazard takes 10 from the paladin (the Hades II's own
 ## trap damage on the same 30 of life; was 7, RP-03 step 1), the edge that crumbles 7 (was 5). Enemies keep 60.
 const HAZARD_HERO := 10.0
@@ -1402,7 +1405,10 @@ func _crypt() -> RoomLayout:
 	# (its south-west corner is the way in: three corners and the east side). B: at the foot of the dividing wall, one
 	# on each side of its end.
 	l.hazard = _plates([_rect(-11.5, -8.5, 2.0, 5.0), _rect(8.0, 11.0, -7.5, -4.5), _rect(-7.6, -4.6, -3.6, -0.6),
-		_rect(8.0, 11.0, 1.3, 4.3)], PLATES_FROM)
+		_rect(8.0, 11.0, 1.3, 4.3)], TEACH_FROM)
+	# RD-02: the one hazard to learn before the 5th room: awake from the 2nd room (0.15), the warning 1.5 s (the enemies' 1.2 or more),
+	# the same 10 and 60, so "the red warning hurts both sides" is seen by a child who falls early
+	l.hazard.warn = TEACH_WARN
 	# A1, RP-12: the oil urns beside the slabs (late)
 	l.hazard.also = _urns(PackedVector2Array(CRYPT_URNS), PackedVector4Array(CRYPT_OIL))
 	l.hazard.also.also = _spikes([Vector2(-4.0, -4.5), Vector2(3.0, 1.6)], 0.4)

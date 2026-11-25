@@ -396,10 +396,11 @@ urn_flows = PackedVector4Array(10.2, -2.6, 4.2, -2.6, -0.6, -9, 5.4, -9)
 [sub_resource type="Resource" id="Resource_vlysx"]
 script = ExtResource("7_gcpwj")
 kind = 1
+warn = 1.5
 hero_damage = 10.0
 enemy_damage = 60.0
 plates = Array[Rect2]([Rect2(-11.5, 2, 3, 3), Rect2(8, -7.5, 3, 3), Rect2(-7.6, -3.6, 3, 3), Rect2(8, 1.3, 3, 3)])
-from_progress = 0.34
+from_progress = 0.15
 plate_hero_damage = PackedFloat32Array()
 plate_push = PackedVector2Array()
 strips = PackedVector4Array()
