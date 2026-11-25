@@ -87,6 +87,17 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 @export var poise_stun := 1.2
 @export var poise_vuln := 0.4
 @export var poise_idle := 4.0
+## SW-C5 (SWORN's stagger bar): the elites, the guardians and the Capitão have poise too. poise_mult: the share of a common's of each
+## blow they take (as BossDef.posture_mult; 1: the same); poise_growth: each break after the first needs this many times more
+## (SWORN 1.25; 1: always the same, the commons').
+@export var poise_mult := 1.0
+@export var poise_growth := 1.0
+## SW-C8: a blow never pushes it (SWORN's immuneToKnockback: the Capitão and the bosses); `heavy` only pushes it less.
+@export var no_push := false
+## SW-C7: a kind that comes in a pack (EncounterGen): never fewer than this many heads in a wave it is in (0: as many as its rating buys).
+@export var pack_min := 0
+## ... and never more than this many in one wave (0: no limit; SW-C7: 6).
+@export var pack_max := 0
 ## GF-12 (D-42, Hades II per enemy): seconds a blow that wounds it stuns it (it stops, a wind-up or an attack under
 ## way is cut and never lands, its warning on the floor goes; Horde.flinch). Hades plays its StunAnimations; their
 ## length is in the animations, not the scripts: ours is the hit pose's (Horde.HURT_TIME). 0: never (Hades

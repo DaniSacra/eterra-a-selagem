@@ -20,6 +20,12 @@ static func settle(left: float, full: float, idle: float, after: float) -> float
 	return full if idle >= after else left
 
 
+## SW-C5 (SWORN's stagger, subsequentStunResistMultiplier): the full poise after `breaks` breaks, each `growth` times the one before
+## (1: always the same, the commons'). The stun it lasts is the def's own.
+static func full_after(base: float, breaks: int, growth: float) -> float:
+	return base * pow(maxf(growth, 1.0), maxi(breaks, 0))
+
+
 ## Whether a body takes poise now: it has some, and is not frozen, stunned, down or invulnerable.
 static func takes(full: float, frozen_t: float, stun_t: float, down: bool, invulnerable: bool) -> bool:
 	return full > 0.0 and frozen_t <= 0.0 and stun_t <= 0.0 and not down and not invulnerable

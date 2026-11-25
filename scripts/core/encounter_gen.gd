@@ -260,12 +260,17 @@ static func stand_in(kinds: Array[StringName], defs: Dictionary, melee: bool) ->
 	return &""
 
 
-## Bodies a wave puts on the floor: a head of a trinca is all its figures (EnemyDef.group).
+## Bodies a wave puts on the floor: a head of a trinca is all its figures (EnemyDef.group); a head of a pack (SW-C7, pack_min) is half
+## one (a pack of 5 rats takes the room of 2 or 3 soldiers).
 static func bodies(wave: Array, defs: Dictionary) -> int:
-	var n := 0
+	var n := 0.0
 	for id: StringName in wave:
-		n += maxi(1, (defs[id] as EnemyDef).group)
-	return n
+		var d := defs[id] as EnemyDef
+		n += PACK_SHARE if d.pack_min > 0 else float(maxi(1, d.group))
+	return ceili(n)
+
+
+const PACK_SHARE := 0.5
 
 
 ## One of the stage's pools that may be drawn at this depth, by weight (null: none).
@@ -347,7 +352,10 @@ static func waves(stage: StageDef, depth: int, kinds: Array[StringName], alive: 
 		for id in in_wave:
 			var rating := _rating(defs, id)
 			var slice := maxf(rating, rng.randfn(mean, mean / 3.0))
-			for i in ceili(slice / rating):
+			var kind_heads := maxi(ceili(slice / rating), (defs[id] as EnemyDef).pack_min)
+			if (defs[id] as EnemyDef).pack_max > 0:
+				kind_heads = mini(kind_heads, (defs[id] as EnemyDef).pack_max)  # (a pack of 4 to 6, not a flood: the room's budget is not all rats)
+			for i in kind_heads:
 				wave.append(id)
 		_fit(wave, in_wave, alive, defs)
 		_shuffle(wave, rng)
@@ -358,18 +366,38 @@ static func waves(stage: StageDef, depth: int, kinds: Array[StringName], alive: 
 ## Brings a wave into the range: the cheapest of its kinds fills it up to the fewest; past the most, the kind with
 ## the most heads gives way (every kind keeps one).
 static func _fit(wave: Array[StringName], kinds: Array[StringName], alive: Vector2i, defs: Dictionary) -> void:
-	var cheapest := kinds[0]
-	for id in kinds:
-		if _rating(defs, id) < _rating(defs, cheapest):
-			cheapest = id
 	while bodies(wave, defs) < alive.x:
-		wave.append(cheapest)
-	while bodies(wave, defs) > maxi(alive.y, kinds.size()) and wave.size() > kinds.size():
-		var crowded := kinds[0]
+		var cheapest := kinds[0]
+		var found := false
 		for id in kinds:
-			if wave.count(id) * maxi(1, (defs[id] as EnemyDef).group) > wave.count(crowded) * maxi(1, (defs[crowded] as EnemyDef).group):
+			var d := defs[id] as EnemyDef
+			if d.pack_max > 0 and wave.count(id) >= d.pack_max:
+				continue  # (a full pack takes no more)
+			if not found or _rating(defs, id) < _rating(defs, cheapest):
+				cheapest = id
+				found = true
+		wave.append(cheapest if found else kinds[0])
+	while bodies(wave, defs) > maxi(alive.y, kinds.size()) and wave.size() > kinds.size():
+		wave.erase(_crowded(wave, kinds, defs))
+
+
+## The kind that gives way first: the one with the most heads (a Trinca's are three bodies); a pack (EnemyDef.pack_min) keeps its
+## heads while any other kind has more than one, and only when nothing else is left does it shrink.
+static func _crowded(wave: Array[StringName], kinds: Array[StringName], defs: Dictionary) -> StringName:
+	for keep_packs in [true, false]:
+		var crowded := &""
+		var most := 0
+		for id in kinds:
+			var d := defs[id] as EnemyDef
+			var n := wave.count(id)
+			if n <= (maxi(1, d.pack_min) if keep_packs else 1):
+				continue
+			if n * maxi(1, d.group) > most:
+				most = n * maxi(1, d.group)
 				crowded = id
-		wave.erase(crowded)
+		if crowded != &"":
+			return crowded
+	return kinds[0]
 
 
 static func _rating(defs: Dictionary, id: StringName) -> float:

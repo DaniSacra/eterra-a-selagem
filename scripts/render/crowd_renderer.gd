@@ -468,11 +468,12 @@ func add_bar(d: EnemyDef, top: Vector3, life: float, armor: float, crowded := fa
 
 
 ## C1b: the poise's small gauge under a common enemy's life bar (pale, empties; only after a blow wore it). left: 0..1.
-func add_poise_bar(d: EnemyDef, top: Vector3, left: float, crowded := false) -> void:
+func add_poise_bar(d: EnemyDef, top: Vector3, left: float, crowded := false, armored := false) -> void:
 	var w := maxf(BAR_MIN_WIDTH, d.radius * BAR_WIDTH) * POISE_WIDTH
 	var h := BAR_HEIGHT * POISE_HEIGHT * (BAR_CROWD_HEIGHT if crowded else 1.0)
 	var life_h := BAR_HEIGHT * (BAR_CROWD_HEIGHT if crowded else 1.0)
-	var at := top + Vector3(0, BAR_ABOVE - life_h * 0.75 - h * 0.5, 0)
+	var under := BAR_ARMOR_HEIGHT * (BAR_CROWD_HEIGHT if crowded else 1.0) if armored else 0.0  # (the armor bar is a strip more under the life)
+	var at := top + Vector3(0, BAR_ABOVE - life_h * 0.75 - h * 0.5 - under, 0)
 	var l := clampf(left, 0.0, 1.0)
 	_put(_bars, Vector3(w, 0, 0), Vector3(0, h, 0), Vector3.BACK, at, Color(l, 0.0, (BAR_CROWD_FADE if crowded else 1.0) + 8.0, l))
 

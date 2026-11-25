@@ -39,12 +39,15 @@ func _def(id: String) -> EnemyDef:
 	return load("res://data/enemies/%s.tres" % id) as EnemyDef
 
 
-func test_poise_only_on_the_four_commons() -> void:
+func test_poise_on_the_commons_and_since_SW_C5_on_the_elites_and_guardians() -> void:
 	for id in ["skeleton", "runner", "mage", "archer"]:
 		assert_eq(_def(id).poise, 100.0, id)
-		assert_false(_def(id + "_elite").poise > 0.0, id + " elite")
-	for id in ["trinca", "guard", "priest", "varredor", "knight", "morvath"]:
+		assert_eq(_def(id).poise_growth, 1.0, id + " asks the same every time")
+		assert_gt(_def(id + "_elite").poise, 0.0, id + " elite (SW-C5)")
+		assert_lt(_def(id + "_elite").poise_mult, 1.0, id + " elite takes less of a blow")
+	for id in ["trinca", "guard", "priest", "varredor", "morvath"]:
 		assert_eq(_def(id).poise, 0.0, id)
+	assert_gt(_def("knight").poise, 0.0, "the guardians (SW-C5)")
 
 
 func test_common_life_and_warnings() -> void:

@@ -287,6 +287,16 @@ const ENEMY_RECOVER := {"skeleton": [1.2, 1.0], "runner": [1.35, 0.5], "guard": 
 ## (Feel.poise_weights, by DealtBy source; burns, zones, echoes, Blessings that act alone and psalms take none). Attack
 ## 0.15 (about 7 blows, as many as it takes to kill it), the rest 1 or 2.
 const POISE := 100.0
+## SW-C5 (docs/design/sworn_rea_kingswood_2026-11-25.md 4): the elites, the guardians, the Capitao and Morvath have a poise bar too. The
+## buttons wear it by the same weights times poise_mult (elite 0.5: 13 light blows, 3 specials; guardian 0.3, Capitao 0.4), it breaks
+## into a stun (SWORN 2.0 common, 2.5 elite and captain, 3.5 guardian and boss) taking poise_vuln more damage, and each break after the first
+## asks 1.25 times more. The commons keep theirs as they were (1.2 s, 0.4, always the same).
+const ELITE_POISE_MULT := 0.5
+const ELITE_POISE_STUN := 2.5
+const ELITE_POISE_VULN := 0.25
+const GUARDIAN_POISE_MULT := 0.3
+const GUARDIAN_POISE_STUN := 3.5
+const POISE_GROWTH := 1.25
 const POISE_WEIGHTS := {"attack": 0.15, "special": 0.6, "dash": 0.5, "omega_attack": 0.7, "omega_special": 0.7,
 	"cast_omega": 0.7, "shout": 0.6, "ultimate": 1.0, "crystal": 0.25}
 
@@ -303,7 +313,7 @@ func _enemies() -> void:
 		# T5-02, T5-09: it trembles in the hold of its wind-up; its blade comes down 0.1 s into its pounce, reaching
 		# 1.1 m (at its size) past its body in an arc of 120 degrees ahead, as its body lands
 		"windup_shake": 0.025, "strike_at": 0.1, "strike_reach": 1.1, "strike_degrees": 120.0,
-		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "poise": POISE}, {"armor": 80.0, "hp": 60.0, "attack_windup": 0.9, "poise": 0.0, "speed": 380.0 / U, "rating": 12.0, "recover_time": ENEMY_RECOVER.skeleton[1],
+		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "poise": POISE}, {"armor": 80.0, "hp": 60.0, "attack_windup": 1.1, "poise": POISE, "poise_mult": ELITE_POISE_MULT, "poise_stun": ELITE_POISE_STUN, "poise_vuln": ELITE_POISE_VULN, "poise_growth": POISE_GROWTH, "speed": 380.0 / U, "rating": 12.0, "recover_time": ENEMY_RECOVER.skeleton[1],
 		# C19-1 (Q-11, Hades' Guard elite): two blades 0.2 s apart, the second where he stood at the end of the wind-up
 		"strikes": 2, "strike_gap": 0.2})
 	# the fast one that bursts all around itself (sheet: 0.9 of the soldier, stooped, embers in the chest); C17,
@@ -319,9 +329,10 @@ func _enemies() -> void:
 		# be read), then Hades' 0.5 s of the Radiator elite
 		# (its own bake, runner_elite.res: the same figure with a longer stride for its 7.4 m/s, 199 steps a minute; the
 		# common one's would be 259, Lote 2B)
-		{"armor": 85.0, "hp": 45.0, "attack_windup": 1.0, "poise": 0.0, "speed": 590.0 / U, "rating": 17.0, "recover_time": ENEMY_RECOVER.runner[1], "strikes": 2, "strike_gap": 0.5,
+		{"armor": 85.0, "hp": 45.0, "attack_windup": 1.0, "poise": POISE, "poise_mult": ELITE_POISE_MULT, "poise_stun": ELITE_POISE_STUN, "poise_vuln": ELITE_POISE_VULN, "poise_growth": POISE_GROWTH, "speed": 590.0 / U, "rating": 17.0, "recover_time": ENEMY_RECOVER.runner[1], "strikes": 2, "strike_gap": 0.5,
 			"model": &"runner_elite"})
 	_bigger_ones()
+	_pack_and_captain()
 	# Ranged enemies with the numbers of Hades II's ranged ones in its first region (study of 2026-11-16) and Daniel's
 	# rule of the same day: they stay at their farthest and shoot, never close in (keep_away is ours: Hades' mage hides
 	# instead of running). The caster (Hades: the Mage, its life and rating): 3.5 m/s; from up to 13.1 m (elite 16.25),
@@ -332,12 +343,12 @@ func _enemies() -> void:
 	# 0.7 to 0.9 s and 1.5 to 2.2 s behind a pillar (elite 0.8 to 1.2), 3.1 m past it; at most 3 at once (GP-6, 2026-11-22: 6 before, a third of all the damage he took).
 	# Cold violet (Daniel, 2026-11-14) until the VFX pass: magenta, DEAD_MAGENTA.
 	_pair({"id": &"mage", "model": &"mage", "behavior": B.ARCHER, "size": 1.27, "hp": 115.0, "speed": 280.0 / U, "damage": 6.0, "radius": 0.5,
-		"attack_damage": 6.0, "attack_range": 1050.0 / U, "attack_cooldown": 0.8 + 2.2, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA,
+		"attack_damage": 6.0, "attack_range": 1050.0 / U, "attack_cooldown": 0.8 + 2.2, "attack_windup": 0.875, "magic_color": DEAD_MAGENTA,
 		"shot_orb": true, "shot_speed": 560.0 / U, "shot_range": 1600.0 / U, "shot_turn": 20.0, "shot_homing": 0.8, "shot_ticks": 3, "shot_interval": 0.17,
 		"recoil": 400.0 / U, "cover_hug": 250.0 / U, "max_attackers": 3, "keep_away": 0.8,
 		"rating": 12.0, "role": &"control", "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY,
 		"recover_time": ENEMY_RECOVER.mage[0], "poise": POISE},
-		{"armor": 155.0, "hp": 80.0, "poise": 0.0, "attack_range": 1300.0 / U, "shot_ticks": 7, "attack_cooldown": 0.8 + 1.0, "rating": 24.0})
+		{"armor": 155.0, "hp": 80.0, "attack_windup": 1.0, "poise": POISE, "poise_mult": ELITE_POISE_MULT, "poise_stun": ELITE_POISE_STUN, "poise_vuln": ELITE_POISE_VULN, "poise_growth": POISE_GROWTH, "attack_range": 1300.0 / U, "shot_ticks": 7, "attack_cooldown": 0.8 + 1.0, "rating": 24.0})
 	# the crossbowman (Hades: the Screamer's life and rating; it has no shot there, a cone held on itself): a fast
 	# orange bolt along a line marked on the floor (the aim locks there) from 12 m, Daniel's request of 2026-11-16;
 	# from Hades, after each attack it runs 8.75 m from him for 1.5 to 1.75 s, and at most 2 wind up at once; 3.6 m/s
@@ -347,44 +358,44 @@ func _enemies() -> void:
 		# T5-05: the crossbow rises to the shoulder over its settle (it rose in 0.1 s)
 		"windup_settle": 0.25,
 		"rating": 13.0, "role": &"flank", "tell": T.BOLT, "tell_at": Vector3(-0.05, 1.62, 1.42), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY,
-		"recover_time": ENEMY_RECOVER.archer[0], "poise": POISE}, {"armor": 190.0, "hp": 130.0, "poise": 0.0, "rating": 34.0})
+		"recover_time": ENEMY_RECOVER.archer[0], "poise": POISE}, {"armor": 190.0, "hp": 130.0, "attack_windup": 1.0, "poise": POISE, "poise_mult": ELITE_POISE_MULT, "poise_stun": ELITE_POISE_STUN, "poise_vuln": ELITE_POISE_VULN, "poise_growth": POISE_GROWTH, "rating": 34.0})
 	# the brute: a long charge (1.15 s warning) and a slam on whoever comes close
-	_pair({"id": &"guard", "model": &"guard", "behavior": B.KNIGHT, "size": 1.5, "hp": 255.0, "speed": 260.0 / U, "damage": 14.0, "radius": 0.75,
-		"heavy": true, "attack_damage": 14.0, "attack_range": 500.0 / U + 3.0, "attack_cooldown": 1.9, "attack_windup": 1.15, "lunge_speed": 15.0,
-		"lunge_time": 0.4, "front_block": 0.7, "front_open": 4.0, "close_damage": 11.0, "close_range": 2.6, "close_windup": 0.85,
+	_pair({"id": &"guard", "model": &"guard", "behavior": B.KNIGHT, "size": 1.5, "hp": 255.0, "speed": 260.0 / U, "damage": 8.0, "radius": 0.75,
+		"heavy": true, "attack_damage": 8.0, "attack_range": 500.0 / U + 3.0, "attack_cooldown": 1.9, "attack_windup": 1.15, "lunge_speed": 15.0,
+		"lunge_time": 0.4, "front_block": 0.7, "front_open": 4.0, "close_damage": 8.0, "close_range": 2.6, "close_windup": 0.85,
 		# T5-06: braced in three beats, 0.15 s to settle and the last 0.35 s held with a tremble
 		"windup_settle": 0.15, "windup_hold": 0.3, "windup_shake": 0.03,
 		"rating": 18.0, "role": &"block", "tell": T.SHIELD, "tell_at": Vector3(0.45, 1.1, 0.4), "material": &"shield",
 		# its charge in flight is not cut (Hades: the charging Brute, WeaponSetImmuneToStun while it runs)
-		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "stun_immune_attacking": true, "recover_time": ENEMY_RECOVER.guard[0]}, {"armor": 330.0, "front_block": 0.6, "speed": 340.0 / U, "rating": 39.0})
+		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "stun_immune_attacking": true, "recover_time": ENEMY_RECOVER.guard[0]}, {"armor": 330.0, "front_block": 0.6, "speed": 340.0 / U, "rating": 39.0, "poise": POISE, "poise_mult": ELITE_POISE_MULT, "poise_stun": ELITE_POISE_STUN, "poise_vuln": ELITE_POISE_VULN, "poise_growth": POISE_GROWTH})
 	# the one rooted in place (Hades: the SiegeVine's life, rating and attack): from up to 22.5 m, 0.8 s of warning,
 	# one shadow vine creeping along the floor after the paladin at 1.9 m/s, turning 90 degrees a second at first and
 	# 15 less each second, for 12 s, 6 damage; then 3.25 s (elite: 3 vines 0.7 s apart, then 2.25 s). Before
 	# 2026-11-16 it dropped circles under him: those are Morvath's alone now.
-	_pair({"id": &"priest", "model": &"priest", "behavior": B.ARCHER, "size": 1.3, "hp": 290.0, "speed": 0.0, "damage": 10.0, "radius": 0.7,
-		"heavy": true, "attack_damage": 10.0, "attack_range": 1800.0 / U, "attack_cooldown": 3.25, "attack_windup": 0.8, "magic_color": DEAD_MAGENTA,
+	_pair({"id": &"priest", "model": &"priest", "behavior": B.ARCHER, "size": 1.3, "hp": 290.0, "speed": 0.0, "damage": 8.0, "radius": 0.7,
+		"heavy": true, "attack_damage": 8.0, "attack_range": 1800.0 / U, "attack_cooldown": 3.25, "attack_windup": 0.8, "magic_color": DEAD_MAGENTA,
 		"shot_orb": true, "shot_speed": 150.0 / U, "shot_turn": 90.0, "shot_turn_decay": 15.0, "shot_range": 150.0 / U * 12.0, "shot_low": true,
 		"ward_count": 3, "rating": 22.0, "role": &"area", "tell": T.RITUAL, "tell_at": Vector3(0.0, 1.3, 0.45), "vivid": 0.25,
 		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY},
-		{"armor": 390.0, "shot_ticks": 3, "shot_interval": 0.7, "attack_cooldown": 2.25, "rating": 48.0})
+		{"armor": 390.0, "shot_ticks": 3, "shot_interval": 0.7, "attack_cooldown": 2.25, "attack_windup": 1.0, "rating": 48.0, "poise": POISE, "poise_mult": ELITE_POISE_MULT, "poise_stun": ELITE_POISE_STUN, "poise_vuln": ELITE_POISE_VULN, "poise_growth": POISE_GROWTH})
 	# C5, CB-7 (Daniel's names, 2026-11-22): the Trinca, three small figures that walk the corners of a triangle round the
 	# paladin and pounce one at a time (a short pounce with a thin aim, the soldier's, never two blows at once). A felled
 	# figure lies in a mound and rises after 3.5 s if another of them still stands; all three down, it is over. A head of
 	# a wave is the three bodies (it counts as 3 of the 20 standing). No weapon, arms hanging, grey bone. The elite is four.
 	_pair({"id": &"trinca", "model": &"trio", "behavior": B.RUNNER, "size": 0.85, "hp": 45.0, "speed": 300.0 / U, "damage": 4.0, "radius": 0.42,
-		"attack_damage": 4.0, "attack_range": 2.6, "attack_cooldown": 1.5, "attack_windup": 0.9, "lunge_speed": 600.0 / U, "lunge_time": 0.25,
+		"attack_damage": 4.0, "attack_range": 2.6, "attack_cooldown": 1.5, "attack_windup": 0.85, "lunge_speed": 600.0 / U, "lunge_time": 0.25,
 		"rating": 12.0, "role": &"swarm", "group": 3, "rise_time": 3.5, "tint": Color(0.86, 0.87, 0.90), "vivid": -0.2,
 		"max_attackers": 1, "recover_time": 1.0, "aim_lock": 0.3, "windup_gap": 0.5, "windup_shake": 0.02,
 		"strike_at": 0.1, "strike_reach": 0.9, "strike_degrees": 100.0,
-		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY}, {"armor": 60.0, "group": 4, "rating": 28.0, "recover_time": 0.8})
+		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY}, {"armor": 60.0, "group": 4, "rating": 28.0, "recover_time": 0.8, "attack_windup": 1.0, "poise": POISE, "poise_mult": ELITE_POISE_MULT, "poise_stun": ELITE_POISE_STUN, "poise_vuln": ELITE_POISE_VULN, "poise_growth": POISE_GROWTH})
 	# C5, CB-7: the Varredor, rooted, 5.5 m of reach: 0.9 s of wind-up that shows where its bar starts and the way it will
 	# turn, then the bar (1.1 m across) swings 200 degrees in 1.6 s; within 1.6 m of it nothing hurts; it rests 1.4 s (the
 	# window to strike). One a fight (per_room), never in the room with the chain (RP-11: banned role "sweep" there).
 	_pair({"id": &"varredor", "ground_warning": true, "model": &"sweeper", "behavior": B.SWEEP, "size": 1.55, "hp": 160.0, "speed": 0.0, "damage": 8.0, "radius": 0.6,
-		"heavy": true, "attack_damage": 8.0, "attack_range": 5.5, "attack_width": 1.1, "attack_cooldown": 0.0, "attack_windup": 0.9,
+		"heavy": true, "attack_damage": 8.0, "attack_range": 5.5, "attack_width": 1.1, "attack_cooldown": 0.0, "attack_windup": 1.5,
 		"sweep_degrees": 200.0, "sweep_time": 1.6, "sweep_clear": 1.6, "aim_lock": 0.3, "recover_time": 1.4, "per_room": 1,
 		"rating": 22.0, "role": &"sweep", "tell": T.GLINT, "tell_at": Vector3(0.3, 2.3, 1.3), "tint": Color(0.70, 0.76, 0.82),
-		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY}, {"armor": 220.0, "rating": 44.0})
+		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY}, {"armor": 220.0, "rating": 44.0, "poise": POISE, "poise_mult": ELITE_POISE_MULT, "poise_stun": ELITE_POISE_STUN, "poise_vuln": ELITE_POISE_VULN, "poise_growth": POISE_GROWTH})
 	_support_ones()
 	_leap_and_throw()
 	_beam_and_trap()
@@ -401,6 +412,7 @@ func _enemies() -> void:
 		"exact_windup": true,
 		"charges": 1, "recharge_windup": 0.55, "aim_lock": 0.15, "raise_count": 3, "raise_max": 6, "escort": [&"mage", &"mage"] as Array[StringName],
 		"armor_soft": 0.3,
+		"poise": POISE, "poise_mult": GUARDIAN_POISE_MULT, "poise_stun": GUARDIAN_POISE_STUN, "poise_vuln": ELITE_POISE_VULN, "poise_growth": POISE_GROWTH,
 		"moves": [
 			_kmove(&"throw", {"from_life": 1.0, "cooldown": 18.0, "first": 8.0, "min_dist": 4.0, "max_dist": 16.0}),
 			_kmove(&"charge", {"count": 3, "from_life": 0.3, "cooldown": 10.0, "min_dist": 3.2, "max_dist": 14.0}),
@@ -433,7 +445,8 @@ func _enemies() -> void:
 		"volley_count": 3, "volley_every": 12.0, "volley_back": 8.0, "volley_back_time": 1.5, "volley_windup": 1.0, "volley_speed": 4.0,
 		"volley_spread": 50.0, "volley_turn": 60.0, "volley_life": 4.0, "volley_recover": 1.5,
 		"ward_count": 3, "ward_every": 5.0, "ward_armor": 40.0, "ward_radius": 10.0,
-		"tell": T.ORB, "tell_at": Vector3(-1.02, 2.15, 0.6)})
+		"tell": T.ORB, "tell_at": Vector3(-1.02, 2.15, 0.6),
+		"poise": POISE, "poise_mult": GUARDIAN_POISE_MULT, "poise_stun": GUARDIAN_POISE_STUN, "poise_vuln": ELITE_POISE_VULN, "poise_growth": POISE_GROWTH})
 	# the last of the region: Hades II's first guardian has 6050 life and hits for 4 to 14. His necromancy is the cold
 	# spectral green of Daniel's request of 2026-11-15 (SPECTRAL: bluer and paler than Emeth's crystal green); the
 	# fight's numbers are data/bosses/morvath.tres (_bosses)
@@ -487,16 +500,16 @@ func _leap_and_throw() -> void:
 	# the Saltador: 140 life, 4.2 m/s, keeps 4 to 7 m off; every 3.2 s four corners in L close on where the paladin stands over 0.8 s (the
 	# spot follows him and holds the last 0.3 s), it leaps (0.5 s in the air) and lands there hurting 12 in a square of 3 m across; it
 	# rests 1.0 s, low. Warning 0.8 s of marks and 0.5 s of flight. From room 3.
-	_enemy({"id": &"saltador", "model": &"runner", "behavior": B.LEAP, "size": 1.1, "hp": 140.0, "speed": 4.2, "damage": 12.0, "radius": 0.5,
-		"attack_damage": 12.0, "attack_range": 7.0, "attack_cooldown": 3.2, "attack_windup": 0.8, "aim_lock": 0.3, "leap_time": 0.5, "leap_half": 1.8,
+	_enemy({"id": &"saltador", "model": &"runner", "behavior": B.LEAP, "size": 1.1, "hp": 140.0, "speed": 4.2, "damage": 8.0, "radius": 0.5,
+		"attack_damage": 8.0, "attack_range": 7.0, "attack_cooldown": 3.2, "attack_windup": 0.8, "aim_lock": 0.3, "leap_time": 0.5, "leap_half": 1.8,
 		"recover_time": 1.0, "max_attackers": 1, "windup_gap": 0.5, "magic_color": Color(1.0, 0.55, 0.15), "rating": 15.0, "role": &"leap",
 		"per_room": 2, "tint": RUST, "vivid": 0.15, "tell": T.TREMBLE, "sway": 5.0, "windup_shake": 0.03, "stun_time": STUN,
 		"stun_heavy_time": STUN_HEAVY, "poise": POISE})
 	# the Lançador: 150 life, 3.6 m/s, keeps 6 to 8 m off; every 3.4 s a thin dotted line from its hand (0.8 s, locked), then an axe at
 	# 9 m/s out 11 m (less where stone is), 9 damage each way, and back along the same line; the line shows again 0.4 s before it turns.
 	# After the throw it backs away. From room 4.
-	_enemy({"id": &"lancador", "model": &"skeleton", "behavior": B.ARCHER, "size": 1.2, "hp": 150.0, "speed": 3.6, "damage": 9.0, "radius": 0.55,
-		"attack_damage": 9.0, "attack_range": 8.0, "attack_cooldown": 3.4, "attack_windup": 0.8, "magic_color": AXE_STEEL, "shot_orb": true,
+	_enemy({"id": &"lancador", "model": &"skeleton", "behavior": B.ARCHER, "size": 1.2, "hp": 150.0, "speed": 3.6, "damage": 8.0, "radius": 0.55,
+		"attack_damage": 8.0, "attack_range": 8.0, "attack_cooldown": 3.4, "attack_windup": 0.8, "magic_color": AXE_STEEL, "shot_orb": true,
 		"shot_speed": 9.0, "shot_range": 11.0, "shot_line": true, "shot_return": true, "keep_away": 0.75, "retreat_far": 6.0,
 		"retreat_time": Vector2(1.0, 1.4), "max_attackers": 1, "windup_gap": 0.5, "rating": 14.0, "role": &"throw", "per_room": 2,
 		"tint": Color(0.72, 0.8, 0.95), "vivid": -0.05, "tell": T.GLINT, "tell_at": Vector3(0.1, 1.9, -1.0), "stun_time": STUN,
@@ -514,7 +527,7 @@ func _beam_and_trap() -> void:
 	# the Canalizador: 130 life, planted (speed 0); within 12 m of the paladin a thread on him for 0.9 s (it follows, locked the last 0.3 s), then
 	# a beam 0.5 m across held 2.25 s in 5 pulses of 5, turning after him at 40 degrees a second; nothing hurts within 1 m of it; 2.4 s of rest. Room 6.
 	_enemy({"id": &"canalizador", "ground_warning": true, "model": &"channeler", "behavior": B.BEAM, "size": 1.3, "hp": 130.0, "speed": 0.0, "damage": 5.0, "radius": 0.55,
-		"attack_damage": 5.0, "attack_range": 12.0, "attack_cooldown": 2.4, "attack_windup": 0.9, "aim_lock": 0.3, "shot_ticks": 5, "shot_interval": 0.45,
+		"attack_damage": 5.0, "attack_range": 12.0, "attack_cooldown": 2.4, "attack_windup": 1.5, "aim_lock": 0.3, "shot_ticks": 5, "shot_interval": 0.45,
 		"shot_turn": 40.0, "attack_width": 0.5, "sweep_clear": 1.0, "recover_time": 0.4, "magic_color": BEAM_PALE, "tint": Color(0.62, 0.9, 0.95),
 		"vivid": 0.1, "rating": 18.0, "role": &"beam", "per_room": 1, "never_with": [&"sweep"] as Array[StringName], "tell": T.ORB,
 		"tell_at": Vector3(-0.96, 2.0, 0.58), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "poise": POISE})
@@ -522,7 +535,7 @@ func _beam_and_trap() -> void:
 	# paladin stands, or where his last dodge ended if under 3 s ago: an X for 1.0 s, then 10 damage to whoever is on it (the dodge's
 	# protection passes over it) and the spikes stand 0.5 s more; the plate lies dormant until 6 s after it was laid; at most 4 lie at once. Room 9.
 	_enemy({"id": &"armadilheiro", "model": &"trapper", "behavior": B.SUPPORT, "size": 1.2, "hp": 110.0, "speed": 3.8, "damage": 4.0, "radius": 0.5,
-		"attack_range": 7.0, "attack_cooldown": 2.6, "attack_windup": 0.5, "retreat_far": 5.0, "flee_speed": 4.8, "plate_damage": 10.0,
+		"attack_range": 7.0, "attack_cooldown": 2.6, "attack_windup": 0.5, "retreat_far": 5.0, "flee_speed": 4.8, "plate_damage": 8.0,
 		"plate_time": 1.0, "plate_half": 0.8, "plate_max": 4, "plate_window": 3.0, "plate_spikes": 0.5, "plate_life": 6.0, "magic_color": Color(0.96, 0.92, 0.78),
 		"tint": Color(0.7, 0.8, 0.5), "vivid": -0.05, "rating": 16.0, "role": &"trap", "per_room": 1, "tell": T.RITUAL,
 		"tell_at": Vector3(0.0, 1.0, 0.45), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "poise": POISE})
@@ -567,11 +580,36 @@ func _bigger_ones() -> void:
 		"max_attackers": 1, "recover_time": 1.4, "aim_lock": 0.3, "windup_gap": 0.35, "windup_shake": 0.03, "strike_at": 0.1, "strike_reach": 1.7,
 		"strike_degrees": 150.0, "strikes": 2, "strike_gap": 0.45, "stun_time": STUN, "stun_heavy_time": STUN_HEAVY})
 	# the runner: 1.25 s of warning (the common 1.0 or 0.85), a wider burst, and a second one 0.6 s after the first
-	_enemy({"id": &"runner_big", "ground_warning": true, "model": &"runner", "behavior": B.PULSE, "size": 1.6, "hp": 225.0, "speed": 330.0 / U, "damage": 9.0, "radius": 0.7,
-		"heavy": true, "big": true, "attack_damage": 9.0, "attack_range": 2.2, "attack_width": 3.4, "attack_cooldown": 1.8, "attack_windup": 1.25,
+	_enemy({"id": &"runner_big", "ground_warning": true, "model": &"runner", "behavior": B.PULSE, "size": 1.6, "hp": 225.0, "speed": 330.0 / U, "damage": 8.0, "radius": 0.7,
+		"heavy": true, "big": true, "attack_damage": 8.0, "attack_range": 2.2, "attack_width": 3.4, "attack_cooldown": 1.8, "attack_windup": 1.5,
 		"magic_color": DEAD_CRIMSON, "rating": 28.0, "role": &"react", "per_room": 1, "tell": T.TREMBLE, "sway": 5.0, "windup_shake": 0.05, "strike_at": 0.1,
 		"strikes": 2, "strike_gap": 0.6, "death_burst": 1.0, "tint": Color(1.0, 0.72, 0.5), "vivid": 0.1, "stun_time": STUN, "stun_heavy_time": STUN_HEAVY,
 		"recover_time": 1.2})
+
+
+## SW-C7 and SW-C8 (docs/design/sworn_rea_kingswood_2026-11-25.md 3.2 and 4: the Snake, 20 life and 3 damage, cost 1; the Major, 5 to 6 times
+## a common's life, immune to being pushed, a 1.23 s warning, calls 5, cost 10). Models we already have, no Meshy.
+## The Rato de osso: the soldier's figure at 0.6, fast, one blow kills it (10 life; the first blow is 15), 3 damage, in a pack of 4 or more
+## (pack_min); solid like every body. The Capitao esqueleto: the shield-bearer's figure bigger and gilded, 520 life
+## (5.5 times the soldier's 95), no armor, never pushed, a 1.2 s warning for its charge and its call, which raises 5 soldiers of the weak
+## kind (the knight's own call, CV-2: every 2 rows of charges, never more than 5 of its own standing); one a fight, from room 4.
+func _pack_and_captain() -> void:
+	var B := EnemyDef.Behavior
+	var T := EnemyDef.Tell
+	_enemy({"id": &"bone_rat", "model": &"skeleton", "behavior": B.RUNNER, "size": 0.6, "hp": 10.0, "speed": 480.0 / U, "damage": 3.0, "radius": 0.3,
+		"attack_damage": 3.0, "attack_range": 220.0 / U, "attack_cooldown": 1.2, "attack_windup": 0.6, "lunge_speed": 700.0 / U,
+		"lunge_time": 0.2, "rating": 2.0, "role": &"scurry", "pack_min": 4, "pack_max": 6, "tint": Color(0.82, 0.74, 0.6), "vivid": -0.2, "max_attackers": 3,
+		"recover_time": 0.7, "aim_lock": 0.2, "windup_gap": 0.25, "windup_shake": 0.02, "strike_at": 0.1, "strike_reach": 0.8, "strike_degrees": 120.0,
+		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY})
+	_enemy({"id": &"capitao", "model": &"guard", "behavior": B.KNIGHT, "size": 1.95, "hp": 520.0, "speed": 250.0 / U, "damage": 8.0, "radius": 0.9,
+		"heavy": true, "no_push": true, "attack_damage": 8.0, "attack_range": 500.0 / U + 3.0, "attack_cooldown": 2.4, "attack_windup": 1.2, "exact_windup": true,
+		"lunge_speed": 15.0, "lunge_time": 0.4, "close_damage": 8.0, "close_range": 2.8, "close_windup": 1.0, "aim_lock": 0.3,
+		"raise_count": 5, "raise_max": 5, "raise_every": 2, "raise_kind": &"skeleton_raised", "raise_first": 3.0,
+		"windup_settle": 0.15, "windup_hold": 0.3, "windup_shake": 0.03, "recover_time": 1.1, "gap_min": 0.4, "gap_max": 1.4, "gap_min0": 0.3, "gap_max0": 0.8,
+		"poise": POISE, "poise_mult": 0.4, "poise_stun": ELITE_POISE_STUN, "poise_vuln": ELITE_POISE_VULN, "poise_growth": POISE_GROWTH,
+		"rating": 30.0, "role": &"captain", "per_room": 1, "gild": ELITE_GILD, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tint": Color(1.0, 0.8, 0.72),
+		"tell": T.SHIELD, "tell_at": Vector3(0.45, 1.1, 0.4), "material": &"shield", "stun_immune_attacking": true,
+		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY})
 
 
 ## An enemy and its elite version: the same, wearing an armor bar (Hades II "HealthBuffer"), faster and outlined.
@@ -900,7 +938,7 @@ func _stage() -> void:
 	st.big_chance = 0.5
 	st.depth_ramp = 11.0  # (C2, 14 rooms: the last fight, room 12, is 191, was 226)
 	st.enemies = [&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"mage", &"mage_elite", &"archer", &"archer_elite",
-		&"guard", &"guard_elite", &"priest", &"priest_elite", &"trinca", &"trinca_elite", &"varredor", &"varredor_elite", &"skeleton_big", &"runner_big", &"gritador", &"coveiro", &"saltador", &"lancador", &"canalizador", &"armadilheiro"]
+		&"guard", &"guard_elite", &"priest", &"priest_elite", &"trinca", &"trinca_elite", &"varredor", &"varredor_elite", &"skeleton_big", &"runner_big", &"gritador", &"coveiro", &"saltador", &"lancador", &"canalizador", &"armadilheiro", &"bone_rat", &"capitao"]
 	# C1e, lote A: the modifiers of the deep rooms: from room 8 each plain head has 10% (5 points more a room), two a fight at most
 	st.mods = [&"furioso", &"detonante", &"regenerante", &"escoltado", &"eco"]
 	st.mod_from_depth = 8
@@ -974,6 +1012,12 @@ func _stage() -> void:
 		_pool(Tier.COMMON, 0.64, 1.0, 2.0, [&"pressure", &"trap", &"flank"]),
 		_pool(Tier.COMMON, 0.64, 1.0, 2.0, [&"leap", &"trap", &"pressure"]),
 		_pool(Tier.HARD, 0.70, 1.0, 2.0, [&"block", &"trap", &"flank"], 0.5),
+		# SW-C7 (the pack of rats, from room 3) and SW-C8 (the Capitão, from room 4, the last wave, one a fight)
+		_pool(Tier.COMMON, 0.18, 0.60, 2.0, [&"scurry", &"pressure"]),
+		_pool(Tier.COMMON, 0.46, 1.0, 1.5, [&"scurry", &"flank", &"block"]),
+		_pool(Tier.HARD, 0.27, 0.60, 2.0, [&"pressure", &"captain"]),  # (no elite before room 5, C2)
+		_pool(Tier.HARD, 0.46, 1.0, 1.5, [&"control", &"captain", &"scurry"], 0.5),
+		_pool(Tier.HARD, 0.60, 1.0, 1.5, [&"block", &"captain", &"flank"], 0.5),
 	]
 	var R := RunMap.Reward
 	# The doors' deck (C13-02, Hades II's RunProgress: 4 Blessings, 2 hearts, 2 Magia tonics, 2 gold, 2 pomegranates,
@@ -1852,7 +1896,7 @@ func _bosses() -> void:
 		# times posture_mult 0.5: attack 14 blows, special/Brado 3.3, Investida 4, ultimate 2); broken, he kneels 2.6 s taking +40%
 		# C1d, the Ruptura (phase 4, 12 s in, then every 25 s): the floor warns 1.5 s, 16 damage, then 3 s exposed (x1.4, no Postura)
 		"rupture_every": 25.0, "rupture_first": 12.0, "rupture_phase": 4, "rupture_windup": 1.5, "rupture_damage": 16.0, "rupture_window": 3.0,
-		"posture": 1300.0, "posture_stun": 2.6, "posture_vuln": 0.3, "posture_idle": 5.0, "posture_mult": 0.5,
+		"posture": 1300.0, "posture_stun": 3.5, "posture_growth": POISE_GROWTH, "posture_vuln": 0.3, "posture_idle": 5.0, "posture_mult": 0.5,
 	}
 	for k: String in numbers:
 		b.set(k, numbers[k])

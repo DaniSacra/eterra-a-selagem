@@ -94,7 +94,7 @@ func test_the_two_new_enemies_are_data_with_their_elites() -> void:
 	assert_almost_eq(v.attack_width, 1.1, 0.001)
 	assert_almost_eq(v.sweep_degrees, 200.0, 0.001)
 	assert_almost_eq(v.sweep_time, 1.6, 0.001)
-	assert_almost_eq(v.attack_windup, 0.72, 0.001)
+	assert_almost_eq(v.attack_windup, 1.2, 0.001)
 	assert_almost_eq(v.sweep_clear, 1.6, 0.001)
 	assert_almost_eq(v.recover_time, 1.4, 0.001, "its rest")
 	assert_eq(v.per_room, 1)

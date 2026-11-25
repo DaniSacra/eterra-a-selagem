@@ -28,7 +28,7 @@ func _blow(boss: Boss, source: StringName, amount := 1.0) -> void:
 func test_data() -> void:
 	var d := load("res://data/bosses/morvath.tres") as BossDef
 	assert_eq(d.posture, 1300.0)
-	assert_eq(d.posture_stun, 2.6)
+	assert_eq(d.posture_stun, 3.5)
 	assert_eq(d.posture_vuln, 0.3)
 
 

@@ -288,6 +288,7 @@ func spawn(d: EnemyDef, at: Vector2, rising: bool = true, with_mod: ModDef = nul
 	e.max_armor = d.armor
 	e.armor = d.armor
 	e.poise = d.poise
+	e.poise_full = d.poise
 	e.cooldown = d.attack_cooldown * _rng.randf_range(0.4, 1.0)
 	e.call_cd = d.raise_first
 	e.rows = d.raise_every  # (CV-2: its first act is the call)
@@ -2427,7 +2428,7 @@ func _end_wards(e: Enemy) -> void:
 func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color: Color = Fx.GOLD, show_number: bool = true, big: bool = false, flash: bool = true) -> bool:
 	if not e.alive or e.invulnerable:
 		return false
-	if e.broken_t > 0.0 and e.armor <= 0.0:
+	if e.broken_t > 0.0 and (e.armor <= 0.0 or e.def.elite):
 		amount *= 1.0 + (boss_vuln if e.def.behavior == EnemyDef.Behavior.BOSS else e.def.poise_vuln)  # C1b: a broken poise leaves it open (C1d: so does Morvath's Postura)
 	# what it really takes off (armor, or life down to its floor), under where it came from (DT-016)
 	dealt.add(dealing, minf(amount, e.armor) if e.armor > 0.0 else clampf(e.hp - e.hp_floor, 0.0, amount))
@@ -2451,6 +2452,8 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 			e.recoil_t = 0.0
 			e.recoil_dir = from_dir.normalized()
 			e.recoil_peak = HEAVY_ARMOR_PEAK[1 if e.def.heavy else 0]
+		if e.def.poise_growth > 1.0 and flash and from_dir != Vector2.ZERO:
+			_wear_poise(e, from_dir)  # SW-C5: the stun bar of the elites and guardians wears under the armor too (they are two bars)
 		var level := EnemyFx.wear_level(e.armor, e.max_armor)
 		if e.armor > 0.0 and level > level_before and e.max_armor > 0.0:
 			_crack(e, chest, from_dir, level)
@@ -2486,7 +2489,7 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 		# Refinar Peso, Fatia 2: Combat sets it around its damage)
 		flinch(e, (e.def.stun_heavy_time if big else e.def.stun_time) * stun_scale)
 	if knockback > 0.0:
-		e.push = from_dir * knockback * (0.35 if e.def.heavy else 1.0)
+		e.push = from_dir * knockback * (0.0 if e.def.no_push else 0.35 if e.def.heavy else 1.0)
 	if show_number:
 		fx.number(Vector3(e.pos.x, e.y + 1.9 * e.def.size, e.pos.y), amount, color, big, e.get_instance_id(),
 			from_dir == Vector2.ZERO and knockback <= 0.0)
@@ -2565,13 +2568,14 @@ func _wear_poise(e: Enemy, from_dir: Vector2) -> void:
 	var d := e.def
 	if not Poise.takes(d.poise, e.frozen_t, e.stun_t, e.state == Enemy.State.DOWN or e.state == Enemy.State.RISE, e.invulnerable):
 		return
-	var shr := Poise.share(dealing, Feel.live().poise_weights)
+	var shr := Poise.share(dealing, Feel.live().poise_weights) * d.poise_mult
 	if shr <= 0.0:
 		return
-	e.poise = Poise.wear(e.poise, d.poise, shr)
+	e.poise = Poise.wear(e.poise, d.poise, shr)  # (a blow takes the same of the bar however many breaks it has had: the bar grows)
 	e.poise_idle = 0.0
 	if e.poise > 0.0:
 		return
+	e.poise_breaks += 1
 	var key := String(dealing)
 	breaks[key] = int(breaks.get(key, 0)) + 1
 	interrupt(e)
@@ -2591,11 +2595,12 @@ func _poise_timers(e: Enemy, dt: float) -> void:
 	if e.broken_t > 0.0:
 		e.broken_t = maxf(0.0, e.broken_t - dt)
 		if e.broken_t <= 0.0:
-			e.poise = e.def.poise  # it recovers: full again
+			e.poise_full = Poise.full_after(e.def.poise, e.poise_breaks, e.def.poise_growth)  # it recovers: full again, asking more each time
+			e.poise = e.poise_full
 			e.poise_idle = 0.0
 		return
 	e.poise_idle += dt
-	e.poise = Poise.settle(e.poise, e.def.poise, e.poise_idle, e.def.poise_idle)
+	e.poise = Poise.settle(e.poise, e.poise_full, e.poise_idle, e.def.poise_idle)
 
 
 ## GF-12 (D-42, Hades II per enemy): a blow stuns it for `seconds` (EnemyDef.stun_time, stun_heavy_time): it stops
@@ -2991,8 +2996,8 @@ func render(render_dt := 1.0 / 60.0) -> void:
 			var life := e.hp / maxf(e.max_hp, 0.001)
 			renderer.add_bar(d, Vector3(e.pos.x, top, e.pos.y), life,
 				e.armor / maxf(e.max_armor, 0.001) if e.max_armor > 0.0 else 0.0, crowded, bar_trails.shown(e, life, now))
-			if d.poise > 0.0 and e.armor <= 0.0 and e.poise < d.poise * CrowdRenderer.POISE_SHOW:
-				renderer.add_poise_bar(d, Vector3(e.pos.x, top, e.pos.y), e.poise / d.poise, crowded)
+			if d.poise > 0.0 and (e.armor <= 0.0 or d.elite) and e.poise < e.poise_full * CrowdRenderer.POISE_SHOW:
+				renderer.add_poise_bar(d, Vector3(e.pos.x, top, e.pos.y), e.poise / maxf(e.poise_full, 0.001), crowded, e.armor > 0.0)
 	_draw_ward_threads(now)
 	for e in dying:
 		var burst := e.def.death_burst
