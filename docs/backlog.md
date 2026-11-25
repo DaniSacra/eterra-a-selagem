@@ -36,6 +36,15 @@ só mexem na Quebra (`combat.gd:762-763`, `stun_rule.gd:28`): é o mesmo caso do
 `79fe4ec` (Ancião mais brando, Guerreiro 40 de vida): medir de novo antes de mexer.
 
 ### (A) Fazer agora sem perguntar
+**Feito em 2026-11-24 noite (exe `Lote R`, ver o commit):** R1 inteiro (Voz do Leão interrompe comuns 1 s, Imposição texto honesto, custo já era 1 = 29 no total,
+cadência igual à `d841c81`, `CADENCE_CAP` 0,24, Apogeu e Investida com peso), R2 item 7 (um estouro por reação; Convergência sem elemento no chefe), R3 8 e 9
+(no GE-4), R4 12 a 15 (teto de 6 textos vivos; Videira em pergaminho), R5 16 (RunLog v8), R6 17 em parte (orbes do Ancião x0,8: 9 de 12 em R 0,6; falta o dano
+dos arqueiros chamados) e 18 em parte (laje da Cripta A desde 0,15, mas a Cripta sai pouco antes da sala 5: pôr laje de aprender em outra arena), R7 19 e 20,
+R8 21 e 22 medidos e aplicados (Força Titânica x2,6 custo x2,5; Maga Combustão 70, Choque 35, Sobrecarga 25, Geada 5; `docs/design/balance.md` Lote R8),
+R10 24 (Morvath abaixo de 60 MB fica proposta), item 25 (`docs/design/heroes/bencaos_por_botao.md`). Extra: 4 Bênçãos mortas para a Maga saem do sorteio dela
+(`Boon.needs_tag`). **Falta**: R3 10 e 11 (visual por habilidade e disco da Convergência), R9 capturas, e as perguntas novas: 4 Bênçãos para os botões vazios,
+`pesado_firme`/`circulo_firme` lerem algo dos dois heróis, cruzamento Chama/Geada com as reações, a Maga é o herói de área?
+
 Marca **[exe]**: entra no exe do redesign (o das crianças). Cada lote só toca os arquivos dele; `tools/make_data.gd`, `combat.gd`, `player.gd` e
 `data/text_pt.tres` seguem com os donos do redesign (GE e UI), então o que mexe neles entra como item do passo GE-3/GE-4/UI-3/UI-4, não como lote solto.
 
