@@ -1,5 +1,18 @@
 # Backlog de A Selagem
 
+## PT-25, teste do Daniel no exe c233881b (2026-11-25 noite)
+- **PT-25-1 (bug):** Sarael ofereceu só 1 Bênção na sala 3. Achar por que a tela veio com 1 carta e garantir 3, ou 2 com aviso quando o anjo não tem mais.
+- **PT-25-2:** música do Santuário. Conferir se `thatched_villagers` toca no Santuário (MUS-2). Daniel quer uma peça nova: separar 3 candidatas de licença livre para ele escolher (como `ASelagem-musicas-escolher`).
+- **PT-25-3:** a Videira compra como os Dons: segurar o botão compra e já aloca, sem voltar atrás.
+- **PT-25-4:** o último golpe do combo dá um passo curto à frente, para pegar o inimigo que os golpes 1 e 2 empurraram. Os golpes 1 e 2 continuam plantados.
+- **PT-25-5:** Cavaleiro duro demais: a barra amarela (armadura 1400) quase não desce. Baixar a armadura ou subir o dano do herói contra armadura, até o Daniel conseguir quebrar a guarda.
+- **PT-25-6:** tela de Espólios no fim de toda descida, inclusive a primeira:
+  - o que ele pegou (ouro, Prata, Memória, materiais, Bênçãos, salas vencidas);
+  - o que foi liberado ("A Videira liberada", "Dons liberados" etc.);
+  - o botão Continuar leva ao Santuário.
+- **PT-25-7:** chegada como um cometa que cai do céu e forma o herói no impacto, em vez do feixe atual.
+- **Respondido:** os esqueletos pequenos da sala 3 são o Rato de osso (Fase 1, C7): bando de 4 a 6 que morre com um golpe, perigoso pelo número. A primeira descida sempre guiada, sem passar pelo Santuário: ok.
+
 ## Grande ajuste de layout das salas (pedido do Daniel, 2026-11-25, depois do pente fino)
 Todas as salas da descida serão refeitas, uma por vez, a partir de pacotes do ChatGPT no modelo
 `docs/art/requests/MODELO_especificacao_sala_ChatGPT.md` (pintura aprovada, planta com medidas em JSON, essencial x clima,
