@@ -47,11 +47,24 @@ var banned: Dictionary = {}
 ## BO-2: the hero's ultimate is open this descent (Game sets it from the Mastery): a Blessing of the Shift button only
 ## enters the draw then, so a novice sees five a family (decision of 2026-11-22).
 var ult_open := false
+## The tags of the hero's moves (Game fills them from the combo tree): a Blessing whose needs_tag is missing here is
+## never offered. Empty (tests, old callers): no filter.
+var hero_tags: Dictionary = {}
 var _cache: Dictionary = {}
 
 
 func _init(boons: Array[Boon] = []) -> void:
 	catalog = boons
+
+
+## Fills hero_tags from a combo tree (every tag of every move).
+func set_hero_moves(tree: ComboTree) -> void:
+	hero_tags.clear()
+	if tree == null:
+		return
+	for node in tree.all_nodes():
+		for t in node.tags:
+			hero_tags[t] = true
 
 
 static func load_catalog(dir: String = "res://data/boons/") -> Array[Boon]:
@@ -200,6 +213,8 @@ func can_offer(b: Boon) -> bool:
 ## the Shift button waits for the ultimate (ult_open).
 func offerable(b: Boon) -> bool:
 	if not can_offer(b) or b.reserve or (b.slot == Boon.Slot.ULT and not ult_open):
+		return false
+	if b.needs_tag != &"" and not hero_tags.is_empty() and not hero_tags.has(b.needs_tag):
 		return false
 	for list in b.requires_sets:
 		var base := false

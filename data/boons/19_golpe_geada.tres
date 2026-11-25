@@ -16,4 +16,5 @@ id = &"golpe_geada"
 family = 1
 icon = 3
 slot = 1
+needs_tag = &"spin"
 mods = Array[ExtResource("1_p6yte")]([SubResource("Resource_jur5g")])

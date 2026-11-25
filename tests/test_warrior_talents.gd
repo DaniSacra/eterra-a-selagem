@@ -346,23 +346,23 @@ func test_the_golpe_carregado_damage_is_the_sum_then_forca_titanica_triples_it()
 	var base: float = losses[0]
 	assert_eq(base, 150.0)
 	assert_eq(losses[10], 210.0, "Força Concentrada: +40%")
-	assert_eq(losses[11], 450.0, "Força Titânica: x3")
-	assert_eq(losses[21], 630.0, "x3 final after Força Concentrada's +40%")
+	assert_eq(losses[11], 390.0, "Força Titânica: x2,6")
+	assert_eq(losses[21], 546.0, "x2,6 final after Força Concentrada's +40%")
 
 
-func test_forca_titanica_doubles_the_cost_and_never_leaves_negative_magia() -> void:
+func test_forca_titanica_raises_the_cost_and_never_leaves_negative_magia() -> void:
 	_run([&"forca_titanica"])
 	game.hero_gifts.step(0.0)
 	var p := game.player
 	var lance := _node(p.tree, &"lance")
-	assert_eq(p.cost_of(lance, 0.0), 40.0)
+	assert_eq(p.cost_of(lance, 0.0), 50.0, "x2,5 (Lote R8)")
 	assert_eq(p.cost_of(_node(p.tree, &"bolt"), 0.0), 12.0, "the special is no Golpe Carregado")
 	assert_eq(Player.omega_cost(20.0, 1.2, 1.0), 0.0, "never under zero")
-	p.magick.value = 30.0
-	assert_false(p._affordable(ComboNode.In.CHARGE_LIGHT), "30 does not pay 40: no charge starts, the normal blow comes out")
-	assert_false(p.magick.spend(40.0))
-	assert_eq(p.magick.value, 30.0, "nothing was taken")
 	p.magick.value = 40.0
+	assert_false(p._affordable(ComboNode.In.CHARGE_LIGHT), "40 does not pay 50: no charge starts, the normal blow comes out")
+	assert_false(p.magick.spend(50.0))
+	assert_eq(p.magick.value, 40.0, "nothing was taken")
+	p.magick.value = 50.0
 	assert_true(p._affordable(ComboNode.In.CHARGE_LIGHT))
 	_run()
 	game.hero_gifts.step(0.0)

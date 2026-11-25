@@ -359,6 +359,7 @@ func _ready() -> void:
 				enchant_pool.append(e)
 	ults.equip(hero.ultimate(StringName(ultimate)))
 	boons.ult_open = ults.def != null  # BO-2: the Blessing of Shift is in the draw only with the ultimate open
+	boons.set_hero_moves(load(hero.combos) as ComboTree if hero.combos != "" else null)  # no dead Blessing for the Maga
 	if Dev.has("ult-full"):
 		ults.charge.fill()  # dev: the ultimate starts full (captures, --start=boss)
 	hero_gifts = HeroGifts.new(self)

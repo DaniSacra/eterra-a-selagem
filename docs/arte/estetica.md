@@ -303,6 +303,23 @@ Medido na GPU (Forward+, 1920 x 1080); quadros em `docs/gallery/e1b/vfx/` e `env
   O recorte "A oeste" (230, 440) fica em 19: dois terços dele são a face da parede e o nicho com ossos, que ficam escuros de
   propósito (a parede medida antes e depois: 21,8 e 21,8); o chão dentro dele (345, 495, 60 x 35) foi de 40 para 48.
 
+## Redesign de 2026-11-24: a Maga elemental, o Supremo de cada arma e o medalhão de 3 setores (AD-12)
+
+Esta seção substitui qualquer leitura antiga da Maga de Selo, dos quatro ramos do Guerreiro e da Fúria (a brasa `fury_ember` e a barra de Fúria saíram do jogo; qualquer citação delas
+mais acima é histórica). Valores e regras em `docs/art/art_direction.md` seção 2.1.1.
+
+- **A Maga é elemental**: três cores só, uma por elemento, numa constante (`ElementLook`): fogo laranja vivo, frio ciano claro, raio branco-ouro. Nunca violeta (é de Morvath e da
+  maldição) e nunca esmeralda (é da Emeth). Sem hexágono nem sigilo de Selo; o Selo dos anjos (a Marca de Qeshael) continua, e é outra coisa.
+- **Leitura na luta**: o estado do inimigo é um **pip pequeno acima da cabeça** (losango fogo, floco frio, faísca raio), até 3 por inimigo, no tom do elemento; não há barra. O golpe da Maga
+  tem uma assinatura por habilidade (Centelha bola pequena com rastro curto; Combustão anel que abre; Estilhaço lascas finas; Geada placa de gelo com a borda desfeita; Arco linha quebrada
+  de 0,12 s). **O herói segue o ponto mais legível**: nenhuma cor de elemento passa de 1,3 de luz sobre ele.
+- **O Supremo muda de cor com a arma**: Corte do Juízo na cor da Emeth (verde, só a lâmina); Convergência Elemental nas três cores em sequência (gelo, fogo, raio, a cada 1,5 s). O anel de carga
+  do herói é o mesmo ouro para os dois. A Convergência abre o disco com o laranja do fogo e o resto das fases lê pelo anel e pelos pips, não por clarão.
+- **Medalhão de Dons**: coroa e 12 nós em 3 setores; sem nó de Supremo. Enquanto a arte pintada do ChatGPT (AD-06) não vem, o procedural desenha os 3 setores com a etiqueta do ramo no meio
+  do arco. **Pendência de cor**: o ramo Domínio do Guerreiro usa esmeralda (`3fae7c`) e o Elementalismo da Maga usa âmbar de brasa; a direção pede ouro velho e as três cores dos elementos
+  (AD-07, `art_direction.md` 2.1.1).
+- **O que continua valendo do restante deste guia**: o herói é pequeno, a multidão é cinza, o vermelho é só de golpe que vai ferir, o âmbar de perigo é só de sala, o violeta é de Morvath.
+
 ## Pendências
 
 1. Colocar o `paladin_1` no jogo. Não foi feito: o esqueleto do Meshy (24 ossos, `Hips`, `LeftArm`...) é outro, e os

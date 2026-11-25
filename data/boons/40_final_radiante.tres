@@ -14,4 +14,5 @@ per_level = PackedFloat32Array(0.1, 0.1)
 script = ExtResource("2_qkw01")
 id = &"final_radiante"
 icon = 8
+needs_tag = &"finisher"
 mods = Array[ExtResource("1_2q8ih")]([SubResource("Resource_obbic")])

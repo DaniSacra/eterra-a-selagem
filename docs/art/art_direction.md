@@ -47,6 +47,51 @@ Regras:
 - O vermelho do perigo não aparece em nada que não fira. Hoje os estandartes do leão violam isso (ART-02.4, Q-22).
 - Ninguém além do herói usa o petróleo saturado; ninguém além da Emeth usa o esmeralda vivo.
 
+### 2.1.1 Cores dos elementos e o Supremo de cada arma (AD-12, 2026-11-24)
+
+O herói já não usa Fúria nem Selo (saíram no redesign); nada nesta seção descreve o kit antigo. As cores da Maga elemental estão na última linha da tabela 2.1 e **uma
+constante só** as guarda: `scripts/render/element_look.gd`.
+
+| Elemento | Constante | RGB (luz) | Matiz | Forma do pip sobre o inimigo (`state_pips.gd`) | Quando aparece |
+|---|---|---|---|---|---|
+| Fogo (Queimadura) | `ElementLook.FIRE` | 1,00 / 0,42 / 0,00 | 25 | losango pequeno | Centelha no 3º acerto, Combustão, fase de fogo da Convergência |
+| Frio | `ElementLook.COLD` | 0,35 / 0,88 / 1,00 | 192 | floco | Estilhaço, Geada, fase de gelo da Convergência |
+| Raio (Eletrizado) | `ElementLook.VOLT` | 1,00 / 0,97 / 0,78 | 48 | faísca | Arco Voltaico, fase elétrica da Convergência |
+
+Regras:
+- **Distância mínima RGB de 0,25** de cada elemento a todas as reservadas (vermelho do perigo, âmbar do perigo, petróleo do herói, anel do Supremo, Emeth, espectral, violeta de Morvath,
+  maldição) e entre eles; travado em `tests/test_element_look.gd`. Sem violeta e sem esmeralda.
+- O **fogo da Maga lê pela forma e pelo lugar**: losango sobre o inimigo ou projétil no ar, **nunca zona no chão** (o chão em brasa é do perigo de sala, âmbar). A exceção é o Chão Ardente
+  (Dom de Conjuração): marca de brasa pequena em laranja vivo (`FIRE`), nunca o aro âmbar nem a divisa do perigo.
+- Azul ciano claro (`COLD`) fica a 9 graus do petróleo do herói (183): o que separa é o **valor** (o petróleo é escuro, o frio é luz acima de 0,88). O herói segue o ponto mais legível.
+- As reações (Choque Térmico, Sobrecarga, Cristalização) não têm cor própria: usam as duas cores do par, para o jogador ver de onde vieram.
+- **Bênçãos** continuam com a cor da família (`Boon.FAMILY_COLOR`: Chama âmbar, Geada azul-gelo): é a carta e o efeito da Bênção, não o estado nativo. O fogo da Bênção de Chama e o fogo
+  nativo da Maga **não podem ficar iguais no mesmo golpe**: a Bênção usa o âmbar `Boon.FAMILY_COLOR[0]`, o nativo o laranja `FIRE`.
+
+**Supremo por arma** (redesign A.3: um Supremo fixo por arma, nenhum a escolher; o anel de carga do herói é o mesmo, `Player.ULT_RING_COLOR` ouro (1,00; 0,72; 0,22), para os dois):
+
+| Arma | Supremo | Cor do efeito | Onde está no código | O que o distingue |
+|---|---|---|---|---|
+| Emeth (Guerreiro) | **Corte do Juízo** | a Emeth, `Combat.EMETH` (0,30; 1,00; 0,45), e só ela: faixa de corte e rachadura no chão | `Ultimates._color()` devolve `Combat.EMETH` | única cor viva do Supremo; esmeralda é da lâmina, a mesma da onda do especial |
+| Bastão (Maga) | **Convergência Elemental** | **as três cores**, uma por fase de 1,5 s: gelo `COLD`, fogo `FIRE`, eletricidade `VOLT`; o disco abre em `FIRE` | `Ultimates._phase_color` e `_color()` | nunca esmeralda, nunca o ouro do anel; a troca de cor a cada 1,5 s é o relógio que o jogador lê |
+
+Proibido: Supremo verde na Maga, Supremo laranja no Guerreiro, ou um Supremo que se pinte da cor da família de uma Bênção. Se a Bênção `ultimo_brasa` ou `ultimo_geada` ficar
+em jogo, a habilidade dela usa a cor da família (âmbar, azul-gelo), em separado do Supremo.
+
+**Medalhão de Dons (3 setores)**: cada herói tem **coroa + 12 nós em 3 setores de 120 graus, 4 nós por setor** (entrada, dois do meio, ápice); sem nó de Supremo (o Supremo da arma
+não se escolhe). Ramos: Guerreiro Combo, Ímpeto, Domínio; Maga Elementalismo, Conjuração, Feitiçaria. Cores de ramo (hoje em `TalentNode.BRANCH_COLOR`) e o que a direção pede:
+
+| Ramo | Hoje | Direção |
+|---|---|---|
+| Combo | carmim da empunhadura, `c4404e` | ok |
+| Ímpeto | laranja queimado, `c8643c` | ok, mas separado do fogo da Maga por ser de outro herói |
+| Domínio | esmeralda, `3fae7c` | **trocar**: esmeralda é só da Emeth (regra deste guia). Ouro velho ou bronze, como pede AD-07 |
+| Elementalismo | âmbar de brasa, `d9772b` | **trocar** pela cor do elemento: três gotas `FIRE`, `COLD`, `VOLT` (AD-07) |
+| Conjuração | marfim dourado, `e6d6a0` | ok (é a Geada e o domo; marfim, sem confundir com `VOLT` por ser mais escuro) |
+| Feitiçaria | latão velho, `b8923f` | ok |
+
+O fundo pintado do medalhão ainda é o de 24 nós; até chegar a arte nova (AD-06, pedido ao ChatGPT) vale o desenho procedural de `MedallionView`.
+
 ### 2.2 Ouro velho (as seis definições de hoje)
 
 | Uso | Valor | Tipo | Onde |

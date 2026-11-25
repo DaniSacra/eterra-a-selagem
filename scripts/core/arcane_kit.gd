@@ -15,7 +15,7 @@ extends Resource
 @export var shot_magick := 1.0
 
 @export_group("Combustão")
-@export var combust_damage := 35.0
+@export var combust_damage := 70.0
 @export var combust_radius := 2.0
 @export var combust_knockback := 4.0
 
@@ -28,7 +28,7 @@ extends Resource
 @export var frost_range := 8.0
 @export var frost_radius := 2.5
 @export var frost_time := 4.0
-@export var frost_dps := 3.0
+@export var frost_dps := 5.0
 @export var frost_step := 1.0
 
 @export_group("Arco Voltaico")
@@ -46,8 +46,8 @@ extends Resource
 @export var cold_freeze_at := 3
 @export var slow_pct := 0.3
 @export var react_gap := 0.5
-@export var thermal := 20.0
-@export var overload := 15.0
+@export var thermal := 35.0
+@export var overload := 25.0
 @export var overload_radius := 1.8
 @export var crystal_freeze := 0.8
 @export var crystal_boss_poise := 25.0

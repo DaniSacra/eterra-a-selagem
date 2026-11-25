@@ -527,7 +527,7 @@ entries = {
 "talent_concentracao": "Concentração",
 "talent_concentracao_desc": "Golpe Carregado: carrega 30% mais rápido.",
 "talent_forca_titanica": "Força Titânica",
-"talent_forca_titanica_desc": "Golpe Carregado: 3x de dano, gasta o dobro de Magia.",
+"talent_forca_titanica_desc": "Golpe Carregado: 2,6x de dano, gasta 2,5x de Magia.",
 "talent_ruptura": "Ruptura",
 "talent_ruptura_desc": "Finalizadores: quebram a armadura e a postura 50% mais.",
 "talent_voz_do_leao": "Voz do Leão",

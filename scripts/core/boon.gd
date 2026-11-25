@@ -57,6 +57,9 @@ const FAMILY_KEY: Array[StringName] = [&"family_chama", &"family_geada", &"famil
 ## BO-2: a Blessing kept out of the draw (never offered, never deleted: the file stays, an old save and the Compêndio
 ## still know it, and it can come back). The ones that leave their family when it is cut to six a button.
 @export var reserve := false
+## A move tag the hero must have for this Blessing to do anything ("finisher", "spin"); the draw skips it for a hero
+## whose combo tree has no move with it (the Maga has no finisher nor spin, 2026-11-24). Empty: any hero.
+@export var needs_tag: StringName = &""
 ## An Elo (E3-02, Hades II's OneFromEachSet): offered when one gift of each list is owned (a list per family). The
 ## first of each list is the one the card shows when none is owned.
 @export var requires_sets: Array[PackedStringArray] = []

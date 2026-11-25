@@ -638,10 +638,15 @@ const RESERVE: Array[StringName] = [&"brasas", &"lamina_ardente", &"omega_brasa"
 	&"geada_final", &"omega_geada", &"vigia_firme"]
 
 
+## Blessings that only work with a move shape some heroes lack (Boon.needs_tag; the Maga has no finisher nor spin).
+const NEEDS_TAG := {&"golpe_geada": &"spin", &"final_radiante": &"finisher", &"final_veu": &"finisher", &"golpe_certeiro": &"finisher"}
+
+
 func _boon(n: int, id: StringName, family: Boon.Family, icon: int, mods: Array[BoonMod], skill: SkillDef = null, slot: Boon.Slot = Boon.Slot.NONE) -> void:
 	var b := Boon.new()
 	b.id = id
 	b.reserve = RESERVE.has(id)
+	b.needs_tag = NEEDS_TAG.get(id, &"")
 	b.slot = slot
 	b.family = family
 	b.icon = icon
@@ -2006,7 +2011,7 @@ func _talents() -> void:
 	_talent(4, &"forca_concentrada", B.IMPETO, T.ENTRY, 2, 2, {"mods": [_fixed(&"damage_pct", 0.4, [], &"omega")] as Array[BoonMod]})
 	_talent(5, &"determinacao", B.IMPETO, T.MIDDLE, 2, 6, {"needs": &"forca_concentrada", "mods": [_fixed(&"attack_magick_pct", 1.0)] as Array[BoonMod]})
 	_talent(6, &"concentracao", B.IMPETO, T.MIDDLE, 3, 11, {"needs": &"forca_concentrada", "mods": [_fixed(&"charge_time_pct", -0.3)] as Array[BoonMod]})
-	_talent(7, &"forca_titanica", B.IMPETO, T.APEX, 4, 17, {"needs": &"forca_concentrada", "mods": [_fixed(&"omega_cost_pct", 1.0), _fixed(&"final_pct", 2.0, [], &"omega")] as Array[BoonMod]})
+	_talent(7, &"forca_titanica", B.IMPETO, T.APEX, 4, 17, {"needs": &"forca_concentrada", "mods": [_fixed(&"omega_cost_pct", 1.5), _fixed(&"final_pct", 1.6, [], &"omega")] as Array[BoonMod]})
 	# Domínio: the finisher breaks armor 50% faster; the Brado is wider, stronger and interrupts (the old Voz Larga's numbers);
 	# the stun of a blow lasts 50% longer; the Investida goes through and stuns whoever it hits for 2 s (B.4), armor takes 50% more
 	_talent(8, &"ruptura", B.DOMINIO, T.ENTRY, 2, 3, {"mods": [_fixed(&"armor_pct", 0.5, [], &"finisher")] as Array[BoonMod]})

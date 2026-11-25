@@ -15,4 +15,5 @@ script = ExtResource("2_ahd5b")
 id = &"final_veu"
 family = 5
 icon = 20
+needs_tag = &"finisher"
 mods = Array[ExtResource("1_uhvxk")]([SubResource("Resource_8u2om")])

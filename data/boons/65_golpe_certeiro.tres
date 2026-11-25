@@ -15,4 +15,5 @@ script = ExtResource("2_mbtmo")
 id = &"golpe_certeiro"
 family = 7
 icon = 22
+needs_tag = &"finisher"
 mods = Array[ExtResource("1_ho4fa")]([SubResource("Resource_ltdlv")])
