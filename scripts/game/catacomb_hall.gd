@@ -1185,7 +1185,7 @@ func _north_west() -> void:
 	var z := -HALF.y + 0.1
 	m.balustrade(Vector3(-HALF.x, 0, z), Vector3(DAIS_X.x, 0, z))
 	m.block(Vector3(NW_PIER.x, -DEPTH, NW_PIER.y - 1.0), Vector3(3.6, DEPTH, 6.0))
-	kit.brazier(NW_PIER, 0.0, false)
+	kit.brazier(NW_PIER, 0.0, false, ArenaKit.BRAZIER_LIGHT, false)  # SL-01: cold, the corner bowls carry the fire
 	m.block(Vector3(NW_PIER.x, 0, NW_PIER.y - 2.4), Vector3(1.8, 0.6, 1.8))
 	m.layers = ArenaKit.STATUE_LAYER
 	kit.statue(Vector2(NW_PIER.x, NW_PIER.y - 2.4), 0.5, NW_STATUE.x, 0.6, NW_STATUE.y, false)
@@ -1194,13 +1194,14 @@ func _north_west() -> void:
 
 
 ## SL-01: the picture's three fire bowls on their pedestals in the floor's corners (x, z): by the dais's west foot, on
-## the west balustrade and in the south-east. Each stands off the middle and blocks as a post.
+## the west balustrade and in the south-east. They stand against the balustrades and block nothing (the walkable
+## floor and the fight are exactly as before; the east bowl at the standing stone keeps its circle).
 const CORNER_BRAZIERS: Array[Vector2] = [Vector2(-8.2, -13.3), Vector2(-14.3, -3.6), Vector2(14.2, 12.9)]
 
 
 func _corner_braziers() -> void:
 	for at in CORNER_BRAZIERS:
-		kit.brazier(at)
+		kit.brazier(at, 0.0, false)
 
 
 ## The north-west's candles, pots and crates (a step of their own: build_steps, QA P1-1).
@@ -1372,6 +1373,7 @@ func _east() -> void:
 	m.balustrade(Vector3(x, 0, HALF.y), Vector3(x, 0, EAST_STONE.y + 1.2), true, _near())
 	m.obelisk(Vector3(EAST_STONE.x, 0, EAST_STONE.y), 5.6, OBELISK_EAST, Vector2(-1, 1).normalized())
 	kit.circles.append(Vector3(EAST_STONE.x - 0.3, EAST_STONE.y, OBELISK_EAST * 0.62))
+	kit.brazier(Vector2(x - 1.7, EAST_STONE.y + 0.6))
 	_field_crate(Vector3(x - 1.9, 0, EAST_STONE.y + 2.6), 0.4, Vector3.ONE * 0.9, 1.0)
 	_candles(Vector3(x - 2.4, 0, EAST_STONE.y + 1.8), 4, false, false, true)
 	# the clutter by the stone stops the way as it reads (C18, ENV P2-6: a phantom of 2.5 m² at x 13 to 15)
