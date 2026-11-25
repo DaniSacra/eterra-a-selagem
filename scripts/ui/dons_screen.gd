@@ -130,17 +130,24 @@ func _place_stage() -> void:
 		_stage.position = ((size - STAGE) * 0.5).floor()
 
 
+## The night sky of the constellation (SW-M1) under the hero, in the clouds of the three branches' colours; a painted
+## `<hero>_bg.png` of the pack, when one exists, takes its place.
 func _ground() -> Control:
 	var info := DonsArt.bg(hero_id)
-	var r := TextureRect.new()
-	r.name = "ground"
-	r.texture = info.tex
-	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	r.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	r.material = DonsArt.shader_material(0.004 if info.placeholder else 0.0, 0.5 if info.placeholder else 1.0, 0.55, 0.0, 0.85 if info.placeholder else 0.0)
-	return r
+	if not info.placeholder:
+		var r := TextureRect.new()
+		r.name = "ground"
+		r.texture = info.tex
+		r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		r.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		r.material = DonsArt.shader_material(0.0, 1.0, 0.55, 0.0, 0.0)
+		return r
+	var clouds: Array[Color] = []
+	for b: TalentDef.Branch in MedallionView.BRANCH_TINT:
+		clouds.append((MedallionView.BRANCH_TINT[b] as Color).darkened(0.35))
+	return SkyGround.new().setup(11, clouds)
 
 
 func _figure() -> Control:
@@ -426,6 +433,7 @@ func _gift_info(id: StringName, n: MedallionNodeDef) -> Dictionary:
 		"key": UiKit.action_label(&"ui_accept"), "slot": int(t.slot) if t.slot != Boon.Slot.NONE else -1,
 		"sub": _place(t), "cost_kind": "devotion", "cost_n": t.cost,
 		"verb": "", "enabled": false, "reason": "", "hold": false}
+	info["cost_right"] = T.t(&"dons_cost_free", {"n": loadout.devotion() - loadout.used()})
 	var need := loadout.needs(t)
 	if t.needs != &"" and not need.is_empty():
 		info["needs"] = T.t(need.key, need.args)

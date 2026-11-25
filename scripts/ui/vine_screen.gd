@@ -1,13 +1,14 @@
 class_name VineScreen
 extends Control
-## A Videira (V2, redone as the plant 2026-11-23, docs/art/vine_spec.md): the account's roots as a plant that grows from a vase
-## under the stone arch. Three curved branches (Vida, Provisão, Perseverança) with a bud on each root and a clay tag beside it
-## (name and price); the reading panel on the right says, for the root in focus, its name, its state in words, what it
-## changes with its numbers, what it costs and "você tem N", and holds the Regar button with the price written on it. No
-## scrolling and no question: Regar is the confirmation. The rules stay in Vine (state, buy) and the save in Save.
-## Keys, gamepad and mouse walk the same buds (VineLayout.neighbor): up grows, left and right change branch; accept on a bud
-## that can grow moves the focus to Regar, accept there waters it; cancel goes back to the bud, and closes the screen from it.
-## The 1280 x 720 stage scales evenly to the window and is centred.
+## A Videira (V2; SW-M1 2026-11-25: the plant became a constellation map): the account's roots as figures of Eterra in a night
+## sky (VineLayout: Vida the lion, Provisão the chalice, Perseverança the sword), each node a star joined by lines of light.
+## The map opens on the whole sky; choosing a figure (accept, click, or the wheel) closes the camera on it (SkyCamera, a smooth
+## zoom), and cancel opens it out again. Closed on a figure, a clay tag hangs by each star (name and price) and the reading
+## panel on the right is the node's tip (NodeTip, SW-M2): its name and text, "agora -> depois" with the real numbers, the price
+## with the icon of its material and "você tem N", "Abra o anterior primeiro" when something comes before it, and the Regar
+## button. No question: Regar is the confirmation. The rules stay in Vine (state, buy) and the save in Save.
+## Keys, gamepad and mouse walk the same stars (VineLayout.neighbor): up grows, left and right change figure; accept on a star
+## that can grow moves the focus to Regar, accept there waters it. The 1280 x 720 stage scales evenly to the window.
 ##   var s := VineScreen.new()
 ##   host.open(s, [Save.data]); s.bought.connect(func(id: StringName) -> void: ...)
 
@@ -19,7 +20,10 @@ const PANEL_RECT := Rect2(960, 110, 304, 450)
 const WATER_SIZE := Vector2(270, 50)
 const BUD_HIT := 64.0
 const OPEN_TIME := 0.6
-const BLOOM_TIME := 0.6
+const BLOOM_TIME := 0.7
+## The star's hit square: small in the whole sky (the figures are small there), full size closed on a figure.
+const HIT_FAR := 34.0
+const NAME_W := 260.0
 const AMBER := Color("f0a040")
 const MOSS := Color("9aa84e")
 const RUBRIC_LIT := Color(0.92, 0.42, 0.34)
@@ -37,7 +41,12 @@ var bar: ActionBar
 var pending: StringName = &""
 ## The root the panel shows (the one focused).
 var shown: StringName = &""
-var plant: VinePlant
+var sky: VineSky
+var cam := VineLayout.sky_camera()
+## The figure the camera is closed on (&"": the whole sky).
+var zoomed: StringName = &""
+var ground: SkyGround
+var _names: Dictionary = {}
 var _stage: Control
 var _purse: HBoxContainer
 var _count: Label
@@ -47,7 +56,8 @@ var _name: Label
 var _step: Label
 var _state: Label
 var _desc: RichTextLabel
-var _life: RichTextLabel
+var _values: RichTextLabel
+var _needs: Label
 var _cost: MaterialCount
 var _have: Label
 var _tween: Tween
@@ -59,9 +69,8 @@ func open(data: Dictionary = {}) -> void:
 	name = "vine_screen"
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var ground := ColorRect.new()
-	ground.color = UiKit.INK
-	ground.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var clouds: Array[Color] = [Color("3a2a6a"), Color("1c4a5a"), Color("5a3a1c")]
+	ground = SkyGround.new().setup(7, clouds)
 	add_child(ground)
 	_stage = Control.new()
 	_stage.name = "stage"
@@ -70,10 +79,12 @@ func open(data: Dictionary = {}) -> void:
 	add_child(_stage)
 	resized.connect(_place_stage)
 	_place_stage()
-	plant = VinePlant.new().setup(vine)
-	_stage.add_child(plant)
+	sky = VineSky.new().setup(vine, cam)
+	_stage.add_child(sky)
 	_stage.add_child(_vignette())
 	_head()
+	for b in vine.branches():
+		_stage.add_child(_figure_name(b))
 	for n in vine.catalog:
 		_stage.add_child(_tag(n))
 	for n in vine.catalog:
@@ -85,8 +96,23 @@ func open(data: Dictionary = {}) -> void:
 	_refresh()
 	var first := VineLayout.first_focus(vine, _data)
 	_show(first)
+	_place()
 	(buds[first] as Button).grab_focus.call_deferred()
 	_opening()
+	# --vine-zoom=vida|provisao|perseveranca opens already closed on a figure (captures)
+	if Dev.has("vine-zoom") and VineLayout.CENTER.has(StringName(Dev.arg("vine-zoom"))):
+		_show(buds_of(StringName(Dev.arg("vine-zoom")))[0])
+		zoom_in(StringName(Dev.arg("vine-zoom")))
+		cam.snap()
+		_place()
+
+
+## The star ids of a branch in order of purchase.
+func buds_of(branch: StringName) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for n in vine.nodes_of(branch):
+		out.append(n.id)
+	return out
 
 
 ## The stage at the largest even scale that fits the window, centred (1280 x 720 up to 1920 x 1080 and over).
@@ -121,7 +147,7 @@ func _head() -> void:
 	var title := UiKit.label(T.t(&"vine_title"), UiKit.GOLD, 30, UiKit.TITLE_FONT)
 	title.position = Vector2(40, 18)
 	_stage.add_child(UiKit.shadow(title))
-	_line = UiKit.label(T.t(&"vine_line"), UiKit.DIM, 16)
+	_line = UiKit.label(T.t(&"vine_pick"), UiKit.DIM, 16)
 	_line.name = "line"
 	_line.position = Vector2(42, 60)
 	_stage.add_child(_line)
@@ -132,21 +158,18 @@ func _head() -> void:
 
 func _tag(n: VineNode) -> VineTag:
 	var t := VineTag.new().setup(n)
-	t.home = VineLayout.tag(n.branch, n.step)
-	t.position = t.home
 	t.pressed.connect(_choose.bind(n.id))
 	t.mouse_entered.connect(func() -> void: (buds[n.id] as Button).grab_focus())
 	tags[n.id] = t
 	return t
 
 
-## A bud: a flat button, the one that holds the focus; the plant draws it and its ring.
+## A bud: a flat button, the one that holds the focus; the sky draws it and its ring.
 func _bud(n: VineNode) -> Button:
 	var b := Button.new()
 	b.name = String(n.id)
 	b.flat = true
 	b.size = Vector2(BUD_HIT, BUD_HIT)
-	b.position = VineLayout.bud(n.branch, n.step) - b.size * 0.5
 	var empty := StyleBoxEmpty.new()
 	for style: StringName in [&"normal", &"hover", &"pressed", &"focus", &"disabled"]:
 		b.add_theme_stylebox_override(style, empty)
@@ -155,6 +178,18 @@ func _bud(n: VineNode) -> Button:
 	b.pressed.connect(_choose.bind(n.id))
 	buds[n.id] = b
 	return b
+
+
+## The name of a figure under it in the whole sky; closed on it, at the top of the stage.
+func _figure_name(branch: StringName) -> Label:
+	var l := UiKit.label(T.t(VineLayout.NAME_KEY[branch]), VineLayout.tint(branch).lightened(0.3), 22, UiKit.TITLE_FONT)
+	l.name = "figure_%s" % branch
+	l.size = Vector2(NAME_W, 30)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UiKit.shadow(l)
+	_names[branch] = l
+	return l
 
 
 func _build_panel() -> void:
@@ -182,9 +217,13 @@ func _build_panel() -> void:
 	_desc = UiKit.rich("", UiKit.PALE, 19)
 	_desc.name = "desc"
 	col.add_child(_desc)
-	_life = UiKit.rich("", UiKit.PALE, 17)
-	_life.name = "life"
-	col.add_child(_life)
+	_values = UiKit.rich("", UiKit.PALE, 18)
+	_values.name = "values"
+	col.add_child(_values)
+	_needs = UiKit.label("", UiKit.GOLD, 16, UiKit.BOLD_FONT)
+	_needs.name = "needs"
+	_needs.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	col.add_child(_needs)
 	var fill := Control.new()
 	fill.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -194,12 +233,19 @@ func _build_panel() -> void:
 	rule.custom_minimum_size = Vector2(0, 2)
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(rule)
+	var price := HBoxContainer.new()
+	price.add_theme_constant_override(&"separation", 10)
+	price.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(price)
 	_cost = MaterialCount.new().setup(MaterialPurse.SILVER, 0, UiKit.GOLD, 32, 32.0)
 	_cost.name = "cost"
-	col.add_child(_cost)
-	_have = UiKit.label("", UiKit.DIM, 15)
+	price.add_child(_cost)
+	_have = UiKit.label("", UiKit.DIM, 16)
 	_have.name = "have"
-	col.add_child(_have)
+	_have.size_flags_vertical = Control.SIZE_SHRINK_END
+	_have.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_have.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	price.add_child(_have)
 	water_button = UiKit.button("", confirm, WATER_SIZE.x)
 	water_button.name = "water"
 	water_button.custom_minimum_size = WATER_SIZE
@@ -222,30 +268,55 @@ func _foot() -> void:
 	_stage.add_child(hint)
 
 
-## The plant grows from the vase to what the save holds (0,6 s); the tags come with their buds.
+## The sky lights in (0,6 s); the figures come with their stars.
 func _opening() -> void:
-	plant.grow = 0.0
+	sky.reveal = 0.0
 	_stage.modulate.a = 0.0
 	if _tween != null:
 		_tween.kill()
 	_tween = create_tween().set_parallel(true)
 	_tween.tween_property(_stage, "modulate:a", 1.0, 0.2)
-	_tween.tween_property(plant, "grow", 1.0, OPEN_TIME).set_ease(Tween.EASE_OUT)
+	_tween.tween_property(sky, "reveal", 1.0, OPEN_TIME).set_ease(Tween.EASE_OUT)
 
 
-func _process(_delta: float) -> void:
-	if plant == null:
+func _process(delta: float) -> void:
+	if sky == null:
 		return
-	for id: StringName in tags:
-		(tags[id] as Control).modulate.a = _tag_alpha(id)
+	cam.step(delta)
+	_place()
+
+
+## Everything that follows the camera, from where it is now: the stars' hit squares, the tags, the names, the panel, the sky.
+func _place() -> void:
+	var k := cam.progress()
+	var hit := lerpf(HIT_FAR, BUD_HIT, k)
+	for n in vine.catalog:
+		var c := cam.to_screen(VineLayout.bud(n.branch, n.step))
+		var b: Button = buds[n.id]
+		b.size = Vector2(hit, hit)
+		b.position = c - b.size * 0.5
+		var t: VineTag = tags[n.id]
+		t.home = VineLayout.tag_corner(n.branch, n.step, c)
+		t.position = t.home + (Vector2(0, -4) if shown == n.id else Vector2.ZERO)
+		t.modulate.a = _tag_alpha(n.id)
+		t.visible = zoomed == n.branch
+	for b in vine.branches():
+		var l: Label = _names[b]
+		var in_sky := cam.to_screen(VineLayout.center(b) + Vector2(0, VineLayout.NAME_BELOW))
+		var read := VineLayout.NAME_READ_AT
+		l.position = (in_sky.lerp(read, k) if b == zoomed else in_sky) - Vector2(NAME_W * 0.5, 15.0)
+		l.modulate.a = 1.0 if b == zoomed else clampf(1.0 - k * 1.2, 0.0, 1.0)
+	_panel.visible = zoomed != &""
+	_panel.modulate.a = k
+	ground.shift = -(cam.center - VineLayout.SKY_CENTER) * cam.zoom * 0.12
 
 
 func _tag_alpha(id: StringName) -> float:
 	var dim := 0.72 if vine.state(_data, id) == Vine.State.LOCKED else 1.0
-	return dim * plant.reveal(id)
+	return dim * cam.progress() * sky.reveal
 
 
-## Everything from the save as it is now: the balance, the plant's states, each tag and the foot.
+## Everything from the save as it is now: the balance, the figures' states, each tag and the foot.
 func _refresh() -> void:
 	MaterialCount.refresh(_purse, _data)
 	var sts := {}
@@ -253,7 +324,7 @@ func _refresh() -> void:
 		var st := vine.state(_data, n.id)
 		sts[n.id] = st
 		(tags[n.id] as VineTag).show_state(st == Vine.State.OWNED, st == Vine.State.SHORT)
-	plant.set_states(sts)
+	sky.set_states(sts)
 	var done := vine.bought_count(_data)
 	_count.text = T.t(&"vine_count", {"n": done, "m": vine.catalog.size()})
 	(_stage.get_node("hint") as Label).text = T.t(&"vine_none") if done == 0 else ""
@@ -266,32 +337,35 @@ func _refresh() -> void:
 func _show(id: StringName) -> void:
 	if shown != id:
 		Audio.play(&"ui_move")
-	if shown != &"" and tags.has(shown):
-		(tags[shown] as VineTag).lift(false)
 	shown = id
-	(tags[id] as VineTag).lift(true)
-	plant.focus_id = id
+	sky.focus_id = id
+	# closed on a figure, the focus passing to another figure takes the camera along
+	var branch := vine.find(id).branch
+	if zoomed != &"" and branch != zoomed:
+		zoom_in(branch)
 	_fill(id)
 	_neighbors()
 
 
 func _fill(id: StringName) -> void:
 	var n := vine.find(id)
-	var st := vine.state(_data, id)
-	_name.text = T.t(n.name_key)
+	var tip := NodeTip.of_vine(vine, _data, id)
+	var st := tip.state
+	_name.text = T.t(tip.name_key)
 	_step.text = T.t(&"vine_step", {"b": T.t(StringName("vine_branch_%s" % n.branch)), "n": n.step})
-	_desc.text = BoonCard.strong_numbers(T.t(n.desc_key))
-	var life := vine.life_total(id)
-	# the total only says something new from the second step on (the first one repeats the description)
-	_life.visible = life > Vine.own_life(n)
-	_life.text = BoonCard.strong_numbers(T.t(&"vine_life_total", {"n": life})) if life > 0 else ""
-	_cost.set_id(n.material)
-	_cost.set_amount(n.cost)
+	_desc.text = BoonCard.strong_numbers(T.t(tip.desc_key))
+	# "agora -> depois": the real numbers of the node, a share or a count (a switch has none)
+	_values.visible = tip.has_values
+	if tip.has_values:
+		_values.text = T.t(&"vine_tip_values", {"a": UiKit.strong(tip.now_text()), "b": UiKit.strong(tip.next_text())})
+	_needs.visible = tip.needs != &""
+	_needs.text = T.t(&"vine_needs", {"a": T.t(tip.needs)}) if tip.needs != &"" else ""
+	_cost.set_id(tip.material)
+	_cost.set_amount(tip.cost)
 	_cost.set_color(UiKit.GOLD if st == Vine.State.AVAILABLE else RUBRIC_LIT if st == Vine.State.SHORT else UiKit.DIM)
 	_cost.visible = st != Vine.State.OWNED
-	var held := vine.balance(_data, id)
 	_have.visible = st != Vine.State.OWNED
-	_have.text = T.t(&"vine_have", {"n": held})
+	_have.text = T.t(&"vine_have", {"n": tip.have})
 	var word := _state_word(n, st)
 	_state.text = word
 	_state.visible = can_water(st)  # otherwise the button already says it (B7: "Faltam N" three times)
@@ -300,8 +374,16 @@ func _fill(id: StringName) -> void:
 	water_button.disabled = not can
 	water_button.text = ("%s  %s" % [UiKit.action_label(&"ui_accept"), T.t(&"vine_water", {"n": n.cost, "m": MaterialCount.short_of(n.material)})]) \
 		if can else word
-	if bar != null:
-		bar.item(&"ui_accept").set_verb(T.t(&"bar_water") if can else word)
+	_verb()
+
+
+## The bar's accept verb: open the figure from the whole sky, water a star that can grow, else why not.
+func _verb() -> void:
+	if bar == null or shown == &"":
+		return
+	var st := vine.state(_data, shown)
+	var verb := T.t(&"vine_open_figure") if zoomed == &"" else T.t(&"bar_water") if st == Vine.State.AVAILABLE else _state_word(vine.find(shown), st)
+	bar.item(&"ui_accept").set_verb(verb)
 
 
 static func can_water(st: Vine.State) -> bool:
@@ -346,10 +428,38 @@ func _neighbors() -> void:
 	water_button.set_focus_neighbor(SIDE_LEFT, water_button.get_path_to(sel))
 
 
-## A bud or tag pressed: a root that can grow sends the focus to Regar; any other just shows why on the panel.
+## A star or tag pressed: from the whole sky it closes the camera on its figure; closed on a figure, a root that can grow
+## sends the focus to Regar and any other just shows why on the panel.
 func _choose(id: StringName) -> void:
 	(buds[id] as Button).grab_focus()
+	if zoomed == &"":
+		zoom_in(vine.find(id).branch)
+		return
 	select(id)
+
+
+## Closes the camera on a figure (a smooth zoom).
+func zoom_in(branch: StringName) -> void:
+	zoomed = branch
+	sky.branch_in = branch
+	VineLayout.close_on(cam, branch)
+	_set_line()
+	_verb()
+	_place()
+
+
+## Opens the camera out to the whole sky.
+func zoom_out() -> void:
+	zoomed = &""
+	sky.branch_in = &""
+	cam.open_out()
+	_set_line()
+	_verb()
+	_place()
+
+
+func _set_line() -> void:
+	_line.text = T.t(&"vine_line") if zoomed != &"" else T.t(&"vine_pick")
 
 
 ## Moves the focus to Regar for a root that can grow now (true); the others stay as they are.
@@ -357,12 +467,14 @@ func select(id: StringName) -> bool:
 	if vine.state(_data, id) != Vine.State.AVAILABLE:
 		return false
 	_show(id)
+	if zoomed == &"":
+		zoom_in(vine.find(id).branch)
 	pending = id
 	water_button.grab_focus.call_deferred()
 	return true
 
 
-## Waters the root asked about: spent once, written in the save, the plant grows. False with nothing selected.
+## Waters the root asked about: spent once, written in the save, the star lights. False with nothing selected.
 func confirm() -> bool:
 	if pending == &"":
 		return false
@@ -381,18 +493,14 @@ func confirm() -> bool:
 	return true
 
 
-## The can over the bud, the drops, then the bud opens (0,6 s).
+## The star lights: a ring of light spreads from it and a glint flashes (0,7 s).
 func _water(id: StringName) -> void:
-	plant.water_id = id
-	plant.water_t = 0.0
-	plant.bloom_id = id
-	plant.bloom = 0.0
+	sky.bloom_id = id
+	sky.bloom = 0.0
 	if _tween != null:
 		_tween.kill()
 	_tween = create_tween()
-	_tween.tween_property(plant, "water_t", VinePlant.WATER_TIME, VinePlant.WATER_TIME)
-	_tween.tween_callback(func() -> void: plant.water_id = &"")
-	_tween.tween_property(plant, "bloom", 1.0, BLOOM_TIME).set_ease(Tween.EASE_OUT)
+	_tween.tween_property(sky, "bloom", 1.0, BLOOM_TIME).set_ease(Tween.EASE_OUT)
 
 
 ## Back to the bud, nothing spent.
@@ -407,6 +515,8 @@ func cancel() -> void:
 func _back() -> void:
 	if water_button.has_focus() or pending != &"":
 		cancel()
+	elif zoomed != &"":
+		zoom_out()
 	else:
 		closed.emit()
 
@@ -419,10 +529,22 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
 		var wheel := (event as InputEventMouseButton).button_index
 		if wheel == MOUSE_BUTTON_WHEEL_UP or wheel == MOUSE_BUTTON_WHEEL_DOWN:
-			_go(VineLayout.neighbor(vine, shown, Vector2.UP if wheel == MOUSE_BUTTON_WHEEL_UP else Vector2.DOWN))
+			get_viewport().set_input_as_handled()
+			wheel_zoom(1 if wheel == MOUSE_BUTTON_WHEEL_UP else -1)
 			return
 	if event.is_action_pressed(&"tab_next") or event.is_action_pressed(&"tab_prev"):
 		_go(VineLayout.neighbor(vine, shown, Vector2.RIGHT if event.is_action_pressed(&"tab_next") else Vector2.LEFT))
+
+
+## The mouse wheel: closer closes on the focused star's figure (then closer still), farther goes back out to the whole sky.
+func wheel_zoom(dir: int) -> void:
+	if zoomed == &"":
+		if dir > 0 and shown != &"":
+			zoom_in(vine.find(shown).branch)
+		return
+	cam.wheel(dir)
+	if dir < 0 and cam.target_zoom < SkyCamera.ZOOM_IN * 0.9:
+		zoom_out()
 
 
 func _go(id: StringName) -> void:

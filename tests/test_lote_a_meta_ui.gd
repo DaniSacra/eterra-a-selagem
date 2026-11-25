@@ -93,6 +93,7 @@ func test_every_bar_leaves_by_the_same_word() -> void:
 	var vine := VineScreen.new()
 	add_child_autofree(vine)
 	vine.open(SaveData.defaults())
+	vine.zoom_in(&"vida")
 	var vbar := vine.find_child("action_bar", true, false) as ActionBar
 	assert_eq(vbar.item(&"ui_cancel").verb.text, back)
 	# an empty purse: Enter says why it cannot water (UI review 2026-11-24b, B1; test_enter_follows_focus)

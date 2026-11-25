@@ -510,16 +510,23 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - Só interface: mesma semente dá o mesmo `RESULT`. Capturar: Fonte com o Ancião e uma sala de luta, 720 e 1080.
 
 ## A Videira e a escolha de herói, telas (V2 e PT-9, 2026-11-23; testes em `tests/test_videira_v2.gd`, `tests/test_hero_station.gd`)
-- **`VineScreen`** (3d, `scripts/ui/vine_screen.gd`, `host.open(VineScreen.new(), [Save.data])`; spec `docs/art/vine_spec.md`): a planta que
-  cresce, palco 1280 x 720 em escala uniforme e centrado (`_place_stage`). Peças: `VinePlant` (desenho: arco e latada, vaso, tronco, três
-  ramos Catmull-Rom de `VineLayout.path`, brotos por estado, anel de foco, regador e gotas), `VineTag` (etiqueta de barro com nome e preço;
-  comprada vira o verso com ✓; só mouse), um broto-botão por raiz (o que leva o foco) e o painel de leitura à direita (nome, "Ramo · Nª raiz",
-  palavra do estado, o que muda com números em negrito, "Vida máxima: +N com esta", preço grande, "você tem N" e o botão **Regar · N Prata**;
-  desligado mostra o motivo no lugar do verbo). Sem pergunta: Regar é a confirmação. Lógica em `Vine` (`state`, `buy`, novos `life_total`
-  e `missing`); posições e vizinhança do foco em `VineLayout` (`BUD`, `TAG`, `neighbor`, `first_focus`; um ramo de 4 nós pede só uma linha nova).
-  Entrada: setas (cima cresce, lados trocam de ramo, à direita do último ramo vai ao Regar), Enter/clique no broto que pode crescer leva o foco
-  ao Regar, Enter ali rega, Esc/B volta ao broto e depois fecha, LB/RB trocam de ramo, rodinha sobe e desce. Abrir: a planta cresce do vaso
-  em 0,6 s; regar: regador, gotas e o broto abre em 0,6 s (a compra é uma só). Sinal `bought(id)`; grava o save sozinha.
+- **`VineScreen`** (3d, `scripts/ui/vine_screen.gd`, `host.open(VineScreen.new(), [Save.data])`): **mapa de constelações (SW-M1, 2026-11-25)**.
+  Céu escuro (`SkyGround` + `StarField`, estrelas que piscam, nuvens de cor) com uma figura por ramo, montada com os nós que existem:
+  Vida = o Leão, Provisão = o Cálice, Perseverança = a Espada (nomes a aprovar; selo e videira ficam para ramos futuros). Dados em `VineLayout`
+  (`CENTER`, `NODES`, `ROOT`, `OUTLINE`, `TINT`: coordenadas do mundo em px do palco; um ramo com um nó a mais pede uma linha, não código).
+  `VineSky` desenha (cada nó é uma estrela por estado: acesa, anel pulsando, anel apagado, ponto escuro; linhas de luz da raiz ao nó; traços
+  fracos que fecham a figura; anel e brilho ao regar). `SkyCamera` (pura) faz o zoom suave: abre no céu inteiro (zoom 1), escolher uma figura
+  (Enter/clique numa estrela, ou a rodinha para cima) aproxima (zoom 2,4, figura à esquerda do painel), Esc/B ou a rodinha para baixo afasta,
+  Esc no céu inteiro fecha; o foco passando a outra figura leva a câmera. Aproximado, aparecem as etiquetas de barro (`VineTag`) e o painel.
+  Teste de captura: `--title --screen=vine --vine=N [--vine-zoom=vida|provisao|perseveranca]`.
+  **Dica do nó (SW-M2)**: o painel é montado por `NodeTip` (pura): nome, "Ramo · Nª raiz", texto, "Total agora e depois: +5 → +10" com os números
+  reais do dado (`vida_*` e `respiro` em valor, `ainda_de_pe` e as Colheitas em %, o que é interruptor como o Viajante não mostra número; nó
+  trancado mostra o total quando o caminho abrir), "Antes: <nó anterior>" e o botão "Abra o anterior primeiro", preço com o ícone do material,
+  "você tem N". Sem pergunta: Regar é a confirmação. Lógica em `Vine` (`state`, `buy`); vizinhança do foco em `VineLayout.neighbor`.
+- **Dons (SW-M1)**: o medalhão ganhou o mesmo céu (`SkyGround` em `DonsScreen._ground`; um `<herói>_bg.png` pintado, se vier, ganha), linhas de
+  luz finas e o brilho de quatro pontas nos Dons acesos (`StarGlyph`). Dom que custa Devoção diz "livres N" na linha de preço (SW-M2).
+- **Carteira (SW-M3)**: Dons, Videira, Forja e Vendedor já levavam a carteira (`CoinCorner.wallet`: Prata, Memória, Esmeralda com ícone) no canto
+  superior direito; o Livro de Ahk passou a tê-la lá também (`CoinCorner.corner`, ancorada, em placa escura), saindo da barra de baixo.
   Arte final em `assets/ui/vine/` (`VineArt`: bg, vase, bud_dry, bud_closed, bud_ready, cluster, tag, tag_back, panel) entra sozinha por caminho.
   Captura: `--title --screen=vine [--vine=N --silver=N --memory=N]` (N raízes já crescidas e bolsa para ver os quatro estados).
   Pendente: sons (água, folhas, madeira), saldo descendo contando, Compatibility sem brilho, arte do ChatGPT (bark, leaf, can, drops).

@@ -8,6 +8,7 @@ func _vine(silver: int) -> VineScreen:
 	var s := VineScreen.new()
 	add_child_autofree(s)
 	s.open(d)
+	s.zoom_in(&"vida")  # SW-M1: the map opens on the whole sky; the chip says Regar once a figure is open
 	return s
 
 

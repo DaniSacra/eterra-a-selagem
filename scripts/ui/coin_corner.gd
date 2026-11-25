@@ -122,6 +122,24 @@ static func wallet(data: Dictionary, size: int = 18, mark_px: float = 22.0) -> H
 	return row
 
 
+## SW-M3: the wallet on a dark plate in the top right corner of a full-window screen (anchored, any resolution), on top of
+## whatever the screen paints (the Livro's parchment). The wallet stays the row `wallet` made, so refresh() still reads it.
+static func corner(host: Control, row: HBoxContainer, margin: float = 16.0) -> PanelContainer:
+	var plate := PanelContainer.new()
+	plate.name = "wallet_plate"
+	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plate.add_theme_stylebox_override(&"panel", UiKit.box(Color(0.045, 0.032, 0.04, 0.94), UiKit.OLD_GOLD, 2, 8, 16))
+	row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	row.custom_minimum_size = Vector2.ZERO
+	plate.add_child(row)
+	host.add_child(plate)
+	plate.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	plate.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	plate.offset_right = -margin
+	plate.offset_top = margin
+	return plate
+
+
 ## Right edge and top of the wallet in a 1280 x 720 stage.
 static func place(row: Control, right: float, top: float) -> void:
 	row.size = Vector2(WALLET_WIDTH, 32.0)

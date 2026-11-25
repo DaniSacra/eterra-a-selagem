@@ -262,6 +262,8 @@ func _draw_glow() -> void:
 			var tint := tint_of(id)
 			for k in 4:
 				glow.draw_circle(c, r * (1.0 - k * 0.18), Color(tint.lightened(0.2), 0.10 * breathe * _appear(id)))
+			# SW-M1: a lit Dom is a star, its four-pointed glint over the disc's rim
+			StarGlyph.spikes(glow, c, r * 1.55, Color(tint.lightened(0.45), 0.5 * breathe * _appear(id)))
 	for b: Dictionary in _bursts:
 		var c := spot(b.id)
 		var r := def.find(b.id).diameter * 0.5
@@ -304,17 +306,17 @@ func _draw_edge(ci: CanvasItem, a: StringName, b: StringName, glow_pass: bool) -
 		return
 	var tint := tint_of(a)
 	var col := Color(tint.darkened(0.1), 0.8)
-	var w := 6.0
+	var w := 3.0
 	if lit:
 		col = tint.lightened(0.15).lerp(UiKit.GOLD, 0.35)
-		w = 7.0
+		w = 4.0
 	elif half:
 		col = Color(tint, 0.85)
 	if glow_pass:
 		col = Color(tint.lightened(0.3), 0.3 * _appear(a))
-		w = 14.0
+		w = 11.0
 	if not glow_pass:
-		ci.draw_line(spot_rel(a), spot_rel(b), Color(UiKit.INK, 0.55), w + 4.0, true)
+		ci.draw_line(spot_rel(a), spot_rel(b), Color(UiKit.INK, 0.45), w + 2.0, true)
 	ci.draw_line(spot_rel(a), spot_rel(b), col, w, true)
 
 

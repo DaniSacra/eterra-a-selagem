@@ -167,7 +167,7 @@ func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = fals
 		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
 	_wallet = CoinCorner.wallet(_data, 17, 20.0)
 	_wallet.name = "coins"
-	bar.set_center(_wallet)
+	CoinCorner.corner(self, _wallet)
 	_refresh()
 	_show(start)
 	_first_focus().grab_focus.call_deferred()
