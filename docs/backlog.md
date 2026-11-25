@@ -1,5 +1,138 @@
 # Backlog de A Selagem
 
+## Rodada de backlog 2026-11-25
+Game-director, commit lido `a5b1a55` (árvore limpa, só `docs/backlog_proposals/qa_2026-11-25.md` sem commit). Fontes: `docs/backlog_proposals/*_2026-11-25.md`
+(AD2 arte, CF2 combate, RD2 salas, UX2 interface, QA2), o que ficou aberto dos `*_2026-11-24.md` e da rodada de 2026-11-24 noite (abaixo). O detalhe e o aceite
+longo de cada id estão no arquivo de origem; aqui só o resumo.
+
+**Estado em 5 linhas.** (1) O Guerreiro redesenhado (3 x 4 Dons, Golpe Carregado, Corte do Juízo, Coragem para as crianças) está no exe `bc13f16`; a Maga está
+**parada** por pedido do Daniel (não gostou da jogabilidade). (2) O pedido do Daniel depois de jogar: refinar as salas, o visual do Guerreiro e **os efeitos, que
+estão muito fracos**; as duas portas juntas no fim da sala ficam. (3) Hoje entraram hit stop 35/60/85/100 ms, empurrão de câmera, recuo dos comuns, capa petróleo,
+Emeth acesa, anel do impacto aceso, arco do corte com 0,34 s e colunas do Ancião fora da câmera. (4) Mesmo assim, nas capturas depois da correção
+(`docs/gallery/cycle_2026-11-24_r9/seq_combo_after/g_01.png`, `g_02.png`, `g_04.png` e `07_fx2_sala1.png`) o corte ainda é um véu ciano pálido atrás do herói, o
+Giro da Alvorada não mostra arco nenhum, a Onda de Luz é um risco de 2 px e a "gota branca" segue flutuando ao lado do herói (opinião minha: estamos longe da
+meia-lua esmeralda da prancha e do Ember & Blade). (5) QA2: zero erro de script, `stuck` 0 em 12 sementes; o robô perde para Morvath em 9 de 12 e o pico de passo com
+300 inimigos é 56 ms.
+
+**Feito hoje (desde `9439bf8`, conferido no git log):** AD2-01, 02, 03, 05, 06 (`e9cb04e`, os quatro primeiros ainda sem verificação de aceite em captura; ver E1);
+CF2-01 (falso alarme, endurecido), 02, 05, 06 (`f3b8325`), CF2-03, 04, 06 (`45a1c9e`); UX2-01, 02 (= AD2-10, AD2-11), 03, 10 e AD2-14 em parte (números maiores)
+(`7cbeb18`); RD2-01, 02 (sem reproduzir o `stuck`; teste `test_spawn_points`), 03, 04 só pedras, 07 em parte (aviso 1,5 s e 30% aceso) (`f041375`); arco do corte
+0,34 s e caminho da Onda de Luz (`790b610`, `tests/test_slash_visible.gd`); 4 Bênçãos dos botões vazios (`d87a59a`); Ancião x0,6 e orbes 3, Provação acima de
+60%, lajes de aprender (`a979de0`, `039d45d`).
+
+### (A) Fazer agora sem perguntar
+Ordem: **bugs, quickwins, efeitos, pequenas melhorias**. Até 4 agentes juntos, um dono por arquivo: `scripts/game/fx.gd` e os shaders de efeito só no lote E1;
+`tools/make_data.gd` e `data/stages/` só no lote S; `hud.gd` só no U; `combat.gd`, `horde.gd`, `player.gd` só no G. Quem precisar de arquivo de outro lote
+pede ao dono no relatório. Cada agente roda só o `-gselect` dos seus testes; capturas GPU só a sessão principal, uma por vez.
+
+**Onda 1 (4 agentes em paralelo)**
+
+**Lote E1, efeitos do Guerreiro** (`technical-artist`; `fx.gd`, `slash.gdshader`, `ring.gdshader`, `emeth.gdshader`, `projectiles.gd` só no desenho da Onda,
+`number_tally.gd`). É o pedido número 1 do Daniel.
+1. **E1-1 Gota branca ainda solta** (bug, AD2-06 resto, P). `seq_combo_after/g_01.png` e `g_02.png`: duas gotas brancas acima do herói, longe do alvo. Aceite: em 10
+   quadros de combo nenhum branco sólido a mais de 0,5 m do inimigo atingido; clarão no tronco do alvo.
+2. **E1-2 Corte em meia-lua esmeralda de verdade** (efeitos, AD2-02 não atingido, M). Isentar os golpes do herói dos amortecedores do estilizado (`style_veil`,
+   `style_edge_cap`, `style_core_light`), fio esmeralda acima do limiar do glow, faixa do punho à ponta mais 0,3 m. Aceite do AD2-02: arco de 1,5 vez a altura do
+   herói em 1 quadro por golpe, fio matiz 140 a 160, saturação 0,6, luma 200; corpo do herói sem pixel estourado.
+3. **E1-3 Giro da Alvorada com arco visível** (efeitos, AD-11 e CF2-08 brilho, P). Em `07_fx2_sala1.png` o giro não deixa arco. Anel de corte em volta do herói na
+   cor da Emeth, 2 quadros a mais depois do acerto. Aceite: arco do giro visível por 0,34 s ou mais na sequência de quadros.
+4. **E1-4 Onda de Luz larga** (efeitos, P). `g_04.png`: risco de 2 px. Faixa de 0,6 m ou mais, miolo claro e borda esmeralda, rastro aceso já existente. Aceite: a
+   faixa mede 12 px ou mais na câmera Perto a 1672 de largura.
+5. **E1-5 Rastro e luz por golpe** (efeitos, CF2-11 e CF2-07 resto, P). Largura do rastro 1,0 / 1,2 / 1,6 e luz pontual curta também nos golpes 1 e 2 no ponto do
+   alvo, dentro do `LIGHT_POOL` 3. Aceite: os 3 golpes reconhecíveis lado a lado sem legenda; `RESULT` da semente 5 igual.
+6. **E1-6 Números de dano com peso** (AD2-14 resto, P). Nascem sobre o alvo, pulo 1,4 para 1,0 em 0,12 s, contorno de 2 px, final e pesado 1,3 vez e em ouro velho,
+   repetidos de lado. Aceite do AD2-14.
+7. **E1-7 Regra do anel do herói** (AD2-15, P). Anel sempre petróleo; estado (Onda pronta) num fio interno esmeralda; regra na §2.1 do `art_direction.md`.
+   Aceite: 01 e 04 refeitas com matiz 180 a 188.
+8. **E1-8 Exclamação de aviso em amarelo saturado** (opinião minha, P). `g_01.png`: o "!" do `enemy_fx.gd:553` é amarelo puro, cor que a estética proíbe. Passar
+   para ouro velho com contorno de tinta ou vermelho translúcido. Aceite: matiz e saturação dentro da paleta de perigo; teste do `enemy_fx` verde.
+
+**Lote G, sensação no código** (`gameplay-engineer`; `combat.gd`, `horde.gd`, `player.gd`, `scripts/core/defeat_cause.gd`; sem `fx.gd` nem `make_data.gd`)
+9. **G-1 Dano "unknown" na sala do chefe** (bug baixo, QA2-04, P). Semente 8: 14 de 111 sem origem. Aceite: `unknown` 0 em 12 sementes; teste do `DefeatCause`.
+10. **G-2 Esquiva não cancela o giro antes do acerto** (CF2-08, P). Aceite: teste GUT do quadro de cancelamento; cadência 1 < 2 < 3 igual.
+11. **G-3 Morte pelo golpe 3 e pelo giro mais forte** (CF2-10, P). Empurrão 1,5 vez e corpo some em 0,35 s; golpe 1 mantém. Aceite: teste do tempo de sumiço por golpe.
+12. **G-4 Vida inicial de cada `--start=`** (QA2-06, P). Documentar em `docs/reference/engine.md` (não no `CLAUDE.md`). Aceite: tabela escrita.
+
+**Lote S, salas** (`room-designer`; `tools/make_data.gd`, `data/stages/`, `scripts/game/rooms.gd` e perigos; regerar só `stage`)
+13. **S-1 Raiz e planta com alcance e aviso maiores** (RD2-04a sem atrair a horda, P). Raiz ligada ao tronco central, 1,5 s de aviso; o desvio do fluxo da horda é
+    a pergunta B2. Aceite: 12 sementes, raiz com golpe em inimigo em metade das descidas em que aparece; `test_hazard_sr` verde.
+14. **S-2 Runa fere o bando que passa** (RD2-07 resto, P). Aceite: runas abaixo de 15% do dano da sala 7 no robô; golpes em inimigo maiores que no herói em 8 de 12.
+15. **S-3 Ritmo das salas 2 a 4 e 6 a 9** (RD2-06, P). 3 ondas, a 3ª com 1 elite ou atirador, nascimento escalonado, mesma vida total. Aceite: 25 a 45 s nas salas
+    1 a 4, 30 a 55 s nas 6 a 9 (robô, 12 sementes).
+16. **S-4 Laje de aprender por ciclo** (RD2-08, M). Arma sozinha a cada 6 s com 1,5 s de aviso até a profundidade 4. Aceite: golpe em inimigo em 8 de 12; dano no
+    herói abaixo de 10 por descida; teste GUT do ciclo.
+17. **S-5 Investida do Cavaleiro com linha até a parede** (RD2-10, M; dono do aviso no chão é o `room-designer` com o `gameplay-engineer` revisando). Espinhos dos cantos
+    armam no atordoado (60). Sala 5 concentra 7 de 22 mortes. Aceite: 12 sementes `--start=miniboss --guardian=knight`, 3 ou mais batidas por luta, luta abaixo de 90 s.
+
+**Lote U, interface** (`ui-ux-designer`; `hud.gd`, `action_slot.gd`, `first_tips.gd`, `data/text_pt.tres` só nas chaves dele)
+18. **U-1 Dica da porta só com porta aberta** (UX2-08 = UX-03, P). Aceite: teste GUT, nada antes de `door_open` e a menos de 6 m.
+19. **U-2 Glifos e dicas pelo `Controls`** (UX2-11 = UX-10, P). Aceite: teste sem "ultimate" nem "Ômega"; teclado e controle batem.
+20. **U-3 Magia discreta no Guerreiro** (UX2-06, P). Barra fina abaixo da vida, realça ao subir ou quando o botão que a usa está ativo. Aceite: vida domina na captura.
+21. **U-4 Faixa de baixo organizada** (UX2-05, M). Esquerda vida e Magia; centro só botões sem caixa escura; direita ouro e materiais em pílula; losango "2/3" com rótulo
+    ao focar. Aceite: 1280x720 sem texto sobreposto, cada contador identificável.
+22. **U-5 Seta de atirador fora da tela** (UX2-07 = UX-04, P; sai do C porque a sala 5 mata de fora da tela). Máximo 2, 1 s antes do disparo. Aceite: `--stress=300` sem
+    passar de 2; `RESULT` igual.
+
+**Onda 2 (depois de integrar a onda 1; até 4 agentes)**
+
+**Lote H, o Guerreiro mais apresentável** (`technical-artist`, depois do E1; `hero_paint.gdshader`, `hero_body.gd`, `emeth_sword.gd`)
+23. **H-1 Armadura em aço escuro sem gerar nada** (AD2-04 passo 1, M). Zonas de material no `hero_paint`: placas em aço escuro com friso de ouro velho, couro só em cintos
+    e botas. Aceite: `--showcase` ao lado da prancha, tronco com luma menor que a pele e o chão, friso legível; se a textura não separa as placas, vira a pergunta B1.
+24. **H-2 Capa curta e braço da espada fora** (AD2-13, M; segue a prancha aprovada, não é decisão nova). Aceite: folha de 4 direções com pernas abaixo do joelho e braço
+    visíveis.
+
+**Lote C, cenário das salas** (`environment-artist`; peças, chão e luz das salas, nada de `make_data.gd` sem pedir ao S)
+25. **C-1 Grelhas da sala 5 sem moldura branca** (AD2-12, quickwin P). Aceite do AD2-12.
+26. **C-2 Sala 5: chão mais escuro e sem vão preto** (AD2-07, M). Chão luma 85 a 100, pilares com base e capitel, silhuetas na bruma à direita. Aceite: nenhuma área preta
+    acima de 10% da tela; herói com contraste 40.
+27. **C-3 Sala 1 com chão vivo** (AD2-08, M). Decalques, lajes quebradas, velas variadas, mancha verde diante do portal. Aceite do AD2-08.
+28. **C-4 Receita de luz pela régua da Câmara do Selo** (AD2-09, M), primeiro salas 1 e 5. Aceite: centro de luta mais claro que as bordas, 2 poças quentes.
+
+**Lote S2, salas** (`room-designer`, depois do S)
+29. **S-6 Zonas mortas** (RD2-05, M). Nascimento em dois lados nas Fendas e no Santuário, ouro e quebráveis perto dos cantos. Aceite: nenhuma zona acima de 60% do tempo.
+30. **S-7 Descanso depois do guardião** (RD2-11 = RD-08, M; as duas portas seguem juntas, uma delas vira descanso). Aceite: teste do `RunMap` em 300 descidas; vida ao
+    entrar nas salas 6 e 11 sobe 4 ou mais.
+
+**Lote M, medida** (`combat-feel-director` em `tools/feel_probe*` e `combat_cadence.md`; `balance-designer` só em `balance.md`; uma passada, 12 sementes)
+31. **M-1 Sonda nova e matriz de cadência** (CF2-12, G). Aceite: N de N verde, nenhuma linha `LOST`, matriz a 60 FPS publicada.
+32. **M-2 Leitura dos inimigos no HEAD** (CF2-09 = CF-09). `enemy_motion_probe` e `boss_probe`; silhueta muda 6 quadros antes do dano em todos os tipos.
+33. **M-3 Robô contra Morvath e duração da luta** (QA2-02, QA2-03, QA2-05). Dizer se é robô ou equilíbrio; mediana da luta contra a meta do `balance.md`. Lembrar a
+    ordem do Daniel de 2026-11-21 ("ainda fácil") contra o teste das crianças ("difícil"): só medida, nenhum número muda sem a régua.
+34. **M-4 Pico de 56 ms com 300 inimigos** (QA2-01, `qa-performance`). Medir na GPU antes de mexer; aceite: pico abaixo de 25 ms ou causa dita e aceita.
+
+**Sessão principal (capturas GPU, uma por vez, depois de cada onda)**
+35. Verificar o aceite de AD2-01, 03 e 05 (capa na sala 5, Emeth em 10 quadros, quadro do Brado), a sequência de combo depois do E1, a sala 5 depois do C e `--stress=300`
+    em 1280x720 (UX2-09). Copiar para `C:\Users\danie\Downloads`.
+36. **TA-12 `docs/steam-ia.md` em dia** (`technical-artist`, só documentos, P). Registrar a Maga do Meshy e os medalhões novos. Aceite: inventário sem modelo de IA faltando.
+
+### (B) Precisa do Daniel
+1. **Armadura do Guerreiro no Meshy** (AD2-04 passo 2). Só se o H-1 provar que a textura não separa placa e couro. Opções: (a) retextura do modelo atual no Meshy;
+   (b) pintar à mão as zonas no shader e aceitar o limite; (c) modelo novo. Recomendo **(b) agora e (a) só depois de ver a captura do H-1**, com a estimativa de créditos
+   escrita no `meshy_asset_plan.md` antes de gastar.
+2. **Raízes e planta puxam a horda para o perigo?** (RD2-04a). Mexer no fluxo da horda muda o caminho dos inimigos. Opções: (a) a horda é atraída para o tronco;
+   (b) só alcance e aviso maiores (S-1); (c) deixar como está. Recomendo **(b) agora e medir**; (a) só se ainda ficar em 0 golpe.
+3. **O respiro das Fendas fere inimigo?** (RD2-04c). Hoje só empurra. Opções: (a) dano 10 só em inimigo; (b) dano também no herói; (c) só empurrão. Recomendo **(a)**
+   (no Hades II o perigo de sala vira arma do jogador).
+4. **Retrato do herói no HUD** (UX2-04). O retrato atual tem traço de anime e destoa do 3D. Opções: (a) render do busto 3D; (b) pedido ao ChatGPT no estilo da prancha;
+   (c) manter. Recomendo **(b) depois do H-1 e H-2**, para pintar o herói já acertado.
+5. **Seguem de antes, sem mudança**: limpar o repositório (B8 da rodada anterior: recomendo não reescrever o histórico); pedidos de arte ao ChatGPT (B9: agora
+   recomendo o chão pintado das salas 1 e 5 antes do medalhão, porque o Daniel pediu salas); heróis futuros (B10: depois).
+
+### (C) Depois
+- **Maga (parada pelo Daniel)**: aprovar os 12 Dons provisórios (HD-03), visual por habilidade e disco da Convergência (R3 10 e 11, AD-03 a AD-05, TA-09 a TA-11),
+  combinações (HD-04), patamar contra o Guerreiro (BL-08), HUD e medalhão dela (UX-02, UX-07). Nada disso entra até o Daniel reabrir a Maga.
+- **Salas maiores**: Cavaleiro em octógono e Ancião em nave com abside (RD2-09), passada de acabamento por arena (RD2-12, G, uma por vez com antes e depois), regra
+  própria de Ponte, Fendas B, Runas e Santuário C (RD-07), perigo que o jogador arma (RD-09), marco por sala (EA-05), raio-x com oclusão (EA-04), Santuário HV-D (EA-07),
+  Compatibility do aviso (EA-10).
+- **Interface maior**: moldura comum das 4 telas (UX2-12), glossário (UX-11), ensino da esquiva e do Brado na primeira sala (UX-12), Supremo por arma no slot (UX-06).
+- **Dívidas técnicas** (R10 da rodada anterior): Morvath assado abaixo de 60 MB (TA-07), medalhões acima de 512 px (TA-08), origens do Meshy e KayKit sem uso (TA-05, TA-06),
+  `disk_report.sh` (TA-02).
+- **Equilíbrio**: Bênção da tecla esquecida (B7 anterior, depois do registro das crianças), ouro até o guardião (BL-10), Maestria sem item em 6 e 10 (HD-07, BL-05).
+- **Heróis novos**: Ladina e Paladino (HD-08, HD-09, HD-10).
+
+**O que só o Daniel jogando responde**: se o golpe 3 agora pesa mais que o 2 sem legenda (CF2-02), se o empurrão de câmera enjoa (CF2-03), se o corte novo do E1 lê como
+"efeito forte" e não como clarão, e se a sala 5 ficou justa para as crianças depois do S-5.
+
 ## Redesign dos heróis (pacote do Daniel de 2026-11-24, `docs/design/heroes/redesign_2026-11-24/`) — LER PRIMEIRO na conversa nova
 Aprovado pelo Daniel em 2026-11-24 ("pode, segue as recomendações"). Decisões:
 1. Dons removidos (Fúria, Guerra, sustento): devolver toda a Memória gasta e liberar as Vagas, migração idempotente nos três saves.
