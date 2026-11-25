@@ -6,6 +6,7 @@ extends PanelContainer
 ## key). Pure display: the screen calls show_for() each time the focus moves.
 ##   var list := AbilityList.new().setup(220.0)
 ##   list.show_for(&"rush", color)        # &"": acts alone
+## SW-B1: show_held(state) writes under each button the Blessing it already has (its medallion and name).
 
 ## The buttons in the order of the HUD's row: action, its mark (BoonIcon id; -1: the action's own by slot), its slot.
 const BUTTONS: Array[Array] = [[&"light_attack", -1, Boon.Slot.ATTACK], [&"heavy_attack", -1, Boon.Slot.SPECIAL],
@@ -13,6 +14,7 @@ const BUTTONS: Array[Array] = [[&"light_attack", -1, Boon.Slot.ATTACK], [&"heavy
 	[&"ultimate", BoonIcon.ULT_GLYPH, Boon.Slot.ULT], [&"dodge", -1, Boon.Slot.DASH]]
 const NAME_SIZE := 16
 const MARK := 22.0
+const HELD_SIZE := 13
 const DIM_ALPHA := 0.42
 
 var lit := &""
@@ -47,10 +49,19 @@ func setup(width: float) -> AbilityList:
 		line.add_theme_constant_override(&"separation", 8)
 		var glyph: int = b[1] if b[1] >= 0 else BoonIcon.ACTION_GLYPH + int(b[2])
 		line.add_child(ActionSlot.glyph_mark(glyph, MARK))
+		var words := VBoxContainer.new()
+		words.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		words.add_theme_constant_override(&"separation", -2)
+		words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var n := UiKit.label(T.t("action_" + String(action)), UiKit.PALE, NAME_SIZE, UiKit.BOLD_FONT)
 		n.name = &"Name"
-		n.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		line.add_child(n)
+		words.add_child(n)
+		var held := UiKit.label("", UiKit.DIM, HELD_SIZE)
+		held.name = &"Held"
+		held.clip_text = true
+		held.visible = false
+		words.add_child(held)
+		line.add_child(words)
 		line.add_child(BoonCard.key_plaque(action))
 		col.add_child(line)
 		_lines[action] = line
@@ -70,10 +81,39 @@ func show_for(action: StringName, tint: Color) -> void:
 		var line: HBoxContainer = _lines[a]
 		var on := a == lit
 		line.modulate.a = 1.0 if on or lit == &"" else DIM_ALPHA
-		(line.get_node("Name") as Label).add_theme_color_override(&"font_color", tint.lightened(0.3) if on else UiKit.PALE)
+		(line.find_child("Name", true, false) as Label).add_theme_color_override(&"font_color", tint.lightened(0.3) if on else UiKit.PALE)
 	_alone.visible = lit == &""
 
 
 ## Whether the line of an action is the one lit (tests).
 func is_lit(action: StringName) -> bool:
 	return lit == action
+
+
+## SW-B1: the Blessing the hero holds on each button (action -> Boon), the Investida's apart from the dodge's (BC-2).
+static func held_by_action(state: BoonState) -> Dictionary:
+	var out := {}
+	if state == null:
+		return out
+	for b in state.owned():
+		if not b.is_duo() and b.slot != Boon.Slot.NONE:
+			out[b.button()] = b
+	return out
+
+
+## Writes under each button the name of the Blessing it already has (nothing under a free button).
+func show_held(state: BoonState) -> void:
+	var held := held_by_action(state)
+	for a: StringName in _lines:
+		var label := (_lines[a] as HBoxContainer).find_child("Held", true, false) as Label
+		var b: Boon = held.get(a)
+		label.visible = b != null
+		label.text = T.t("boon_" + String(b.id)) if b != null else ""
+		if b != null:
+			label.add_theme_color_override(&"font_color", b.color().lightened(0.2))
+
+
+## The name written under a button ("" when free), for the tests.
+func held_text(action: StringName) -> String:
+	var line: HBoxContainer = _lines.get(action)
+	return (line.find_child("Held", true, false) as Label).text if line != null else ""

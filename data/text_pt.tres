@@ -1434,5 +1434,13 @@ entries = {
 "word_react_overload": "Sobrecarga",
 "word_react_crystal": "Cristalização",
 "courage_start_1": "Coragem: +%d de vida e a primeira Bênção sobe um nível",
-"courage_start_n": "Coragem: +%d de vida e as %d primeiras Bênçãos sobem um nível"
+"courage_start_n": "Coragem: +%d de vida e as %d primeiras Bênçãos sobem um nível",
+"need_set": "Pede {names}",
+"need_or": " ou ",
+"need_others": "outras",
+"need_tag_finisher": "Pede um golpe final no combo",
+"need_tag_spin": "Pede um golpe giratório no combo",
+"need_ult": "Pede o Golpe Supremo liberado",
+"choice_new_mark": "Novo!",
+"choice_level_up": "Nível {n}"
 }

@@ -259,7 +259,10 @@ func test_codex_elos_formed_hinted_and_unknown() -> void:
 	# Aurora Gelada: both its Blessings were met, so the recipe shows, never the name
 	var hinted := c.find_child("aurora", true, false)
 	assert_eq((hinted.find_child("Name", true, false) as Label).text, "???")
-	assert_eq((hinted.find_child("Recipe", true, false) as Label).text, EloLink.caption(state.sources(state.find(&"aurora"))))
+	# SW-B3: and what the Elo asks, one line a list (BoonNeeds)
+	assert_eq((hinted.find_child("Recipe", true, false) as Label).text, c._recipe_and_needs(state.find(&"aurora"), state.sources(state.find(&"aurora"))))
+	assert_true((hinted.find_child("Recipe", true, false) as Label).text.begins_with(EloLink.caption(state.sources(state.find(&"aurora")))))
+	assert_true((hinted.find_child("Recipe", true, false) as Label).text.contains("Pede "))
 	for b in c.catalog(true):
 		assert_true(b.is_duo())
 		if b.id in [&"vapor", &"aurora"]:

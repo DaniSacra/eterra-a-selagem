@@ -531,13 +531,25 @@ func _boons() -> void:
 		name.custom_minimum_size.x = BOON_NAME_WIDTH
 		name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		row.add_child(name)
-		var fam := UiKit.label(T.t(Boon.FAMILY_KEY[b.family]) if n > 0 else "", Book.FADED, ROW_SIZE - 2)
+		var fam := UiKit.label(_family_and_needs(b) if n > 0 else "", Book.FADED, ROW_SIZE - 2)
 		fam.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		fam.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		row.add_child(fam)
 		row.add_child(_times(n))
 		cols.get_child(cols.get_child_count() - 1).add_child(row)
 	_undiscovered(hidden)
+
+
+## SW-B3: a Blessing's family and, under it, what it asks before it is offered (BoonNeeds: a move, the ultimate open).
+func _family_and_needs(b: Boon) -> String:
+	var lines := BoonNeeds.lines(b, _catalog.catalog)
+	return T.t(Boon.FAMILY_KEY[b.family]) + ("\n" + "\n".join(lines) if not lines.is_empty() else "")
+
+
+## SW-B3: an Elo's two Blessings and, under them, the lists it asks one of each from.
+func _recipe_and_needs(b: Boon, from: Array[Boon]) -> String:
+	var lines := BoonNeeds.lines(b, _catalog.catalog)
+	return EloLink.caption(from) + ("\n" + "\n".join(lines) if not lines.is_empty() else "")
 
 
 ## Every Elo, one line each: the chain with its two Blessings and its name once formed; before, "???" and the recipe
@@ -569,7 +581,7 @@ func _elos() -> void:
 		name.custom_minimum_size.x = ELO_NAME_WIDTH
 		row.add_child(name)
 		var known := from.size() == 2 and from.all(func(s: Boon) -> bool: return count("boons", s.id, "seen") > 0)
-		var recipe := UiKit.label(EloLink.caption(from) if n > 0 or known else UNKNOWN, Book.INK if n > 0 else Book.FADED, ROW_SIZE - 1)
+		var recipe := UiKit.label(_recipe_and_needs(b, from) if n > 0 or known else UNKNOWN, Book.INK if n > 0 else Book.FADED, ROW_SIZE - 1)
 		recipe.name = &"Recipe"
 		recipe.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		recipe.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

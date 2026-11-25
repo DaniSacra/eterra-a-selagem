@@ -16,7 +16,7 @@ const LEAD_SIZE := 20
 ## BC-1: the angel's figure at the left, in px at 720 lines, and the list's width.
 ## PT-7 (2026-11-23): larger, the angel a presence beside its Blessings.
 const FIGURE := Vector2(300.0, 450.0)
-const LIST_W := 210.0
+const LIST_W := 240.0
 ## BC-4: seconds the angel's words stay before the options come by themselves.
 const INTRO_TIME := 2.5
 ## The angel's seal over its cards (by_angel): it stands for the angel while the angels have no figure (ciclo
@@ -29,8 +29,19 @@ const ANGEL_ART_HEIGHT := 280.0
 ## The glossary beside the row (UI-HB1, P1-2) and the room between it and the cards.
 const GLOSSARY := 220.0
 const GLOSSARY_GAP := 22
+## SW-B1: the cards come apart (assets/shaders/card_dissolve.gdshader) for this long before the pick is told to the game.
+const DISSOLVE_TIME := 0.45
+const DISSOLVE_SHADER := preload("res://assets/shaders/card_dissolve.gdshader")
+## The angel's colour over the whole screen (alpha), under the cards.
+const TINT_ALPHA := 0.4
 
 var _cards: Array[BoonCard] = []
+## SW-B1: Blessings never seen before (the Compêndio has none of them): "Novo!" on their medallions. Set before open.
+var fresh: Array[StringName] = []
+var _state: BoonState
+var _dissolving := false
+## The tests run without a screen and take a pick at once; this one asks for the dissolve anyway.
+var dissolve_headless := false
 var _opened_at := 0
 var _rarities: Dictionary = {}
 var _upgrades: Dictionary = {}
@@ -62,6 +73,7 @@ var reroll_item: ActionBar.Item
 func open(offers: Array[Boon], state: BoonState, rarities: Dictionary = {}, upgrades: Dictionary = {}) -> void:
 	_rarities = rarities
 	_upgrades = upgrades
+	_state = state
 	var row := _page()
 	if offers.is_empty():
 		row.add_child(_card(null, state))
@@ -75,6 +87,7 @@ func open(offers: Array[Boon], state: BoonState, rarities: Dictionary = {}, upgr
 ## game (null in tests) gives the hero's equipped Gifts and their names.
 func open_cards(drawn: Array[BoonState.Card], state: BoonState, game: Game) -> void:
 	_drawn = drawn.duplicate()
+	_state = state
 	_rarities = offers_of(drawn)
 	_upgrades = {}
 	var row := _page()
@@ -121,7 +134,7 @@ func _page(title_text: String = "", hint_text: String = "", lead_text: String = 
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_opened_at = Time.get_ticks_msec()
 	var page := UiKit.column(self, 1100.0, 0.74)
-	page.add_theme_constant_override(&"separation", 20)
+	page.add_theme_constant_override(&"separation", 20 if hint_text != "" else 8)
 	var head := VBoxContainer.new()
 	head.name = "head"
 	_head = head
@@ -137,7 +150,7 @@ func _page(title_text: String = "", hint_text: String = "", lead_text: String = 
 	var row: BoxContainer = VBoxContainer.new() if hint_text == "" else HBoxContainer.new()
 	row.name = "cards"
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override(&"separation", 14 if hint_text == "" else 22)
+	row.add_theme_constant_override(&"separation", 10 if hint_text == "" else 22)
 	var hint := UiKit.shadow(UiKit.label(hint_text if hint_text != "" else T.t(&"choice_hint"), UiKit.DIM, 18))
 	hint.name = "hint"
 	_hint = hint
@@ -207,12 +220,20 @@ func by_angel(a: AngelDef, on_back: Callable = Callable(), held := -1) -> void:
 		return
 	angel = a
 	back = on_back
+	_tint_screen(AngelSeal.tint(a.family))
 	if _head != null:
-		var n := UiKit.shadow(UiKit.title(T.t(&"choice_by_angel", {"name": T.t(a.name_key)}), 20, AngelSeal.tint(a.family).lightened(0.3)))
+		# SW-B1: the angel's name and its line over the screen, "Escolha uma Bênção" smaller under them
+		var n := UiKit.shadow(UiKit.title(T.t(a.name_key), 38, AngelSeal.tint(a.family).lightened(0.4)))
 		n.name = "angel"
 		n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_head.add_child(n)
 		_head.move_child(n, 0)
+		var phrase := UiKit.shadow(UiKit.label(T.t(a.line_key), UiKit.PALE, 20))
+		phrase.name = "angel_line"
+		phrase.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_head.add_child(phrase)
+		_head.move_child(phrase, 1)
+		_title.add_theme_font_size_override(&"font_size", 22)
 	var line := find_child("line", true, false) as HBoxContainer
 	if line != null:
 		# BC-1: the angel in a column to the left of the lines, its whole painting fading into the dark (the seal when it
@@ -244,17 +265,51 @@ func by_angel(a: AngelDef, on_back: Callable = Callable(), held := -1) -> void:
 			seal.position = Vector2(ANGEL_FIGURE, ANGEL_FIGURE) * 0.09
 			holder.add_child(seal)
 			col.add_child(holder)
-		if held < 0:
-			# (with the angel's words first the name stands once, in the words)
-			var name := UiKit.shadow(UiKit.title(T.t(a.name_key), 24, tint.lightened(0.35)))
-			name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			col.add_child(name)
 		if glossary != null and list == null:
 			glossary.get_parent().remove_child(glossary)
 			col.add_child(glossary)
 	_offer_back()
 	if held >= 0 and line != null:
 		_show_intro(a, held, line)
+
+
+## SW-B1: the whole screen in the angel's colour, over the dimmed fight and under everything else.
+func _tint_screen(tint: Color) -> void:
+	var veil := get_node_or_null("AngelTint") as ColorRect
+	if veil == null:
+		veil = ColorRect.new()
+		veil.name = "AngelTint"
+		veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		add_child(veil)
+		move_child(veil, 1)
+	veil.color = Color(tint.darkened(0.4), TINT_ALPHA)
+	# a glow of the colour behind the angel, at the left (the figure's place)
+	var glow := get_node_or_null("AngelGlow") as TextureRect
+	if glow == null:
+		var grad := Gradient.new()
+		grad.colors = PackedColorArray([Color(1, 1, 1, 1), Color(1, 1, 1, 0)])
+		var tex := GradientTexture2D.new()
+		tex.gradient = grad
+		tex.fill = GradientTexture2D.FILL_RADIAL
+		tex.fill_from = Vector2(0.5, 0.5)
+		tex.fill_to = Vector2(1.0, 0.5)
+		tex.width = 256
+		tex.height = 256
+		glow = TextureRect.new()
+		glow.name = "AngelGlow"
+		glow.texture = tex
+		glow.stretch_mode = TextureRect.STRETCH_SCALE
+		glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		glow.set_anchors_preset(Control.PRESET_FULL_RECT)
+		glow.anchor_right = 0.55
+		glow.offset_left = 0
+		glow.offset_right = 0
+		glow.offset_top = 0
+		glow.offset_bottom = 0
+		add_child(glow)
+		move_child(glow, 2)
+	glow.modulate = Color(tint.lightened(0.15), 0.5)
 
 
 ## The bar's "Voltar aos anjos" once there is a way back.
@@ -326,9 +381,10 @@ func _show_intro(a: AngelDef, held: int, line: HBoxContainer) -> void:
 
 ## The "Trazidas por X" line over the title: hidden while the angel speaks (its name is in the words).
 func _set_brought_line(on: bool) -> void:
-	var n := _head.get_node_or_null("angel") if _head != null else null
-	if n is CanvasItem:
-		n.visible = on
+	for id in ["angel", "angel_line"]:
+		var n := _head.get_node_or_null(id) if _head != null else null
+		if n is CanvasItem:
+			n.visible = on
 
 
 ## Whether the angel's words are on show (BC-4).
@@ -392,12 +448,20 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _ready_cards() -> void:
 	Audio.play(&"level_up")
+	if list != null:
+		list.show_held(_state)
 	if glossary != null:
 		for c in _cards:
 			c.focus_entered.connect(func() -> void:
 				glossary.show_for(c.plain)
 				if list != null:
 					list.show_for(c.button(), card_tint(c)))
+			# SW-B1: the pointer on one word of rule: that word's box alone; off it, the card's words again
+			c.term_hovered.connect(func(id: StringName) -> void:
+				if id == &"":
+					glossary.show_for(c.plain if c.has_focus() else "")
+				else:
+					glossary.show_terms([id] as Array[StringName]))
 	# the first card that can be taken (an altar's trade out of reach cannot be focused)
 	for c in _cards:
 		if c.focus_mode != Control.FOCUS_NONE:
@@ -458,6 +522,7 @@ func card_upgrade(b: Boon) -> bool:
 func _card(b: Boon, state: BoonState) -> BoonCard:
 	var card := BoonCard.new()
 	card.listed = list != null
+	card.fresh = b != null and fresh.has(b.id)
 	var rarity := card_rarity(b, state)
 	if b:
 		var lv := state.level(b.id)
@@ -479,17 +544,52 @@ func _card(b: Boon, state: BoonState) -> BoonCard:
 
 
 func _pick(b: Boon) -> void:
-	if Time.get_ticks_msec() - _opened_at < GUARD_MS:
+	if _dissolving or Time.get_ticks_msec() - _opened_at < GUARD_MS:
 		return
 	Audio.play(&"boon")
-	chosen.emit(b)
+	_dissolve_then(func() -> void: chosen.emit(b))
 
 
 func _pick_card(c: BoonState.Card) -> void:
-	if Time.get_ticks_msec() - _opened_at < GUARD_MS:
+	if _dissolving or Time.get_ticks_msec() - _opened_at < GUARD_MS:
 		return
 	Audio.play(&"boon")
-	card_chosen.emit(c)
+	_dissolve_then(func() -> void: card_chosen.emit(c))
+
+
+## SW-B1: the cards come apart, then done runs (at once when the screen is not on show, or DISSOLVE_TIME is 0).
+func _dissolve_then(done: Callable) -> void:
+	_dissolving = true
+	if not is_inside_tree() or not is_visible_in_tree() or DISSOLVE_TIME <= 0.0 or (DisplayServer.get_name() == "headless" and not dissolve_headless):
+		done.call()
+		return
+	var mat := ShaderMaterial.new()
+	mat.shader = DISSOLVE_SHADER
+	mat.set_shader_parameter(&"progress", 0.0)
+	mat.set_shader_parameter(&"edge", AngelSeal.tint(angel.family).lightened(0.4) if angel != null else UiKit.GOLD)
+	for c in _cards:
+		c.focus_mode = Control.FOCUS_NONE
+		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_burn(c, mat)
+	var tw := create_tween()
+	tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tw.tween_property(mat, "shader_parameter/progress", 1.0, DISSOLVE_TIME)
+	tw.finished.connect(done)
+
+
+## The dissolve material on a card and every part of it.
+static func _burn(n: Node, mat: Material) -> void:
+	if n is CanvasItem:
+		(n as CanvasItem).material = mat
+	for c in n.get_children():
+		_burn(c, mat)
+
+
+## Whether the Compêndio has met this Blessing (a run's award writes it at the end of the descent).
+static func known_to_codex(id: StringName) -> bool:
+	var entries: Dictionary = (Save.data.get("codex", {}) as Dictionary).get("boons", {})
+	var entry: Variant = entries.get(String(id), {})
+	return entry is Dictionary and int((entry as Dictionary).get("seen", 0)) > 0
 
 
 ## The gift's text with its numbers at a level: {a} {b} from its modifiers, {dmg} {count} {cd} {radius} {duration} {gap}

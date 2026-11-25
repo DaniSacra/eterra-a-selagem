@@ -89,8 +89,13 @@ func dev_open(ids: String) -> void:
 			angels_now.append(a)
 	_entry = {"room": 0, "node": -1, "offered": [], "chose": "", "cards": [], "fallback": ""}
 	meetings.append(_entry)
-	if not angels_now.is_empty():
-		opened.emit(angels_now)
+	if angels_now.is_empty():
+		return
+	if Dev.has("encounter-pick"):
+		# dev, for captures: straight to the first angel's cards (SW-B1)
+		choose(angels_now[0])
+		return
+	opened.emit(angels_now)
 
 
 ## Fatia 2 (sistemas.md 1.6): the one angel a Blessing's door shows (no meeting), drawn when the door opens on dice of

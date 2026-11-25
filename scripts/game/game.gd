@@ -1090,6 +1090,7 @@ func _open_choice(cards: Array = []) -> void:
 	_offer_rarity = BoonChoice.offers_of(offer_cards)
 	var offers: Array[Boon] = []
 	var psalm_card: BoonState.Card = null
+	var fresh: Array[StringName] = []
 	for c in offer_cards:
 		if c.psalm != null:
 			psalm_card = c
@@ -1097,6 +1098,8 @@ func _open_choice(cards: Array = []) -> void:
 			continue
 		offers.append(c.boon)
 		if not c.grow:
+			if not seen_boons.has(c.boon.id) and not BoonChoice.known_to_codex(c.boon.id):
+				fresh.append(c.boon.id)  # SW-B1: the "Novo!" mark
 			seen_boons[c.boon.id] = true
 	if (Dev.has("autopick") or bot) and psalm_card != null:
 		# the robot and the captures take the Psalm when one comes
@@ -1111,6 +1114,7 @@ func _open_choice(cards: Array = []) -> void:
 	_rerollable = not _no_reroll
 	_no_reroll = false
 	ui.add_child(choice)
+	choice.fresh = fresh
 	if psalm_card != null and choice.has_method(&"open_cards"):
 		choice.call(&"open_cards", offer_cards, boons, self)
 		choice.connect(&"card_chosen", choose_card)

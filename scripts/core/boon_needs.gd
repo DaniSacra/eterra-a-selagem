@@ -1,0 +1,42 @@
+class_name BoonNeeds
+extends RefCounted
+## SW-B3: what a Blessing asks for before it can come on a card, read from the data it already has (nothing new to
+## author): an Elo asks one Blessing of each list in `requires_sets`; a move tag (`needs_tag`) asks the hero's combo for
+## a finisher or a spin; a Blessing of Shift asks the ultimate open. Lines are plain text in the player's language,
+## one per requirement, empty when it asks nothing.
+##   BoonNeeds.lines(boon, catalog)    # ["Pede Golpe em Brasa ou Golpe de Gelo", ...]
+
+## The most names a list says before "outras".
+const SHOWN := 3
+const TAG_KEYS := {&"finisher": &"need_tag_finisher", &"spin": &"need_tag_spin"}
+
+
+## The requirement lines of a Blessing. catalog: every Blessing (to skip the ones kept out of the draw; empty: none skipped).
+static func lines(b: Boon, catalog: Array[Boon] = []) -> PackedStringArray:
+	var out := PackedStringArray()
+	if b == null:
+		return out
+	for list in b.requires_sets:
+		var names := PackedStringArray()
+		for id in list:
+			var other := _find(catalog, StringName(id))
+			if catalog.is_empty() or (other != null and not other.reserve):
+				names.append(T.t("boon_" + String(id)))
+		if not names.is_empty():
+			# a family's list is long: three names and "outras"
+			var shown := names.slice(0, SHOWN)
+			if names.size() > SHOWN:
+				shown.append(T.t(&"need_others"))
+			out.append(T.t(&"need_set", {"names": T.t(&"need_or").join(shown)}))
+	if b.needs_tag != &"" and TAG_KEYS.has(b.needs_tag):
+		out.append(T.t(TAG_KEYS[b.needs_tag]))
+	if b.slot == Boon.Slot.ULT:
+		out.append(T.t(&"need_ult"))
+	return out
+
+
+static func _find(catalog: Array[Boon], id: StringName) -> Boon:
+	for x in catalog:
+		if x.id == id:
+			return x
+	return null

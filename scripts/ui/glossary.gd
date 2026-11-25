@@ -63,7 +63,8 @@ static func terms_of(text: String) -> Array[StringName]:
 static func mark(word: String, id: StringName) -> String:
 	if not COLORS.has(id):
 		return UiKit.strong(word)
-	return "[color=#%s][b]%s[/b][/color]" % [(COLORS[id] as Color).to_html(false), word]
+	# SW-B1: the url tag lets a card tell which word the pointer is on (BoonCard.term_hovered)
+	return "[url=%s][color=#%s][b]%s[/b][/color][/url]" % [id, (COLORS[id] as Color).to_html(false), word]
 
 
 ## The words of rule in a text marked in their term's colour (UI-HB2, H4: "congela" in cold blue, "queimadura" in
@@ -93,7 +94,11 @@ static func _inside_mark(text: String, at: int) -> bool:
 
 ## Shows the terms of a card's text (none: the panel empty and its ink hidden, keeping its width).
 func show_for(text: String) -> void:
-	var ids := terms_of(text)
+	show_terms(terms_of(text))
+
+
+## Shows these terms (SW-B1: the one word under the pointer, or the card's all).
+func show_terms(ids: Array[StringName]) -> void:
 	shown = ids
 	for c in _box.get_children():
 		c.free()
