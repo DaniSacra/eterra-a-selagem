@@ -8,8 +8,8 @@ func test_hall_life_lays_decals_and_nothing_that_blocks() -> void:
 	var sty := Masonry.new(root)
 	HallLife.dress(root, sty)
 	var life := root.get_node("HallLife")
-	# the stain (2), the dust, the cracks: each a strip
-	assert_eq(life.get_child_count(), 2 + HallLife.DUST + HallLife.CRACKS)
+	# the dust, the cracks: each a strip (SL-01: the green stain of the portal is gone)
+	assert_eq(life.get_child_count(), HallLife.DUST + HallLife.CRACKS)
 	assert_true(HallLife.SLAB_SIZE.y < 0.2, "slabs lie low")
 	assert_true(HallLife.HEAP_SIZE.y < 0.3, "rubble under the knee")
 	for c in life.get_children():

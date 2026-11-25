@@ -289,10 +289,10 @@ func crate_frame(pos: Vector3, yaw: float = 0.0, size := Vector3.ONE) -> Array:
 ## A banner hanging on the facade from `top` (the middle of its bar), facing along yaw: cloth with a pointed foot,
 ## folds as darker upright bands, old gold trim down its sides and round the point, a tassel. size: width, length.
 ## emblem (Emblem): the raised sword of Eterra's canon in old gold on it (BANNER_SWORD; the Chamber of the Seal's banners)
-## or the standing lion (BANNER_LION; the arenas' and the hall's).
-func banner(top: Vector3, yaw: float, size: Vector2, layers := FACADE_LAYER, emblem := Emblem.NONE) -> void:
+## or the standing lion (BANNER_LION; the arenas'). `cloth`: another colour of the cloth (SL-01: the hall's worn crimson).
+func banner(top: Vector3, yaw: float, size: Vector2, layers := FACADE_LAYER, emblem := Emblem.NONE, cloth := BANNER_CLOTH) -> void:
 	var mi := MeshInstance3D.new()
-	mi.mesh = _banner_mesh(size, emblem, BANNER_CLOTH, BANNER_TRIM, false)
+	mi.mesh = _banner_mesh(size, emblem, cloth, BANNER_TRIM, false)
 	if _banner_mat == null:
 		_banner_mat = _cloth_material(BANNER_GLOW)
 	mi.material_override = _banner_mat

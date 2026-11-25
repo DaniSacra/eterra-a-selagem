@@ -769,7 +769,7 @@ func _framed_of(a: Arena) -> Array:
 
 func test_sworn_framed_slabs_lie_on_free_floor() -> void:
 	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
-	for room: Array in [[&"hall", 0], [&"crypt", 0], [&"crypt", 1], [&"sanctuary", 0], [&"sanctuary", 1]]:
+	for room: Array in [[&"crypt", 0], [&"crypt", 1], [&"sanctuary", 0], [&"sanctuary", 1]]:
 		var a := _arena(room[0], room[1])
 		var what := "%s %d" % room
 		var framed := _framed_of(a)
@@ -805,20 +805,6 @@ func test_sworn_framed_slabs_lie_on_free_floor() -> void:
 				var apart := absf(r.x - o.x) >= r.z + o.z or absf(r.y - o.y) >= r.w + o.w
 				assert_true(apart, "%s: slabs %d and %d apart" % [what, i, j])
 		match room[0]:
-			&"hall":
-				# S-1: four slabs either side of the flight's axis, never four equal frames (pressure plates)
-				# (plus the lion emblem of the middle, art pack 2026-11-23: first slab, a grave slab with the lion)
-				assert_eq(rects.size(), 5, "SW-H1: two pairs either side of the flight's axis and the emblem")
-				assert_eq(graves, 2, "S-1: one of the four a plain grave slab, and the emblem")
-				assert_eq(lions, 1, "the lion of the middle is the only one")
-				var sizes := {}
-				for i in rects.size():
-					sizes[Vector2((rects[i] as Vector4).z, (rects[i] as Vector4).w)] = true
-					assert_lte((infos[i] as Vector4).z, 1.0, "S-1: never lighter than the floor")
-				assert_gt(sizes.size(), 2, "S-1: of different sizes")
-				for r: Vector4 in rects.slice(1):
-					var ring := Vector2(r.x, r.y).distance_to(CatacombHall.MEDALLION_AT)
-					assert_gt(ring - Vector2(r.z, r.w).length(), CatacombHall.MEDALLION, "clear of the medallion")
 			&"crypt":
 				# (art pack 2026-11-23: in B the first of the pair is the lion frame, so one raised frame is left there)
 				assert_between(raised, 1, 2, "SW-G3: a pair in the crypt")

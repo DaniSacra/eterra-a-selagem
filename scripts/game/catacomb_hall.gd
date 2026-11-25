@@ -1,86 +1,75 @@
 class_name CatacombHall
 extends RefCounted
-## The catacomb hall of Daniel's reference image ("Arena das Catacumbas", 2026-11-14; analysis in
-## docs/art/arena_reference.md), rebuilt piece by piece where the picture has them. The positions come from the
-## picture itself: its landmarks were cast onto the floor through the game's camera (fov 24, turned 35, 30 above the
-## floor), so seen through that camera each piece lands where the painting has it. Seen from the south-east, the room
-## is the diamond of the picture:
-## - north: a raised dais with a wide flight of steps, the green portal in a gothic facade on the right half of the
-##   steps, hooded statues beside it, red banners on its buttresses, pots and crates at the foot of the steps;
-## - north-west corner: a pier out in the abyss with a fire bowl and a hooded statue behind it;
-## - west: a long balustrade with candles and clay pots, and out in the abyss a giant hooded statue on its tower with
-##   a fire bowl at its feet; an arcade and chains in the depths behind;
+## SL-01 (Sala 01 of the 14, docs/art/ref/sala01_2026-11-25, local only): the hall rebuilt from the approved painting and its
+## plan. Meters, x east, z south, from the middle of the room:
+## - north-west: a raised dais with a flight of steps up to it, three hooded statues under blind niches on it, a banner
+##   of worn crimson with no insignia, pots and candles; a pier out in the abyss with a fire bowl and a hooded statue;
+## - north-east: a plain wall at the floor's edge with TWO closed doors in it (D1, D2), 4.2 m apart with stone between
+##   them, no stairs and no portal; the door chosen opens on a black inside (HallDoor);
+## - west: a long balustrade with candles and clay pots; beyond it only arcades, broken bridges and mist (no giant
+##   statue: the enemy's ground carries no allied symbol); a shallow, walkable stream cosmetically wet in the floor;
 ## - south: a standing stone in the middle of the south edge; west of it a landing, the way in (steps down);
-## - east: a standing stone with a fire bowl, and a flight of stairs going down out of the hall (a way on), a fire
-##   bowl on a pier north of it;
-## - the engraved medallion, a little west of the middle.
-## Meters, x east, z south, from the middle of the room. Doors: 0 the portal, 1 the east stairs, 2 the south stairs; the first two stand together in the north-east
-## corner (PT-6b: the choice needs no walking from one door to the other).
+## - east: a standing stone with a fire bowl, a plain balustrade, a fire bowl on a pier by the north-east corner;
+## - the floor: plain slabs, no medallion, no frame, no emblem; low rubble O1 to O3 that blocks nothing.
+## Doors: 0 and 1 are D1 and D2 (the two ways of every room), 2 the south stairs (only with three doors).
 
 ## Half the room (the fight happens inside it, less the Arena margin).
 const HALF := Vector2(16.0, 15.0)
-const MEDALLION_AT := Vector2(-2.5, 1.0)
-const MEDALLION := 7.5
+## The middle the floor is calm round, the key light hangs over and the loose pieces keep off (the medallion that was
+## here is gone, SL-01); how far from it nothing loose lies (MIDDLE_CLEAR).
+const MIDDLE_AT := Vector2(-2.5, 1.0)
+const MIDDLE_CLEAR := 7.5
 ## The dais: its height; the flight of steps up to it (x range on the north edge), its steps and their run.
 const DAIS_Y := 1.0
 const DAIS_STEPS := 4
 const STEP_RUN := 0.6
-## The facade: its x range, its front (z), its height; the portal's middle (x) and opening.
+## The facade: its x range (the dais part, then the wall of the doors to its east), the dais wall's front (z), its height.
 const FACADE_X := Vector2(-6.5, 20.0)
+const DAIS_X := Vector2(-6.5, 5.5)
 const FACADE_Z := -20.0
 const FACADE_HEIGHT := 10.5
-const PORTAL_X := 10.5
-## The flight of steps up to the portal: x range on the north edge (centred on the portal).
-const FLIGHT := Vector2(PORTAL_X - 6.6, PORTAL_X + 2.8)
-const PORTAL_SIZE := Vector2(3.4, 4.4)
-## How deep in the doorway the sheet of light hangs, behind the facade's front.
-const PORTAL_DEPTH := 2.2
+const FLIGHT := Vector2(-3.2, 2.2)
+## The three hooded statues on the dais (x), their height, the value of their stone, how far they stand off the wall.
+const STATUES_X: Array[float] = [-4.15, -0.4, 3.55]
+const STATUE_HEIGHT := 5.0
+const STATUE_VALUE := 1.25
+const STATUE_OFF := 1.3
+## The two doors (05-portas.md, 02-planta-dados.json): x of their middles on the north edge, the clear opening (width,
+## height to the pointed apex), the frame's width, the share of the span the arcs' radius takes (the old orders' 0.8),
+## how far the wall's face stands out of the floor's edge (the floor plate's margin), where the anchors of their signs
+## hang (m in front of the edge, height) and where the paladin stands to use them (the zone: width, depth, inside the
+## floor's walkable edge).
+const DOOR_X: Array[float] = [7.6, 11.8]
+const DOOR_CLEAR := Vector2(2.4, 3.6)
+const DOOR_FRAME := 0.35
+const DOOR_ARC := 0.8
+const DOOR_WALL_Z := -HALF.y - 0.3
+const DOOR_SIGN := Vector2(2.0, 2.6)
+const DOOR_SIGN_TEXT := 0.5
+const DOOR_ZONE := Vector2(3.0, 2.6)
+## How far the door's black face and its leaves stand in front of the wall's face, a leaf's thickness.
+const DOOR_FACE_OUT := 0.12
+const DOOR_DEPTH := 1.2
+## The doors' black (neutral, nothing glows: the inside is only dark) and the leaves' dark wood and iron.
+const DOOR_BLACK := Color(0.012, 0.012, 0.016)
 ## The landing west of the south standing stone (the way in): its x range and how far south it reaches; the gap of
 ## its steps down (x range).
 const LANDING := Vector2(-16.0, -3.6)
 const LANDING_END := 20.5
 const WAY_IN := Vector2(-13.6, -9.6)
 const SOUTH_STONE := Vector2(-2.6, 15.3)
-## The east standing stone, and the stairs down north of it (door 1: z range of the gap).
+## The east standing stone and the pier with a fire bowl by the north-east corner (x, z).
 const EAST_STONE := Vector2(16.3, 2.1)
-const EAST_GAP := Vector2(-13.6, -10.0)
+const EAST_PIER := Vector2(HALF.x + 1.0, -14.8)
 ## The south stairs down (door 2, only with three doors): x range of the gap.
 const SOUTH_GAP := Vector2(6.4, 10.8)
-## The north-west pier (fire bowl, statue) and the giant's pier and tower out to the west.
+## The north-west pier (fire bowl, statue).
 const NW_PIER := Vector2(-12.4, -18.3)
 ## The statue on the north-west pier: its height and its stone's value.
 const NW_STATUE := Vector2(3.8, 1.0)
 ## The weak warm light of its bowl on it (the bowl's own light leaves it out: it turned the statue ochre): energy,
 ## range, cone.
 const NW_GLOW := Vector3(0.8, 5.0, 40.0)
-const GIANT_BOWL := Vector2(-23.0, -4.4)
-const GIANT := Vector3(-26.0, -4.4, 8.3)
-## Height of the giant's feet (its tower and plinth end just under it): the hood's top lands near the picture's top.
-const GIANT_FOOT := -0.4
-## The fire bowl's light on the giant (cycle 6: the giant is out of the bowl's own light, so it stays dark neutral
-## stone and only the side turned to the fire is warm; cycle 7: weaker, the giant's mean colour stays cold): energy,
-## range, cone, and the share of the giant's height it aims at.
-const GIANT_UPLIGHT := 1.5
-const GIANT_UPLIGHT_RANGE := 8.0
-const GIANT_UPLIGHT_CONE := 30.0
-const GIANT_UPLIGHT_AIM := 0.45
-const GIANT_VALUE := 1.0
-## A cold light on the two statues out in the abyss alone (cycle 7; the colour of the facade's, so all the statues
-## are the same cold stone and the giant has a lit side): its energy, where it shines from, its cone and range. It
-## aims between the two.
-const STATUE_FILL_ENERGY := 2.4
-const STATUE_FILL_FROM := Vector3(-8.0, 18.0, 6.0)
-const STATUE_FILL_CONE := 32.0
-const STATUE_FILL_RANGE := 48.0
-## The pile of rough blocks the giant and its bowl stand on, out of the abyss (dark, out of the fires' light): the
-## stone's tint; the courses from the top down (each: height of its top, then its blocks as x middle, x width, z depth).
-const PILE_TINT := 0.55
-const PILE_FOOT := -6.2
-const PILE_COURSES: Array[Array] = [
-	[-1.25, [Vector3(-26.2, 4.3, 4.5), Vector3(-22.9, 2.3, 3.4)]],
-	[-2.9, [Vector3(-27.0, 2.9, 4.8), Vector3(-24.4, 2.2, 4.3), Vector3(-22.4, 1.9, 3.9)]],
-	[-4.5, [Vector3(-26.6, 3.4, 5.0), Vector3(-23.3, 3.3, 4.5)]],
-]
 const DEPTH := 26.0
 ## Where the fixed showcase camera looks: the floor point at the middle of the reference image.
 const SHOWCASE := Vector3(-2.0, 0, 0)
@@ -132,80 +121,44 @@ const OBELISK_SOUTH := 2.2
 ## GR-24: the entrance stele 45% lower (it stood behind the HUD's buttons, a tenth of the frame; the collision circle is the same).
 const OBELISK_SOUTH_HEIGHT := 2.6
 const OBELISK_EAST := 2.3
-## The floor in front of the portal's steps, always wet (x, z rect).
-const WET := Rect2(-1.0, -15.0, 13.0, 6.0)
-## The portal (cycle 4, a deep gothic doorway): the lintel over the opening (height); the hooded statues beside it;
-## its orders, each a pointed arch of voussoirs (ring width, depth), each this much wider on each side and farther
-## forward than the one inside (the inmost's front this far behind the facade's front), their stone darker than the
-## wall's (the picture parts them by the shadow between them); the radius of their arcs (share of the span).
-const PORTAL_LINTEL := 0.6
-const PORTAL_STATUE := 5.0
-const PORTAL_STATUE_VALUE := 1.25
-const PORTAL_ORDERS := 4
-const PORTAL_ORDER_RING := Vector2(0.45, 0.7)
-const PORTAL_ORDER_STEP := Vector2(0.35, 0.6)
-const PORTAL_INNER_Z := -1.6
-## The whole doorway stands this far out of the wall, a porch (the picture's opening sits at the facade's face).
-const PORTAL_PORCH := 1.6
+## The floor in front of the doors, always a little wet (x, z rect).
+const WET := Rect2(5.0, -15.0, 9.5, 4.0)
+## The stone of the doors' frames and arcs (a touch lighter than the wall's; the Chamber of the Seal shares it).
 const PORTAL_ORDER_TINT := Color(1.15, 1.15, 1.15)
-const PORTAL_ARC := 0.8
-## Slender shafts in the steps between the orders (radius, which orders have them), with a base and a capital.
-const COLONNETTE := 0.13
-const COLONNETTE_ORDERS: Array[int] = [1, 3]
-## The dark teeth hanging from the lintel against the light (share of the opening's width across, length, root width),
-## their stone's darkness.
-const PENDANTS: Array[Vector3] = [Vector3(-0.3, 0.7, 0.5), Vector3(0.03, 1.5, 0.7), Vector3(0.24, 0.9, 0.5),
-	Vector3(0.41, 0.4, 0.35)]
-## The opening is a pointed arch (cycle 6; the picture's, not a square doorway): the springing's height as a share of
-## the opening's, the ring of stone under the lintel that draws it (width, depth) and its stone's darkness.
-const PORTAL_SPRING := 0.5
-const PORTAL_INNER_RING := Vector2(0.32, 0.5)
-const PORTAL_INNER_TINT := 0.6
-const PENDANT_TINT := 0.4
-## The tympanum over the lintel, set back behind the inmost order; the lit diamond window in it: its size (m, width and
-## height), its frame and the stone cross dividing the glass, its glow.
-const TYMPANUM_BACK := 0.25
-const PORTAL_WINDOW := Vector2(1.0, 1.2)
-const PORTAL_WINDOW_FRAME := 0.15
-const PORTAL_WINDOW_CROSS := 0.06
-const PORTAL_WINDOW_GLOW := 1.2
-## The gable over the outer order (slope in degrees, its coping's thickness and how far it stands out) and the
-## pinnacles of the buttresses beside the portal (shaft width, spire height).
+## The slope of a gable in degrees (the Chamber of the Seal's, boss_chamber.gd) and the pinnacle of a buttress (shaft width,
+## spire height).
 const GABLE_SLOPE := 60.0
-const GABLE := Vector2(0.4, 0.2)
 const PINNACLE := Vector2(1.3, 1.8)
-## The spill of the portal's light down the steps (energy, range, cone): it lights the floor, the steps and the
-## fighters, not the facade nor the statues (FACADE_LAYER).
-const SPILL := Vector3(6.5, 16.0, 60.0)
-## Where the spill aims: this far into the hall from its north edge (the steps and the wet floor at their foot).
-const SPILL_AIM := 0.8
-## Its colour: the portal's green, a little toward teal (cycle 6: less cyan, the picture's steps are a purer green).
-const SPILL_COLOR := Color(0.3, 1.0, 0.5)
-## The cold light on the facade alone (its colour, energy, and where it shines from: x off the portal, height, z out
-## of the facade), so the stone and the statues read dark teal against the green.
+## The cold light on the facade alone (its colour, energy, and where it shines from: x off the dais's middle, height,
+## z out of the facade), so the stone and the statues read dark teal, never black.
 const FACADE_FILL := Color(0.55, 0.74, 0.82)
 const FACADE_FILL_ENERGY := 3.0
 const FACADE_FILL_FROM := Vector3(-7.0, 16.0, 11.0)
-## Where along the facade it aims (m east of the portal) and its cone (degrees): the whole facade east of the portal.
-const FACADE_FILL_AIM := 2.0
+## Where along the facade it aims (x) and its cone (degrees): the dais and the wall of the doors.
+const FACADE_FILL_AIM := 4.0
 const FACADE_FILL_CONE := 70.0
-## The facade's relief: a plinth along its foot (height, how far out), two cornices (heights over the dais, height,
-## how far out), blind pointed niches between the buttresses (width, height, how far over the dais; their dark back),
-## and the tall windows over them (width, height, over the dais) with a mullion.
+## The facade's relief: a plinth along its foot (height, how far out), cornices (heights over its foot, height, how far
+## out) on the dais wall and on the doors' wall, blind pointed niches (width, height, base over the dais; their dark
+## back) behind the statues and the tall window of the doors' wall (width, height, over the floor) with a mullion.
 const PLINTH := Vector2(1.0, 0.25)
-const CORNICES: Array[float] = [4.2, 8.0]
+const DAIS_CORNICES: Array[float] = [7.4]
+const DOOR_CORNICES: Array[float] = [4.4, 8.0]
 const CORNICE := Vector2(0.25, 0.2)
-const NICHE := Vector3(0.9, 2.4, 1.2)
+const NICHE := Vector3(2.0, 6.2, 0.4)
 const NICHE_DARK := 0.3
-const HIGH_WINDOW := Vector3(1.2, 2.6, 4.6)
+const HIGH_WINDOW := Vector3(1.2, 2.6, 5.0)
 const MULLION := 0.1
-## The buttresses along the facade (x), and the bays between them that take a niche and a window (x).
-const BUTTRESSES: Array[float] = [-5.9, -3.6, 0.8, PORTAL_X - 4.7, PORTAL_X + 4.7, 19.0]
-const BAYS: Array[float] = [-1.4, 3.3, 17.1]
-## The banners on the buttresses (plain: no emblem until Daniel names Eterra's): x, height of the bar over the dais,
-## width, length; how far in front of the facade's face they hang.
-const BANNERS: Array[Vector4] = [Vector4(-5.9, 5.9, 2.1, 4.6), Vector4(PORTAL_X + 5.0, 6.8, 2.6, 5.8)]
+## The buttresses along the dais wall (x) and the doors' wall (x), and the bay of the doors' wall that takes a window (x).
+const BUTTRESSES: Array[float] = [-5.9, -2.3, 1.6, 5.0]
+const DOOR_BUTTRESSES: Array[float] = [14.6, 19.0]
+const DOOR_BAY := 16.9
+## The banners (worn crimson, no insignia: the lion is the allies'): x, height of the bar over the foot of their wall,
+## width, length; how far in front of the facade's face they hang. The first hangs on the dais wall, the second on the
+## doors' wall (its foot is the floor, not the dais).
+const BANNERS: Array[Vector4] = [Vector4(-2.3, 6.4, 1.9, 4.4), Vector4(14.6, 7.2, 2.3, 5.2)]
 const BANNER_OUT := 1.5
+## Their cloth: crimson worn dark (the kit's is brighter and lit it salmon).
+const BANNER_CLOTH := Color(0.4, 0.06, 0.08)
 ## The key light over the hall (the picture's middle of the room is a greyed mauve, its edges dark teal).
 const KEY_LIGHT := Color(0.92, 0.8, 0.78)
 const KEY_ENERGY := 5.6
@@ -400,9 +353,6 @@ const STY_COMPAT_FIRE := 0.4
 ## P2-A5: in Compatibility (no linear to sRGB on the way out) the edge's darkening went to a quarter of the middle and
 ## the pushed pools went lime under the paladin: there the edge darkens less and the pools keep the fire's own colour.
 const STY_COMPAT_FLOOR := {&"edge_value": 0.62, &"paint_pool_saturation": 1.0}
-## P2-A4: the portal's spill held on the steps and the floor at their foot in the stylized look (cone in degrees,
-## reach): on the petrol floor its green by the north-east candles read as an emerald stain (the emerald is the Emeth's).
-const STY_SPILL := Vector2(32.0, 12.0)
 ## Room redesign (lot A 3.2, decision L-1): the hall's biome in the stylized look, blue slate instead of the STY's warm
 ## umber (docs/art/room_redesign_lotA_spec.md 3.2; ArenaKit.paint_look, stylize_fires). The fires are STY-10's.
 ## ENV-HB1 (docs/art/benchmark_hades2_style.md 4.1; the hall's finish test of 2026-11-20, docs/design/
@@ -421,15 +371,21 @@ const STY_SHADOW_GLOW := Color(0.50, 0.42, 1.0)
 ## The scene's vignette on the stone, floor and kit (paint.gdshaderinc: how much darker, where it starts and where it is
 ## full, 0 the middle of the screen, 1 the middle of an edge): the edge boxes at 0.55 to 0.70 of the middle.
 const STY_VIGNETTE := Vector3(0.75, 0.4, 1.2)
+## SL-01 (04-paleta-e-iluminacao.md): the golden main light now comes from the north-west, (-22, 18, -20), aimed at the middle.
 ## The warm key (a faint amber from high up to the left, diffuse, no shadow, never on the crowd): its colour (#F2C890),
 ## energy, where it lands on the floor (x, z), the radius of the pool (m), and where it comes from over that spot
 ## (x, height, z). The pool covers 10 to 18 % of the walkable floor, about 7 m round.
 const STY_WARM_KEY := Color(0.949, 0.784, 0.565)
 const STY_WARM_ENERGY := 7.0
-const STY_WARM_AT := Vector2(-6.5, 1.5)
-const STY_WARM_RADIUS := 7.0
-const STY_WARM_FROM := Vector3(-13.0, 16.0, 0.5)
+const STY_WARM_AT := Vector2(-2.0, 0.0)
+const STY_WARM_RADIUS := 8.0
+const STY_WARM_FROM := Vector3(-22.0, 18.0, -20.0)
 const STY_WARM_SOFT := 2.0
+## ... and the cold fill (04-paleta-e-iluminacao.md: (0, 14, 10), weak): its colour, energy, reach.
+const STY_COLD_FILL := Color(0.33, 0.44, 0.48)
+const STY_COLD_FILL_AT := Vector3(0.0, 14.0, 10.0)
+const STY_COLD_FILL_ENERGY := 0.9
+const STY_COLD_FILL_RANGE := 26.0
 ## C-4 (AD2-09): two more warm pools of the candles on the floor, x, z, radius, energy (the fight's middle stays the
 ## brightest: the cold key and the warm key over it).
 const STY_POOLS: Array[Vector4] = [Vector4(-9.5, -5.5, 3.4, 2.6), Vector4(6.5, 7.5, 3.4, 2.4)]
@@ -473,9 +429,6 @@ const STY_EDGE_VALUE := 0.38
 const STY_EDGE_SPAN := Vector2(0.5, 1.25)
 const STY_POOL_GAIN := 1.5
 const STY_FLOOR_POOL_SATURATION := 1.0
-## S-1: the hall's mouldings lower and its slabs less worn pale than the defaults (1.22, 0.16): noble floor, no buttons.
-const STY_FRAMED_LIP := 1.08
-const STY_FRAMED_WORN := 0.05
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`).
 ## The hall: pale worn dust on the blue slate; its plate carries no edge distance, so its walkable box is given.
@@ -484,8 +437,7 @@ const STY_FRAMED_WORN := 0.05
 ## washes faint (ArenaKit.CALM_FLOOR). The large scale comes from the fires' pools, the edge, the framed slabs and the
 ## medallion.
 const STY_FLOOR_BIOME := {&"patch_color": Color(0.36, 0.45, 0.55),
-	&"floor_box": Vector4(0.0, 0.0, HALF.x, HALF.y), &"framed_lip": STY_FRAMED_LIP, &"framed_worn": STY_FRAMED_WORN,
-	&"framed_lion_span": EMBLEM_LION_SPAN}
+	&"floor_box": Vector4(0.0, 0.0, HALF.x, HALF.y)}
 ## ENV-HB3 (benchmark 4.1): the frame dark and full. The hall's own stone below the floor (the lips, the buttresses and
 ## the cliffs) a deep petrol in the stylized look, so the bottom of the screen is no lighter than the fight; and out in
 ## the abyss toward the camera, south and east of the hall, broken columns of the depths' stone rising out of the mist
@@ -516,17 +468,6 @@ const STY_FRAME_CHAIN_DROP := 0.55
 const STY_FRAME_CHAIN_SAG := 2.2
 const STY_FRAME_CHAIN_SIZE := 1.6
 const STY_FRAME_SEED := 4417
-## SW-H1, SW-G3 (docs/art/sworn_reference_ideas.md 3.2): two pairs of slabs (ArenaKit.framed) flanking the axis of
-## the dais's flight (its middle, x) on the way from the medallion to the portal. S-1 of the Sworn P1 review: four equal
-## square frames lighter than the floor read as pressure plates (the runes' room has slabs that strike): each its own
-## size, value (never over the floor's) and kind, one a grave slab with the lion, one with a corner of its moulding
-## broken. Each: x from the axis, z, size x, size z (m), kind, mark (lion or broken corner), value.
-const STY_FRAMES: Array[Array] = [
-	[-2.3, -9.3, 2.0, 2.0, ArenaKit.Framed.RAISED, false, 0.95],
-	[2.4, -9.4, 2.6, 2.2, ArenaKit.Framed.RAISED, true, 1.0],
-	[-2.5, -12.0, 2.8, 2.2, ArenaKit.Framed.GRAVE, false, 0.97],
-	[2.2, -12.0, 2.2, 2.0, ArenaKit.Framed.RAISED, false, 0.92],
-]
 ## The decals of the stylized look (floor_decal.gdshader: the shop's rugs, the fountain's moss), a centimetre over the
 ## slabs.
 const DECAL_SHADER := preload("res://assets/shaders/floor_decal.gdshader")
@@ -555,10 +496,10 @@ static var SHOP_LAMP := TombKit.Lamp.new(ScreenTone.fit(Color(1.0, 0.62, 0.3)), 
 ## The provisions' cloth (umber, folded over the crates: x, z, size, y of its top) and its colour (times the stone's),
 ## and their two urns (x, z, height, y).
 const SHOP_CLOTH := Color(0.55, 0.38, 0.28)
-const SHOP_CLOTHS: Array[Vector4] = [Vector4(7.3, -14.0, 0.75, 1.46), Vector4(-5.35, -14.2, 0.85, 0.56)]
+const SHOP_CLOTHS: Array[Vector4] = [Vector4(3.9, -14.0, 0.75, 1.46), Vector4(-5.35, -14.2, 0.85, 0.56)]
 ## Art review 2026-11-21 item 8 (stylized look): the urns' stone tinted to about (0.62, 0.57, 0.5), not white.
 const STY_URN_TINT := Color(0.45, 0.40, 0.34)
-const SHOP_URNS: Array[Vector4] = [Vector4(8.3, -13.8, 0.3, 0.8), Vector4(-6.25, -13.75, 0.26, 0.45)]
+const SHOP_URNS: Array[Vector4] = [Vector4(4.9, -13.8, 0.3, 0.8), Vector4(-6.25, -13.75, 0.26, 0.45)]
 ## The fountain's moss (inner, mean outer radius from the basin's middle; how far its edge breaks either way, how far
 ## it swings out to the north and in to the south: lot A review item 9, 2.6 to 3.4 m), its candles on the rim
 ## (angles; the first FOUNTAIN_LIT burn).
@@ -578,7 +519,7 @@ const FOUNTAIN_POOL_SPENT := 0.3
 ## the walkable floor), and on the lower step of the portal statues' plinths (in front, toward the steps).
 const URNS: Array[Vector4] = [Vector4(-15.3, -12.2, 0.28, 0.0), Vector4(-15.35, -11.5, 0.22, 0.0),
 	Vector4(-15.3, 0.95, 0.28, 0.0), Vector4(-15.35, 1.75, 0.22, 0.0),
-	Vector4(PORTAL_X - 4.31, -17.58, 0.48, DAIS_Y + 0.3), Vector4(PORTAL_X + 4.51, -17.58, 0.48, DAIS_Y + 0.3)]
+	Vector4(STATUES_X[0] + 0.29, -17.58, 0.48, DAIS_Y + 0.3), Vector4(STATUES_X[2] - 0.29, -17.58, 0.48, DAIS_Y + 0.3)]
 
 var arena: Arena
 var kit: ArenaKit
@@ -617,7 +558,7 @@ func build_steps(exit_count: int) -> Array[Callable]:
 			a.walk = [Rect2(LANDING.x, HALF.y - 6.0, LANDING.y - LANDING.x, LANDING_END - HALF.y + 6.0)]
 			a.start = Vector2((WAY_IN.x + WAY_IN.y) * 0.5, LANDING_END - 2.4)
 			a.start_facing = Vector2(1, -1).normalized()
-			a.door_pos = Vector2((FLIGHT.x + FLIGHT.y) * 0.5, -HALF.y - 1.5)
+			a.door_pos = Vector2((DOOR_X[0] + DOOR_X[1]) * 0.5, -HALF.y - 1.5)
 			a.showcase = SHOWCASE
 			_floor(),
 		_dais,
@@ -628,7 +569,7 @@ func build_steps(exit_count: int) -> Array[Callable]:
 		_west,
 		_landing,
 		func() -> void: _south(exit_count >= 3),
-		func() -> void: _east(exit_count >= 2),
+		_east,
 		_depths,
 		func() -> void: _doors(exit_count),
 		func() -> Array[Callable]:
@@ -641,6 +582,7 @@ func build_steps(exit_count: int) -> Array[Callable]:
 			return more,
 		_urns,
 		_frame,
+		_ground,
 		func() -> void: HallLife.dress(kit.root, kit.styled()),
 		_stylize_rest,
 	]
@@ -657,9 +599,6 @@ func _stylize_rest() -> Array[Callable]:
 	style[&"floor"] = ArenaKit.framed(ground, _frames())
 	var more := kit.stylize_steps(style, arena)
 	more.append(_elun)
-	more.append(func() -> void:
-		if _spill != null:
-			VisualProfile.vary(_spill, {&"spot_angle": STY_SPILL.x, &"spot_range": STY_SPILL.y}))
 	return more
 
 
@@ -682,6 +621,20 @@ func _elun() -> void:
 	spot.set_meta(ArenaKit.NOT_FIRE, true)
 	ArenaKit.style_only(spot)
 	elun_shaft(arena, Vector2(STY_SHAFT_AT.x, STY_SHAFT_AT.y))
+	# SL-01: the weak cold fill from the south side (#536F7A), no shadow, so the paladin and the fighters read in the shade
+	# (the browser's renderer keeps its own count of lights: none there)
+	if not ArenaRoom.compat():
+		var fill := OmniLight3D.new()
+		fill.position = STY_COLD_FILL_AT
+		fill.light_color = STY_COLD_FILL
+		fill.light_energy = STY_COLD_FILL_ENERGY
+		fill.omni_range = STY_COLD_FILL_RANGE
+		fill.light_specular = 0.0
+		fill.shadow_enabled = false
+		fill.light_cull_mask = ~Arena.CROWD_LAYER
+		fill.set_meta(ArenaKit.NOT_FIRE, true)
+		arena.add_child(fill)
+		ArenaKit.style_only(fill)
 	for p: Vector4 in STY_POOLS:
 		ArenaRoom.pool_spot(arena, Vector2(p.x, p.y), p.z, ArenaRoom.POOL_WARM, p.w)
 	# the mist banks of the depths, brushed (their strokes and a darker near plane)
@@ -761,23 +714,10 @@ func _frame() -> void:
 		STY_FRAME_CHAIN_SAG, STY_FRAME_CHAIN_SIZE))
 
 
-## Art pack 2026-11-23 (the hall lab): the lion emblem of the middle, a square grave slab with the seal's lion inside the
-## medallion's square band (never a disc: round floor marks are Morvath's alone). Its side (m, inside the band's inner
-## edge, which is MEDALLION * 0.507 * SQUARE_FIT from the middle), its value and the lion's height on it (m).
-const EMBLEM_SIDE := 3.2
-const EMBLEM_VALUE := 1.0
-const EMBLEM_LION_SPAN := 1.7
-
-
-## SW-H1: the four slabs of the way to the portal (STY_FRAMES), and the emblem of the middle.
+## SL-01: the floor carries no frames, no emblem and no medallion (the lion of the allies is not for the enemy's ground):
+## plain slabs only, the painted floor gets no framed slab at all.
 func _frames() -> Array:
-	var axis := (FLIGHT.x + FLIGHT.y) * 0.5
-	var out := [ArenaKit.framed_slab(MEDALLION_AT, Vector2(EMBLEM_SIDE, EMBLEM_SIDE), ArenaKit.Framed.GRAVE, true, EMBLEM_VALUE, 7)]
-	for k in STY_FRAMES.size():
-		var f: Array = STY_FRAMES[k]
-		out.append(ArenaKit.framed_slab(Vector2(axis + float(f[0]), float(f[1])), Vector2(float(f[2]), float(f[3])), f[4], f[5],
-			float(f[6]), k))
-	return out
+	return []
 
 
 ## The urns of the stylized look (room redesign, lot A 3.2): beside the two groups of pots on the west balustrade, on
@@ -863,8 +803,10 @@ func _trail(node: Node3D, points: Array[Vector2]) -> void:
 
 
 ## A flat strip a hair over the floor along `path` (x, z), `width` wide: UV.x the metres along it, UV.y 0..1 across,
-## the vertex colour's alpha 1 at its start and, with `fade`, 0 at its end (floor_decal kinds 5 and 6).
-static func floor_strip(path: PackedVector2Array, width: float, y: float, mat: Material, fade: bool) -> MeshInstance3D:
+## the vertex colour's alpha 1 at its start and, with `fade`, 0 at its end (floor_decal kinds 5 and 6). `widths`: one
+## width per point instead of `width` (SL-01: the stream swells and narrows).
+static func floor_strip(path: PackedVector2Array, width: float, y: float, mat: Material, fade: bool,
+		widths := PackedFloat32Array()) -> MeshInstance3D:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var total := 0.0
@@ -876,7 +818,7 @@ static func floor_strip(path: PackedVector2Array, width: float, y: float, mat: M
 	var prev_s := 0.0
 	for i in path.size():
 		var d := (path[mini(i + 1, path.size() - 1)] - path[maxi(i - 1, 0)]).normalized()
-		var n := Vector2(-d.y, d.x) * width * 0.5
+		var n := Vector2(-d.y, d.x) * (widths[i] if widths.size() == path.size() else width) * 0.5
 		if i > 0:
 			s += path[i - 1].distance_to(path[i])
 		var l := Vector3(path[i].x + n.x, y, path[i].y + n.y)
@@ -995,12 +937,12 @@ static func dress_fountain(parent: Node3D) -> void:
 
 func _floor() -> void:
 	kit.wet_zone = WET
-	kit.floor_plate(Vector3.ZERO, HALF * 2.0 + Vector2(0.6, 0.6), MEDALLION, MEDALLION_AT)
+	kit.floor_plate(Vector3.ZERO, HALF * 2.0 + Vector2(0.6, 0.6))
 	kit.abyss(HALF, DEPTH, false)
 	_cliff(Rect2(-HALF, HALF * 2.0))
 	var key := OmniLight3D.new()
 	_key = key
-	key.position = Vector3(MEDALLION_AT.x, KEY_HEIGHT, MEDALLION_AT.y)
+	key.position = Vector3(MIDDLE_AT.x, KEY_HEIGHT, MIDDLE_AT.y)
 	key.light_color = KEY_LIGHT
 	key.light_energy = KEY_ENERGY
 	key.omni_range = KEY_RANGE
@@ -1030,7 +972,6 @@ func _under_of(mi: MeshInstance3D) -> void:
 ## copy of the hall's stone, the same in the classic look, a darker petrol in the stylized one (ENV-HB3, STY_NEAR_STONE).
 var _near_mat: ShaderMaterial
 ## The portal's spill down the steps (P2-A4 narrows it in the stylized look).
-var _spill: SpotLight3D
 
 
 func _near() -> ShaderMaterial:
@@ -1053,30 +994,32 @@ func _cliff(r: Rect2) -> void:
 func _dais() -> void:
 	var steps_z := -HALF.y - STEP_RUN * DAIS_STEPS
 	var mid := (FLIGHT.x + FLIGHT.y) * 0.5
+	var cx := (DAIS_X.x + DAIS_X.y) * 0.5
 	# the dais block (its top at DAIS_Y), from the top of the steps back behind the facade
 	var back := FACADE_Z - 6.0
-	m.block(Vector3((FACADE_X.x + FACADE_X.y) * 0.5, -DEPTH, (steps_z + back) * 0.5), Vector3(FACADE_X.y - FACADE_X.x, DEPTH + DAIS_Y, steps_z - back))
-	kit.floor_plate(Vector3((FACADE_X.x + FACADE_X.y) * 0.5, DAIS_Y + 0.01, (steps_z + FACADE_Z) * 0.5), Vector2(FACADE_X.y - FACADE_X.x, steps_z - FACADE_Z))
+	m.block(Vector3(cx, -DEPTH, (steps_z + back) * 0.5), Vector3(DAIS_X.y - DAIS_X.x, DEPTH + DAIS_Y, steps_z - back))
+	kit.floor_plate(Vector3(cx, DAIS_Y + 0.01, (steps_z + FACADE_Z) * 0.5), Vector2(DAIS_X.y - DAIS_X.x, steps_z - FACADE_Z))
 	# the steps, and the stone cheeks beside them up to the dais' height
 	m.stairs(Vector3(mid, 0, -HALF.y), Vector2(0, -1), FLIGHT.y - FLIGHT.x, DAIS_STEPS, DAIS_Y / DAIS_STEPS, STEP_RUN)
 	var cheek_z := -HALF.y - STEP_RUN * DAIS_STEPS * 0.5
-	m.block(Vector3((FACADE_X.x + FLIGHT.x) * 0.5, -0.4, cheek_z), Vector3(FLIGHT.x - FACADE_X.x, DAIS_Y + 0.4, STEP_RUN * DAIS_STEPS))
-	m.block(Vector3((FLIGHT.y + FACADE_X.y) * 0.5, -0.4, cheek_z), Vector3(FACADE_X.y - FLIGHT.y, DAIS_Y + 0.4, STEP_RUN * DAIS_STEPS))
+	m.block(Vector3((DAIS_X.x + FLIGHT.x) * 0.5, -0.4, cheek_z), Vector3(FLIGHT.x - DAIS_X.x, DAIS_Y + 0.4, STEP_RUN * DAIS_STEPS))
+	m.block(Vector3((FLIGHT.y + DAIS_X.y) * 0.5, -0.4, cheek_z), Vector3(DAIS_X.y - FLIGHT.y, DAIS_Y + 0.4, STEP_RUN * DAIS_STEPS))
 
 
-## The dais' statues, candles and props (a step of their own after _facade: build_steps, QA P1-1).
 func _dais_props() -> void:
 	var steps_z := -HALF.y - STEP_RUN * DAIS_STEPS
-	# the hooded statues beside the portal, lit green by it; small plinths with candles at the top of the steps
+	# the three hooded statues of the dais, cold stone (the facade's fill); small plinths with candles at the top of
+	# the steps
 	m.layers = ArenaKit.FACADE_LAYER
-	kit.statue(Vector2(PORTAL_X - 4.6, FACADE_Z + 1.3), 0.25, PORTAL_STATUE, DAIS_Y, PORTAL_STATUE_VALUE, false)
-	kit.statue(Vector2(PORTAL_X + 4.8, FACADE_Z + 1.3), -0.25, PORTAL_STATUE, DAIS_Y, PORTAL_STATUE_VALUE, false)
+	for k in STATUES_X.size():
+		kit.statue(Vector2(STATUES_X[k], FACADE_Z + STATUE_OFF), (0.25 - 0.25 * k), STATUE_HEIGHT, DAIS_Y, STATUE_VALUE, false)
 	m.layers = 1
-	for px: float in [PORTAL_X - 2.6, PORTAL_X + 2.9]:
+	for px: float in [FLIGHT.x - 0.8, FLIGHT.y + 0.8]:
 		m.block(Vector3(px, DAIS_Y, steps_z - 0.45), Vector3(0.8, 0.9, 0.8))
 		_candles(Vector3(px, DAIS_Y + 0.9, steps_z - 0.45), 2, false)
-	# pots, crates and candles at the west foot of the steps
-	var foot := Vector3(FLIGHT.x - 1.6, 0, -HALF.y + 1.0)
+	# pots, crates and candles at the east foot of the steps (the picture's: low crates, a pot and candles; nothing here
+	# blocks the way to the doors, which stand east of it)
+	var foot := Vector3(FLIGHT.y + 1.6, 0, -HALF.y + 1.0)
 	kit.crate(foot, 0.3, Vector3.ONE * 0.9)
 	kit.crate(foot + Vector3(0.1, 0.75, 0), 0.1, Vector3.ONE * 0.7)
 	kit.crate(foot + Vector3(1.1, 0, 0.2), -0.2, Vector3.ONE * 0.8)
@@ -1086,152 +1029,124 @@ func _dais_props() -> void:
 	arena.boxes.append(Rect2(foot.x - 1.4, -HALF.y - 0.5, 3.4, 2.2))
 
 
-## The gothic facade with the portal in it: a thick wall of big ashlar on a plinth, two cornices, buttresses with
-## red banners, blind niches and tall windows; the portal a deep doorway: four pointed orders of voussoirs stepping in,
-## slender shafts between them, a gable with pinnacles beside it, a dark tympanum with the lit diamond window over the
-## lintel, dark teeth hanging against the green sheet of light deep inside. All of it on FACADE_LAYER (the portal's
-## spill down the steps leaves it out, so only the portal's own light greens its inner faces).
+## The north side. The dais wall (x from DAIS_X.x to DAIS_X.y, its front at FACADE_Z, on the dais): thick ashlar on a
+## plinth, a cornice, buttresses, a banner and a tall blind niche behind each of the three hooded statues. East of it
+## the wall of the doors (_door_wall), at the floor's own level. All on FACADE_LAYER: the facade's cold fill lights it.
 func _facade() -> void:
 	m.layers = ArenaKit.FACADE_LAYER
 	var y := DAIS_Y
-	var w := PORTAL_SIZE.x
-	var h := PORTAL_SIZE.y
-	var back := FACADE_Z - 1.6
-	var mat := m.ashlar(y)
-	var ring := PORTAL_ORDER_RING.x
-	var deep := PORTAL_ORDER_RING.y
-	var spans: Array[float] = []
-	var fronts: Array[float] = []
-	for k in PORTAL_ORDERS:
-		spans.append(w + PORTAL_ORDER_STEP.x * 2.0 * k)
-		fronts.append(FACADE_Z + PORTAL_PORCH + PORTAL_INNER_Z + PORTAL_ORDER_STEP.y * k)
-	var outer := spans[PORTAL_ORDERS - 1] * 0.5 + ring
-	var gap := outer - 0.1
 	var top := FACADE_HEIGHT
-	# the wall, with the portal's gap left free (left, right), and behind the orders a block above the opening
-	var left := Vector2(FACADE_X.x, PORTAL_X - gap)
-	var right := Vector2(PORTAL_X + gap, FACADE_X.y)
-	m.block(Vector3((left.x + left.y) * 0.5, y, back), Vector3(left.y - left.x, top, 3.2), 0.0, mat)
-	m.block(Vector3((right.x + right.y) * 0.5, y, back), Vector3(right.y - right.x, top, 3.2), 0.0, mat)
-	var behind := fronts[0] - deep + 0.3
-	m.block(Vector3(PORTAL_X, y + h, (behind + FACADE_Z - 3.2) * 0.5), Vector3(gap * 2.0, top - h, behind - FACADE_Z + 3.2), 0.0, mat)
-	# the doorway's depth: dark stone behind the light, a threshold the light pools on
-	var dark := StandardMaterial3D.new()
-	dark.albedo_color = Color(0.02, 0.06, 0.04)
-	var sheet_z := FACADE_Z + PORTAL_PORCH - PORTAL_DEPTH
-	m.block(Vector3(PORTAL_X, y - 0.2, sheet_z - 0.6), Vector3(w + 1.0, h + 1.0, 0.4), 0.0, dark)
-	m.block(Vector3(PORTAL_X, y, (sheet_z + fronts[0]) * 0.5), Vector3(w + 0.2, 0.08, fronts[0] - sheet_z + 0.4))
-	# the orders: jambs up to the springing line (the opening's top) and pointed arches of voussoirs
-	var order := m.ashlar(y, PORTAL_ORDER_TINT)
-	var apexes: Array[float] = []
-	for k in PORTAL_ORDERS:
-		var span: float = spans[k]
-		var z: float = fronts[k] - deep * 0.5
-		var jamb_deep := deep if k > 0 else fronts[0] - sheet_z + 0.3
-		for sd: float in [-1.0, 1.0]:
-			m.block(Vector3(PORTAL_X + sd * (span + ring) * 0.5, y, fronts[k] - jamb_deep * 0.5), Vector3(ring, h, jamb_deep), 0.0, order)
-		apexes.append(m.voussoir_arch(Vector3(PORTAL_X, y, z), Vector2(0, 1), span, h, ring, deep, order, PORTAL_ARC))
-		if k in COLONNETTE_ORDERS:
-			for sd: float in [-1.0, 1.0]:
-				var at := Vector3(PORTAL_X + sd * (span * 0.5 - COLONNETTE + 0.04), y, fronts[k - 1] + COLONNETTE - 0.02)
-				m.block(at, Vector3(0.4, 0.25, 0.4), 0.0, order)
-				m.shaft(at + Vector3(0, 0.25, 0), COLONNETTE, h - 0.55, order)
-				m.block(at + Vector3(0, h - 0.3, 0), Vector3(0.42, 0.3, 0.42), 0.0, order)
-	# the lintel and the tympanum set back over it, the lit diamond window in it
-	var tymp := fronts[0] - TYMPANUM_BACK
-	m.box(Vector3(PORTAL_X, y + h + PORTAL_LINTEL * 0.5, fronts[0] - deep * 0.5), Vector3(w + 0.1, PORTAL_LINTEL, deep), 0.0, order)
-	m.block(Vector3(PORTAL_X, y + h, tymp - 0.2), Vector3(w + 0.4, apexes[0] - h, 0.4), 0.0, mat)
-	var win_y := y + h + PORTAL_LINTEL + (apexes[0] - ring - h - PORTAL_LINTEL) * 0.36
-	_portal_window(Vector3(PORTAL_X, win_y, tymp))
-	# the dark teeth hanging from the lintel, in front of the sheet of light
-	var teeth := m.stone(y, Color.WHITE * PENDANT_TINT)
-	# the opening itself a pointed arch: its apex at the lintel, its arcs' centres on the springing line
-	var spring := h * PORTAL_SPRING
-	var arc := ((h - spring) * (h - spring) + w * w * 0.25) / w
-	m.voussoir_arch(Vector3(PORTAL_X, y, sheet_z + 0.2 + PORTAL_INNER_RING.y * 0.5), Vector2(0, 1), w, spring, PORTAL_INNER_RING.x, PORTAL_INNER_RING.y,
-		m.stone(y, Color.WHITE * PORTAL_INNER_TINT), arc / w)
-	for p: Vector3 in PENDANTS:
-		var px := absf(p.x) * w + arc - w * 0.5
-		m.pendant(Vector3(PORTAL_X + p.x * w, y + spring + sqrt(maxf(0.0, arc * arc - px * px)) + 0.05, sheet_z + 0.35), p.y, p.z, teeth)
-	var sheet := Vector2(w + 0.4, h + 0.2)
-	kit.portal_glow(Vector3(PORTAL_X, y + h * 0.5, sheet_z), 0.0, sheet, Vector3(spring + (sheet.y - h) * 0.5, w, arc))
-	# over the outer order: the spandrels in courses up to a gable (its sloped copings), the wall above it
-	var slope := tan(deg_to_rad(GABLE_SLOPE))
-	var oc := spans[PORTAL_ORDERS - 1]
-	var r := oc * PORTAL_ARC
-	var cx := r - oc * 0.5
-	var band := 0.4
-	var yy := h
-	while yy < top - 0.01:
-		var hb := minf(band, top - yy)
-		var t := yy + hb - h
-		var ext := 0.0
-		if (r + ring) * (r + ring) - t * t > 0.0:
-			ext = maxf(0.0, sqrt((r + ring) * (r + ring) - t * t) - cx)
-		var gx := outer + 0.2 - (yy - h) / slope
-		for sd: float in [-1.0, 1.0]:
-			var a := ext - 0.05
-			var b := minf(gx, gap + 0.2)
-			if b > a + 0.05:
-				m.box(Vector3(PORTAL_X + sd * (a + b) * 0.5, y + yy + hb * 0.5, FACADE_Z + PORTAL_PORCH - 0.85), Vector3(b - a, hb, 2.0), 0.0, mat, false)
-			var c := maxf(gx, ext - 0.05)
-			if gap + 0.2 > c + 0.05:
-				m.box(Vector3(PORTAL_X + sd * (c + gap + 0.2) * 0.5, y + yy + hb * 0.5, FACADE_Z - 1.0), Vector3(gap + 0.2 - c, hb, 2.0), 0.0, mat, false)
-		yy += hb
-	var gable_len := (outer + 0.2) / cos(deg_to_rad(GABLE_SLOPE))
-	for sd: float in [-1.0, 1.0]:
-		var mid := Vector3(PORTAL_X + sd * (outer + 0.2) * 0.5, y + h + (outer + 0.2) * slope * 0.5, FACADE_Z + PORTAL_PORCH + 0.15 + GABLE.y - 0.3)
-		var cop := m.box(mid, Vector3(gable_len + GABLE.x, GABLE.x, 0.6), 0.0, order, false)
-		cop.basis = Basis(Vector3.BACK, -sd * deg_to_rad(GABLE_SLOPE))
-	# plinth and cornices along the wall, broken by the portal
-	for side: Vector2 in [Vector2(FACADE_X.x, PORTAL_X - outer - 0.1), Vector2(PORTAL_X + outer + 0.1, FACADE_X.y)]:
-		m.block(Vector3((side.x + side.y) * 0.5, y, FACADE_Z + PLINTH.y * 0.5 - 0.05), Vector3(side.y - side.x, PLINTH.x, PLINTH.y + 0.1), 0.0, mat, false)
-	for ch: float in CORNICES:
-		var half := minf(outer + 0.1, outer + 0.2 - (ch - h) / slope + GABLE.x) if ch > h else outer + 0.1
-		for side: Vector2 in [Vector2(FACADE_X.x, PORTAL_X - half), Vector2(PORTAL_X + half, FACADE_X.y)]:
-			m.box(Vector3((side.x + side.y) * 0.5, y + ch, FACADE_Z + CORNICE.y * 0.5 - 0.05), Vector3(side.y - side.x, CORNICE.x, CORNICE.y + 0.1), 0.0, mat, false)
-	# buttresses: piers standing out of the wall; the two beside the portal end in pinnacles, the rest in points
+	var mat := m.ashlar(y)
+	var back := FACADE_Z - 1.6
+	m.block(Vector3((DAIS_X.x + DAIS_X.y) * 0.5, y, back), Vector3(DAIS_X.y - DAIS_X.x, top, 3.2), 0.0, mat)
+	m.block(Vector3((DAIS_X.x + DAIS_X.y) * 0.5, y, FACADE_Z + PLINTH.y * 0.5 - 0.05), Vector3(DAIS_X.y - DAIS_X.x, PLINTH.x, PLINTH.y + 0.1), 0.0, mat, false)
+	for ch: float in DAIS_CORNICES:
+		m.box(Vector3((DAIS_X.x + DAIS_X.y) * 0.5, y + ch, FACADE_Z + CORNICE.y * 0.5 - 0.05), Vector3(DAIS_X.y - DAIS_X.x, CORNICE.x, CORNICE.y + 0.1), 0.0, mat, false)
+	# buttresses: piers standing out of the wall, each ending in a point
 	for bx: float in BUTTRESSES:
 		m.block(Vector3(bx, y, FACADE_Z + 0.2), Vector3(1.3, top - 1.5, 1.4), 0.0, mat)
 		m.block(Vector3(bx, y, FACADE_Z + 0.6), Vector3(1.5, 2.2, 1.0), 0.0, mat)
 		m.point(Vector3(bx, y + 2.2, FACADE_Z + 0.6), 1.5, 0.5, 0.0, 0.3, mat)
-		if absf(bx - PORTAL_X) < 6.0:
-			m.pinnacle(Vector3(bx, y + top - 1.5, FACADE_Z + 0.2), PINNACLE.x, PINNACLE.y, mat)
-		else:
-			m.point(Vector3(bx, y + top - 1.5, FACADE_Z + 0.2), 1.3, 1.2)
-	m.layers = 1
-	for b: Vector4 in BANNERS:
-		kit.banner(Vector3(b.x, y + b.y, FACADE_Z + BANNER_OUT), 0.0, Vector2(b.z, b.w), ArenaKit.FACADE_LAYER, ArenaKit.Emblem.LION)
-	m.layers = ArenaKit.FACADE_LAYER
-	# blind pointed niches low between the buttresses, tall windows over them, both dark and deep with a stone frame
+		m.pinnacle(Vector3(bx, y + top - 1.5, FACADE_Z + 0.2), PINNACLE.x, PINNACLE.y, mat)
+	# a tall blind pointed niche behind each statue, dark and deep with a stone frame
 	var hollow := m.stone(y, Color.WHITE * NICHE_DARK)
-	for wx: float in BAYS:
-		_niche(Vector3(wx, y + NICHE.z, FACADE_Z), NICHE.x, NICHE.y, mat, hollow, false)
-		_niche(Vector3(wx, y + HIGH_WINDOW.z, FACADE_Z), HIGH_WINDOW.x, HIGH_WINDOW.y, mat, hollow, true)
-	# the portal's light spilling down the steps and over the wet floor in front of them (not on the facade)
+	for sx: float in STATUES_X:
+		_niche(Vector3(sx, y + NICHE.z, FACADE_Z), NICHE.x, NICHE.y, mat, hollow, false)
+	_door_wall()
 	m.layers = 1
-	var spill := SpotLight3D.new()
-	_spill = spill
-	arena.add_child(spill)
-	spill.look_at_from_position(Vector3(PORTAL_X, y + h * 0.6, FACADE_Z + PORTAL_PORCH - 0.5), Vector3(PORTAL_X - 0.5, 0, -HALF.y + SPILL_AIM))
-	spill.light_color = SPILL_COLOR
-	spill.light_energy = SPILL.x
-	spill.spot_range = SPILL.y
-	spill.spot_angle = SPILL.z
-	spill.light_cull_mask = ~(Arena.CROWD_LAYER | ArenaKit.FACADE_LAYER)
-	# it is the portal's light: red when Morvath's doors open, the reward's colour when the way is lit
-	kit.tint_with_portal(kit.portals.size() - 1, spill)
+	# the worn crimson banners, no insignia
+	kit.banner(Vector3(BANNERS[0].x, y + BANNERS[0].y, FACADE_Z + BANNER_OUT), 0.0, Vector2(BANNERS[0].z, BANNERS[0].w), ArenaKit.FACADE_LAYER, ArenaKit.Emblem.NONE, BANNER_CLOTH)
+	kit.banner(Vector3(BANNERS[1].x, BANNERS[1].y, DOOR_WALL_Z + BANNER_OUT), 0.0, Vector2(BANNERS[1].z, BANNERS[1].w), ArenaKit.FACADE_LAYER, ArenaKit.Emblem.NONE, BANNER_CLOTH)
 	# a cold light from the hall on the facade alone: its stone and statues read dark teal, never black
 	var fill := SpotLight3D.new()
 	arena.add_child(fill)
-	fill.look_at_from_position(Vector3(PORTAL_X + FACADE_FILL_FROM.x, FACADE_FILL_FROM.y, FACADE_Z + FACADE_FILL_FROM.z),
-		Vector3(PORTAL_X + FACADE_FILL_AIM, y + 4.0, FACADE_Z))
+	fill.look_at_from_position(Vector3(FACADE_FILL_FROM.x, FACADE_FILL_FROM.y, FACADE_Z + FACADE_FILL_FROM.z),
+		Vector3(FACADE_FILL_AIM, y + 4.0, FACADE_Z))
 	fill.light_color = FACADE_FILL
 	fill.light_energy = FACADE_FILL_ENERGY
 	fill.spot_range = 40.0
 	fill.spot_angle = FACADE_FILL_CONE
 	fill.spot_attenuation = 0.5
 	fill.light_cull_mask = ArenaKit.FACADE_LAYER
+
+
+## The doors' wall, east of the dais (x from DAIS_X.y to FACADE_X.y), its face on the floor's edge (DOOR_WALL_Z), from
+## the floor up: full height with, in it, the two doorways of DOOR_X. Each has stone jambs DOOR_FRAME wide lining a
+## recess of the doorway's depth, a ring of voussoirs, a black cap in the arch, a black face at the back of the recess
+## and the HallDoor's two closed leaves; 1.1 m of plain wall stands between the two frames (the plan's measures). The
+## wall is the edge of the floor: nothing here collides, nobody can reach a door but by its zone.
+func _door_wall() -> void:
+	var zf := DOOR_WALL_Z
+	var top := FACADE_HEIGHT
+	var wall := m.ashlar(0.0)
+	var order := m.ashlar(0.0, PORTAL_ORDER_TINT)
+	var hw := DOOR_CLEAR.x * 0.5
+	var spring := HallDoor.spring_of(DOOR_CLEAR.x, DOOR_CLEAR.y, DOOR_ARC)
+	var edges: Array[float] = [DAIS_X.y]
+	for dx: float in DOOR_X:
+		edges.append(dx - hw - DOOR_FRAME)
+		edges.append(dx + hw + DOOR_FRAME)
+	edges.append(FACADE_X.y)
+	# the wall in three pieces, from deep under the floor up (the abyss beyond the hall's edge shows the same stone)
+	for k in [0, 2, 4]:
+		var w: float = edges[k + 1] - edges[k]
+		m.block(Vector3((edges[k] + edges[k + 1]) * 0.5, -DEPTH, zf - 1.6), Vector3(w, DEPTH + top, 3.2), 0.0, wall)
+		m.block(Vector3((edges[k] + edges[k + 1]) * 0.5, 0.0, zf + PLINTH.y * 0.5 - 0.05), Vector3(w, PLINTH.x, PLINTH.y + 0.1), 0.0, wall, false)
+	var black := StandardMaterial3D.new()
+	black.albedo_color = DOOR_BLACK
+	black.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	black.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var depth := DOOR_DEPTH
+	_doors_built.clear()
+	for k in DOOR_X.size():
+		var dx := DOOR_X[k]
+		var span_l := edges[1 + k * 2]
+		var span_r := edges[2 + k * 2]
+		# over the doorway: the wall from the springing line up, in front of the recess
+		m.block(Vector3((span_l + span_r) * 0.5, spring, zf - 1.6), Vector3(span_r - span_l, top - spring, 3.2), 0.0, wall)
+		# the jambs, the recess's side walls: from the wall's face back past the black face
+		for sd: float in [-1.0, 1.0]:
+			m.block(Vector3(dx + sd * (hw + DOOR_FRAME * 0.5), 0.0, zf + 0.15 - (depth + 0.25) * 0.5),
+				Vector3(DOOR_FRAME, spring, depth + 0.25 + 0.15), 0.0, order)
+		# a threshold in the recess's floor, the ring of stones round the arch
+		m.block(Vector3(dx, -0.5, zf + 0.15 - (depth + 0.15) * 0.5), Vector3(DOOR_CLEAR.x, 0.49, depth + 0.15), 0.0, order)
+		m.voussoir_arch(Vector3(dx, 0.0, zf + DOOR_FACE_OUT), Vector2(0, 1), DOOR_CLEAR.x, spring, DOOR_FRAME, 0.4, order, DOOR_ARC)
+		# the black: the cap of the arch in the wall's plane, the whole opening at the back of the recess
+		var whole := HallDoor.outline(DOOR_CLEAR.x, DOOR_CLEAR.y, DOOR_ARC)
+		var cap := HallDoor.outline(DOOR_CLEAR.x, DOOR_CLEAR.y, DOOR_ARC, false, true)
+		for z: float in [zf + DOOR_FACE_OUT * 0.5, zf - depth]:
+			var face := MeshInstance3D.new()
+			face.mesh = HallDoor.face(cap if z > zf - 0.5 else whole)
+			face.material_override = black
+			face.position = Vector3(dx, 0.0, z)
+			face.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			kit.root.add_child(face)
+		_doors_built.append(HallDoor.make(kit.root, Vector3(dx, 0.0, zf + DOOR_FACE_OUT + 0.05), DOOR_CLEAR.x, DOOR_CLEAR.y, DOOR_ARC))
+	# cornices across the whole wall (the arches' crowns stay under the first), buttresses and a window in its east bay
+	var mat := m.ashlar(0.0)
+	for ch: float in DOOR_CORNICES:
+		m.box(Vector3((DAIS_X.y + FACADE_X.y) * 0.5, ch, zf + CORNICE.y * 0.5 - 0.05), Vector3(FACADE_X.y - DAIS_X.y, CORNICE.x, CORNICE.y + 0.1), 0.0, mat, false)
+	for bx: float in DOOR_BUTTRESSES:
+		m.block(Vector3(bx, 0.0, zf + 0.2), Vector3(1.3, top - 1.5, 1.4), 0.0, mat)
+		m.block(Vector3(bx, 0.0, zf + 0.6), Vector3(1.5, 2.2, 1.0), 0.0, mat)
+		m.point(Vector3(bx, 2.2, zf + 0.6), 1.5, 0.5, 0.0, 0.3, mat)
+		m.pinnacle(Vector3(bx, top - 1.5, zf + 0.2), PINNACLE.x, PINNACLE.y, mat)
+	_niche(Vector3(DOOR_BAY, HIGH_WINDOW.z, zf), HIGH_WINDOW.x, HIGH_WINDOW.y, mat, m.stone(0.0, Color.WHITE * NICHE_DARK), true)
+
+
+## The two doors' nodes (D1, D2), to open the one chosen.
+var _doors_built: Array[HallDoor] = []
+
+
+## Opens the leaves of door i (0 or 1: D1, D2); nothing for another number (the south stairs, a room with fewer doors).
+func open_door_leaves(i: int) -> void:
+	if i >= 0 and i < _doors_built.size():
+		_doors_built[i].open()
+
+
+## The door i's leaves, to look at (the tests).
+func door_leaves(i: int) -> HallDoor:
+	return _doors_built[i] if i >= 0 and i < _doors_built.size() else null
 
 
 ## A dark pointed niche in the facade's face: its foot (middle, on the wall's front), width and height; a stone frame
@@ -1246,35 +1161,12 @@ func _niche(foot: Vector3, width: float, height: float, mat: Material, hollow: M
 		m.box(foot + Vector3(0, (height - width * 0.4) * 0.5, 0.05), Vector3(MULLION, height - width * 0.4, 0.12), 0.0, mat)
 
 
-## The lit diamond window in the tympanum: green glass, a frame of four bevelled bars, a thin stone cross.
-func _portal_window(at: Vector3) -> void:
-	var win := MeshInstance3D.new()
-	var wq := QuadMesh.new()
-	wq.size = Vector2.ONE * 0.7071
-	win.mesh = wq
-	var wm := StandardMaterial3D.new()
-	wm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	wm.albedo_color = ArenaKit.PORTAL_SHEET * PORTAL_WINDOW_GLOW
-	win.material_override = wm
-	win.transform = Transform3D(Basis.from_scale(Vector3(PORTAL_WINDOW.x, PORTAL_WINDOW.y, 1.0)) * Basis(Vector3.BACK, PI * 0.25), at + Vector3(0, 0, 0.03))
-	arena.add_child(win)
-	var frame := m.ashlar(DAIS_Y, PORTAL_ORDER_TINT)
-	var half := PORTAL_WINDOW * 0.5
-	var edge := sqrt(half.x * half.x + half.y * half.y)
-	var tilt := atan2(half.y, half.x)
-	for sx: float in [-1.0, 1.0]:
-		for sy: float in [-1.0, 1.0]:
-			var out := Vector3(sx * half.y, sy * half.x, 0).normalized() * PORTAL_WINDOW_FRAME * 0.5
-			var bar := m.box(at + Vector3(sx * half.x * 0.5, sy * half.y * 0.5, 0.08) + out, Vector3(edge + PORTAL_WINDOW_FRAME, PORTAL_WINDOW_FRAME, 0.16), 0.0, frame, false)
-			bar.basis = Basis(Vector3.BACK, -sx * sy * tilt)
-	m.box(at + Vector3(0, 0, 0.06), Vector3(PORTAL_WINDOW_CROSS, PORTAL_WINDOW.y, 0.06), 0.0, frame, false)
-	m.box(at + Vector3(0, 0, 0.06), Vector3(PORTAL_WINDOW.x, PORTAL_WINDOW_CROSS, 0.06), 0.0, frame, false)
 
 
 ## North-west: the balustrade on the abyss, and out beyond it a pier with a fire bowl and a hooded statue.
 func _north_west() -> void:
 	var z := -HALF.y + 0.1
-	m.balustrade(Vector3(-HALF.x, 0, z), Vector3(FACADE_X.x, 0, z))
+	m.balustrade(Vector3(-HALF.x, 0, z), Vector3(DAIS_X.x, 0, z))
 	m.block(Vector3(NW_PIER.x, -DEPTH, NW_PIER.y - 1.0), Vector3(3.6, DEPTH, 6.0))
 	kit.brazier(NW_PIER, 0.0, false)
 	m.block(Vector3(NW_PIER.x, 0, NW_PIER.y - 2.4), Vector3(1.8, 0.6, 1.8))
@@ -1291,7 +1183,7 @@ func _north_west_props() -> void:
 	m.pot(Vector3(-11.6, 0, z + 0.8), 1.0)
 	m.pot(Vector3(-10.9, 0, z + 1.2), 0.8)
 	# at the west foot of the dais (the picture's: low crates, a pot and candles; nothing here blocks the way)
-	var nook := Vector3(FACADE_X.x + 0.8, 0, z + 0.8)
+	var nook := Vector3(DAIS_X.x + 0.8, 0, z + 0.8)
 	kit.crate(nook + Vector3(0.35, 0, -0.1), 0.4, Vector3(0.9, 0.55, 0.9))
 	kit.crate(nook + Vector3(-0.55, 0, 0.35), -0.15, Vector3(0.75, 0.45, 0.75))
 	m.pot(nook + Vector3(0.5, 0, 0.75), 0.75)
@@ -1303,30 +1195,8 @@ func _north_west_props() -> void:
 func _west() -> void:
 	var x := -HALF.x + 0.1
 	m.balustrade(Vector3(x, 0, -HALF.y), Vector3(x, 0, LANDING_END))
-	# the giant: a pier out to its fire bowl, a tower of stone out of the depths, the hooded figure on it looking
-	# over the hall
-	var tower_top := GIANT_FOOT - GIANT.z * ArenaKit.STATUE_PLINTH
-	# the pile and the giant on the depths' layer: the fires of the hall leave them dark, only the spot below warms
-	# the side of the giant turned to its bowl
-	m.layers = ArenaKit.DEPTH_LAYER
-	var rough := m.stone(PILE_FOOT, Color.WHITE * PILE_TINT)
-	for i in PILE_COURSES.size():
-		var top: float = PILE_COURSES[i][0]
-		var bottom: float = PILE_COURSES[i + 1][0] if i + 1 < PILE_COURSES.size() else PILE_FOOT
-		for b: Vector3 in PILE_COURSES[i][1]:
-			m.block(Vector3(b.x, bottom, GIANT.y), Vector3(b.y, top - bottom, b.z), 0.0, rough)
-	m.block(Vector3(-24.9, -DEPTH, GIANT.y), Vector3(6.4, DEPTH + PILE_FOOT, 4.2), 0.0, rough)
-	m.block(Vector3(GIANT_BOWL.x, PILE_COURSES[0][0], GIANT_BOWL.y), Vector3(2.0, -PILE_COURSES[0][0], 2.0), 0.0, rough)
-	m.layers = ArenaKit.STATUE_LAYER
-	kit.statue(Vector2(GIANT.x, GIANT.y), PI * 0.5, GIANT.z, tower_top, GIANT_VALUE, false)
-	m.layers = 1
-	kit.brazier(GIANT_BOWL, 0.0, false, 5.5)
-	kit.statue_glow(Vector3(GIANT_BOWL.x + 0.5, 2.0, GIANT_BOWL.y), Vector3(GIANT.x, GIANT_FOOT + GIANT.z * GIANT_UPLIGHT_AIM, GIANT.y),
-		GIANT_UPLIGHT, GIANT_UPLIGHT_RANGE, GIANT_UPLIGHT_CONE)
-	var between := (Vector3(GIANT.x, GIANT_FOOT + GIANT.z * 0.5, GIANT.y) + Vector3(NW_PIER.x, NW_STATUE.x * 0.5, NW_PIER.y - 2.4)) * 0.5
-	kit.statue_glow(STATUE_FILL_FROM, between, STATUE_FILL_ENERGY, STATUE_FILL_RANGE, STATUE_FILL_CONE, FACADE_FILL, 0.5)
 	# candles and clay pots along the balustrade (the picture's groups; VX-13: the one at z 2.2 burnt out), a small altar
-	# of a crate with candles and two pots on it
+	# of a crate with candles and two pots on it. Beyond it SL-01 stands no giant: arcades, bridges and mist (_depths)
 	kit.crate(Vector3(x + 1.0, 0, -10.4), 0.2, Vector3(1.3, 0.8, 1.3))
 	_candles(Vector3(x + 1.0, 0.8, -10.4), 4, false, false, true)
 	m.pot(Vector3(x + 1.0, 0, -11.9), 1.0)
@@ -1338,6 +1208,95 @@ func _west() -> void:
 	_candles(Vector3(x + 1.2, 0, 7.1), 6)
 	m.pot(Vector3(x + 0.9, 0, 9.4), 0.9)
 	_candles(Vector3(x + 0.9, 0, 12.4), 3, true, false, true)
+
+
+## SL-01: the shallow stream of the west (02-planta-dados.json "water"): its centreline (x, z, from the north), its width
+## range (m) over the line, the two pools (x, z, size x, size z), the rubble O1 to O3 (x, z, size x, size z; none over
+## RUBBLE_TOP m, none that blocks), how high the water and its banks lie over the slabs (the stream a hair over the bank's
+## damp, both under the warnings' priority), the bank's damp (dark wet stone, wider than the water) and moss, and the
+## chunks of a rubble heap (how many to the square metre, their size range, how tall at most).
+const WATER_LINE: Array[Vector2] = [Vector2(-9.0, -11.0), Vector2(-6.0, -9.0), Vector2(-8.0, -5.0), Vector2(-10.0, -1.0),
+	Vector2(-9.0, 3.0), Vector2(-12.0, 8.0), Vector2(-11.0, 13.0)]
+const WATER_WIDTH := Vector2(0.55, 1.4)
+const WATER_POOLS: Array[Vector4] = [Vector4(-8.0, -9.0, 4.0, 2.5), Vector4(-11.0, 9.0, 2.6, 2.3)]
+const WATER_Y := 0.016
+const WATER_SMOOTH := 4
+const WATER_BANK := Vector3(1.9, 0.5, 0.012)
+const WATER_MOSS := Vector3(3.0, 0.6, 0.008)
+const RUBBLE_PILES: Array[Vector4] = [Vector4(-11.0, -3.0, 2.8, 2.2), Vector4(10.0, 1.0, 2.5, 1.8), Vector4(8.0, 10.0, 3.0, 2.0)]
+const RUBBLE_TOP := 0.3
+const RUBBLE_DENSITY := 3.0
+const RUBBLE_CHUNK := Vector2(0.18, 0.55)
+const RUBBLE_SEED := 4101
+
+
+## The stylized look's ground of SL-01 (nothing here collides or stands over RUBBLE_TOP): the stream and its pools with
+## their damp banks and moss, and the low rubble O1 to O3 on a patch of moss each. On the styled Masonry and a style-only
+## node, so the classic look is as it was.
+func _ground() -> void:
+	var node := Node3D.new()
+	node.name = "HallGround"
+	kit.root.add_child(node)
+	ArenaKit.style_only(node)
+	var water := ShaderMaterial.new()
+	water.shader = preload("res://assets/shaders/shallow_water.gdshader")
+	if ArenaRoom.compat():
+		water.set_shader_parameter(&"glint", 0.25)
+	var damp := HallLife.decal(HallLife.WATER_DAMP, WATER_BANK.y)
+	var moss := HallLife.decal(HallLife.WATER_MOSS, WATER_MOSS.y, true)
+	# the stream: its line smoothed, swelling and narrowing
+	var line := PackedVector2Array()
+	var widths := PackedFloat32Array()
+	for i in WATER_LINE.size() - 1:
+		var p0 := WATER_LINE[maxi(i - 1, 0)]
+		var p1 := WATER_LINE[i]
+		var p2 := WATER_LINE[i + 1]
+		var p3 := WATER_LINE[mini(i + 2, WATER_LINE.size() - 1)]
+		for k in WATER_SMOOTH:
+			var t := float(k) / WATER_SMOOTH
+			line.append(Vector2(
+				0.5 * ((2.0 * p1.x) + (-p0.x + p2.x) * t + (2.0 * p0.x - 5.0 * p1.x + 4.0 * p2.x - p3.x) * t * t + (-p0.x + 3.0 * p1.x - 3.0 * p2.x + p3.x) * t * t * t),
+				0.5 * ((2.0 * p1.y) + (-p0.y + p2.y) * t + (2.0 * p0.y - 5.0 * p1.y + 4.0 * p2.y - p3.y) * t * t + (-p0.y + 3.0 * p1.y - 3.0 * p2.y + p3.y) * t * t * t)))
+			var along := (float(i) + t) / float(WATER_LINE.size() - 1)
+			widths.append(lerpf(WATER_WIDTH.x, WATER_WIDTH.y, 0.5 + 0.5 * sin(along * TAU * 1.5 + 0.6)))
+	line.append(WATER_LINE[WATER_LINE.size() - 1])
+	widths.append(WATER_WIDTH.x)
+	var wide := PackedFloat32Array()
+	var wider := PackedFloat32Array()
+	for w in widths:
+		wide.append(w * WATER_BANK.x)
+		wider.append(w * WATER_MOSS.x)
+	node.add_child(floor_strip(line, 1.0, WATER_BANK.z + WATER_MOSS.z, moss, false, wider))
+	node.add_child(floor_strip(line, 1.0, WATER_BANK.z, damp, false, wide))
+	node.add_child(floor_strip(line, 1.0, WATER_Y, water, false, widths))
+	# the pools: a lens along x, narrow at both ends
+	for p in WATER_POOLS:
+		var lens := PackedVector2Array()
+		var lens_w := PackedFloat32Array()
+		var lens_wide := PackedFloat32Array()
+		for k in 7:
+			var u := float(k) / 6.0
+			lens.append(Vector2(p.x + (u - 0.5) * p.z, p.y))
+			lens_w.append(p.w * sin(PI * clampf(u, 0.08, 0.92)))
+			lens_wide.append(p.w * sin(PI * clampf(u, 0.08, 0.92)) * WATER_BANK.x * 0.7)
+		node.add_child(floor_strip(lens, 1.0, WATER_BANK.z, damp, false, lens_wide))
+		node.add_child(floor_strip(lens, 1.0, WATER_Y + 0.001, water, false, lens_w))
+	# the rubble: chunks within the patch's ellipse, each askew, none over RUBBLE_TOP, on a patch of moss
+	var sty := kit.styled()
+	var r := RandomNumberGenerator.new()
+	r.seed = RUBBLE_SEED
+	for pile in RUBBLE_PILES:
+		var area := PI * pile.z * pile.w * 0.25
+		node.add_child(floor_strip(PackedVector2Array([Vector2(pile.x - pile.z * 0.55, pile.y), Vector2(pile.x + pile.z * 0.55, pile.y)]),
+			pile.w * 1.15, WATER_MOSS.z, moss, false))
+		for _k in roundi(area * RUBBLE_DENSITY):
+			var a := r.randf() * TAU
+			var d := sqrt(r.randf())
+			var at := Vector2(pile.x + cos(a) * d * pile.z * 0.5, pile.y + sin(a) * d * pile.w * 0.5)
+			var size := Vector3(r.randf_range(RUBBLE_CHUNK.x, RUBBLE_CHUNK.y), 0.0, r.randf_range(RUBBLE_CHUNK.x, RUBBLE_CHUNK.y))
+			size.y = minf(RUBBLE_TOP - 0.02, lerpf(0.08, RUBBLE_TOP, (1.0 - d) * r.randf_range(0.5, 1.0)))
+			var b := sty.box(Vector3(at.x, size.y * 0.5 - 0.02, at.y), size, r.randf() * TAU, null, false)
+			b.rotate_object_local(Vector3.RIGHT, r.randf_range(-0.15, 0.15))
 
 
 ## The Antessala of the guided descent: the hall dressed as its variant 1, the only one of the hall with slabs that strike.
@@ -1381,7 +1340,7 @@ func _south(stairs_down: bool) -> void:
 	_stairs_down(Vector3((SOUTH_GAP.x + SOUTH_GAP.y) * 0.5, 0, HALF.y), Vector2(0, 1), SOUTH_GAP.y - SOUTH_GAP.x)
 
 
-func _east(stairs_down: bool) -> void:
+func _east() -> void:
 	var x := HALF.x - 0.1
 	# from the south-east corner up to the standing stone, its fire bowl and clutter on the inside
 	m.balustrade(Vector3(x, 0, HALF.y), Vector3(x, 0, EAST_STONE.y + 1.2), true, _near())
@@ -1395,16 +1354,11 @@ func _east(stairs_down: bool) -> void:
 	# fallen stones of the hall's own masonry (C18, ENV P2-6: the KayKit rubble was the one kit piece left in sight)
 	_rubble(Vector2(x - 2.4, EAST_STONE.y + 4.2))
 	_rubble(Vector2(x - 1.3, EAST_STONE.y + 4.8))
-	# north of the stone: the stairs down out of the hall (or a plain balustrade), a fire bowl on a pier past them
-	if stairs_down:
-		m.balustrade(Vector3(x, 0, EAST_STONE.y - 1.0), Vector3(x, 0, EAST_GAP.y))
-		_stairs_down(Vector3(HALF.x, 0, (EAST_GAP.x + EAST_GAP.y) * 0.5), Vector2(1, 0), EAST_GAP.y - EAST_GAP.x)
-	else:
-		m.balustrade(Vector3(x, 0, EAST_STONE.y - 1.0), Vector3(x, 0, EAST_GAP.x))
-	var pier := Vector2(HALF.x + 1.0, EAST_GAP.x - 1.2)
-	m.block(Vector3(pier.x, -DEPTH, pier.y), Vector3(2.0, DEPTH + 0.5, 2.0))
-	kit.brazier(pier, 0.5, false)
-	m.balustrade(Vector3(x, 0, EAST_GAP.x), Vector3(x, 0, -HALF.y))
+	# north of the stone a plain balustrade up to the doors' wall (SL-01: the stairs down out of the hall are gone with
+	# their gap, their zone and their anchors), a fire bowl on a pier past the corner
+	m.balustrade(Vector3(x, 0, EAST_STONE.y - 1.0), Vector3(x, 0, -HALF.y))
+	m.block(Vector3(EAST_PIER.x, -DEPTH, EAST_PIER.y), Vector3(2.0, DEPTH + 0.5, 2.0))
+	kit.brazier(EAST_PIER, 0.5, false)
 	m.pot(Vector3(x - 0.9, 0, -7.4), 0.9)
 	_candles(Vector3(x - 0.9, 0, -8.6), 3, false, false, true)
 
@@ -1461,6 +1415,7 @@ func _depths() -> void:
 	_bridge(at, yaw, facing, near)
 	_gate(at, yaw, facing, near)
 	_pylon(m.depth_stone(Game.FOG, PYLON_FADE, PYLON_TINT))
+	_west_arcade(m.depth_stone(Game.FOG))
 	# arches to the north, behind the facade
 	var far := m.depth_stone(Game.FOG)
 	for i in 4:
@@ -1476,14 +1431,9 @@ func _depths() -> void:
 	m.layers = 1
 	var wall: Vector3 = at.call(BRIDGE_DIST, LANTERN_LAT * BRIDGE_DIST, LANTERN_Y)
 	_lantern(wall - ahead * (BRIDGE_DECK.z * 0.4 + 0.05), yaw, near)
-	var giant_top := Vector3(GIANT.x, GIANT_FOOT + GIANT.z * 0.95, GIANT.y)
 	var hook := TOWER + Vector3(0, TOWER_ARM.x, 0)
-	# the great chains of the picture's top: from the giant across to the pylon and on to the facade, and one from the
-	# giant out over the abyss
-	kit.chain(giant_top + Vector3(0, -1.0, 0), hook + Vector3(0, 0.5, 0), 2.5, 2.2)
-	kit.chain(hook + Vector3(0, -0.5, 0), Vector3(FACADE_X.x + 0.6, DAIS_Y + FACADE_HEIGHT - 2.0, FACADE_Z), 3.0, 2.2)
-	kit.chain(giant_top + Vector3(0, -2.0, 0), Vector3(-6.0, 9.0, -26.0), 3.5, 2.2)
-	kit.chain(giant_top + Vector3(0, -1.5, 0), Vector3(-40.0, 8.0, 14.0), 4.0, 2.2)
+	# the great chain from the pylon to the facade (the giant's three are gone with it)
+	kit.chain(hook + Vector3(0, -0.5, 0), Vector3(DAIS_X.x + 0.6, DAIS_Y + FACADE_HEIGHT - 2.0, FACADE_Z), 3.0, 2.2)
 	# violet from far below, only at the sides (west and east of the frame) and low, lighting only the depths
 	for p: Vector3 in [Vector3(-HALF.x - 6.0, ABYSS_LIGHT_Y, 2.0), Vector3(-HALF.x - 14.0, ABYSS_LIGHT_Y, -16.0), Vector3(-28.0, ABYSS_LIGHT_Y, 10.0),
 			Vector3(HALF.x + 6.0, ABYSS_LIGHT_Y, 6.0), Vector3(HALF.x + 6.0, ABYSS_LIGHT_Y, -8.0)]:
@@ -1523,6 +1473,40 @@ func _depths() -> void:
 		_note_bank(1.0 - float(i) / float(MIST_BANKS.size() - 1))
 	kit.abyss_fog(Vector3(-HALF.x - 14.0, -12.0, 0.0), Vector3(24.0, 10.0, 50.0))
 	kit.abyss_fog(Vector3(HALF.x + 10.0, -12.0, 0.0), Vector3(16.0, 10.0, 40.0))
+
+
+## SL-01: where the giant stood, far to the west, a two-tier arcade of the depths' stone seen through the mist (its piers
+## and arches from the abyss up to a deck; one span fallen) and a bank of cold mist in front of it. The face's x, the
+## z of its first pier and their spacing, how many piers; the piers' size (x, z) and their lowest and highest tops, the
+## tiers' arch feet and heights (a tier: foot y, rise), the deck, the span that is gone, the pier cut short; the bank
+## (middle, size, alpha).
+const ARCADE_X := -30.0
+const ARCADE_Z := Vector2(-22.0, 7.5)
+const ARCADE_PIERS := 6
+const ARCADE_PIER := Vector3(2.2, 2.4, -26.0)
+const ARCADE_TOP := 10.0
+const ARCADE_TIERS: Array[Vector2] = [Vector2(-6.0, 7.0), Vector2(3.5, 5.0)]
+const ARCADE_DECK := Vector2(3.0, 0.8)
+const ARCADE_GAP := 2
+const ARCADE_BROKEN := 3
+const ARCADE_MIST := Vector4(-24.0, -2.0, -4.0, 0.3)
+const ARCADE_MIST_SIZE := Vector2(34.0, 12.0)
+
+
+func _west_arcade(mat: Material) -> void:
+	var gap := ARCADE_Z.y
+	for i in ARCADE_PIERS:
+		var z := ARCADE_Z.x + gap * i
+		var top := ARCADE_TOP - (4.0 if i == ARCADE_BROKEN else 0.0)
+		m.box(Vector3(ARCADE_X, (ARCADE_PIER.z + top) * 0.5, z), Vector3(ARCADE_PIER.x, top - ARCADE_PIER.z, ARCADE_PIER.y), 0.0, mat)
+		if i + 1 >= ARCADE_PIERS or i == ARCADE_GAP:
+			continue
+		for tier: Vector2 in ARCADE_TIERS:
+			m.pointed_arch(Vector3(ARCADE_X, tier.x, z + gap * 0.5), Vector2(1, 0), gap - ARCADE_PIER.y, tier.y, 0.9, ARCADE_PIER.x * 0.8, mat)
+	var length := gap * (ARCADE_PIERS - 1)
+	m.box(Vector3(ARCADE_X, ARCADE_TOP + ARCADE_DECK.y * 0.5, ARCADE_Z.x + length * 0.5 - gap * 0.5), Vector3(ARCADE_DECK.x, ARCADE_DECK.y, length - gap), 0.0, mat)
+	kit.mist_bank(Vector3(ARCADE_MIST.x, ARCADE_MIST.y, ARCADE_MIST.z), ARCADE_MIST_SIZE, Game.FOG * VEIL_LIGHT, ARCADE_MIST.w, 0.0, RUIN_MIST_BANDS)
+	_note_bank(0.6)
 
 
 ## The mist banks the depths built (the last card of the kit), with how near they are (1 the nearest plane, 0 the farthest),
@@ -1739,22 +1723,26 @@ func _lantern(at: Vector3, yaw: float, frame: Material) -> void:
 
 # ---------- doors ----------
 
-## Where each way on is: the spot in front of it on the floor (Arena.exits), the way into the room from it, and the
-## zone that leaves the room when stepped in.
 func _doors(count: int) -> void:
 	var a := arena
 	var inner := HALF - Vector2(1.2, 1.2)
-	var mid := (FLIGHT.x + FLIGHT.y) * 0.5
-	var spots: Array[Vector2] = [Vector2(PORTAL_X, -inner.y + 0.6), Vector2(inner.x - 0.6, (EAST_GAP.x + EAST_GAP.y) * 0.5),
+	# D1 and D2 stand in the north wall (their spot and zone are floor in front of it: the paladin reaches them and
+	# presses the key there, the wall stays shut until the choice); the third, with three doors, is the south stairs
+	var spots: Array[Vector2] = [Vector2(DOOR_X[0], -inner.y + 0.8), Vector2(DOOR_X[1], -inner.y + 0.8),
 		Vector2((SOUTH_GAP.x + SOUTH_GAP.y) * 0.5, inner.y - 0.6)]
-	var inward: Array[Vector2] = [Vector2(0, 1), Vector2(-1, 0), Vector2(0, -1)]
-	var zones: Array[Rect2] = [Rect2(FLIGHT.x + 0.6, -HALF.y - 2.0, FLIGHT.y - FLIGHT.x - 1.2, 4.4),
-		Rect2(inner.x - 1.0, EAST_GAP.x + 0.4, 4.0, EAST_GAP.y - EAST_GAP.x - 0.8),
+	var inward: Array[Vector2] = [Vector2(0, 1), Vector2(0, 1), Vector2(0, -1)]
+	var zones: Array[Rect2] = [Rect2(DOOR_X[0] - DOOR_ZONE.x * 0.5, -HALF.y, DOOR_ZONE.x, DOOR_ZONE.y),
+		Rect2(DOOR_X[1] - DOOR_ZONE.x * 0.5, -HALF.y, DOOR_ZONE.x, DOOR_ZONE.y),
 		Rect2(SOUTH_GAP.x + 0.4, inner.y - 1.0, SOUTH_GAP.y - SOUTH_GAP.x - 0.8, 4.0)]
 	for i in mini(count, 3):
 		a.exits.append(spots[i])
 		a.exit_inward.append(inward[i])
 		a.exit_zones.append(zones[i])
+		if i < DOOR_X.size():
+			# the sign floats DOOR_SIGN.x in front of the door, on its own anchor, held by no rod
+			a.exit_medals.append(Vector3(DOOR_X[i], DOOR_SIGN.y, -HALF.y + DOOR_SIGN.x))
+	a.exit_sign_up = DOOR_SIGN_TEXT
+	a.exit_rod = false
 
 
 # ---------- candles ----------

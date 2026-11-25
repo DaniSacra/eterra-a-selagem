@@ -169,6 +169,9 @@ func _build(layout: RoomLayout, exit_count: int, seed_: int) -> void:
 		shafts = layout.shafts
 	door_pos = Vector2(0, -half.y + 2.0)
 	exits.clear()
+	exit_medals.clear()
+	exit_sign_up = -1.0
+	exit_rod = true
 	boxes.clear()
 	for i in exit_count:
 		# far enough apart that two flights of stairs (7 m wide) never overlap
@@ -563,7 +566,9 @@ func door_anchor(i: int) -> Vector3:
 func door_anchors() -> Array[Vector3]:
 	var raw: Array[Vector3] = []
 	for i in exits.size():
-		if layout != null and i < layout.exits.size():
+		if i < exit_medals.size():
+			raw.append(exit_medals[i])
+		elif layout != null and i < layout.exits.size():
 			raw.append(layout.exits[i].medal_anchor())
 		else:
 			raw.append(ArenaExit.make(exits[i], exit_inward[i] if i < exit_inward.size() else Vector2(0, 1), Rect2()).medal_anchor())
@@ -573,9 +578,18 @@ func door_anchors() -> Array[Vector3]:
 
 ## The height where the text of door i's sign starts (under its medallion).
 func door_sign_y(i: int) -> float:
+	if exit_sign_up >= 0.0 and i < exit_medals.size():
+		return exit_sign_up
 	if layout != null and i < layout.exits.size():
 		return layout.exits[i].sign_up
 	return ArenaExit.new().sign_up
+
+
+## SL-01: opens the leaves of door i (the one chosen; the hall's doors stand closed until then). Nothing for a door
+## that has none (a stairs, a room with other doors).
+func open_exit(i: int) -> void:
+	if hall_look != null:
+		hall_look.open_door_leaves(i)
 
 
 ## The door whose medallion hangs at (x, z) of the room, or -1.
@@ -694,6 +708,12 @@ var start_facing := Vector2.UP
 ## The way into the room from each door (to set its sign in front of it) and the zone that leaves by it.
 var exit_inward: Array[Vector2] = []
 var exit_zones: Array[Rect2] = []
+## SL-01: where the hall's doors' signs hang when they are not on the door itself (x, height, z of each medallion; none:
+## the layout's ArenaExit says), the height where their text starts (negative: the default), and whether a rod holds
+## the medallion (the hall's float free in front of their closed doors).
+var exit_medals: Array[Vector3] = []
+var exit_sign_up := -1.0
+var exit_rod := true
 ## Where the fixed showcase camera (--showcase) looks: the middle of the composition.
 var showcase := Vector3.ZERO
 

@@ -1,9 +1,9 @@
 class_name HallLife
 extends RefCounted
 ## C-3 (AD2-08): the first hall's floor, lived on (stylized look only; nothing here collides or stands over 0.1 m): cracks,
-## smudges of dust, a stain of green in front of the portal, a few slabs broken or half sunk, small rubble. Built on
-## `kit.styled()` and floor_decal.gdshader's kinds 5 (a wet run, here a stain) and 6; its own seed, so the run is the same.
-## Everything keeps off the fight's middle (CENTRE_FREE m round the medallion), and the red warnings stay over it
+## smudges of dust, a few slabs broken or half sunk, small rubble (the green stain of the old portal is gone, SL-01). Built on
+## `kit.styled()` and floor_decal.gdshader's kinds 5 (a wet run) and 6; its own seed, so the run is the same.
+## Everything keeps off the fight's middle (CENTRE_FREE m round the middle of the room), and the red warnings stay over it
 ## (the decals' alpha is under 0.9 and they lie under the warnings' priority).
 
 const DECAL := preload("res://assets/shaders/floor_decal.gdshader")
@@ -22,24 +22,17 @@ const DUST_WIDTH := Vector2(0.9, 1.6)
 const DUST_LENGTH := Vector2(1.5, 3.0)
 const DUST_COLOR := Color(0.07, 0.075, 0.085)
 const DUST_ALPHA := 0.55
-## The stain in front of the portal (its x, z, width and length; the green of the portal's spill, deep and dark) and the
-## moss round it (wider).
-const STAIN_AT := Vector2(2.8, -13.0)
-const STAIN_SIZE := Vector2(5.0, 3.2)
-const STAIN_COLOR := Color(0.03, 0.17, 0.1)
-const STAIN_MOSS := Color(0.06, 0.15, 0.09)
-const STAIN_ALPHA := 0.8
 ## The fight's middle, kept clear of cracks and loose stones: its centre and radius (m).
-const CENTRE := Vector2(-2.5, 1.0)
+const CENTRE := CatacombHall.MIDDLE_AT
 const CENTRE_FREE := 4.0
 ## Where decals may lie (the hall's floor, less its edge) and where loose pieces may (less the dais' stairs).
 const FIELD := Rect2(-12.5, -11.5, 25.0, 23.0)
 ## The slabs broken or half sunk: their x, z, yaw (degrees), tilt (degrees, about x then z), the kind (size x, z).
-const SLABS: Array[Vector4] = [Vector4(7.6, 4.6, 24.0, 4.0), Vector4(-9.2, 8.8, -12.0, -3.0), Vector4(10.6, -5.8, 70.0, 3.5)]
+const SLABS: Array[Vector4] = [Vector4(7.6, 4.6, 24.0, 4.0), Vector4(-6.5, 9.0, -12.0, -3.0), Vector4(10.6, -5.8, 70.0, 3.5)]
 const SLAB_SIZE := Vector3(1.3, 0.12, 1.1)
 const SLAB_SINK := 0.075
 ## The rubble: heaps (x, z), pieces in each, how far they spread and their size (m, under the knee).
-const HEAPS: Array[Vector2] = [Vector2(7.6, 4.6), Vector2(-9.2, 8.8), Vector2(3.5, 10.0), Vector2(-6.0, -8.0)]
+const HEAPS: Array[Vector2] = [Vector2(7.6, 4.6), Vector2(-5.5, 8.8), Vector2(3.5, 10.0), Vector2(-2.0, -8.5)]
 const HEAP_PIECES := 5
 const HEAP_SPREAD := 0.9
 const HEAP_SIZE := Vector2(0.06, 0.16)
@@ -52,22 +45,26 @@ static func dress(parent: Node3D, sty: Masonry) -> void:
 	ArenaKit.style_only(node)
 	var r := RandomNumberGenerator.new()
 	r.seed = SEED
-	_stain(node)
 	for i in DUST:
 		var at := _spot(r)
 		var way := Vector2.from_angle(r.randf() * TAU) * r.randf_range(DUST_LENGTH.x, DUST_LENGTH.y) * 0.5
 		node.add_child(CatacombHall.floor_strip(PackedVector2Array([at - way, at + way]), r.randf_range(DUST_WIDTH.x, DUST_WIDTH.y),
-			Y + 0.001 * i, _decal(DUST_COLOR, DUST_ALPHA), true))
+			Y + 0.001 * i, decal(DUST_COLOR, DUST_ALPHA), true))
 	for i in CRACKS:
-		node.add_child(CatacombHall.floor_strip(_crack(r), CRACK_WIDTH, Y + 0.004 + 0.001 * i, _decal(CRACK_COLOR, 0.9), true))
+		node.add_child(CatacombHall.floor_strip(_crack(r), CRACK_WIDTH, Y + 0.004 + 0.001 * i, decal(CRACK_COLOR, 0.9), true))
 	for s in SLABS:
 		_slab(sty, s)
 	for h in HEAPS:
 		_heap(sty, h)
 
 
+## SL-01: the stream's damp and moss (used by CatacombHall._ground), a wet stone and a grey-green.
+const WATER_DAMP := Color(0.035, 0.05, 0.06)
+const WATER_MOSS := Color(0.13, 0.17, 0.1)
+
+
 ## A wet-run decal's material (kind 5) in `color`.
-static func _decal(color: Color, alpha: float, moss := false) -> ShaderMaterial:
+static func decal(color: Color, alpha: float, moss := false) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = DECAL
 	mat.set_shader_parameter(&"kind", 5)
@@ -78,13 +75,6 @@ static func _decal(color: Color, alpha: float, moss := false) -> ShaderMaterial:
 	else:
 		mat.set_shader_parameter(&"wet", color)
 	return mat
-
-
-## The green stain on the floor before the portal: a dark green blotch with a ring of moss round it.
-static func _stain(node: Node3D) -> void:
-	var path := PackedVector2Array([STAIN_AT - Vector2(STAIN_SIZE.y, 0.0), STAIN_AT, STAIN_AT + Vector2(STAIN_SIZE.y, 0.0)])
-	node.add_child(CatacombHall.floor_strip(path, STAIN_SIZE.x * 1.35, Y + 0.0005, _decal(STAIN_MOSS, STAIN_ALPHA, true), false))
-	node.add_child(CatacombHall.floor_strip(path, STAIN_SIZE.x, Y + 0.0015, _decal(STAIN_COLOR, STAIN_ALPHA), true))
 
 
 ## A spot on the floor outside the fight's middle.

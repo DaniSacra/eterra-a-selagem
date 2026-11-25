@@ -210,7 +210,7 @@ static func _door_mount(parent: Node3D, frame: Node3D, spin: Node3D) -> void:
 		return
 	var a := rooms.game.arena
 	var i := door_of(parent)
-	if i < 0:
+	if i < 0 or not a.exit_rod:
 		return
 	var inward := a.exit_inward[i] if i < a.exit_inward.size() else Vector2(0, 1)
 	var side := Vector2(-inward.y, inward.x)
