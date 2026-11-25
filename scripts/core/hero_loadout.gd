@@ -133,8 +133,11 @@ func toggle(id: StringName) -> bool:
 	return true
 
 
-## The ultimate the next descent plays: the fixed one of the hero's weapon (redesign A.3), none below its Mastery level.
+## The ultimate the next descent plays: the fixed one of the hero's weapon (redesign A.3), none below its Mastery level
+## or before the Ultimate's milestone (Milestones.ult_open).
 func ultimate() -> StringName:
+	if not Milestones.ult_open(data):
+		return &""  # SW-O5: the Ultimate waits for its milestone (6 descents and Mastery 2), whatever the Mastery
 	var u := hero.ult_for_weapon(level())
 	return u.id if u != null else &""
 

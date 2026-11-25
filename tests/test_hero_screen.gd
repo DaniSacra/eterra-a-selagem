@@ -19,6 +19,7 @@ func _data(xp: int, equipped: Array = [], ult: String = "") -> Dictionary:
 	SaveData.open_revealed(block)  # a player who got there before the Memória (Rejogabilidade): every Gift opened
 	block.equipped = equipped
 	block.ultimate = ult
+	d.runs = 6  # (SW-O5: the Ultimate's milestone, 6 descents)
 	return d
 
 

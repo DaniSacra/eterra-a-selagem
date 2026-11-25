@@ -60,6 +60,7 @@ var _guide_wait: Array[HubGuideDef] = []
 
 
 func _ready() -> void:
+	HubGate.begin_visit(Save.data)  # SW-O5: the one new thing of this visit, fixed before anything asks what is open
 	# the press that brought him here (Iniciar, Voltar ao Santuário) is no interact
 	Controls.clear_presses()
 	Controls.virtual = null
@@ -177,6 +178,7 @@ func _process(delta: float) -> void:
 
 
 func _exit_tree() -> void:
+	HubGate.end_visit()
 	Controls.virtual = null
 
 
@@ -441,7 +443,7 @@ func _announce() -> void:
 	var lines: Array[String] = []
 	for id in ids:
 		# a station with a guide this visit is explained by it, not said twice
-		if not _guide_wait.any(func(d: HubGuideDef) -> bool: return d.station == id):
+		if not _guide_wait.any(func(d: HubGuideDef) -> bool: return d.station == id or d.id == id):
 			lines.append(T.t(HubGate.TEXT[id]))
 	HubGate.mark_presented(Save.data, ids)
 	Save.write()

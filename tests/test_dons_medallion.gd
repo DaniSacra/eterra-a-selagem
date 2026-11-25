@@ -24,6 +24,7 @@ func _data(hero: String, xp: int, memory: int = 0, wins: int = 1) -> Dictionary:
 	block.equipped = []
 	block.opened = []
 	d.wins = wins
+	d.runs = 6  # (SW-O5: the Ultimate's milestone, 6 descents)
 	MaterialPurse.give(d, MaterialPurse.MEMORY, memory)
 	return d
 

@@ -44,18 +44,24 @@ func test_a_station_that_opens_brings_its_guide_once() -> void:
 	HubGuide.mark_shown(d, [&"portal"])
 	assert_true(HubGuide.pending(d).is_empty())
 	d.runs = 1
-	assert_eq(_ids(HubGuide.pending(d)), [&"tree", &"book"], "in the data's order")
-	HubGuide.mark_shown(d, [&"tree", &"book"])
+	assert_eq(_ids(HubGuide.pending(d)), [&"tree"], "the first descent opens the Árvore alone")
+	HubGuide.mark_shown(d, [&"tree"])
 	assert_true(HubGuide.pending(d).is_empty(), "shown: never again")
+	d.runs = 3
+	HubGate.mark_presented(d, [HubPlan.TREE])
+	assert_eq(_ids(HubGuide.pending(d)), [&"forge"], "SW-O5: one new station per visit, the Livro waits")
+	HubGate.mark_presented(d, [HubPlan.SMITH])
+	HubGuide.mark_shown(d, [&"forge"])
+	assert_eq(_ids(HubGuide.pending(d)), [&"book"])
 
 
 func test_wins_and_the_account_open_theirs() -> void:
 	var d := SaveData.defaults()
 	d.wins = 1
 	assert_true(_ids(HubGuide.pending(d)).has(&"sworn"))
-	SaveData.hero(d, SaveData.FIRST_HERO).firsts = {"guardian": 1}
-	var ids := _ids(HubGuide.pending(d))
-	assert_true(ids.has(&"forge") and ids.has(&"account"))
+	d.runs = 4
+	HubGate.mark_presented(d, [HubPlan.TREE, HubPlan.SMITH, HubPlan.BOOK])
+	assert_true(_ids(HubGuide.pending(d)).has(&"account"), "the Videira on the fourth descent")
 
 
 func test_the_save_keeps_what_was_shown() -> void:
@@ -124,22 +130,20 @@ func test_hub_shows_the_guide_writes_it_and_holds_the_hero() -> void:
 	HubGuide.mark_shown(Save.data, [&"portal"])
 	hub = (load(SceneGo.HUB) as PackedScene).instantiate()
 	add_child_autofree(hub)
-	assert_eq(_ids(hub._guide_wait), [&"tree", &"book"])
+	assert_eq(_ids(hub._guide_wait), [&"tree"])
 	hub._guide_tick(0.1)
 	assert_null(hub.guide, "waits for the arrival look")
 	hub.arrived = 10.0
 	hub._guide_tick(0.1)
 	assert_not_null(hub.guide)
 	assert_eq(hub.guide.current.id, &"tree")
-	assert_eq(HubGuide.shown(Save.data), ["portal", "tree", "book"], "written when it starts")
+	assert_eq(HubGuide.shown(Save.data), ["portal", "tree"], "written when it starts")
 	var at := hub.lean()
 	# on the station, moved up the screen so the middle of its height stands in the middle (GPU capture 2026-11-23)
 	var show: Vector3 = HubPlan.SHOW[HubPlan.TREE]
 	var shift := (show.z * 0.5) / tan(deg_to_rad(Feel.live().cam_pitch))
 	assert_almost_eq(at.distance_to(HubPlan.to_world(Vector2(show.x, show.y))), shift, 0.01, "leans on the station")
 	var g := hub.guide
-	g.advance()
-	assert_eq(g.current.id, &"book")
 	g.advance()
 	assert_null(g.current)
 	assert_null(hub.guide, "gone after the last")

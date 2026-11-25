@@ -82,11 +82,11 @@ func test_the_station_is_beside_the_vendedor_and_off_every_other_piece() -> void
 	assert_false(_rect(vine).intersects(a), "and off the Videira")
 
 
-func test_the_station_opens_beside_the_vendedor() -> void:
+func test_the_station_opens_after_the_first_victory() -> void:
 	var d := SaveData.defaults()
 	assert_false(HubGate.is_open(d, HubPlan.HEROES))
-	d.runs = 3
-	assert_true(HubGate.is_open(d, HubPlan.HEROES))
+	d.runs = 5
+	assert_false(HubGate.is_open(d, HubPlan.HEROES), "SW-O5: not with the Vendedor, only after the first victory")
 	var w := SaveData.defaults()
 	w.wins = 1
 	assert_true(HubGate.is_open(w, HubPlan.HEROES), "and for a save that sealed Morvath")

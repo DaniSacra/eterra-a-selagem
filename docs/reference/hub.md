@@ -251,3 +251,22 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - O Forjador volta a abrir só a Forja (`Hub._use_smith`); `VineSheet` e as chaves `vine_smith_*` saíram.
 - Ver (só a sessão principal): `tools/gpu.sh shot x.png --hub --hub-open=all --hero-at=vine --look=stylized --cam=near` e `--hero-at=heroes`;
   telas: `--hub --hub-open=all --hub-use=vine` e `--hub-use=heroes`; guias: `--hub --guide=account` e `--guide=maga`.
+
+## Marcos do Santuário (SW-O5, 2026-11-25, `Milestones`, `MilestoneDef`; spec em `docs/design/onboarding_sw_o.md`)
+- Quando cada estação abre é **dado**: `MilestoneDef` (`id`, `order`, `opens`, `runs_min`, `needs`, `any_of`), em `data/milestones/NN_id.tres`
+  (parte `milestones` do `make_data.gd`, do 3A1); sem a pasta, `Milestones.defaults()` traz a mesma tabela. `needs`: `first` (descida-tutorial
+  feita ou pulada, ou `runs > 0`), `guardian` (`firsts.guardian` ou `firsts.guardian_run`; a tutorial não grava nenhum), `win`, `stone`
+  (primeira Pedra Funda, pedido ou receita: o mesmo teste do uso do Vendedor), `mastery2`.
+- Tabela (D-O1 a): 0 `tree` Árvore (`first`); 1 `forge` Forja (3 descidas **ou** guardião); 2 `book` Livro e Compêndio (3); 3 `account` Videira (4);
+  4 `vendor` Vendedor (5 **ou** Pedra Funda); 5 `ult` Ultimate (6 descidas **e** Maestria 2; abre como `ult`, não é estação); 6 `maga`
+  Estandarte dos Heróis (primeira vitória; os Juramentos seguem `Juramentos.unlocked`).
+- **Uma coisa nova por visita**: `HubGate.begin_visit` (chamado no `Hub._ready`) fixa `Milestones.next_to_present` (o marco mais baixo
+  alcançado e ainda não apresentado); `is_open` só abre essa e o que já foi apresentado (`hub.presented`) ou usado (`HubGate.used`: Dom aberto,
+  Forja/Temperar, Ofícios, nó da Videira). Os outros esperam a próxima volta. `end_visit` no `_exit_tree`. Fora do Hub (testes, `SaveData`) a
+  pergunta usa o próximo vivo; `open_ids` (o que o save ganhou, sem o limite) é o que a migração v9 marca como apresentado.
+- Nada que já está aberto fecha: apresentado ou usado continua aberto. `Milestones.grandfather(data)` marca como apresentado/guiado o que o
+  save antigo tinha (a Ultimate de quem já tem Maestria 2); `SaveData.merged` deve chamá-la ao migrar para a versão dos marcos (3A1).
+- Guias: condição nova `ult` (`HubGuide.CONDITIONS`), que pergunta a `HubGate.is_open(&"ult")`; `account` pergunta a `HubGate` (não a `Vine.open`).
+  O guia `ult` (estação `tree`, texto `guide_ult`) entra no `_hub_guide` do `make_data.gd`. A frase de abertura `hub_open_ult` está em `HubGate.TEXT`.
+- Mudou em relação a antes: a Prata (15 de Prata não abre mais a Forja), Videira não abre mais com o primeiro guardião, Estandarte
+  só com a primeira vitória (antes com o Vendedor). Quem já tinha apresentado fica como estava.

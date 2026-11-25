@@ -76,6 +76,7 @@ func test_the_hero_screen_shows_the_one_the_descent_plays() -> void:
 	var hero := HeroDef.warrior()
 	var data := SaveData.defaults()
 	SaveData.hero(data, "warrior").mastery_xp = hero.mastery.total_to(6)
+	data.runs = 6  # (SW-O5: the Ultimate's milestone, 6 descents)
 	assert_eq(HeroLoadout.new(hero, data).ultimate(), &"cleave", "never chosen: the first unlocked is the chosen one")
 	SaveData.hero(data, "warrior").mastery_xp = 0
 	assert_eq(HeroLoadout.new(hero, data).ultimate(), &"", "Mastery 1: none")
