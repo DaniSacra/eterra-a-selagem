@@ -418,6 +418,7 @@ func test_death_hub_portal_and_a_new_descent_double_nothing() -> void:
 	var runs := "user://test_hub_runs.jsonl"
 	var kept := Save.data
 	Save.data = SaveData.defaults()
+	Save.data.first = FirstDescent.DONE  # not the guided descent (its own rules: test_first_descent.gd)
 	Save.enabled = true
 	Save.path = path
 	Dev.put("runlog", runs)

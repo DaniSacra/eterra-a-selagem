@@ -167,7 +167,7 @@ func test_save_8_keeps_the_block_and_opens_older_files() -> void:
 
 ## The log's version 6 reads an older line with an empty oficios.
 func test_run_log_6() -> void:
-	assert_eq(RunLog.VERSION, 8)  # (7: uses; 8: cause, oaths, per-room hazard; test_run_log.gd)
+	assert_eq(RunLog.VERSION, 9)  # (7: uses; 8: cause, oaths, per-room hazard; 9: SW-O onboarding; test_run_log.gd)
 	var old := RunLog.normalized({"version": 5, "outcome": "death"})
 	assert_eq(old.oficios, {})
 	assert_eq(int(old.version), 5)

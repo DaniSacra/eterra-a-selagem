@@ -120,7 +120,7 @@ func test_old_save_counts_open_stations_as_shown() -> void:
 	assert_true(HubGate.presented(old).has("vendor"))
 	assert_true(HubGate.presented(old).has("smith"), "runs 5 reaches the Forja's third descent")
 	# a new version-9 file keeps what it was shown
-	var kept := SaveData.merged({"version": 9, "runs": 3, "hub": {"presented": ["tree"]}})
+	var kept := SaveData.merged({"version": SaveData.VERSION, "first": 1, "runs": 3, "hub": {"presented": ["tree"]}})
 	assert_eq(HubGate.to_present(kept), [HubPlan.SMITH] as Array[StringName], "one at a time, in the milestones' order")
 
 
