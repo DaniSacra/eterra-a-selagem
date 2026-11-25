@@ -55,7 +55,8 @@ func test_where_the_slits_fire() -> void:
 				assert_gte(s.distance_to(l.hero_spawn), 6.0, "band %d 6 m from the way in" % i)
 		for e in l.exits:
 			assert_false(e.mouth.grow(0.5).has_point(a), "band %d off a door" % i)
-	assert_ne(walls[0], walls[1], "one each side of the dividing wall")
+	# PT-6b (2026-11-25): the door pair stands east of the dividing wall, so both slits shoot from its west side
+	assert_eq(walls[0], walls[1], "both slits west of the dividing wall (the doors take the east side)")
 	assert_eq(_crypt().hazard.aims.size(), 0, "A has no slit")
 
 

@@ -238,7 +238,7 @@ group = 2
 
 [sub_resource type="Resource" id="Resource_v0w6p"]
 script = ExtResource("1_63so8")
-at = Vector2(13.6, -10.8)
+at = Vector2(14.3, -2.6)
 radius = 0.275
 height = 0.55
 group = 3
@@ -246,7 +246,7 @@ group = 3
 [sub_resource type="Resource" id="Resource_lk2yf"]
 script = ExtResource("1_63so8")
 form = 2
-at = Vector2(14.3, -11.5)
+at = Vector2(14.3, -1.8)
 radius = 0.2
 height = 0.4
 group = 3
@@ -254,7 +254,7 @@ group = 3
 [sub_resource type="Resource" id="Resource_6gi8n"]
 script = ExtResource("1_63so8")
 form = 1
-at = Vector2(13.4, -12.1)
+at = Vector2(13.6, -2.2)
 radius = 0.384
 height = 0.75
 group = 3
@@ -653,7 +653,7 @@ from_progress = 0.34
 plate_hero_damage = PackedFloat32Array()
 plate_push = PackedVector2Array()
 strips = PackedVector4Array()
-aims = PackedVector4Array(1.55, -10.4, 1.55, 2.4, -5.3, -10.4, -5.3, 2.4)
+aims = PackedVector4Array(-9, -10.4, -9, 2.4, -5.3, -10.4, -5.3, 2.4)
 band_push = PackedVector2Array()
 band_dir = PackedVector2Array()
 also = SubResource("Resource_eqnfm")
@@ -732,7 +732,7 @@ height = 1.2
 [sub_resource type="Resource" id="Resource_jw3ap"]
 script = ExtResource("4_wmys5")
 shape = 1
-center = Vector2(1.55, -10.75)
+center = Vector2(-9, -10.75)
 half = Vector2(0.25, 0.3)
 piece = &"bolt_slit"
 height = 1.2

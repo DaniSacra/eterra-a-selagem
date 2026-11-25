@@ -1325,7 +1325,7 @@ func _plant() -> HazardDef:
 ## wall (the east one clear of the north door's mouth): a low block of the wall, 0.5 x 0.6 m, 1.2 m high, stopping bodies
 ## and shots (the environment artist's slit with the chevron cut on its top replaces the placeholder block).
 const SLIT_WEST := -5.3
-const SLIT_EAST := -9.4  # PT-6b (2026-11-25): the door pair now stands east of the dividing wall, so both slits shoot from its west side
+const SLIT_EAST := -9.0  # PT-6b (2026-11-25): the door pair now stands east of the dividing wall, so both slits shoot from its west side
 
 
 func _slit(x: float) -> ArenaObstacle:
