@@ -22,7 +22,8 @@ func test_boss_sources_in_the_code_are_all_known() -> void:
 		assert_true(DefeatCause.BOSS_ATTACKS.has(id), "%s is a known boss attack" % id)
 
 
-func test_the_spin_cannot_be_cut_before_it_lands() -> void:
+## G-2 was undone by SW-C1 (2026-11-25, approved by Daniel): the dodge cuts any blow, the spin's windup too.
+func test_the_dodge_cuts_the_spin_in_its_windup_since_sw_c1() -> void:
 	var runner := ComboRunner.new(load("res://data/combos/paladin.tres") as ComboTree)
 	var L := ComboNode.In.LIGHT
 	var hit_by: Array[StringName] = []
@@ -39,7 +40,7 @@ func test_the_spin_cannot_be_cut_before_it_lands() -> void:
 	runner.step(0.0)
 	assert_eq(runner.node.id, &"cut3")
 	assert_eq(runner.phase, ComboRunner.Phase.WINDUP)
-	assert_false(runner.can_cancel(), "the spin's windup holds against the dodge")
+	assert_true(runner.can_cancel(), "the spin's windup is cut by the dodge (SW-C1)")
 	var steps := 0
 	while runner.phase == ComboRunner.Phase.WINDUP and steps < 400:
 		runner.step(1.0 / 120.0)

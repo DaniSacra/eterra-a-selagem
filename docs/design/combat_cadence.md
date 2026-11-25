@@ -953,3 +953,21 @@ Ancião: a pausa dele continua a de antes (média 2,3 s, `IdleStats` 64% da luta
 - CF2-05: Investida 35 ms por alvo, no máximo 3 (105 ms).
 - CF2-06 (parcial): pitch do som de acerto 1,00 / 0,94 / 0,86 (golpe 1 / 2 / finalizador) e o grave `hit_heavy` por baixo do finalizador. Sem o abaixamento da música no Apogeu/Brado.
 - Não feitos: CF2-03 (precisa de `Fx.punch` em `fx.gd`, fora do escopo de hoje) e CF2-04 (recuo do inimigo, mexe na `horde.gd`).
+
+
+## 13. Plano SWORN, fase 1 (SW-C1, C2, C3, C6; 2026-11-25): tempos novos do herói
+
+Fonte dos números do SWORN: `docs/design/sworn_rea_kingswood_2026-11-25.md` 1.2 e 1.4. A regra do PO (golpe parado, 1 < 2 < 3,
+preparação-golpe-recuperação) não mudou. Tempos em segundos desde o aperto; "próximo leve" = quando o golpe seguinte do
+combo pode sair; as janelas moram em `ComboNode.cancel_*_from` (`tools/make_data.gd`).
+
+| Golpe | Dano antes / depois | Empurrão (m) antes / depois | Impacto aos | Próximo leve (nosso / SWORN) | Esquiva corta | Especial, Brado, Investida cortam | Pausa 1 corpo / 2 / 3 ou mais (ms) antes / depois |
+|---|---|---|---|---|---|---|---|
+| cut1 | 15 / 15 | 0,36 / 0,10 | 0,08 | 0,21 / 0,30 | desde 0 | desde 0 | 35 de espera + 10 / 120, 90, 60 |
+| cut2 | 15 / 15 | 0,43 / 0,10 | 0,13 | 0,35 / 0,30 | desde 0 | desde 0 | 60 + 10 / 120, 90, 60 |
+| cut3 (giro) | 20 / **30** | 2,3 / 2,3 | 0,36 | 0,66 / 0,63 | desde 0 (antes só depois do impacto) | desde 0 | 100 + 10 / 160, 110, 60 |
+| Brado, Investida, Ômegas | iguais | iguais | iguais | | desde 0 | | iguais (`hit_stop_ms`) |
+
+- Antes, especial e Brado esperavam a recuperação inteira; agora cortam a preparação e a recuperação (o golpe cortado antes do impacto não acerta).
+- A pausa antes era só o "espera" em velocidade cheia mais 10 ms a 6% (o que se sente é o trecho lento); agora a pausa total é o número da tabela (20 ms em velocidade cheia e o resto a 6%), constantes `Combat.PAUSE_*` num lugar só.
+- Esquiva medida (SW-C6): 0,2 s (SWORN 0,2), 5,6 m (SWORN 2,5), protegido de 0 a 0,2 s (SWORN igual), recarga 0,8 s a contar do começo da esquiva (SWORN 0,8), 1 carga (+1 pela Bênção Passos; SWORN 1, +1 na meta). Igual ou melhor, sem mudança.

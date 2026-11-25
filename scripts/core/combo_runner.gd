@@ -22,8 +22,6 @@ signal combo_dropped
 signal chain_lost
 
 const NO_INPUT := -1
-## The tag of the spin (the combo's last blow; make_data.gd): it holds its windup against the dodge.
-const SPIN_TAG := &"spin"
 
 var tree: ComboTree
 var phase := Phase.IDLE
@@ -58,6 +56,9 @@ var _held := 0.0
 var _legs := 0.0
 ## The blow landed on this step (Stage.STRIKE).
 var _struck := false
+## SW-C1: seconds (at the blow's own pace) since the move under way was pressed; the cancel windows of the move
+## (ComboNode.cancel_*_from) are read against it.
+var _since := 0.0
 ## Seconds left before a move may start again, by id (ComboNode.cooldown).
 var _cooldowns: Dictionary[StringName, float] = {}
 ## The share of a move's cooldown taken off when it is armed (0 to 0.5; GiftState.cooldown_cut, set by HeroGifts).
@@ -116,11 +117,12 @@ func stage() -> Stage:
 	return Stage.IDLE
 
 
-## A dodge may cut any move, its windup too (Hades II cuts the charge; GF-02): a blow cut before it lands deals nothing.
-## G-2 (CF2-08): the spin is the exception, it cannot be cut before its blow lands (the press waits in the dodge buffer
-## and comes out the moment it has), so the heaviest blow is never dropped half made; after the hit its recovery is cut.
+## SW-C1 (SWORN: the masks of cancel): the dodge may cut a move from ComboNode.cancel_dodge_from seconds after its press
+## (0 for every blow of the Warrior, the spin included: a cut windup never lands, a cut recovery is simply over; Hades II
+## cuts the charge, GF-02). The special, the Brado and the Investida cut from cancel_special_from (step), the next light from
+## cancel_light_from (step).
 func can_cancel() -> bool:
-	return not (phase == Phase.WINDUP and node != null and node.tags.has(SPIN_TAG))
+	return not is_attacking() or node == null or _since >= node.cancel_dodge_from
 
 
 ## The chain of the move under way goes on as if `from` had been played (Passo Encadeado: the Corte Veloz counts as
@@ -234,6 +236,10 @@ func step(dt: float) -> void:
 	# (checked before it counts down, with room for the sum of frames: a hold of 8 frames starts on the 8th after it)
 	var held := _held > 0.0001
 	_held = maxf(0.0, _held - dt)
+	if phase == Phase.WINDUP or phase == Phase.RECOVERY:
+		_since += dt * speed
+		if not held and _cancel_into():
+			return
 	match phase:
 		Phase.IDLE:
 			if not held and not _try_start():
@@ -289,6 +295,35 @@ func _options() -> Array[ComboNode]:
 	return tree.dodge if _dodge_left > 0.0 else tree.neutral
 
 
+## SW-C1: the press waiting cuts the move under way when its window has opened: the special, the Brado or the Investida
+## (cancel_special_from, a windup or a recovery), the next light of the chain (cancel_light_from, a recovery). A windup
+## cut this way never lands (as with the dodge). True when the new move started.
+func _cancel_into() -> bool:
+	if _buffered == NO_INPUT or node == null:
+		return false
+	var recovering := phase == Phase.RECOVERY
+	if _buffered == ComboNode.In.LIGHT:
+		if not recovering or node.cancel_light_from < 0.0 or _since < node.cancel_light_from:
+			return false
+	elif _buffered == ComboNode.In.HEAVY or _buffered == ComboNode.In.SHOUT or _buffered == ComboNode.In.RUSH:
+		var move := ComboTree.find(tree.neutral, _buffered as ComboNode.In)
+		if _since < node.cancel_special_from or move == null or move == node or _cooldowns.has(move.id):
+			return false
+	else:
+		return false
+	if recovering:
+		phase = Phase.WINDOW
+		_t = node.chain_window
+		move_ended.emit(node)
+	else:
+		phase = Phase.IDLE
+		node = null
+		_chain_from = null
+		_hold = 0.0
+		chain_lost.emit()
+	return _try_start()
+
+
 func _try_start() -> bool:
 	if _buffered == NO_INPUT:
 		return false
@@ -310,6 +345,7 @@ func _try_start() -> bool:
 	_kept_left = 0.0
 	node = found
 	_chain_from = null
+	_since = 0.0
 	phase = Phase.WINDUP
 	_hold = found.glint * glint_scale
 	_t = found.windup + _hold

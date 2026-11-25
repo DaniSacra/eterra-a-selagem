@@ -47,9 +47,9 @@ const FINISHER_GLINT := 0.08
 ## Special1DisableMoveHold, D-44 (3)); only the dodge cuts it.
 const SPECIAL_HOLD := 0.71
 ## Push of cut1 and cut2 (m/s; Horde.KNOCKBACK_DECAY 7 makes it about a seventh of that in meters). E1c: with no lunge
-## to follow the enemy, 8 and 10 threw it 2.6 m back, out of the spin's 3 m; 2.5 and 3 keep the three blows on it
-## (0.8 m in all).
-const COMBO_PUSH := [2.5, 3.0]
+## to follow the enemy, 8 and 10 threw it 2.6 m back, out of the spin's 3 m. SW-C2 (SWORN: only the third blow pushes): 0.7,
+## 0.1 m each, nearly none; the spin (cut3) is the one that throws.
+const COMBO_PUSH := [0.7, 0.7]
 
 
 func _initialize() -> void:
@@ -111,7 +111,7 @@ func _tree(fifth: bool) -> ComboTree:
 	# legs held (move_hold, only the dodge cuts it): cut1 0.08 / 8 frames / 11 frames (press to walking 0.26 s),
 	# cut2 0.13 / 13 / 19 (0.45 s), the spin 0.28 + 0.08 of glint = 0.36 / 18 / 30 (0.86 s).
 	var cut3 := _move(&"cut3", L, &"Slash_C", [&"light", &"spin", &"finisher"],
-		{"damage": 20.0, "shape": ComboNode.Shape.CIRCLE, "reach": 240.0 / U, "knockback": 16.0, "windup": 0.36 - FINISHER_GLINT,
+		{"damage": 30.0, "shape": ComboNode.Shape.CIRCLE, "reach": 240.0 / U, "knockback": 16.0, "windup": 0.36 - FINISHER_GLINT,
 		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "magick_per_hit": 0.5, "chain_window": 0.6, "hit_stop_ms": 100.0, "shake": 2.4, "move_scale": 0.0, "sound": &"blade_spin",
 		# QW-103: the spin's swish (its samples peak 30 to 90 ms in) on the blade's frame, 0.36 s after the press; the
 		# press only gathers

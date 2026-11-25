@@ -608,7 +608,7 @@ nele, 0 vence; evoluído (4 Dons, Forja 2, conta 6) 12 chegam, 1 morre nele, 5 v
 
 
 ## Lote C1: combate novo (Daniel, 2026-11-22: "não dá para ficar só apertando o botão de atacar"; testes em `tests/test_combat_c1.gd`)
-- **Herói fraco**: combo 15/15/20 (Quarto Corte 15), Ômega do ataque 100, ultimates a 60% (Corte do Juízo 180/120 na Maestria 3, Voragem
+- **Herói fraco**: combo 15/15/20 (desde o SW-C2, 2026-11-25, 15/15/30; Quarto Corte 15), Ômega do ataque 100, ultimates a 60% (Corte do Juízo 180/120 na Maestria 3, Voragem
   5 e 72), dano fixo das Bênçãos x 0,6 (`FLAT`). Onda 35, Investida 35 e Brado 15 ficam.
 - **Botões**: a onda (`heavy`) tira 50% a mais da blindagem (`Combat.ARMOR_SPECIAL`); o Brado absorve um golpe de 4 ou mais
   (`ComboNode.buff_ward`, `GiftState.take_ward`, `Player.WARD_MIN`).
@@ -675,8 +675,15 @@ nele, 0 vence; evoluído (4 Dons, Forja 2, conta 6) 12 chegam, 1 morre nele, 5 v
 ## C1e: a esquiva como defesa principal (2026-11-22; `tests/test_dodge_c1e.gd`)
 - **Números** (só em `tools/make_data.gd`): esquiva de 0,2 s e 5,6 m como antes; proteção `Feel.dodge_iframes` = `dodge_time` (0,2 s, o trajeto inteiro, antes 0,3 s com 0,1 s de cauda); recarga `HeroDef.dodge_recharge` 0,8 s (era 1,1); 1 carga de base, a segunda vem da Bênção Passos (`dodge_charges` +1 em `Boons`, lido em `game.gd`) ou de Dons.
 - **Esquiva no último instante**: golpe ou projétil que chega ao herói até `Feel.close_window` (0,15 s) depois do começo da esquiva (`DodgeClose.counts`, `scripts/core/dodge_close.gd`) dá `Player.dodge_close`; `Game._on_dodge_close` toca câmera lenta curta (`close_fraction` 0,4 por `close_slow` 0,25 s, `Fx.slow_mo`, só com a opção de câmera lenta ligada), anel esmeralda e o som `ward`. No máximo uma a cada `close_cooldown` (2 s). Não atordoa ninguém (regra F8). `Game.dodge_closes` conta na partida.
-- **Cancelamento**: a esquiva corta qualquer golpe, janela de recuperação e `move_hold` (`ComboRunner.can_cancel` sempre verdadeiro; o Brado, Ômegas e cargas também). Aperto sem carga ou durante estágio, rolagem/gesto fica guardado `Player.DODGE_BUFFER` (0,15 s) e sai quando puder.
+- **Cancelamento**: a esquiva corta qualquer golpe, janela de recuperação e `move_hold` (`ComboRunner.can_cancel` sempre verdadeiro; o Brado, Ômegas e cargas também; desde o SW-C1 o giro também, ver abaixo). Aperto sem carga ou durante estágio, rolagem/gesto fica guardado `Player.DODGE_BUFFER` (0,15 s) e sai quando puder.
 - **Leitura**: o HUD já mostra as cargas e a recarga (`Hud._dash_wait`, lê `hero.dodge_recharge`); nada novo.
+
+
+## Plano SWORN, fase 1 (SW-C1, C2, C3, C6; 2026-11-25; `tests/test_sworn_c.gd`, `docs/design/combat_cadence.md` 13)
+- **Cancelamento em dado (SW-C1)**: `ComboNode.cancel_dodge_from` (0: a esquiva corta desde o quadro 0, inclusive o giro, que antes segurava a preparação, G-2/CF2-08 desfeito), `cancel_special_from` (0: especial D, Brado Q e Investida E cortam a preparação e a recuperação de qualquer golpe; golpe cortado antes do impacto não acerta; nunca corta a si mesmo nem corta com o recarregar em curso) e `cancel_light_from` (-1: o próximo leve sai quando a recuperação acaba, como antes; um número antes disso adianta a corrente). Tempos em segundos desde o aperto, no ritmo do golpe (`ComboRunner._since`, `_cancel_into`). `can_cancel()` lê o dado.
+- **Giro vale o dobro e é o único que empurra (SW-C2)**: 15/15/30; empurrão 0,7 nos golpes 1 e 2 (cerca de 0,1 m, `COMBO_PUSH`), o giro mantém 16.
+- **Pausa no impacto por tipo (SW-C3)**: golpe do ataque (tag `light`, fora Ômega e Investida) para o mundo por `Combat.PAUSE_*`: 120 ms em 1 corpo, 90 em 2, 60 em 3 ou mais; o giro 160, 110 e 60. 20 ms ficam em velocidade cheia e o resto a `hit_slow_scale` (6%); morte soma 40 ms. Os outros golpes (Brado, Investida, Ômegas) seguem com `hit_stop_ms`.
+- **Esquiva (SW-C6)**: 0,2 s, 5,6 m (SWORN 2,5 m), protegido o trajeto inteiro, 1 carga, recarga 0,8 s: igual ou melhor, nada mudou.
 
 
 ## C1e, lote A: Gritador, Coveiro e modificadores (`docs/design/inimigos_c1e.md`; testes em `tests/test_c1e_a.gd`)
