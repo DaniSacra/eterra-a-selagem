@@ -14,7 +14,8 @@ extends RefCounted
 ## - east: a standing stone with a fire bowl, and a flight of stairs going down out of the hall (a way on), a fire
 ##   bowl on a pier north of it;
 ## - the engraved medallion, a little west of the middle.
-## Meters, x east, z south, from the middle of the room. Doors: 0 the portal, 1 the east stairs, 2 the south stairs.
+## Meters, x east, z south, from the middle of the room. Doors: 0 the portal, 1 the east stairs, 2 the south stairs; the first two stand together in the north-east
+## corner (PT-6b: the choice needs no walking from one door to the other).
 
 ## Half the room (the fight happens inside it, less the Arena margin).
 const HALF := Vector2(16.0, 15.0)
@@ -22,14 +23,15 @@ const MEDALLION_AT := Vector2(-2.5, 1.0)
 const MEDALLION := 7.5
 ## The dais: its height; the flight of steps up to it (x range on the north edge), its steps and their run.
 const DAIS_Y := 1.0
-const FLIGHT := Vector2(-3.8, 5.6)
 const DAIS_STEPS := 4
 const STEP_RUN := 0.6
 ## The facade: its x range, its front (z), its height; the portal's middle (x) and opening.
 const FACADE_X := Vector2(-6.5, 20.0)
 const FACADE_Z := -20.0
 const FACADE_HEIGHT := 10.5
-const PORTAL_X := 2.8
+const PORTAL_X := 10.5
+## The flight of steps up to the portal: x range on the north edge (centred on the portal).
+const FLIGHT := Vector2(PORTAL_X - 6.6, PORTAL_X + 2.8)
 const PORTAL_SIZE := Vector2(3.4, 4.4)
 ## How deep in the doorway the sheet of light hangs, behind the facade's front.
 const PORTAL_DEPTH := 2.2
@@ -41,7 +43,7 @@ const WAY_IN := Vector2(-13.6, -9.6)
 const SOUTH_STONE := Vector2(-2.6, 15.3)
 ## The east standing stone, and the stairs down north of it (door 1: z range of the gap).
 const EAST_STONE := Vector2(16.3, 2.1)
-const EAST_GAP := Vector2(-5.8, 0.6)
+const EAST_GAP := Vector2(-13.6, -10.0)
 ## The south stairs down (door 2, only with three doors): x range of the gap.
 const SOUTH_GAP := Vector2(6.4, 10.8)
 ## The north-west pier (fire bowl, statue) and the giant's pier and tower out to the west.
@@ -184,7 +186,7 @@ const FACADE_FILL := Color(0.55, 0.74, 0.82)
 const FACADE_FILL_ENERGY := 3.0
 const FACADE_FILL_FROM := Vector3(-7.0, 16.0, 11.0)
 ## Where along the facade it aims (m east of the portal) and its cone (degrees): the whole facade east of the portal.
-const FACADE_FILL_AIM := 8.0
+const FACADE_FILL_AIM := 2.0
 const FACADE_FILL_CONE := 70.0
 ## The facade's relief: a plinth along its foot (height, how far out), two cornices (heights over the dais, height,
 ## how far out), blind pointed niches between the buttresses (width, height, how far over the dais; their dark back),
@@ -197,11 +199,11 @@ const NICHE_DARK := 0.3
 const HIGH_WINDOW := Vector3(1.2, 2.6, 4.6)
 const MULLION := 0.1
 ## The buttresses along the facade (x), and the bays between them that take a niche and a window (x).
-const BUTTRESSES: Array[float] = [-5.9, -3.6, 7.5, 12.6, 19.0]
-const BAYS: Array[float] = [10.05, 15.8]
+const BUTTRESSES: Array[float] = [-5.9, -3.6, 0.8, PORTAL_X - 4.7, PORTAL_X + 4.7, 19.0]
+const BAYS: Array[float] = [-1.4, 3.3, 17.1]
 ## The banners on the buttresses (plain: no emblem until Daniel names Eterra's): x, height of the bar over the dais,
 ## width, length; how far in front of the facade's face they hang.
-const BANNERS: Array[Vector4] = [Vector4(-5.9, 5.9, 2.1, 4.6), Vector4(12.9, 6.8, 2.6, 5.8)]
+const BANNERS: Array[Vector4] = [Vector4(-5.9, 5.9, 2.1, 4.6), Vector4(PORTAL_X + 5.0, 6.8, 2.6, 5.8)]
 const BANNER_OUT := 1.5
 ## The key light over the hall (the picture's middle of the room is a greyed mauve, its edges dark teal).
 const KEY_LIGHT := Color(0.92, 0.8, 0.78)
@@ -575,7 +577,7 @@ const FOUNTAIN_POOL_SPENT := 0.3
 ## the walkable floor), and on the lower step of the portal statues' plinths (in front, toward the steps).
 const URNS: Array[Vector4] = [Vector4(-15.3, -12.2, 0.28, 0.0), Vector4(-15.35, -11.5, 0.22, 0.0),
 	Vector4(-15.3, 0.95, 0.28, 0.0), Vector4(-15.35, 1.75, 0.22, 0.0),
-	Vector4(-1.51, -17.58, 0.48, DAIS_Y + 0.3), Vector4(7.31, -17.58, 0.48, DAIS_Y + 0.3)]
+	Vector4(PORTAL_X - 4.31, -17.58, 0.48, DAIS_Y + 0.3), Vector4(PORTAL_X + 4.51, -17.58, 0.48, DAIS_Y + 0.3)]
 
 var arena: Arena
 var kit: ArenaKit
@@ -1072,8 +1074,8 @@ func _dais_props() -> void:
 	for px: float in [PORTAL_X - 2.6, PORTAL_X + 2.9]:
 		m.block(Vector3(px, DAIS_Y, steps_z - 0.45), Vector3(0.8, 0.9, 0.8))
 		_candles(Vector3(px, DAIS_Y + 0.9, steps_z - 0.45), 2, false)
-	# pots, crates and candles at the east foot of the steps
-	var foot := Vector3(FLIGHT.y + 1.6, 0, -HALF.y + 1.0)
+	# pots, crates and candles at the west foot of the steps
+	var foot := Vector3(FLIGHT.x - 1.6, 0, -HALF.y + 1.0)
 	kit.crate(foot, 0.3, Vector3.ONE * 0.9)
 	kit.crate(foot + Vector3(0.1, 0.75, 0), 0.1, Vector3.ONE * 0.7)
 	kit.crate(foot + Vector3(1.1, 0, 0.2), -0.2, Vector3.ONE * 0.8)
@@ -1393,9 +1395,9 @@ func _east(stairs_down: bool) -> void:
 	var pier := Vector2(HALF.x + 1.0, EAST_GAP.x - 1.2)
 	m.block(Vector3(pier.x, -DEPTH, pier.y), Vector3(2.0, DEPTH + 0.5, 2.0))
 	kit.brazier(pier, 0.5, false)
-	m.balustrade(Vector3(x, 0, EAST_GAP.x - 2.4), Vector3(x, 0, -HALF.y))
-	m.pot(Vector3(x - 0.9, 0, -11.0), 0.9)
-	_candles(Vector3(x - 0.9, 0, -12.6), 3, false, false, true)
+	m.balustrade(Vector3(x, 0, EAST_GAP.x), Vector3(x, 0, -HALF.y))
+	m.pot(Vector3(x - 0.9, 0, -7.4), 0.9)
+	_candles(Vector3(x - 0.9, 0, -8.6), 3, false, false, true)
 
 
 ## A flight of stairs going down out of the hall from its edge at `edge`, along `out`, `width` wide, with posts at its
@@ -1734,7 +1736,7 @@ func _doors(count: int) -> void:
 	var a := arena
 	var inner := HALF - Vector2(1.2, 1.2)
 	var mid := (FLIGHT.x + FLIGHT.y) * 0.5
-	var spots: Array[Vector2] = [Vector2(mid, -inner.y + 0.6), Vector2(inner.x - 0.6, (EAST_GAP.x + EAST_GAP.y) * 0.5),
+	var spots: Array[Vector2] = [Vector2(PORTAL_X, -inner.y + 0.6), Vector2(inner.x - 0.6, (EAST_GAP.x + EAST_GAP.y) * 0.5),
 		Vector2((SOUTH_GAP.x + SOUTH_GAP.y) * 0.5, inner.y - 0.6)]
 	var inward: Array[Vector2] = [Vector2(0, 1), Vector2(-1, 0), Vector2(0, -1)]
 	var zones: Array[Rect2] = [Rect2(FLIGHT.x + 0.6, -HALF.y - 2.0, FLIGHT.y - FLIGHT.x - 1.2, 4.4),
