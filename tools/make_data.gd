@@ -1325,7 +1325,7 @@ func _plant() -> HazardDef:
 ## wall (the east one clear of the north door's mouth): a low block of the wall, 0.5 x 0.6 m, 1.2 m high, stopping bodies
 ## and shots (the environment artist's slit with the chevron cut on its top replaces the placeholder block).
 const SLIT_WEST := -5.3
-const SLIT_EAST := 1.55
+const SLIT_EAST := -9.4  # PT-6b (2026-11-25): the door pair now stands east of the dividing wall, so both slits shoot from its west side
 
 
 func _slit(x: float) -> ArenaObstacle:
@@ -2789,7 +2789,7 @@ func _runes() -> RoomLayout:
 	l.banned_roles = [&"area"]
 	l.guardian = false
 	# the north door's fire bowls, 0.9 m out of the floor (drawn, never blocking)
-	var bowls: Array[ArenaObstacle] = [_bowl(3.8, -12.9), _bowl(8.2, -12.9)]
+	var bowls: Array[ArenaObstacle] = [_bowl(-9.1, -12.9), _bowl(-6.0, -12.9)]
 	var a: Array[ArenaObstacle] = []
 	for p: Vector2 in [Vector2(-6, -6), Vector2(6, -6), Vector2(-6, 6), Vector2(6, 6)]:
 		a.append(_piece(p.x, p.y, 1.2, 1.2, 4.0, &"rune_pillar", true))

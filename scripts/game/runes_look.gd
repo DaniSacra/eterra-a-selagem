@@ -23,7 +23,7 @@ const WALL_HEIGHT := 7.0
 const STELE := Vector3(1.2, 5.0, 0.4)
 ## The stele's cap: two stepped courses this tall.
 const STELE_CAP := 0.22
-const STELAE: Array[float] = [-8.5, -1.0, 11.0]
+const STELAE: Array[float] = [-10.6, -7.6, -1.6]
 const LEDGE := Vector2(1.0, 0.25)
 const MARK_ROWS := 9
 const MARK_STROKES := 4
@@ -156,8 +156,8 @@ const STY_SEED := 3917
 ## R5 (B): the crystal against the north wall's foot, off the floor, before the quiet stone's axis: its middle (x),
 ## how many prisms, their height and radius ranges, how far they lean back and aside (degrees), its colour (albedo
 ## share, the edge's glow peak: the brightest channel twice that, under 0.8).
-const CRYSTAL_X := 1.5
-const CRYSTAL_SPREAD := 1.1
+const CRYSTAL_X := -4.5
+const CRYSTAL_SPREAD := 0.9
 const CRYSTALS := 6
 const CRYSTAL_HEIGHT := Vector2(1.2, 3.0)
 const CRYSTAL_RADIUS := Vector2(0.12, 0.28)
