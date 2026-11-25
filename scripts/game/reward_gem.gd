@@ -143,7 +143,9 @@ static func make(parent: Node3D, reward: RunMap.Reward, kind: RunMap.Kind, color
 	# set back along the view past the swaying disc: through it, it veiled the half of the face behind its plane
 	var pitch := deg_to_rad(Feel.live().cam_pitch)
 	halo.position = held + Vector3(0, lift, 0) - Vector3(0, sin(pitch), cos(pitch)) * RADIUS * HALO_BACK * s
-	halo.scale = Vector3(s, s, s)
+	# (over a door the halo stays inside the spacing of two doors: the Provação's are 4.2 m apart)
+	var halo_k := s * (DOOR_HALO if s > 1.0 else 1.0)
+	halo.scale = Vector3(halo_k, halo_k, halo_k)
 	halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	halo.sorting_offset = -1.0
 	frame.add_child(halo)
@@ -189,6 +191,8 @@ static func make(parent: Node3D, reward: RunMap.Reward, kind: RunMap.Kind, color
 ## cheek off the floor. The rod meets the disc on its turning axis, so the swaying disc stays on it. Nothing collides.
 ## PT-2: the disc on a door is DOOR_SCALE of its size (the arch's tympanum is 4 m wide).
 const DOOR_SCALE := 1.4
+## The share of its size a door's halo keeps (HALO * DOOR_SCALE * this stays under the 4.2 m of the closest doors).
+const DOOR_HALO := 0.85
 const DOOR_ROD := 0.04
 const DOOR_ARCH_TOP := 4.9
 const DOOR_ARCH_BACK := 0.5

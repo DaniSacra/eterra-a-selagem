@@ -272,3 +272,16 @@ func test_slab_not_offered_below_the_life_share() -> void:
 	assert_true(Trials.healthy(stage, 30.0, 30.0))
 	assert_ne(T.t(&"trial_slab_risk"), "trial_slab_risk", "the card warns of the risk")
 	assert_false(T.t(&"trial_slab_risk").contains("—"), "no em-dash")
+
+
+## SW-C9 leftovers: arriving in the Provação or the Altar names the room once (the kind and the arena are called alike).
+func test_the_room_is_named_once_on_arrival() -> void:
+	for kind in [RunMap.Kind.TRIAL, RunMap.Kind.ALTAR]:
+		var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
+		add_child_autofree(game)
+		game.rooms.start_at(kind)
+		await wait_process_frames(30)
+		var name_text := T.t(RunMap.KIND_KEY[kind])
+		var notice: Label = game.hud._notice
+		assert_eq(game.hud.place_shown(), name_text, "%s: the place shows the name" % name_text)
+		assert_false(game.hud._notice_t > 0.0 and notice.text == name_text, "%s: and the notice does not repeat it" % name_text)

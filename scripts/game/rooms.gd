@@ -494,10 +494,14 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 		await wait.call()
 		if not is_inside_tree():
 			return
-	game.hud.show_notice(T.t(RunMap.KIND_KEY[room.kind]) if room.kind != RunMap.Kind.COMBAT else T.t(&"notice_room", {"n": room.depth}), 2.0)
-	if room.kind != RunMap.Kind.BOSS and game.arena.name_key != &"":
+	var notice := T.t(RunMap.KIND_KEY[room.kind]) if room.kind != RunMap.Kind.COMBAT else T.t(&"notice_room", {"n": room.depth})
+	var place := T.t(game.arena.name_key) if room.kind != RunMap.Kind.BOSS and game.arena.name_key != &"" else ""
+	# the room's name once: the Provação and the Altar are named alike by their kind and by their arena
+	if notice != place:
+		game.hud.show_notice(notice, 2.0)
+	if place != "":
 		# the arena's name for 2 s (decision D-33)
-		game.hud.show_place(T.t(game.arena.name_key))
+		game.hud.show_place(place)
 	game.snap_camera()
 	_fade_in()
 

@@ -36,7 +36,12 @@ func _draw() -> void:
 			draw_polyline(pts, DoorGlyph.PSALM_LIGHT, maxf(1.2, w), true)
 			draw_line(c + Vector2(-h * 0.12, -h * 0.18), c + Vector2(h * 0.1, h * 0.2), IVORY, maxf(1.0, w * 0.8), true)
 		&"angel":
-			AngelSeal.mark(self, family, c, r * AngelSeal.MARK, maxf(1.2, w * 0.9), AngelSeal.tint(family), IVORY)
+			if family == Boon.Family.DUO:
+				# a meeting of two angels has no mark of its own (the blank black dot): two rings side by side
+				for side: float in [-1.0, 1.0]:
+					draw_arc(c + Vector2(side * r * 0.3, 0.0), r * 0.38, 0.0, TAU, 24, IVORY, maxf(1.2, w * 1.1), true)
+			else:
+				AngelSeal.mark(self, family, c, r * AngelSeal.MARK, maxf(1.2, w * 0.9), AngelSeal.tint(family), IVORY)
 		&"find":
 			var g := r * 0.5
 			draw_colored_polygon(PackedVector2Array([c + Vector2(0, -g), c + Vector2(g * 0.8, 0), c + Vector2(0, g), c + Vector2(-g * 0.8, 0)]), DoorGlyph.EMERALD_FILL)
