@@ -1,6 +1,6 @@
 # Backlog de A Selagem
 
-## PT-25, teste do Daniel no exe c233881b (2026-11-25 noite)
+## PT-25, teste do Daniel no exe c233881b (2026-11-25 noite) — SÓ BACKLOG, não desenvolver até o Daniel mandar
 - **PT-25-1 (bug):** Sarael ofereceu só 1 Bênção na sala 3. Achar por que a tela veio com 1 carta e garantir 3, ou 2 com aviso quando o anjo não tem mais.
 - **PT-25-2:** música do Santuário. Conferir se `thatched_villagers` toca no Santuário (MUS-2). Daniel quer uma peça nova: separar 3 candidatas de licença livre para ele escolher (como `ASelagem-musicas-escolher`).
 - **PT-25-3:** a Videira compra como os Dons: segurar o botão compra e já aloca, sem voltar atrás.
