@@ -101,6 +101,14 @@ Donos: `art-director` (figuras), `ui-ux-designer` (telas), `gameplay-engineer` (
 - **SW-M2 Dica do nó**: custo e quanto se tem; valor agora e o próximo ("+3 → +4"); "abra o anterior primeiro".
 - **SW-M3 HUD dos recursos** no canto superior direito, em todas as telas de meta, cada recurso com seu ícone.
 
+**Fases 3, 4 e 5 feitas em 2026-11-25** (exes `5590c5d`, `1bd5542e`, `40153659`), depois o Cavaleiro no molde do Butcher (sem o
+pulo) e recuperações mais curtas (`87ec1067`), e o pente fino de 4 agentes (`ART_REVIEW_2026-11-25_sweep.md`,
+`docs/qa/UI_REVIEW_2026-11-25_sweep.md`; exe `870e3c80`, suíte 2426/2426). Ficou do pente fino: linha de objetivo no Santuário
+(P1-1, decidir se liga ou apaga as chaves), números de dano empilhados (`fx.gd`), torres de ruína chapadas da ponte
+(`bridge_look`, `RUIN_HAZE`), aviso da pedra que cai (`DropFloor`) chapado demais, xadrez claro das Runas, modelos do
+Cavaleiro e do Ancião (Meshy, com autorização). Textos "a aprovar pelo Daniel": fala da chegada, frases de objetivo, dicas,
+O Leão / O Cálice / A Espada, legendas do fim curto; pergunta de cânone D-O8.
+
 ### Continua aberto da rodada 2026-11-25 (abaixo)
 M-1 sonda e matriz de cadência (entra na fase 1), M-2 leitura dos inimigos (entra no SW-C4), (B) armadura no Meshy, raiz e planta puxando a horda, retrato do HUD,
 e o (C) inteiro. S-6 e S-7 viraram SW-R3 e SW-R2.
