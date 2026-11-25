@@ -57,7 +57,16 @@ depois vão para `docs/gallery/`.
   piso úmido); duas portas para cima separadas por alvenaria; fonte quebrada com queda d'água e poça andável no canto
   nordeste; miolo livre e passagens de pelo menos 2,4 m; manter os perigos da Cripta (placas, urnas de óleo, espinhos,
   frestas) e as variantes A e B. Começa só depois que o Daniel testar a SL-01 no exe e aprovar (pedido dele, 2026-11-25; reusa o padrão de portas dela).
-- **SV-R, Santuário da Vigília TOTALMENTE REFEITO** (Daniel, 2026-11-25). O hub inteiro será refeito do zero: planta, cenário, estações e caminhos. Hoje é o `HubPlan`/`HubLook`, ver `docs/reference/hub.md`. Esperar o pacote do Daniel no modelo da sala (pintura, planta com medidas, essencial x clima, paleta e luz, estações e NPCs). Até lá, nenhuma melhoria no Santuário atual.
+- **SV-R, Santuário da Vigília TOTALMENTE REFEITO** (Daniel, 2026-11-25). O hub inteiro será refeito do zero: planta, cenário, estações e caminhos. Hoje é o `HubPlan`/`HubLook`, ver `docs/reference/hub.md`. **Pacote recebido** em `docs/art/ref/hub01_2026-11-25/eterra_hub/` (local; o `PROMPT-CLAUDE-CODE.md` manda).
+  - **Desenho:** mosteiro-jardim assimétrico em patamares, maior que o atual (50 x 32,5 m), sem praça circular. Tem cascatas, uma ponte sólida e jardins.
+  - **Fluxo:** Ponto de Vigília (renascimento, num canto), depois a Videira (pérgola própria, perto e no mesmo nível), depois o eixo principal até o Portão da Aventura, sempre acessível.
+  - **Estações ao longo do caminho:** Capela dos Dons (`tree`), Aposento dos Heróis (`heroes`, um só, com o seletor dos 4), Forja, Biblioteca de Akh, Mercador e Alquimista (fechado pela flag).
+  - **Áreas futuras:** duas, só com porta fechada.
+  - **Portas e regras:** estações fechadas têm portas físicas, e o `HubGate` manda. A ordem dos `Milestones` não muda. Rotas de 4 a 5 m.
+  - **Paleta:** calcário `#D3C5A7`, luz `#F4DBAB`, sol de noroeste. Leão e peixe só discretos, na arquitetura aliada.
+  - **Etapas:** captura de antes, blockout do JSON, conectividade com testes, acabamento, reposicionar USE, ANCHOR e ARRIVAL, luz, capturas por estação.
+  - Zero Meshy sem aprovação.
+  - Lote grande: `environment-artist` no cenário e `gameplay-engineer` no `HubPlan`, na colisão e na conectividade.
 - **SL-03 em diante:** as outras 13 salas, na ordem que o Daniel mandar os pacotes. Depois da SL-01 aprovada, o padrão de
   portas da SL-01 vira a regra das salas novas.
 
