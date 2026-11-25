@@ -35,7 +35,9 @@ uniform vec3 style_back : source_color = vec3(0.07, 0.45, 0.2);
 uniform vec3 style_face : source_color = vec3(0.16, 0.75, 0.3);
 uniform vec3 style_key = vec3(-0.45, 0.75, 0.5);
 uniform float style_split = 0.12;
-uniform float style_cap = 0.6; // STY-09: 0.98 still clipped to white on the screen (exposure 1.25)
+uniform float style_cap = 0.72; // AD2-03: 0.6 before (the blade was lost over the cape); the swing's pulse lifts it to style_cap_swing.
+uniform float style_cap_swing = 0.9;
+// STY-09: 0.98 still clipped to white on the screen (exposure 1.25)
 // STY-09: under the stylized key (1.6, the classic moon is 0.35) the crystal's own lit albedo clipped to white on the
 // screen: the blade takes only this share of it there (its colour is the two painted bands of the emission).
 uniform float style_lit = 0.25;
@@ -144,6 +146,7 @@ void fragment() {
 		// HB3 (2026-11-20): capped by its brightest channel, the hue kept (a cap per channel clipped only the green and
 		// greyed the crystal: 0.6% of green round the paladin on the GPU, 1% asked)
 		float peak = max(EMISSION.r, max(EMISSION.g, EMISSION.b));
-		EMISSION *= min(1.0, style_cap / max(peak, 0.0001));
+		float cap = mix(style_cap, style_cap_swing, clamp(pulse / 0.6, 0.0, 1.0));
+		EMISSION *= min(1.0, cap / max(peak, 0.0001));
 	}
 }

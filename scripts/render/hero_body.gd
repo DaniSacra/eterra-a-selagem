@@ -25,7 +25,9 @@ const MODEL_HEIGHT := 1.8
 const GAME_HEIGHT := 2.5
 const HEIGHT := 2.75
 ## The sword at this many times the Knight's own sword at GAME_HEIGHT; it grows with the model.
+## AD2-03 (art review 2026-11-25: the blade was lost on the screen): Emeth (not the staff) 15% larger in the hand, the grip at his fist.
 const SWORD_SCALE := 1.0
+const EMETH_SCALE := 1.15
 ## Eterra Stylized (STY-06; docs/art/stylized_spec.md 2.3): his shader in that look and its outline pass.
 const PAINT := preload("res://assets/shaders/hero_paint.gdshader")
 const PAINT_OUTLINE := preload("res://assets/shaders/hero_outline.gdshader")
@@ -80,7 +82,7 @@ static func _arm(model: Node3D, clips: AnimationLibrary, held: StringName = &"sw
 	var space := Retarget._space(skeleton, model)
 	var unit := space.get_scale().x
 	var blade: Vector3 = clips.get_meta(&"grip_dir", Vector3.UP)
-	var size := SWORD_SCALE * MODEL_HEIGHT / GAME_HEIGHT / unit
+	var size := SWORD_SCALE * (1.0 if held == &"staff" else EMETH_SCALE) * MODEL_HEIGHT / GAME_HEIGHT / unit
 	sword.transform = Transform3D(Basis(Quaternion(Vector3.UP, blade)).scaled(Vector3.ONE * size), clips.get_meta(&"grip_at", Vector3.ZERO))
 	return sword
 

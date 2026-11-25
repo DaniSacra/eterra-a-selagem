@@ -28,6 +28,13 @@ uniform float saturation = 1.8;
 // his lightest edge (value 0.28 and rim 0.7 with it). 1: off.
 uniform float top = 0.3;
 uniform float flat_lod = 3.0;
+// AD2-01 (art review 2026-11-25: the cape read 131; 158; 143, the room-5 floor 153; 148; 158): the painting's green zone
+// (the cape; where green is above red and blue) is put on the petrol 3e9094, a body of cape_value of it (the painting's
+// own luma keeps the folds), under the floor's light; his warm rim is cape_rim of itself there, so the cape is the dark
+// shape and the rim the fine line that separates it.
+uniform vec3 cape_color : source_color = vec3(0.2, 0.55, 0.64);
+uniform float cape_value = 0.42;
+uniform float cape_rim = 0.55;
 uniform vec3 rim_color : source_color = vec3(1.0, 0.82, 0.62);
 uniform float rim_power = 3.2;
 uniform float rim = 0.7;
@@ -46,16 +53,19 @@ uniform float gamma = 1.0;
 void fragment() {
 	vec3 raw = texture(albedo, UV).rgb;
 	vec3 c = figure_flatten(raw, textureLod(albedo, UV, flat_lod).rgb, flatten);
+	float cape = smoothstep(0.015, 0.06, c.g - c.r) * (1.0 - smoothstep(0.0, 0.04, c.b - c.g - 0.02));
+	float paint_luma = dot(c, vec3(0.2126, 0.7152, 0.0722));
 	float grey = dot(c, vec3(0.2126, 0.7152, 0.0722));
 	c = max(mix(vec3(grey), c, saturation), vec3(0.0));
 	c *= min(1.0, top / max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 0.0001));
 	c *= tint.rgb * value;
+	c = mix(c, cape_color * clamp(paint_luma / 0.12, 0.6, 1.3) * cape_value * tint.rgb, cape);
 	ALBEDO = c;
 	ROUGHNESS = roughness;
 	METALLIC = metallic;
 	SPECULAR = specular;
 	float side = mix(rim_dark, 1.0, smoothstep(-0.2, 0.5, dot(NORMAL, normalize(rim_dir))));
-	EMISSION = c * fill + rim_color * figure_rim(NORMAL, VIEW, rim_power) * rim * side;
+	EMISSION = c * fill + rim_color * figure_rim(NORMAL, VIEW, rim_power) * rim * side * mix(1.0, cape_rim, cape);
 	if (gamma != 1.0) {
 		ALBEDO = figure_gamma(ALBEDO, gamma);
 		EMISSION = figure_gamma(EMISSION, gamma);

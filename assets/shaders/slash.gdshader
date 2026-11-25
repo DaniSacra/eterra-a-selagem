@@ -62,6 +62,11 @@ uniform float style_edge_cap = 0.38;
 uniform float style_edge_pale = 0.3;
 uniform float style_core_sat = 0.65;
 uniform float style_peak = 0.6;
+// AD2-02 (art review 2026-11-25: a weak cut): the paladin's own arcs (Fx.slash with a blade) ask more of the stylized
+// look: style_core_light 0.35 (it was 0.216), a deeper core, and a fine edge of the blow's hue over the cap at
+// style_wire_glow (1.5; 0: off) on the wire only, never on the body of the arc (nothing past style_wire_cap).
+uniform float style_wire_glow = 0.0;
+uniform float style_wire_cap = 1.3;
 
 #include "res://assets/shaders/slash_strokes.gdshaderinc"
 
@@ -174,5 +179,12 @@ void fragment() {
 		}
 		ALBEDO = lit;
 		ALPHA = clamp(peak / max(style_peak, 0.0001), 0.0, 1.0);
+		if (style_wire_glow > 0.0) {
+			vec3 hue = color.rgb / max(max(color.r, color.g), max(color.b, 0.001));
+			vec3 fio = mix(hue, vec3(1.0), 0.15) * wire * (0.55 + 0.45 * glow) * life * style_wire_glow;
+			ALBEDO += fio;
+			float most = max(ALBEDO.r, max(ALBEDO.g, ALBEDO.b));
+			ALBEDO *= min(1.0, style_wire_cap / max(most, 0.0001));
+		}
 	}
 }

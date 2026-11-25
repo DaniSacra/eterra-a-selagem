@@ -279,8 +279,9 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		ComboNode.Shape.CIRCLE:
 			horde.in_circle(origin, reach, _hits)
 			if shout:
-				fx.ring(origin, reach, color, 0.4, 0.15, true)
-				fx.ring(origin, reach * 0.6, color, 0.28, 0.2)
+				# AD2-05: two lit rings at the real reach, the second 0.08 s behind it (the shock adds its own pair)
+				fx.ring(origin, reach, color, 0.4, 0.15, true, true)
+				fx.ring_later(origin, reach, color, 0.08)
 				fx.shock(origin, reach * 0.8, color, 0.7)
 			elif not finisher:
 				# (a finisher's crescent is the ring flying out: one circle, not rings inside rings)
@@ -308,7 +309,8 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			continue
 		if stars < MAX_STARS and not shout:
 			stars += 1
-			_draw_hit(e, cut_axis(node.shape, origin, e.pos, away, flip), away, color, heavy or node.has_tag(&"omega"), finisher)
+			var level := 2 if heavy or finisher or node.has_tag(&"omega") else 1 if node.id == &"cut2" else 0
+			_draw_hit(e, cut_axis(node.shape, origin, e.pos, away, flip), away, color, heavy or node.has_tag(&"omega"), finisher, level)
 		# (the cry only pushes: not even the stun of a plain blow comes with it)
 		_no_stun = shout
 		_strike_node = node if node.tags.has(&"light") and not shout else null
@@ -488,13 +490,14 @@ func _draw_swing(node: ComboNode, shape: Dictionary, origin: Vector2, dir: Vecto
 ## What one enemy shows when a blow lands on it: the cut along the way the blade was moving and the chips flying
 ## away from the paladin. Only called from the loop of those really hit. heavy: a heavy or held blow (a second streak
 ## across the cut).
-func _draw_hit(e: Enemy, axis: Vector2, away: Vector2, color: Color, heavy: bool, finisher: bool) -> void:
-	var at := Vector3(e.pos.x, 1.0 + e.y, e.pos.y) - Vector3(away.x, 0, away.y) * 0.3
+func _draw_hit(e: Enemy, axis: Vector2, away: Vector2, color: Color, heavy: bool, finisher: bool, level: int = 0) -> void:
+	# (the chest of the one struck, 0.15 m toward the blade: AD2-06, CF2-07)
+	var at := Vector3(e.pos.x, 1.0 + e.y, e.pos.y) - Vector3(away.x, 0, away.y) * 0.15
 	var lean := tan(_look.randf_range(-GASH_LEAN, GASH_LEAN))
 	var length := GASH_HEAVY if heavy else GASH.y if finisher else _look.randf_range(GASH.x, GASH.y)
 	fx.gash(at, Vector3(axis.x, lean, axis.y), color, length, heavy, GASH_TIME.y if heavy or finisher else GASH_TIME.x)
 	# the snap at the contact (vfx_pass_spec.md V-05)
-	fx.contact(at, Vector3(axis.x, 0.0, axis.y), color, heavy or finisher)
+	fx.contact(at, Vector3(axis.x, 0.0, axis.y), color, heavy or finisher, level)
 	# and the family's own form over it (vfx_pass_spec.md 5.3)
 	fx.family_hit(Fx.family_of(color), at, Vector3(axis.x, 0.0, axis.y), color, heavy or finisher)
 	fx.chips(at, Vector3(away.x, 0.35, away.y), CHIP_COLOR, _look.randi_range(GASH_CHIPS.x, GASH_CHIPS.y), CHIP_SPEED, CHIP_SIZE, CHIP_LIFE, 0.7)

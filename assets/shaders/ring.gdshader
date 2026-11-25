@@ -8,6 +8,9 @@ uniform float band = 0.08;
 uniform float intensity = 1.5;
 // How much the inside of the ring is lit (0: a line only).
 uniform float fill = 0.18;
+// AD2-05 (art review 2026-11-25: the shock's ring read dark grey): how far the line itself goes toward ivory (the Fx.shock
+// and the Brado ask for 0.75, a clear line over a clear floor), and a floor under the light of its colour.
+uniform float ivory = 0.4;
 
 void fragment() {
 	float d = length(UV * 2.0 - 1.0);
@@ -15,5 +18,5 @@ void fragment() {
 	float ring = smoothstep(1.0 - band, 1.0 - band * 0.3, d) * (1.0 - smoothstep(0.97, 1.0, d));
 	float inner = smoothstep(0.0, 1.0, d) * fill;
 	float fade = 1.0 - life;
-	ALBEDO = mix(color.rgb, vec3(1.0), ring * 0.4) * (ring + inner) * fade * fade * intensity;
+	ALBEDO = mix(color.rgb, vec3(1.0), ring * ivory) * (ring + inner) * fade * fade * intensity;
 }
