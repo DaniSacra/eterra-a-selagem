@@ -30,8 +30,9 @@ extends RefCounted
 signal changed
 
 ## E5: TRIAL is the Provação's chamber (no door leads there: its slab, Rooms; the depth stays, it is no room of the
-## graph), ALTAR the Altar Esquecido (a room of the graph, no fight).
-enum Kind { COMBAT, MINIBOSS, FOUNTAIN, SHOP, BOSS, TRIAL, ALTAR }
+## graph), ALTAR the Altar Esquecido (a room of the graph, no fight). SW-O3: ANTE is the Antessala of the guided first
+## descent (RunMap.scripted only): the catacomb hall with no fight, its door open from the start, nothing given.
+enum Kind { COMBAT, MINIBOSS, FOUNTAIN, SHOP, BOSS, TRIAL, ALTAR, ANTE }
 ## What a room gives when it is cleared (or what the shop sells).
 ## BOON: a gift (three to choose). POM: one more level for a gift already owned. HEART: more life.
 ## MAGICK: more Magia. GOLD: gold for the shop. HEAL: life back (shop only). POM_SLICE: one level more for a gift
@@ -54,7 +55,7 @@ const MATERIAL_REWARDS: Array[Reward] = [Reward.SILVER, Reward.MEMORY]
 const GROUP_OF := {Reward.BOON: Group.POWER, Reward.POM: Group.POWER, Reward.ENCHANT: Group.POWER,
 	Reward.PSALM: Group.POWER, Reward.POM_SLICE: Group.POWER, Reward.HEART: Group.BODY, Reward.MAGICK: Group.BODY,
 	Reward.GOLD: Group.BODY, Reward.HEAL: Group.BODY, Reward.SILVER: Group.HOME, Reward.MEMORY: Group.HOME}
-const KIND_KEY: Array[StringName] = [&"room_combat", &"room_miniboss", &"room_fountain", &"room_shop", &"room_boss", &"room_trial", &"room_altar"]
+const KIND_KEY: Array[StringName] = [&"room_combat", &"room_miniboss", &"room_fountain", &"room_shop", &"room_boss", &"room_trial", &"room_altar", &"room_ante"]
 
 ## The doors of every room (DM-1; every arena has 3, the hall too: CatacombHall._doors), but the one before the shop's
 ## and the shop's own.
@@ -156,6 +157,8 @@ var forced_layout := -1
 var min_curse := 3
 ## A Videira's O Viajante: the layer before each guardian keeps its fountain and a merchant takes the other door.
 var traveler := false
+## SW-O4: the graph of the guided first descent (RunMap.scripted), layer 0 the Antessala.
+var is_scripted := false
 var _rng := RandomNumberGenerator.new()
 ## While drawing: the parents of each id, the most times each arena was fought along any way up to it (arena index:
 ## count), the arenas of the fight right before it (the altar passes them on), and the fewest fights after it.
@@ -169,13 +172,17 @@ var _angel_deck: RewardDeck
 var _angel_rng := RandomNumberGenerator.new()
 
 
-func _init(stage_def: StageDef, seed_value: int, forced := -1, shortest_curse := 3, with_traveler := false) -> void:
+## scripted: no graph is drawn (RunMap.scripted fills the nodes of the guided first descent).
+func _init(stage_def: StageDef, seed_value: int, forced := -1, shortest_curse := 3, with_traveler := false, scripted_ := false) -> void:
 	traveler = with_traveler
 	stage = stage_def
 	map_seed = seed_value
 	forced_layout = forced
 	min_curse = shortest_curse
 	_rng.seed = seed_value
+	is_scripted = scripted_
+	if is_scripted:
+		return
 	for attempt in MAX_TRIES:
 		if _build():
 			return
@@ -204,7 +211,7 @@ func last_depth() -> int:
 
 ## The opening room: the hall's fight, always a Blessing.
 func first() -> Room:
-	return nodes[layers[1][0]]
+	return nodes[0] if is_scripted else nodes[layers[1][0]]
 
 
 ## The rooms behind the doors of the room he stands in (door i = doors()[i]).
@@ -266,6 +273,47 @@ func summary() -> Dictionary:
 			edges.append([r.id, n])
 	return {"seed": map_seed, "nodes": ns, "edges": edges, "path": path.duplicate(), "failures": failures,
 		"pom_turned": pom_turned}
+
+
+# ---------- the guided first descent (SW-O4) ----------
+
+## The graph of the first descent from its data: a room (or the alternatives of a door's choice) for each step of
+## `def`, every room linked to all of the next step (as the long descent's doors are), its fight written by hand. No dice
+## draw it, no rule check runs (`_keeps_rules` is the long descent's): the same data gives the same graph. `arrival` keeps
+## the Antessala alone (--first=arrival: its door leads nowhere).
+static func scripted(stage_def: StageDef, def: FirstDescentDef, seed_value: int, arrival := false) -> RunMap:
+	var m := RunMap.new(stage_def, seed_value, -1, 3, false, true)
+	m.miniboss_depth = FirstDescent._depth_of(def, Kind.MINIBOSS)
+	var last := def.last_layer()
+	for d in range(0, 1 + (0 if arrival else last)):
+		var ids := PackedInt32Array()
+		var slot := 0
+		for fr in def.layer(d):
+			var r := Room.new(fr.kind, fr.reward, d, -1, fr.variant)
+			for i in stage_def.layouts.size():
+				if stage_def.layouts[i].id == fr.layout_id:
+					r.layout = i
+			if r.layout >= 0:
+				r.arena = fr.layout_id
+			r.guardian = fr.guardian
+			r.angel = fr.angel
+			r.id = m.nodes.size()
+			r.slot = slot
+			r.fight_seed = hash([seed_value, r.id])
+			if fr.kind == Kind.COMBAT or fr.kind == Kind.MINIBOSS:
+				r.fight = FirstDescent.fight_of(fr, stage_def)
+			slot += 1
+			m.nodes.append(r)
+			ids.append(r.id)
+		m.layers.append(ids)
+	for d in range(0, m.layers.size() - 1):
+		for from in m.layers[d]:
+			for to in m.layers[d + 1]:
+				m.nodes[from].next.append(to)
+	m.miniboss2_depth = 0
+	m._fights_min.resize(m.nodes.size())
+	m._fights_min.fill(0)
+	return m
 
 
 # ---------- walking ----------

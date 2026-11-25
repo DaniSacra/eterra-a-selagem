@@ -83,7 +83,8 @@ static func award(g: Game, gained: Dictionary, outcome: String, data: Dictionary
 	for p in g.psalms.taken:
 		SaveData.codex_add(data, "psalms", String(p.id), "taken")
 	codex(g, outcome, data)
-	var guardians := g.rooms.won.count(RunMap.Kind.MINIBOSS) if g.rooms else 0
+	# (SW-O4: the guardian of the guided first descent opens no Forja: `firsts.guardian` counts the long descent's only)
+	var guardians := g.rooms.won.count(RunMap.Kind.MINIBOSS) if g.rooms and not g.first_run else 0
 	if guardians > 0:
 		block.firsts["guardian"] = int(block.firsts.get("guardian", 0)) + guardians
 	if g.arcane != null and int(g.arcane.tally.reactions) > 0:

@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="HubGuideDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/hub_guide_def.gd" id="1_pt7b2"]
+[ext_resource type="Script" path="res://scripts/core/hub_guide_def.gd" id="1_i04hg"]
 
 [resource]
-script = ExtResource("1_pt7b2")
+script = ExtResource("1_i04hg")
 id = &"account"
-order = 6
+order = 7
 station = &"vine"
 text_key = &"guide_account"
 condition = &"account"

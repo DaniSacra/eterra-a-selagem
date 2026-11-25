@@ -18,7 +18,9 @@ extends RefCounted
 ## older file opens with none bought; nothing else changes.
 ## 12 (A Videira, V1, replaced "O Preparo"): vine (bought: ids of the nodes, Vine) in place of account. What a file had
 ## bought of the old tree comes back as the material it paid (Prata or Memória, exact, LEGACY_PREPARO), the old block is left.
-const VERSION := 15
+## 16 (SW-O4, the guided first descent): first (0 pending, 1 played, 2 skipped; FirstDescent). An older file with descents
+## played has it done; one with none is still to play it.
+const VERSION := 16
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
@@ -37,7 +39,7 @@ static func defaults() -> Dictionary:
 		codex[section] = {}
 	return {
 		"version": VERSION,
-		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": true, "scale": 1, "shake": true, "impact_frames": true, "slow_motion": true, "color_split": true, "rumble": true, "quality": 0, "camera": "near", "camera_chosen": false, "bindings": {},
+		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": true, "scale": 1, "shake": true, "impact_frames": true, "slow_motion": true, "color_split": true, "rumble": true, "quality": 0, "camera": "near", "camera_chosen": false, "objective": true, "bindings": {},
 			# DT-RS2: the visual profile (VisualProfile.NAMES); a save from before has none and opens stylized
 			"look": "stylized",
 			# T5 (the PO's review): the piece chosen for each place (MusicCatalog; Music.piece_for falls back to the default)
@@ -48,6 +50,8 @@ static func defaults() -> Dictionary:
 		"moves": [],
 		"wins": 0,
 		"runs": 0,
+		# since version 16: the guided first descent (FirstDescent: 0 pending, 1 played, 2 skipped)
+		"first": 0,
 		"heroes": {FIRST_HERO: hero_defaults()},
 		# M1b: the hero picked at the Portal for the next descents (HEROES); a save from before has none: the Warrior
 		"hero": FIRST_HERO,
@@ -173,6 +177,13 @@ static func merged(loaded: Variant) -> Dictionary:
 		for key: String in ["music_hub", "music_dungeon"]:
 			if String(out.options.get(key, "")) == "blade_march":
 				out.options[key] = String(MusicCatalog.DEFAULT[MusicCatalog.HUB if key == "music_hub" else MusicCatalog.DUNGEON])
+	# files before version 16 (SW-O4): a save that played a descent has done the guided one; a new one still has it ahead
+	if version < 16:
+		out["first"] = FirstDescent.DONE if int(out.runs) > 0 else FirstDescent.PENDING
+		var ms := "res://scripts/core/milestones.gd"
+		if ResourceLoader.exists(ms):
+			(load(ms) as GDScript).call(&"grandfather", out)  # (SW-O5: what is open stays open)
+	out["first"] = clampi(int(out.first), 0, 2)
 	# version 8 (Ofícios): nothing to move, an older file opens with the empty block (defaults)
 	out.version = VERSION
 	return out

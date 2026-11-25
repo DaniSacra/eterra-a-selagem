@@ -1,10 +1,10 @@
 [gd_resource type="Resource" script_class="HubGuideDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/hub_guide_def.gd" id="1_01rhu"]
+[ext_resource type="Script" path="res://scripts/core/hub_guide_def.gd" id="1_qggdw"]
 
 [resource]
-script = ExtResource("1_01rhu")
+script = ExtResource("1_qggdw")
 id = &"vendor"
-order = 5
+order = 6
 station = &"vendor"
 text_key = &"guide_vendor"

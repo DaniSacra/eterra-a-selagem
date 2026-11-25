@@ -29,6 +29,9 @@ static func result(g: Game) -> Dictionary:
 		"tools": g.tools_found.map(func(t: StringName) -> String: return String(t)),
 		"oficios": g.oficios.report() if g.oficios != null else {},
 		"angels": g.encounters.meetings.duplicate(true) if g.encounters else []}
+	if rooms != null and rooms.first_def != null:
+		# the guided first descent only (SW-O4): the Antessala's and the first Blessing's seconds
+		out.merge(rooms.first_report())
 	if g.arcane != null:
 		# the Maga only: the Warrior's RESULT stays as it was
 		out["hero"] = String(g.hero.id)
@@ -54,7 +57,7 @@ static func entry(g: Game, outcome: String, gain: Dictionary) -> Dictionary:
 		"last_hurt": {"attack": String(g.last_hurt.get("attack", &"")), "enemy": String(g.last_hurt.get("enemy", &""))},
 		"defeated_by": String(g.defeated_by()) if outcome == "death" else "", "source": RunLog.source(g.bot != null),
 		"slot": Save.slot, "cause": DefeatCause.key(g.last_hurt) if outcome == "death" else "",
-		"oaths": g.juramentos.to_dict() if g.juramentos else {}, "courage": g.courage_stacks}
+		"oaths": g.juramentos.to_dict() if g.juramentos else {}, "courage": g.courage_stacks, "first": g.first_run}
 	var by := gain.duplicate()
 	by.erase("total")
 	var xp_now := int(SaveData.hero(Save.data, String(g.hero.id)).mastery_xp)

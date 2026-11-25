@@ -1,0 +1,124 @@
+[gd_resource type="Resource" script_class="FirstDescentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/first_room_def.gd" id="1_wtt3j"]
+[ext_resource type="Script" path="res://scripts/core/first_descent_def.gd" id="2_n80uf"]
+
+[sub_resource type="Resource" id="Resource_g2eut"]
+script = ExtResource("1_wtt3j")
+id = &"ante"
+kind = 7
+layout_id = &"hall"
+variant = 1
+objective = &"obj_explore"
+
+[sub_resource type="Resource" id="Resource_b4eqe"]
+script = ExtResource("1_wtt3j")
+id = &"crypt_a"
+layer = 1
+layout_id = &"crypt"
+variant = 1
+waves = Array[PackedStringArray]([PackedStringArray("skeleton"), PackedStringArray("skeleton", "skeleton")])
+reward = 1
+angel = &"sarael"
+cap = 3
+tip = &"first_tip_fight"
+objective = &"obj_win"
+
+[sub_resource type="Resource" id="Resource_7ae5r"]
+script = ExtResource("1_wtt3j")
+id = &"rift_a"
+layer = 2
+layout_id = &"rift"
+waves = Array[PackedStringArray]([PackedStringArray("archer"), PackedStringArray("archer", "archer", "skeleton")])
+reward = 5
+cap = 3
+tip = &"first_tip_archer"
+objective = &"obj_win"
+
+[sub_resource type="Resource" id="Resource_36qfa"]
+script = ExtResource("1_wtt3j")
+id = &"garden_boon"
+layer = 3
+layout_id = &"garden"
+waves = Array[PackedStringArray]([PackedStringArray("bone_rat", "bone_rat", "bone_rat", "bone_rat", "bone_rat"), PackedStringArray("runner", "runner")])
+reward = 1
+angel = &"nivael"
+cap = 5
+tip = &"first_tip_hold"
+objective = &"obj_win"
+
+[sub_resource type="Resource" id="Resource_hdnn7"]
+script = ExtResource("1_wtt3j")
+id = &"garden_pom"
+layer = 3
+layout_id = &"garden"
+waves = Array[PackedStringArray]([PackedStringArray("bone_rat", "bone_rat", "bone_rat", "bone_rat", "bone_rat"), PackedStringArray("runner", "runner")])
+reward = 2
+cap = 5
+tip = &"first_tip_hold"
+objective = &"obj_win"
+
+[sub_resource type="Resource" id="Resource_5tv1r"]
+script = ExtResource("1_wtt3j")
+id = &"fountain"
+layer = 4
+kind = 2
+layout_id = &"hall"
+
+[sub_resource type="Resource" id="Resource_01q8s"]
+script = ExtResource("1_wtt3j")
+id = &"crypt_b"
+layer = 4
+layout_id = &"crypt"
+waves = Array[PackedStringArray]([PackedStringArray("skeleton", "archer", "bone_rat", "bone_rat", "bone_rat"), PackedStringArray("guard", "skeleton", "archer")])
+reward = 1
+hazards = true
+hazard_progress = 0.2
+cap = 5
+tip = &"first_tip_armor"
+objective = &"obj_win"
+
+[sub_resource type="Resource" id="Resource_f14k2"]
+script = ExtResource("1_wtt3j")
+id = &"knight"
+layer = 5
+kind = 1
+layout_id = &"knight_hall"
+waves = Array[PackedStringArray]([PackedStringArray("knight")])
+reward = 1
+guardian = &"knight"
+hp_scale = 0.7
+hazards = true
+hazard_progress = 0.36
+cap = 1
+tip = &"first_tip_knight"
+objective = &"obj_guardian"
+
+[sub_resource type="Resource" id="Resource_vvv21"]
+script = ExtResource("1_wtt3j")
+id = &"sanctuary"
+layer = 6
+layout_id = &"sanctuary"
+waves = Array[PackedStringArray]([PackedStringArray("skeleton", "skeleton", "archer"), PackedStringArray("mage", "runner", "bone_rat", "bone_rat", "bone_rat", "bone_rat")])
+reward = 5
+cap = 5
+objective = &"obj_win"
+
+[sub_resource type="Resource" id="Resource_m0e42"]
+script = ExtResource("1_wtt3j")
+id = &"shop"
+layer = 7
+kind = 3
+layout_id = &"hall"
+objective = &"obj_shop"
+
+[sub_resource type="Resource" id="Resource_sgh1g"]
+script = ExtResource("1_wtt3j")
+id = &"morvath"
+layer = 8
+kind = 4
+objective = &"obj_morvath"
+
+[resource]
+script = ExtResource("2_n80uf")
+rooms = Array[ExtResource("1_wtt3j")]([SubResource("Resource_g2eut"), SubResource("Resource_b4eqe"), SubResource("Resource_7ae5r"), SubResource("Resource_36qfa"), SubResource("Resource_hdnn7"), SubResource("Resource_5tv1r"), SubResource("Resource_01q8s"), SubResource("Resource_f14k2"), SubResource("Resource_vvv21"), SubResource("Resource_m0e42"), SubResource("Resource_sgh1g")])

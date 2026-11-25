@@ -18,7 +18,14 @@ signal trial_taken(card: Trials.Card)
 signal trial_turned(card: Trials.Card)
 signal altar_used(option: StringName)
 
+## SW-O3: the Antessala's slabs were crossed (the hero passed their line) and a vase of the room was broken (the
+## objective's rules read them).
+signal plates_crossed
+signal broke_one
+
 const STAGE := "res://data/stages/catacombs.tres"
+## SW-O1: the arrival's scene (the environment artist's; the guided first descent plays it once, in the Antessala).
+const ARRIVAL_SCENE := "res://scripts/game/arrival_scene.gd"
 ## The descent's graph is drawn on dice of its own (DV-1): the run's seed with this salt (the same --seed, the same map
 ## whatever else the run draws before it).
 const MAP_SALT := 7411
@@ -147,6 +154,21 @@ var _spots: Array[Dictionary] = []
 ## The robot's mind on the slab of this room (decided once when it shows).
 var _bot_trial := false
 var _rng: RandomNumberGenerator
+## SW-O4: the guided first descent (FirstDescent.active at setup): its data, the room's data (FirstRoomDef; null off the
+## guided one) and the numbers its report keeps (seconds of play at the Antessala's door and at the first Blessing; -1: not yet).
+var first_def: FirstDescentDef
+var first_room: FirstRoomDef
+var ante_s := -1.0
+var first_boon_s := -1.0
+## SW-O3, the Antessala: whether the slabs were crossed, a vase broken, and the arrival's scene in play (null: none).
+var ante_crossed := false
+var ante_broke := false
+var _arrival: Node
+var _arrival_t := 0.0
+var _ante_idle := 0.0
+var _ante_last := Vector2.INF
+## The life share the room's enemies are born with (FirstRoomDef.hp_scale; 1.0 off the guided descent).
+var _hp_scale := 1.0
 var _fade: ColorRect
 ## The fade running now (_fade_tween).
 var _fading: Tween
@@ -158,13 +180,17 @@ func setup(g: Game, rng: RandomNumberGenerator) -> void:
 	game = g
 	_rng = rng
 	stage = load(STAGE)
-	if Dev.has("short"):
+	first_def = FirstDescentDef.live() if g.first_run else null
+	if first_def != null:
+		# SW-O4: the guided first descent: its own stage and graph, no Ofício, Juramento nor shorter descent in it
+		stage = FirstDescent.stage_for(stage, first_def)
+	elif Dev.has("short"):
 		stage = short_stage(stage, 4)
 	elif Dev.has("medium"):
 		stage = short_stage(stage, 6)
-	if g.oficios != null and not g.oficios.works.is_empty():
+	if first_def == null and g.oficios != null and not g.oficios.works.is_empty():
 		stage = Vendor.stage_for(stage, Vendor.load_catalog(), g.oficios.works)  # Fatia 3: the Obras made
-	if g.juramentos:
+	if first_def == null and g.juramentos:
 		stage = g.juramentos.stage_for(stage)  # E6: more elites, dearer shop
 	trials = Trials.new(Trials.load_catalog())
 	sign_silver = stage.silver_elite
@@ -174,7 +200,10 @@ func setup(g: Game, rng: RandomNumberGenerator) -> void:
 		for i in stage.layouts.size():
 			if String(stage.layouts[i].id) == Dev.arg("arena"):
 				forced = i
-	map = new_map(stage, forced)
+	if first_def != null:
+		map = FirstDescent.map(stage, first_def, hash([_rng.seed, MAP_SALT]), FirstDescent.arrival_only())
+	else:
+		map = new_map(stage, forced)
 	for id in stage.enemies:
 		_defs[id] = game.horde.def(id)
 	game.horde.killed.connect(_on_killed)
@@ -286,8 +315,10 @@ func step(dt: float) -> void:
 			_step_shop(use)
 			_step_slab(dt)
 			_step_spots()
+			if room.kind == RunMap.Kind.ANTE:
+				_step_ante(dt)
 			var door := game.arena.exit_at(game.player.pos)
-			if door >= 0 and door < next_rooms.size() and use:
+			if door >= 0 and door < next_rooms.size() and use and not (first_def != null and FirstDescent.arrival_only()):
 				_leave(next_rooms[door])
 		Phase.EVENT:
 			_step_spots()
@@ -406,8 +437,10 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 		RunMap.Kind.ALTAR:
 			layout = stage.altar_layout
 	var variant := room.variant
+	first_room = _first_room_of(room)
+	_hp_scale = first_room.hp_scale if first_room != null else 1.0
 	if layout != null:
-		if Dev.has("variant") and room.depth == 1:
+		if Dev.has("variant") and room.depth == 1 and first_def == null:
 			variant = int(Dev.num("variant", 0))
 		layout = layout.variant(variant)
 	var exits := 0 if room.kind == RunMap.Kind.BOSS else next_rooms.size()
@@ -424,6 +457,8 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 		if xz.size() == 2:
 			game.player.place(Vector2(float(xz[0]), float(xz[1])))
 	game.player.magick.gain(game.player.magick.max_value)  # Magia is full in every room (Hades II)
+	if first_def != null and room.depth == 1 and ante_s < 0.0:
+		ante_s = snappedf(game.time, 0.1)  # (SW-O3: the seconds from the start to the Antessala's door)
 	game.room_tally.enter(room.depth, String(game.arena.id), game.player.hp, game.time, room.kind == RunMap.Kind.BOSS,
 		variant, gold, game.boons.owned().size(), room.id)
 	if room.kind == RunMap.Kind.SHOP:
@@ -452,6 +487,10 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 	trial_cards.clear()
 	altar_options.clear()
 	_apply_curse()
+	ante_crossed = false
+	ante_broke = false
+	_ante_idle = 0.0
+	_ante_last = Vector2.INF
 	if wait.is_valid():
 		await wait.call()  # (the room's own pieces, a shop's or an event's, on a black frame of their own)
 		if not is_inside_tree():
@@ -472,7 +511,8 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 			_cap = fight.cap
 			game.horde.alive_cap = fight.ceiling
 			phase = Phase.FIGHT
-			_start_hazard(layout)
+			if first_room == null or first_room.hazards:
+				_start_hazard(layout)
 		RunMap.Kind.MINIBOSS:
 			var guardian: Array[StringName] = [room.fight.kinds[0] if room.fight != null and not room.fight.kinds.is_empty()
 				else room.guardian if room.guardian != &"" else stage.minibosses[_rng.randi() % stage.minibosses.size()]]
@@ -484,11 +524,15 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 			game.horde.alive_cap = alive.y
 			phase = Phase.FIGHT
 			found(MaterialPurse.MEMORY, &"reach", stage.memory_guardian_reach)  # (the child who falls here still brings one home)
-			if layout != null and (layout.hazard == null or layout.hazard.kind == HazardDef.Kind.PLATES):
+			if layout != null and (layout.hazard == null or layout.hazard.kind == HazardDef.Kind.PLATES) and (first_room == null or first_room.hazards):
 				_start_hazard(layout)  # the slabs of the guardian's house (RP-06), its columns (RP-09); never the runes
 		RunMap.Kind.FOUNTAIN:
 			game.spawn_fountain(FOUNTAIN_SPOT)
 			_open_doors()
+		RunMap.Kind.ANTE:
+			# SW-O3: no fight, the door open at once, its slabs teaching the dodge (damage 0) and nothing given
+			_open_doors()
+			_start_hazard(layout)
 		RunMap.Kind.SHOP:
 			_build_shop()
 			_open_doors()
@@ -508,17 +552,121 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 			return
 	var notice := T.t(RunMap.KIND_KEY[room.kind]) if room.kind != RunMap.Kind.COMBAT else T.t(&"notice_room", {"n": room.depth})
 	var place := T.t(game.arena.name_key) if room.kind != RunMap.Kind.BOSS and game.arena.name_key != &"" else ""
-	# the room's name once: the Provação and the Altar are named alike by their kind and by their arena
-	if notice != place:
+	# the room's name once: the Provação and the Altar are named alike by their kind and by their arena (the Antessala has
+	# no word of its own: the arrival's line and the objective speak there)
+	if notice != place and room.kind != RunMap.Kind.ANTE:
 		game.hud.show_notice(notice, 2.0)
 	if place != "":
 		# the arena's name for 2 s (decision D-33)
 		game.hud.show_place(place)
 	game.snap_camera()
-	_fade_in()
+	if not _play_arrival():
+		_fade_in()
+
+
+# ---------- SW-O1 and SW-O3: the arrival and the Antessala ----------
+
+## The room's data of the guided descent (null: not in it).
+func _first_room_of(r: RunMap.Room) -> FirstRoomDef:
+	if first_def == null or r == null:
+		return null
+	var here_ := first_def.layer(r.depth)
+	for fr in here_:
+		if fr.kind == r.kind and fr.reward == r.reward and fr.guardian == r.guardian and fr.layout_id == r.arena:
+			return fr
+	return here_[r.slot] if r.slot < here_.size() else null
+
+
+## The arrival's scene (environment-artist: ArrivalScene.play(game, at), finished, skip), once, in the Antessala of the
+## guided descent: the screen stays black until its opening, the hero's control comes with the scene. False: none to play
+## (the scene is not there, or it is not the Antessala), the screen fades in as in any room.
+func _play_arrival() -> bool:
+	if first_def == null or room.kind != RunMap.Kind.ANTE or not ResourceLoader.exists(ARRIVAL_SCENE):
+		return false
+	var scene := (load(ARRIVAL_SCENE) as GDScript).new() as Node
+	if scene == null or not scene.has_method(&"play"):
+		return false
+	_arrival = scene
+	_arrival_t = 0.0
+	add_child(scene)
+	scene.call(&"play", game, game.arena.start)
+	if scene.has_signal(&"finished"):
+		scene.connect(&"finished", func() -> void:
+			if is_instance_valid(_arrival):
+				_arrival.queue_free()
+			_arrival = null)
+	# the black opens on the scene's own time (FirstDescentDef): the one ColorRect of the rooms' fades
+	_fade.color.a = 1.0
+	_fade_tween().tween_interval(first_def.arrival_open_at)
+	_fading.tween_property(_fade, "color:a", 0.0, first_def.arrival_open_s)
+	return true
+
+
+## What the Antessala asks each step: its slabs run (they teach, they never hurt), the slabs crossed and the vase
+## broken are told, and a hero standing still for FirstDescentDef.idle_blink_s has the objective blink (idle_blink).
+signal idle_blink
+
+
+func _step_ante(dt: float) -> void:
+	if plates != null:
+		plates.step(dt)
+	if _arrival != null:
+		_arrival_t += dt
+		if _arrival_t >= first_def.arrival_skip_after and _arrival.has_method(&"skip") \
+				and (Controls.pressed(&"attack") or Controls.pressed(&"dodge") or Controls.pressed(&"interact")):
+			_arrival.call(&"skip")
+	var at := game.player.pos
+	if not ante_crossed and plates != null and plates.hazard.count() > 0:
+		var top := INF
+		for i in plates.hazard.count():
+			top = minf(top, plates.hazard.bounds(i).position.y)
+		if at.y < top - 0.5:
+			ante_crossed = true
+			plates_crossed.emit()
+	if not ante_broke and game.breaks != null:
+		for n in game.breaks.rules.life:
+			if n <= 0:
+				ante_broke = true
+				broke_one.emit()
+				break
+	if first_def != null and at.distance_to(_ante_last) < 0.05:
+		_ante_idle += dt
+		if _ante_idle >= first_def.idle_blink_s:
+			_ante_idle = 0.0
+			idle_blink.emit()
+	else:
+		_ante_idle = 0.0
+	_ante_last = at
+
+
+## What the objective asks of the Antessala (Objective.pick's ctx fields): how near the hero is to the slabs and to a
+## vase still whole, and whether he crossed one and broke the other.
+func ante_ctx() -> Dictionary:
+	var near_plates := false
+	var near_breakable := false
+	if room != null and room.kind == RunMap.Kind.ANTE and first_def != null:
+		var at := game.player.pos
+		if plates != null and not ante_crossed:
+			for i in plates.hazard.count():
+				if plates.hazard.bounds(i).grow(first_def.obj_dodge_near).has_point(at):
+					near_plates = true
+		if game.breaks != null and not ante_broke:
+			var rules := game.breaks.rules
+			for i in rules.pieces.size():
+				if rules.life[i] > 0 and rules.pieces[i].at.distance_to(at) < first_def.obj_break_near:
+					near_breakable = true
+	return {"near_plates": near_plates, "near_breakable": near_breakable, "crossed_plates": ante_crossed, "broke_one": ante_broke}
+
+
+## The numbers of the guided descent for the RESULT ({} off it).
+func first_report() -> Dictionary:
+	if first_def == null:
+		return {}
+	return {"first": 1, "ante_s": ante_s, "first_boon_s": first_boon_s}
 
 
 # ---------- the fight ----------
+
 
 ## Dev (--trace-thirds, the room-designer's "where the fight happens", rooms_progression.md 2.3): seconds of the hero
 ## in each third of the room west to east (hero_x0..2) and north to south (hero_z0..2), and enemy-seconds west to east
@@ -605,7 +753,10 @@ func _spawn(id: StringName) -> void:
 		game.room_tally.seen(String(id))
 	else:
 		var mod := _take_mod(id)
-		game.horde.spawn(d, at, true, mod)
+		var born := game.horde.spawn(d, at, true, mod)
+		if _hp_scale != 1.0:
+			born.max_hp *= _hp_scale  # (SW-O4: the guided descent's guardian with less life)
+			born.hp = born.max_hp
 		game.room_tally.seen(String(id), String(mod.id) if mod != null else "")
 	game.fx.burst(&"shadow", Vector3(at.x, 0.6, at.y))
 	if d.elite:
@@ -733,7 +884,8 @@ func _room_cleared() -> void:
 		# the guardian won: Prata and Memória for home (Rejogabilidade, Fatia 1)
 		found(MaterialPurse.SILVER, &"guardian", stage.silver_guardian)
 		found(MaterialPurse.MEMORY, &"guardian", stage.memory_guardian)
-		game.find_tool(Forge.TOOL_REFINE)  # (Fatia 2: the Forjador's first tool, at the first guardian won)
+		if first_def == null:
+			game.find_tool(Forge.TOOL_REFINE)  # (Fatia 2: the Forjador's first tool, at the first guardian won; not the guided descent's)
 	_oficios_cleared()
 	_relic_cleared()
 	if room.reward == RunMap.Reward.NONE:
@@ -795,6 +947,8 @@ func _give(reward: RunMap.Reward, guardian: bool = false, meeting: bool = false)
 	var p := game.player
 	match reward:
 		RunMap.Reward.BOON:
+			if first_def != null and first_boon_s < 0.0:
+				first_boon_s = snappedf(game.time, 0.1)  # (SW-O4: the first Blessing offered; the aim is before 2 minutes)
 			game.open_boon_choice(stage.guardian_rarity_chance if guardian else stage.rarity_chance,
 					stage.guardian_psalm_chance if guardian else stage.psalm_chance, meeting)
 		RunMap.Reward.SILVER:
@@ -1625,6 +1779,8 @@ func _start_hazard(layout: RoomLayout) -> void:
 func _start_one(def: HazardDef) -> void:
 	# captures: --hazards arms every hazard of the room as deep in the descent
 	var progress := 1.0 if Dev.has("hazards") else EncounterGen.progress(stage, room.depth)
+	if first_room != null and first_room.hazard_progress >= 0.0 and not Dev.has("hazards"):
+		progress = first_room.hazard_progress  # (SW-O4: the guided descent's room sets how far down its hazards stand)
 	match def.kind:
 		HazardDef.Kind.LINE:
 			bands = BandFloor.new(game, def, progress >= def.from_progress, progress)

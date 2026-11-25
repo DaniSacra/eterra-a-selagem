@@ -88,7 +88,7 @@ func test_the_file_of_version_12_is_migrated_for_both_heroes() -> void:
 	var m0 := MaterialPurse.amount(old, MaterialPurse.MEMORY)
 	var out := SaveData.merged(old)
 	assert_eq(out.version, SaveData.VERSION)
-	assert_eq(SaveData.VERSION, 15)
+	assert_eq(SaveData.VERSION, 16)
 	assert_eq(MaterialPurse.amount(out, MaterialPurse.MEMORY) - m0, 121, "60 and 61 Memória back")
 	assert_eq(out.heroes.warrior.opened, [])
 	assert_eq(out.heroes.warrior.equipped, [], "the Vagas are free")

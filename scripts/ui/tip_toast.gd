@@ -51,7 +51,9 @@ func _ready() -> void:
 
 ## The text of a tip, with the keys of the actions as they are bound now.
 static func text_of(id: StringName) -> String:
-	return T.t(StringName("tip_" + String(id)), {
+	# (SW-O4: a tip of the guided descent is a whole text key, first_tip_*)
+	var key := id if String(id).begins_with("first_tip_") else StringName("tip_" + String(id))
+	return T.t(key, {
 		"attack": UiKit.action_label(&"light_attack"), "special": UiKit.action_label(&"heavy_attack"),
 		"dodge": UiKit.action_label(&"dodge")})
 

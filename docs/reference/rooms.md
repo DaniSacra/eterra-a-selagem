@@ -672,3 +672,45 @@ Números de referência: `docs/design/sworn_rea_kingswood_2026-11-25.md` seçõe
   vezes (distância do centro dela ao herói sobre 8 m, entre 0,25 e 3) elevada a isso, então o próximo inimigo sobe do lado em que o herói não
   está; as zonas tardias abrem depois de 4 cabeças (`Rooms.LATE_AFTER`) e não só na 2a onda, para a horda e a sala de uma onda também as usarem.
   As áreas do Santuário `aisles` viraram `aisle_n` e `aisle_s`.
+
+## Primeira descida guiada e Antessala (SW-O3, SW-O4; lote 3A1, 2026-11-25; `tests/test_first_descent.gd`; especificação `docs/design/onboarding_sw_o.md`)
+- **Quando.** `FirstDescent.active(data, flags)` (`scripts/core/first_descent.gd`, puro): `--first` liga sempre (também com robô, sem save, `--smoke`);
+  `--first=arrival` só a chegada e a Antessala (a porta não leva adiante, para capturas). Sem `--first`: falso com `--bot`, `--smoke`, `--start`, `--horde`, `--stress`,
+  `--arena`, `--short`, `--medium`, `--nosave` ou `Save.enabled` falso; senão verdadeiro se `save.first == 0`. O robô, o `--smoke`, as capturas e a suíte seguem a
+  descida normal, com o mesmo `RESULT` (provado com `tools/smoke.sh 900 --seed=1..6` antes e depois). `Game.first_run` guarda a decisão (calculada uma vez no `_ready`).
+- **Save 16.** Campo `first`: 0 pendente, 1 feita, 2 pulada. `SaveData.merged`: versão menor com `runs` > 0 vira 1, sem descida fica 0. `Boot.first_scene` leva ao Santuário
+  quem pulou (`first` 2). Fim da descida (`FirstDescent.finish`): morte e Morvath curto gravam 1 com `runs += 1` e **sem** `wins`, `firsts.victory` nem `firsts.guardian`
+  (o `RunAward.award` não conta o guardião da guiada) nem a ferramenta da Forja (`Rooms` não chama `find_tool` na guiada); `Game.skip_first_descent()` (a pausa) grava 2 e vai ao Santuário.
+  Fechar o jogo no meio deixa 0. O registro (`RunLog` 9) ganha `first: true` e `tools/runs_report.py` não conta essas linhas; `outcome` "first" é o Morvath curto.
+- **Dados.** `data/first_descent.tres` (`FirstDescentDef`, `FirstRoomDef`; parte `first` de `tools/make_data.gd`, é onde se muda sala, onda, recompensa, anjo, vida, perigo):
+  9 passos (0 a 8). Passos com duas salas são escolhas de porta; toda sala abre para todas as do passo seguinte (como a descida longa). Ondas escritas à mão, sem orçamento,
+  sem elite, sem modificador, sem Provação nem Altar (`FirstDescent.stage_for` zera `trial_chance`, `altar_chance`, `route_shop_chance`, `long_depths`, `fixed_rewards`).
+  `RunMap.scripted(stage, def, seed, arrival)` monta o grafo (`RunMap.is_scripted`, `Kind.ANTE` = 7, camada 0 = a Antessala, `_keeps_rules` não roda). A vida do guardião
+  (`hp_scale`) é aplicada em `Rooms._spawn`; o perigo da sala liga por `hazards` e a distância da descida em que vale por `hazard_progress` (a Cripta B acorda as lajes
+  de aprender em 0,2; a Casa do Cavaleiro em 0,36, como a primeira descida normal).
+- **Sala a sala** (`Sala N de 8`; N é `depth`, a Antessala é 0):
+
+| # | Sala (arena, variante) | Ondas | Recompensa | Portas |
+|---|---|---|---|---|
+| 0 | Antessala (`hall`, 1) | nenhuma | nada | 1: Bênção (Sarael) |
+| 1 | Cripta A (`crypt`, 1, sem perigo) | `[skeleton]`; `[skeleton x2]` | Bênção do Sarael (3 cartas) | 1: Ouro |
+| 2 | Fendas A (`rift`, sem quedas) | `[archer]`; `[archer x2, skeleton]` | Ouro | 2: Bênção (Nivael) ou Romã |
+| 3 | Jardim A (`garden`) | `[bone_rat x5]`; `[runner x2]` | a escolhida | 2: Fonte ou Cripta B (Bênção) |
+| 4 | Fonte (`hall`) ou Cripta B (`crypt`, 0, lajes de aprender) | `[skeleton, archer, bone_rat x3]`; `[guard, skeleton, archer]` | Bênção | 1: o guardião |
+| 5 | Casa do Cavaleiro (`knight_hall`) | `[knight]`, vida x0,7, sem escolta | Bênção do guardião | 1 |
+| 6 | Santuário (`sanctuary`, sem perigo) | `[skeleton x2, archer]`; `[mage, runner, bone_rat x4]` | Ouro | 1: loja |
+| 7 | Salão (loja) | nenhuma | 3 itens | 1: Morvath |
+| 8 | Câmara do Selo | Morvath curto: vida x0,6, só a fase 1 | fim da guiada | nenhuma |
+
+  Desvio do documento: a Cripta A é a variante 1 (Ossário, sem perigo) e a B a 0 (as lajes de aprender são as da variante 0), para as duas não serem iguais; a Fonte da 4 é uma das portas
+  da 3 (o documento a punha "na 3 ou na 4").
+- **Antessala** (`RunMap.Kind.ANTE`): sem luta, `_open_doors` logo na entrada (`phase` OPEN), sem recompensa, sem cura de sala nem Prata, sem aviso "Sala N" (`notice` não sai).
+  As lajes (variante `ante` do `hall`, `docs/design/rooms_progression.md` "Antessala") rodam no `Rooms._step_ante`; ele conta `plates_crossed` (o herói passou do lado norte da faixa),
+  `broke_one` (um quebrável do `BreakFloor.rules` com vida 0) e `idle_blink` (25 s parado); `Rooms.ante_ctx()` dá `near_plates`, `near_breakable`, `crossed_plates`, `broke_one`
+  para o `Objective.pick`.
+- **Chegada** (SW-O1): `Rooms._play_arrival` carrega `scripts/game/arrival_scene.gd` se existir (`play(game, at)`, `finished`, `skip()`), uma vez, na Antessala da guiada; o preto de
+  `Rooms._fade` abre em `arrival_open_at`/`arrival_open_s` do dado e qualquer ataque, esquiva ou interação depois de `arrival_skip_after` chama `skip()`. Sem o arquivo: a sala abre como as outras.
+- **RESULT** com a guiada: `first` 1, `ante_s` (segundos de jogo até a porta da Antessala) e `first_boon_s` (a primeira Bênção oferecida). Sem a guiada o `RESULT` é o de sempre.
+- **Pendências de integração**: `Milestones.ult_open` (o `Game._ult_open` pergunta se o arquivo existir, senão a Ultimate segue aberta), `ArrivalScene`, `Objective`, a condição `ult` do
+  `HubGuide.due`, as chaves de texto novas (`room_ante`, `first_tip_*`, `first_done`, `arrival_line`, `obj_*`, `guide_ult`), `MilestoneDef` (a parte `milestones` do `make_data` só escreve quando a classe existe),
+  `Boss.last_phase` e `Boss.tutorial_end` (o `Game._shorten_boss` os usa se existirem; sem eles Morvath cai inteiro e o `Game` termina a guiada do mesmo jeito).

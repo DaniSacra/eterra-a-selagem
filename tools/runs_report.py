@@ -110,7 +110,8 @@ def main(argv):
         except ValueError:
             bad += 1
             continue
-        if isinstance(e, dict) and since <= e.get("when", "") <= until and (source == "all" or e.get("source", "human") == source):
+        # a descida guiada (SW-O4, "first": true) fica fora das medias de sala e de partida
+        if isinstance(e, dict) and not e.get("first", False) and since <= e.get("when", "") <= until and (source == "all" or e.get("source", "human") == source):
             runs.append(e)
     o = ["# Resumo das partidas", ""]
     o.append("Arquivo: `%s`. Filtro: desde `%s`%s, origem `%s`. Linhas danificadas ignoradas: %d." % (

@@ -65,6 +65,8 @@ func test_where_they_stand() -> void:
 		assert_not_null(base)
 		for v in base.variant_count():
 			var l := base.variant(v)
+			a = Arena.new()  # (the hall's build adds its doors to the arena's lists: one arena for each dress)
+			add_child_autofree(a)
 			a.build(l, 3, 1406)
 			var name := "%s %d" % [id, v]
 			assert_between(l.breakables.size(), 4, 10, "%s: 4 to 10 pieces" % name)

@@ -94,9 +94,10 @@ static func wants_slots() -> bool:
 	return Save.enabled
 
 
-## Where a chosen save starts: the hub once it has a descent, the first descent itself when it is new.
+## Where a chosen save starts: the hub once it has a descent (or skipped the guided first one: `first` 2), the first
+## descent itself when it is new.
 static func first_scene(data: Dictionary) -> String:
-	return HUB if int(data.get("runs", 0)) > 0 else GAME
+	return HUB if int(data.get("runs", 0)) > 0 or int(data.get("first", 0)) == FirstDescent.SKIPPED else GAME
 
 
 func _build() -> void:

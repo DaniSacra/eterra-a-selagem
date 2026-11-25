@@ -133,6 +133,10 @@ var life_bonus := 0.0
 ## Coragem (Courage): the pomegranates still owed to the descent; the first Blessing taken grows (a pomegranate needs one held).
 var courage_poms := 0
 var courage_stacks := 0
+## SW-O4: this descent is the guided first one (FirstDescent.active, decided once in _ready), and whether Morvath's short
+## fight ended it (a first descent that ends that way is neither a win nor a record).
+var first_run := false
+var first_won := false
 var boss: Boss
 ## The boss fight in numbers (Boss.stats; kept after he falls), for RESULT.
 var boss_stats := {}
@@ -253,6 +257,7 @@ func _ready() -> void:
 	fast = Dev.num("fast", 1.0)
 	_build_world()
 	_build_ui()
+	first_run = FirstDescent.active(Save.data, FirstDescent.flags_now(Save.enabled)) and not Dev.has("horde") and FirstDescentDef.live() != null
 	boons = BoonState.new(BoonState.load_catalog())
 	combat = Combat.new()
 	combat.horde = horde
@@ -1035,8 +1040,16 @@ func _start_boss(id: StringName) -> void:
 	Audio.play(&"door")
 	fx.shake(4.0)
 	boss = Boss.new()
+	if first_run and rooms != null and rooms.first_def != null:
+		# SW-O4: Morvath's short fight (the Boss's own fields, when it has them)
+		if "last_phase" in boss:
+			boss.set("last_phase", rooms.first_def.boss_last_phase)
+		if "hp_scale" in boss:
+			boss.set("hp_scale", rooms.first_def.boss_hp_scale)
 	boss.setup(self, horde.def(id))
 	boss.defeated.connect(_on_boss_defeated)
+	if first_run:
+		_shorten_boss()
 	# his music, one layer more per phase (E4-06)
 	Music.boss_phase(boss.phase)
 	boss.phase_changed.connect(Music.boss_phase)
@@ -1047,6 +1060,24 @@ func _start_boss(id: StringName) -> void:
 	boss.moment.connect(func(name: StringName) -> void:
 		if name == &"victory":
 			_on_boss_falling())
+
+
+## SW-O4: Morvath of the guided descent: less life (FirstDescentDef.boss_hp_scale) and only the first phase (the Boss's
+## `last_phase` and its `tutorial_end`, boss-engineer's: this reads them only if the Boss has them).
+func _shorten_boss() -> void:
+	var def := rooms.first_def if rooms != null else null
+	if def == null or boss == null or boss.e == null:
+		return
+	if "hp_scale" in boss:
+		pass  # (the Boss scales its own life)
+	else:
+		boss.e.max_hp *= def.boss_hp_scale
+		boss.e.hp = boss.e.max_hp
+		boss.e.hp_floor *= def.boss_hp_scale
+	if "last_phase" in boss:
+		boss.set("last_phase", def.boss_last_phase)
+	if boss.has_signal(&"tutorial_end"):
+		boss.connect(&"tutorial_end", _on_first_end)
 
 
 func _dev_start(what: String) -> void:
@@ -1424,6 +1455,8 @@ func _on_player_died() -> void:
 	if boss:
 		boss.record_death()
 	Save.data.runs += 1
+	if first_run:
+		FirstDescent.finish(Save.data, &"death")  # (SW-O4: played once, whatever came of it; the Coragem still counts the death)
 	Save.write()
 	log_run("death")
 	# the fight's music goes; the walk stays under the end screen (never silence with the music on)
@@ -1441,6 +1474,9 @@ func _on_boss_falling() -> void:
 
 ## The ending is over: the run is won, the sealing closes (_play_ending) and the end screen opens.
 func _on_boss_defeated() -> void:
+	if first_run:
+		_on_first_end()
+		return
 	mode = Mode.ENDING
 	var at := boss.center if boss else player.pos
 	Save.data.runs += 1
@@ -1453,6 +1489,33 @@ func _on_boss_defeated() -> void:
 	log_run("victory")
 	await _play_ending(at)
 	_open_end(true, new_best)
+
+
+## SW-O4: Morvath's short fight is over (Boss.tutorial_end, or his fall if the boss lacks it): the guided descent ends. Not a
+## win: no `wins`, no `firsts.victory`, no record time, no Juramento; the descent counts as played (`first` = done), the
+## Mastery and the Memória count as in any run. The end screen offers the Santuário only.
+func _on_first_end() -> void:
+	if mode == Mode.ENDING or mode == Mode.OVER:
+		return
+	mode = Mode.ENDING
+	first_won = true
+	Save.data.runs += 1
+	FirstDescent.finish(Save.data, &"done")
+	Save.write()
+	log_run("first")
+	Music.play(&"catacombs", Music.WALK)
+	await get_tree().create_timer(1.8).timeout
+	_open_end(false, false)
+
+
+## SW-O4: the pause's "Pular a primeira descida" (after its confirmation): the descent is marked skipped (`first` = 2, the
+## first milestone opens), the run is left and the Santuário is next.
+func skip_first_descent() -> void:
+	if not first_run:
+		return
+	FirstDescent.finish(Save.data, &"skip")
+	Save.write()
+	SceneGo.to(get_tree(), SceneGo.HUB)
 
 
 ## The close of the sealing. Its scene already played while the paladin kept control (Boss._step_dying, VICTORY_TIME,
@@ -1495,9 +1558,9 @@ func _open_end(victory: bool, new_best: bool) -> void:
 	var end := EndScreen.new()
 	_screen = end
 	ui.add_child(end)
-	end.open(victory, {"time": time, "level": level if rooms == null else 0, "kills": kills, "best_combo": combat.best_combo, "boons": boons.owned().size(),
+	end.open(victory, {"first_done": first_won, "time": time, "level": level if rooms == null else 0, "kills": kills, "best_combo": combat.best_combo, "boons": boons.owned().size(),
 		"defeated_by": defeated_by() if not victory and not last_hurt.is_empty() else &"", "mastery": mastery_report}, new_best)
-	if Save.enabled and int(Save.data.runs) <= 1:
+	if first_run or (Save.enabled and int(Save.data.runs) <= 1):
 		# a new save's first descent ends in the Santuário, seen for the first time (boot.gd first_scene)
 		end.home_only()
 	end.retry.connect(func() -> void: SceneGo.to(get_tree(), SceneGo.GAME))
@@ -1900,7 +1963,7 @@ func _equip_talents() -> void:
 		if Dev.has("hero-equip"):
 			_warn_dropped(book, block.equipped, ids, level)
 		# the fixed ultimate of the hero's weapon, once its Mastery level is reached (redesign A.3; no choice, nothing saved)
-		var ult := hero.ult_for_weapon(level)
+		var ult := hero.ult_for_weapon(level) if _ult_open() else null
 		ultimate = String(ult.id) if ult != null else ""
 	elif Dev.has("hero-equip"):
 		push_warning("--hero-equip: the robot takes no Gifts from the save; use --talents=a,b")
@@ -1918,6 +1981,15 @@ func _equip_talents() -> void:
 		talents_opened = ids.size()
 	if not ids.is_empty() or not boons.forge.is_empty() or not boons.granted.is_empty():
 		_apply_talents(ids)
+
+
+## SW-O5: whether the save has the Ultimate open (Milestones.ult_open, the milestone batch's; open while it is not there).
+static func _ult_open() -> bool:
+	var path := "res://scripts/core/milestones.gd"
+	if not ResourceLoader.exists(path):
+		return true
+	var m := load(path) as GDScript
+	return bool(m.call(&"ult_open", Save.data))
 
 
 ## The Ofícios of this descent: --oficios=noted,pity,pick,preview (also the robot's), else a person's save; nothing

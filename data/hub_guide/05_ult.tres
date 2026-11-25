@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="HubGuideDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/hub_guide_def.gd" id="1_d780f"]
+
+[resource]
+script = ExtResource("1_d780f")
+id = &"ult"
+order = 5
+station = &"tree"
+text_key = &"guide_ult"
+condition = &"ult"

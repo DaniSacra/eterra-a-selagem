@@ -89,7 +89,8 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 	if victory:
 		_open_victory(stats, new_best)
 		return
-	var v := UiKit.page(self, T.t(&"end_defeat"), DEFEAT_WIDTH, 0.75, 40)
+	# SW-O4: the guided first descent ended by Morvath's short fight is no defeat (its own title)
+	var v := UiKit.page(self, T.t(&"first_done" if bool(stats.get("first_done", false)) else &"end_defeat"), DEFEAT_WIDTH, 0.75, 40)
 	v.add_theme_constant_override(&"separation", 8)
 	var title := v.get_node(^"header").get_child(0) as Label
 	title.add_theme_color_override(&"font_color", DEFEAT_COLOR)

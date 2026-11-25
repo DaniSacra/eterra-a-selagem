@@ -2,7 +2,7 @@ extends SceneTree
 ## One-off generator of the content files in data/ (combos, enemies, gifts, waves) for the 3D version.
 ## The .tres files it writes are the source of truth afterwards: tune them in the editor or by hand.
 ## ~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves] [stage] [bosses] [feel]
-##   [talents] [ultimates] [mastery] [hero] [psalms] [trials] [juramentos]
+##   [talents] [ultimates] [mastery] [hero] [psalms] [trials] [juramentos] [first] [milestones]
 
 ## Elites wear a faint old-gold edge (the rim of crowd.gdshader; cycle 5: the gilded halo is gone, the elite reads by
 ## its gold trims, its armor bar and a thin dark outline, CrowdRenderer.OUTLINE_COLOR).
@@ -55,7 +55,7 @@ const COMBO_PUSH := [0.7, 0.7]
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
 	# the hero last: it points at the talents, ultimates and Mastery written before it
-	for part in ["combos", "enemies", "mods", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants", "oficios", "obras", "vine", "hub_guide", "maga", "medallion"]:
+	for part in ["combos", "enemies", "mods", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants", "oficios", "obras", "vine", "hub_guide", "maga", "medallion", "first", "milestones"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -1116,6 +1116,8 @@ func _stage() -> void:
 	hall.platform = true
 	_arena(hall, &"hall", RoomLayout.Size.MEDIUM, 0, Vector2(0.0, 0.0))
 	hall.fountain = true
+	# SW-O3: the Antessala of the guided first descent, the hall's variant 1 ("ante": never drawn by the long descent)
+	hall.variants = [_ante_variant()]
 	# E5 (docs/art/e5_spec.md): the Santuário (the guardian's house, high, from 40% of the descent), the Ponte and the
 	# Câmara das Runas (high, from half of it); the rooms of the two events
 	st.layouts = [hall, _crypt(), _rift(), _garden(), _sanctuary(), _bridge(), _runes(), _knight_hall(), _elder_hall()]
@@ -1292,6 +1294,36 @@ func _plates(rects: Array[Rect2], from := 0.0) -> HazardDef:
 	h.hero_damage = HAZARD_HERO
 	h.enemy_damage = 60.0
 	return h
+
+
+## SW-O3 (docs/design/rooms_progression.md, "Antessala"): the slabs of the Antessala, three of 2.4 m side by side across the
+## way from the way in (south-west) to the door (north-east), at z -3.2 to -0.8 and x -1.0 to 6.2: 6 m or more from the way
+## in and the door, 8 m from the nearest vase. They teach the dodge and never hurt: damage 0 to him (a short shove toward
+## the way in and the sound), a 1.0 s warning, a pause of 1.5 s and the next one 2.5 s after the last, on their own and
+## from the first second.
+const ANTE_PLATES := [[-1.0, 1.4], [1.4, 3.8], [3.8, 6.2]]
+const ANTE_Z := [-3.2, -0.8]
+const ANTE_PUSH := Vector2(-0.5, 0.7)
+
+
+func _ante_variant() -> ArenaVariant:
+	var rects: Array[Rect2] = []
+	for x: Array in ANTE_PLATES:
+		rects.append(_rect(x[0], x[1], ANTE_Z[0], ANTE_Z[1]))
+	var h := _plates(rects, 0.0)
+	h.warn = 1.0
+	h.rearm = 1.5
+	h.start_delay = 1.0
+	h.hero_damage = 0.0
+	h.enemy_damage = 0.0
+	h.plate_push = PackedVector2Array([ANTE_PUSH, ANTE_PUSH, ANTE_PUSH])
+	h.auto_cycle = 2.5
+	h.auto_near = 0.0
+	h.auto_until = 1.0
+	var v := ArenaVariant.new()
+	v.depth = Vector2(-1.0, -1.0)  # (no share of the descent holds it: only RunMap.scripted asks for it)
+	v.hazard = h
+	return v
 
 
 ## RP-06: the slabs wake from the 4th room (progress 0.34); in the 2nd and 3rd they lie at rest and teach.
@@ -2952,6 +2984,8 @@ func _hub_guide() -> void:
 		[&"tree", HubPlan.TREE, &"guide_tree", &"open"],
 		[&"book", HubPlan.BOOK, &"guide_book", &"open"],
 		[&"forge", HubPlan.SMITH, &"guide_forge", &"open"],
+		# SW-O5: the Ultimate opens at the Árvore (condition "ult": HubGuide.due, milestone batch)
+		[&"ult", HubPlan.TREE, &"guide_ult", &"ult"],
 		[&"vendor", HubPlan.VENDOR, &"guide_vendor", &"open"],
 		[&"account", HubPlan.VINE, &"guide_account", &"account"],
 		[&"maga", HubPlan.HEROES, &"guide_maga", &"maga"],
@@ -2965,6 +2999,118 @@ func _hub_guide() -> void:
 		g.text_key = list[i][2]
 		g.condition = list[i][3]
 		_save(g, HUB_GUIDE_DIR + "%02d_%s.tres" % [g.order, g.id])
+
+
+# ---------- SW-O4: the guided first descent (docs/design/onboarding_sw_o.md) ----------
+
+const FIRST_PATH := "res://data/first_descent.tres"
+
+
+func _wave_lists(list: Array) -> Array[PackedStringArray]:
+	var out: Array[PackedStringArray] = []
+	for w: Array in list:
+		out.append(PackedStringArray(w))
+	return out
+
+
+func _first_room(layer: int, id: StringName, kind: RunMap.Kind, layout_id: StringName, props: Dictionary = {}) -> FirstRoomDef:
+	var r := FirstRoomDef.new()
+	r.layer = layer
+	r.id = id
+	r.kind = kind
+	r.layout_id = layout_id
+	for k: String in props:
+		r.set(k, props[k])
+	return r
+
+
+## Nine rooms, Antessala to Morvath (Sala 0 to 8): the Antessala; the Cripta A (the skeleton alone, then two: the first
+## Blessing, Sarael's); the Fendas A (the crossbow, then the crossbow with the soldier; two doors, the Nivael's Blessing or a
+## pomegranate); the Jardim A (a pack of rats, then two runners; two doors, the fountain or the Cripta B); the Cripta B (the
+## first mix, with the teaching slabs awake); the Casa do Cavaleiro (the Knight alone, 0.7 of his life); the Santuário (the
+## mix, no hazard); the shop and Morvath's chamber (his first phase only, 0.6 of his life). The fights are written by hand:
+## the long descent's budget, anchors and fixed doors do not touch them. A step with two rooms is a choice of door; every room
+## of a step opens on every room of the next. Deviation from the document: Cripta A is the Ossuary variant (1) with no
+## hazard and Cripta B the open one (0) with the teaching slabs (their hazard is the variant 0's), so the two do not look alike.
+func _first() -> void:
+	var R := RunMap.Reward
+	var K := RunMap.Kind
+	var d := FirstDescentDef.new()
+	d.rooms_total = 8
+	d.arrival_line = &"arrival_line"
+	var bone5 := ["bone_rat", "bone_rat", "bone_rat", "bone_rat", "bone_rat"]
+	var rooms: Array = [
+		_first_room(0, &"ante", K.ANTE, &"hall", {"variant": 1, "objective": &"obj_explore"}),
+		_first_room(1, &"crypt_a", K.COMBAT, &"crypt", {"variant": 1, "reward": R.BOON, "angel": &"sarael", "cap": 3,
+			"waves": _wave_lists([["skeleton"], ["skeleton", "skeleton"]]),
+			"tip": &"first_tip_fight", "objective": &"obj_win"}),
+		_first_room(2, &"rift_a", K.COMBAT, &"rift", {"reward": R.GOLD, "cap": 3,
+			"waves": _wave_lists([["archer"], ["archer", "archer", "skeleton"]]),
+			"tip": &"first_tip_archer", "objective": &"obj_win"}),
+		_first_room(3, &"garden_boon", K.COMBAT, &"garden", {"reward": R.BOON, "angel": &"nivael", "cap": 5,
+			"waves": _wave_lists([bone5, ["runner", "runner"]]),
+			"tip": &"first_tip_hold", "objective": &"obj_win"}),
+		_first_room(3, &"garden_pom", K.COMBAT, &"garden", {"reward": R.POM, "cap": 5,
+			"waves": _wave_lists([bone5, ["runner", "runner"]]),
+			"tip": &"first_tip_hold", "objective": &"obj_win"}),
+		_first_room(4, &"fountain", K.FOUNTAIN, &"hall"),
+		_first_room(4, &"crypt_b", K.COMBAT, &"crypt", {"reward": R.BOON, "cap": 5, "hazards": true, "hazard_progress": 0.2,
+			"waves": _wave_lists([["skeleton", "archer", "bone_rat", "bone_rat", "bone_rat"], ["guard", "skeleton", "archer"]]),
+			"tip": &"first_tip_armor", "objective": &"obj_win"}),
+		_first_room(5, &"knight", K.MINIBOSS, &"knight_hall", {"reward": R.BOON, "guardian": &"knight", "hp_scale": 0.7,
+			"hazards": true, "hazard_progress": HOUSE_FROM + 0.06, "cap": 1,
+			"waves": _wave_lists([["knight"]]),
+			"tip": &"first_tip_knight", "objective": &"obj_guardian"}),
+		_first_room(6, &"sanctuary", K.COMBAT, &"sanctuary", {"reward": R.GOLD, "cap": 5,
+			"waves": _wave_lists([["skeleton", "skeleton", "archer"], ["mage", "runner", "bone_rat", "bone_rat", "bone_rat", "bone_rat"]]),
+			"objective": &"obj_win"}),
+		_first_room(7, &"shop", K.SHOP, &"hall", {"objective": &"obj_shop"}),
+		_first_room(8, &"morvath", K.BOSS, &"", {"objective": &"obj_morvath"}),
+	]
+	for r: FirstRoomDef in rooms:
+		d.rooms.append(r)
+	_save(d, FIRST_PATH)
+
+
+# ---------- SW-O5: the milestones that open the Santuário (data only; MilestoneDef is the milestone batch's class) ----------
+
+const MILESTONE_DIR := "res://data/milestones/"
+const MILESTONE_SCRIPT := "res://scripts/core/milestone_def.gd"
+
+
+## One milestone a station (or the Ultimate): `opens`, the descents played (`runs_min`), what else it needs (`needs`: first,
+## guardian, win, stone, mastery2) and whether the descents or the need suffice (`any_of`) or both are asked. The table of
+## docs/design/onboarding_sw_o.md, SW-O5. Written only when the class exists (the milestone batch brings it): else skipped.
+func _milestones() -> void:
+	if not ResourceLoader.exists(MILESTONE_SCRIPT):
+		print("milestones: ", MILESTONE_SCRIPT, " not there yet, skipped")
+		return
+	var script: GDScript = load(MILESTONE_SCRIPT)
+	DirAccess.make_dir_recursive_absolute(MILESTONE_DIR)
+	for f in DirAccess.get_files_at(MILESTONE_DIR):
+		DirAccess.remove_absolute(MILESTONE_DIR + f)
+	var rows := [
+		# [id, opens, runs_min, needs, any_of] (the values of Milestones.defaults())
+		[&"tree", HubPlan.TREE, 0, [&"first"], false],
+		[&"forge", HubPlan.SMITH, 3, [&"guardian"], true],
+		[&"book", HubPlan.BOOK, 3, [], false],
+		[&"account", HubPlan.VINE, 4, [], false],
+		[&"vendor", HubPlan.VENDOR, 5, [&"stone"], true],
+		[&"ult", &"ult", 6, [&"mastery2"], false],
+		[&"maga", HubPlan.HEROES, 0, [&"win"], false],
+	]
+	for i in rows.size():
+		var m: Resource = script.new()
+		m.set("id", rows[i][0])
+		m.set("order", i)
+		m.set("opens", rows[i][1])
+		m.set("runs_min", rows[i][2])
+		var needs: Array[StringName] = []
+		for n: StringName in rows[i][3]:
+			needs.append(n)
+		m.set("needs", needs)
+		m.set("any_of", rows[i][4])
+		_save(m, MILESTONE_DIR + "%02d_%s.tres" % [i, rows[i][0]])
 
 
 # ---------- E6: the Juramentos (D-63; docs/design/e6_juramentos.md) ----------

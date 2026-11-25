@@ -1755,3 +1755,25 @@ Medida do robô: `smoke 900 --bot-reaction=0.25`, sementes 1 a 12 (antes = árvo
   chão onde a linha encontra a parede. Uma luta de 12 teve 2 batidas (a semente em que o Cavaleiro ficou longe das paredes).
 - Sopro das Fendas (RD2-04c): 10 só em inimigo, 7 de 17 salas com golpe (antes 0 de 17), 8 empurrados.
 - Arte: anel âmbar do `WallMark`, lajes de espinhos no chão da parede, e a marca da laje de aprender armando sozinha são placeholders.
+
+## Antessala (SW-O3, 2026-11-25, lote 3A1; `tests/test_first_descent.gd`)
+
+A sala da primeira descida guiada (`docs/design/onboarding_sw_o.md`): o Salão (`hall`) sem luta, a porta aberta desde a entrada, nada dado.
+É a **variante 1 do `hall`** (`ante`), que nenhuma faixa da descida longa sorteia (`ArenaVariant.depth` = (-1, -1)); só o `RunMap.scripted`
+a pede. A posição da faixa ficou com o dono do lote (o room-designer não escreveu), em dado (`ANTE_PLATES`, `ANTE_Z` em `tools/make_data.gd`):
+
+| Peça | Onde (x, z em m do centro do Salão) | Regra que cumpre |
+|---|---|---|
+| Entrada (`arena.start`) | (-11,6; 18,1), o patamar sudoeste | |
+| Porta (a do canto nordeste, `PORTAL_X` 10,5) | (10,5; -14,0), zona x 4,5 a 12,7, z -17 a -12,6 | |
+| 3 lajes de 2,4 x 2,4 lado a lado | x de -1,0 a 6,2 (cortes em -1,0 / 1,4 / 3,8 / 6,2), z de -3,2 a -0,8 | no caminho natural do sul para a porta (a reta entre as duas cruza z -2 em x 2,2); 11,8 m da porta, mais de 20 m da entrada (regra do PT-6: 6 m ou mais) |
+| Quebráveis do Salão (os 4 grupos do AT-Q4, sem mudança) | os mais perto: (14,3; -2,6) a 8 m da faixa, (-13,8; -6,6) a 12 m | nenhum a menos de 3 m das lajes |
+
+- O chão do Salão é aberto (16 x 15 m): a faixa de 7,2 m não fecha o caminho. Quem não quer atravessar contorna pelo norte ou pelo sul; a
+  dica de esquiva só fala das lajes a 6 m (`obj_dodge_near`) e o objetivo muda quando o herói passa da faixa (`Rooms.plates_crossed`), de qualquer jeito.
+- As lajes (`HazardDef` do `_ante_variant`): aviso de 1,0 s, golpe de 0,25 s, 1,5 s de descanso e a próxima 2,5 s depois (`auto_cycle`, `auto_near` 0:
+  armam sozinhas, sem ninguém em cima), acordadas desde o primeiro segundo (`from_progress` 0, `start_delay` 1,0). **Dano 0** ao herói e aos
+  inimigos; só o empurrão curto (0,86 m para o sudoeste, `plate_push`) e o som. O dano 0 não manda `hit_player` (o `Ground` só acerta com `power` > 0).
+- O realce de ouro do quebrável mais perto do caminho (SW-O3) não entrou: é arte (`environment-artist`); o `Rooms.ante_ctx()` já diz
+  quando um vaso inteiro está a 5 m.
+- O robô com `--first`: sai da Antessala em cerca de 15 s de jogo (ver `docs/reference/rooms.md`, "Primeira descida guiada").
