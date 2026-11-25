@@ -2197,14 +2197,22 @@ func _doors() -> void:
 				var c := (edge_mid + end) * 0.5 - u * EXIT_RUN * steps * 0.5 + side * sd * (width * 0.5 + EXIT_CHEEK.x * 0.5)
 				var along := depth + EXIT_RUN * steps
 				var yaw := atan2(u.x, u.y)
+				# PT-6b: between two doors side by side the cheek would stand in the other's mouth (their steps meet)
+				if over_other_mouth(c, i):
+					continue
 				m.block(Vector3(c.x, -EXIT_RISE * steps, c.y), Vector3(EXIT_CHEEK.x, EXIT_CHEEK.y + EXIT_RISE * steps, along), yaw, mat)
 			# the pillars beside the mouth stand off the floor, on the cheeks (art pack 2026-11-17: half of each stood
 			# on the walkable floor, stone the paladin walked into; tools/fit_probe.gd)
 			var off := edge_mid - u * DOOR_POST_OUT
+			# PT-6b: doors side by side share the space between them: a post or lantern that would stand over the other
+			# door's mouth is left out
 			var post_side := off + side * (width * 0.5 + DOOR_POST_OUT)
-			m.post(Vector3(post_side.x, 0.0, post_side.y), 0.0, 0.9, mat)
+			if not over_other_mouth(post_side, i):
+				m.post(Vector3(post_side.x, 0.0, post_side.y), 0.0, 0.9, mat)
 			var lamp_side := off - side * (width * 0.5 + DOOR_POST_OUT)
-			if used and not _bowl_near(edge_mid, 3.0):
+			if over_other_mouth(lamp_side, i):
+				pass
+			elif used and not _bowl_near(edge_mid, 3.0):
 				tomb.lantern(Vector3(lamp_side.x, 0.0, lamp_side.y), atan2(u.x, u.y), mat, door_lamp(), ~Arena.CROWD_LAYER)
 			else:
 				m.post(Vector3(lamp_side.x, 0.0, lamp_side.y), 0.0, 0.9, mat)
@@ -2233,6 +2241,18 @@ func door_arch(edge_mid: Vector2, inward: Vector2, width: float, back := 0.5, he
 		var side := Vector2(-inward.y, inward.x) * sd * (w * 0.5 + JAMB * 0.5)
 		m.block(foot + Vector3(side.x, 0.0, side.y), Vector3(JAMB, spring, 0.9), atan2(inward.x, inward.y), mat)
 	m.voussoir_arch(foot, inward, w, spring, 0.5, 0.9, mat)
+
+
+## True when p lies over (within OTHER_MOUTH_GROW of) the mouth of a door other than `skip` (PT-6b: the doors stand
+## side by side, and what hangs beside one must not stand in the other).
+const OTHER_MOUTH_GROW := 0.5
+
+
+func over_other_mouth(p: Vector2, skip: int) -> bool:
+	for j in layout.exits.size():
+		if j != skip and layout.exits[j].mouth.grow(OTHER_MOUTH_GROW).has_point(p):
+			return true
+	return false
 
 
 ## True when a fire bowl of the layout stands within `reach` of p.

@@ -77,7 +77,7 @@ const LANTERN_LIGHT := Vector2(1.4, 7.0)
 const NORTH_Z := -14.0
 const WALL_THICK := 0.9
 const NORTH_HEIGHT := Vector2(7.0, 9.0)
-const NORTH_WINDOWS: Array[float] = [-3.0, 3.5]
+const NORTH_WINDOWS: Array[float] = [-9.5, -3.0]
 ## West: its inner face, height, the window (z) and the banners (z).
 const WEST_X := -17.0
 const WEST_HEIGHT := Vector2(6.0, 7.2)
@@ -101,9 +101,11 @@ const PILASTER := Vector3(4.6, 0.7, 0.35)
 const COURSES: Array[float] = [0.9, 5.4]
 ## The door X1's recess in the north wall: its sides (x), its back wall's face (z), the raised stoop each side of the
 ## door where the fire bowls stand; the door's arch (ArenaRoom.door_arch) set back this far into the recess.
-const RECESS := Vector2(9.4, 16.6)
+## PT-6b: the recess spans every door of the north wall (door_xs), RECESS_MARGIN beyond the outer ones; each door has its
+## own opening (DOOR_HALF each side of its x) and gable.
+const RECESS_MARGIN := 3.6
 const RECESS_BACK := -15.6
-const DOOR_OPEN := Vector2(10.5, 15.5)
+const DOOR_HALF := 1.9
 const DOOR_TOP := 5.2
 const DOOR_BACK := 2.05
 const STOOP := 0.2
@@ -354,6 +356,22 @@ func air() -> Dictionary:
 	return a
 
 
+## The x of every door in the north wall, left to right (the recess and the openings follow them).
+func door_xs() -> Array[float]:
+	var xs: Array[float] = []
+	for e in layout.exits:
+		if e.inward.y > 0.5:
+			xs.append(e.mouth.get_center().x)
+	xs.sort()
+	return xs
+
+
+## The recess's sides (x): RECESS_MARGIN out of the outer doors.
+func recess() -> Vector2:
+	var xs := door_xs()
+	return Vector2(xs[0] - RECESS_MARGIN, xs[xs.size() - 1] + RECESS_MARGIN)
+
+
 ## The north door (X1) opens in the north wall.
 func in_wall(i: int) -> bool:
 	return layout.exits[i].inward.y > 0.5
@@ -527,8 +545,8 @@ func _moss() -> void:
 			_moss_band(st, line, MOSS_ROOT, false)
 			_moss_band(st, line, MOSS_ROOT, true)
 	var b := arena.shape().bounds()
-	_moss_band(st, PackedVector2Array([Vector2(b.position.x + 4.0, NORTH_Z), Vector2(RECESS.x, NORTH_Z)]), MOSS_WALL, true)
-	_moss_band(st, PackedVector2Array([Vector2(RECESS.y, NORTH_Z), Vector2(b.end.x, NORTH_Z)]), MOSS_WALL, true)
+	_moss_band(st, PackedVector2Array([Vector2(b.position.x + 4.0, NORTH_Z), Vector2(recess().x, NORTH_Z)]), MOSS_WALL, true)
+	_moss_band(st, PackedVector2Array([Vector2(recess().y, NORTH_Z), Vector2(b.end.x, NORTH_Z)]), MOSS_WALL, true)
 	_moss_band(st, PackedVector2Array([Vector2(WEST_X, b.position.y + 4.0), Vector2(WEST_X, 9.0)]), MOSS_WALL, false)
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
@@ -741,8 +759,8 @@ func _walls() -> void:
 	var b := arena.shape().bounds()
 	# north: from the north-west cut to the north-east corner, the door's recess left open
 	var north_from := b.position.x + 4.0
-	_wall(Vector2(north_from, NORTH_Z), Vector2(RECESS.x, NORTH_Z), Vector2(0, 1), NORTH_HEIGHT, NORTH_WINDOWS, 11)
-	_wall(Vector2(RECESS.y, NORTH_Z), Vector2(b.end.x + 0.9, NORTH_Z), Vector2(0, 1), NORTH_HEIGHT, [], 12)
+	_wall(Vector2(north_from, NORTH_Z), Vector2(recess().x, NORTH_Z), Vector2(0, 1), NORTH_HEIGHT, NORTH_WINDOWS, 11)
+	_wall(Vector2(recess().y, NORTH_Z), Vector2(b.end.x + 0.9, NORTH_Z), Vector2(0, 1), NORTH_HEIGHT, [], 12)
 	m.layers = 1
 
 
@@ -911,15 +929,26 @@ func _window(c: Vector2, inward: Vector2) -> void:
 ## raised stoops each side where the fire bowls stand.
 func _door_recess() -> void:
 	var back_z := RECESS_BACK - WALL_THICK * 0.5
-	for x: float in [RECESS.x, RECESS.y]:
-		var sx := x + (-0.45 if x == RECESS.x else 0.45)
+	var rec := recess()
+	for x: float in [rec.x, rec.y]:
+		var sx := x + (-0.45 if x == rec.x else 0.45)
 		m.block(Vector3(sx, 0, (NORTH_Z + RECESS_BACK - WALL_THICK) * 0.5), Vector3(0.9, NORTH_HEIGHT.x + 0.4, absf(RECESS_BACK - NORTH_Z) + WALL_THICK), 0.0, _wall_mat)
-	for span: Vector2 in [Vector2(RECESS.x, DOOR_OPEN.x), Vector2(DOOR_OPEN.y, RECESS.y)]:
+	# the piers between the openings (and the sides' ends): the back wall and the stoop
+	var from := rec.x
+	var spans: Array[Vector2] = []
+	for x in door_xs():
+		spans.append(Vector2(from, x - DOOR_HALF))
+		from = x + DOOR_HALF
+	spans.append(Vector2(from, rec.y))
+	for span in spans:
+		if span.y - span.x < 0.01:
+			continue
 		m.block(Vector3((span.x + span.y) * 0.5, 0, back_z), Vector3(span.y - span.x, NORTH_HEIGHT.y - 0.4, WALL_THICK), 0.0, _wall_mat)
 		m.block(Vector3((span.x + span.y) * 0.5, 0, (NORTH_Z + RECESS_BACK) * 0.5), Vector3(span.y - span.x, STOOP, absf(RECESS_BACK - NORTH_Z)), 0.0)
-	m.block(Vector3((DOOR_OPEN.x + DOOR_OPEN.y) * 0.5, DOOR_TOP, back_z), Vector3(DOOR_OPEN.y - DOOR_OPEN.x, NORTH_HEIGHT.y - 0.4 - DOOR_TOP, WALL_THICK), 0.0, _wall_mat)
-	# a gable of stone over the door
-	m.point(Vector3((DOOR_OPEN.x + DOOR_OPEN.y) * 0.5, NORTH_HEIGHT.y - 0.4, back_z), DOOR_OPEN.y - DOOR_OPEN.x + 1.2, 1.6, 0.0, 0.0, _wall_mat)
+	for x in door_xs():
+		m.block(Vector3(x, DOOR_TOP, back_z), Vector3(DOOR_HALF * 2.0, NORTH_HEIGHT.y - 0.4 - DOOR_TOP, WALL_THICK), 0.0, _wall_mat)
+		# a gable of stone over the door
+		m.point(Vector3(x, NORTH_HEIGHT.y - 0.4, back_z), DOOR_HALF * 2.0 + 1.2, 1.6, 0.0, 0.0, _wall_mat)
 
 
 ## The corners: the north-west cut's broken pier with a buttress leaning on the wall, and the north-east tower pier.
@@ -1165,8 +1194,8 @@ func _dress_styled_steps() -> Array[Callable]:
 			v[&"sm"] = sm
 			v[&"b"] = b
 			var north_from := b.position.x + 4.0
-			_leaves(sm, Vector2(north_from, NORTH_Z), Vector2(RECESS.x, NORTH_Z), Vector2(0, 1))
-			_leaves(sm, Vector2(RECESS.y, NORTH_Z), Vector2(b.end.x, NORTH_Z), Vector2(0, 1))
+			_leaves(sm, Vector2(north_from, NORTH_Z), Vector2(recess().x, NORTH_Z), Vector2(0, 1))
+			_leaves(sm, Vector2(recess().y, NORTH_Z), Vector2(b.end.x, NORTH_Z), Vector2(0, 1))
 			_leaves(sm, Vector2(WEST_X, b.position.y + 4.0), Vector2(WEST_X, 9.0), Vector2(1, 0))
 			if _trunk_o != null:
 				_leaves_round(sm, _trunk_o.center, _trunk_o.radius),
@@ -1436,7 +1465,7 @@ func _fungi(sm: Masonry) -> void:
 	var b := arena.shape().bounds()
 	var x0 := b.position.x + 5.0
 	while x0 < b.end.x - 1.0:
-		if x0 < RECESS.x - 0.5 or x0 > RECESS.y + 0.5:
+		if x0 < recess().x - 0.5 or x0 > recess().y + 0.5:
 			sm.fungus(Vector3(x0 + r.randf_range(-1.0, 1.0), 0.4, NORTH_Z - 0.3), r.randi_range(FUNGI.x, FUNGI.y), FUNGI_REACH, r.randi())
 		x0 += FUNGI_WALL_EVERY
 	if not variant_b:
@@ -1453,7 +1482,7 @@ func _blossoms(sm: Masonry) -> void:
 	var b := arena.shape().bounds()
 	var x0 := b.position.x + 4.5
 	while x0 < b.end.x - 1.5:
-		if (x0 < RECESS.x - 0.8 or x0 > RECESS.y + 0.8) and _clear_of_others(Vector2(x0, NORTH_Z + BLOSSOM_WALL_OUT), 0.1):
+		if (x0 < recess().x - 0.8 or x0 > recess().y + 0.8) and _clear_of_others(Vector2(x0, NORTH_Z + BLOSSOM_WALL_OUT), 0.1):
 			sm.blossoms(Vector3(x0, 0.0, NORTH_Z + BLOSSOM_WALL_OUT), r.randi_range(BLOSSOM_COUNT.x, BLOSSOM_COUNT.y), BLOSSOM_REACH, r.randi())
 		x0 += BLOSSOM_WALL_EVERY + r.randf_range(0.0, 1.2)
 	if _trunk_o != null:

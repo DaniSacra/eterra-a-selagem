@@ -2789,7 +2789,7 @@ func _runes() -> RoomLayout:
 	l.banned_roles = [&"area"]
 	l.guardian = false
 	# the north door's fire bowls, 0.9 m out of the floor (drawn, never blocking)
-	var bowls: Array[ArenaObstacle] = [_bowl(3.8, -12.9), _bowl(8.2, -12.9)]
+	var bowls: Array[ArenaObstacle] = [_bowl(-9.1, -12.9), _bowl(-6.0, -12.9)]
 	var a: Array[ArenaObstacle] = []
 	for p: Vector2 in [Vector2(-6, -6), Vector2(6, -6), Vector2(-6, 6), Vector2(6, 6)]:
 		a.append(_piece(p.x, p.y, 1.2, 1.2, 4.0, &"rune_pillar", true))

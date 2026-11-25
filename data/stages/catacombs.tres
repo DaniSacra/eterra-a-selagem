@@ -2972,7 +2972,7 @@ height = 4.0
 
 [sub_resource type="Resource" id="Resource_yryi1"]
 script = ExtResource("4_wmys5")
-center = Vector2(3.8, -12.9)
+center = Vector2(-9.1, -12.9)
 radius = 0.45
 blocks_move = false
 blocks_shots = false
@@ -2981,7 +2981,7 @@ height = 1.2
 
 [sub_resource type="Resource" id="Resource_axpi5"]
 script = ExtResource("4_wmys5")
-center = Vector2(8.2, -12.9)
+center = Vector2(-6, -12.9)
 radius = 0.45
 blocks_move = false
 blocks_shots = false

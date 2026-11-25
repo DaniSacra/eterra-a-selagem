@@ -134,13 +134,13 @@ const BANNER_WEST := 2.6
 const BANNER_TOP := 5.6
 const BANNER_SIZE := Vector2(1.2, 2.8)
 ## T3: cold fire bowls high on corbels at the north wall's ends (x), the corbel's top, the bowl's scale; never lit.
-const COLD_BOWLS: Array[float] = [-5.4, 5.4]
+const COLD_BOWLS: Array[float] = [-5.4, -2.6]
 const CORBEL := Vector3(0.8, 0.22, 0.62)
 const CORBEL_TOP := 3.25
 const COLD_BOWL_SCALE := 0.5
 ## T4: broken urns on shelves at the foot of the back walls (north: from, to x; west: from, to z), the shelf's height,
 ## the urns' height range, the room between two.
-const SHELF_NORTH := Vector2(2.9, 6.1)
+const SHELF_NORTH := Vector2(-6.2, -2.8)
 const SHELF_WEST := Vector2(1.2, 4.6)
 const SHELF_HEIGHT := 0.95
 const SHELF_URN := Vector2(0.2, 0.3)
@@ -414,6 +414,9 @@ func _lanterns() -> void:
 		var edge_mid := e.mouth.get_center() + u * absf(e.mouth.size.dot(u)) * 0.5
 		for sd: float in [-1.0, 1.0]:
 			var p := edge_mid + side * sd * (w * 0.5 + JAMB + 0.6) - u * (FACE_SET + LANTERN_BRACKET.z * 0.5)
+			# PT-6b: the doors stand side by side, so the lantern between them would hang over the other one's mouth
+			if over_other_mouth(p, i):
+				continue
 			tomb.lantern(Vector3(p.x, LANTERN_AT, p.y), atan2(u.x, u.y), ashlar(), cold_lamp(), ~Arena.CROWD_LAYER, LANTERN_BRACKET)
 
 
