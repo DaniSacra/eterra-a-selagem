@@ -1,8 +1,8 @@
 class_name ArrivalTimeline
 extends RefCounted
 ## The arrival scene's clock (SW-O1, docs/design/onboarding_sw_o.md): what is on the screen at second t of the Guerreiro's
-## first descent: black, a star, the light of Elun coming down, the seal opening, Emeth's crystals rising, sparks running
-## to the light, the Guerreiro forming in it, then the light going out and the hero walking. Pure numbers, no nodes:
+## first descent: black, a star, a comet of the light of Elun falling slantwise (PT-25-7) and landing, the seal opening,
+## Emeth's crystals rising, sparks running to the spot, the Guerreiro forming in the light, then it going out and the hero walking. Pure numbers, no nodes:
 ## ArrivalScene reads state_at(t) every frame and dresses it; tests/test_arrival.gd reads it with no screen.
 ##   var s := ArrivalTimeline.state_at(3.7)   # s.hero_visible, s.hero_form, s.beam, s.control ...
 
@@ -11,6 +11,12 @@ const T_STAR := 0.6
 const STAR_FADE := 0.4
 const T_OPEN := 1.6
 const OPEN_TIME := 0.8
+## The comet falls from T_OPEN for FALL_TIME and lands at T_IMPACT (the flash, the dust ring, the shake); the ring of light
+## runs SHOCK_TIME over the floor and the screen's flash lasts FLASH_TIME.
+const FALL_TIME := 0.8
+const T_IMPACT := 2.4  # (T_OPEN + FALL_TIME; a literal so it equals T_RING exactly)
+const SHOCK_TIME := 0.7
+const FLASH_TIME := 0.3
 const T_RING := 2.4
 const RING_TIME := 0.6
 const T_CRYSTALS := 2.4
@@ -33,8 +39,10 @@ const CRYSTAL_LOW := 0.4
 
 ## Everything on the screen at second t (a Dictionary, all numbers 0..1 unless said):
 ##   black: the cover's alpha; star: its light; star_move: how far it has come down to the birth spot;
-##   dim: the room's light share (DIM to 1); beam: the light of Elun (0 before T_OPEN, up to 1, down after T_CONTROL);
-##   beam_on / beam_off: it should be lit / be taken now (bools); ring: the seal's opening (and fading with the beam);
+##   dim: the room's light share (DIM to 1); comet: how far down it has fallen (0 before T_OPEN, 1 from T_IMPACT);
+##   impact (bool): it has landed; shock: the floor ring's run 0..1 and flash: the screen's flash (1 at the impact, 0 after
+##   FLASH_TIME); beam: the light that stays where it landed (1 from T_IMPACT, down after T_CONTROL);
+##   beam_on / beam_off: it should be lit / be put out now (bools); ring: the seal's opening (and fading with the beam);
 ##   crystals: how risen they are; crystal_glow: their light (1 while the beam stands, CRYSTAL_LOW after);
 ##   motes_on: sparks running (bool), motes: their travel 0..1; hero_visible (bool), hero_form: how much of the hero is
 ##   formed (bottom up), hero_flash: the one glow held in the beam (a bump over the forming);
@@ -47,11 +55,14 @@ static func state_at(t: float) -> Dictionary:
 	var star_in := _ramp(t, T_STAR, STAR_FADE)
 	return {
 		&"black": 1.0 - _ease(open),
-		&"star": star_in * (1.0 - open),
-		&"star_move": _ease(open),
+		&"star": star_in * (1.0 - _ramp(t, T_OPEN, STAR_FADE)),
+		&"comet": _ramp(t, T_OPEN, FALL_TIME),
+		&"impact": t >= T_IMPACT,
+		&"shock": _ramp(t, T_IMPACT, SHOCK_TIME),
+		&"flash": (1.0 - _ramp(t, T_IMPACT, FLASH_TIME)) if t >= T_IMPACT else 0.0,
 		&"dim": lerpf(DIM, 1.0, _ease(light_up)),
-		&"beam": (1.0 if t >= T_OPEN else 0.0) * (1.0 - beam_down),
-		&"beam_on": t >= T_OPEN,
+		&"beam": (1.0 if t >= T_IMPACT else 0.0) * (1.0 - beam_down),
+		&"beam_on": t >= T_IMPACT,
 		&"beam_off": t >= T_CONTROL,
 		&"ring": _ease(_ramp(t, T_RING, RING_TIME)) * (1.0 - beam_down),
 		&"crystals": _ease(_ramp(t, T_CRYSTALS, CRYSTAL_TIME)),

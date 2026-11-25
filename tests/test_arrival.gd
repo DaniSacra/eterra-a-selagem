@@ -13,13 +13,22 @@ func test_black_at_the_start_then_a_star() -> void:
 	assert_eq(T.state_at(1.0)[&"black"], 1.0)
 
 
-func test_the_black_opens_after_the_star_and_the_beam_comes() -> void:
+func test_the_black_opens_after_the_star_and_the_comet_falls_and_lands() -> void:
 	assert_lt(T.state_at(2.0)[&"black"], 1.0)
 	assert_eq(T.state_at(T.T_OPEN + T.OPEN_TIME)[&"black"], 0.0)
-	assert_true(T.state_at(T.T_OPEN)[&"beam_on"])
-	assert_eq(T.state_at(2.0)[&"beam"], 1.0)
-	assert_eq(T.state_at(2.5)[&"star"], 0.0, "the star became the beam")
+	assert_eq(T.state_at(T.T_OPEN - 0.01)[&"comet"], 0.0)
+	assert_between(T.state_at(2.0)[&"comet"], 0.1, 0.9)
+	assert_false(T.state_at(2.0)[&"impact"])
+	assert_false(T.state_at(2.0)[&"beam_on"], "no light stays before it lands")
+	assert_true(T.state_at(T.T_IMPACT)[&"impact"])
+	assert_eq(T.state_at(T.T_IMPACT)[&"flash"], 1.0)
+	assert_almost_eq(float(T.state_at(T.T_IMPACT + T.FLASH_TIME)[&"flash"]), 0.0, 0.001)
+	assert_almost_eq(float(T.state_at(T.T_IMPACT + T.SHOCK_TIME)[&"shock"]), 1.0, 0.001)
+	assert_eq(T.state_at(3.0)[&"beam"], 1.0)
+	assert_eq(T.state_at(2.5)[&"star"], 0.0, "the star became the comet")
 	assert_almost_eq(T.state_at(0.0)[&"dim"], T.DIM, 0.001)
+	assert_lte(T.T_IMPACT, T.T_RING, "the seal opens on the landing")
+	assert_lt(T.T_IMPACT, T.T_HERO)
 
 
 func test_the_hero_is_unseen_before_3_6_and_seen_after() -> void:

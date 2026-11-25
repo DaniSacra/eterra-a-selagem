@@ -1,9 +1,10 @@
 class_name ArrivalScene
 extends Node3D
-## The Guerreiro's arrival (SW-O1, docs/design/onboarding_sw_o.md; ArrivalTimeline is its clock): black, a star, the
-## light of Elun (RewardShaft) coming down on the birth spot, the seal's ring of runes (ritual_rune.gdshader, the steady
+## The Guerreiro's arrival (SW-O1, docs/design/onboarding_sw_o.md; ArrivalTimeline is its clock): black, a star, a comet of
+## the light of Elun falling slantwise onto the birth spot (PT-25-7: a head and a tail of soft quads, no beam) and landing in
+## a flash, a ring of light over the floor, a ring of dust and a little shake; the seal's ring of runes (ritual_rune.gdshader, the steady
 ## circle) opening from the middle, Emeth's crystals (crystal_spike.gdshader) rising round it, sparks (SpectralMotes,
-## GATHER) running from them to the light, and the Guerreiro forming in it from the floor up (arrival_form.gdshader on
+## GATHER) running from them to the spot, and the Guerreiro forming in its light from the floor up (arrival_form.gdshader on
 ## his own materials, for 0.4 s). Then the light goes out, the crystals stay as scenery, the room's light comes up and
 ## he walks; a line shows at the foot of the screen (the HUD's ArrivalCaption). Only what the game already has: no
 ## light, no particle system, one shader (the hero's), the rest drawn by materials the hall already warms.
@@ -26,29 +27,39 @@ const STAR_HALO := 40.0
 const STAR_PULSE_HZ := 0.6
 const STAR_IVORY := Color(1.0, 0.94, 0.82)
 const STAR_EMERALD := Color(0.3, 1.0, 0.55)
-## Where the star is in the screen before it comes down (its middle), and the height it ends at over the birth spot (m).
+## Where the star is in the screen (its middle) until the comet takes its place.
 const STAR_HOME := Vector2(0.5, 0.5)
-const STAR_END_HEIGHT := 1.6
 ## The room's light at its darkest, as the world's brightness adjustment (1 is as it is).
 const DIM_BRIGHTNESS := 0.7
-## The beam of the reward is a faint one that falls away round the paladin; here it is his own light, so its body is
-## stronger and it keeps most of its strength round him (reward_shaft.gdshader uniforms, only on this node's shaft).
-const BEAM_BODY := 0.9
-## The light of Elun is gold and warm (RewardShaft's own tint is a pale ivory that reads beige on the floor).
+## The light of Elun is gold and warm.
 const BEAM_TINT := Color(1.0, 0.78, 0.34)
-const BEAM_NEAR_KEEP := 1.0
-const BEAM_HERO_KEEP := 0.5
-## Sweep 2026-11-25 (item 2): the beam not smooth: more and livelier streaks down its body, and dust drifting up in it
-## (count, rise m/s, life s, mote size m, radius round the middle m, brightness).
-const BEAM_STREAKS := 0.5
-const BEAM_STREAK_COUNT := 13.0
-const BEAM_STREAK_SPEED := 0.4
-const DUST_COUNT := 28
-const DUST_RISE := 0.9
-const DUST_LIFE := 5.0
-const DUST_SIZE := 0.07
-const DUST_RADIUS := 0.7
-const DUST_GAIN := 0.9
+## PT-25-7, the comet: it comes from COMET_UP m over the spot and COMET_SIDE m to the screen's left (along the camera's
+## right), falls with its speed growing (the path share is progress to this power) and ends at COMET_END m. Its head is a
+## soft quad (m, light) and its tail TAIL_COUNT quads along the path, TAIL_STEP of the fall apart, thinner and fainter.
+const COMET_UP := 15.0
+const COMET_SIDE := 9.0
+const COMET_END := 0.9
+const COMET_EASE := 2.0
+const HEAD_SIZE := 1.1
+const HEAD_LIGHT := 0.85
+const TAIL_COUNT := 14
+const TAIL_STEP := 0.03
+const TAIL_SIZE := 0.8
+const TAIL_LIGHT := 0.32
+## The landing: the screen's flash (alpha at most), the floor ring's radius (m) and height, the light that stays round
+## the hero (size m, light, its breathing), the shake (Fx.shake amount) and the ring of dust (count, life s, speed, size m).
+const FLASH_ALPHA := 0.5
+const SHOCK_RADIUS := 3.4
+const SHOCK_Y := 0.09
+const POOL_SIZE := 3.0
+const POOL_LIGHT := 0.4
+const POOL_Y_AT := 0.25
+const SHAKE := 1.2
+const DUST_COUNT := 44
+const DUST_LIFE := 1.1
+const DUST_SPEED := 4.5
+const DUST_SIZE := 0.16
+const DUST_GAIN := 0.75
 ## The seal: radius (m) of the ring of runes, its colour (old gold), strength and the share it opens from.
 const RING_RADIUS := 2.2
 const RING_COLOR := Color(0.72, 0.55, 0.25)
@@ -95,6 +106,7 @@ const CAPTION_KEY := &"arrival_line"
 const FORM_SHADER := preload("res://assets/shaders/arrival_form.gdshader")
 const RUNE_SHADER := preload("res://assets/shaders/ritual_rune.gdshader")
 const SPIKE_SHADER := preload("res://assets/shaders/crystal_spike.gdshader")
+const IMPACT_SHADER := preload("res://assets/shaders/arrival_impact.gdshader")
 
 ## The star over the black: a core and a soft emerald halo, drawn by hand (a few circles, one canvas item).
 class Star extends Control:
@@ -124,8 +136,14 @@ var _hold := -1.0
 var _playing := false
 var _gave_control := false
 var _captioned := false
-var _shaft: RewardShaft
-var _taken := false
+var _landed := false
+var _head: MeshInstance3D
+var _tail: Array[MeshInstance3D] = []
+var _comet_from := Vector3.ZERO
+var _shock: MeshInstance3D
+var _shock_mat: ShaderMaterial
+var _pool: MeshInstance3D
+var _flash: ColorRect
 var _cover: ColorRect
 var _star: Star
 var _layer: CanvasLayer
@@ -204,6 +222,11 @@ func play(g: Game, spot: Vector2) -> void:
 	_star.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_star.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(_star)
+	_flash = ColorRect.new()
+	_flash.color = Color(BEAM_TINT.lerp(Color.WHITE, 0.45), 0.0)
+	_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_layer.add_child(_flash)
 	if g.ui != null:
 		_ui_was_visible = g.ui.visible
 		g.ui.visible = false
@@ -217,6 +240,7 @@ func play(g: Game, spot: Vector2) -> void:
 	g.cam.snap()
 	_build_ring()
 	_build_crystals()
+	_build_comet()
 	_hold_hero()
 	_apply(ArrivalTimeline.state_at(0.0))
 
@@ -267,7 +291,8 @@ func _apply(s: Dictionary) -> void:
 	_cover.color.a = s[&"black"]
 	_dress_star(s)
 	_dim(s[&"dim"])
-	_dress_beam(s)
+	_dress_comet(s)
+	_dress_landing(s)
 	_dress_ring(s[&"ring"])
 	_dress_crystals(s[&"crystals"], s[&"crystal_glow"])
 	for m in _motes:
@@ -285,11 +310,7 @@ func _apply(s: Dictionary) -> void:
 func _dress_star(s: Dictionary) -> void:
 	_star.clock = clock
 	_star.glow = s[&"star"]
-	var home := get_viewport().get_visible_rect().size * STAR_HOME
-	var goal := home
-	if game.camera != null:
-		goal = game.camera.unproject_position(Vector3(at.x, STAR_END_HEIGHT, at.y))
-	_star.at = home.lerp(goal, s[&"star_move"])
+	_star.at = get_viewport().get_visible_rect().size * STAR_HOME
 	_star.queue_redraw()
 
 
@@ -301,45 +322,118 @@ func _dim(share: float) -> void:
 	_env.adjustment_brightness = lerpf(DIM_BRIGHTNESS * _env_brightness, _env_brightness, k)
 
 
-func _dress_beam(s: Dictionary) -> void:
-	if s[&"beam_on"] and _shaft == null and not _taken:
-		_shaft = RewardShaft.make(self, Vector3(at.x, 0.0, at.y), BEAM_TINT)
-		# a skip past the descent: the light is there at once
-		_shaft.appear(0.0, clock > ArrivalTimeline.T_OPEN + RewardShaft.DOWN + RewardShaft.LAND)
-		_shaft_look()
+## The comet's own path: p is the fall (0 to 1), the head sits at the path's share p^COMET_EASE.
+func _comet_at(p: float) -> Vector3:
+	var end := Vector3(at.x, COMET_END, at.y)
+	return _comet_from.lerp(end, pow(clampf(p, 0.0, 1.0), COMET_EASE))
+
+
+func _build_comet() -> void:
+	var right := Vector3.RIGHT
+	if game.camera != null:
+		right = game.camera.global_transform.basis.x
+		right.y = 0.0
+		right = right.normalized() if right.length() > 0.01 else Vector3.RIGHT
+	_comet_from = Vector3(at.x, COMET_END + COMET_UP, at.y) - right * COMET_SIDE
+	_head = _glow_quad(HEAD_SIZE)
+	for i in TAIL_COUNT:
+		var k := float(i + 1) / float(TAIL_COUNT)
+		_tail.append(_glow_quad(lerpf(TAIL_SIZE, TAIL_SIZE * 0.25, k)))
+	_pool = _glow_quad(POOL_SIZE)
+	_pool.position = Vector3(at.x, POOL_Y_AT, at.y)
+	_shock = MeshInstance3D.new()
+	var plane := PlaneMesh.new()
+	plane.size = Vector2.ONE * SHOCK_RADIUS * 2.0
+	_shock.mesh = plane
+	_shock_mat = ShaderMaterial.new()
+	_shock_mat.shader = IMPACT_SHADER
+	_shock_mat.set_shader_parameter(&"color", BEAM_TINT)
+	_shock.material_override = _shock_mat
+	_shock.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_shock.position = Vector3(at.x, SHOCK_Y, at.y)
+	_shock.visible = false
+	add_child(_shock)
+
+
+func _glow_quad(size: float) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	mi.mesh = Fx.quad(size, Color(0, 0, 0, 1))
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.visible = false
+	add_child(mi)
+	return mi
+
+
+func _tone(mi: MeshInstance3D, light: float) -> void:
+	(mi.mesh.material as StandardMaterial3D).albedo_color = Color(BEAM_TINT * light, 1.0)
+
+
+## The comet falling (second 1.6 to 2.4): the head and its tail along the slant; gone the frame it lands.
+func _dress_comet(s: Dictionary) -> void:
+	var p: float = s[&"comet"]
+	var on := p > 0.0 and p < 1.0
+	_head.visible = on
+	if on:
+		_head.position = _comet_at(p)
+		_tone(_head, HEAD_LIGHT * minf(p * 6.0, 1.0))
+	for i in _tail.size():
+		var q := p - float(i + 1) * TAIL_STEP
+		var mi := _tail[i]
+		mi.visible = on and q > 0.0
+		if mi.visible:
+			mi.position = _comet_at(q)
+			_tone(mi, TAIL_LIGHT * (1.0 - float(i) / float(_tail.size())))
+
+
+## The landing: the flash, the ring over the floor, the dust, the shake (once), then the light round the hero until he walks.
+func _dress_landing(s: Dictionary) -> void:
+	if s[&"impact"] and not _landed:
+		_landed = true
 		Audio.play(&"seal")
-	if s[&"beam_off"] and _shaft != null and not _taken:
-		_taken = true
-		_shaft.take()
-		if _dust != null:
-			_dust.emitting = false
+		if game.fx != null and clock < ArrivalTimeline.T_IMPACT + 0.5:
+			game.fx.shake(SHAKE)
+		_burst_dust()
+	var flash: float = s[&"flash"]
+	_flash.color.a = FLASH_ALPHA * flash * flash
+	var shock: float = s[&"shock"]
+	_shock.visible = s[&"impact"] and shock < 1.0
+	_shock_mat.set_shader_parameter(&"t", shock)
+	var beam: float = s[&"beam"]
+	_pool.visible = beam > 0.0
+	if _pool.visible:
+		var breath := 0.9 + 0.1 * sin(clock * TAU * 0.8)
+		_tone(_pool, POOL_LIGHT * beam * breath * minf(shock * 3.0, 1.0))
 
 
-func _shaft_look() -> void:
-	for m: ShaderMaterial in _shaft.get(&"_mats"):
-		if m.shader == RewardShaft.SHAFT_SHADER:
-			m.set_shader_parameter(&"body", BEAM_BODY)
-			m.set_shader_parameter(&"near_keep", BEAM_NEAR_KEEP)
-			m.set_shader_parameter(&"hero_keep", BEAM_HERO_KEEP)
-			m.set_shader_parameter(&"streaks", BEAM_STREAKS)
-			m.set_shader_parameter(&"streak_count", BEAM_STREAK_COUNT)
-			m.set_shader_parameter(&"streak_speed", BEAM_STREAK_SPEED)
-	if _dust == null:
-		_dust = CPUParticles3D.new()
-		_dust.amount = DUST_COUNT
-		_dust.lifetime = DUST_LIFE
-		_dust.preprocess = DUST_LIFE
-		_dust.mesh = Fx.quad(DUST_SIZE, Color(BEAM_TINT * DUST_GAIN, 1.0))
-		_dust.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-		_dust.emission_sphere_radius = DUST_RADIUS
-		_dust.direction = Vector3.UP
-		_dust.spread = 12.0
-		_dust.gravity = Vector3.ZERO
-		_dust.initial_velocity_min = DUST_RISE * 0.6
-		_dust.initial_velocity_max = DUST_RISE
-		_dust.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		_dust.position = Vector3(at.x, 0.2, at.y)
-		add_child(_dust)
+func _burst_dust() -> void:
+	_dust = CPUParticles3D.new()
+	_dust.amount = DUST_COUNT
+	_dust.lifetime = DUST_LIFE
+	_dust.one_shot = true
+	_dust.explosiveness = 1.0
+	_dust.mesh = Fx.quad(DUST_SIZE, Color(BEAM_TINT * DUST_GAIN, 1.0))
+	_dust.emission_shape = CPUParticles3D.EMISSION_SHAPE_RING
+	_dust.emission_ring_axis = Vector3.UP
+	_dust.emission_ring_height = 0.05
+	_dust.emission_ring_radius = 0.5
+	_dust.emission_ring_inner_radius = 0.3
+	_dust.direction = Vector3.UP
+	_dust.spread = 25.0
+	_dust.gravity = Vector3(0, -2.0, 0)
+	_dust.initial_velocity_min = DUST_SPEED * 0.3
+	_dust.initial_velocity_max = DUST_SPEED * 0.6
+	_dust.radial_accel_min = DUST_SPEED
+	_dust.radial_accel_max = DUST_SPEED * 1.4
+	_dust.damping_min = 2.5
+	_dust.damping_max = 4.0
+	var fade := Gradient.new()
+	fade.set_color(0, Color.WHITE)
+	fade.set_color(1, Color.BLACK)
+	_dust.color_ramp = fade
+	_dust.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_dust.position = Vector3(at.x, 0.12, at.y)
+	add_child(_dust)
+	_dust.emitting = true
 
 
 func _build_ring() -> void:
@@ -562,6 +656,12 @@ func _end() -> void:
 		m.queue_free()
 	_motes.clear()
 	_ring.queue_free()
+	for n: Node in [_head, _pool, _shock, _dust]:
+		if n != null:
+			n.queue_free()
+	for mi in _tail:
+		mi.queue_free()
+	_tail.clear()
 	if _layer != null:
 		_layer.queue_free()
 		_layer = null
