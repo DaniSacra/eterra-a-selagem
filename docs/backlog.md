@@ -47,11 +47,17 @@ depois vão para `docs/gallery/`.
   - capturas antes e depois na GPU, na mesma câmera.
   - Começa depois de integrar o pente fino (o lote C mexe no `hall`). Dono: `environment-artist` com o `gameplay-engineer`
     para portas e colisão. Zero créditos Meshy.
-- **SL-02, Sala 02 Cripta dos Esquecidos (`crypt`), na fila.** Pacote `docs/art/ref/sala02_2026-11-25/eterra_sala02/`
+- **SL-01, estado (Daniel, 2026-11-25 noite): "não está ótima, mas está ok".** Entregue no exe `c7a0b441` e depois. Falta uma volta, SL-01b:
+  - o rio ficou ruim: refazer como canal na pintura, rebaixado, com beira de pedra e reflexo;
+  - as portas têm de ser bem maiores, com o bônus encaixado dentro do vão (PT-25-10);
+  - a pintura tem mais detalhe que a sala: mais adereços, mato, folhas, velas, rachaduras e camadas de fundo, sem tirar o miolo livre.
+  - Fazer junto da SL-02 (mesmo padrão de porta).
+- **SL-02, Sala 02 Cripta dos Esquecidos (`crypt`), na fila e liberada** (a SL-01 foi aceita como "ok"). Pacote `docs/art/ref/sala02_2026-11-25/eterra_sala02/`
   (`PROMPT-CLAUDE-CODE.md` manda). Em resumo: manter 24 x 21 m; direção C "Ossuário Abandonado" (nichos de ossos, velas,
   piso úmido); duas portas para cima separadas por alvenaria; fonte quebrada com queda d'água e poça andável no canto
   nordeste; miolo livre e passagens de pelo menos 2,4 m; manter os perigos da Cripta (placas, urnas de óleo, espinhos,
   frestas) e as variantes A e B. Começa só depois que o Daniel testar a SL-01 no exe e aprovar (pedido dele, 2026-11-25; reusa o padrão de portas dela).
+- **SV-R, Santuário da Vigília TOTALMENTE REFEITO** (Daniel, 2026-11-25). O hub inteiro será refeito do zero: planta, cenário, estações e caminhos. Hoje é o `HubPlan`/`HubLook`, ver `docs/reference/hub.md`. Esperar o pacote do Daniel no modelo da sala (pintura, planta com medidas, essencial x clima, paleta e luz, estações e NPCs). Até lá, nenhuma melhoria no Santuário atual.
 - **SL-03 em diante:** as outras 13 salas, na ordem que o Daniel mandar os pacotes. Depois da SL-01 aprovada, o padrão de
   portas da SL-01 vira a regra das salas novas.
 
