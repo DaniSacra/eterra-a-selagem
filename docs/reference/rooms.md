@@ -647,3 +647,5 @@ altar em no máximo
 
 ## Cura base e PT-6/PT-11 juntados (2026-11-24)
 PT-6 e PT-11 entraram na `arpg-3d` (merge sem conflito, dados regerados sem diferença). Junto veio a cura base por sala vencida: `Rooms._room_cleared` chama `Rooms.base_room_heal(room.kind, stage.room_heal_base)` (3 de vida em `COMBAT` e `MINIBOSS`, 0 nas demais), além do `hero_gifts.room_won()` (Respiro). Medida e tabela em `docs/design/balance.md`.
+
+- **PT-6b (2026-11-25)**: as portas em uso são as primeiras da lista `exits` (`exit_count`), então as duas primeiras ficam juntas no canto nordeste (4,2 m entre centros, fora da parede leste) e a terceira à esquerda; Altar com as duas na parede leste. `tests/test_door_corner.gd` trava a regra.
