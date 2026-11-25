@@ -103,7 +103,7 @@ func _on_landed(z: Ground.Zone) -> void:
 	zone = null
 	var cuts := game.horde.interrupts
 	var dealt := PlateFloor.strike(game, z, hazard.def.band_push_of(zone_band), hazard.def.band_source,
-		hazard.def.enemy_damage <= 0.0)
+		hazard.def.enemy_damage <= 0.0 or hazard.def.band_source == &"breath")
 	cut += game.horde.interrupts - cuts
 	pushed += int(dealt.z)
 	enemy_damage += dealt.x

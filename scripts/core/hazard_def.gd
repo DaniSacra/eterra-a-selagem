@@ -119,6 +119,14 @@ func rearm_at(progress: float) -> float:
 	return rearm_late if rearm_late > 0.0 and progress >= late_from else rearm
 
 
+## PLATES, RD2-08 (the slab that teaches, by itself): a slab idle for auto_cycle seconds arms on its own (warn seconds on the
+## floor as ever) when an enemy stands within auto_near m of it (0: whenever it is ready), only while the descent is at or
+## before auto_until (EncounterGen.progress). Nobody has to step on it: the pack that fights near it learns it for him.
+## auto_cycle 0: never on its own.
+@export var auto_cycle := 0.0
+@export var auto_near := 0.0
+@export var auto_until := 1.0
+
 ## A second hazard of the same room, started beside this one (Santuário B: the slabs and the stones of the vault; the
 ## Fendas B: the breath and the stones; the Cripta A: the slabs and the oil urns). Rooms counts both against the room's
 ## two warnings at once (combat_cadence.md 9.2 R9).

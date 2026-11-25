@@ -11,7 +11,7 @@ extends RefCounted
 enum Phase { CALM, ARM, FIRE, REST }
 ## What a step did: nothing, a pattern began to warm up (lay its warnings), it struck, it ended (rest).
 enum Event { NONE, ARMED, FIRED, ENDED }
-const PATTERNS: Array[StringName] = [&"sweep", &"comb", &"cut", &"checker", &"frame", &"islands"]
+const PATTERNS: Array[StringName] = [&"sweep", &"comb", &"cut", &"checker", &"frame", &"islands", &"herd"]
 ## The dense ones: more of the floor at once, only with few enemies standing.
 const DENSE: Array[StringName] = [&"comb", &"checker"]
 ## Seconds the ember of a struck tile lasts after the strike (spec 3.4: what the floor shows, RunesLook.set_tile).
@@ -39,6 +39,8 @@ var chevron := Vector2.ZERO
 ## added to the ember the floor shows, one step brighter than rest.
 var hint := PackedFloat32Array()
 var _rng: RandomNumberGenerator
+## RD2-07: where the enemies stand (the owner sets it each step): the herd pattern lights where the pack is.
+var bodies := PackedVector2Array()
 ## The sweep's row and way, the comb's and the checker's parity, the frame's ring.
 var _sweep := 0
 var _sweep_way := 1
@@ -268,6 +270,8 @@ func _draw(hero: Vector2, standing: int) -> void:
 			_ring = 1 - _ring
 		&"islands":
 			_islands()
+		&"herd":
+			_herd(hero)
 	_fit(def.dense_share if DENSE.has(pattern) else def.max_share)
 
 
@@ -292,6 +296,48 @@ func _cut(hero: Vector2) -> void:
 		lit[row * def.cols + c] = 1
 	for r in def.rows:
 		lit[r * def.cols + col] = 1
+
+
+## RD2-07 (the herd): up to two 2 x 2 blocks of tiles over where the most enemies stand (two blocks never touching), never
+## on the tile of the paladin (the runes hurt the pack that passes, not the one who dodges them); with no enemy standing
+## on a tile that may light, islands instead.
+func _herd(hero: Vector2) -> void:
+	var count := PackedInt32Array()
+	count.resize(def.cols * def.rows)
+	var mine := tile_at(hero)
+	for b in bodies:
+		var t := tile_at(b)
+		if t.x >= 0:
+			count[t.y * def.cols + t.x] += 1
+	var placed: Array[Vector2i] = []
+	for n in 2:
+		var best := Vector2i(-1, -1)
+		var best_n := 0
+		for r in def.rows - 1:
+			for c in def.cols - 1:
+				var at := Vector2i(c, r)
+				var clear := true
+				for p in placed:
+					if absi(p.x - at.x) <= 2 and absi(p.y - at.y) <= 2:
+						clear = false
+				if not clear or (mine.x >= c and mine.x <= c + 1 and mine.y >= r and mine.y <= r + 1):
+					continue
+				var k := 0
+				for dr in 2:
+					for dc in 2:
+						var i := (r + dr) * def.cols + c + dc + 0
+						k += count[i] if live[i] == 1 else 0
+				if k > best_n:
+					best_n = k
+					best = at
+		if best.x < 0:
+			break
+		placed.append(best)
+		for dr in 2:
+			for dc in 2:
+				lit[(best.y + dr) * def.cols + best.x + dc] = 1
+	if placed.is_empty():
+		_islands()
 
 
 ## Up to HazardDef.islands blocks of 2 x 2 tiles, never touching each other.

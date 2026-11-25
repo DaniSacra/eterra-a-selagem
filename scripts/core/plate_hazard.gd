@@ -46,6 +46,11 @@ var widths := PackedFloat32Array()
 
 ## Seconds of rest at this depth (HazardDef.rearm_at).
 var rearm := 5.0
+## RD2-08: whether the slabs arm on their own in this descent (HazardDef.auto_cycle, up to auto_until), the seconds each has
+## been ready (idle and awake), and how many armed so.
+var auto := false
+var ready_for := PackedFloat32Array()
+var armed_by_cycle := 0
 
 
 ## doors: the mouths (and zones) of the room's doors; a slab touching one never arms.
@@ -53,6 +58,7 @@ func _init(hazard: HazardDef, doors: Array[Rect2], is_awake := true, progress :=
 	def = hazard
 	rearm = def.rearm_at(progress)
 	awake = is_awake
+	auto = def.auto_cycle > 0.0 and progress <= def.auto_until
 	calm = def.start_delay
 	for r in def.plates:
 		from.append(Vector2(r.position.x, r.get_center().y))
@@ -74,6 +80,7 @@ func _init(hazard: HazardDef, doors: Array[Rect2], is_awake := true, progress :=
 	ember.resize(n)
 	stay.resize(n)
 	foe_stay.resize(n)
+	ready_for.resize(n)
 	for i in n:
 		var ok := 1
 		for d in doors:
@@ -124,6 +131,8 @@ func step(dt: float, hero: Vector2, bodies: PackedVector2Array, others := 0) -> 
 		ember[i] = maxf(0.0, ember[i] - dt)
 		match phase[i]:
 			Phase.IDLE:
+				if auto and awake and live[i] == 1:
+					ready_for[i] += dt  # (the calm counts: the first one is ready at auto_cycle, never before start_delay)
 				if not awake or calm > 0.0 or live[i] == 0:
 					stay[i] = 0.0
 					foe_stay[i] = 0.0
@@ -138,9 +147,15 @@ func step(dt: float, hero: Vector2, bodies: PackedVector2Array, others := 0) -> 
 				foe_stay[i] = foe_stay[i] + dt if enemy_on else 0.0
 				hero_on = hero_on and stay[i] >= def.dwell
 				enemy_on = enemy_on and foe_stay[i] >= def.dwell_of_enemy()
-				if (hero_on or enemy_on) and going + others < MOST_AT_ONCE:
+				var cycled := false
+				if auto:
+					cycled = ready_for[i] >= def.auto_cycle and _near(i, bodies)
+				if cycled and not (hero_on or enemy_on):
+					armed_by_cycle += 1
+				if (hero_on or enemy_on or cycled) and going + others < MOST_AT_ONCE:
 					stay[i] = 0.0
 					foe_stay[i] = 0.0
+					ready_for[i] = 0.0
 					phase[i] = Phase.ARM
 					left[i] = def.warn
 					by_hero[i] = 1 if hero_on else 0
@@ -169,6 +184,17 @@ func step(dt: float, hero: Vector2, bodies: PackedVector2Array, others := 0) -> 
 					phase[i] = Phase.IDLE
 					left[i] = 0.0
 	return {"armed": armed, "fired": struck}
+
+
+## RD2-08: whether an enemy stands within auto_near of slab i (no distance asked: always).
+func _near(i: int, bodies: PackedVector2Array) -> bool:
+	if def.auto_near <= 0.0:
+		return true
+	var r := bounds(i).grow(def.auto_near)
+	for b in bodies:
+		if r.has_point(b):
+			return true
+	return false
 
 
 ## What slab i shows now: x arming 0 to 1 over the warning (the light reaching from its edge to its middle), y the

@@ -300,6 +300,8 @@ altar em no máximo
   imune nem guardião); o aviso do chão sem dano não fere (`Ground.Zone.floor_own`: aterrissa e avisa `hazard_landed`
   mesmo sem dano, `hit_player` só com `power` acima de 0). Som `breath_arm` = `rune_arm`, `breath_fire` = `dodge`.
   `rooms[].hazard` `kind` `breath` com `pushed` e `cut` (a corrente também). Testes em `tests/test_breath.gd`.
+  **S (2026-11-25, RD2-04c)**: o respiro agora fere 10 só em inimigo (`BREATH_ENEMY` no `make_data.gd`, `enemy_damage` 10, `hero_damage` 0; o
+  corte da preparação continua, `BandFloor._on_landed`); chave "Derrotado por" é a do `breath` do `DefeatCause`.
 - **Coluna rachada que tomba (RP-09, a árvore que cai do Érebo do Hades II)**: `ArenaObstacle.hits_to_fall` (0 = nunca),
   `fall_length` 5, `fall_width` 1,2, `fall_time` 0,6, `fall_damage` 50 (`_cracked` no `make_data.gd`): Santuário A e B
   (15; -6) e (-9; 6), Jardim A (4,5; 7), Cripta B (6,5; -6). Só os golpes do herói contam (`Combat.reached`: forma,
@@ -598,7 +600,24 @@ altar em no máximo
 - Visual provisório: as duas usam a `CryptLook` (`l.look = &"crypt"`; a entrada da arcada acompanha `hero_spawn.y` quando `guardian_home`) e o ar
   do Santuário (`Ambience.BY_ARENA`). Falta arte própria (colunas e braseiros de guardião, laje de espinhos como peça) com o environment-artist.
 - Medida (robô, 12 sementes, `--start=miniboss`): ver `docs/design/rooms_progression.md`, "Salas dos guardiões".
+- **Lote S (2026-11-25)**: as 4 lajes de espinhos do Salão do Cavaleiro estão **encostadas nas paredes** onde a investida termina (meios oeste e
+  leste, parede sul dos dois lados da entrada, a 6 m dela): o Cavaleiro atordoado 1,5 s em cima de uma arma na hora e a pisada fere aos 1,2 s.
+  `WallMark` (`scripts/game/wall_mark.gd`, `WallAim` puro em `scripts/core/wall_aim.gd`, criado por `Rooms._start_hazard` na casa do Cavaleiro) põe
+  um anel âmbar (`Ground.add_round`, fonte `wallmark`, 0 de dano) onde a linha da investida encontra a parede, seguindo a linha enquanto ela
+  segue o herói, e conta as batidas (`rooms[].walls`: `wall_hits`, `marked`). Placeholder: o desenho final é do `environment-artist`.
 - **PT-2, medalhão no arco da porta** (`ArenaExit.medal_up` 3,8, `medal_in`, `sign_up` 0,9; `Arena.door_anchor/door_sign_y`): o disco da recompensa pende do arco da própria porta ou sobre a escada (`RewardGem.DOOR_SCALE` 0,8, haste do coroamento), no vão de 4 m e sob a coroa de 5,2 m, e o texto da `DoorSign` começa logo abaixo dele. `Arena.door_label` segue como ponto de uso e exclusão no chão. Imagem de cada recompensa, tipo de sala e anjo: `RewardIcon` (`assets/ui/rewards/<id>.png`, 512x512, ids em `LEIAME.txt`); sem arquivo vale o desenho de hoje. `tests/test_pt2_door_medallion.gd`.
+
+## Lote S, ritmo e perigos que ensinam (2026-11-25; `tests/test_long_waves.gd`, `test_plate_cycle.gd`, `test_hazard.gd`)
+- **Salas longas (RD2-06)**: `StageDef.long_depths` (2, 3, 4, 6 a 9): a luta vem sempre em 3 ondas mais leves (`EncounterGen.waves`, o mínimo de
+  corpos por onda vira `long_fewest` 2; a vida total é a mesma), a 3a com 1 elite de um tipo da luta da sala 4 em diante
+  (`EncounterGen.elite_last`, `long_elite_from`), os corpos nascem um a um a cada 0,45 a 0,75 s (`long_gap`) e a onda seguinte espera 0,8 s
+  (`long_delay`); só em luta comum (`Rooms._step_fight`), nunca nos guardiões.
+- **Laje de aprender por ciclo (RD2-08)**: `HazardDef.auto_cycle` 6 s, `auto_near` 2,5 m, `auto_until` 0,26 (até a sala 4): a laje parada há 6 s
+  arma sozinha, aviso 1,5 s, quando há inimigo a até 2,5 m; vale para as lajes da Cripta A/B, as que cedem das Fendas A e a do Jardim A
+  (`_teach` no `make_data.gd`). `PlateHazard.auto`, `armed_by_cycle`; `rooms[].hazard.armed_by_cycle`.
+- **Runas, bando (RD2-07)**: padrão novo `herd` (`ArenaHazard._herd`): até dois blocos 2 x 2 onde mais inimigos estão, nunca na casa do herói;
+  duas entradas em cada variante da lista de padrões; `ArenaHazard.bodies` é preenchido pelo `RuneFloor.step`.
+- **Raízes e planta (S-1)**: faixa 4,8 m (planta 3,2 x 3,5 m) e aviso 1,8 s; o fluxo da horda não mudou (decisão do Daniel: pergunta B2 aberta).
 
 ## PT-6, o herói entra por baixo e sai por cima (2026-11-23; `tests/test_pt6_rooms.gd`)
 - Regra: em toda sala o herói nasce na borda sul (a mais perto da câmera) olhando para o norte (`hero_spawn`, `hero_facing` (0,-1)) e as portas

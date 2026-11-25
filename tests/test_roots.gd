@@ -119,7 +119,7 @@ func test_where_the_roots_strike() -> void:
 		assert_eq(h.strips.size(), 2 if v == 0 else 1, "the two outer roots (B: one, and the plant)")
 		assert_almost_eq(h.dwell, 0.5, 0.001)
 		assert_almost_eq(h.dwell_of_enemy(), 0.05, 0.001, "an enemy only walks over it")
-		assert_almost_eq(h.warn, 1.5, 0.001)
+		assert_almost_eq(h.warn, 1.8, 0.001)  # (S-1: 1.8 s, was 1.5)
 		assert_almost_eq(h.rearm, 6.0, 0.001)
 		assert_almost_eq(h.push_out, 1.0, 0.001)
 		assert_almost_eq(h.hero_damage, 10.0, 0.001)
@@ -216,7 +216,7 @@ func test_in_a_real_room() -> void:
 	var e := game.horde.spawn(game.horde.def(&"skeleton"), foe_at, false)
 	var hp := game.player.hp
 	var struck_at := Vector2.INF
-	for i in roundi(5.0 / DT):
+	for i in roundi(8.0 / DT):
 		if struck_at == Vector2.INF:
 			game.player.place(at)
 			e.pos = foe_at

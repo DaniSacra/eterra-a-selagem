@@ -89,6 +89,15 @@ enum Tier { COMMON, HARD, SPECIAL }
 ## The next wave comes when this many of the last are left standing, after wave_delay seconds.
 @export var wave_remaining := 1
 @export var wave_delay := 0.5
+## RD2-06 (the short rooms' rhythm): in a fight at one of these depths the room always comes in 3 waves (the heads the
+## budget buys are the same, each wave lighter: the tier's fewest standing is long_fewest at most), the 3rd with an elite
+## when a kind of the fight has one (from long_elite_from, never before elite_from_depth), the heads rise one by one every long_gap seconds (min, max)
+## and the next wave waits long_delay seconds. Empty: as before.
+@export var long_depths: PackedInt32Array = PackedInt32Array()
+@export var long_fewest := 2
+@export var long_elite_from := 4
+@export var long_gap := Vector2(0.6, 1.0)
+@export var long_delay := 1.2
 
 @export_group("Rewards")
 ## The deck the doors' rewards are drawn from (RunMap.Reward, each card listed once per copy; C13-02, Hades II's

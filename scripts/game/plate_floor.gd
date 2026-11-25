@@ -203,6 +203,8 @@ func stop() -> void:
 func tally() -> Dictionary:
 	var out := {"kind": String(hazard.def.plate_source), "armed_by_hero": hazard.armed_by_hero, "armed_by_enemy": hazard.armed_by_enemy,
 		"hero_on_s": snappedf(hero_on, 0.1)}
+	if hazard.auto:
+		out["armed_by_cycle"] = hazard.armed_by_cycle  # RD2-08: the slabs that taught on their own
 	if not hazard.def.aims.is_empty():
 		out["slit_damage"] = snappedf(slit_damage, 0.1)
 		out["slit_struck"] = slit_struck
