@@ -1065,9 +1065,11 @@ func _stage() -> void:
 	st.gold_reward = 100
 	# Blessings (C13-03, C13-06, E3-01): rarity tried in turn (rare 10%, epic 5%; the legendary only by a trade), the
 	# guardian's (rare 90%, epic 7%; Hades II's 5% legendary is the Psalm, none yet), Elo 12% a card, trade 10% a card.
-	st.rarity_chance = [0.10, 0.05, 0.01] as Array[float]  # decision 10 of 2026-11-22: the legendary 1% in the common draw...
+	# SW-B2: 77.4 / 14.7 / 5.9 / 2 % (was 84.6 / 9.4 / 5 / 1), the epic and the legendary felt in every descent
+	st.rarity_chance = [0.16, 0.06, 0.02] as Array[float]  # decision 10 of 2026-11-22: a legendary in the common draw...
 	st.guardian_rarity_chance = [0.90, 0.07, 0.03] as Array[float]  # ...and 3% at the guardian
-	st.elo_chance = 0.12
+	st.elo_chance = 0.5  # SW-B2: the Elo's ceiling, reached with 10 Blessings; none below 3 (elo_ramp: Boon.ELO_RAMP)
+	st.elo_ramp = Boon.ELO_RAMP
 	st.trade_chance = 0.1
 	# a Psalm (E4): 10% of the cards once one can be offered, 5% at the guardian (guardian_spec.md 11.1)
 	st.psalm_chance = 0.1

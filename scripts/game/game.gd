@@ -881,7 +881,7 @@ func find_tool(tool: StringName) -> void:
 
 
 func _draw_cards(chances: Array[float] = Boon.RARITY_CHANCE, psalm_chance := -1.0) -> Array[BoonState.Card]:
-	var elo := rooms.stage.elo_chance if rooms else Boon.ELO_CHANCE
+	var elo := rooms.stage.elo_now(boons.owned().size()) if rooms else BoonState.elo_chance_at(boons.owned().size(), Boon.ELO_CHANCE)
 	var trade := rooms.stage.trade_chance if rooms else Boon.TRADE_CHANCE
 	var cards := boons.draw(_rng, 3, chances, elo, trade)
 	fill_psalm(cards, psalm_chance, _rng)

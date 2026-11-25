@@ -18,13 +18,16 @@ enum Rarity { COMMON, RARE, EPIC, LEGENDARY }
 ## Fixed multipliers (decision D-53 (a); Hades II draws them in a range, 1.3 to 1.5 and so on).
 const RARITY_MULT: Array[float] = [1.0, 1.5, 2.0, 2.5]
 ## Chances of a card, tried in turn from common (C13-03, Hades II's RarityChances): rare, epic, legendary; the last
-## that passes is the card's: the legendary 1% (decision 10 of 2026-11-22), the epic and rare as before.
+## that passes is the card's: 77.4 / 14.7 / 5.9 / 2% (SW-B2; the SWORN gives 79.5 / 14 and 6.5 for the top three).
 ## These are the defaults; a stage carries its own (StageDef.rarity_chance).
-const RARITY_CHANCE: Array[float] = [0.10, 0.05, 0.01]
+const RARITY_CHANCE: Array[float] = [0.16, 0.06, 0.02]
 ## The guardian's (Hades II's Erebus: rare 90, epic 7; the legendary 3%, decision 10 of 2026-11-22).
 const RARITY_CHANCE_GUARDIAN: Array[float] = [0.90, 0.07, 0.03]
-## Chance a card is an Elo when one can be formed (C13-06, Hades II's duo: 12%).
-const ELO_CHANCE := 0.12
+## The most a card's chance of being an Elo grows to when one can be formed (C13-06; SW-B2, the SWORN's duo: 0 to 50%).
+const ELO_CHANCE := 0.5
+## SW-B2: the share of ELO_CHANCE by Blessings held (index = how many; the last one holds after it): none below three,
+## then a straight climb to the whole at ten (SWORN: 0 at two Blessings, 50% at ten).
+const ELO_RAMP: Array[float] = [0.0, 0.0, 0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0]
 ## Chance a card offers to trade the Blessing on an action already held for another, one rarity higher and at the
 ## same level (E3-01, Hades II's ReplaceChance 0.1).
 const TRADE_CHANCE := 0.1

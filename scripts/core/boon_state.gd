@@ -116,6 +116,14 @@ static func roll_rarity(rng: RandomNumberGenerator, chances: Array[float] = Boon
 	return r
 
 
+## SW-B2: the chance of an Elo card with `held` Blessings in the hand: the ceiling times the ramp's share at that count
+## (the last share after the end of the list; none for an empty ramp).
+static func elo_chance_at(held: int, ceiling: float, ramp: Array[float] = Boon.ELO_RAMP) -> float:
+	if ramp.is_empty():
+		return 0.0
+	return ceiling * clampf(ramp[clampi(held, 0, ramp.size() - 1)], 0.0, 1.0)
+
+
 ## What a sequence of chances gives, rarity by rarity (common first): the share of cards of each in the long run.
 static func rarity_odds(chances: Array[float]) -> PackedFloat32Array:
 	var out := PackedFloat32Array([1.0, 0.0, 0.0, 0.0])
