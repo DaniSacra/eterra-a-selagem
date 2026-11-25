@@ -63,6 +63,13 @@ enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, SHOUT, FROST, ARC, DOME }
 ## special's 0.71 s), whatever the phase; only the dodge cuts it. Walking then cuts the rest of the clip. Below 0:
 ## until the recovery ends.
 @export var move_hold := -1.0
+## SW-C1 (SWORN's cancel masks, docs/design/sworn_rea_kingswood_2026-11-25.md 0.1): seconds after the move's press from
+## which each input may cut it. The dodge and the special (the burst, the Brado, the Investida) cut from the first frame
+## (0); a cut windup never lands. The next light: -1 is when the recovery ends (windup + glint + recovery), a number
+## before that makes the chain faster.
+@export var cancel_dodge_from := 0.0
+@export var cancel_special_from := 0.0
+@export var cancel_light_from := -1.0
 ## Seconds after the move ends in which the next input still continues the combo.
 @export var chain_window := 0.35
 ## The hit stop when it lands, as in Hades II (HitStop, GF-01): the world keeps its full speed for hit_stop_ms after

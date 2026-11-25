@@ -17,6 +17,19 @@ signal landed(node: ComboNode, tags: Array[StringName], hits: int)
 const COMBO_KEEP := 3.0
 ## Extra hit slow when a blow kills (Hades II: 0.04 s).
 const KILL_HOLD_MS := 40.0
+## SW-C3 (SWORN: 0.2 s on a single target, 0.075 s on an area; numbers in docs/design/combat_cadence.md): the pause a blow of
+## the attack makes when it lands, in ms of real time, by what it reached. The place to tune it playing. A blow on one body
+## weighs most, on a crowd least; the spin (the finisher) pauses a little longer than blows 1 and 2; the other moves (the
+## Brado, the Investida, the Omegas) keep their own number (ComboNode.hit_stop_ms).
+const PAUSE_ONE_MS := 120.0
+const PAUSE_ONE_FINISHER_MS := 160.0
+const PAUSE_TWO_MS := 90.0
+const PAUSE_TWO_FINISHER_MS := 110.0
+const PAUSE_CROWD_MS := 60.0
+## The part of the pause kept at full speed before the world drops (the blow is seen landing), then it runs at the move's hit_slow_scale.
+const PAUSE_WAIT_MS := 20.0
+## From this many bodies hit the blow counts as an area.
+const PAUSE_CROWD := 3
 ## Apogeu (CF-04): the last blow of a sequence that carries the sum lands with a hit stop of this many ms (and 40 more of slow),
 ## a heavier shake and its own sound. The Investida Implacável gives one frame of hit stop per body it goes through, three at most (CF2-05: 35 ms each, 105 ms the most).
 const APOGEE_STOP_MS := 90.0
@@ -340,7 +353,7 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	# (the blade's own sound plays when the move starts, ComboNode.sound: GF-11)
 	if not struck.is_empty():
 		# Hades II holds the hit slow a little longer when the blow kills
-		_hit_slow(node, KILL_HOLD_MS if kills > 0 else 0.0)
+		_hit_slow(node, KILL_HOLD_MS if kills > 0 else 0.0, struck.size())
 		if _cine_cd <= 0.0 and wants_slow_mo(struck.size(), kills):
 			_cine_cd = SLOW_MO_COOLDOWN
 			# (Fx starts it once the hit stop is over: GF-05)
@@ -531,7 +544,7 @@ static func cut_axis(shape: ComboNode.Shape, origin: Vector2, at: Vector2, away:
 ## The hit stop of a blow as Hades II plays it (GF-01): the world keeps its speed for the move's wait
 ## (ComboNode.hit_stop_ms), then slows to hit_slow_scale for hit_slow_ms (and extra_ms more when it kills), then comes
 ## back (HitStop). Never a freeze. One at most every HIT_SLOW_COOLDOWN seconds, as there.
-func _hit_slow(node: ComboNode, extra_ms: float = 0.0) -> void:
+func _hit_slow(node: ComboNode, extra_ms: float = 0.0, bodies: int = 1) -> void:
 	# the cooldown only keeps a blow from stopping twice (one swing's repeated contacts): a different blow of the chain
 	# (the 2nd after the 1st, the 3rd after the 2nd) always plays its own stop (CF2-01)
 	if node.hit_slow_ms <= 0.0 or (_slow_cd > 0.0 and node.id == _slow_node):
@@ -539,7 +552,25 @@ func _hit_slow(node: ComboNode, extra_ms: float = 0.0) -> void:
 	_slow_cd = HIT_SLOW_COOLDOWN
 	_slow_node = node.id
 	var k := Feel.live().hit_stop_scale
-	fx.blow_stop(node.hit_stop_ms * k, (node.hit_slow_ms + extra_ms) * k, node.hit_slow_scale)
+	var pause := pause_ms(node, bodies)
+	if pause <= 0.0:
+		fx.blow_stop(node.hit_stop_ms * k, (node.hit_slow_ms + extra_ms) * k, node.hit_slow_scale)
+		return
+	var wait := minf(PAUSE_WAIT_MS, pause)
+	fx.blow_stop(wait * k, (pause - wait + extra_ms) * k, node.hit_slow_scale)
+
+
+## SW-C3: the pause (ms) of a blow of the attack by the bodies it reached (PAUSE_*); 0 for the other moves (the Brado, the
+## Investida, the Omegas, the special's bolt), which keep ComboNode.hit_stop_ms.
+static func pause_ms(node: ComboNode, bodies: int) -> float:
+	if not node.has_tag(&"light") or node.has_tag(OMEGA_TAG) or node.has_tag(&"dash"):
+		return 0.0
+	var finisher := node.has_tag(&"finisher")
+	if bodies >= PAUSE_CROWD:
+		return PAUSE_CROWD_MS
+	if bodies == 2:
+		return PAUSE_TWO_FINISHER_MS if finisher else PAUSE_TWO_MS
+	return PAUSE_ONE_FINISHER_MS if finisher else PAUSE_ONE_MS
 
 
 ## Apogeu's blow lands with weight (CF-04): a longer hit stop than the spin's own, a heavier shake and kick, its own sound.

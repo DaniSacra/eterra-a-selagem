@@ -69,7 +69,7 @@ func test_attack_damage_and_timing_follow_hades() -> void:
 	var cut1 := ComboTree.find(tree.neutral, L)
 	var cut2 := cut1.following()[0]
 	var cut3 := cut2.following()[0]
-	assert_eq([cut1.damage, cut2.damage, cut3.damage], [15.0, 15.0, 20.0])
+	assert_eq([cut1.damage, cut2.damage, cut3.damage], [15.0, 15.0, 30.0])
 	# E1c: Hades II's staff (docs/design/hades2_feel_study.md): windup + glint, attack lock, legs held
 	assert_almost_eq(cut1.lead(), 0.08, 0.001)
 	assert_almost_eq(cut2.lead(), 0.13, 0.001)
