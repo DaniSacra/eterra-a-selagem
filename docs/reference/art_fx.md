@@ -423,6 +423,13 @@ A cena da primeira descida: só o que já existe (preto, uma estrela, a luz de E
   (metros no mundo), fio esmeralda sob o corte, `flash` leva ao marfim, tudo sob `cap` (teto do `ScreenTone`). Troca só o `material_override`
   das malhas pintadas por 0,4 s; a lâmina e o resto ficam ocultos até acabar. No `warmup_set.res` (entrada acrescentada por
   `tools/make_warmup.gd`, sem regerar o conjunto).
+- **Cometa (PT-25-7, 2026-11-25, sem captura ainda)**: o feixe do `RewardShaft` saiu da chegada. De 1,6 a 2,4 s (`FALL_TIME` 0,8, a estrela some em 0,4 s) um cometa dourado
+  (`BEAM_TINT`) cai em diagonal, vindo de `COMET_UP` 15 m acima e `COMET_SIDE` 9 m à esquerda da câmera: cabeça e 14 quadros de cauda
+  (`Fx.quad`, aditivo, sem textura nova), velocidade crescente (`COMET_EASE`). No impacto (`T_IMPACT` 2,4, o mesmo instante do selo e dos cristais):
+  clarão de tela (`FLASH_ALPHA` 0,5, 0,3 s), anel de luz no chão (`arrival_impact.gdshader`, 0,7 s, raio 3,4 m), anel de poeira
+  (`CPUParticles3D` de uma vez, 44 grãos), tremor `fx.shake(SHAKE)` (respeita a opção de tremor) e um brilho baixo em volta do herói até os 4,0 s.
+  O corte de baixo para cima do herói agora tem a borda dourada. Relógio: chaves novas `comet`, `impact`, `shock`, `flash`; `star_move` saiu.
+  Duração e controle (4,0 s) iguais. Para ver: `--arrival --arrival-hold=2.0` (cometa no ar), `2.5` (impacto, anel e poeira), `3.0`, `3.8` (herói se formando).
 - **Para ver sozinha** (sem o 3A1): `--arrival` toca sobre a primeira sala; `--arrival-hold=SEGUNDOS` congela o relógio num instante.
 
 ## Pente fino lote B (2026-11-25)

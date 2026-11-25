@@ -60,6 +60,7 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   (`assets/textures/seal/lion.svg`) escrito à mão em SVG por um assistente de IA (Claude), sem gerador de imagem; o
   campo de distância `lion_sdf.res` sai dele por `tools/make_seal_lion.gd`. Toda a cenografia da câmara é geometria e
   shader (`BossChamber`, `chamber_*.gdshader`), sem modelo nem textura gerada.
+- **Chegada do herói (PT-25-7)**: cometa de luz feito só de quadros e partículas de código e do shader `arrival_impact.gdshader`; nenhum modelo, textura ou áudio novo gerado por IA.
 
 - **Música (vai no jogo, E4-06, 2026-11-17)**: `audio/music/*.ogg`, composta e escrita em código (notas, timbres e
   mixagem em `tools/make_music.gd`) por um assistente de IA (Claude), como o leão do selo: nenhum gerador de música ou
