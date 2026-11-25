@@ -14,6 +14,9 @@ uniform vec3 stone_color : source_color = vec3(0.039, 0.11, 0.149);
 uniform vec3 edge_color : source_color = vec3(0.086, 0.47, 0.545);
 uniform float edge = 0.25;
 uniform float edge_height = 0.5;
+// soften > 0 (the bridge's far ruins): the cold edge fades out and the stone melts into the mist near its tops, so the
+// silhouette is a layer of fog, not a hard contour.
+uniform float soften = 0.0;
 // The mist the stone fades into; haze: the share of it in the stone (the farther the card, the more).
 uniform vec3 mist_color : source_color = vec3(0.07, 0.28, 0.31);
 uniform float haze = 0.35;
@@ -188,12 +191,13 @@ void fragment() {
 	float value = 1.0 - spread + 2.0 * spread * hash1(vec2(floor(bx), row + seed));
 	value *= 1.0 - joint * step(fract(y / course), 0.12);
 	vec3 col = stone_color * value;
-	col = mix(col, edge_color, edge * (1.0 - smoothstep(0.0, edge_height, under)));
+	col = mix(col, edge_color, edge * (1.0 - soften) * (1.0 - smoothstep(0.0, edge_height, under)));
 	float sunk = smoothstep(sink.x, sink.y, y);
 	vec3 mist = mist_color * mist_value(vec2(lat, y)) * mix(1.0, deep, sunk);
 	// mixed as painted (in the square root of the light), so a share of mist reads as that share; the cave's roof
 	// (dark 0) stays near black
 	float fade = max(haze, sunk) * mix(0.35, 1.0, step(0.5, dark));
+	fade = mix(fade, 1.0, soften * (1.0 - smoothstep(0.0, 4.5, under)) * 0.85);
 	col = mix(sqrt(col), sqrt(mist), fade);
 	col *= col;
 	if (solid < 0.5 && backdrop > 0.5) {

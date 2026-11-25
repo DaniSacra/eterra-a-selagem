@@ -282,6 +282,8 @@ const IMPACT_SIZE := 1.0
 ## A damage number starts this far above the point asked for (the top of the enemy's head): clear of the life bar
 ## that sits there (CrowdRenderer.BAR_ABOVE), a quarter of a meter above it.
 const NUMBER_LIFT := 1.0
+## Times a number that lands on another one on the screen is lifted above it (and no further).
+const NUMBER_STACK_TRIES := 4
 ## Which numbers show is NumberTally's: one per target that counts up while the hits keep coming, at most
 ## NUMBER_CROWD within NUMBER_CROWD_RADIUS meters and NumberTally.MAX_SHOWN on screen; finishers never hidden.
 const NUMBER_CROWD := NumberTally.CROWD
@@ -1914,7 +1916,13 @@ func animate(delta: float) -> void:
 			e.life = 0.2
 	else:
 		_tally.age(delta)
+	# oldest first, so a number already showing keeps its place and the newer one moves out of its way (NUMBER_STACK)
+	var order: Array[int] = []
 	for i in _labels.size():
+		order.append(i)
+	order.sort_custom(func(a: int, b: int) -> bool: return _tally.entries[a].life > _tally.entries[b].life)
+	var placed: Array[Rect2] = []
+	for i in order:
 		var l := _labels[i]
 		var e := _tally.entries[i]
 		if not e.shown or camera == null:
@@ -1934,6 +1942,18 @@ func animate(delta: float) -> void:
 		var pop := 1.0 + (NUMBER_POP - 1.0) * maxf(0.0, 1.0 - e.life / NUMBER_POP_TIME)
 		l.scale = Vector2.ONE * pop
 		l.position = sp - l.size * 0.5 * pop
+		# numbers over one another (several targets struck together): lift this one above the ones already placed
+		var box := Rect2(l.position, l.size * pop).grow_individual(-2.0, -4.0, -2.0, -4.0)
+		for _k in NUMBER_STACK_TRIES:
+			var hit := false
+			for q in placed:
+				if q.intersects(box):
+					box.position.y = q.position.y - box.size.y
+					hit = true
+			if not hit:
+				break
+		l.position.y = box.position.y - 4.0
+		placed.append(box)
 		l.modulate.a = 1.0 - smoothstep(0.45, NumberTally.LIFE, e.life)
 
 
