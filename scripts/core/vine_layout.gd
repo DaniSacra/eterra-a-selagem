@@ -1,65 +1,112 @@
 class_name VineLayout
 extends RefCounted
-## Where the Videira's roots stand on its 1280 x 720 stage (docs/art/vine_spec.md 1.1) and how the focus walks between them.
-## Pure data and arithmetic: a root is found by its branch and its step, so a branch with four nodes asks one more row in
-## BUD, not new code (Vida has five). Up is growing (step + 1), left and right pass to the neighbouring branch on the same step.
+## Where the Videira's figures stand in the sky (SW-M1, replaces the plant of vine_spec.md 1.1) and how the focus walks
+## between their stars. Each branch is one figure of Eterra drawn with the nodes it already has: Vida the lion (the hero's
+## sign), Provisão the chalice, Perseverança the sword; the seal and the vine are kept for branches to come. A node is found
+## by its branch and its step (the offsets below are in the order of purchase, growing from the figure's root outward), so a
+## branch with one more node asks one more row in NODES, not new code. Positions are WORLD px of the 1280 x 720 stage at
+## zoom 1 (the whole sky); SkyCamera magnifies them. Up is growing (step + 1), left and right pass to the neighbouring
+## branch on the same step. Pure data and arithmetic.
 
 const STAGE := Vector2(1280, 720)
-## The foot of the trunk where the three branches part, and the vase's centre.
-const FORK := Vector2(490, 500)
-const TRUNK_BASE := Vector2(490, 615)
-const VASE := Vector2(490, 660)
-## The bud centres by branch, in step order (spec 1.1).
-const BUD := {
-	&"vida": [Vector2(395, 452), Vector2(325, 370), Vector2(262, 288), Vector2(215, 206), Vector2(178, 124)],
-	&"provisao": [Vector2(490, 390), Vector2(490, 275), Vector2(490, 160)],
-	&"perseveranca": [Vector2(590, 450), Vector2(690, 330), Vector2(760, 200)],
-}
-## The clay tag's corner by branch and step (it stands outside the trunk: left for Vida, right for the others).
-const TAG := {
-	&"vida": [Vector2(245, 429), Vector2(175, 347), Vector2(112, 265), Vector2(65, 183), Vector2(28, 101)],
-	&"provisao": [Vector2(512, 367), Vector2(512, 252), Vector2(512, 137)],
-	&"perseveranca": [Vector2(612, 427), Vector2(712, 307), Vector2(782, 177)],
-}
-## Where each branch's name is written (above its last bud).
-const NAME_AT := {&"vida": Vector2(178, 78), &"provisao": Vector2(490, 112), &"perseveranca": Vector2(760, 150)}
+## The world point and the screen point of the whole sky (the camera at rest), and where a figure's centre stands when the
+## camera has closed on it (left of the reading panel).
+const SKY_CENTER := Vector2(640, 360)
+const READ_AT := Vector2(480, 395)
 const TAG_SIZE := Vector2(128, 46)
-const SAMPLES := 12
+## Gap between a star and its tag, and how far the tag reaches up from the star's level.
+const TAG_GAP := 20.0
+## The figures' centres in the whole sky (Vida left, Provisão high in the middle, Perseverança right).
+const CENTER := {&"vida": Vector2(400, 410), &"provisao": Vector2(640, 285), &"perseveranca": Vector2(880, 410)}
+## Each branch's stars, offsets from its centre, step 1 first.
+const NODES := {
+	&"vida": [Vector2(-50, 55), Vector2(-85, 0), Vector2(-55, -65), Vector2(0, -92), Vector2(55, -65)],
+	&"provisao": [Vector2(0, 45), Vector2(-65, -45), Vector2(65, -45)],
+	&"perseveranca": [Vector2(0, 50), Vector2(0, -15), Vector2(0, -95)],
+}
+## Where each figure starts (a star that is not a node: the first line comes from it).
+const ROOT := {&"vida": Vector2(0, 95), &"provisao": Vector2(0, 100), &"perseveranca": Vector2(0, 105)}
+## The faint strokes that finish the figure (not nodes, nothing to buy): offsets from the centre.
+const OUTLINE := {
+	&"vida": [[Vector2(55, -65), Vector2(85, 0), Vector2(50, 55), Vector2(0, 95)],
+		[Vector2(-28, -5), Vector2(-12, -12)], [Vector2(12, -12), Vector2(28, -5)],
+		[Vector2(-10, 25), Vector2(10, 25), Vector2(0, 38), Vector2(-10, 25)]],
+	&"provisao": [[Vector2(0, 45), Vector2(65, -45)], [Vector2(-65, -45), Vector2(-30, -52), Vector2(30, -52), Vector2(65, -45)],
+		[Vector2(-40, 100), Vector2(0, 92), Vector2(40, 100)]],
+	&"perseveranca": [[Vector2(-42, 50), Vector2(42, 50)],
+		[Vector2(-12, 40), Vector2(-12, -70), Vector2(0, -105), Vector2(12, -70), Vector2(12, 40)]],
+}
+## The light of each figure.
+const TINT := {&"vida": Color("f0b85a"), &"provisao": Color("b48cf0"), &"perseveranca": Color("78e6d2")}
+## What each figure is called (text keys).
+const NAME_KEY := {&"vida": &"vine_fig_vida", &"provisao": &"vine_fig_provisao", &"perseveranca": &"vine_fig_perseveranca"}
+## How far under the figure's centre its name stands in the whole sky, and the screen point of the name when closed on it.
+const NAME_BELOW := 140.0
+const NAME_READ_AT := Vector2(480, 74)
 
 
+static func center(branch: StringName) -> Vector2:
+	return CENTER[branch]
+
+
+static func tint(branch: StringName) -> Color:
+	return TINT[branch]
+
+
+static func places(branch: StringName) -> int:
+	return (NODES[branch] as Array).size()
+
+
+## A star's world place.
 static func bud(branch: StringName, step: int) -> Vector2:
-	var row: Array = BUD[branch]
-	return row[clampi(step - 1, 0, row.size() - 1)]
+	var row: Array = NODES[branch]
+	return CENTER[branch] + row[clampi(step - 1, 0, row.size() - 1)]
 
 
-static func tag(branch: StringName, step: int) -> Vector2:
-	var row: Array = TAG[branch]
-	return row[clampi(step - 1, 0, row.size() - 1)]
+static func root(branch: StringName) -> Vector2:
+	return CENTER[branch] + ROOT[branch]
 
 
-## The branch's stem from the fork through its buds, as a smooth curve (Catmull-Rom): SAMPLES points per leg, so the
-## bud of step k stands at index k * SAMPLES. Only `count` buds long (-1: every place of the branch in BUD), so a branch
-## with fewer nodes than places does not grow a stem to nowhere.
-static func path(branch: StringName, count := -1) -> PackedVector2Array:
-	var pts: Array[Vector2] = [FORK]
-	var row: Array = BUD[branch]
-	for p: Vector2 in row.slice(0, row.size() if count < 0 else mini(count, row.size())):
-		pts.append(p)
-	var out := PackedVector2Array()
-	for i in pts.size() - 1:
-		# the ends borrow a mirrored neighbour (no overshoot) and the stem leaves the fork upward
-		var p0 := pts[i - 1] if i > 0 else FORK + Vector2(0, 70)
-		var p3 := pts[i + 2] if i + 2 < pts.size() else pts[i + 1] * 2.0 - pts[i]
-		for s in SAMPLES:
-			out.append(_cr(p0, pts[i], pts[i + 1], p3, float(s) / SAMPLES))
-	out.append(pts[-1])
+## The figure's line of nodes from its root: the points the lit lines run through (root first, then step 1, 2, ...), only
+## `count` stars long (-1: every place), so a branch with fewer nodes than places does not draw a line to nowhere.
+static func chain(branch: StringName, count := -1) -> PackedVector2Array:
+	var out := PackedVector2Array([root(branch)])
+	var n := places(branch) if count < 0 else mini(count, places(branch))
+	for step in range(1, n + 1):
+		out.append(bud(branch, step))
 	return out
 
 
-static func _cr(p0: Vector2, p1: Vector2, p2: Vector2, p3: Vector2, t: float) -> Vector2:
-	var t2 := t * t
-	var t3 := t2 * t
-	return 0.5 * (2.0 * p1 + (p2 - p0) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 + (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3)
+## The faint strokes of the figure in world px.
+static func outline(branch: StringName) -> Array[PackedVector2Array]:
+	var out: Array[PackedVector2Array] = []
+	for stroke: Array in OUTLINE[branch]:
+		var pts := PackedVector2Array()
+		for p: Vector2 in stroke:
+			pts.append(CENTER[branch] + p)
+		out.append(pts)
+	return out
+
+
+## Which side of its star the tag hangs on: +1 right, -1 left (the stars left of the figure's middle keep it outside).
+static func tag_side(branch: StringName, step: int) -> int:
+	var row: Array = NODES[branch]
+	return -1 if (row[clampi(step - 1, 0, row.size() - 1)] as Vector2).x < 0.0 else 1
+
+
+## The tag's top-left corner for a star seen at the screen point `star`.
+static func tag_corner(branch: StringName, step: int, star: Vector2) -> Vector2:
+	var x := star.x + TAG_GAP if tag_side(branch, step) > 0 else star.x - TAG_GAP - TAG_SIZE.x
+	return Vector2(x, star.y - TAG_SIZE.y * 0.5)
+
+
+## The camera for a whole sky and for each figure.
+static func sky_camera() -> SkyCamera:
+	return SkyCamera.new(SKY_CENTER, SKY_CENTER)
+
+
+static func close_on(cam: SkyCamera, branch: StringName) -> void:
+	cam.close_on(CENTER[branch], READ_AT)
 
 
 ## The id the focus goes to from `id` in a direction (Vector2.UP grows, LEFT and RIGHT change branch on the same step);
@@ -81,7 +128,7 @@ static func neighbor(vine: Vine, id: StringName, dir: Vector2) -> StringName:
 	return there[mini(row, there.size() - 1)].id if not there.is_empty() else id
 
 
-## The first root to show with the focus: the lowest that can grow now (Vida first), else the first of Vida.
+## The first star to show with the focus: the lowest that can grow now (Vida first), else the first of Vida.
 static func first_focus(vine: Vine, data: Dictionary) -> StringName:
 	for row in 6:
 		for branch in vine.branches():

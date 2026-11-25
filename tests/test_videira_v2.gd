@@ -115,22 +115,35 @@ func test_the_forjador_is_only_the_forja_again() -> void:
 
 # ---------- the screen ----------
 
-func test_the_nine_buds_stand_on_the_table_of_the_spec_with_a_tag_beside_each() -> void:
+func test_the_eleven_stars_stand_on_the_sky_of_the_layout_with_a_tag_beside_each() -> void:
 	var s := _screen(_data(100, 30))
 	assert_eq(s.buds.size(), 11, "Vida has 5 steps since the redesign (Respiro, Ainda de Pé)")
 	assert_eq(s.tags.size(), 11)
-	var want := {&"vida_1": Vector2(395, 452), &"vida_3": Vector2(262, 288), &"viajante": Vector2(490, 390),
-		&"reserva": Vector2(490, 160), &"prata": Vector2(590, 450), &"materiais": Vector2(760, 200)}
-	for id: StringName in want:
-		assert_lt(((s.buds[id] as Control).position + (s.buds[id] as Control).size * 0.5).distance_to(want[id]), 5.0, "%s on its place" % id)
-	assert_eq((s.tags[&"estoque"] as Control).position, Vector2(512, 252))
-	var all := []
-	for id: StringName in s.tags:
-		all.append(Rect2((s.tags[id] as Control).position, VineLayout.TAG_SIZE))
-	for i in all.size():
-		assert_false(VineScreen.PANEL_RECT.intersects(all[i]), "a tag clear of the panel")
-		for j in range(i + 1, all.size()):
-			assert_false((all[i] as Rect2).intersects(all[j]), "no tag over another")
+	# the whole sky: each star's hit square on its world place (the camera at rest is the identity)
+	for n in s.vine.catalog:
+		var b := s.buds[n.id] as Control
+		assert_lt((b.position + b.size * 0.5).distance_to(VineLayout.bud(n.branch, n.step)), 1.0, "%s on its place" % n.id)
+		assert_false((s.tags[n.id] as Control).visible, "no tags in the whole sky")
+	# closed on a figure: its tags clear of each other, of the panel and inside the stage
+	for branch in Vine.BRANCHES:
+		s.zoom_in(branch)
+		s.cam.snap()
+		s._place()
+		var all: Array[Rect2] = []
+		for n in s.vine.nodes_of(branch):
+			var t := s.tags[n.id] as Control
+			assert_true(t.visible)
+			var r := Rect2(t.position, VineLayout.TAG_SIZE)
+			assert_true(Rect2(Vector2.ZERO, VineLayout.STAGE).encloses(r), "%s inside the stage" % n.id)
+			assert_false(VineScreen.PANEL_RECT.intersects(r), "%s clear of the panel" % n.id)
+			var star := Rect2(s.cam.to_screen(VineLayout.bud(branch, n.step)) - Vector2(12, 12), Vector2(24, 24))
+			for o in all:
+				assert_false(o.intersects(r), "%s over another tag" % n.id)
+			assert_false(r.intersects(star), "%s over its own star" % n.id)
+			all.append(r)
+		# every star of the figure is on the left side of the panel
+		for n in s.vine.nodes_of(branch):
+			assert_lt(s.cam.to_screen(VineLayout.bud(branch, n.step)).x, VineScreen.PANEL_RECT.position.x - 150.0)
 
 
 func test_a_tag_says_the_name_and_the_price_in_the_right_material() -> void:
@@ -144,9 +157,10 @@ func test_a_tag_says_the_name_and_the_price_in_the_right_material() -> void:
 func test_the_panel_reads_what_it_does_what_it_costs_and_what_you_have() -> void:
 	var s := _screen(_data(30, 2))
 	assert_eq(s.shown, &"vida_1", "opens on the first root that can grow")
+	assert_eq(s.zoomed, &"", "on the whole sky")
 	assert_eq((s.find_child("name", true, false) as Label).text, T.t(&"vine_vida_1"))
 	assert_eq((s.find_child("state", true, false) as Label).text, T.t(&"vine_can"))
-	assert_string_contains((s.find_child("life", true, false) as RichTextLabel).text, "5", "the branch's life total")
+	assert_string_contains((s.find_child("values", true, false) as RichTextLabel).text, "+5", "now and next")
 	assert_eq((s.find_child("cost", true, false) as MaterialCount).amount, 5)
 	assert_eq((s.find_child("have", true, false) as Label).text, T.t(&"vine_have", {"n": 30}))
 	assert_true(s.water_button.text.contains("Regar") and s.water_button.text.contains("5"), "the price on the button")
@@ -157,7 +171,9 @@ func test_the_panel_reads_what_it_does_what_it_costs_and_what_you_have() -> void
 	assert_eq(s.water_button.text, T.t(&"vine_short_n", {"n": 1, "m": "Memória"}), "the reason in place of the verb")
 	s._show(&"vida_2")
 	assert_eq((s.find_child("state", true, false) as Label).text, T.t(&"vine_locked", {"a": T.t(&"vine_vida_1")}))
-	assert_string_contains((s.find_child("life", true, false) as RichTextLabel).text, "10", "Seiva and Caule together")
+	assert_true((s.find_child("needs", true, false) as Label).visible, "says what comes first")
+	assert_string_contains((s.find_child("needs", true, false) as Label).text, T.t(&"vine_vida_1"))
+	assert_string_contains((s.find_child("values", true, false) as RichTextLabel).text, "+10", "Seiva and Caule together")
 
 
 func test_watering_asks_nothing_spends_once_and_grows_the_plant() -> void:
@@ -179,7 +195,7 @@ func test_watering_asks_nothing_spends_once_and_grows_the_plant() -> void:
 	assert_eq((s.find_child("state", true, false) as Label).text, T.t(&"vine_owned"))
 	assert_eq(T.t(&"vine_owned"), "Já cresceu")
 	assert_true((s.tags[&"vida_1"] as VineTag).owned, "the tag turned over")
-	assert_eq(s.plant.states[&"vida_1"], Vine.State.OWNED)
+	assert_eq(s.sky.states[&"vida_1"], Vine.State.OWNED)
 	assert_eq(((s.find_child("purse", true, false)).get_node("silver") as MaterialCount).amount, 25, "the balance follows")
 	assert_eq(s.vine.state(d, &"vida_2"), Vine.State.AVAILABLE, "the next root of the branch opens")
 	assert_string_contains((s.find_child("count", true, false) as Label).text, "1")
@@ -212,7 +228,10 @@ func test_keys_and_the_mouse_walk_the_buds_and_reach_regar() -> void:
 	var b := s.buds[&"vida_1"] as Button
 	assert_eq(b.get_node(b.focus_neighbor_top), s.buds[&"vida_2"], "up grows")
 	assert_eq(b.get_node(b.focus_neighbor_right), s.buds[&"viajante"], "right passes to the next branch on the same step")
-	# a click on a bud that can grow sends the focus to Regar; cancel goes back to the bud
+	# a click in the whole sky opens the figure; a click on a star that can grow then sends the focus to Regar
+	(s.buds[&"vida_1"] as Button).pressed.emit()
+	assert_eq(s.zoomed, &"vida", "the first click closes the camera on the figure")
+	assert_eq(s.pending, &"", "and buys nothing")
 	(s.buds[&"vida_1"] as Button).pressed.emit()
 	await wait_process_frames(2)
 	assert_eq(s.pending, &"vida_1")
@@ -265,17 +284,15 @@ func test_the_first_focus_is_the_lowest_root_that_can_grow() -> void:
 	assert_eq(VineLayout.first_focus(v, d), &"viajante", "the first rows come before Vida's third")
 
 
-func test_a_branch_path_passes_through_its_buds() -> void:
+func test_a_figure_chain_runs_from_its_root_through_its_stars() -> void:
 	for b in Vine.BRANCHES:
-		var pts := VineLayout.path(b)
-		assert_eq(pts[0], VineLayout.FORK)
-		for step in range(1, (VineLayout.BUD[b] as Array).size() + 1):
-			assert_lt(pts[step * VineLayout.SAMPLES].distance_to(VineLayout.bud(b, step)), 0.01)
-		var hull := Rect2(VineLayout.FORK, Vector2.ZERO)
-		for step in range(1, (VineLayout.BUD[b] as Array).size() + 1):
-			hull = hull.expand(VineLayout.bud(b, step))
+		var pts := VineLayout.chain(b)
+		assert_eq(pts[0], VineLayout.root(b))
+		assert_eq(pts.size(), VineLayout.places(b) + 1)
+		for step in range(1, VineLayout.places(b) + 1):
+			assert_eq(pts[step], VineLayout.bud(b, step))
 		for p in pts:
-			assert_true(hull.grow(45.0).has_point(p), "%s does not run past its buds" % b)
+			assert_lt(p.distance_to(VineLayout.center(b)), 125.0, "%s stays in its figure" % b)
 
 
 func test_the_life_total_and_what_is_missing_come_from_the_data() -> void:
@@ -321,22 +338,23 @@ func test_the_planting_shows_the_stages_bought_and_only_those() -> void:
 	assert_eq(v.stages_shown(), 0)
 
 
-func test_vida_has_places_for_five_steps_inside_the_stage_and_clear_of_each_other() -> void:
-	assert_eq((VineLayout.BUD[&"vida"] as Array).size(), 5, "Respiro and Ainda de Pé are steps 4 and 5 of Vida")
-	var tags: Array[Rect2] = []
-	for b in VineLayout.BUD:
-		assert_eq((VineLayout.TAG[b] as Array).size(), (VineLayout.BUD[b] as Array).size(), "a tag for each bud")
-		for step in range(1, (VineLayout.BUD[b] as Array).size() + 1):
-			var r := Rect2(VineLayout.tag(b, step), VineLayout.TAG_SIZE)
-			assert_true(Rect2(Vector2.ZERO, VineLayout.STAGE).encloses(r), "%s %d tag inside the stage" % [b, step])
-			assert_false(VineScreen.PANEL_RECT.intersects(r), "%s %d tag clear of the panel" % [b, step])
-			for o in tags:
-				assert_false(o.intersects(r), "%s %d tag over another" % [b, step])
-			tags.append(r)
-		assert_gt(VineLayout.NAME_AT[b].y, 40.0, "the name stays under the stage's top")
+func test_every_node_has_a_star_and_the_figures_do_not_touch_in_the_sky() -> void:
+	assert_eq(VineLayout.places(&"vida"), 5, "Respiro and Ainda de Pé are steps 4 and 5 of Vida")
+	var v := Vine.new(Vine.load_catalog())
+	for b in Vine.BRANCHES:
+		assert_eq(VineLayout.places(b), v.nodes_of(b).size(), "a star for each node of %s, no more" % b)
+		assert_true(VineLayout.NAME_KEY.has(b))
+		assert_ne(T.t(VineLayout.NAME_KEY[b]), String(VineLayout.NAME_KEY[b]), "the figure has a name")
+	var boxes: Array[Rect2] = []
+	for b in Vine.BRANCHES:
+		var r := Rect2(VineLayout.center(b) - Vector2(115, 125), Vector2(230, 250))
+		assert_true(Rect2(Vector2.ZERO, VineLayout.STAGE).encloses(r), "%s inside the stage" % b)
+		for o in boxes:
+			assert_false(o.intersects(r), "%s clear of another figure" % b)
+		boxes.append(r)
 
 
-func test_a_path_is_only_as_long_as_the_nodes_it_has() -> void:
-	assert_eq(VineLayout.path(&"vida", 3).size(), 3 * VineLayout.SAMPLES + 1)
-	assert_eq(VineLayout.path(&"vida").size(), 5 * VineLayout.SAMPLES + 1)
-	assert_eq(VineLayout.path(&"vida", 9).size(), 5 * VineLayout.SAMPLES + 1, "no more than the places")
+func test_a_chain_is_only_as_long_as_the_nodes_it_has() -> void:
+	assert_eq(VineLayout.chain(&"vida", 3).size(), 4)
+	assert_eq(VineLayout.chain(&"vida").size(), 6)
+	assert_eq(VineLayout.chain(&"vida", 9).size(), 6, "no more than the places")
