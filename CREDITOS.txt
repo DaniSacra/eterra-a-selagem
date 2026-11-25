@@ -5,7 +5,7 @@ EQUIPE
 Criação e direção: Daniel Sacramento.
 
 ÁUDIO
-Músicas para escolher no título, nas salas e em Morvath: "Tempting Secrets", "Oppressive Gloom", "The Descent" e "Clash Defiant", de Kevin MacLeod (incompetech.com), licença Creative Commons Atribuição 4.0 (creativecommons.org/licenses/by/4.0).
+Músicas para escolher no título, nas salas e em Morvath: "Tempting Secrets", "Thatched Villagers", "Oppressive Gloom", "The Descent", "Heroic Age", "Ossuary 5 - Rest" e "Clash Defiant", de Kevin MacLeod (incompetech.com), licença Creative Commons Atribuição 4.0 (creativecommons.org/licenses/by/4.0).
 Marcha das Lâminas, Tambores do Fundo, Pulso de Ferro, Morvath, a Batalha, Catacumbas e Morvath (originais), temas dos Salmos e da vitória: compostos e sintetizados para o jogo, nota por nota, em código do próprio projeto.
 Golpes, ossos, escudo, panos e passos: Impact Sounds e RPG Audio, de Kenney (kenney.nl), CC0.
 Sopro da lâmina: Swish, de Iwan Gabovitch (qubodup, opengameart.org), CC0.

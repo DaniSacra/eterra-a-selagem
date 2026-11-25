@@ -232,7 +232,7 @@ func test_the_hub_menu_has_como_jogar() -> void:
 
 func test_the_hub_is_a_place_of_its_own_with_the_titles_piece() -> void:
 	assert_true(MusicCatalog.PLACES.has(MusicCatalog.HUB))
-	assert_eq(MusicCatalog.DEFAULT[MusicCatalog.HUB], MusicCatalog.DEFAULT[MusicCatalog.TITLE], "the title's piece by default")
+	assert_eq(MusicCatalog.DEFAULT[MusicCatalog.HUB], &"thatched_villagers", "its own piece by default (MUS-2)")
 	assert_eq(MusicCatalog.choices(MusicCatalog.HUB), MusicCatalog.choices(MusicCatalog.TITLE), "any piece the title may play")
 	assert_true(SaveData.defaults().options.has("music_hub"))
 	assert_eq(T.t(&"music_place_hub"), T.t(&"hub_name"), "named by the place's one key")

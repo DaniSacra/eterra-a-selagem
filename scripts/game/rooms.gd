@@ -432,6 +432,7 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 	# the rooms' music (E4-06): the fight's layer comes in for a fight and goes when it is won; Morvath has his own
 	if room.kind != RunMap.Kind.BOSS:
 		var fighting := room.kind in [RunMap.Kind.COMBAT, RunMap.Kind.MINIBOSS, RunMap.Kind.TRIAL]
+		Music.room_depth = room.depth
 		Music.play(&"catacombs", Music.FIGHT if fighting else Music.WALK)
 	Music.ambience(game.arena.id if game.arena.layout != null else &"hall")  # the room's air, crossfaded (E6, C15-04)
 	_stop_runes()
@@ -722,6 +723,7 @@ func _warn_exits() -> void:
 	for i in next_rooms.size():
 		game.arena.light_exit(i, true, GOLD_COLOR)
 	Audio.play(&"ult_ready")
+	Music.room_won()  # MUS-2: the calm transition, until the next room
 
 
 ## An enemy fell: in a fight it may leave its share of the fight's gold (GoldPurse), shown where it fell. An elite

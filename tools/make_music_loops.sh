@@ -8,6 +8,9 @@
 #   "Oppressive Gloom"  -> audio/music/catacombs_1.ogg (rooms, the walk)
 #   "The Descent"       -> audio/music/catacombs_2.ogg (rooms, the fight)
 #   "Clash Defiant"     -> audio/music/morvath_1..4.ogg (Morvath, one section of the same piece per phase)
+#   "Thatched Villagers"-> audio/music/thatched_villagers.ogg (the Santuario, 44 bars of 93.75 bpm)
+#   "Heroic Age"        -> audio/music/heroic_age.ogg  (the rooms, walk and fight alike, 48 bars of 130 bpm)
+#   "Ossuary 5 - Rest"  -> audio/music/room_won.ogg    (the transition: 16 s of it, faded in and out, over the room won)
 # A loop of a piece with a tempo is a whole number of bars (bpm from incompetech's catalog, 4/4), so the music after
 # the cut is the music before it; the seam is an equal-power crossfade of XFADE bars of the next bars into the head.
 # Every file is brought to a set loudness (LUFS, ffmpeg ebur128) so the E6 mix (tests/test_mix.gd) keeps its levels.
@@ -40,6 +43,28 @@ encode() {
 	echo "$(basename "$3"): $(printf '%.1f' "$now") LUFS + $(printf '%.1f' "$gain") dB"
 }
 
+mus2() {
+	# the Santuario (MUS-2, 2026-11-25): "Thatched Villagers", 44 bars from the start (bpm found by the envelope's
+	# autocorrelation; the loop that meets itself best in the whole piece), 2 bars of crossfade into the head
+	BAR=$(echo "4 * 60 / 93.75" | bc -l)
+	LEN=$(echo "${HUB_BARS:-44} * $BAR" | bc -l)
+	loop "$SRC/Thatched Villagers.mp3" 0 "$LEN" "$(echo "2 * $BAR" | bc -l)" "$WORK/thatched_villagers.wav"
+	encode "$WORK/thatched_villagers.wav" -22 "$OUT/thatched_villagers.ogg"
+
+	# the rooms' second piece: "Heroic Age" (130 bpm), 48 bars, played for the walk and the fight alike
+	BAR=$(echo "4 * 60 / 130" | bc -l)
+	loop "$SRC/Heroic Age.mp3" 0 "$(echo "48 * $BAR" | bc -l)" "$(echo "2 * $BAR" | bc -l)" "$WORK/heroic_age.wav"
+	encode "$WORK/heroic_age.wav" -20 "$OUT/heroic_age.ogg"
+
+	# the transition: the steady stretch of "Ossuary 5 - Rest" (64 s to 80 s), 2 s in and 4 s out (it plays once over the
+	# room won, the room's music ducked under it, until the next room begins)
+	ffmpeg -v error -y -ss 64 -t 16 -i "$SRC/Ossuary 5 - Rest.mp3" -af "afade=t=in:d=2:curve=qsin,afade=t=out:st=12:d=4:curve=qsin" \
+		-ar 44100 -c:a pcm_s16le "$WORK/room_won.wav"
+	encode "$WORK/room_won.wav" -22 "$OUT/room_won.ogg"
+}
+# MUS2_ONLY=1 makes just the three pieces of MUS-2 (the folder needs only their mp3s)
+[ -n "${MUS2_ONLY:-}" ] && { mus2; exit 0; }
+
 # the title: the opening hit plays once, then the loop from LOOP_FROM to TITLE_END, its last XT seconds fading into
 # the seconds before LOOP_FROM (Music.TRACKS.title.loop_from must match)
 LOOP_FROM=16
@@ -70,3 +95,5 @@ for spec in "43:-22" "212:-21" "153:-20" "84:-19"; do
 	encode "$WORK/morvath_$i.wav" "$target" "$OUT/morvath_$i.ogg"
 	i=$((i + 1))
 done
+
+mus2

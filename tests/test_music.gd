@@ -118,8 +118,8 @@ func test_every_track_is_there_in_time_and_small() -> void:
 	var bounds := {&"classic_catacombs": Vector2(60, 200), &"classic_morvath": Vector2(45, 120), &"tempting_secrets": Vector2(60, 200),
 		&"gloom_descent": Vector2(60, 200), &"clash_defiant": Vector2(45, 120), &"victory": Vector2(6, 15),
 		# MUS-1: the fight music, 60 to 100 s in whole bars
-		&"blade_march": Vector2(60, 100), &"deep_drums": Vector2(60, 100), &"iron_pulse": Vector2(60, 100), &"morvath_battle": Vector2(60, 100)}
-	for id: StringName in MusicCatalog.PIECES:
+		&"thatched_villagers": Vector2(100, 130), &"heroic_age": Vector2(80, 100), &"blade_march": Vector2(60, 100), &"deep_drums": Vector2(60, 100), &"iron_pulse": Vector2(60, 100), &"morvath_battle": Vector2(60, 100)}
+	for id: StringName in MusicCatalog.PIECES.keys().filter(MusicCatalog.is_real):
 		assert_true(cat.has(id), "piece %s" % id)
 		var spec := MusicCatalog.spec(id)
 		if spec.get("sting", false):
@@ -153,7 +153,7 @@ func test_every_track_is_there_in_time_and_small() -> void:
 ## sample to its first is no larger than the jumps inside it, and its last and first quarter second are about as loud
 ## (no fade out, no gap, no restart heard).
 func test_our_layered_loops_meet_themselves() -> void:
-	for id: StringName in MusicCatalog.PIECES:
+	for id: StringName in MusicCatalog.PIECES.keys().filter(MusicCatalog.is_real):
 		var spec := MusicCatalog.spec(id)
 		if not spec.get("loop", false) or spec.get("solo", false) or int(spec.layers) < 2:
 			continue
@@ -177,7 +177,7 @@ func test_no_track_has_two_seconds_of_silence() -> void:
 	# every layer that may be heard alone (each section of a solo piece; ours only the first, the walk and Morvath's
 	# first phase, the others play over it), the stings and the victory up to the moment it hands over
 	var cat := Music.catalog()
-	for id: StringName in MusicCatalog.PIECES:
+	for id: StringName in MusicCatalog.PIECES.keys().filter(MusicCatalog.is_real):
 		var spec := MusicCatalog.spec(id)
 		if not spec.get("loop", false):
 			continue
@@ -186,7 +186,7 @@ func test_no_track_has_two_seconds_of_silence() -> void:
 			assert_lt(longest_quiet(x), SILENCE_S, "%s layer %d: quiet stretch" % [id, i + 1])
 	var victory := decode(Music.stream_of(&"victory", 0), float(cat[&"victory"].length) - MusicMix.HANDOVER)
 	assert_lt(longest_quiet(victory), SILENCE_S, "victory: quiet stretch")
-	for id: StringName in MusicCatalog.PIECES:
+	for id: StringName in MusicCatalog.PIECES.keys().filter(MusicCatalog.is_real):
 		if MusicCatalog.spec(id).get("sting", false):
 			var x := decode(Music.stream_of(id, 0), float(cat[id].length) - 3.0)
 			assert_lt(longest_quiet(x), SILENCE_S, "%s: quiet stretch" % id)

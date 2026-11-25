@@ -13,7 +13,7 @@ signal closed
 const TOUR := 20.0
 ## Level 0 of a piece with phases: all of them in turn.
 const ALL := 0
-const ROW := 30.0  # MUS-1: 14 pieces in the list (was 38 with 10), still inside 1280 x 720
+const ROW := 27.0  # MUS-1: 14 pieces in the list (was 38 with 10); MUS-2: 17 (was 30), still inside 1280 x 720
 const LEFT_WIDTH := 340.0
 const RIGHT_WIDTH := 780.0
 ## The name of a piece in the list (one line; the longest, the rooms' recorded pair, is about 410 px at 19).
@@ -76,7 +76,8 @@ func _build() -> void:
 	cols.add_child(right)
 	right.add_child(UiKit.section(T.t(&"music_room_list")))
 	for id: StringName in MusicCatalog.PIECES:
-		right.add_child(_piece_row(id))
+		if MusicCatalog.is_real(id):
+			right.add_child(_piece_row(id))
 	var back := UiKit.button(T.t(&"back"), func() -> void: closed.emit(), 220)
 	back.name = "back"
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
