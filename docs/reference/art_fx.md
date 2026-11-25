@@ -377,3 +377,15 @@ Para conferir (ver o relatório): a distorção do Brado (refração de tela) n�
 | Clarão e luz em todo acerto (`Fx.contact(..., level)`, `CONTACT_LIGHT`) | luz só nos pesados | golpes 1, 2, 3: energia 1,0 / 1,4 / 1,8, alcance 3 m, 0,08 s; 4 lascas brancas de 0,15 s; o ponto é o peito do atingido, 0,15 m para o lado da lâmina (era 0,3) |
 | Pó de osso da morte (`BONE_DUST_AT`) | nascia a 0,3 m do chão e subia | nasce a 1,0 m e desce de leve (-0,25) |
 Testes novos em `tests/test_fx_on_hit.gd`: `test_plain_contact_lights_and_sparks_at_the_target`, `test_brado_echo_ring_comes_later`.
+
+## Lote E1 (2026-11-25; só visual, sem captura na GPU ainda)
+| Item | O quê (onde) |
+|---|---|
+| E1-1 | Faíscas do acerto: velocidade 5 para 2,2 m/s e vida 0,15 para 0,12 s (`CONTACT_SPARK_SPEED`, alcance no máximo 0,3 m), cor marfim-menta (`CONTACT_SPARK_TINT`), não mais branco puro. |
+| E1-2 | Corte do herói (`blade > 0`): esmeralda de matiz 150 (`SLASH_EMERALD`, sem o puxão para o ouro), pico de tela 222 (`SLASH_STYLE_SCREEN`), fio de 3 px x 1,0 / 1,2 / 1,6 por golpe (`SLASH_EDGE_LEVELS`, pelo tempo pedido: 0,12 / 0,16 / 0,3), ponta a 2,9 m (`BLADE_REACH`, era 2,6), núcleo apagado a menos de 1 m do corpo (`body_clear_m` em `slash.gdshader`). |
+| E1-3 | Giro (largura >= 300 graus): anel esmeralda na cintura com `SLASH_MIN_LIFE + 0,034 s` (`SPIN_RING_EXTRA`). |
+| E1-4 | Rastro da Onda: faixa de no mínimo 1,4 m (`WAVE_BAND_MIN`), `Fx.thrust(..., band = true)`: ponta a 0,85 da base, miolo claro, fio esmeralda. |
+| E1-5 | Largura do rastro 1,0 / 1,2 / 1,6 (item 2); a luz pontual por golpe já existia (`CONTACT_LIGHT`). |
+| E1-6 | Números: pop 1,4x em 0,12 s, contorno 2 px, grandes em ouro velho (`NUMBER_BIG_COLOR`) e 29 px, espalhados de lado até 0,45 m. A altura de nascimento ficou em 1,0 m (o teste de `test_fx_on_hit` exige acima da barra). |
+| E1-7 | Anel do herói sempre petróleo; o amparo do Brado acende um fio esmeralda por dentro (`inner`, `inner_color` em `hero_ring.gdshaderinc`). Regra na §2.1 do `art_direction.md`. |
+| E1-8 | "!" de aviso em ouro velho (0,98; 0,76; 0,28), matiz 41, com contorno de tinta. |

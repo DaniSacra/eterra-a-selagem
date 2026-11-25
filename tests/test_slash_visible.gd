@@ -50,3 +50,49 @@ func test_the_wave_leaves_its_path_lit() -> void:
 	for e: Dictionary in fx._thrusts:
 		alive = alive or (e.node as Node3D).visible
 	assert_true(alive, "still lit 0.2 s after the throw")
+
+
+func test_own_cut_is_emerald_and_thickens_per_blow() -> void:
+	var edge := []
+	for time in [Combat.SLASH_TIME, Combat.HEAVY_SLASH_TIME, Combat.FINISHER_SLASH_TIME]:
+		var fx := _slash(time)
+		var s: Dictionary = fx._slashes[0]
+		for e: Dictionary in fx._slashes:
+			if (e.node as Node3D).visible:
+				s = e
+		var mat: ShaderMaterial = s.mat
+		var c: Color = mat.get_shader_parameter(&"color")
+		assert_between(c.h * 360.0, 140.0, 160.0, "hue of the paladin's cut")
+		edge.append(float(mat.get_shader_parameter(&"edge_px")))
+	assert_lt(edge[0], edge[1])
+	assert_lt(edge[1], edge[2])
+
+
+func test_spin_leaves_a_ring_that_outlives_the_arc() -> void:
+	var fx := Fx.new()
+	add_child_autofree(fx)
+	fx.setup(Camera3D.new(), Control.new())
+	fx.slash(Vector2.ZERO, Vector2(0, 1), 2.4, 360.0, Combat.EMETH, 0.12, false, 0.9, false)
+	var rings := 0
+	var life := 0.0
+	for r: Dictionary in fx._rings:
+		if (r.node as Node3D).visible:
+			rings += 1
+			life = r.time
+	assert_eq(rings, 1, "a ring round him")
+	assert_gte(life, Fx.SLASH_MIN_LIFE + Fx.SPIN_RING_EXTRA - 0.001, "it outlives the arc by 2 frames")
+
+
+func test_wave_path_is_a_wide_band() -> void:
+	var fx := Fx.new()
+	add_child_autofree(fx)
+	fx.setup(Camera3D.new(), Control.new())
+	var pr := Projectiles.new()
+	add_child_autofree(pr)
+	pr.fx = fx
+	pr.fire_wave(Projectiles.Kind.SPARK, Vector2.ZERO, Vector2(0, 1), 10.0, 8.0, 0.2, Combat.EMETH, [] as Array[StringName])
+	var wide := 0.0
+	for e: Dictionary in fx._thrusts:
+		if (e.node as Node3D).visible:
+			wide = (e.node as Node3D).scale.x
+	assert_gte(wide, 0.6, "at least 0.6 m across")

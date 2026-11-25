@@ -45,6 +45,7 @@ Regras:
   lugar (a Emeth está na mão do herói, o espectral no chão e nos mortos); esmeralda corrompido (165) e petróleo do herói
   (183) a 18 graus (ART-05.8).
 - O vermelho do perigo não aparece em nada que não fira. Hoje os estandartes do leão violam isso (ART-02.4, Q-22).
+- **Anel do herói (E1-7):** o anel no chão é sempre petróleo (matiz 180 a 188). Um estado (hoje o amparo do Brado) acende um fio fino esmeralda logo por dentro do anel (`inner`, `inner_color` em `hero_ring.gdshaderinc`), nunca troca a cor do anel.
 - Ninguém além do herói usa o petróleo saturado; ninguém além da Emeth usa o esmeralda vivo.
 
 ### 2.1.1 Cores dos elementos e o Supremo de cada arma (AD-12, 2026-11-24)

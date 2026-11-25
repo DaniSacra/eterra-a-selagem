@@ -67,6 +67,9 @@ uniform float style_peak = 0.6;
 // style_wire_glow (1.5; 0: off) on the wire only, never on the body of the arc (nothing past style_wire_cap).
 uniform float style_wire_glow = 0.0;
 uniform float style_wire_cap = 1.3;
+// E1-2: the paladin's own arc keeps its core off his body: nothing lit within body_clear_m meters of him (soft over a
+// third of that), so no pixel of him is blown out (0: off, for the volleys and bosses).
+uniform float body_clear_m = 0.0;
 
 #include "res://assets/shaders/slash_strokes.gdshaderinc"
 
@@ -130,6 +133,10 @@ void fragment() {
 		core = (y < e && inside < 1.0) ? pow(1.0 - inside, 0.8) : 0.0;
 		float band_m = reach_m > 0.0 ? (1.0 - band_from) * reach_m : 1.0;
 		core *= slash_strokes(y * band_m, k, rest, fwidth(y * band_m));
+		if (body_clear_m > 0.0 && reach_m > 0.0) {
+			float dist = mix(band_from * reach_m, reach_m, y);
+			core *= smoothstep(body_clear_m * 0.65, body_clear_m, dist);
+		}
 	}
 	float glow = pow(1.0 - k, 1.6);
 	float life = pow(1.0 - rest, 1.5);

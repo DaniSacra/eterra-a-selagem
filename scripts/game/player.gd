@@ -1189,9 +1189,11 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 	_step_kick(dt)
 	_ward_k = move_toward(_ward_k, 1.0 if warded else 0.0, dt / WARD_RING_FADE)
 	for ring in [_ring_look, _ring_through]:
-		(ring as ShaderMaterial).set_shader_parameter(&"color", RING_COLOR.lerp(WARD_RING_COLOR, _ward_k))
-		(ring as ShaderMaterial).set_shader_parameter(&"open", lerpf(RING_OPEN, WARD_RING_OPEN * blink, _ward_k))
-		(ring as ShaderMaterial).set_shader_parameter(&"band", lerpf(0.09, WARD_RING_BAND, _ward_k))
+		# E1-7: the ring itself stays petrol; the ward is a fine emerald thread just inside it
+		(ring as ShaderMaterial).set_shader_parameter(&"color", RING_COLOR)
+		(ring as ShaderMaterial).set_shader_parameter(&"inner_color", WARD_RING_COLOR)
+		(ring as ShaderMaterial).set_shader_parameter(&"inner", _ward_k * blink)
+		(ring as ShaderMaterial).set_shader_parameter(&"open", lerpf(RING_OPEN, WARD_RING_OPEN, _ward_k))
 	if curse.active():
 		glow = CURSE_GLOW
 	_show_curse()

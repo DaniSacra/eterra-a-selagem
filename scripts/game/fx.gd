@@ -36,7 +36,7 @@ const CONTACT_LIGHT: Array[float] = [1.0, 1.4, 1.8]
 const CONTACT_LIGHT_RANGE := 3.0
 const CONTACT_LIGHT_TIME := 0.08
 const CONTACT_SPARKS := 4
-const CONTACT_SPARK_LIFE := 0.15
+const CONTACT_SPARK_LIFE := 0.12
 const CONTACT_GROW := 1.4
 const CONTACT_SPIKES := Vector2(0.4, 0.9)
 const CONTACT_SPIKES_HEAVY := Vector2(0.6, 1.4)
@@ -159,7 +159,7 @@ const SLASH_INNER := 0.05
 ## Meters from the paladin to the Emeth's tip in a swing, on the floor: where the edge of every cut of his is drawn
 ## (reach_m and blade_m in slash.gdshader and slash_ink.gdshader). Measured on the model in the swing frames of cut1
 ## to cut3 (the tip, EmethSword.TIP, from 2.3 m as it drops through to 2.85 m level with the waist; C12d).
-const BLADE_REACH := 2.6
+const BLADE_REACH := 2.9
 ## Seconds of its sweep a cut already shows on the frame of the blow (one frame at 60): it starts with the blade,
 ## never a frame behind it (VX-01).
 const SLASH_LEAD := 1.0 / 60.0
@@ -182,6 +182,21 @@ const SLASH_STYLE_CORE_LIGHT := 0.35
 const SLASH_STYLE_CORE_DEPTH := 0.75
 const SLASH_STYLE_VEIL := 1.0
 const SLASH_STYLE_WIRE := 1.5
+## E1-2: the paladin's own cut is a true emerald (hue 150, never the gold the plain colour is pulled toward), its edge
+## thicker per blow (blow 1, 2, 3: SLASH_EDGE_PX x 1.0, 1.2, 1.6), the screen peak its own, and its core cleared over his body.
+const SLASH_EMERALD := Color(0.28, 0.95, 0.62)
+const SLASH_EDGE_PX := 3.0
+const SLASH_EDGE_LEVELS := [1.0, 1.2, 1.6]
+const SLASH_STYLE_SCREEN := 222
+const SLASH_BODY_CLEAR := 1.0
+## E1-3: a spin leaves a ring of cut light round him, this many seconds longer than its blow (2 frames at 60).
+const SPIN_DEGREES := 300.0
+const SPIN_RING_EXTRA := 0.034
+## E1-4: the path of the wave is a band, not a line: its width at least this many meters.
+const WAVE_BAND_MIN := 1.4
+## E1-1: the sparks of a landed blow stay within about 0.3 m of what they hit (speed x life), tinted, never solid white.
+const CONTACT_SPARK_SPEED := 2.2
+const CONTACT_SPARK_TINT := Color(0.8, 1.0, 0.88)
 const RING_POOL := 16
 ## How a ring of the pool ages: it opens and fades on its own (a burst), the caller moves it (a wave), or it fades where it is.
 const RING_OPEN := 0
@@ -192,7 +207,10 @@ const NUMBER_POOL := 32
 ## Damage numbers and floating words: font sizes in pixels at 720 lines (small and white, as in the references)
 ## and the dark outline around them.
 const NUMBER_SIZE := 22
-const NUMBER_BIG := 30
+const NUMBER_BIG := 29
+## E1-6: the weighty (big) numbers in old gold, the sideways spread of repeated hits.
+const NUMBER_BIG_COLOR := Color(0.88, 0.74, 0.44)
+const NUMBER_SPREAD := 0.45
 ## GR-27: damage over time keeps this share of a direct number's height at least, a colour of this value and edge.
 const TICK_SHARE := 0.7
 const TICK_VALUE := 0.75
@@ -207,7 +225,7 @@ const GOLD_JOIN := 6.0
 ## The gold rises beside the blow's number, not over it (QW-115, "60" under "+1 ouro"): metres to the right on the
 ## screen of where it fell.
 const GOLD_SIDE := 1.1
-const NUMBER_OUTLINE := 5
+const NUMBER_OUTLINE := 2
 ## Meters across the crossed cuts of Fx.impact (times the size asked for).
 const IMPACT_SIZE := 1.0
 ## A damage number starts this far above the point asked for (the top of the enemy's head): clear of the life bar
@@ -680,8 +698,8 @@ func clear_of_hero(pos: Vector3) -> Vector3:
 
 ## Meters behind the paladin (away from the camera, on the floor) where his own bursts are centred (hero_burst).
 const HERO_BURST_BACK := 0.8
-const NUMBER_POP := 1.3
-const NUMBER_POP_TIME := 0.08
+const NUMBER_POP := 1.4
+const NUMBER_POP_TIME := 0.12
 ## V-14: the grey of the wisp a dead one leaves (value 0.25).
 const DEATH_ASH := Color(0.25, 0.24, 0.23)
 const BONE_DUST := Color(0.34, 0.32, 0.28)
@@ -726,6 +744,8 @@ func behind(pos: Vector3, meters: float) -> Vector3:
 ## 0: the outer edge of the arc, for a cut that is not the paladin's). The head sweeps the arc in
 ## Feel.slash_sweep_time and is already SLASH_LEAD into it on the frame it starts.
 func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, time: float = 0.2, flip: bool = false, height: float = 0.9, ink_under: bool = true, blade: float = BLADE_REACH) -> void:
+	# the blow's weight from the time it was asked with (Combat: 0.12 a cut, 0.16 heavy, 0.3 the finisher)
+	var level := 2 if time >= 0.25 else 1 if time >= 0.14 else 0
 	time = maxf(time, SLASH_MIN_LIFE)
 	var tilt := _rng.randf_range(-0.08, 0.08)
 	var s: Dictionary = _take(_slashes)
@@ -748,14 +768,18 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"band_from", INK_INNER)
 	var family := family_of(color)
 	# SR-G4: the plain cut (the Emeth's, no family) is white and gold, its core deeper and brighter
+	var own := blade > 0.0
 	var lit := color.lerp(GOLD, SLASH_GOLD) if family < 0 else color
+	if own and family < 0:
+		lit = SLASH_EMERALD
 	(s.mat as ShaderMaterial).set_shader_parameter(&"color", lit)
-	(s.mat as ShaderMaterial).set_shader_parameter(&"style_peak", ScreenTone.linear_peak(lit.lerp(Color.WHITE, 0.3)))
+	(s.mat as ShaderMaterial).set_shader_parameter(&"style_peak", ScreenTone.linear_peak(lit.lerp(Color.WHITE, 0.15 if own else 0.3), SLASH_STYLE_SCREEN if own else ScreenTone.SAFE))
+	(s.mat as ShaderMaterial).set_shader_parameter(&"edge_px", SLASH_EDGE_PX * float(SLASH_EDGE_LEVELS[level]) if own else 3.0)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"body_clear_m", SLASH_BODY_CLEAR if own else 0.0)
 	if family < 0:
 		(s.mat as ShaderMaterial).set_shader_parameter(&"core_depth", SLASH_CORE.x)
 		(s.mat as ShaderMaterial).set_shader_parameter(&"core_light", SLASH_CORE.y)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"family", family)
-	var own := blade > 0.0
 	(s.mat as ShaderMaterial).set_shader_parameter(&"style_core_light", SLASH_STYLE_CORE_LIGHT if own else 0.216)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"style_core_depth", SLASH_STYLE_CORE_DEPTH if own else 0.6)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"style_wire_glow", SLASH_STYLE_WIRE if own else 0.0)
@@ -774,6 +798,9 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 	(s.mat as ShaderMaterial).set_shader_parameter(&"tail", minf(SLASH_TAIL, SLASH_TAIL_DEGREES / maxf(width_deg, 1.0)))
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep / feel.ink_life)
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"opacity", feel.ink_opacity if ink_under else 0.0)
+	if own and width_deg >= SPIN_DEGREES:
+		# E1-3: the turn all round him leaves a ring of cut light at his waist, lit 2 frames past the arc's own life
+		ring(origin, reach * 0.95, SLASH_EMERALD, time + SPIN_RING_EXTRA, height)
 
 
 func _place_arc(e: Dictionary, mesh: Mesh, origin: Vector2, dir: Vector2, height: float, tilt: float) -> void:
@@ -833,7 +860,7 @@ func contact(pos: Vector3, dir: Vector3, color: Color, heavy: bool = false, leve
 		hit_light(pos, color, CONTACT_LIGHT[clampi(level, 0, 2)], CONTACT_LIGHT_RANGE, CONTACT_LIGHT_TIME)
 	var sparks := budget.take(&"motes", CONTACT_SPARKS)
 	if sparks > 0:
-		_spray(pos, Vector3.UP * 0.4, Color(1.0, 0.97, 0.9) * 0.9, sparks, 5.0, 0.1, CONTACT_SPARK_LIFE, 1.2, MOTE_GRAVITY, false)
+		_spray(pos, Vector3.UP * 0.4, CONTACT_SPARK_TINT * 0.9, sparks, CONTACT_SPARK_SPEED, 0.1, CONTACT_SPARK_LIFE, 1.2, MOTE_GRAVITY, false)
 	var aim := Vector2(1, 0)
 	if camera != null and dir.length_squared() > 0.0001:
 		var b := camera.global_transform.basis
@@ -849,7 +876,7 @@ func impact(pos: Vector3, color: Color, size: float = 1.0, time: float = -1.0) -
 
 ## A thrust: a thin beam from origin along dir, reach meters long and width meters across at its widest (what the
 ## blow reaches), tapering to a point. omega: the held thrust (a broader, paler thread with the gold veins of Emeth).
-func thrust(origin: Vector2, dir: Vector2, reach: float, width: float, color: Color, time: float = 0.2, height: float = 0.9, omega: bool = false) -> void:
+func thrust(origin: Vector2, dir: Vector2, reach: float, width: float, color: Color, time: float = 0.2, height: float = 0.9, omega: bool = false, band: bool = false) -> void:
 	var e: Dictionary = _take(_thrusts)
 	var mi: MeshInstance3D = e.node
 	var mid := origin + dir * reach * 0.5
@@ -862,6 +889,13 @@ func thrust(origin: Vector2, dir: Vector2, reach: float, width: float, color: Co
 	mat.set_shader_parameter(&"t", 0.0)
 	mat.set_shader_parameter(&"intensity", Feel.live().slash_intensity)
 	mat.set_shader_parameter(&"omega", 1.0 if omega else 0.0)
+	# E1-4: the wave's path is a band, light in the middle and an emerald edge, not a spike
+	mat.set_shader_parameter(&"tip_width", 0.85 if band else 0.15)
+	mat.set_shader_parameter(&"blade_share", 0.5 if band else 0.4)
+	mat.set_shader_parameter(&"core_light", 0.6 if band else 0.12)
+	mat.set_shader_parameter(&"core_value", 0.9 if band else 0.55)
+	mat.set_shader_parameter(&"edge_px", 3.0 if band else 2.0)
+	mat.set_shader_parameter(&"edge_pale", 0.25 if band else 0.45)
 	# V-04: the light runs in to the point in THRUST_IN s and leaves over THRUST_OUT s
 	mat.set_shader_parameter(&"sweep", clampf(THRUST_IN / time, 0.05, 0.9))
 	mat.set_shader_parameter(&"leave", clampf(THRUST_OUT / time, 0.1, 0.95))
@@ -1414,6 +1448,8 @@ func beam(at: Vector2, color: Color, radius: float = 0.8, height: float = 9.0, t
 func number(pos: Vector3, amount: float, color: Color, big: bool = false, key: int = 0, tick: bool = false) -> void:
 	if tick:
 		color = tick_color(color)
+	if big and not tick:
+		color = NUMBER_BIG_COLOR
 	var i := _tally.add(key, pos + Vector3(0, NUMBER_LIFT, 0), amount, color, big, Engine.get_process_frames())
 	if i < 0:
 		return
@@ -1937,7 +1973,7 @@ func _show_label(i: int, text: String, color: Color, size: int, outline: int = 0
 
 
 func _jitter() -> Vector3:
-	return Vector3(_rng.randf_range(-0.2, 0.2), 0, _rng.randf_range(-0.1, 0.1))
+	return Vector3(_rng.randf_range(-NUMBER_SPREAD, NUMBER_SPREAD), 0, _rng.randf_range(-0.1, 0.1))
 
 
 ## Ring sector mesh: UV.x along the swing, UV.y from the inner (inner_frac of reach) to the outer edge. Cached by size.

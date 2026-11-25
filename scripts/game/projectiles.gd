@@ -45,7 +45,7 @@ const OMEGA_WAKE := 1.4
 const WAVE_PEAK := 1.0
 const WAVE_PATH_TIME := 0.4
 const WAVE_PATH_REACH := 9.0
-const WAVE_PATH_WIDTH := Vector2(0.9, 2.4)
+const WAVE_PATH_WIDTH := Vector2(Fx.WAVE_BAND_MIN, 2.4)
 ## How far the leading edge goes toward white (emeth_wave.gdshader edge_pale; vfx_pass_spec.md V-06: 0.5, it was 0.35).
 const WAVE_EDGE_PALE := 0.5
 const WAVE_GOLD := Color(0.95, 0.72, 0.3)
@@ -219,7 +219,7 @@ func fire_wave(kind: Kind, from: Vector2, dir: Vector2, damage: float, distance:
 func _light_path(from: Vector2, dir: Vector2, distance: float, size: float, color: Color) -> void:
 	if fx == null:
 		return
-	fx.thrust(from, dir.normalized(), minf(distance, WAVE_PATH_REACH), clampf(size, WAVE_PATH_WIDTH.x, WAVE_PATH_WIDTH.y), color, WAVE_PATH_TIME, HEIGHT)
+	fx.thrust(from, dir.normalized(), minf(distance, WAVE_PATH_REACH), clampf(size, WAVE_PATH_WIDTH.x, WAVE_PATH_WIDTH.y), color, WAVE_PATH_TIME, HEIGHT, false, true)
 
 
 ## A Gift's wide wave (Corte Crescente on the spin, Onda Carregada, Fio do Passo; Combat._gift_wave) drawn bolder: it
