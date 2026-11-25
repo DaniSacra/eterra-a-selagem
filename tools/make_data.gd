@@ -112,7 +112,7 @@ func _tree(fifth: bool) -> ComboTree:
 	# cut2 0.13 / 13 / 19 (0.45 s), the spin 0.28 + 0.08 of glint = 0.36 / 18 / 30 (0.86 s).
 	var cut3 := _move(&"cut3", L, &"Slash_C", [&"light", &"spin", &"finisher"],
 		{"damage": 20.0, "shape": ComboNode.Shape.CIRCLE, "reach": 240.0 / U, "knockback": 16.0, "windup": 0.36 - FINISHER_GLINT,
-		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "magick_per_hit": 0.5, "chain_window": 0.6, "hit_stop_ms": 70.0, "shake": 1.6, "move_scale": 0.0, "sound": &"blade_spin",
+		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "magick_per_hit": 0.5, "chain_window": 0.6, "hit_stop_ms": 100.0, "shake": 2.4, "move_scale": 0.0, "sound": &"blade_spin",
 		# QW-103: the spin's swish (its samples peak 30 to 90 ms in) on the blade's frame, 0.36 s after the press; the
 		# press only gathers
 		"sound_at": 0.36 - SWISH_PEAK, "sound_press": &"spin_gather", "layers": LAYER_SPIN}, [], &"move_spin")
@@ -122,11 +122,11 @@ func _tree(fifth: bool) -> ComboTree:
 	var cut2 := _move(&"cut2", L, &"Slash_B", [&"light"],
 		{"damage": 15.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[1], "windup": 0.13, "recovery": 13.0 / 60.0,
 		"move_hold": 19.0 / 60.0, "magick_per_hit": 0.5,
-		"chain_window": 0.4, "hit_stop_ms": 65.0, "shake": 0.8, "move_scale": 0.0, "sound": &"blade_heavy", "layers": LAYER_TURN}, after_cut2)
+		"chain_window": 0.4, "hit_stop_ms": 60.0, "shake": 1.1, "move_scale": 0.0, "sound": &"blade_heavy", "layers": LAYER_TURN}, after_cut2)
 	var cut1 := _move(&"cut1", L, &"Slash_A", [&"light"],
 		{"damage": 15.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.08, "recovery": 8.0 / 60.0,
 		"move_hold": 11.0 / 60.0, "magick_per_hit": 0.5,
-		"chain_window": 0.4, "hit_stop_ms": 25.0, "shake": 0.6, "move_scale": 0.0}, [cut2])
+		"chain_window": 0.4, "hit_stop_ms": 35.0, "shake": 0.9, "move_scale": 0.0}, [cut2])
 	# special (Daniel, 2026-11-21): the sword's burst, a bolt of light thrown ahead (strikes only with its bolt): 35
 	# damage, 6 m, through the crowd, 12 Magia (magick_cost: a press without it throws nothing), 0.5 s between throws. A tap
 	# only: the Omega special (held) left the Warrior's tree. Hades II's Special1: the attack is free again 18 frames
@@ -190,11 +190,11 @@ const EXTRA := {"damage": 15.0, "windup": 0.14, "recovery": 12.0 / 60.0, "move_h
 func _extra_blows(spin: ComboNode) -> ComboNode:
 	var back := _move(&"cut4", L, &"Slash_A", [&"light"],
 		{"damage": EXTRA.damage, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.12, "recovery": 9.0 / 60.0,
-		"move_hold": 12.0 / 60.0, "magick_per_hit": 0.5, "chain_window": 0.4, "hit_stop_ms": 30.0, "shake": 0.6, "move_scale": 0.0}, [spin])
+		"move_hold": 12.0 / 60.0, "magick_per_hit": 0.5, "chain_window": 0.4, "hit_stop_ms": 85.0, "shake": 1.8, "move_scale": 0.0}, [spin])
 	return _move(&"thrust4", L, &"Sword_Attack", [&"light", &"thrust"],
 		{"damage": EXTRA.damage, "shape": ComboNode.Shape.LINE, "reach": 430.0 / U, "width": 1.6, "knockback": COMBO_PUSH[1],
 		"windup": EXTRA.windup, "recovery": EXTRA.recovery, "move_hold": EXTRA.move_hold, "magick_per_hit": 0.5, "chain_window": 0.4,
-		"hit_stop_ms": 50.0, "shake": 0.8, "move_scale": 0.0, "sound": &"thrust", "sound_at": EXTRA.windup - THRUST_PEAK}, [back])
+		"hit_stop_ms": 85.0, "shake": 1.8, "move_scale": 0.0, "sound": &"thrust", "sound_at": EXTRA.windup - THRUST_PEAK}, [back])
 
 
 # ---------- enemies ----------

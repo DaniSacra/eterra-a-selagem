@@ -156,3 +156,21 @@ func test_the_crossbowmans_second_bolt_is_aimed_again() -> void:
 	assert_eq(aims.size(), 2)
 	if aims.size() == 2:
 		assert_gt(absf(aims[0].angle_to(aims[1])), 0.1, "where he stands then")
+
+
+func test_impact_pitch_goes_down_from_blow_1_to_the_finisher() -> void:
+	var c1 := ComboNode.new()
+	c1.id = &"cut1"
+	var c2 := ComboNode.new()
+	c2.id = &"cut2"
+	var c3 := ComboNode.new()
+	c3.id = &"cut3"
+	c3.tags = [&"finisher"]
+	assert_eq(Combat.hit_pitch(c1), 1.0)
+	assert_lt(Combat.hit_pitch(c2), Combat.hit_pitch(c1))
+	assert_lt(Combat.hit_pitch(c3), Combat.hit_pitch(c2))
+
+
+func test_dash_stop_is_35_ms_for_at_most_three_bodies() -> void:
+	assert_eq(Combat.DASH_STOP_MS, 35.0)
+	assert_eq(Combat.DASH_STOPS_MAX, 3)

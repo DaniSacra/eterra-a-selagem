@@ -18,11 +18,11 @@ const COMBO_KEEP := 3.0
 ## Extra hit slow when a blow kills (Hades II: 0.04 s).
 const KILL_HOLD_MS := 40.0
 ## Apogeu (CF-04): the last blow of a sequence that carries the sum lands with a hit stop of this many ms (and 40 more of slow),
-## a heavier shake and its own sound. The Investida Implacável gives one frame of hit stop per body it goes through, three at most.
+## a heavier shake and its own sound. The Investida Implacável gives one frame of hit stop per body it goes through, three at most (CF2-05: 35 ms each, 105 ms the most).
 const APOGEE_STOP_MS := 90.0
 const APOGEE_SLOW_MS := 40.0
 const APOGEE_SHAKE := 1.2
-const DASH_STOP_MS := 1000.0 / 60.0
+const DASH_STOP_MS := 35.0
 const DASH_STOPS_MAX := 3
 ## Slow motion in a fight is rare, as in Hades II (there only the last kill of a room and a boss's death slow the
 ## world; a blow only gets a few hundredths of a second of hit slow): a blow that fells SLOW_MO_KILLS at once or
@@ -176,6 +176,7 @@ var _swing := 0
 var _no_stun := false
 var _behind: Array[Enemy] = []
 var _slow_cd := 0.0
+var _slow_node := &""
 var _cine_cd := 0.0
 ## Seconds before another impact frame may flash.
 var _frame_cd := 0.0
@@ -353,7 +354,9 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			fx.ring(struck[0].pos, FINISHER_RING, color, FINISHER_RING_TIME, 1.0 + struck[0].y, true)
 		if omega or finisher or heavy:
 			fx.shock(struck[0].pos, FINISHER_RING * (2.2 if omega else 1.6 if finisher else 1.2), color, 1.6 if omega else 1.0 if finisher else 0.6)
-		Audio.play(CombatSounds.EVENTS[&"hit_heavy" if heavy else &"hit"])
+		Audio.play(CombatSounds.EVENTS[&"hit_heavy" if heavy else &"hit"], hit_pitch(node))
+		if finisher and not heavy:
+			Audio.play(CombatSounds.EVENTS[&"hit_heavy"], hit_pitch(node))  # the low thump under the 3rd blow and the spin (CF2-06)
 		_play_material(CombatSounds.loudest(_mats))
 	match node.effect:
 		ComboNode.Effect.GROUND_MARK:
@@ -520,9 +523,12 @@ static func cut_axis(shape: ComboNode.Shape, origin: Vector2, at: Vector2, away:
 ## (ComboNode.hit_stop_ms), then slows to hit_slow_scale for hit_slow_ms (and extra_ms more when it kills), then comes
 ## back (HitStop). Never a freeze. One at most every HIT_SLOW_COOLDOWN seconds, as there.
 func _hit_slow(node: ComboNode, extra_ms: float = 0.0) -> void:
-	if _slow_cd > 0.0 or node.hit_slow_ms <= 0.0:
+	# the cooldown only keeps a blow from stopping twice (one swing's repeated contacts): a different blow of the chain
+	# (the 2nd after the 1st, the 3rd after the 2nd) always plays its own stop (CF2-01)
+	if node.hit_slow_ms <= 0.0 or (_slow_cd > 0.0 and node.id == _slow_node):
 		return
 	_slow_cd = HIT_SLOW_COOLDOWN
+	_slow_node = node.id
 	var k := Feel.live().hit_stop_scale
 	fx.blow_stop(node.hit_stop_ms * k, (node.hit_slow_ms + extra_ms) * k, node.hit_slow_scale)
 
@@ -550,6 +556,13 @@ func shot_weight(stop_ms: float, dir: Vector2) -> void:
 		return
 	fx.blow_stop(stop_ms * Feel.live().hit_stop_scale)
 	fx.kick(dir, SHOT_KICK)
+
+
+## The pitch of the impact sound by blow (CF2-06): the 1st sharp, the 2nd lower, the finisher (the spin) the lowest.
+static func hit_pitch(node: ComboNode) -> float:
+	if node.has_tag(&"finisher"):
+		return 0.86
+	return 0.94 if node.id == &"cut2" else 1.0
 
 
 ## How hard the camera jolts when this move lands (times Fx.KICK_METERS): KICK_COMMON, KICK_FINISHER or KICK_OMEGA.

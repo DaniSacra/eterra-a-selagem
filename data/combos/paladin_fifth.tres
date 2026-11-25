@@ -20,12 +20,12 @@ glint = 0.08
 recovery = 0.3
 move_hold = 0.5
 chain_window = 0.6
-hit_stop_ms = 70.0
+hit_stop_ms = 100.0
 sound = &"blade_spin"
 sound_at = 0.3
 sound_press = &"spin_gather"
 layers = Array[StringName]([&"dash_land", &"dodge"])
-shake = 1.6
+shake = 2.4
 magick_per_hit = 0.5
 
 [sub_resource type="Resource" id="Resource_t6i7i"]
@@ -46,8 +46,8 @@ windup = 0.12
 recovery = 0.15
 move_hold = 0.2
 chain_window = 0.4
-hit_stop_ms = 30.0
-shake = 0.6
+hit_stop_ms = 85.0
+shake = 1.8
 magick_per_hit = 0.5
 next = Array[Resource]([SubResource("Resource_2cf54")])
 
@@ -69,10 +69,10 @@ windup = 0.14
 recovery = 0.2
 move_hold = 0.3
 chain_window = 0.4
-hit_stop_ms = 50.0
+hit_stop_ms = 85.0
 sound = &"thrust"
 sound_at = 0.11500000000000002
-shake = 0.8
+shake = 1.8
 magick_per_hit = 0.5
 next = Array[Resource]([SubResource("Resource_t6i7i")])
 
@@ -94,10 +94,10 @@ windup = 0.13
 recovery = 0.21666666666666667
 move_hold = 0.31666666666666665
 chain_window = 0.4
-hit_stop_ms = 65.0
+hit_stop_ms = 60.0
 sound = &"blade_heavy"
 layers = Array[StringName]([&"dodge"])
-shake = 0.8
+shake = 1.1
 magick_per_hit = 0.5
 next = Array[Resource]([SubResource("Resource_uwpjs")])
 
@@ -119,8 +119,8 @@ windup = 0.08
 recovery = 0.13333333333333333
 move_hold = 0.18333333333333332
 chain_window = 0.4
-hit_stop_ms = 25.0
-shake = 0.6
+hit_stop_ms = 35.0
+shake = 0.9
 magick_per_hit = 0.5
 next = Array[Resource]([SubResource("Resource_7rma2")])
 

@@ -415,7 +415,7 @@ func _s_attack_hit() -> void:
 	var h := _first(seen, "hit", "cut1")
 	check_shape("GF-01a", "hit_stop_shape_cut1", rates, h, 1, 1, 3)
 	meta("GF-10a", "kick_cut1", "tranco do golpe 1 ate 0,10 m", "%.3f m" % peak.kick, peak.kick <= 0.1)
-	meta("GF-10b", "shake_cut1", "tremor do golpe 1 ate 0,10 m", "%.3f m" % peak.shake, peak.shake <= 0.1)
+	meta("GF-10b", "shake_cut1", "tremor do golpe 1 ate 0,12 m (0,9 x 0,12 e o bonus por alvo, CF2-02)", "%.3f m" % peak.shake, peak.shake <= 0.12)
 	meta("GF-10c", "flash_cut1", "clarao do inimigo 0,05 s (2 a 4 quadros)", "%d quadros (%.2f s)" % [int(peak.flash), peak.flash / 60.0],
 		peak.flash >= 2.0 and peak.flash <= 4.0)
 
@@ -466,6 +466,18 @@ func _s_combo_mash() -> void:
 				closest = mini(closest, slow_at[k] - slow_at[k - 1])
 			meta("GF-01e", "hit_stop_per_blow", "o golpe 2 da corrente de 3 tem o proprio hit stop e dois hit stops nunca ficam a menos de 9 quadros (0,15 s)",
 				"golpe 2 %s, menor intervalo %d quadros (paradas em %s)" % ["tem" if has2 else "SEM", closest, str(slow_at)], has2 and closest >= 9)
+			# CF2-01/02: every blow of the chain waits its own 35 / 60 / 100 ms (2, 4, 6 frames), never swallowed
+			var waits: Array[int] = []
+			var ok := true
+			for pair in [["cut1", 2], ["cut2", 3], ["cut3", 5]]:
+				var h := _first(seen, "hit", pair[0])
+				var sh := stop_shape(rates, h)
+				var w: int = (sh.first_slow - h - 1) if sh.first_slow >= 0 else -1
+				waits.append(w)
+				ok = ok and w >= int(pair[1])
+			ok = ok and waits[0] < waits[1] and waits[1] < waits[2]
+			meta("GF-01f", "hit_stop_wait_per_blow", "espera do golpe 1, 2 e 3 (giro) cresce e vale 2+, 3+, 5+ quadros", "esperas %s" % str(waits), ok)
+
 
 
 func _s_combo_on_hit() -> void:
