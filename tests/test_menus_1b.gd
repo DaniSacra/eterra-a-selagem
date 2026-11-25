@@ -10,16 +10,20 @@ const MANY: Array[StringName] = [&"golpe_brasa", &"toque_geada", &"circulo_radia
 
 var _saving := true
 var _options := {}
+var _first := 0
 
 
 func before_each() -> void:
 	_saving = Save.enabled
 	Save.enabled = false
 	_options = Save.data.options.duplicate(true)
+	_first = int(Save.data.get("first", 0))
+	Save.data.first = FirstDescent.DONE  # the pause of a normal descent (the guided one adds "Pular", test_first_descent.gd)
 
 
 func after_each() -> void:
 	Save.data.options = _options
+	Save.data.first = _first
 	Save.enabled = _saving
 
 

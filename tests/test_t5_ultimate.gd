@@ -29,6 +29,9 @@ func _start(xp: int, chosen := "") -> void:
 	block.mastery_xp = xp
 	block.ultimate = chosen
 	block.equipped = []
+	# a veteran's save: not the guided descent, the Ultimate's gate open (SW-O5; the gate has its own test, test_milestones.gd)
+	Save.data.first = FirstDescent.DONE
+	HubGate.mark_presented(Save.data, [Milestones.ULT])
 	game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
 	add_child_autofree(game)
 	game.rooms.start_at(RunMap.Kind.FOUNTAIN)

@@ -183,6 +183,9 @@ static func merged(loaded: Variant) -> Dictionary:
 		var ms := "res://scripts/core/milestones.gd"
 		if ResourceLoader.exists(ms):
 			(load(ms) as GDScript).call(&"grandfather", out)  # (SW-O5: what is open stays open)
+		# a file older than version 11 never had the guides: with the milestones' openings marked, what is due counts as shown
+		if version < 11:
+			HubGuide.mark_shown(out, HubGuide.pending(out).map(func(d: HubGuideDef) -> StringName: return d.id))
 	out["first"] = clampi(int(out.first), 0, 2)
 	# version 8 (Ofícios): nothing to move, an older file opens with the empty block (defaults)
 	out.version = VERSION
