@@ -149,6 +149,12 @@ func columns(data: Dictionary) -> void:
 		_rooms[-1].columns = data
 
 
+## RD2-10: the knight's charges that ended in the wall and the marks that told them (WallMark.tally).
+func walls(data: Dictionary) -> void:
+	if not _rooms.is_empty():
+		_rooms[-1].walls = data
+
+
 ## AT-Q1: what broke in the room (Breakables.tally: total, broken, by_hero, by_enemy, by_hazard). Only rooms with
 ## breakables have it (a room without is as before).
 func breakables(data: Dictionary) -> void:

@@ -78,6 +78,8 @@ static func generate(stage: StageDef, depth: int, defs: Dictionary, rng: RandomN
 	fight.cap = clampi(roundi(lerpf(alive.x, alive.y, progress(stage, depth))), alive.x, alive.y)
 	fight.ceiling = alive.y
 	fight.waves = waves(stage, depth, fight.kinds, alive, defs, rng, mult * budget(stage, depth))
+	if is_long(stage, depth):
+		elite_last(fight, stage, depth, defs, Vector2i(mini(alive.x, stage.long_fewest), alive.y))
 	limit_per_room(fight.waves, fight.kinds, defs)
 	if room != null and room.max_ranged > 0:
 		for w in fight.waves:
@@ -88,6 +90,38 @@ static func generate(stage: StageDef, depth: int, defs: Dictionary, rng: RandomN
 	if not stage.mods.is_empty() and depth >= stage.mod_from_depth:
 		assign_mods(fight, stage, depth, defs, rng)
 	return fight
+
+
+## RD2-06: whether the rooms of this depth come in 3 lighter, slower waves (StageDef.long_depths).
+static func is_long(stage: StageDef, depth: int) -> bool:
+	return stage.long_depths.has(depth)
+
+
+## RD2-06: the last wave of a long room carries one elite (when a kind of the fight has one and the descent allows it and
+## none is there yet): a head of the kind is exchanged for it, the heads it is worth taken from the same kind (one stays).
+## Returns true when it did.
+static func elite_last(fight: Fight, stage: StageDef, depth: int, defs: Dictionary, alive: Vector2i) -> bool:
+	if fight.waves.is_empty() or depth < maxi(stage.elite_from_depth, stage.long_elite_from):
+		return false
+	var wave: Array = fight.waves[fight.waves.size() - 1]
+	for id: StringName in wave:
+		if (defs[id] as EnemyDef).elite:
+			return false
+	for id in fight.kinds:
+		var d := defs[id] as EnemyDef
+		if d.elite or d.elite_version == &"" or not defs.has(d.elite_version) or wave.count(id) < 1:
+			continue
+		var elite := defs[d.elite_version] as EnemyDef
+		wave[wave.find(id)] = elite.id
+		var pay := mini(ceili(elite.rating / _rating(defs, id)) - 1, wave.count(id) - 1)
+		for i in pay:
+			wave.erase(id)
+		var typed: Array[StringName] = []
+		typed.assign(wave)
+		_fit(typed, fight.kinds, alive, defs)  # (kept inside the room's fewest: the cheapest kind fills in)
+		wave.assign(typed)
+		return true
+	return false
 
 
 ## Times a fight whose parts are those of the room before is drawn again.
@@ -300,6 +334,9 @@ static func waves(stage: StageDef, depth: int, kinds: Array[StringName], alive: 
 	var most := clampi(floori(heads / maxf(1.0, alive.x)), 1, stage.wave_split.size())
 	var least := clampi(ceili(heads / maxf(1.0, alive.y)), 1, most)
 	var count := clampi(rng.randi_range(stage.min_waves, stage.max_waves), least, most)
+	if is_long(stage, depth):
+		count = 3
+		alive = Vector2i(mini(alive.x, stage.long_fewest), alive.y)
 	var split: PackedFloat32Array = stage.wave_split[count - 1]
 	for w in count:
 		# the first kind (the highlight) is in every wave; later waves add the others, the last has them all

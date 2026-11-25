@@ -71,6 +71,10 @@ func _init(g: Game, def: HazardDef, rng: RandomNumberGenerator, crystal_awake :=
 
 func step(dt: float) -> void:
 	_t += dt
+	hazard.bodies.clear()
+	for e in game.horde.list:
+		if e.alive and e.def.behavior != EnemyDef.Behavior.BOSS:
+			hazard.bodies.append(e.pos)
 	match hazard.step(dt, game.player.pos, game.horde.count()):
 		ArenaHazard.Event.ARMED:
 			zones.clear()

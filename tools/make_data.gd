@@ -913,6 +913,13 @@ func _stage() -> void:
 	# one enemy is left (wave_remaining), and only while there is room under the cap.
 	var Tier := StageDef.Tier
 	st.alive_cap = 20
+	# RD2-06: the rooms that were short (2 to 4, 6 to 9: 15 to 37 s) come in 3 lighter waves, the last with an elite, the heads
+	# rising one by one: 25 to 45 s there, 30 to 55 s in the deeper ones, the same life in all
+	st.long_depths = PackedInt32Array([2, 3, 4, 6, 7, 8, 9])
+	st.long_fewest = 2
+	st.long_gap = Vector2(0.45, 0.75)
+	st.long_delay = 0.8
+	st.long_elite_from = 4
 	st.tier_alive = [Vector2i(3, 6), Vector2i(7, 11), Vector2i(11, 15)]  # (C2: the top rooms stay at 3 to 4)
 	st.miniboss_tier = Tier.HARD
 	# The fights by how far down the region (0 the first room, 1 the last fight before the shop; EncounterGen.progress).
@@ -1218,6 +1225,19 @@ const PLATES_FROM := 0.34
 ## RD-02: the Crypt A's slabs wake early (the 2nd or 3rd room) with a longer warning, to teach before the 5th room.
 const TEACH_FROM := 0.15
 const TEACH_WARN := 1.5
+## RD2-08: the slabs that teach arm by themselves every 6 s when the pack fights within 2.5 m of them, up to the 4th room
+## (progress 0.25 plus a hair), with the same 1.5 s of warning.
+const TEACH_CYCLE := 6.0
+const TEACH_NEAR := 2.5
+const TEACH_UNTIL := 0.26
+
+
+func _teach(h: HazardDef) -> HazardDef:
+	h.warn = TEACH_WARN
+	h.auto_cycle = TEACH_CYCLE
+	h.auto_near = TEACH_NEAR
+	h.auto_until = TEACH_UNTIL
+	return h
 ## A1 (Daniel, 2026-11-20: the game must get harder): every room hazard takes 10 from the paladin (the Hades II's own
 ## trap damage on the same 30 of life; was 7, RP-03 step 1), the edge that crumbles 7 (was 5). Enemies keep 60.
 const HAZARD_HERO := 10.0
@@ -1239,11 +1259,11 @@ func _roots(tips: Array) -> HazardDef:
 		var a := TRUNK + (first - TRUNK).normalized() * TRUNK_RADIUS
 		strips.append(Vector4(a.x, a.y, tip.x, tip.y))
 	h.strips = strips
-	h.strip_width = 4.0  # RD2-04: 4 m (was 3) and a touch wakes it (0.05 s): the roots struck nobody in 6 descents
+	h.strip_width = 4.8  # RD2-04: 4 m (was 3), S-1: 4.8 m (the spawns' edge) and a touch wakes it (0.05 s): the roots struck nobody
 	h.dwell = 0.5
 	# an enemy only walks over it: a fifth of a second wakes it (second pass, the Game Director: the outer roots never woke)
-	h.enemy_dwell = 0.05
-	h.warn = 1.5
+	h.enemy_dwell = 0.05  # (S-1 tried 0.8, who lingers: it never woke in 12 descents, 0 strikes; back to a touch)
+	h.warn = 1.8  # S-1: more warning (was 1.5) for the wider strip; the pack that walks past still wakes it at a touch
 	h.rearm = 6.0
 	h.push_out = 1.0
 	h.plate_source = &"roots"
@@ -1280,11 +1300,11 @@ const PLANT_AT := Vector2(-16.6, -1.5)
 func _plant() -> HazardDef:
 	var h := _plates([], PLATES_FROM)
 	h.plates = []
-	h.strips = PackedVector4Array([Vector4(PLANT_AT.x, PLANT_AT.y, PLANT_AT.x + 2.5, PLANT_AT.y)])
-	h.strip_width = 2.5  # RD2-04: a wider reach (2.5, was 1.5) that wakes at a touch (0.05 s), 1.5 s of warning
+	h.strips = PackedVector4Array([Vector4(PLANT_AT.x, PLANT_AT.y, PLANT_AT.x + 3.5, PLANT_AT.y)])
+	h.strip_width = 3.2  # RD2-04: 2.5 (was 1.5), S-1: 3.2 wide and 3.5 long, wakes at a touch (0.05 s), 1.8 s of warning
 	h.dwell = 0.5
 	h.enemy_dwell = 0.05
-	h.warn = 1.5
+	h.warn = 1.8
 	h.rearm = 6.0
 	h.push_out = 1.0
 	h.sparks = PackedVector2Array([PLANT_AT + Vector2(0.3, 0.0)])
@@ -1416,7 +1436,7 @@ func _crypt() -> RoomLayout:
 		_rect(8.0, 11.0, 1.3, 4.3)], TEACH_FROM)
 	# RD-02: the one hazard to learn before the 5th room: awake from the 2nd room (0.15), the warning 1.5 s (the enemies' 1.2 or more),
 	# the same 10 and 60, so "the red warning hurts both sides" is seen by a child who falls early
-	l.hazard.warn = TEACH_WARN
+	_teach(l.hazard)
 	# A1, RP-12: the oil urns beside the slabs (late)
 	l.hazard.also = _urns(PackedVector2Array(CRYPT_URNS), PackedVector4Array(CRYPT_OIL))
 	l.hazard.also.also = _spikes([Vector2(-4.0, -4.5), Vector2(3.0, 1.6)], TEACH_FROM)
@@ -1616,7 +1636,7 @@ func _rift() -> RoomLayout:
 	# B (the north bridge fallen): its west stretch along the fallen bridge's brink, away from the second hole
 	# RD-02: the east slabs wake early with the long warning, as the Crypt A's (Fendas A comes in the 2nd to 4th rooms)
 	l.hazard.also = _sag([_rect(14, 19, -11.5, -8.8), _rect(13, 17, 8.2, 12)], TEACH_FROM)
-	l.hazard.also.warn = TEACH_WARN
+	_teach(l.hazard.also)
 	l.variants[0].hazard = _breath(RIFT_BREATH + [_rect(-10.0, -7.2, -13, -7)], RIFT_BREATH_PUSH + [Vector2(-BREATH_PUSH, 0)])
 	# A1, RP-20: stones from the vault over the east platform's fight (north of the columns, off the north door, and the
 	# middle of the platform), beside the breath (which does not hurt)
@@ -1673,7 +1693,7 @@ func _garden() -> RoomLayout:
 	l.hazard.also = _trap(GARDEN_TRAPS, 0.3, 5.0, 4.0)
 	# RD-02: one slab to learn in the east field (awake from the 2nd room, warning 1.5 s), off the traps' lines and the spawns
 	l.hazard.also.also = _plates([_rect(5.5, 10.5, -2.5, 2.5)], TEACH_FROM)
-	l.hazard.also.also.warn = TEACH_WARN
+	_teach(l.hazard.also.also)
 	l.obstacles.append_array(_trap_blocks(GARDEN_TRAPS))
 	var b: Array[ArenaObstacle] = [trunk]
 	for pts: Array in [[Vector2(-4.1, -5.7), Vector2(-2.4, -5.8), Vector2(-0.7, -5.7), Vector2(0.9, -5.4)],
@@ -2513,7 +2533,10 @@ func _knight_hall() -> RoomLayout:
 	# the four corners: where the vault's stones fall (north-west, south-west, south-east, north-east) and, by each, a plate
 	var corners: Array[Rect2] = [_rect(-10.6, -6.8, -10.6, -6.8), _rect(-10.6, -6.8, 6.8, 10.6), _rect(6.8, 10.6, 6.8, 10.6),
 		_rect(6.8, 10.6, -10.6, -6.8)]
-	var plates: Array[Rect2] = [_spike_rect(-9.4, -5.4), _spike_rect(-9.6, 3.2), _spike_rect(7.0, 3.2), _spike_rect(8.4, -5.6)]
+	# RD2-10: the plates lie flush against the walls where the charges end (the knight stops 1.1 m off the wall, in the plate,
+	# and is stunned there 1.5 s: it arms at once and strikes after 1.2 s): the west and east middles and the south wall
+	# either side of the way in (6 m off it). The paladin chooses the wall the charge will hit (the wall mark shows it).
+	var plates: Array[Rect2] = [_spike_rect(-10.95, -1.2), _spike_rect(8.55, -1.2), _spike_rect(-9.0, 8.55), _spike_rect(6.6, 8.55)]
 	l.hazard = _spike_plates(plates, HOUSE_FROM)
 	l.hazard.also = _rocks(corners)
 	l.hazard.also.from_progress = HOUSE_FROM
@@ -2618,6 +2641,8 @@ func _chain(bands: Array[Rect2], pushes: Array[Vector2]) -> HazardDef:
 ## the brink (6 x 2 to 3 m) warms up 1.2 s (the mist rising) and pushes everyone in it 2.5 m away from the brink, cutting
 ## a wind-up or an attack there; after 3 s of calm.
 const BREATH_PUSH := 2.5
+## RD2-04c: life an enemy loses in the breath (the paladin loses none).
+const BREATH_ENEMY := 10.0
 ## The stretches of the Salão das Fendas where the bot's fights go (measured: the south bridge, the south way and the
 ## east): the east brink of the middle hole, east of the south hole (by the south bridge) and the south way.
 const RIFT_BREATH: Array[Rect2] = [Rect2(2.9, -7, 2.3, 6), Rect2(2.9, 4.2, 2.0, 4.8), Rect2(-8, 10.2, 10, 2)]
@@ -2631,7 +2656,7 @@ func _breath(bands: Array, pushes: Array) -> HazardDef:
 	h.fire = 0.3
 	h.cycle = 7.0
 	h.hero_damage = 0.0
-	h.enemy_damage = 0.0
+	h.enemy_damage = BREATH_ENEMY  # RD2-04c: the breath hurts only them (10), never him
 	return h
 
 
@@ -2763,7 +2788,7 @@ func _runes() -> RoomLayout:
 		a.append(_piece(p.x, p.y, 1.2, 1.2, 4.0, &"rune_pillar", true))
 	a.append_array(bowls)
 	l.obstacles = a
-	l.hazard = _hazard([&"sweep", &"comb", &"cut"], RUNES_ENTRY.duplicate())
+	l.hazard = _hazard([&"sweep", &"comb", &"cut", &"herd", &"herd"], RUNES_ENTRY.duplicate())
 	var b: Array[ArenaObstacle] = [_piece(-9, -6, 1.2, 1.2, 4.0, &"rune_pillar", true), _piece(9, 6, 1.2, 1.2, 4.0, &"rune_pillar", true)]
 	# the quiet stone in the middle (its four tiles never light, HazardDef.quiet): drawn smooth, it stops nothing
 	var quiet := ArenaObstacle.box(Vector2.ZERO, Vector2(3, 3), 0.0, &"quiet", 0.0, false)
@@ -2773,7 +2798,7 @@ func _runes() -> RoomLayout:
 	var vb := _variant(b)
 	var quiet_b: Array[Rect2] = [_rect(-3, 3, -3, 3)]
 	quiet_b.append_array(RUNES_ENTRY)
-	vb.hazard = _hazard([&"checker", &"frame", &"islands"], quiet_b)
+	vb.hazard = _hazard([&"checker", &"frame", &"islands", &"herd", &"herd"], quiet_b)
 	# A1, RP-14 (H-5): two crystals by the north wall, off the floor; three blows of his discharge one along its column
 	# of tiles (col 3, x -6 to -3; col 8, x 9 to 12), warned 1.2 s, 10 to him and 60 to each enemy on it. Runas B comes
 	# from the middle of the descent (RP-07), so they are awake there.

@@ -10,9 +10,9 @@ extends RefCounted
 ## "plates" the slabs that strike when stepped on (Ground.PLATE_SOURCE); RP-11: "chain" the chain that sweeps the bridge
 ## (Ground.CHAIN_SOURCE); RP-10: "roots" the roots that strike in the Jardim (Ground.ROOT_SOURCE); RP-16: "slit" the arrow slit (Ground.SLIT_SOURCE); SR-P1: "trap" the wall trap's blades (Ground.TRAP_SOURCE);
 ## A1: "crystal" the crystal's discharge (RP-14), "rocks" the stones of the vault (RP-20), "urn" the oil urn's blast
-## and "oil" its running flame (RP-12); AT-H2 "niche" the skeleton of the niche, AT-H3 "plant" the hostile plant; SR-P2 "sag" the slab that gives, SR-P3 "spikes" the pit grate; 2026-11-23 "spikeplate" the plate that raises spikes.
+## and "oil" its running flame (RP-12); AT-H2 "niche" the skeleton of the niche, AT-H3 "plant" the hostile plant; SR-P2 "sag" the slab that gives, SR-P3 "spikes" the pit grate; 2026-11-23 "spikeplate" the plate that raises spikes; S (2026-11-25) "breath" the rift's breath (only enemies are hurt, the key is there for the tally).
 const BOSS_ATTACKS: Array[StringName] = [&"scythe", &"reap", &"blades", &"storm", &"barrage", &"eruptions", &"ritual", &"curse", &"dash", &"runes",
-	&"plates", &"chain", &"roots", &"slit", &"trap", &"crystal", &"rocks", &"urn", &"oil", &"niche", &"plant", &"sag", &"spikes", &"spikeplate"]
+	&"plates", &"chain", &"roots", &"slit", &"trap", &"crystal", &"rocks", &"urn", &"oil", &"niche", &"plant", &"sag", &"spikes", &"spikeplate", &"breath"]
 const UNKNOWN := &"killer_unknown"
 
 

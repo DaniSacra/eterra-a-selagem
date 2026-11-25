@@ -101,8 +101,10 @@ func test_the_knights_hall_has_a_plate_and_stones_in_each_corner() -> void:
 	for c: Vector2 in corners:
 		var stones := rocks.drop_zones.filter(func(z: Rect2) -> bool: return z.get_center().x * c.x > 5.0 and z.get_center().y * c.y > 5.0)
 		assert_eq(stones.size(), 1, "stones in the corner %s" % c)
-		var spikes := plates.plates.filter(func(r: Rect2) -> bool: return r.get_center().distance_to(c * 11.0) < 9.0)
-		assert_gte(spikes.size(), 1, "a plate by the corner %s" % c)
+	# RD2-10: the plates lie flush against the walls where the charges end, on the sides and the south wall
+	for r in plates.plates:
+		var flush := absf(r.position.x) > 8.5 and (r.position.x < -10.9 or r.end.x > 10.9) or r.end.y > 10.9
+		assert_true(flush, "plate %s flush against a wall" % r)
 	for z in rocks.drop_zones:
 		for k in 11:
 			for j in 11:

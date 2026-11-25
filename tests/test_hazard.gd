@@ -51,8 +51,8 @@ func test_the_numbers_of_the_spec() -> void:
 		assert_almost_eq(h.max_share, 0.30, 0.001)
 		for p in h.patterns:
 			assert_true(ArenaHazard.PATTERNS.has(p), "%s is a pattern" % p)
-	assert_eq(l.hazard.patterns, [&"sweep", &"comb", &"cut"] as Array[StringName], "A: bands")
-	assert_eq(l.variant(1).hazard.patterns, [&"checker", &"frame", &"islands"] as Array[StringName], "B: tiles")
+	assert_eq(l.hazard.patterns, [&"sweep", &"comb", &"cut", &"herd", &"herd"] as Array[StringName], "A: bands and the herd (RD2-07)")
+	assert_eq(l.variant(1).hazard.patterns, [&"checker", &"frame", &"islands", &"herd", &"herd"] as Array[StringName], "B: tiles and the herd (RD2-07)")
 
 
 func test_cut_corners_doors_and_the_quiet_stone_never_light() -> void:
@@ -215,3 +215,36 @@ func test_the_fight_in_the_runes_runs_its_floor() -> void:
 	assert_null(game.rooms.runes, "the floor stops with the fight")
 	var room: Dictionary = game.room_tally.rooms(game.time)[-1]
 	assert_true(room.has("hazard"), "the room's numbers say what the floor did")
+
+
+## RD2-07: the herd lights 2 x 2 blocks where the pack stands, never the paladin's tile; with nobody standing it is islands.
+func test_the_herd_lights_where_the_pack_stands() -> void:
+	var a := _hazard(0, 3)
+	var pack := PackedVector2Array([Vector2(-6.2, -2.4), Vector2(-5.5, -1.8), Vector2(-5.0, -2.9), Vector2(-6.0, -3.0)])
+	a.def = a.def.duplicate()
+	a.bodies = pack
+	var hero := Vector2(8.0, 6.0)
+	var on_pack := 0
+	for k in 10:
+		a.pattern = &"herd"
+		a.phase = ArenaHazard.Phase.REST
+		a.left = 0.0
+		a.def.patterns = [&"herd"] as Array[StringName]
+		a.step(0.01, hero, 6)
+		assert_eq(a.pattern, &"herd")
+		assert_true(a.safe_everywhere(), "an unlit tile beside every lit one")
+		assert_false(a.is_lit(hero), "never under the paladin")
+		for b in pack:
+			if a.is_lit(b):
+				on_pack += 1
+		a.left = 0.0  # arm -> fire -> rest, then the next herd
+		a.step(0.01, hero, 6)
+		a.left = 0.0
+		a.step(0.01, hero, 6)
+	assert_gte(on_pack, 20, "the pack stands on it (4 bodies x 10 patterns, most of them)")
+	var empty := _hazard(0, 3)
+	empty.def = empty.def.duplicate()
+	empty.def.patterns = [&"herd"] as Array[StringName]
+	empty.left = 0.0
+	empty.step(0.01, hero, 0)
+	assert_gt(empty.share(), 0.0, "nobody standing: islands, still a pattern")

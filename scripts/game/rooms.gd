@@ -132,6 +132,8 @@ var urns: UrnFloor
 ## AT-H2, AT-H3: a second PLATES hazard beside the room's first (the niche's skeleton beside the Cripta B's slabs, the
 ## hostile plant beside the Jardim B's root), or null.
 var plates_also: PlateFloor
+## RD2-10: the wall the knight's charge will end against, marked on the floor (the knight's hall), or null.
+var wall_mark: WallMark
 var _slab_node: Node3D
 var _slab_sign: DoorSign
 ## The spot before the trial's block and before the altar's step where its choice screen opens: {at, node, away (he
@@ -536,6 +538,8 @@ func _step_fight(dt: float) -> void:
 		columns.step(dt)
 	if plates_also != null:
 		plates_also.step(dt)
+	if wall_mark != null:
+		wall_mark.step(dt)
 	if drops != null:
 		drops.step(dt)
 	if urns != null:
@@ -550,11 +554,15 @@ func _step_fight(dt: float) -> void:
 		if _spawn_t <= 0.0 and game.horde.count() < _cap and game.horde.room_for(_group_of(_queue[0])) >= _group_of(_queue[0]):
 			_spawn(_next_in_queue())
 			_spawn_t = _rng.randf_range(stage.spawn_interval_min, stage.spawn_interval_max)
+			if EncounterGen.is_long(stage, room.depth) and room.kind == RunMap.Kind.COMBAT:
+				_spawn_t = _rng.randf_range(stage.long_gap.x, stage.long_gap.y)
 		return
 	var alive := game.horde.count()
 	if _wave + 1 < _waves.size():
 		if alive <= stage.wave_remaining:
 			_wave_wait = stage.wave_delay
+			if EncounterGen.is_long(stage, room.depth) and room.kind == RunMap.Kind.COMBAT:
+				_wave_wait = stage.long_delay
 	elif alive == 0:
 		_room_cleared()
 
@@ -1560,6 +1568,8 @@ func _to_look(what: StringName) -> void:
 ## The floor that strikes on its own in this fight, by its kind (RuneFloor for the runes' grid, PlateFloor for the
 ## slabs of RP-06, asleep before the descent reaches HazardDef.from_progress).
 func _start_hazard(layout: RoomLayout) -> void:
+	if layout != null and layout.guardian_home and layout.guardian_id == &"knight" and wall_mark == null:
+		wall_mark = WallMark.new(game)
 	if layout != null and columns == null:
 		var c := ColumnFloor.new(game, layout.obstacles)
 		if c.count() > 0:
@@ -1597,6 +1607,10 @@ func _start_one(def: HazardDef) -> void:
 
 
 func _stop_runes() -> void:
+	if wall_mark != null:
+		wall_mark.stop()
+		game.room_tally.walls(wall_mark.tally())
+		wall_mark = null
 	if columns != null:
 		columns.stop()
 		game.room_tally.columns(columns.tally())

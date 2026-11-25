@@ -1683,3 +1683,31 @@ Quem pagar o Cavaleiro mais caro deve mexer em `HOUSE_FROM`, no tempo entre pedr
   cada 3 s, 40% mirada no herói. O sopro das Fendas continua só empurrando (`test_breath` trava 0 de dano; o dano em inimigo
   pedido no RD2-04 (c) ficou de fora: muda a regra da sala).
 - Runas: aviso 1,5 s e no máximo 30% das lajes acesas (era 1,2 s e 35%), para o dano do herói cair abaixo de 15% do da sala 7.
+
+## Lote S (2026-11-25, room-designer): ritmo, laje por ciclo, runas do bando, investida do Cavaleiro
+Medida do robô: `smoke 900 --bot-reaction=0.25`, sementes 1 a 12 (antes = árvore sem o lote, depois = final); Cavaleiro `--start=miniboss --guardian=knight --smoke=300`.
+
+| Item | Antes | Depois | Aceite |
+|---|---|---|---|
+| S-3 tempo médio por sala (salas de luta, sem descanso) | 1 a 4: 27,1 s (d2 20,7); 6 a 9: 34,4 s | 1 a 4: 38,4 s (d2 35,3, d3 44,1, d4 42,9); 6 a 9: 50,8 s | 25 a 45 e 30 a 55: atingido |
+| S-3 chegou em Morvath, `stuck` | 9 de 12, 0 | 8 de 12, 0 | sem `stuck`; 1 a menos chegou (as salas ficaram mais longas) |
+| S-4 laje de aprender até a sala 4: descidas com golpe em inimigo | 3 de 12, 0 de dano no herói | 6 de 12, 0 de dano no herói (17 armadas pelo ciclo) | 8 de 12: **não atingido** (6) |
+| S-2 runas: dano em inimigo / no herói | 3025 / 69 (12 de 12 com golpe em inimigo) | 3359 / 60 (12 de 12) | atingido já antes; o padrão `herd` só reforça |
+| S-1 raiz com golpe em inimigo (salas em que aparece) | 1 de 18 | 0 de 18 (3 golpes, só 2 salas acordadas) | metade: **não atingido** |
+| S-5 Cavaleiro: batidas na parede por luta | 4 a 8 | 2 a 8 (11 de 12 com 3 ou mais) | 3 ou mais: quase |
+| S-5 Cavaleiro: luta (média, max) | 74,6 s (97,2) | 70,4 s (85,9) | abaixo de 90: atingido |
+| S-5 Cavaleiro: laje de espinhos com golpe em inimigo | 6 de 12 (310 de dano) | 8 de 12 (545 de dano) | 6 de 12: atingido |
+
+- **S-3**: `StageDef.long_depths` (2 a 4 e 6 a 9) força 3 ondas mais leves, a 3a com 1 elite da sala 4 em diante (a elite da sala 2 e 3 pesava
+  demais: com ela e sem escalonar, 6 de 9 chegavam ao Morvath), nascimento a cada 0,45 a 0,75 s, 0,8 s entre ondas. A sala 1 (um tipo só) e as
+  casas dos guardiões ficam como estavam.
+- **S-4**: `HazardDef.auto_cycle/auto_near/auto_until`: a laje parada há 6 s arma sozinha com o bando a 2,5 m (aviso 1,5 s), até a sala 4. Com
+  `auto_near` 4 m o resultado foi pior (4 de 12, ruído do sorteio), voltou a 2,5 m. O que falta para 8 de 12 é o bando passar pela laje.
+- **S-2**: o robô já fazia as runas ferirem o bando (12 de 12); novo padrão `herd` (dois blocos 2 x 2 onde o bando está, nunca no herói) em
+  duas das cinco entradas da lista de cada variante.
+- **S-1**: faixa 4,8 m e aviso 1,8 s nas raízes, planta 3,2 x 3,5 m e 1,8 s. Tentei `enemy_dwell` 0,8 (acordar só com quem fica): 0 golpes em
+  12 descidas, desfeito. Sem mexer no fluxo da horda (decisão) a raiz quase nunca acorda em sala funda; o que falta é a pergunta B2.
+- **S-5**: lajes de espinhos coladas nas paredes (meios oeste e leste e parede sul a 6 m da entrada) onde a investida acaba; `WallMark` marca no
+  chão onde a linha encontra a parede. Uma luta de 12 teve 2 batidas (a semente em que o Cavaleiro ficou longe das paredes).
+- Sopro das Fendas (RD2-04c): 10 só em inimigo, 7 de 17 salas com golpe (antes 0 de 17), 8 empurrados.
+- Arte: anel âmbar do `WallMark`, lajes de espinhos no chão da parede, e a marca da laje de aprender armando sozinha são placeholders.

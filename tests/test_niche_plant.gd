@@ -35,7 +35,7 @@ func test_where_the_niche_and_the_plant_are() -> void:
 	assert_eq(niche.plate_source, Ground.NICHE_SOURCE)
 	assert_eq(plant.plate_source, Ground.PLANT_SOURCE)
 	for h: HazardDef in [niche, plant]:
-		assert_almost_eq(h.warn, 1.2, 0.001, "1.2 s with the 10")
+		assert_gte(h.warn, 1.2, "1.2 s or more with the 10 (the plant 1.8 s since S-1)")
 		assert_almost_eq(h.hero_damage, 10.0, 0.001)
 		assert_almost_eq(h.enemy_damage, 60.0, 0.001)
 		assert_almost_eq(h.from_progress, 0.34, 0.001, "from the 4th room")
@@ -44,7 +44,7 @@ func test_where_the_niche_and_the_plant_are() -> void:
 	assert_almost_eq(niche.dwell, 0.3, 0.001)
 	assert_almost_eq(plant.push_out, 1.0, 0.001)
 	assert_almost_eq(plant.dwell, 0.5, 0.001)
-	assert_lte(plant.strip_width, 1.5, "a side way out of 0.75 m at most")
+	assert_lte(plant.strip_width, 3.2, "a side way out of 1.6 m at most (S-1; the way off in time is tested below)")
 	for pair: Array in [[crypt, niche], [garden, plant]]:
 		var l: RoomLayout = pair[0]
 		var h: HazardDef = pair[1]
