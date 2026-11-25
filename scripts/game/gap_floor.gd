@@ -5,10 +5,13 @@ extends Node3D
 ## Arena.gaps. Display only; the rule is GapRule (Player.step keeps walkers out). It hangs from the arena and goes with it.
 
 const Y := 0.04
-const WATER := Color(0.05, 0.12, 0.2, 0.92)
-const FOAM := Color(0.62, 0.76, 0.82, 0.8)
-const FOAM_WIDTH := 0.18
-const RIPPLE_SPEED := 0.35
+## The water of the stream as SL-01's (shallow_water.gdshader, its ripples, glint and ragged banks), darker because this
+## one is deep: no one wades it. Its damp bank (HallLife's wet decal) BANK times as wide around it.
+const WATER := preload("res://assets/shaders/shallow_water.gdshader")
+const DEEP := Color(0.02, 0.05, 0.08)
+const SHALLOW := Color(0.07, 0.13, 0.17)
+const BANK := 1.45
+const BANK_Y := 0.03
 
 var _water: Array[ShaderMaterial] = []
 
@@ -19,46 +22,25 @@ func _init(gaps: Array[Rect2] = []) -> void:
 		_add(r)
 
 
+## One rectangle: the strip runs along its long side (the shader's banks are across UV.y).
 func _add(r: Rect2) -> void:
-	var water := MeshInstance3D.new()
-	var plane := PlaneMesh.new()
-	plane.size = r.size
-	water.mesh = plane
-	water.position = Vector3(r.get_center().x, Y, r.get_center().y)
+	var tall := r.size.y > r.size.x
+	var length := maxf(r.size.x, r.size.y)
+	var width := minf(r.size.x, r.size.y)
 	var mat := ShaderMaterial.new()
-	mat.shader = _shader()
-	mat.set_shader_parameter(&"water", WATER)
-	mat.set_shader_parameter(&"foam", FOAM)
-	mat.set_shader_parameter(&"size", r.size)
-	mat.set_shader_parameter(&"foam_width", FOAM_WIDTH)
-	mat.set_shader_parameter(&"speed", RIPPLE_SPEED)
-	water.material_override = mat
-	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(water)
+	mat.shader = WATER
+	mat.set_shader_parameter(&"deep", DEEP)
+	mat.set_shader_parameter(&"shallow", SHALLOW)
+	var damp := HallLife.decal(HallLife.WATER_DAMP, 0.5)
+	for part: Array in [[damp, width * BANK, BANK_Y], [mat, width, Y]]:
+		var mi := MeshInstance3D.new()
+		var plane := PlaneMesh.new()
+		plane.size = Vector2(length, part[1])
+		mi.mesh = plane
+		mi.position = Vector3(r.get_center().x, part[2], r.get_center().y)
+		if tall:
+			mi.rotation.y = PI * 0.5
+		mi.material_override = part[0]
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(mi)
 	_water.append(mat)
-
-
-static var _cached: Shader
-
-
-static func _shader() -> Shader:
-	if _cached == null:
-		_cached = Shader.new()
-		_cached.code = """shader_type spatial;
-render_mode unshaded, cull_disabled, depth_draw_never;
-uniform vec4 water : source_color;
-uniform vec4 foam : source_color;
-uniform vec2 size;
-uniform float foam_width;
-uniform float speed;
-void fragment() {
-	vec2 p = (UV - 0.5) * size;
-	float edge = min(size.y * 0.5 - abs(p.y), size.x * 0.5 - abs(p.x));
-	float bank = 1.0 - smoothstep(0.0, foam_width, edge);
-	float wave = 0.5 + 0.5 * sin((p.x * 1.3 + p.y * 2.1) - TIME * speed * 6.0);
-	vec3 col = mix(water.rgb * (0.8 + 0.4 * wave), foam.rgb, bank * foam.a);
-	ALBEDO = col;
-	ALPHA = mix(water.a, 1.0, bank);
-}
-"""
-	return _cached
