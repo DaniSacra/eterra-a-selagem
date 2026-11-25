@@ -35,6 +35,22 @@ uniform float flat_lod = 3.0;
 uniform vec3 cape_color : source_color = vec3(0.2, 0.55, 0.64);
 uniform float cape_value = 0.42;
 uniform float cape_rim = 0.55;
+// H-1 (art review 2026-11-25): the painting's dark browns and purples (the plates of chest, shoulders, bracers, greaves)
+// are put on dark steel (steel_color, steel_value of it, the painting's luma keeps the relief), its gold patches on old
+// gold; leather stays brown only on the belt band (belt_y0..belt_y1, model units of height) and the boots (under
+// boot_y). Skin and the orange scarf stay as painted.
+uniform vec3 steel_color : source_color = vec3(0.16, 0.18, 0.22);
+uniform float steel_value = 1.0;
+uniform vec3 gold_color : source_color = vec3(0.72, 0.52, 0.2);
+uniform float gold_value = 0.8;
+uniform float belt_y0 = 0.86;
+uniform float belt_y1 = 0.98;
+uniform float boot_y = 0.24;
+// 1 for the Guerreiro (HeroBody sets it with cape_cut and cape_narrow); 0 leaves the painting alone (the Maga).
+uniform float armor = 0.0;
+// H-2: the cape cut above the knee (cape_cut: model units of height, 0 off) and narrowed to cape_narrow of its width.
+uniform float cape_cut = 0.0;
+uniform float cape_narrow = 1.0;
 uniform vec3 rim_color : source_color = vec3(1.0, 0.82, 0.62);
 uniform float rim_power = 3.2;
 uniform float rim = 0.7;
@@ -50,16 +66,42 @@ uniform float gamma = 1.0;
 
 #include "res://assets/shaders/figure_paint.gdshaderinc"
 
+varying float local_y;
+varying float cape_v;
+
+void vertex() {
+	local_y = VERTEX.y * 0.01;  // the skinned mesh space is in centimeters (the skeleton's), the model 180 of them
+	// the cape's texels (green zone, as in fragment) are narrowed toward his spine plane
+	vec3 t = textureLod(albedo, UV, 3.0).rgb;
+	cape_v = smoothstep(0.015, 0.06, t.g - t.r) * (1.0 - smoothstep(0.0, 0.04, t.b - t.g - 0.02));
+	VERTEX.x *= mix(1.0, cape_narrow, cape_v * step(0.001, cape_cut));
+}
+
 void fragment() {
 	vec3 raw = texture(albedo, UV).rgb;
 	vec3 c = figure_flatten(raw, textureLod(albedo, UV, flat_lod).rgb, flatten);
 	float cape = smoothstep(0.015, 0.06, c.g - c.r) * (1.0 - smoothstep(0.0, 0.04, c.b - c.g - 0.02));
+	if (cape_cut > 0.0 && cape > 0.5 && local_y < cape_cut) {
+		discard;
+	}
+	float luma0 = dot(c, vec3(0.2126, 0.7152, 0.0722));
+	float mx = max(c.r, max(c.g, c.b));
+	float mn = min(c.r, min(c.g, c.b));
+	float sat = (mx - mn) / max(mx, 0.001);
+	float gold = smoothstep(0.35, 0.5, c.r) * smoothstep(0.3, 0.45, sat) * (1.0 - smoothstep(0.1, 0.25, c.b)) * smoothstep(0.1, 0.25, c.g / max(c.r, 0.001) - 0.45);
+	float skin = smoothstep(0.45, 0.6, luma0) * smoothstep(0.02, 0.08, c.r - c.b);
+	float orange = smoothstep(0.3, 0.45, c.r - c.b) * (1.0 - smoothstep(0.4, 0.6, c.g));
+	float dark = (1.0 - cape) * (1.0 - gold) * (1.0 - skin) * (1.0 - orange);
+	float leather = max(smoothstep(belt_y0 - 0.02, belt_y0, local_y) * (1.0 - smoothstep(belt_y1, belt_y1 + 0.02, local_y)), 1.0 - smoothstep(boot_y, boot_y + 0.03, local_y));
+	float steel = dark * (1.0 - leather) * armor;
 	float paint_luma = dot(c, vec3(0.2126, 0.7152, 0.0722));
 	float grey = dot(c, vec3(0.2126, 0.7152, 0.0722));
 	c = max(mix(vec3(grey), c, saturation), vec3(0.0));
 	c *= min(1.0, top / max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 0.0001));
 	c *= tint.rgb * value;
 	c = mix(c, cape_color * clamp(paint_luma / 0.12, 0.6, 1.3) * cape_value * tint.rgb, cape);
+	c = mix(c, steel_color * clamp(luma0 / 0.12, 0.6, 1.5) * steel_value * tint.rgb, steel);
+	c = mix(c, gold_color * clamp(luma0 / 0.45, 0.7, 1.2) * gold_value * tint.rgb, gold * (1.0 - leather) * armor);
 	ALBEDO = c;
 	ROUGHNESS = roughness;
 	METALLIC = metallic;
