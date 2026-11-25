@@ -149,6 +149,11 @@ const LIP_FALLEN_DEPTH := Vector2(0.3, 1.1)
 ## bell height, how far the bell flares and the abacus reaches as shares of the shaft's radius, abacus height).
 const CAPITAL := Vector4(0.09, 0.3, 1.38, 1.55)
 const ABACUS := 0.12
+## C-2 (AD2-07): a column's foot and neck read as a base and a capital, not a smooth cylinder: a wider step under the
+## plinth (its side as a share of the plinth's, its height) and an astragal ring over the shaft under the capital
+## (its radius as a share of the shaft's, its height).
+const COLUMN_STEP := Vector2(1.3, 0.09)
+const ASTRAGAL := Vector2(1.2, 0.08)
 ## C18: the impost block over the abacus of the second silhouette (its width as a share of the abacus', its height),
 ## the annulet round its shaft (where along the shaft, radius as a share of the shaft's, height), and where a broken
 ## column snaps (share of its height). The round pieces' sides (smoother than a plain shaft).
@@ -1459,6 +1464,7 @@ func round_column(o: ArenaObstacle, broken := false) -> void:
 	var foot := Vector3(o.center.x, 0.0, o.center.y)
 	var r := o.radius
 	var shaft_r := r * TombKit.COLUMN_SHAFT
+	m.block(foot, Vector3(r * 1.41 * COLUMN_STEP.x, COLUMN_STEP.y, r * 1.41 * COLUMN_STEP.x), PI * 0.25, mat, false)
 	m.block(foot, Vector3(r * 1.41, TombKit.COLUMN_PLINTH, r * 1.41), PI * 0.25, mat, false)
 	m.shaft(foot + Vector3(0, TombKit.COLUMN_PLINTH, 0), r * 0.98, TombKit.COLUMN_BASE - TombKit.COLUMN_PLINTH, mat)
 	m.shaft(foot + Vector3(0, TombKit.COLUMN_BASE, 0), shaft_r * 1.12, 0.12, mat)
@@ -1466,6 +1472,8 @@ func round_column(o: ArenaObstacle, broken := false) -> void:
 	var head := CAPITAL.x + CAPITAL.y + ABACUS + impost
 	var cap_y := o.height - head
 	m.shaft(foot + Vector3(0, TombKit.COLUMN_BASE, 0), shaft_r, cap_y - TombKit.COLUMN_BASE, mat)
+	var astragal := m.shaft(foot + Vector3(0, cap_y - ASTRAGAL.y, 0), shaft_r * ASTRAGAL.x, ASTRAGAL.y, mat)
+	(astragal.mesh as CylinderMesh).radial_segments = CAPITAL_SIDES
 	var ring := m.shaft(foot + Vector3(0, cap_y, 0), shaft_r * 1.1, CAPITAL.x, mat)
 	var bell := m.shaft(foot + Vector3(0, cap_y + CAPITAL.x, 0), shaft_r * CAPITAL.z, CAPITAL.y, mat)
 	(bell.mesh as CylinderMesh).bottom_radius = shaft_r
@@ -1822,14 +1830,19 @@ const KEY_POOL_SOFT := 2.0
 func key_pool(field: Vector3, color: Color, energy: float) -> SpotLight3D:
 	var yaw := deg_to_rad(Feel.live().cam_yaw)
 	var away := -Vector2(sin(yaw), cos(yaw)) * field.z * KEY_POOL_SHIFT
-	var to := Vector3(field.x + away.x, 0.0, field.y + away.y)
+	return pool_spot(self, Vector2(field.x + away.x, field.y + away.y), field.z, color, energy)
+
+
+## A diffuse pool of light on the floor at `at` (x, z), `radius` m (stylized look only, no shadow, never on the crowd).
+static func pool_spot(parent: Node3D, at: Vector2, radius: float, color: Color, energy: float) -> SpotLight3D:
+	var to := Vector3(at.x, 0.0, at.y)
 	var spot := SpotLight3D.new()
-	add_child(spot)
+	parent.add_child(spot)
 	spot.look_at_from_position(to + Vector3(0.01, KEY_POOL_HEIGHT, 0.0), to)
 	spot.light_color = color
 	spot.light_energy = energy
 	spot.light_specular = 0.0
-	spot.spot_angle = rad_to_deg(atan(field.z / KEY_POOL_HEIGHT))
+	spot.spot_angle = rad_to_deg(atan(radius / KEY_POOL_HEIGHT))
 	spot.spot_range = KEY_POOL_HEIGHT * 1.6
 	spot.spot_attenuation = 0.0
 	spot.spot_angle_attenuation = KEY_POOL_SOFT
@@ -1838,6 +1851,16 @@ func key_pool(field: Vector3, color: Color, energy: float) -> SpotLight3D:
 	spot.set_meta(ArenaKit.NOT_FIRE, true)
 	ArenaKit.style_only(spot)
 	return spot
+
+
+## C-4 (AD2-09, the Seal Chamber's ruler): the warm pools of braziers on the floor of a room, each [x, z, radius, energy]
+## in `POOL_WARM`'s colour, off the fight's middle (the middle stays the brightest of the cold key).
+const POOL_WARM := Color(1.0, 0.72, 0.42)
+
+
+func warm_pools(pools: Array) -> void:
+	for p: Array in pools:
+		pool_spot(self, Vector2(p[0], p[1]), float(p[2]), POOL_WARM, float(p[3]))
 
 
 ## ENV-HB4 (docs/art/benchmark_hades2_style.md 4.1, only in the stylized look, on kit.styled()): the plain coursed wall

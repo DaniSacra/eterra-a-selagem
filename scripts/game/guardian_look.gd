@@ -15,6 +15,18 @@ extends ArenaRoom
 ## north wall with a dais, an altar and a lectern, three lancet windows over it and the coloured shaft they let in,
 ## candles on the ledges and in the stands at the way in.
 
+## C-2 (AD2-07): the far ruins read as arches and pillars in the mist on the right of the picture, not as black (the
+## backdrop's mist, stone and edge, lifted from the old 0.1, 0.05 and 0.16).
+const BACKDROP := {&"mist": Color(0.3, 0.34, 0.44), &"stone": Color(0.14, 0.16, 0.21), &"edge": Color(0.4, 0.45, 0.56)}
+## C-2: the painted floor's stone and patches times this (the fight's floor read luma 148 to 158; 85 to 100 asked).
+const STY_FLOOR_VALUE := 0.5
+## C-4: the warm pools of the braziers on the floor, [x offset from the room's middle, z offset from the north wall,
+## radius, energy] (the armory's braziers stand at ARMORY_BOWLS; the chapel's candles at its north ledges).
+const POOLS := {
+	&"armory": [[-3.6, 3.4, 3.4, 2.6], [3.6, 3.4, 3.4, 2.6]],
+	&"chapel": [[-8.0, 3.2, 3.4, 2.4], [6.5, 3.2, 3.4, 2.4]],
+}
+
 const ARMORY := &"armory"
 const CHAPEL := &"chapel"
 
@@ -43,7 +55,7 @@ const HOUSES := {
 			&"air": {&"sky": Color(0.05, 0.062, 0.085), &"fog": Color(0.095, 0.115, 0.15), &"fog_depth": Vector2(40.0, 85.0),
 				&"ambient": Color(0.74, 0.78, 0.85), &"ambient_gain": 2.7, &"moon": Color(0.92, 0.96, 1.0), &"moon_energy": 0.9,
 				&"moon_shadow": true},
-			&"backdrop": {&"mist": Color(0.1, 0.12, 0.16), &"stone": Color(0.05, 0.06, 0.08), &"edge": Color(0.16, 0.19, 0.25)},
+			&"backdrop": BACKDROP,
 			&"shadow_glow": Color(0.22, 0.34, 0.55), &"vignette": CatacombHall.STY_VIGNETTE,
 		},
 		&"patch": Color(0.3, 0.34, 0.42),
@@ -67,7 +79,7 @@ const HOUSES := {
 			&"air": {&"sky": Color(0.055, 0.06, 0.075), &"fog": Color(0.11, 0.12, 0.145), &"fog_depth": Vector2(40.0, 85.0),
 				&"ambient": Color(0.78, 0.8, 0.86), &"ambient_gain": 2.6, &"moon": Color(0.94, 0.96, 1.0), &"moon_energy": 0.85,
 				&"moon_shadow": true},
-			&"backdrop": {&"mist": Color(0.11, 0.125, 0.15), &"stone": Color(0.055, 0.06, 0.075), &"edge": Color(0.18, 0.2, 0.25)},
+			&"backdrop": BACKDROP,
 			&"shadow_glow": Color(0.3, 0.4, 0.6), &"vignette": CatacombHall.STY_VIGNETTE,
 		},
 		&"patch": Color(0.42, 0.43, 0.48),
@@ -632,6 +644,11 @@ func _lights() -> void:
 	_fill.omni_attenuation = float(f[4])
 	_fill.light_cull_mask = FLOOR_LAYER
 	add_child(_fill)
+	var mid := layout.floor.bounds().get_center()
+	var pools: Array = []
+	for p: Array in POOLS[&"armory" if armory() else &"chapel"]:
+		pools.append([mid.x + float(p[0]), _north + float(p[1]), p[2], p[3]])
+	warm_pools(pools)
 
 
 # ---------- the stylized look ----------
@@ -639,7 +656,8 @@ func _lights() -> void:
 func style() -> Dictionary:
 	var cfg := _cfg()
 	var st: Dictionary = (cfg[&"style"] as Dictionary).duplicate(true)
-	st[&"floor"] = ArenaKit.CALM_FLOOR.merged(ArenaKit.SOFT_PATCHES).merged({&"patch_color": cfg[&"patch"]}).merged(STY_FRAME)
+	st[&"floor_stone"] = (st[&"floor_stone"] as Color) * STY_FLOOR_VALUE
+	st[&"floor"] = ArenaKit.CALM_FLOOR.merged(ArenaKit.SOFT_PATCHES).merged({&"patch_color": (cfg[&"patch"] as Color) * STY_FLOOR_VALUE}).merged(STY_FRAME)
 	if compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
