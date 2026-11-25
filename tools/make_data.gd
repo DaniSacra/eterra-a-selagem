@@ -98,6 +98,10 @@ const THRUST_PEAK := 0.025
 ## Hades II measures distances in its own units: its heroine walks 540 a second and stands 200 tall. 80 of them make
 ## a meter here (6.75 m/s, a 2.5 m tall paladin), so every distance below is written as Hades units / U.
 const U := 80.0
+## PT-25-4 and PT-25-11 (Daniel: "atacar e andar um pouquinho é sempre melhor"): the short step each blow of the combo
+## takes forward the moment it lands (ComboNode.step, meters): cut1, cut2 and the finisher. The finisher's is the longest,
+## to reach what the first two pushed away. It stops at bodies (BodyBlock) and walls; it replaces the planted blows of E1c.
+const STEP := [0.3, 0.3, 0.8]
 
 
 ## The paladin's moves, built on the timings, damage and reach of the first weapon of Hades II (study only:
@@ -112,7 +116,7 @@ func _tree(fifth: bool) -> ComboTree:
 	# cut2 0.13 / 13 / 19 (0.45 s), the spin 0.28 + 0.08 of glint = 0.36 / 18 / 30 (0.86 s).
 	var cut3 := _move(&"cut3", L, &"Slash_C", [&"light", &"spin", &"finisher"],
 		{"damage": 30.0, "shape": ComboNode.Shape.CIRCLE, "reach": 240.0 / U, "knockback": 16.0, "windup": 0.36 - FINISHER_GLINT,
-		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "magick_per_hit": 0.5, "chain_window": 0.6, "hit_stop_ms": 100.0, "shake": 2.4, "move_scale": 0.0, "sound": &"blade_spin",
+		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "magick_per_hit": 0.5, "step": STEP[2], "chain_window": 0.6, "hit_stop_ms": 100.0, "shake": 2.4, "move_scale": 0.0, "sound": &"blade_spin",
 		# QW-103: the spin's swish (its samples peak 30 to 90 ms in) on the blade's frame, 0.36 s after the press; the
 		# press only gathers
 		"sound_at": 0.36 - SWISH_PEAK, "sound_press": &"spin_gather", "layers": LAYER_SPIN}, [], &"move_spin")
@@ -121,11 +125,11 @@ func _tree(fifth: bool) -> ComboTree:
 		after_cut2 = [_extra_blows(cut3)]
 	var cut2 := _move(&"cut2", L, &"Slash_B", [&"light"],
 		{"damage": 15.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[1], "windup": 0.13, "recovery": 13.0 / 60.0,
-		"move_hold": 19.0 / 60.0, "magick_per_hit": 0.5,
+		"move_hold": 19.0 / 60.0, "magick_per_hit": 0.5, "step": STEP[1],
 		"chain_window": 0.4, "hit_stop_ms": 60.0, "shake": 1.1, "move_scale": 0.0, "sound": &"blade_heavy", "layers": LAYER_TURN}, after_cut2)
 	var cut1 := _move(&"cut1", L, &"Slash_A", [&"light"],
 		{"damage": 15.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.08, "recovery": 8.0 / 60.0,
-		"move_hold": 11.0 / 60.0, "magick_per_hit": 0.5,
+		"move_hold": 11.0 / 60.0, "magick_per_hit": 0.5, "step": STEP[0],
 		"chain_window": 0.4, "hit_stop_ms": 35.0, "shake": 0.9, "move_scale": 0.0}, [cut2])
 	# special (Daniel, 2026-11-21): the sword's burst, a bolt of light thrown ahead (strikes only with its bolt): 35
 	# damage, 6 m, through the crowd, 12 Magia (magick_cost: a press without it throws nothing), 0.5 s between throws. A tap
@@ -190,10 +194,10 @@ const EXTRA := {"damage": 15.0, "windup": 0.14, "recovery": 12.0 / 60.0, "move_h
 func _extra_blows(spin: ComboNode) -> ComboNode:
 	var back := _move(&"cut4", L, &"Slash_A", [&"light"],
 		{"damage": EXTRA.damage, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.12, "recovery": 9.0 / 60.0,
-		"move_hold": 12.0 / 60.0, "magick_per_hit": 0.5, "chain_window": 0.4, "hit_stop_ms": 85.0, "shake": 1.8, "move_scale": 0.0}, [spin])
+		"move_hold": 12.0 / 60.0, "magick_per_hit": 0.5, "step": STEP[0], "chain_window": 0.4, "hit_stop_ms": 85.0, "shake": 1.8, "move_scale": 0.0}, [spin])
 	return _move(&"thrust4", L, &"Sword_Attack", [&"light", &"thrust"],
 		{"damage": EXTRA.damage, "shape": ComboNode.Shape.LINE, "reach": 430.0 / U, "width": 1.6, "knockback": COMBO_PUSH[1],
-		"windup": EXTRA.windup, "recovery": EXTRA.recovery, "move_hold": EXTRA.move_hold, "magick_per_hit": 0.5, "chain_window": 0.4,
+		"windup": EXTRA.windup, "recovery": EXTRA.recovery, "move_hold": EXTRA.move_hold, "magick_per_hit": 0.5, "step": STEP[1], "chain_window": 0.4,
 		"hit_stop_ms": 85.0, "shake": 1.8, "move_scale": 0.0, "sound": &"thrust", "sound_at": EXTRA.windup - THRUST_PEAK}, [back])
 
 
@@ -238,6 +242,11 @@ func _quick(seconds: float, heavy: bool) -> float:
 
 const ENEMY_PACE := 1.15
 ## The Cavaleiro's phases by share of toughness (SW-REA, the Butcher's 80 / 60 / 40%): guard by time, call, double charge.
+## PT-25-5 (Daniel could not break the Cavaleiro's guard: the yellow bar barely moved at 1400 with light blows taking 30%):
+## the bot needed about 41 s of focused fighting. Armor 550 and the light blows (cut1, cut2, the thrust) taking half of
+## their damage; the strong ones (finisher, wave, dash, Omegas, shout, ultimates) still take it whole.
+const KNIGHT_ARMOR := 550.0
+const KNIGHT_ARMOR_SOFT := 0.5
 const KNIGHT_PHASES := [0.8, 0.6, 0.4]
 const ENEMY_COOLDOWN := 0.9
 ## Morvath's walk (a share of Hades II's 600) and his pace between attacks (shares of BossDef.rest per phase and of
@@ -421,11 +430,11 @@ func _enemies() -> void:
 	# 0.8). Armor 1220 barely feels the light blows (armor_soft), the strong ones take it whole. A priority list with a
 	# cooldown a move (AttackList): the shield throw from the start, the charges in rows of 1, 2 and 3 as his toughness falls.
 	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 500.0, "speed": 417.0 / U, "damage": 10.0, "radius": 1.1,
-		"heavy": true, "elite": true, "armor": 1400.0, "armor_stagger": 2.5, "attack_damage": 12.0, "attack_range": 12.0, "attack_cooldown": 1.8,
+		"heavy": true, "elite": true, "armor": KNIGHT_ARMOR, "armor_stagger": 2.5, "attack_damage": 12.0, "attack_range": 12.0, "attack_cooldown": 1.8,
 		"attack_windup": 0.65, "lunge_speed": 24.0, "lunge_time": 0.3, "close_damage": 8.0, "close_range": 3.2, "close_windup": 0.5,
 		"exact_windup": true,
 		"charges": 1, "recharge_windup": 0.55, "aim_lock": 0.15, "raise_count": 3, "raise_max": 4, "raise_life": KNIGHT_PHASES[1], "raise_cooldown": 30.0, "raise_first": 10.0, "escort": [&"mage", &"mage"] as Array[StringName],
-		"armor_soft": 0.3,
+		"armor_soft": KNIGHT_ARMOR_SOFT,
 		"poise": POISE, "poise_mult": GUARDIAN_POISE_MULT, "poise_stun": GUARDIAN_POISE_STUN, "poise_vuln": ELITE_POISE_VULN, "poise_growth": POISE_GROWTH,
 		"moves": [
 			_kmove(&"throw", {"from_life": 1.0, "cooldown": 10.0, "first": 5.0, "min_dist": 4.0, "max_dist": 0.0}),

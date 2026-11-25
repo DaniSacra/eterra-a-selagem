@@ -1110,6 +1110,7 @@ entries = {
 "encounter_held": "Bênçãos de {family} que você leva: {n}",
 "encounter_held_none": "Você ainda não leva nenhuma de {family}",
 "choice_by_angel": "Trazidas por {name}",
+"angel_few": "{name} só tem {n} Bênçãos para você agora",
 "list_head": "Habilidades",
 "list_alone": "Age sozinha",
 "encounter_hear": "Ouvir {name}",

@@ -40,6 +40,9 @@ enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, SHOUT, FROST, ARC, DOME }
 ## Meters the paladin is carried forward during the windup. Only the dash attack (dash_cut, out of a dodge) has
 ## one: every other blow is struck standing still (E1c, Daniel: "tem que atacar parado").
 @export var lunge := 0.0
+## PT-25-4 and PT-25-11: meters of a short step forward at the moment the blow lands (the impact phase), after the
+## windup that is struck standing still. Stops at bodies and walls like a walk; 0 for no step.
+@export var step := 0.0
 ## Line moves: also strike behind the paladin (the same length backwards).
 @export var both_ways := false
 ## Share of walking speed kept while this move plays. Below 0: the default of data/feel.tres for its kind

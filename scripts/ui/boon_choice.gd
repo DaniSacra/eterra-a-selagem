@@ -243,6 +243,12 @@ func by_angel(a: AngelDef, on_back: Callable = Callable(), held := -1) -> void:
 		_head.add_child(phrase)
 		_head.move_child(phrase, 1)
 		_title.add_theme_font_size_override(&"font_size", 22)
+		# PT-25-1: three cards is the rule; an angel that truly has fewer says so instead of leaving a bare screen
+		if not _cards.is_empty() and _cards.size() < Encounter.CARDS:
+			var few := UiKit.shadow(UiKit.label(T.t(&"angel_few", {"name": T.t(a.name_key), "n": _cards.size()}), UiKit.DIM, 18))
+			few.name = "angel_few"
+			few.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			_head.add_child(few)
 	var line := find_child("line", true, false) as HBoxContainer
 	if line != null:
 		# BC-1: the angel in a column to the left of the lines, its whole painting fading into the dark (the seal when it
