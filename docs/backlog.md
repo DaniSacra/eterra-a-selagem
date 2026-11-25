@@ -1,5 +1,22 @@
 # Backlog de A Selagem
 
+## ENTREGAS (2026-11-25 noite, LER PRIMEIRO na conversa nova)
+Estado: tudo commitado e enviado, exe atual `30fe9deb` nas duas pastas. O Daniel pediu "só backlog": nada começa sem ele mandar.
+Cada entrega é um lote fechado com exe no fim, capturas na GPU e push. O detalhe de cada item está nas seções abaixo (PT-25, SL, SV-R).
+
+| # | Entrega | Itens | Donos | Depende de |
+|---|---|---|---|---|
+| E1 | Bugs e ajustes rápidos | PT-25-1 (Sarael com 1 carta), PT-25-2 (música do Santuário: conferir e 3 candidatas), PT-25-5 (armadura do Cavaleiro), PT-25-4 e 11 (passinho em todo ataque, maior no final) | gameplay-engineer, combat-feel-director | nada |
+| E2 | Começo e fim da descida | PT-25-6 (tela de Espólios), PT-25-8 (Antessala que ensina e começa com Bênção), PT-25-9 na Antessala (riacho obrigatório com esquiva), PT-25-7 (chegada como cometa) | ui-ux-designer, room-designer, technical-artist | textos a aprovar pelo Daniel |
+| E3 | Videira por segurar | PT-25-3 | ui-ux-designer | nada (pode ir junto da E1 ou da E2) |
+| E4 | Salas 01b e 02 | SL-01b (rio, portas grandes com o bônus dentro, mais detalhe), PT-25-10 (escala SWORN: lajes 2x2 e portas grandes), SL-02 (Cripta dos Esquecidos), PT-25-9 nas salas (travessias opcionais) | environment-artist, gameplay-engineer, room-designer | nada |
+| E5 | Santuário da Vigília novo | SV-R inteiro (pacote `docs/art/ref/hub01_2026-11-25/`) | environment-artist, gameplay-engineer | depois da E4 (padrão de portas) |
+| E6 | Botão direito novo do Guerreiro | PT-25-12: proposta do hero-designer com (a) giro que atordoa ou (b) afastar e atordoar | hero-designer, depois gameplay-engineer | escolha do Daniel |
+| E7 | Salas 03 a 14 | SL-03 em diante, uma por pacote | environment-artist | pacotes do Daniel |
+| Sobras | linha de objetivo no Santuário (vira parte da E5), xadrez das Runas (E7), modelos do Cavaleiro e do Ancião (Meshy, autorização) | | | |
+
+Decisões do Daniel em aberto: textos a aprovar (chegada, objetivo, dicas, O Leão / O Cálice / A Espada, fim curto, os da E2), D-O8 (cânone), regra de troca de Bênção no mesmo botão, (a) ou (b) da E6, música nova do Santuário, Meshy.
+
 ## PT-25, teste do Daniel no exe c233881b (2026-11-25 noite) — SÓ BACKLOG, não desenvolver até o Daniel mandar
 - **PT-25-1 (bug):** Sarael ofereceu só 1 Bênção na sala 3. Achar por que a tela veio com 1 carta e garantir 3, ou 2 com aviso quando o anjo não tem mais.
 - **PT-25-2:** música do Santuário. Conferir se `thatched_villagers` toca no Santuário (MUS-2). Daniel quer uma peça nova: separar 3 candidatas de licença livre para ele escolher (como `ASelagem-musicas-escolher`).
