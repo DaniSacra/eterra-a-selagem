@@ -143,6 +143,10 @@ func _ask_skip() -> void:
 ## Skips the first descent for good: the save says so and the player goes to the Santuário.
 func skip_first() -> void:
 	FirstTips.mark_skipped(Save.data)
+	var game := _game()
+	if game != null and game.first_run:
+		game.skip_first_descent()  # first = 2 and the Santuário (the run's own way out)
+		return
 	if Save.enabled:
 		Save.write()
 	SceneGo.to(get_tree(), SceneGo.HUB)

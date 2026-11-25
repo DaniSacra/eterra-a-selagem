@@ -776,7 +776,9 @@ func _process(delta: float) -> void:
 		# the descent: which room, and the gold for the shop (no experience here, so no bar over the scene)
 		_xp_back.visible = false
 		_xp_fill.size.x = 0.0
-		_room.text = T.t(&"hud_room", {"n": game.rooms.depth(), "of": game.rooms.stage.rooms + 1})
+		var d: int = game.rooms.depth()
+		# the guided descent's Antessala is room 0: its name instead of "Sala 0 de 8"
+		_room.text = T.t(&"room_ante") if d <= 0 and game.first_run else T.t(&"hud_room", {"n": d, "of": game.rooms.stage.rooms + 1})
 		ahead.text = game.rooms.ahead_text()
 		ahead.visible = not over and ahead.text != ""
 		_coins.show_counts(T.t(&"hud_gold_count", {"n": game.rooms.gold}), game.materials.total(MaterialPurse.SILVER),

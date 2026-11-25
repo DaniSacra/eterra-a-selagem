@@ -1462,7 +1462,12 @@ func _on_player_died() -> void:
 	log_run("death")
 	# the fight's music goes; the walk stays under the end screen (never silence with the music on)
 	Music.play(&"catacombs", Music.WALK)
-	await get_tree().create_timer(1.8).timeout
+	# the two lines of the short end (D-O5, a aprovar), one after the other at the foot
+	var cap: Variant = hud.get(&"arrival_caption") if hud != null else null
+	for key: StringName in [&"first_end_1", &"first_end_2"]:
+		if cap != null and cap.has_method(&"show_line"):
+			cap.call(&"show_line", key, 2.6)
+		await get_tree().create_timer(2.8).timeout
 	_open_end(false, false)
 
 

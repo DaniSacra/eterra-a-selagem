@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="MilestoneDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/milestone_def.gd" id="1_1ea1s"]
+
+[resource]
+script = ExtResource("1_1ea1s")
+id = &"ult"
+order = 5
+opens = &"ult"
+runs_min = 6
+needs = Array[StringName]([&"mastery2"])

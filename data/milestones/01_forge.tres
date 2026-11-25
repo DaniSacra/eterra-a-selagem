@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="MilestoneDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/milestone_def.gd" id="1_ewket"]
+
+[resource]
+script = ExtResource("1_ewket")
+id = &"forge"
+order = 1
+opens = &"smith"
+runs_min = 3
+needs = Array[StringName]([&"guardian"])
+any_of = true

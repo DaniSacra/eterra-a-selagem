@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="MilestoneDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/milestone_def.gd" id="1_285or"]
+
+[resource]
+script = ExtResource("1_285or")
+id = &"vendor"
+order = 4
+opens = &"vendor"
+runs_min = 5
+needs = Array[StringName]([&"stone"])
+any_of = true

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="MilestoneDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/milestone_def.gd" id="1_p0bh1"]
+
+[resource]
+script = ExtResource("1_p0bh1")
+id = &"book"
+order = 2
+opens = &"book"
+runs_min = 3

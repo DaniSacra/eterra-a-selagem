@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="MilestoneDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/milestone_def.gd" id="1_mxlep"]
+
+[resource]
+script = ExtResource("1_mxlep")
+id = &"maga"
+order = 6
+opens = &"heroes"
+needs = Array[StringName]([&"win"])
