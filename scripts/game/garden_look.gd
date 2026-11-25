@@ -49,7 +49,7 @@ const INSCRIPTION_CLEAR := 0.25
 const CROWN_BOUNDS := Rect2(-16.4, -13.4, 33.0, 27.0)
 ## The crystals' largest channel of emission in each variant (dark corrupted emerald, ART_REVIEW J-1: was 0.8 and 0.9,
 ## near white on screen), their light (StoneTree.CRYSTAL_GLOW's hue, no shadow: energy, reach, height).
-const CRYSTAL_GLOW := Vector2(0.12, 0.15)
+const CRYSTAL_GLOW := Vector2(0.2, 0.24)
 const CRYSTAL_LIGHT := Vector3(0.2, 2.6, 0.7)
 ## C18 (ART P1-7, Q-21 (a)): the crown of leaves, procedural cards (canopy.gdshader) on the crown's spines above
 ## CANOPY_FROM m: one card every CANOPY_EVERY points, sizes, how far each is pushed off its branch, the leaves' two
@@ -211,9 +211,9 @@ const STY_MOSS := Color(0.20, 0.24, 0.17)
 ## The cycle of 2026-11-20 (matrix row 5: hue 75 to 95, saturation 0.28 to 0.35): the mist, its glow and its light
 ## from the cold grey to an olive grey, the colour rising there and in the rust (STY_LEAF_*), never in the floor.
 ## ART_REVIEW.md 4.5 P2-B6: a few degrees greener (hue about 82, the scene to 80 or more), never cyan.
-const STY_MIST := Color(0.081, 0.09, 0.066)
-const STY_GLOW := Color(0.39, 0.43, 0.33)
-const STY_ABYSS_LIGHT := Color(0.49, 0.53, 0.43)
+const STY_MIST := Color(0.04, 0.046, 0.04)
+const STY_GLOW := Color(0.17, 0.19, 0.145)
+const STY_ABYSS_LIGHT := Color(0.26, 0.29, 0.23)
 ## The cliffs and the arches under the front in the depths' stone of the stylized look (no violet in their glow).
 const STY_CLIFF := {&"stone_color": Color(0.055, 0.062, 0.06), &"edge_color": Color(0.14, 0.16, 0.15),
 	&"mist_color": STY_MIST, &"glow_color": Color(0.3, 0.38, 0.4)}
@@ -289,6 +289,8 @@ const WATER_SHADER := preload("res://assets/shaders/dark_water.gdshader")
 ## west side read cyan); deep and foam.
 const WATER_DEEP := Color(0.055, 0.07, 0.065)
 const WATER_PALE := Color(0.66, 0.70, 0.64)
+## Sweep 2026-11-25 (item 3): the lake's and pools' sheets keep the foam and ripples dim (they read as white scribbles on black).
+const SHEET_PALE := Color(0.3, 0.34, 0.31)
 ## J5 (B): the west wall gives way to a low broken parapet (its top's range, m, its blocks' length) and a dark lake
 ## past it, under the floor (its surface's y, how far west, how far north and south past the floor), a fall at its
 ## back (x, width, top).
@@ -1357,7 +1359,7 @@ const EDGE_IVY := Vector4(0.1, 0.06, 1.6, 2.2)
 ## colour times 2 on the card (ArenaKit.mist_bank), alpha.
 const STY_WEST_MIST: Array[Vector3] = [Vector3(-24.0, -5.0, 4.0), Vector3(-20.0, -6.5, 17.0)]
 const STY_WEST_MIST_SIZE := Vector2(26.0, 6.0)
-const STY_WEST_MIST_COLOR := Color(0.11, 0.12, 0.035)
+const STY_WEST_MIST_COLOR := Color(0.045, 0.05, 0.03)
 const STY_WEST_MIST_ALPHA := 0.45
 
 
@@ -1525,7 +1527,7 @@ func _sheet(sm: Masonry, at: Vector3, yaw: float, size: Vector2, foam: Vector2) 
 	mat.shader = WATER_SHADER
 	mat.set_shader_parameter(&"form", 0)
 	mat.set_shader_parameter(&"deep", WATER_DEEP)
-	mat.set_shader_parameter(&"pale", WATER_PALE)
+	mat.set_shader_parameter(&"pale", SHEET_PALE)
 	mat.set_shader_parameter(&"size", size)
 	mat.set_shader_parameter(&"foam_at", foam)
 	mi.material_override = mat

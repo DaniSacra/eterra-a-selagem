@@ -142,17 +142,18 @@ const OLD_ARCH := Vector3(-9.5, 3.2, 0.5)
 ## screen, docs/art/benchmark_hades2_style.md 7.2 row 2; scene saturation 0.30 to 0.40, short of Morvath's violet),
 ## the violet still only under the brink.
 const STYLE := {
-	&"stone": Color(0.28, 0.265, 0.355), &"shadow": Color(0.87, 0.85, 1.0), &"floor_stone": STY_FLOOR,
+	&"stone": Color(0.265, 0.275, 0.35), &"shadow": Color(0.85, 0.88, 1.0), &"floor_stone": STY_FLOOR,
 	&"edge_value": STY_EDGE_VALUE, &"joint_cold": Color(0.9, 0.88, 1.0), &"olive_share": 0.04, &"metal": true,
 	&"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": Color(0.56, 0.52, 0.66),
-	&"air": {&"sky": Color(0.05, 0.045, 0.08), &"fog": Color(0.10, 0.09, 0.14), &"ambient": Color(0.69, 0.68, 0.76),
+	&"air": {&"sky": Color(0.045, 0.05, 0.08), &"fog": Color(0.085, 0.095, 0.145), &"ambient": Color(0.66, 0.69, 0.78),
 		&"ambient_gain": 1.6, &"moon": Color(0.9, 0.9, 0.95), &"moon_energy": 0.8, &"moon_shadow": true},
 	&"shadow_glow": STY_SHADOW_GLOW, &"vignette": CatacombHall.STY_VIGNETTE,
 }
 ## C1V N2 (docs/art/identidade_c1v.md 2.1, the hall's recipe, only in the stylized look): the key's shadow band takes this
 ## indigo on top (hue 246 to 260 like the room), and the warm key (the hall's colour and energy) pools over the field
 ## STY_KEY_POOLS[STY_WARM_FIELD], at its radius.
-const STY_SHADOW_GLOW := Color(0.55, 0.40, 1.0)
+## Sweep 2026-11-25 (item 4): the shadow band, stone and fog a few degrees toward blue (hue about 228, was 255 = Morvath violet).
+const STY_SHADOW_GLOW := Color(0.34, 0.45, 0.9)
 const STY_WARM_FIELD := 1
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
@@ -175,7 +176,7 @@ const STY_COMPAT_AMBIENT := 0.5
 const STY_COMPAT_MOON := 0.6
 ## The haze and the lips' violet in the stylized look: this share of the way to their own grey (the haze's lightest
 ## (0.23, 0.14, 0.42) to about (0.24, 0.17, 0.38); the abyss's mist cards too); the lips' sheet on the slabs fainter (the violet under the brink).
-const STY_HAZE_GREY := 0.4
+const STY_HAZE_GREY := 0.65
 ## P2-B1 (ART_REVIEW.md 4.5): soft pools of key light over the fight fields (ArenaRoom.key_pool: x, z, radius), the
 ## west where he enters, the middle between the bridges, the east fight; their colour and energy. With the
 ## moon lower (STYLE's air), the floor nearest the camera in the near camera under 0.80 of the middle.

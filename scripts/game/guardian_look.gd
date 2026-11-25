@@ -17,7 +17,8 @@ extends ArenaRoom
 
 ## C-2 (AD2-07): the far ruins read as arches and pillars in the mist on the right of the picture, not as black (the
 ## backdrop's mist, stone and edge, lifted from the old 0.1, 0.05 and 0.16).
-const BACKDROP := {&"mist": Color(0.3, 0.34, 0.44), &"stone": Color(0.14, 0.16, 0.21), &"edge": Color(0.4, 0.45, 0.56)}
+## Sweep 2026-11-25 (item 3): dark in the room's blue (the bank reads about luma 0.1), no longer a flat light grey-blue panel.
+const BACKDROP := {&"mist": Color(0.075, 0.09, 0.125), &"stone": Color(0.035, 0.045, 0.065), &"edge": Color(0.17, 0.2, 0.27)}
 ## C-2: the painted floor's stone and patches times this (the fight's floor read luma 148 to 158; 85 to 100 asked).
 const STY_FLOOR_VALUE := 0.5
 ## C-4: the warm pools of the braziers on the floor, [x offset from the room's middle, z offset from the north wall,

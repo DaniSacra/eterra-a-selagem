@@ -38,6 +38,17 @@ const BEAM_BODY := 0.9
 const BEAM_TINT := Color(1.0, 0.78, 0.34)
 const BEAM_NEAR_KEEP := 1.0
 const BEAM_HERO_KEEP := 0.5
+## Sweep 2026-11-25 (item 2): the beam not smooth: more and livelier streaks down its body, and dust drifting up in it
+## (count, rise m/s, life s, mote size m, radius round the middle m, brightness).
+const BEAM_STREAKS := 0.5
+const BEAM_STREAK_COUNT := 13.0
+const BEAM_STREAK_SPEED := 0.4
+const DUST_COUNT := 28
+const DUST_RISE := 0.9
+const DUST_LIFE := 5.0
+const DUST_SIZE := 0.07
+const DUST_RADIUS := 0.7
+const DUST_GAIN := 0.9
 ## The seal: radius (m) of the ring of runes, its colour (old gold), strength and the share it opens from.
 const RING_RADIUS := 2.2
 const RING_COLOR := Color(0.72, 0.55, 0.25)
@@ -62,8 +73,13 @@ const MOTES_END := 1.3
 const MOTES_SPREAD := 0.25
 ## The crystals' own light: a brighter peak, paler edges and a lit deep face, so they are not flat green.
 const CRYSTAL_GAIN := 1.2
-const CRYSTAL_DEEP := 0.55
-const CRYSTAL_EDGE := 0.75
+const CRYSTAL_DEEP := 0.28
+const CRYSTAL_EDGE := 1.0
+## Sweep 2026-11-25 (item 2): the crystals' own glow, so they are not one flat green: a soft halo round each (size in m,
+## colour share) and one green light over the ring's floor (energy, reach in m, height in m), all following the glow.
+const CRYSTAL_HALO := 1.7
+const CRYSTAL_HALO_ALPHA := 0.16
+const CRYSTAL_LIGHT := Vector3(0.9, 4.5, 1.2)
 ## The birth spot's clearance (m): no stone, balustrade or floor edge nearer than this (the crystals stand at
 ## CRYSTAL_RING and are as thick as CRYSTAL_THICK), and how far along the way to the room's middle it is looked for (m).
 const CLEAR_RADIUS := 3.2
@@ -119,6 +135,9 @@ var _crystals: Array[MeshInstance3D] = []
 var _crystal_mats: Array[ShaderMaterial] = []
 var _crystal_base: Array[Transform3D] = []
 var _crystal_peak := 1.0
+var _dust: CPUParticles3D
+var _halos: Array[MeshInstance3D] = []
+var _crystal_light: OmniLight3D
 var _motes: Array[SpectralMotes] = []
 var _forms: Array[Dictionary] = []
 var _hidden: Array[MeshInstance3D] = []
@@ -292,6 +311,8 @@ func _dress_beam(s: Dictionary) -> void:
 	if s[&"beam_off"] and _shaft != null and not _taken:
 		_taken = true
 		_shaft.take()
+		if _dust != null:
+			_dust.emitting = false
 
 
 func _shaft_look() -> void:
@@ -300,6 +321,25 @@ func _shaft_look() -> void:
 			m.set_shader_parameter(&"body", BEAM_BODY)
 			m.set_shader_parameter(&"near_keep", BEAM_NEAR_KEEP)
 			m.set_shader_parameter(&"hero_keep", BEAM_HERO_KEEP)
+			m.set_shader_parameter(&"streaks", BEAM_STREAKS)
+			m.set_shader_parameter(&"streak_count", BEAM_STREAK_COUNT)
+			m.set_shader_parameter(&"streak_speed", BEAM_STREAK_SPEED)
+	if _dust == null:
+		_dust = CPUParticles3D.new()
+		_dust.amount = DUST_COUNT
+		_dust.lifetime = DUST_LIFE
+		_dust.preprocess = DUST_LIFE
+		_dust.mesh = Fx.quad(DUST_SIZE, Color(BEAM_TINT * DUST_GAIN, 1.0))
+		_dust.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+		_dust.emission_sphere_radius = DUST_RADIUS
+		_dust.direction = Vector3.UP
+		_dust.spread = 12.0
+		_dust.gravity = Vector3.ZERO
+		_dust.initial_velocity_min = DUST_RISE * 0.6
+		_dust.initial_velocity_max = DUST_RISE
+		_dust.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_dust.position = Vector3(at.x, 0.2, at.y)
+		add_child(_dust)
 
 
 func _build_ring() -> void:
@@ -367,6 +407,12 @@ func _build_crystals() -> void:
 		# the full-grown transform; _dress_crystals scales its height from the foot
 		_crystal_base.append(Transform3D(lean * Basis.from_scale(Vector3(CRYSTAL_THICK, tall, CRYSTAL_THICK)),
 			foot + lean.y * tall * 0.5))
+		var halo := MeshInstance3D.new()
+		halo.mesh = Fx.quad(CRYSTAL_HALO, Color(0, 0, 0, 0))
+		halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		halo.visible = false
+		add_child(halo)
+		_halos.append(halo)
 		var m := SpectralMotes.make(SpectralMotes.Mode.GATHER, MOTES_EACH, MOTES_COLOR, MOTES_SIZE, MOTES_LIGHT, 40 + i)
 		m.set_param(&"from", foot + Vector3(0, tall * 0.5, 0))
 		m.set_param(&"from_spread", MOTES_SPREAD)
@@ -378,6 +424,16 @@ func _build_crystals() -> void:
 
 
 func _dress_crystals(rise: float, glow: float) -> void:
+	if _crystal_light == null:
+		_crystal_light = OmniLight3D.new()
+		_crystal_light.light_color = Combat.EMETH
+		_crystal_light.omni_range = CRYSTAL_LIGHT.y
+		_crystal_light.light_specular = 0.0
+		_crystal_light.shadow_enabled = false
+		_crystal_light.light_cull_mask = ~Arena.CROWD_LAYER
+		_crystal_light.position = Vector3(at.x, CRYSTAL_LIGHT.z, at.y)
+		add_child(_crystal_light)
+	_crystal_light.light_energy = CRYSTAL_LIGHT.x * glow * clampf(rise, 0.0, 1.0)
 	for i in _crystals.size():
 		var mi := _crystals[i]
 		mi.visible = rise > 0.0
@@ -393,6 +449,10 @@ func _dress_crystals(rise: float, glow: float) -> void:
 		var foot := base.origin - up * base.basis.y.length() * 0.5
 		mi.transform = Transform3D(b, foot + up * tall * 0.5)
 		_crystal_mats[i].set_shader_parameter(&"peak", _crystal_peak * CRYSTAL_GAIN * glow)
+		var halo := _halos[i]
+		halo.visible = glow > 0.0
+		halo.position = foot + up * tall * 0.6
+		(halo.mesh.material as StandardMaterial3D).albedo_color = Color(Combat.EMETH * (CRYSTAL_HALO_ALPHA * glow), 1.0)
 
 
 # ---------- the hero ----------

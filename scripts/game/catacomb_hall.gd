@@ -122,8 +122,9 @@ const ABYSS_LIGHT := Color(0.66, 0.52, 1.0)
 const ABYSS_LIGHT_ENERGY := 5.0
 ## The abyss in the stylized look (lot A spec 3.2): the slate's blue, not violet (a colour kept for Morvath), on the
 ## lights from below and on the glow cards (STYLE.abyss_glow).
-const STY_ABYSS_LIGHT := Color(0.5, 0.66, 0.9)
-const STY_ABYSS_GLOW := Color(0.5, 0.6, 0.76)
+## Sweep 2026-11-25 (item 3): about 0.6 of before (the depth stone lit by it read white in rooms 6 and 11).
+const STY_ABYSS_LIGHT := Color(0.3, 0.4, 0.56)
+const STY_ABYSS_GLOW := Color(0.32, 0.38, 0.5)
 ## The violet lights stand this low, so only the foot of the cliffs and piers turns violet.
 const ABYSS_LIGHT_Y := -12.0
 ## Width of the two standing stones (thick and blunt, as in the picture).
@@ -1339,6 +1340,11 @@ func _west() -> void:
 	_candles(Vector3(x + 0.9, 0, 12.4), 3, true, false, true)
 
 
+## The Antessala of the guided descent: the hall dressed as its variant 1, the only one of the hall with slabs that strike.
+func _is_ante() -> bool:
+	return arena.layout != null and arena.layout.hazard != null
+
+
 # ---------- south-west: the landing and the way in ----------
 
 func _landing() -> void:
@@ -1351,8 +1357,11 @@ func _landing() -> void:
 	m.balustrade(Vector3(LANDING.y - 0.1, 0, HALF.y + 0.8), Vector3(LANDING.y - 0.1, 0, z), false, _near())
 	_stairs_down(Vector3((WAY_IN.x + WAY_IN.y) * 0.5, 0, LANDING_END), Vector2(0, 1), WAY_IN.y - WAY_IN.x)
 	# the standing stone in the middle of the south edge, where the landing meets the hall
-	m.obelisk(Vector3(SOUTH_STONE.x, 0, SOUTH_STONE.y), OBELISK_SOUTH_HEIGHT, OBELISK_SOUTH, Vector2(1, 1).normalized())
-	kit.circles.append(Vector3(SOUTH_STONE.x, SOUTH_STONE.y, OBELISK_SOUTH * 0.68))
+	# Sweep 2026-11-25 (item 2): not in the Antessala of the guided descent (the hall's variant 1: it is the one with a
+	# hazard), where the stone stood over the arrival ring's base and the beam's foot
+	if not _is_ante():
+		m.obelisk(Vector3(SOUTH_STONE.x, 0, SOUTH_STONE.y), OBELISK_SOUTH_HEIGHT, OBELISK_SOUTH, Vector2(1, 1).normalized())
+		kit.circles.append(Vector3(SOUTH_STONE.x, SOUTH_STONE.y, OBELISK_SOUTH * 0.68))
 	_candles(Vector3(SOUTH_STONE.x + 2.4, 0, HALF.y - 2.0), 7, false, true, true)
 	m.pot(Vector3(SOUTH_STONE.x + 3.6, 0, HALF.y - 0.8), 0.9)
 	_candles(Vector3(LANDING.x + 2.4, 0, HALF.y + 0.4), 4, false, false, true)

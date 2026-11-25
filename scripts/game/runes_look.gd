@@ -129,20 +129,24 @@ const STY_IVORY := Color(0.42, 0.40, 0.36)
 ## The light from above in the stylized look: near neutral (the floor's saturation stays low) and diffuse.
 const STY_KEY := Color(0.86, 0.87, 0.9)
 const STY_GROOVE := Vector2(0.05, 0.85)
+## Sweep 2026-11-25 (item 3): the pillars' grooves read as white stripes; at rest they are carved dark (old gold in shade).
+const STY_GROOVE_REST := Color(0.2, 0.175, 0.13)
 ## R2: the mechanism on the north wall between the first two stelae (x, its middle's height, the side of its outer
 ## lozenge: a square turned 45 degrees), its rings (sides as shares of the outer one), a bar's width and depth, the
 ## counterweights (size), the dark backing (its side over the outer ring's, its stone), its old gold (colour; metallic,
 ## roughness), and the faint cold spot that parts it from the wall (colour, energy, cone, where from: up, out).
 const MECH := Vector3(-4.75, 3.5, 4.9)
 const MECH_RINGS: Array[float] = [1.0, 0.7, 0.4]
-const MECH_BAR := Vector2(0.14, 0.08)
+const MECH_BAR := Vector2(0.2, 0.08)
 const MECH_WEIGHT := Vector3(0.36, 0.5, 0.1)
 const MECH_BACK := 1.06
-const MECH_BACK_STONE := Color(0.55, 0.56, 0.6)
-const MECH_GOLD := Color(0.42, 0.31, 0.13)
-const MECH_METAL := Vector2(0.35, 0.75)
+## Sweep 2026-11-25 (item 3): the backing a thick slab (it read as a floating wire gizmo at 4 cm), bars thicker, gold aged.
+const MECH_BACK_DEPTH := 0.07
+const MECH_BACK_STONE := Color(0.3, 0.31, 0.35)
+const MECH_GOLD := Color(0.31, 0.22, 0.1)
+const MECH_METAL := Vector2(0.3, 0.88)
 const MECH_SPOT := Color(0.78, 0.82, 0.95)
-const MECH_SPOT_ENERGY := 1.2
+const MECH_SPOT_ENERGY := 0.8
 const MECH_SPOT_CONE := 24.0
 const MECH_SPOT_FROM := Vector2(9.5, 4.5)
 ## R4: the study's things on a shelf along the north-west cut, off the floor (its top's height; what stands along it,
@@ -580,7 +584,7 @@ func style() -> Dictionary:
 	for n in find_children("*", "OmniLight3D", true, false):
 		VisualProfile.vary(n, {&"light_specular": 0.0})
 	if _groove != null:
-		VisualProfile.vary(_groove, {&"shader_parameter/ivory": STY_IVORY, &"shader_parameter/ivory_share": 1.0,
+		VisualProfile.vary(_groove, {&"shader_parameter/ivory": STY_GROOVE_REST, &"shader_parameter/ivory_share": 1.0,
 			&"shader_parameter/metallic": STY_GROOVE.x, &"shader_parameter/roughness": STY_GROOVE.y})
 	var ivory := StandardMaterial3D.new()
 	ivory.albedo_color = STY_IVORY
@@ -706,26 +710,26 @@ func _mechanism(sm: Masonry, face: float) -> void:
 	var mid := Vector3(MECH.x, MECH.y, face)
 	var turn := Basis(Vector3.BACK, PI * 0.25)
 	var back_side := MECH.z * MECH_BACK
-	var back := sm.box(mid + Vector3(0, 0, 0.02), Vector3(back_side, back_side, 0.04), 0.0, sm.stone(0.0, STONE * MECH_BACK_STONE), false)
+	var back := sm.box(mid + Vector3(0, 0, MECH_BACK_DEPTH * 0.5), Vector3(back_side, back_side, MECH_BACK_DEPTH), 0.0, sm.stone(0.0, STONE * MECH_BACK_STONE), false)
 	back.basis = turn
 	for share in MECH_RINGS:
 		var side := MECH.z * share
 		for k in 4:
 			# the four sides of a square turned 45 degrees: each side's middle at side/2 along a diagonal
 			var dir := Vector2.from_angle(PI * 0.25 + PI * 0.5 * k)
-			var at := mid + Vector3(dir.x, dir.y, 0) * side * 0.5 + Vector3(0, 0, 0.04 + MECH_BAR.y * 0.5)
+			var at := mid + Vector3(dir.x, dir.y, 0) * side * 0.5 + Vector3(0, 0, MECH_BACK_DEPTH + MECH_BAR.y * 0.5)
 			var bar := sm.box(at, Vector3(side + MECH_BAR.x, MECH_BAR.x, MECH_BAR.y), 0.0, gold, false)
 			bar.basis = Basis(Vector3.BACK, dir.angle() + PI * 0.5)
 	var reach := MECH.z * 0.7071
 	for k in 4:
 		var dir := Vector2.from_angle(PI * 0.5 * k)
-		var at := mid + Vector3(dir.x, dir.y, 0) * reach * 0.5 + Vector3(0, 0, 0.04 + MECH_BAR.y * 1.5)
+		var at := mid + Vector3(dir.x, dir.y, 0) * reach * 0.5 + Vector3(0, 0, MECH_BACK_DEPTH + MECH_BAR.y * 1.5)
 		var bar := sm.box(at, Vector3(reach, MECH_BAR.x, MECH_BAR.y), 0.0, gold, false)
 		bar.basis = Basis(Vector3.BACK, dir.angle())
-		var w := mid + Vector3(dir.x, dir.y, 0) * reach * MECH_RINGS[1] + Vector3(0, 0, 0.04 + MECH_BAR.y * 2.0 + MECH_WEIGHT.z * 0.5)
+		var w := mid + Vector3(dir.x, dir.y, 0) * reach * MECH_RINGS[1] + Vector3(0, 0, MECH_BACK_DEPTH + MECH_BAR.y * 2.0 + MECH_WEIGHT.z * 0.5)
 		var weight := sm.box(w, MECH_WEIGHT, 0.0, gold, false)
 		weight.basis = Basis(Vector3.BACK, dir.angle() + PI * 0.5)
-	var hub := sm.box(mid + Vector3(0, 0, 0.04 + MECH_BAR.y * 2.0 + MECH_WEIGHT.z * 0.5), Vector3(0.5, 0.5, MECH_WEIGHT.z), 0.0, gold, false)
+	var hub := sm.box(mid + Vector3(0, 0, MECH_BACK_DEPTH + MECH_BAR.y * 2.0 + MECH_WEIGHT.z * 0.5), Vector3(0.5, 0.5, MECH_WEIGHT.z), 0.0, gold, false)
 	hub.basis = turn
 	var spot := SpotLight3D.new()
 	sm.root.add_child(spot)

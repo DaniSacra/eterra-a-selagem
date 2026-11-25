@@ -90,6 +90,9 @@ const WAX_GLOW_FOOT := 0.55
 const WAX_POOL := 1.8
 ## A burnt-out candle's wax (a share of WAX) and its wick.
 const WAX_OUT := 0.4
+## Sweep 2026-11-25 (item 3): a burnt-out candle is dark soot-grey wax (WAX times WAX_OUT read as flat sand), with a sooted top.
+const BURNT_WAX := Color(0.13, 0.12, 0.115)
+const BURNT_TOP := Color(0.04, 0.035, 0.032)
 const WICK := Color(0.05, 0.045, 0.04)
 ## A candle's flame: its size (m), the orange tongue, the near-white core inside it and the core's share of the size.
 const CANDLE_FLAME := 0.34
@@ -175,6 +178,7 @@ var _mouth: StandardMaterial3D
 var _wax: StandardMaterial3D
 var _wax_out: StandardMaterial3D
 var _wick: StandardMaterial3D
+var _soot: StandardMaterial3D
 var _wax_mesh: CylinderMesh
 var _flame: QuadMesh
 var _flame_core: QuadMesh
@@ -1219,8 +1223,11 @@ func candle_out(at: Vector3, height: float, radius: float) -> void:
 	_wax_ready()
 	if _wax_out == null:
 		_wax_out = StandardMaterial3D.new()
-		_wax_out.albedo_color = WAX * WAX_OUT
-		_wax_out.roughness = 0.7
+		_wax_out.albedo_color = BURNT_WAX
+		_wax_out.roughness = 0.9
+		_soot = StandardMaterial3D.new()
+		_soot.albedo_color = BURNT_TOP
+		_soot.roughness = 1.0
 		_wick = StandardMaterial3D.new()
 		_wick.albedo_color = WICK
 	for t: Transform3D in [Transform3D(Basis.from_scale(Vector3(radius, height, radius)), at + Vector3(0, height * 0.5, 0)),
@@ -1230,6 +1237,7 @@ func candle_out(at: Vector3, height: float, radius: float) -> void:
 		body.material_override = _wax_out
 		body.transform = t
 		_add(body)
+	box(at + Vector3(0, height + 0.004, 0), Vector3(radius * 1.7, 0.012, radius * 1.7), 0.0, _soot, false)
 	box(at + Vector3(0, height + 0.02, 0), Vector3(0.012, 0.04, 0.012), 0.0, _wick, false)
 
 
