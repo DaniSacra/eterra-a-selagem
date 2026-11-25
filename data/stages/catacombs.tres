@@ -1032,6 +1032,9 @@ sparks = PackedVector2Array()
 crystals = PackedVector2Array()
 crystal_cols = PackedInt32Array()
 drop_zones = Array[Rect2]([Rect2(3, -14.5, 6.5, 6.5), Rect2(4, -1, 7, 6)])
+drop_size = 2.4
+drop_every = 3.0
+drop_aim = 0.4
 urns = PackedVector2Array()
 urn_flows = PackedVector4Array()
 
@@ -1271,6 +1274,7 @@ urn_flows = PackedVector4Array()
 [sub_resource type="Resource" id="Resource_e3brq"]
 script = ExtResource("7_gcpwj")
 kind = 1
+warn = 1.5
 hero_damage = 10.0
 enemy_damage = 60.0
 rearm = 6.0
@@ -1278,8 +1282,9 @@ from_progress = 0.34
 plate_hero_damage = PackedFloat32Array()
 plate_push = PackedVector2Array()
 strips = PackedVector4Array(-4.961149, -6.7364864, 1.8, -8.1, -9.736486, -1.961149, -11.4, 1.9)
+strip_width = 4.0
 dwell = 0.5
-enemy_dwell = 0.2
+enemy_dwell = 0.05
 push_out = 1.0
 plate_source = &"roots"
 aims = PackedVector4Array()
@@ -1535,6 +1540,7 @@ height = 1.2
 [sub_resource type="Resource" id="Resource_hc1of"]
 script = ExtResource("7_gcpwj")
 kind = 1
+warn = 1.5
 hero_damage = 10.0
 enemy_damage = 60.0
 rearm = 6.0
@@ -1542,9 +1548,9 @@ from_progress = 0.34
 plate_hero_damage = PackedFloat32Array()
 plate_push = PackedVector2Array()
 strips = PackedVector4Array(-16.6, -1.5, -14.1, -1.5)
-strip_width = 1.5
+strip_width = 2.5
 dwell = 0.5
-enemy_dwell = 0.2
+enemy_dwell = 0.05
 push_out = 1.0
 plate_source = &"plant"
 aims = PackedVector4Array()
@@ -1559,6 +1565,7 @@ urn_flows = PackedVector4Array()
 [sub_resource type="Resource" id="Resource_dthxe"]
 script = ExtResource("7_gcpwj")
 kind = 1
+warn = 1.5
 hero_damage = 10.0
 enemy_damage = 60.0
 rearm = 6.0
@@ -1566,8 +1573,9 @@ from_progress = 0.34
 plate_hero_damage = PackedFloat32Array()
 plate_push = PackedVector2Array()
 strips = PackedVector4Array(-6.7900314, -1.7157989, -6.2, 3.6)
+strip_width = 4.0
 dwell = 0.5
-enemy_dwell = 0.2
+enemy_dwell = 0.05
 push_out = 1.0
 plate_source = &"roots"
 aims = PackedVector4Array()
@@ -2139,6 +2147,9 @@ sparks = PackedVector2Array()
 crystals = PackedVector2Array()
 crystal_cols = PackedInt32Array()
 drop_zones = Array[Rect2]([Rect2(-8, -5.2, 21, 10.4)])
+drop_size = 2.4
+drop_every = 3.0
+drop_aim = 0.4
 urns = PackedVector2Array()
 urn_flows = PackedVector4Array()
 
@@ -2887,6 +2898,8 @@ polys = Array[PackedVector2Array]([PackedVector2Array(-15, -9, -12, -12, 12, -12
 
 [sub_resource type="Resource" id="Resource_yc6wa"]
 script = ExtResource("7_gcpwj")
+warn = 1.5
+max_share = 0.3
 patterns = Array[StringName]([&"sweep", &"comb", &"cut"])
 quiet = Array[Rect2]([Rect2(-6, 3, 12, 9)])
 hero_damage = 10.0
@@ -2959,6 +2972,8 @@ height = 1.2
 
 [sub_resource type="Resource" id="Resource_axpi5"]
 script = ExtResource("7_gcpwj")
+warn = 1.5
+max_share = 0.3
 patterns = Array[StringName]([&"checker", &"frame", &"islands"])
 quiet = Array[Rect2]([Rect2(-3, -3, 6, 6), Rect2(-6, 3, 12, 9)])
 hero_damage = 10.0
@@ -3119,6 +3134,9 @@ sparks = PackedVector2Array()
 crystals = PackedVector2Array()
 crystal_cols = PackedInt32Array()
 drop_zones = Array[Rect2]([Rect2(-10.6, -10.6, 3.8, 3.8), Rect2(-10.6, 6.8, 3.8, 3.8), Rect2(6.8, 6.8, 3.8, 3.8), Rect2(6.8, -10.6, 3.8, 3.8)])
+drop_size = 2.4
+drop_every = 3.0
+drop_aim = 0.4
 urns = PackedVector2Array()
 urn_flows = PackedVector4Array()
 
@@ -3274,7 +3292,7 @@ height = 1.2
 
 [sub_resource type="Resource" id="Resource_i2rtf"]
 script = ExtResource("4_wmys5")
-center = Vector2(-4.5, -4.5)
+center = Vector2(-7.5, -2.5)
 radius = 0.9
 see_through = true
 piece = &"column"
@@ -3282,7 +3300,7 @@ height = 5.2
 
 [sub_resource type="Resource" id="Resource_00qcs"]
 script = ExtResource("4_wmys5")
-center = Vector2(4.5, -4.5)
+center = Vector2(7.5, -2.5)
 radius = 0.9
 see_through = true
 piece = &"column"

@@ -1232,11 +1232,11 @@ func _roots(tips: Array) -> HazardDef:
 		var a := TRUNK + (first - TRUNK).normalized() * TRUNK_RADIUS
 		strips.append(Vector4(a.x, a.y, tip.x, tip.y))
 	h.strips = strips
-	h.strip_width = 3.0
+	h.strip_width = 4.0  # RD2-04: 4 m (was 3) and a touch wakes it (0.05 s): the roots struck nobody in 6 descents
 	h.dwell = 0.5
 	# an enemy only walks over it: a fifth of a second wakes it (second pass, the Game Director: the outer roots never woke)
-	h.enemy_dwell = 0.2
-	h.warn = 1.2
+	h.enemy_dwell = 0.05
+	h.warn = 1.5
 	h.rearm = 6.0
 	h.push_out = 1.0
 	h.plate_source = &"roots"
@@ -1274,10 +1274,10 @@ func _plant() -> HazardDef:
 	var h := _plates([], PLATES_FROM)
 	h.plates = []
 	h.strips = PackedVector4Array([Vector4(PLANT_AT.x, PLANT_AT.y, PLANT_AT.x + 2.5, PLANT_AT.y)])
-	h.strip_width = 1.5
+	h.strip_width = 2.5  # RD2-04: a wider reach (2.5, was 1.5) that wakes at a touch (0.05 s), 1.5 s of warning
 	h.dwell = 0.5
-	h.enemy_dwell = 0.2
-	h.warn = 1.2
+	h.enemy_dwell = 0.05
+	h.warn = 1.5
 	h.rearm = 6.0
 	h.push_out = 1.0
 	h.sparks = PackedVector2Array([PLANT_AT + Vector2(0.3, 0.0)])
@@ -1306,10 +1306,10 @@ func _rocks(zones: Array[Rect2]) -> HazardDef:
 	var h := HazardDef.new()
 	h.kind = HazardDef.Kind.DROPS
 	h.drop_zones = zones
-	h.drop_size = 2.0
+	h.drop_size = 2.4  # RD2-04: 2.4 m, one every 3 s, 0.4 aimed at him (was 2 m, 4 s, half): more fall on the horde
 	h.drop_count = 2
-	h.drop_every = 4.0
-	h.drop_aim = 0.5
+	h.drop_every = 3.0
+	h.drop_aim = 0.4
 	h.warn = 1.2
 	h.fire = 0.25
 	h.start_delay = 3.0
@@ -2518,7 +2518,7 @@ func _knight_hall() -> RoomLayout:
 ## The Elder's chamber (Daniel, 2026-11-23): a square of 24 m with four tall columns (they stop bodies and orbs), 9 m
 ## apart, for the paladin to hide behind from the orbs; no hazard, the columns are the room's one decision.
 const ELDER_SIDE := 24.0
-const ELDER_COLUMNS := [Vector2(-4.5, -4.5), Vector2(4.5, -4.5), Vector2(-4.5, 4.5), Vector2(4.5, 4.5)]
+const ELDER_COLUMNS := [Vector2(-7.5, -2.5), Vector2(7.5, -2.5), Vector2(-4.5, 4.5), Vector2(4.5, 4.5)]
 func _elder_hall() -> RoomLayout:
 	var l := RoomLayout.new()
 	_guardian_house(l, &"elder_hall", &"priest_elder", ELDER_SIDE, 2.5, &"chapel")
@@ -2722,11 +2722,11 @@ func _hazard(patterns: Array[StringName], quiet: Array[Rect2] = []) -> HazardDef
 	h.tile = 3.0
 	h.cols = 10
 	h.rows = 8
-	h.warn = 1.2
+	h.warn = 1.5  # RD2-07: 1.5 s (was 1.2) and a share of 30% (was 35%): the runes were 17% of the damage of room 7
 	h.fire = 0.25
 	h.rest = 2.4
 	h.start_delay = 3.0
-	h.max_share = 0.35
+	h.max_share = 0.30
 	h.dense_share = 0.5
 	h.dense_standing = 3
 	h.patterns = patterns

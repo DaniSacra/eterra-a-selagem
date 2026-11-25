@@ -1,6 +1,6 @@
 extends GutTest
 ## The floor of the Câmara das Runas Instáveis (E5; docs/art/e5_spec.md 3.2 to 3.4): square tiles in bands and blocks
-## (never circles, D-29) that warm up 1.2 s, strike 0.25 s and rest 2.4 s; at most 35% of the tiles lit (50% for the
+## (never circles, D-29) that warm up 1.5 s, strike 0.25 s and rest 2.4 s; at most 30% of the tiles lit (50% for the
 ## dense ones, only with 3 enemies or fewer standing), every lit tile beside an unlit floor tile (unlit floor within
 ## 3 m of anywhere), nothing in the first 3 s, on a door's tiles, on the quiet stone or on a tile cut by the edge. In a
 ## real room it hurts the paladin and the enemies standing on it.
@@ -44,11 +44,11 @@ func test_the_numbers_of_the_spec() -> void:
 		assert_not_null(h, "variant %d has its floor" % v)
 		assert_eq(h.tile, 3.0)
 		assert_eq(Vector2i(h.cols, h.rows), Vector2i(10, 8))
-		assert_almost_eq(h.warn, 1.2, 0.001)
+		assert_almost_eq(h.warn, 1.5, 0.001)
 		assert_almost_eq(h.fire, 0.25, 0.001)
 		assert_almost_eq(h.rest, 2.4, 0.001)
 		assert_almost_eq(h.start_delay, 3.0, 0.001)
-		assert_almost_eq(h.max_share, 0.35, 0.001)
+		assert_almost_eq(h.max_share, 0.30, 0.001)
 		for p in h.patterns:
 			assert_true(ArenaHazard.PATTERNS.has(p), "%s is a pattern" % p)
 	assert_eq(l.hazard.patterns, [&"sweep", &"comb", &"cut"] as Array[StringName], "A: bands")
@@ -160,7 +160,7 @@ func test_the_rhythm_warn_strike_rest() -> void:
 	assert_eq(events[0][0], ArenaHazard.Event.ARMED)
 	assert_almost_eq(float(events[0][1]), 3.0, 0.02, "the first after 3 s")
 	assert_eq(events[1][0], ArenaHazard.Event.FIRED)
-	assert_almost_eq(float(events[1][1]) - float(events[0][1]), 1.2, 0.02, "1.2 s warming up")
+	assert_almost_eq(float(events[1][1]) - float(events[0][1]), 1.5, 0.02, "1.5 s warming up")
 	assert_eq(events[2][0], ArenaHazard.Event.ENDED)
 	assert_almost_eq(float(events[2][1]) - float(events[1][1]), 0.25, 0.02, "0.25 s striking")
 	assert_eq(events[3][0], ArenaHazard.Event.ARMED)

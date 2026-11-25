@@ -684,6 +684,7 @@ func _room_cleared() -> void:
 	Audio.play(&"elite_down")
 	purse = null
 	game.hud.show_notice(T.t(&"notice_room_clear"), 2.0)
+	_warn_exits()
 	if room.kind == RunMap.Kind.MINIBOSS:
 		# the guardian won: Prata and Memória for home (Rejogabilidade, Fatia 1)
 		found(MaterialPurse.SILVER, &"guardian", stage.silver_guardian)
@@ -699,6 +700,20 @@ func _room_cleared() -> void:
 	# the light that falls on it and stays until he takes it (vfx_pass_spec.md 6; the column of 1 s went)
 	_reward_shaft = RewardShaft.make(self, Vector3(_reward_at.x, 0, _reward_at.y), RewardShaft.tint_of(room.reward, _angel_family(room)))
 	_reward_shaft.appear()
+
+
+## RD2-03: whether the last wave lights the doors at once (the fight rooms; the doors' signs still wait for the reward).
+static func warns_exits(kind: RunMap.Kind, doors: int) -> bool:
+	return is_fight_room(kind) and doors > 0
+
+
+## RD2-03: the end of the last wave: every door's light rises together, in the warm gold, and a chime falls.
+func _warn_exits() -> void:
+	if not warns_exits(room.kind, next_rooms.size()):
+		return
+	for i in next_rooms.size():
+		game.arena.light_exit(i, true, GOLD_COLOR)
+	Audio.play(&"ult_ready")
 
 
 ## An enemy fell: in a fight it may leave its share of the fight's gold (GoldPurse), shown where it fell. An elite
