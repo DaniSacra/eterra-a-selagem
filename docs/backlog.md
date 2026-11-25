@@ -24,6 +24,12 @@
   - obstáculos com volume (o pilar com vaso);
   - **portas bem maiores**, de folha dupla e alta, com o ícone do bônus **encaixado dentro da porta**, no vão, e não flutuando acima.
   - Isso combina com os medalhões menores de hoje: medalhão pequeno, porta grande. Vale para todas as salas no grande ajuste (SL-01 em diante; a SL-01 ganha portas maiores na volta).
+- **PT-25-11, todo ataque com um passinho à frente** (Daniel: "atacar e andar um pouquinho é sempre melhor, mesmo que seja um passinho pequeno"). Substitui a regra "golpes plantados" de 2026-11-16 e amplia o PT-25-4: cada golpe do combo avança um pouco (o final, mais), sem atravessar inimigos. Números com o `combat-feel-director`.
+- **PT-25-12, botão direito do Guerreiro redesenhado** (Daniel: "é um guerreiro"). Hoje é a Onda de Luz (E1b). Duas propostas dele:
+  - (a) um giro que atordoa todos em volta (chefes não), com recarga alta;
+  - (b) um golpe que afasta todos em volta e ainda dá um atordoamento curto.
+  - Dono: `hero-designer`, com spec, números e como Bênçãos, Dons e Salmos que hoje mudam o especial passam a valer; depois `gameplay-engineer`.
+  - Cuidado: o Giro da Alvorada já existe e a Onda de Luz está ligada a Bênçãos e Dons. O designer propõe e o Daniel escolhe entre (a) e (b) antes de implementar.
 - **Respondido:** os esqueletos pequenos da sala 3 são o Rato de osso (Fase 1, C7): bando de 4 a 6 que morre com um golpe, perigoso pelo número. A primeira descida sempre guiada, sem passar pelo Santuário: ok.
 
 ## Grande ajuste de layout das salas (pedido do Daniel, 2026-11-25, depois do pente fino)
