@@ -36,16 +36,16 @@ const BEAM_TINT := Color(1.0, 0.78, 0.34)
 ## PT-25-7, the comet: it comes from COMET_UP m over the spot and COMET_SIDE m to the screen's left (along the camera's
 ## right), falls with its speed growing (the path share is progress to this power) and ends at COMET_END m. Its head is a
 ## soft quad (m, light) and its tail TAIL_COUNT quads along the path, TAIL_STEP of the fall apart, thinner and fainter.
-const COMET_UP := 15.0
-const COMET_SIDE := 9.0
+const COMET_UP := 8.0
+const COMET_SIDE := 7.0
 const COMET_END := 0.9
-const COMET_EASE := 2.0
-const HEAD_SIZE := 1.1
-const HEAD_LIGHT := 0.85
+const COMET_EASE := 1.4
+const HEAD_SIZE := 1.8
+const HEAD_LIGHT := 1.6
 const TAIL_COUNT := 14
 const TAIL_STEP := 0.03
-const TAIL_SIZE := 0.8
-const TAIL_LIGHT := 0.32
+const TAIL_SIZE := 1.1
+const TAIL_LIGHT := 0.75
 ## The landing: the screen's flash (alpha at most), the floor ring's radius (m) and height, the light that stays round
 ## the hero (size m, light, its breathing), the shake (Fx.shake amount) and the ring of dust (count, life s, speed, size m).
 const FLASH_ALPHA := 0.5
