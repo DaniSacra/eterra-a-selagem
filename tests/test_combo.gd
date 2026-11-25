@@ -230,7 +230,7 @@ func test_tree_data_is_sane() -> void:
 		ids[node.id] = true
 		assert_true(node.damage > 0.0 or node.effect == ComboNode.Effect.WAVE, "%s strikes somehow" % node.id)
 		assert_gt(node.windup, 0.0, String(node.id))
-		assert_between(node.hit_stop_ms, 0.0, 80.0, String(node.id))
+		assert_between(node.hit_stop_ms, 0.0, 110.0, String(node.id))  # CF2-02: the spin 100 ms
 		assert_true(player.has_animation(node.anim), "missing animation %s" % node.anim)
 		assert_gt(node.anim_speed, 0.0, String(node.id))
 		if node.title != &"":
