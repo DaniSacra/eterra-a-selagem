@@ -69,6 +69,7 @@ Donos: `ui-ux-designer` (tela), `balance-designer` (sorteio), `art-director` (re
 - **SW-B2 Sorteio**: anjo que você já tem pesa 3 contra 1 de um novo; dupla só com 3 Bênçãos ou mais, chance subindo até 50%; raridades testadas contra as do SWORN
   (79,5 / 14 / 4,5 / 1,5 / 0,5%; nosso: raro 10%, épico 5%, lendário 1%); cada raridade soma o mesmo passo (no SWORN +5 pontos).
 - **SW-B3 Compêndio com pré-requisitos** (a crítica que o SWORN recebe; fazemos melhor).
+  **Feito (2026-11-25, worktree, falta conferir na GPU):** SW-B1 e SW-B3 em `BoonChoice`, `BoonCard`, `AbilityList`, `Glossary`, `BoonNeeds`, `card_dissolve.gdshader`; `--encounter=<anjo> --encounter-pick` abre a tela na hora (captura). Arte do retrato: `assets/ui/angels/angel_N.jpg` 512 x 768 (já existe).
 
 ### Fase 5, Dons e Videira como constelações (SW-M) (imagens "pontos de melhorias" e vídeo "Escolhendo dons")
 Donos: `art-director` (figuras), `ui-ux-designer` (telas), `gameplay-engineer` (regras). Cerca de 1 a 2 dias, mais a arte.

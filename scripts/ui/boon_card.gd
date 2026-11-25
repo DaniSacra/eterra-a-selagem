@@ -37,10 +37,9 @@ const SIZE := Vector2(300, 450)
 const MIN_H := 300.0
 ## BC-1: a row's height (from the least to the most), its medallion, the width its words ask, the numbers' column.
 const ROW_MIN_H := 112.0
-const ROW_MAX_H := 168.0
+const ROW_MAX_H := 176.0
 const ROW_ART := 92.0
-const ROW_TEXT_W := 250.0
-const ROW_FACTS_W := 128.0
+const ROW_TEXT_W := 330.0
 const PAD := 18.0
 ## Height of the art band at the top.
 const ART_H := 140.0
@@ -140,7 +139,12 @@ const ALTAR_MARKS := {&"life": [DoorGlyph.Kind.HEART, DoorGlyph.Kind.POMEGRANATE
 
 ## BC-1: a line of the list instead of a tall card (BoonChoice's Blessing screen): the medallion at the left, the name,
 ## rarity, level and the button's plaque, the text, and the numbers at the right. Set before setup.
+## SW-B1: a word of rule under the pointer (the term's id; &"" when it leaves): the screen's glossary shows that one.
+signal term_hovered(id: StringName)
+
 var listed := false
+## SW-B1: a Blessing never seen before: "Novo!" on its medallion (set before setup).
+var fresh := false
 var boon: Boon
 var rarity: Boon.Rarity = Boon.Rarity.COMMON
 ## An Elo: no rarity, no level, the chain's frame.
@@ -159,6 +163,7 @@ var crest: Control
 ## The description as plain words (no markup): the glossary reads its terms from it (Glossary.show_for).
 var plain := ""
 var _box: VBoxContainer
+var _rarity_label: Label
 var _fits := 0
 
 static var _glow: GradientTexture2D
@@ -176,16 +181,28 @@ func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replace
 	var box := _shell(b.color() if b else Color(0.55, 0.85, 0.6))
 	var art := _art(box)
 	crest = _crest(b, from)
-	art.add_child(crest)
+	art.add_child(_with_new_mark(crest) if listed and fresh and b != null else crest)
 	if b == null:
 		box.add_child(_name(T.t(&"boon_rest")))
 		box.add_child(_rule())
 		box.add_child(_rich(text))
 	else:
-		box.add_child(_name(T.t("boon_" + String(b.id))))
+		var title := HBoxContainer.new()
+		title.name = &"Title"
+		title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var nm := _name(T.t("boon_" + String(b.id)))
+		nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title.add_child(nm)
+		box.add_child(title)
 		var cap := EloLink.caption(from) if not from.is_empty() else T.t(Boon.FAMILY_KEY[b.family])
-		box.add_child(_text(cap, EloLink.METAL_LIT if not from.is_empty() else b.color().lightened(0.25), 17, UiKit.BOLD_FONT))
+		if not listed or not from.is_empty():
+			# (a line of the Blessing screen leaves the family out: the screen is in its angel's colour, SW-B1)
+			box.add_child(_text(cap, EloLink.METAL_LIT if not from.is_empty() else b.color().lightened(0.25), 17, UiKit.BOLD_FONT))
 		var meta := _meta(b, level)
+		if listed:
+			# SW-B1: the rarity stands at the right of the name, as the band of the card
+			if _rarity_label != null:
+				title.add_child(_rarity_label)
 		if meta.get_child_count() > 0:
 			box.add_child(meta)
 		else:
@@ -200,13 +217,7 @@ func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replace
 			before = BoonChoice.facts(replaces, replaced_level, Boon.RARITY_MULT[replaced_rarity])
 		var facts := _facts(BoonChoice.facts(b, lv, Boon.RARITY_MULT[rarity] if not elo else 1.0), before)
 		if facts != null:
-			if listed:
-				# the numbers stand in their own column at the right of the line
-				facts.custom_minimum_size.x = ROW_FACTS_W
-				facts.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-				box.get_parent().add_child(facts)
-			else:
-				box.add_child(facts)
+			box.add_child(facts)
 		# what is left of the height goes over the trade, so it always stands at the bottom
 		box.add_child(_fill())
 		if replaces != null:
@@ -971,29 +982,36 @@ func _rich(bbcode: String) -> RichTextLabel:
 	r.name = &"Desc"
 	r.custom_minimum_size.x = ROW_TEXT_W if listed else SIZE.x - PAD * 2.0
 	plain = r.get_parsed_text()
+	if listed:
+		# SW-B1: over a word of rule the screen's glossary shows that one (the pass filter lets the click go to the card)
+		r.mouse_filter = Control.MOUSE_FILTER_PASS
+		r.meta_underlined = false
+		r.meta_hover_started.connect(func(m: Variant) -> void: term_hovered.emit(StringName(str(m))))
+		r.meta_hover_ended.connect(func(_m: Variant) -> void: term_hovered.emit(&""))
 	return r
 
 
 ## The rows of facts (BoonChoice.facts: [stat, label, value]); before: the same of what a trade lets go, matched by
 ## stat (its value shows dimmed before the new one). null without facts.
-func _facts(rows: Array, before: Array = []) -> VBoxContainer:
+func _facts(rows: Array, before: Array = []) -> BoxContainer:
 	if rows.is_empty():
 		return null
 	var old := {}
 	for f: Array in before:
 		old[f[0]] = f[2]
-	var col := VBoxContainer.new()
+	# SW-B1: in a line the numbers run on one row ("Dano: 25   A cada: 4 s"), on a tall card one under the other
+	var col: BoxContainer = HBoxContainer.new() if listed else VBoxContainer.new()
 	col.name = &"Facts"
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	col.add_theme_constant_override(&"separation", 0)
-	for f: Array in rows.slice(0, FACT_MAX):
+	col.add_theme_constant_override(&"separation", 18 if listed else 0)
+	for f: Array in rows.slice(0, 2 if listed else FACT_MAX):
 		var row := HBoxContainer.new()
 		row.name = StringName("Fact_" + String(f[0]))
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_theme_constant_override(&"separation", 6)
-		var label := UiKit.label(String(f[1]), UiKit.DIM, FACT_LABEL, UiKit.BOLD_FONT)
+		var label := UiKit.label(String(f[1]) + (":" if listed else ""), UiKit.DIM, FACT_LABEL, UiKit.BOLD_FONT)
 		label.name = &"Label"
-		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN if listed else Control.SIZE_EXPAND_FILL
 		label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(label)
 		if old.has(f[0]) and old[f[0]] != f[2]:
@@ -1025,6 +1043,7 @@ func _meta(b: Boon, level: int) -> HBoxContainer:
 	row_.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row_.add_theme_constant_override(&"separation", 8)
 	var parts: Array[Label] = []
+	var hidden_level: Label
 	if b.slot != Boon.Slot.NONE:
 		# the word and the mark are the button's own (BC-2: the Investida's are not the dodge's)
 		parts.append(UiKit.label(T.t("action_" + String(b.button())) if b.button() != &"" else T.t(Boon.SLOT_KEY[b.slot]), UiKit.DIM, 16, UiKit.BOLD_FONT))
@@ -1036,14 +1055,24 @@ func _meta(b: Boon, level: int) -> HBoxContainer:
 			lv_text = T.t(&"choice_new") if level == 0 else T.t(&"choice_level", {"n": level + 1, "max": b.max_level})
 		var lv := UiKit.label(lv_text, UiKit.GOLD, 16)
 		lv.name = &"Level"
-		parts.append(lv)
+		if listed and level == 0 and not upgrade:
+			# (the lines say a level only once there is one: "Novo!" is the medallion's, for a Blessing never seen)
+			lv.visible = false
+			hidden_level = lv
+		else:
+			parts.append(lv)
 		var rar := UiKit.label(T.t(Boon.RARITY_KEY[rarity]), rarity_color(rarity).lightened(0.12), 16, UiKit.BOLD_FONT)
 		rar.name = &"Rarity"
-		parts.append(rar)
+		if listed:
+			_rarity_label = rar  # SW-B1: it stands at the right of the name (setup)
+		else:
+			parts.append(rar)
 	for i in parts.size():
 		if i > 0:
 			row_.add_child(UiKit.label("·", UiKit.DIM, 16))
 		row_.add_child(parts[i])
+	if hidden_level != null:
+		row_.add_child(hidden_level)
 	if b.slot != Boon.Slot.NONE:
 		# the action said with the HUD's own symbol (stage 1A)
 		row_.add_child(button_mark(b.button(), ACTION_MARK) if b.button() != &"" else ActionSlot.mark(b.slot, ACTION_MARK))
@@ -1087,6 +1116,32 @@ func button() -> StringName:
 	if psalm != null:
 		return Boon.SLOT_BUTTON[psalm.slot]
 	return &""
+
+
+## SW-B1: the medallion with a small "Novo!" plaque across its foot (a Blessing never seen).
+func _with_new_mark(c: Control) -> Control:
+	var holder := Control.new()
+	holder.name = &"NewMark"
+	holder.custom_minimum_size = c.custom_minimum_size
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	holder.add_child(c)
+	var tag := PanelContainer.new()
+	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := UiKit.box(INK, Color(UiKit.GOLD, 0.9), 1, 0, 8)
+	sb.content_margin_left = 8
+	sb.content_margin_right = 8
+	sb.content_margin_top = 0
+	sb.content_margin_bottom = 1
+	tag.add_theme_stylebox_override(&"panel", sb)
+	var l := UiKit.label(T.t(&"choice_new_mark"), UiKit.GOLD, 13, UiKit.BOLD_FONT)
+	l.name = &"New"
+	tag.add_child(l)
+	tag.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	tag.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	tag.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	holder.add_child(tag)
+	return holder
 
 
 ## A thin rule of old gold with a small diamond in the middle, between the heading and the description.

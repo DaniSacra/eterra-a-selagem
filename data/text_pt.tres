@@ -1469,5 +1469,13 @@ entries = {
 "slot_first_yes": "Fazer a descida guiada",
 "slot_first_skip": "Ir direto ao Santuário",
 "hub_open_ult": "O Golpe Supremo despertou. Ele carrega durante a descida e solta o golpe maior do Guerreiro.",
-"guide_ult": "O Golpe Supremo. Veja na Árvore de Dons a Maestria que ele pede. Chegue perto, clique aqui ou aperte {key}."
+"guide_ult": "O Golpe Supremo. Veja na Árvore de Dons a Maestria que ele pede. Chegue perto, clique aqui ou aperte {key}.",
+"need_set": "Pede {names}",
+"need_or": " ou ",
+"need_others": "outras",
+"need_tag_finisher": "Pede um golpe final no combo",
+"need_tag_spin": "Pede um golpe giratório no combo",
+"need_ult": "Pede o Golpe Supremo liberado",
+"choice_new_mark": "Novo!",
+"choice_level_up": "Nível {n}"
 }
