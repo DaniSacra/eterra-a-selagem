@@ -402,6 +402,7 @@ func _ready() -> void:
 			await rooms.start()
 		if not is_inside_tree():
 			return
+		ArrivalScene.dev(self)  # (--arrival: the arrival scene over this room, to see it alone; SW-O1)
 	elif Dev.has("start"):
 		_dev_start(Dev.arg("start"))
 	if Dev.has("boons"):

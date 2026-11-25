@@ -405,3 +405,22 @@ Testes novos em `tests/test_fx_on_hit.gd`: `test_plain_contact_lights_and_sparks
   brilho 1,3, só no fio) e o golpe 3 desenhado 22% maior (`FINISHER_SLASH_SCALE`, só desenho: o alcance é do `Combat`).
 - **Clarão de tela** `Fx.screen_flash` (`flash` em `screen.gdshader`, +0,28 no máximo, 0,09 s): só Golpe Carregado (0,7), Omega (1,0),
   Apogeu (1,0), Brado (0,8) e Supremo (1,3); desligado pelas opções de quadros de impacto e de tremor desligados. Nunca no golpe comum.
+
+## Chegada do Guerreiro (SW-O1, 2026-11-25, environment-artist; `docs/design/onboarding_sw_o.md`; sem captura na GPU ainda)
+A cena da primeira descida: só o que já existe (preto, uma estrela, a luz de Elun, o selo, cristais de Emeth, fagulhas, o herói se formando).
+- **Relógio puro** `ArrivalTimeline.state_at(t)` (`scripts/core/arrival_timeline.gd`, constantes nomeadas): 0,0 preto; 0,6 estrela (6 px,
+  halo esmeralda, pulsa); 1,6 o preto abre em 0,8 s, a estrela desce até o ponto de nascimento e o `RewardShaft` cai (2,5 m no chão); 2,4 o
+  anel de runas (`ritual_rune.gdshader`, círculo fixo kind 2, ouro velho, cresce do meio) e 5 cristais (`crystal_spike.gdshader` parado
+  no tamanho cheio, a 2,5 m) sobem em 0,6 s; 3,0 a 3,5 as fagulhas (`SpectralMotes` GATHER, 6 por cristal) correm ao feixe e acabam
+  antes do herói; 3,6 o herói se forma de baixo para cima em 0,4 s (`arrival_form.gdshader`); 4,0 controle (`finished`), o feixe apaga
+  em 0,8 s, a luz da sala sobe de 25% a 100% em 1,0 s; 4,2 legenda (`hud.arrival_caption.show_line(&"arrival_line", 0)`); 5,0 fim.
+- **`ArrivalScene`** (`scripts/game/arrival_scene.gd`): `play(game, at)`, sinal `finished` (aos 4,0 s), `skip()` (só depois de 1,0 s, leva ao
+  4,0 e a legenda sai curta, 2,5 s), `has_control()`. Cobre com sua `CanvasLayer` 50 (acima do HUD, que fica escondido até os 4,0 s), segura
+  o herói no ponto (`player.place`, invulnerável, invisível até 3,6), escurece a sala por `Environment.adjustment_brightness`
+  (`DIM_BRIGHTNESS` 0,55; o `RoomMood` não toca nesse campo) e devolve tudo. Os cristais ficam no nó como cenário (sem colisão): liberar o
+  nó com a sala.
+- **`arrival_form.gdshader`**: pinta o corpo com a própria textura e `tint` do material (estilizado ou clássico), descarta acima de `cut`
+  (metros no mundo), fio esmeralda sob o corte, `flash` leva ao marfim, tudo sob `cap` (teto do `ScreenTone`). Troca só o `material_override`
+  das malhas pintadas por 0,4 s; a lâmina e o resto ficam ocultos até acabar. No `warmup_set.res` (entrada acrescentada por
+  `tools/make_warmup.gd`, sem regerar o conjunto).
+- **Para ver sozinha** (sem o 3A1): `--arrival` toca sobre a primeira sala; `--arrival-hold=SEGUNDOS` congela o relógio num instante.
