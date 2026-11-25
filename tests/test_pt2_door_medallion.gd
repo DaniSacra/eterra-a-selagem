@@ -7,17 +7,14 @@ const SEED := 1406
 
 var stage: StageDef
 
-
 func before_all() -> void:
 	stage = load(STAGE)
-
 
 func _arena(layout: RoomLayout, exits: int) -> Arena:
 	var a := Arena.new()
 	add_child_autofree(a)
 	a.build(layout, exits, SEED)
 	return a
-
 
 func test_every_anchor_is_in_the_arch_of_its_door() -> void:
 	for l in stage.layouts:
@@ -31,7 +28,6 @@ func test_every_anchor_is_in_the_arch_of_its_door() -> void:
 			assert_lt(a.door_sign_y(i), m.y - RewardGem.RADIUS * RewardGem.DOOR_SCALE + 0.01, "%s door %d: text starts under the disc" % [l.id, i])
 			assert_eq(a.door_at_anchor(Vector2(m.x, m.z)), i, "%s door %d: found by its anchor" % [l.id, i])
 
-
 func test_two_doors_never_share_a_medallion_spot() -> void:
 	for l in stage.layouts:
 		var a := _arena(l, mini(3, l.exits.size()))
@@ -41,7 +37,6 @@ func test_two_doors_never_share_a_medallion_spot() -> void:
 				var q := a.door_anchor(k)
 				assert_gt(Vector2(p.x, p.z).distance_to(Vector2(q.x, q.z)), 4.0, "%s: doors %d and %d keep apart" % [l.id, i, k])
 
-
 func test_the_hall_without_a_layout_hangs_it_too() -> void:
 	var a := Arena.new()
 	add_child_autofree(a)
@@ -50,7 +45,6 @@ func test_the_hall_without_a_layout_hangs_it_too() -> void:
 	var m := a.door_anchor(0)
 	assert_almost_eq(m.z, -9.0 + ArenaExit.EDGE_FROM_SPOT, 0.01, "at the edge, in from the spot")
 	assert_almost_eq(m.y, ArenaExit.new().medal_up, 0.001)
-
 
 func test_medallions_in_a_run_hang_at_their_door() -> void:
 	var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
@@ -71,7 +65,6 @@ func test_medallions_in_a_run_hang_at_their_door() -> void:
 		var sign := root.find_child("DoorSign", false, false) as Node3D
 		assert_almost_eq(sign.position.y, game.arena.door_sign_y(i), 0.01, "door %d: its text under the disc" % i)
 
-
 func test_icons_fall_back_to_the_painting_of_today() -> void:
 	assert_eq(RewardIcon.path(&"gold"), "res://assets/ui/rewards/gold.png")
 	assert_eq(RewardIcon.id_of(RunMap.Reward.HEART, RunMap.Kind.COMBAT), &"heart")
@@ -86,14 +79,34 @@ func test_icons_fall_back_to_the_painting_of_today() -> void:
 	assert_null(RewardIcon.texture(&""))
 	assert_null(RewardIcon.texture(&"no_such_reward"))
 
-
 func _disc_px(cam: Camera3D, p: Vector3) -> Rect2:
 	var c := cam.unproject_position(p)
 	var r := c.distance_to(cam.unproject_position(p + cam.global_transform.basis.x * RewardGem.RADIUS * RewardGem.DOOR_SCALE))
 	return Rect2(c - Vector2(r, r), Vector2(r, r) * 2.0)
 
+## Every real room of the descent: the layouts, each of its variants, the boss, shop, Provação and Altar rooms, and
+## the exit counts a room can open (2 and 3 doors, as many as it has exits).
+func _all_arenas() -> Array[Arena]:
+	var layouts: Array[RoomLayout] = []
+	layouts.append_array(stage.layouts)
+	for l in [stage.shop_layout, stage.trial_layout, stage.altar_layout]:
+		if l != null:
+			layouts.append(l)
+	var out: Array[Arena] = []
+	for base in layouts:
+		for v in base.variant_count():
+			var l := base.variant(v)
+			for n in range(2, mini(3, l.exits.size()) + 1):
+				out.append(_arena(l, n))
+	var hall := Arena.new()
+	add_child_autofree(hall)
+	hall.exits.append_array([Vector2(10.5, -13.8), Vector2(14.2, -11.8)])
+	hall.exit_inward.append_array([Vector2(0, 1), Vector2(-1, 0)])
+	out.append(hall)
+	return out
 
-## SW-C9: with the standard camera (near) the projected discs of no two doors overlap, in every room and in the Hall.
+## SW-C9: with the standard camera (near) the projected discs of no two doors overlap, in every room of the descent
+## (the layouts and their variants, the Provação, the Altar, the shop, the guardians' halls) and in the Hall.
 func test_projected_discs_never_overlap() -> void:
 	var f := Feel.live()
 	var cam := Camera3D.new()
@@ -102,15 +115,8 @@ func test_projected_discs_never_overlap() -> void:
 	var yaw := deg_to_rad(f.cam_yaw)
 	var pitch := deg_to_rad(f.cam_pitch)
 	cam.rotation = Vector3(-pitch, yaw, 0.0)
-	var arenas: Array[Arena] = []
-	for l in stage.layouts:
-		arenas.append(_arena(l, mini(3, l.exits.size())))
-	var hall := Arena.new()
-	add_child_autofree(hall)
-	hall.exits.append_array([Vector2(10.5, -13.8), Vector2(14.2, -11.8)])
-	hall.exit_inward.append_array([Vector2(0, 1), Vector2(-1, 0)])
-	arenas.append(hall)
-	for a in arenas:
+	var checked := 0
+	for a in _all_arenas():
 		var all := a.door_anchors()
 		if all.size() < 2:
 			continue
@@ -120,4 +126,7 @@ func test_projected_discs_never_overlap() -> void:
 			for k in range(i + 1, all.size()):
 				var ri := _disc_px(cam, all[i])
 				var rk := _disc_px(cam, all[k])
-				assert_false(ri.intersects(rk), "doors %d and %d: discs apart on the screen" % [i, k])
+				var tag := "%s (%d doors): doors %d and %d" % [a.name_key, all.size(), i, k]
+				assert_false(ri.intersects(rk), tag + ": discs apart on the screen")
+				checked += 1
+	assert_gt(checked, 20, "many rooms checked")
