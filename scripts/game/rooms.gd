@@ -369,11 +369,38 @@ func _pull_doors() -> void:
 	if cam == null or game.arena == null:
 		return
 	var screen := get_viewport().get_visible_rect().size
+	# Daniel 2026-11-25: doors off the screen show an arrow at its edge, not their medallions crowded there
+	var out := false
+	var mid := Vector2.ZERO
+	var n := 0
+	for i in _door_labels.size():
+		if is_instance_valid(_door_labels[i]):
+			var at := game.arena.door_anchor(i)
+			var p := cam.unproject_position(at)
+			mid += p
+			n += 1
+			if cam.is_position_behind(at) or not Rect2(Vector2.ZERO, screen).has_point(p):
+				out = true
+	var arrow: DoorArrow = game.hud.door_arrow if game.hud != null else null
+	if arrow != null:
+		arrow.shown = out and n > 0 and game.mode == Game.Mode.PLAY
+		if n > 0:
+			arrow.target = (mid / n) * (arrow.size / screen if screen.x > 0.0 else Vector2.ONE)
+	for i in _door_labels.size():
+		if is_instance_valid(_door_labels[i]):
+			_door_labels[i].visible = not out
+	# all the doors slide together by the largest pull (Daniel 2026-11-25: each sliding alone piled two medallions
+	# on the same spot at the screen's edge), so they keep the room ArenaExit.spread gave them
+	var off := Vector3.ZERO
+	for i in _door_labels.size():
+		if is_instance_valid(_door_labels[i]):
+			var o := RewardGem.pull_in(cam, game.arena.door_anchor(i), screen, DOOR_EDGE)
+			if o.length() > off.length():
+				off = o
 	for i in _door_labels.size():
 		var root := _door_labels[i]
 		if not is_instance_valid(root):
 			continue
-		var off := RewardGem.pull_in(cam, game.arena.door_anchor(i), screen, DOOR_EDGE)
 		root.set_meta(&"pull", off)
 		var gem := root.get_meta(&"gem", null) as Node3D
 		if gem != null:
@@ -386,6 +413,8 @@ func _pull_doors() -> void:
 func _process(_delta: float) -> void:
 	if phase == Phase.OPEN and not _door_labels.is_empty():
 		_pull_doors()
+	elif game != null and game.hud != null and game.hud.door_arrow != null:
+		game.hud.door_arrow.shown = false
 	if prompt != null:
 		prompt.visible = game.mode == Game.Mode.PLAY  # nothing over a screen, the pause or the end
 

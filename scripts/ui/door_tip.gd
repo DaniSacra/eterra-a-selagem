@@ -140,7 +140,8 @@ func _process(delta: float) -> void:
 		var centre := cam.unproject_position(at)
 		var rad := centre.distance_to(cam.unproject_position(at + cam.global_transform.basis.x * RewardGem.RADIUS * RewardGem.DOOR_SCALE))
 		discs.append(Rect2(centre - Vector2(rad, rad), Vector2(rad, rad) * 2.0))
-		_seal(i, rooms[i], centre + Vector2(rad, rad) * 0.7, clampf(rad * 0.62, BADGE_MIN, BADGE_MAX), not behind)
+		var away := game.hud != null and game.hud.door_arrow != null and game.hud.door_arrow.shown  # the arrow stands for them
+		_seal(i, rooms[i], centre + Vector2(rad, rad) * 0.7, clampf(rad * 0.62, BADGE_MIN, BADGE_MAX), not behind and not away)
 		var d := game.player.pos.distance_to(game.arena.door_label(i))
 		_ring(i, clampf((RING_FAR - d) / (RING_FAR - NEAR), 0.0, 1.0))
 	for i in _seals.keys():

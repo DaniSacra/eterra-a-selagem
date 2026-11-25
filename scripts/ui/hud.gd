@@ -198,6 +198,8 @@ const ULT_HURT := 0.5
 
 var game: Game
 var door_tip: DoorTip
+## Daniel 2026-11-25: the arrow to the open doors while they are off the screen (Rooms._pull_doors drives it).
+var door_arrow: DoorArrow
 var tip_toast: TipToast
 ## SW-O1: the arrival's one line at the foot (the ArrivalScene calls arrival_caption.show_line).
 var arrival_caption: ArrivalCaption
@@ -352,6 +354,10 @@ func _ready() -> void:
 	door_tip = DoorTip.new()
 	door_tip.game = game
 	add_child(door_tip)
+	door_arrow = DoorArrow.new()
+	door_arrow.name = "DoorArrow"
+	door_arrow.visible = false
+	add_child(door_arrow)
 	# GP-9: the first descents' four tips, once per save (TipToast)
 	tip_toast = TipToast.new()
 	tip_toast.game = game
