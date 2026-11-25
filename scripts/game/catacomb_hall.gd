@@ -93,6 +93,8 @@ const CANDLE_RADIUS := Vector2(0.12, 0.22)
 ## A cluster has 3 to CANDLE_MAX candles (one tall and thick, one or two of middle height, the rest stubs); those
 ## standing on something (a plinth, a crate) are this share of the size and may be fewer.
 const CANDLE_MAX := 5
+## C-3: the three drawings of a candle group, x how far the stubs spread, y their height, z at most how many (0: all).
+const CANDLE_VARIANTS: Array[Vector3] = [Vector3(1.0, 1.0, 0.0), Vector3(2.2, 0.6, 0.0), Vector3(0.6, 1.5, 3.0)]
 const CANDLE_ON_TOP := 0.6
 ## ENV-HB7 (benchmark_hades2_style.md 4.1): in the stylized look every candle is this share of its height and radius
 ## (the tallest 0.5 m, under a fifth of the hero's drawn 2.75 m; the clusters read near half of him), its halo and
@@ -425,6 +427,9 @@ const STY_WARM_AT := Vector2(-6.5, 1.5)
 const STY_WARM_RADIUS := 7.0
 const STY_WARM_FROM := Vector3(-13.0, 16.0, 0.5)
 const STY_WARM_SOFT := 2.0
+## C-4 (AD2-09): two more warm pools of the candles on the floor, x, z, radius, energy (the fight's middle stays the
+## brightest: the cold key and the warm key over it).
+const STY_POOLS: Array[Vector4] = [Vector4(-9.5, -5.5, 3.4, 2.6), Vector4(6.5, 7.5, 3.4, 2.4)]
 ## The shaft of Elun (beam.gdshader, the hall's): ivory gold (hue 40), where its foot stands in the upper half of the
 ## frame (x, z; it opens round the paladin by itself), its radius at the foot, its height, the light it asks for and its cap
 ## (linear), the share of what is behind that one face covers, how frayed its sides are (brush_break) and the brush's
@@ -577,6 +582,8 @@ var kit: ArenaKit
 var _key: OmniLight3D
 var m: Masonry
 var _rng := RandomNumberGenerator.new()
+## How many candle groups were laid (C-3: the drawing of the next one).
+var _clusters := 0
 ## The classic look's candles and fight-field crates (hidden in the stylized look, where kit.styled() holds their
 ## stand-ins).
 var _classic: Masonry
@@ -631,6 +638,7 @@ func build_steps(exit_count: int) -> Array[Callable]:
 			return more,
 		_urns,
 		_frame,
+		func() -> void: HallLife.dress(kit.root, kit.styled()),
 		_stylize_rest,
 	]
 
@@ -671,6 +679,8 @@ func _elun() -> void:
 	spot.set_meta(ArenaKit.NOT_FIRE, true)
 	ArenaKit.style_only(spot)
 	elun_shaft(arena, Vector2(STY_SHAFT_AT.x, STY_SHAFT_AT.y))
+	for p: Vector4 in STY_POOLS:
+		ArenaRoom.pool_spot(arena, Vector2(p.x, p.y), p.z, ArenaRoom.POOL_WARM, p.w)
 	# the mist banks of the depths, brushed (their strokes and a darker near plane)
 	for bank in _banks:
 		var bm := bank.material_override as ShaderMaterial
@@ -1797,6 +1807,12 @@ func _candles(at: Vector3, count: int, light := true, tall := false, burnt := fa
 	var on_top := at.y > 0.3
 	var size := CANDLE_ON_TOP if on_top else 1.0
 	var n := mini(count, CANDLE_MAX) if on_top else clampi(count, 3, CANDLE_MAX)
+	# C-3 (AD2-08): three drawings in turn, so no two groups beside each other are the same set: the usual cluster,
+	# a spill of low stubs with a burnt one at its edge, a few tall ones close together
+	var variant: Vector3 = CANDLE_VARIANTS[_clusters % CANDLE_VARIANTS.size()]
+	_clusters += 1
+	if variant.z > 0.0:
+		n = mini(n, int(variant.z))
 	var turn := _rng.randf() * TAU
 	for i in n:
 		var t := 1.0
@@ -1806,8 +1822,9 @@ func _candles(at: Vector3, count: int, light := true, tall := false, burnt := fa
 		var p := at
 		if i > 0:
 			var a := turn + TAU * float(i) / float(n - 1) + _rng.randf_range(-0.3, 0.3)
-			p += Vector3(cos(a), 0, sin(a)) * (CANDLE_RADIUS.y * size + r + _rng.randf_range(0.04, 0.22) * size)
-		_candle(p, lerpf(CANDLE_HEIGHT.x, CANDLE_HEIGHT.y, t) * size, r, burnt)
+			p += Vector3(cos(a), 0, sin(a)) * (CANDLE_RADIUS.y * size + r + _rng.randf_range(0.04, 0.22) * size) * variant.x
+		var out := burnt or (variant.y < 1.0 and i == n - 1 and n > 3)
+		_candle(p, lerpf(CANDLE_HEIGHT.x, CANDLE_HEIGHT.y, t) * size * variant.y, r, out)
 	if burnt:
 		return
 	var glow := MeshInstance3D.new()

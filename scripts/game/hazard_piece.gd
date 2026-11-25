@@ -928,6 +928,15 @@ const GRATE_HEIGHT := 0.7
 const GRATE_PEEK := 0.25
 const GRATE_HOT := Color(0.6, 0.18, 0.08)
 const GRATE_STEEL := Color(0.62, 0.64, 0.68)
+## C-1 (AD2-12): the frame (width, height; stone a touch under the dark floor's value), the pit's stepped darks (outer to
+## inner, never pure black) and how much each step shrinks it, the rusty bars (their square side).
+const GRATE_FRAME := 0.2
+const GRATE_FRAME_HEIGHT := 0.05
+const GRATE_FRAME_STONE := Color(0.12, 0.125, 0.15)
+const GRATE_PIT: Array[Color] = [Color(0.075, 0.07, 0.08), Color(0.05, 0.045, 0.055), Color(0.032, 0.03, 0.038)]
+const GRATE_PIT_STEP := 0.22
+const GRATE_RUST := Color(0.22, 0.11, 0.07)
+const GRATE_BAR := 0.09
 var _spikes: Array[Node3D] = []
 var _grate_mat: StandardMaterial3D
 
@@ -939,28 +948,37 @@ static func grate(parent: Node3D, r: Rect2, windup: float) -> HazardPiece:
 	hp.warn = windup
 	parent.add_child(hp)
 	hp.position = Vector3(r.get_center().x, 0.0, r.get_center().y)
-	var pit := MeshInstance3D.new()
-	var q := QuadMesh.new()
-	q.size = r.size
-	pit.mesh = q
-	pit.transform = Transform3D(Basis(Vector3.RIGHT, -PI * 0.5), Vector3(0, MARK_Y, 0))
-	var dark := StandardMaterial3D.new()
-	dark.albedo_color = Color(0.03, 0.03, 0.035)
-	dark.roughness = 1.0
-	pit.material_override = dark
-	pit.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	hp.add_child(pit)
+	# C-1 (AD2-12): a pit that darkens toward its middle (stepped quads, never pure black), a frame of stone in the
+	# floor's own value (no white), rusty iron bars with volume
+	for k in GRATE_PIT.size():
+		var pit := MeshInstance3D.new()
+		var q := QuadMesh.new()
+		q.size = r.size - Vector2.ONE * (GRATE_FRAME * 2.0 + float(k) * GRATE_PIT_STEP)
+		pit.mesh = q
+		pit.transform = Transform3D(Basis(Vector3.RIGHT, -PI * 0.5), Vector3(0, MARK_Y + 0.001 * k, 0))
+		var dark := StandardMaterial3D.new()
+		dark.albedo_color = GRATE_PIT[k]
+		dark.roughness = 1.0
+		dark.metallic_specular = 0.0
+		pit.material_override = dark
+		pit.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		hp.add_child(pit)
+	var stone := StandardMaterial3D.new()
+	stone.albedo_color = GRATE_FRAME_STONE
+	stone.roughness = 1.0
+	stone.metallic_specular = 0.0
 	var iron := StandardMaterial3D.new()
-	iron.albedo_color = IRON
-	iron.roughness = 0.8
-	var bar := 0.12
+	iron.albedo_color = GRATE_RUST
+	iron.roughness = 0.9
+	iron.metallic_specular = 0.2
+	var f := GRATE_FRAME
 	for sx in [-1, 1]:
-		hp._grate_box(Vector3(bar, 0.06, r.size.y), Vector3(sx * (r.size.x * 0.5 - bar * 0.5), 0.03, 0), iron)
+		hp._grate_box(Vector3(f, GRATE_FRAME_HEIGHT, r.size.y), Vector3(sx * (r.size.x * 0.5 - f * 0.5), GRATE_FRAME_HEIGHT * 0.5, 0), stone)
 	for sz in [-1, 1]:
-		hp._grate_box(Vector3(r.size.x, 0.06, bar), Vector3(0, 0.03, sz * (r.size.y * 0.5 - bar * 0.5)), iron)
+		hp._grate_box(Vector3(r.size.x - f * 2.0, GRATE_FRAME_HEIGHT, f), Vector3(0, GRATE_FRAME_HEIGHT * 0.5, sz * (r.size.y * 0.5 - f * 0.5)), stone)
 	for k in 3:
 		var t := (float(k) + 1.0) / 4.0 - 0.5
-		hp._grate_box(Vector3(bar * 0.6, 0.05, r.size.y), Vector3(t * r.size.x, 0.025, 0), iron)
+		hp._grate_box(Vector3(GRATE_BAR, GRATE_BAR, r.size.y - f * 2.0), Vector3(t * r.size.x, GRATE_BAR * 0.5 + 0.01, 0), iron)
 	hp._grate_mat = StandardMaterial3D.new()
 	hp._grate_mat.albedo_color = GRATE_STEEL
 	hp._grate_mat.roughness = 0.5
