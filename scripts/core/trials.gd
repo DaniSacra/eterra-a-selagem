@@ -58,6 +58,11 @@ static func cost(stage: StageDef, depth: int) -> int:
 	return ceili(stage.trial_cost_base + stage.trial_cost_per_depth * depth)
 
 
+## BL-03: true when he has the share of life the slab asks to be offered at all (trial_min_hp_frac of his maximum).
+static func healthy(stage: StageDef, hp: float, max_hp: float) -> bool:
+	return hp >= max_hp * stage.trial_min_hp_frac
+
+
 ## True when he may pay: more life than the cost (Hades II: whoever has the cost or less cannot enter).
 static func can_pay(stage: StageDef, depth: int, hp: float) -> bool:
 	return hp > cost(stage, depth)

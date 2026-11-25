@@ -355,6 +355,7 @@ entries = {
 "door_hard": "Difícil",
 "trial_cost": "Pisar custa {n} de vida",
 "trial_slab_offer": "Uma Bênção forte, com uma maldição",
+"trial_slab_risk": "Risco: a vida paga não volta e a maldição vem junto",
 "trial_slab_refuse": "Para recusar, não pise",
 "trial_short": "Vida insuficiente",
 "trial_for": "por {n} encontros",
