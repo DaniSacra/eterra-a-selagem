@@ -36,6 +36,8 @@ var vine: Vine
 var buds: Dictionary = {}
 var tags: Dictionary = {}
 var water_button: Button
+## The hold that confirms Regar (PT-25-3): hold accept or the mouse on the button until the ring is full.
+var hold: HoldPress
 var bar: ActionBar
 ## The root whose Regar is in focus (&"": none).
 var pending: StringName = &""
@@ -251,11 +253,13 @@ func _build_panel() -> void:
 	_have.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_have.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	price.add_child(_have)
-	water_button = UiKit.button("", confirm, WATER_SIZE.x)
+	water_button = UiKit.button("", Callable(), WATER_SIZE.x)
 	water_button.name = "water"
 	water_button.custom_minimum_size = WATER_SIZE
 	UiKit.primary(water_button)
 	water_button.focus_exited.connect(func() -> void: pending = &"")
+	hold = HoldPress.attach(water_button)
+	hold.completed.connect(confirm)
 	col.add_child(water_button)
 
 

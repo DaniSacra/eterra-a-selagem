@@ -679,3 +679,19 @@ livro (o livro não passa de 1,9 alturas de largura, `BookDesk.side_room`, ou se
 - **Quinto losango** (SW-O5): `Hud.ult_open()` pergunta a `Milestones.ult_open(Save.data)` (aberto sem o arquivo e sem save); fechado, o
   losango do Golpe Supremo e a carga fina não aparecem (antes aparecia trancado com "Maestria N").
 - Todos os textos novos estão marcados a aprovar pelo Daniel (relatório da fase).
+
+## Regar segurando e Espólios (PT-25-3 e PT-25-6, 2026-11-25; testes em `tests/test_spoils_hold.gd`)
+- **`HoldPress`** (`scripts/ui/hold_press.gd`): componente comum de "segure para confirmar" sobre um `Button`, em cima do
+  `HoldGauge` dos Dons. `HoldPress.attach(botão, tempo, dreno)`; segurar Enter/A (com o foco no botão) ou o botão esquerdo do
+  mouse enche um anel dourado sobre o botão (`TIME` 0,8 s); ao encher emite `completed` uma vez; soltar ou perder o foco
+  cancela e o anel esvazia. O clique do botão é consumido (`pressed` nunca dispara por ele). Botão desabilitado não segura.
+  A Videira usa: `VineScreen.hold.completed` chama `confirm()` (compra e aloca de uma vez; a Enter da barra de baixo só
+  seleciona, o mouse segura no botão). O texto do botão virou "Segure · Regar · N material" (`vine_water`).
+  Os Dons seguem com a barra própria no botão (`DonsPanel`); migrar para o `HoldPress` é opcional e fica para depois.
+- **Espólios = a tela de fim (`EndScreen`) nos dois finais, inclusive a primeira descida** (o título é "A luz não se apaga" /
+  "Morvath foi selado"). Ganhou: "Salas vencidas" e "Ouro" na fileira de números (`_stat_rooms`; `stats.rooms_won`, `stats.gold`)
+  e **"Liberado nesta descida"** (`_opened`; `stats.opened`, ids de marco), uma linha por peça do Santuário aberta pela descida
+  (`end_open_<id>`: Dons, Forjador, Livro de Ahk, Videira, Vendedor, Golpe Supremo, Estandarte dos Heróis). `Game` guarda
+  `milestones_before` (`Milestones.reached`) ao começar e `RunSpoils.opened(antes, depois)` (puro) dá os novos ao abrir o fim.
+  O botão do Santuário agora diz "Continuar" (`end_menu`) e continua sendo o primeiro (vitória) ou o segundo caminho (derrota);
+  na primeira descida (`home_only`) é o único. Materiais, Bênçãos e Maestria já vinham antes.
