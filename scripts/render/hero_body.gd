@@ -50,6 +50,10 @@ static func ink_scale() -> float:
 ## there it reaches the screen without the desktop's linear-to-sRGB step and he went black inside the outline (the
 ## same number as CrowdRenderer.COMPAT_GAMMA; the outline keeps its ink).
 const COMPAT_GAMMA := 0.55
+## H-2 (art review 2026-11-25, AD2-13): the Guerreiro's cape ends this high (model units of height, 1.8 tall: above the
+## knee) and is this share of its width, as the approved sheet's short cape (docs/design/warrior_spec.md).
+const CAPE_CUT := 0.58
+const CAPE_NARROW := 0.8
 
 
 ## A hero's body (BODIES) at the game's size, playing its own clips. Returns [model, AnimationPlayer, held piece]
@@ -63,7 +67,7 @@ static func make(id: StringName = &"warrior") -> Array:
 	for lib in anim.get_animation_library_list():
 		anim.remove_animation_library(lib)
 	anim.add_animation_library(&"", load(body.anims))
-	_fill(model)
+	_fill(model, id)
 	return [model, anim, _arm(model, anim.get_animation_library(&""), body.held)]
 
 
@@ -90,11 +94,11 @@ static func _arm(model: Node3D, clips: AnimationLibrary, held: StringName = &"sw
 ## His own painted texture, also a little as light (FILL), so he keeps his colours where the room's light does not
 ## reach. In the stylized look (VisualProfile, F7 flips it live) his own shader instead (painted(), with the same FILL)
 ## and the outline shell after it.
-static func _fill(model: Node3D) -> void:
+static func _fill(model: Node3D, id: StringName = &"warrior") -> void:
 	for n in model.find_children("*", "MeshInstance3D", true, false):
 		var mi := n as MeshInstance3D
 		var mat := (mi.get_active_material(0) as StandardMaterial3D).duplicate() as StandardMaterial3D
-		var paint := painted(mat)
+		var paint := painted(mat, id == &"warrior")
 		mat.emission_enabled = true
 		mat.emission = Color.WHITE
 		# multiply: the colour times the texture (the default, add, puts the full white on top of it)
@@ -106,7 +110,7 @@ static func _fill(model: Node3D) -> void:
 
 
 ## His stylized material from the model's own (StandardMaterial3D): the painting, its colour, FILL; the outline after.
-static func painted(own: StandardMaterial3D) -> ShaderMaterial:
+static func painted(own: StandardMaterial3D, warrior: bool = false) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = PAINT
 	mat.set_shader_parameter(&"albedo", own.albedo_texture)
@@ -118,6 +122,13 @@ static func painted(own: StandardMaterial3D) -> ShaderMaterial:
 	edge.set_shader_parameter(&"color", OUTLINE_COLOR)
 	if RenderingServer.get_current_rendering_method() == "gl_compatibility":
 		mat.set_shader_parameter(&"gamma", COMPAT_GAMMA)
+	if warrior:
+		# H-1, H-2: steel plates, old gold, leather in belts and boots; the cape short and narrow (the outline follows it)
+		for m: ShaderMaterial in [mat, edge]:
+			m.set_shader_parameter(&"cape_cut", CAPE_CUT)
+			m.set_shader_parameter(&"cape_narrow", CAPE_NARROW)
+		mat.set_shader_parameter(&"armor", 1.0)
+		edge.set_shader_parameter(&"albedo", own.albedo_texture)
 	mat.next_pass = edge
 	return mat
 
