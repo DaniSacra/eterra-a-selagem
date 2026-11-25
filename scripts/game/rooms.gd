@@ -353,7 +353,39 @@ func use_kind() -> StringName:
 	return &""
 
 
+## Margin (canvas px) a door's medallion keeps from the screen's sides (the HUD's own, Hud.MARGIN).
+const DOOR_EDGE := 22.0
+
+
+## How far door i's medallion was slid inward so it stays on the screen (RewardGem.pull_in), in the world.
+func door_pull(i: int) -> Vector3:
+	if i < 0 or i >= _door_labels.size():
+		return Vector3.ZERO
+	return _door_labels[i].get_meta(&"pull", Vector3.ZERO)
+
+
+func _pull_doors() -> void:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null or game.arena == null:
+		return
+	var screen := get_viewport().get_visible_rect().size
+	for i in _door_labels.size():
+		var root := _door_labels[i]
+		if not is_instance_valid(root):
+			continue
+		var off := RewardGem.pull_in(cam, game.arena.door_anchor(i), screen, DOOR_EDGE)
+		root.set_meta(&"pull", off)
+		var gem := root.get_meta(&"gem", null) as Node3D
+		if gem != null:
+			gem.position = off
+		var door_sign := root.find_child("DoorSign", false, false) as Node3D
+		if door_sign != null:
+			door_sign.position = Vector3(off.x, door_sign.position.y, off.z)
+
+
 func _process(_delta: float) -> void:
+	if phase == Phase.OPEN and not _door_labels.is_empty():
+		_pull_doors()
 	if prompt != null:
 		prompt.visible = game.mode == Game.Mode.PLAY  # nothing over a screen, the pause or the end
 
@@ -764,7 +796,7 @@ func _spawn(id: StringName) -> void:
 		# smoke with a dull gold edge closes on it
 		game.fx.elite_surge(at, d.radius * 1.6 + 0.6)
 		if room.kind == RunMap.Kind.MINIBOSS:
-			game.hud.show_notice(T.t(&"notice_elite", {"name": T.t(d.name_key)}), 3.0)
+			game.hud.show_notice(T.t(&"notice_guardian", {"name": T.t(d.name_key)}), 3.0)
 			Audio.play(&"elite")
 
 
@@ -2085,7 +2117,9 @@ func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind
 	add_child(root)
 	var color := _reward_color(reward) if reward != RunMap.Reward.NONE else _kind_color(kind)
 	# the reward's medallion over its pedestal (RewardGem, QW-106): it turns, the room's lights shade it
-	_gems.append(RewardGem.make(root, reward, kind, color))
+	var gem := RewardGem.make(root, reward, kind, color)
+	_gems.append(gem)
+	root.set_meta(&"gem", gem.get_parent())
 	if text != "":
 		# the reward's name in gold, a second line (the shop's price) in pale under it (UI-01)
 		var lines := text.split("\n", true, 1)

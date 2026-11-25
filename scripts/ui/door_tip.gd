@@ -135,8 +135,7 @@ func _process(delta: float) -> void:
 	var screen := get_viewport().get_visible_rect().size
 	var discs: Array[Rect2] = []
 	for i in rooms.size():
-		var a := game.arena.door_anchor(i)
-		var at := Vector3(a.x, a.y, a.z)
+		var at := game.arena.door_anchor(i) + game.rooms.door_pull(i)
 		var behind := cam.is_position_behind(at)
 		var centre := cam.unproject_position(at)
 		var rad := centre.distance_to(cam.unproject_position(at + cam.global_transform.basis.x * RewardGem.RADIUS * RewardGem.DOOR_SCALE))

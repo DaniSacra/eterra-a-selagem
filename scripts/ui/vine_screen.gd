@@ -257,8 +257,9 @@ func _build_panel() -> void:
 func _foot() -> void:
 	_count = UiKit.label("", UiKit.PALE, 16, UiKit.BOLD_FONT)
 	_count.name = "count"
-	_count.position = Vector2(PANEL_RECT.position.x, 586)
-	_count.size = Vector2(PANEL_RECT.size.x, 24)
+	# at the foot on the left, level with the row of keys (it floated at the lower right, under the panel of an open figure)
+	_count.position = Vector2(42, 720.0 - ActionBar.BOTTOM - ActionBar.HEIGHT * 0.5 - 12.0)
+	_count.size = Vector2(420, 24)
 	_stage.add_child(_count)
 	var hint := UiKit.label("", UiKit.DIM, 15)
 	hint.name = "hint"
@@ -357,7 +358,9 @@ func _fill(id: StringName) -> void:
 	# "agora -> depois": the real numbers of the node, a share or a count (a switch has none)
 	_values.visible = tip.has_values
 	if tip.has_values:
-		_values.text = T.t(&"vine_tip_values", {"a": UiKit.strong(tip.now_text()), "b": UiKit.strong(tip.next_text())})
+		# "+0%" reads as a bonus that is zero: a node with nothing yet says "nothing" (docs/qa UI review P2-1)
+		var values_key := &"vine_tip_values_none" if tip.now == 0.0 else &"vine_tip_values"
+		_values.text = T.t(values_key, {"a": UiKit.strong(tip.now_text()), "b": UiKit.strong(tip.next_text())})
 	_needs.visible = tip.needs != &""
 	_needs.text = T.t(&"vine_needs", {"a": T.t(tip.needs)}) if tip.needs != &"" else ""
 	_cost.set_id(tip.material)

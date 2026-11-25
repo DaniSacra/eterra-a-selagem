@@ -422,6 +422,32 @@ static func enamel_of(reward: RunMap.Reward, kind: RunMap.Kind) -> Color:
 
 
 ## The disc's mount: faces the camera, sways round it.
+## Keeps a door's medallion (disc and ring) inside the screen: how far to slide it along the camera's right, horizontal
+## in the world, so its ring stands at least `margin` px from the left and right edges (the sign's text already clamps
+## itself, DoorSign). Zero when it is clear or behind the camera. Pure given the camera.
+static func pull_in(cam: Camera3D, anchor: Vector3, screen: Vector2, margin: float) -> Vector3:
+	if cam.is_position_behind(anchor):
+		return Vector3.ZERO
+	var right := cam.global_transform.basis.x
+	right.y = 0.0
+	right = right.normalized()
+	var c := cam.unproject_position(anchor)
+	var reach := RADIUS * DOOR_SCALE * RING_REACH
+	var px := c.distance_to(cam.unproject_position(anchor + right * reach))
+	if px < 0.5:
+		return Vector3.ZERO
+	var shift := 0.0
+	if c.x + px > screen.x - margin:
+		shift = (screen.x - margin) - (c.x + px)
+	elif c.x - px < margin:
+		shift = margin - (c.x - px)
+	return right * (shift / px * reach)
+
+
+## The ring of a door's medallion over its disc's radius (the ring pulses a little wider than the disc).
+const RING_REACH := 1.25
+
+
 class Sway extends Node3D:
 	var phase := 0.0
 

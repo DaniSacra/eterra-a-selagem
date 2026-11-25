@@ -12,9 +12,11 @@ const OUT := 0.6
 ## The short stay after a skip (SW-O1).
 const SKIPPED := 2.5
 ## Pixels above the bottom edge: over the row of actions (the TipToast stands at 172 too, they never meet).
-const BOTTOM := 190.0
-const TEXT_PX := 26
-const WIDTH_RATIO := 0.7
+const BOTTOM := 215.0
+const TEXT_PX := 24
+const WIDTH_RATIO := 0.8
+## At most this many lines (a longer text is cut with "..." rather than reach the row of actions).
+const MAX_LINES := 2
 
 var _label: Label
 var _tween: Tween
@@ -29,6 +31,8 @@ func _ready() -> void:
 	_label = UiKit.shadow(UiKit.label("", UiKit.PALE, TEXT_PX, UiKit.TEXT_FONT))
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_label.max_lines_visible = MAX_LINES
+	_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_label.anchor_left = (1.0 - WIDTH_RATIO) * 0.5
 	_label.anchor_right = 1.0 - (1.0 - WIDTH_RATIO) * 0.5
 	_label.anchor_top = 1.0

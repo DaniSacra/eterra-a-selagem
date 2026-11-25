@@ -17,7 +17,17 @@ func text(key: StringName, args: Dictionary = {}) -> String:
 	out = out.replace("{HUB}", entries.get("hub_name", "{HUB}"))
 	for k: String in args:
 		out = out.replace("{%s}" % k, str(args[k]))
-	return out
+	return glue_units(out)
+
+
+static var _unit_rx: RegEx
+
+## A number (or the {placeholder} that becomes one) and its unit keep together on a line: "0,8 s" never leaves "s."
+## alone on the next one (the space between them becomes a no-break space).
+static func glue_units(text: String) -> String:
+	if _unit_rx == null:
+		_unit_rx = RegEx.create_from_string("([0-9}]) (s|m|ms|%|x)(?![\\p{L}0-9])")
+	return _unit_rx.sub(text, "$1\u00A0$2", true)
 
 
 ## The name of paladin i (1..4); the placeholder itself while Daniel has not named him.
