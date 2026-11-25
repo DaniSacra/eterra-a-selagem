@@ -1,5 +1,90 @@
 # Backlog de A Selagem
 
+## Plano SWORN, "copia mas não faz igual" (2026-11-25, LER PRIMEIRO)
+Pedido do Daniel (2026-11-25): "chegou o momento que a gente vai ter que copiar um pouco SWORN para depois mudarmos e adaptarmos, pois ainda não está muito
+gostoso de jogar e não tem um onboarding interessante". Copiamos **mecânica, tempos, números, estrutura da partida e onboarding**; nunca arte, personagens, nomes,
+textos, músicas ou mapas do SWORN (Eterra segue com o Guerreiro, as catacumbas de Valmor, os anjos e Morvath).
+Fontes: estudo dos dados do jogo instalado (`docs/design/sworn_rea_kingswood_2026-11-25.md`, números com precisão de quadro), pesquisa na web
+(`docs/design/sworn_research_2026-11-25.md`) e o que o Daniel separou como "coisas que eu gosto" (`C:\Users\danie\Videos\Sworn`: "Escolha de bênçãos e de portas",
+"Escolhendo dons", "Primeira Vez Antessala"; `C:\Users\danie\OneDrive\Imagens\Sworn` de 2026-11-25: portas lado a lado com o ícone, layout de bênção, pontos de
+melhorias dons e videira, HUD dos recursos).
+
+**Feito em 2026-11-25 (exe `337f6bd`):** portas de saída juntas no canto nordeste em todas as salas, inclusive a sala 1 (PT-6b); tela de Dons radial a partir do
+herói com compra do centro para fora; efeitos voltas 1 e 2 (estrela de impacto, fio HDR do corte, anel fino do giro, Onda de Luz em lâmina, pó de osso, clarão de tela nos
+golpes fortes); músicas MUS-2 (Santuário, transição de sala vencida, rodízio Heroic Age); lote S (salas longas em 3 ondas, runas no bando, laje de aprender, Cavaleiro
+com marca na parede); agente `disk-janitor` no fim de cada rodada.
+
+**Como implementar (regra para todas as fases):** cada fase é um lote fechado com exe no fim; até 4 agentes, um dono por arquivo; números em `tools/make_data.gd`
+(conteúdo é dado); lógica nova com teste GUT; robô em 12 sementes antes e depois; capturas GPU só a sessão principal, uma por vez, com antes e depois em Downloads;
+`disk-janitor` no fim. A coluna "SWORN" é o número observado nos dados dele; "nosso" é o de hoje; a meta é o ponto de partida, afinado jogando.
+
+### Fase 1, combate na mão (SW-C) — primeiro, é o que mais muda o "gostoso"
+Donos: `gameplay-engineer` (código: `combat.gd`, `player.gd`, `horde.gd`, combos), `balance-designer` (números em `make_data.gd` e `balance.md`),
+`combat-feel-director` (medida e `combat_cadence.md`). Cerca de 1 dia.
+| id | o quê | SWORN | nosso hoje | meta / aceite |
+|---|---|---|---|---|
+| SW-C1 | Janela de cancelamento por tempo em cada `ComboNode` (a partir de t libera esquiva, especial, leve) | esquiva, pesado e magia cortam desde o quadro 0; próximo leve em 0,30 s; depois do final em 0,63 s | regras soltas; esquiva não corta o giro (G-2) | dado por golpe; esquiva corta qualquer golpe no quadro 0 (desfaz o G-2); teste GUT por golpe |
+| SW-C2 | Golpe 3 vale o dobro e é o único que empurra | 20 / 20 / 40, empurrão só no 3 | 15 / 15 / 20 | 15 / 15 / 30; recuo só no 3 |
+| SW-C3 | Pausa no impacto por tipo de golpe | 0,2 s em alvo único, 0,075 s em área | 35 / 60 / 85 / 100 ms crescente | testar alvo único 0,12 a 0,2 s e área 0,06 s; medir na GPU |
+| SW-C4 | Dano e aviso dos comuns | dano 10 a 20% da vida do herói; aviso 0,48 a 0,67 s; chefes 0,83 a 1,03 s | guarda tira 35%; avisos mais lentos | comuns 10 a 20%; aviso 0,5 a 0,7 s; chefe 0,8 a 1,0 s; área grande 1,2 a 1,6 s |
+| SW-C5 | Barra de atordoamento (poise) em elites, guardiões e Morvath | dano enche a barra; atordoa 2,0 / 2,5 / 3,5 s; cada vez seguinte pede 1,25x | elites e chefes nunca atordoam | barra sob a vida do inimigo; 2,5 s elite, 3,5 s guardião e Morvath; fator 1,25; teste GUT |
+| SW-C6 | Esquiva conferida | 2,5 m em 0,2 s, invencível o tempo todo, recarga 0,8 s, 1 carga (+1 na meta) | medir e comparar | igualar onde for pior; i-frames do começo ao fim |
+| SW-C7 | Inimigo de 1 golpe para ritmo de horda | cobra com 20 de vida | nenhum | um comum pequeno (ex.: rato de osso) que morre com 1 golpe, em bando |
+| SW-C8 | Capitão (elite que chama ajudantes) | 1250 a 1500 de vida (5 a 6x), invoca 5, custo 10 | elites sem invocação | variante em dado: 5 a 6x vida, imune a empurrão, aviso 1,2 s, chama 4 a 5 |
+| SW-C9 | Portas: medalhão maior, mais alto e mais brilhante sobre cada porta (imagem do Daniel) | ícone grande flutuando no arco | medalhão menor, junto da porta | lê de longe na câmera Perto; quickwin junto da fase 1 (`ui-ux-designer` ou `environment-artist`) |
+Aceite da fase: Daniel jogando diz se ficou gostoso; robô em 12 sementes sem `stuck`; `combat_cadence.md` com a matriz nova.
+
+### Fase 2, ritmo das salas e da descida (SW-R)
+Dono: `room-designer` (e `balance-designer` nos números). Cerca de meio dia.
+- **SW-R1 Orçamento de inimigos por sala** (substitui contar corpos): curva 4 a 8 até a sala 5, queda para 6 logo depois do minichefe, até 11 no fim; custo por tipo
+  (pequeno 1, comum 3, pesado 5, capitão 10). Metade das salas em ondas (uma inteira ou duas de 75%), metade em horda contínua. Aceite: tempo por sala no robô
+  dentro de 25 a 55 s e o respiro visível depois do guardião.
+- **SW-R2 Salas âncora** no capítulo de 14: minichefe na 5, descanso logo depois do guardião (era o S-7), loja fixa, portas com recompensa fixa nas salas 1, 2, 7 e 11;
+  o resto sorteado. Aceite: teste do `RunMap` em 300 descidas.
+- **SW-R3 Zonas mortas** (era o S-6): nascimento dos dois lados nas Fendas e no Santuário.
+
+### Fase 3, a primeira vez e a descida-tutorial (SW-O) — o onboarding
+Donos: `game-director` (roteiro), `gameplay-engineer` (descida fixa em dado), `ui-ux-designer` (objetivo e textos), `environment-artist` (cena de chegada).
+Cerca de 1 a 2 dias.
+- **SW-O1 Chegada** (vídeo "Primeira Vez Antessala"): tela escura, uma estrela de luz de Elun, o selo ou cristais se abrindo e o paladino se formando na luz; uma
+  fala com legenda. **Texto e lore só com o Daniel** (nada inventado; ler `canone.md`).
+- **SW-O2 Objetivo no canto superior esquerdo**: frases curtas que trocam sozinhas ("Explore a área", "Encontre um caminho", "Vença a sala", "Escolha uma Bênção").
+- **SW-O3 Antessala** sem inimigos: andar, um obstáculo para esquivar, um quebrável, a primeira porta.
+- **SW-O4 Primeira descida fixa em dado**: inimigos apresentados um tipo por vez (esqueleto sozinho, dupla, atirador, depois mistura), primeira Bênção cedo com 3
+  opções, minichefe na sala 5, chefe curto no fim; não conta como vitória plena; ao voltar ao Santuário destrava o primeiro passo da meta.
+- **SW-O5 Destravar aos poucos**: no SWORN a ultimate só depois de 6 partidas e o companheiro depois de 4. Aqui: Videira, Forja, ultimates e Juramentos aparecem por
+  marco (uma estação nova no Santuário por marco), com a Coragem das crianças mantida.
+Aceite: uma pessoa que nunca jogou chega à primeira Bênção em menos de 2 minutos sem ler nada fora da tela.
+
+### Fase 4, tela de Bênção nova (SW-B) (imagem "layout de bênção" e vídeo)
+Donos: `ui-ux-designer` (tela), `balance-designer` (sorteio), `art-director` (retratos dos anjos, pedido de arte ao ChatGPT pelo Daniel). Cerca de 1 dia, mais a arte.
+- **SW-B1 Layout**: tela inteira tingida na cor do anjo, retrato do anjo à esquerda, nome e uma frase em cima; 3 cartões com ícone redondo, nome, raridade, texto com
+  palavras-chave coloridas e o glifo do botão, e uma linha de número ("Dano: 25"); caixa de explicação ao passar sobre a palavra-chave; marca "Novo!"; coluna dos 6
+  botões à direita mostrando o que cada um já tem; os cartões se desfazem ao escolher.
+- **SW-B2 Sorteio**: anjo que você já tem pesa 3 contra 1 de um novo; dupla só com 3 Bênçãos ou mais, chance subindo até 50%; raridades testadas contra as do SWORN
+  (79,5 / 14 / 4,5 / 1,5 / 0,5%; nosso: raro 10%, épico 5%, lendário 1%); cada raridade soma o mesmo passo (no SWORN +5 pontos).
+- **SW-B3 Compêndio com pré-requisitos** (a crítica que o SWORN recebe; fazemos melhor).
+
+### Fase 5, Dons e Videira como constelações (SW-M) (imagens "pontos de melhorias" e vídeo "Escolhendo dons")
+Donos: `art-director` (figuras), `ui-ux-designer` (telas), `gameplay-engineer` (regras). Cerca de 1 a 2 dias, mais a arte.
+- **SW-M1 Mapa da meta**: fundo escuro de céu; cada tema é uma figura de Eterra (sugestão: o leão, a espada, o cálice, o selo, a videira); escolher uma aproxima a câmera;
+  cada figura cresce do centro para fora (a tela radial de hoje vira a figura do herói).
+- **SW-M2 Dica do nó**: custo e quanto se tem; valor agora e o próximo ("+3 → +4"); "abra o anterior primeiro".
+- **SW-M3 HUD dos recursos** no canto superior direito, em todas as telas de meta, cada recurso com seu ícone.
+
+### Continua aberto da rodada 2026-11-25 (abaixo)
+M-1 sonda e matriz de cadência (entra na fase 1), M-2 leitura dos inimigos (entra no SW-C4), (B) armadura no Meshy, raiz e planta puxando a horda, retrato do HUD,
+e o (C) inteiro. S-6 e S-7 viraram SW-R3 e SW-R2.
+
+### Decisões que são do Daniel
+1. Ordem das fases (recomendo 1, 2, 3, 4, 5; a 4 pode ir junto da 3 se a arte dos anjos chegar antes).
+2. Esquiva cortando o giro (SW-C1 desfaz o G-2): recomendo sim, como no SWORN.
+3. Fala e cena da chegada (SW-O1): eu escrevo uma proposta e ele aprova.
+4. Figuras das constelações (SW-M1) e se os Dons viram uma delas.
+5. Retratos dos anjos para a tela de Bênção (pedido de arte ao ChatGPT, como os medalhões).
+6. A descida-tutorial conta como vitória? (recomendo não, como no SWORN).
+
+
 ## Rodada de backlog 2026-11-25
 Game-director, commit lido `a5b1a55` (árvore limpa, só `docs/backlog_proposals/qa_2026-11-25.md` sem commit). Fontes: `docs/backlog_proposals/*_2026-11-25.md`
 (AD2 arte, CF2 combate, RD2 salas, UX2 interface, QA2), o que ficou aberto dos `*_2026-11-24.md` e da rodada de 2026-11-24 noite (abaixo). O detalhe e o aceite
