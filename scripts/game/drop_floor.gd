@@ -65,6 +65,7 @@ func step(dt: float) -> void:
 	for r: Rect2 in did.armed:
 		var z := game.ground.add_hazard(r, def.warn, def.hero_damage, def.enemy_damage, true, Ground.ROCKS_SOURCE)
 		GroundLook.put(z.mat, &"tile_m", r.size.x)
+		GroundLook.put(z.mat, &"drop", 1.0)
 		zones[r] = z
 		Audio.play(CombatSounds.EVENTS[&"rocks_arm"])
 		var c := r.get_center()

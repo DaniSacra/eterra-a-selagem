@@ -105,6 +105,10 @@ uniform float tile_m = 0.0;
 // 0: 35% of the light); arming, the fill reaches from the frame to the middle (progress of the way in, a bright front
 // where it has got to), never a circle (D-29).
 uniform float plate = 0.0;
+// The falling stone's square (RP-20, DropFloor; style 3, lines only): drop > 0 draws the band as one square warning like the
+// others' (a live rim all round, the middle clear at first), the fill rising from the rim inwards as a gradient with the
+// wind-up (the pass is additive: no shadow here).
+uniform float drop = 0.0;
 uniform float crack_m = 0.06;
 // The slab's warning red, only as a rim plate_red_m wide on its edge (plate_red 1: the last bang_lead of the arming, the strike).
 uniform float plate_red = 0.0;
@@ -311,6 +315,16 @@ void fragment() {
 			float level = mix(fill_early, fill_max, smoothstep(1.0 - fill_late, 1.0, progress));
 			a = max(frame, crack) * (0.35 + 0.65 * progress) + swept * level + front * 0.5;
 			extra += vec3(1.0, 0.18, 0.12) * (1.0 - smoothstep(plate_red_m * 0.6, plate_red_m, to_edge)) * plate_red * 0.9;
+		} else if (style == 3 && drop > 0.0) {
+			vec2 p = vec2(uv.x * size_m, (along - 0.5) * length_m);
+			float half_l = length_m * 0.5;
+			float to_edge = min(size_m - abs(p.x), half_l - abs(p.y));
+			float depth = clamp(to_edge / max(min(size_m, half_l), 0.001), 0.0, 1.0);
+			float rim = smoothstep(rim_m, rim_m * 0.3, to_edge);
+			float pulse = 0.85 + 0.15 * sin(TIME * (6.0 + 10.0 * progress));
+			float rise = clamp(progress * 1.5 - depth * 0.8 + 0.1, 0.0, 1.0);
+			float body = rise * rise * (3.0 - 2.0 * rise) * mix(fill_early, fill_max, progress) * 1.3;
+			a = rim * (0.45 + 0.55 * progress) * pulse + body;
 		} else if (style == 3) {
 			float along_m = along * length_m;
 			float cell = tile_m > 0.0 ? tile_m : length_m;

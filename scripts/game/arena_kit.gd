@@ -1210,10 +1210,11 @@ func abyss_glow(foot: Vector3, size: Vector2, yaw: float, energy := ABYSS_GLOW_E
 ## decks between some, a cave's roof on top if `roof` is set (its height, how much lower to the west, and where
 ## along the card it starts to drop and is lowest). mist: the
 ## colour they fade into (haze: the share of it in the stone; sink: the heights where the feet start to sink and are gone).
+## soften: 0 to 1, melts the tops into the mist (no hard contour).
 ## patches: only on the backdrop (the farthest card, which also paints the mist where no stone stands): two lighter
 ## patches of mist (x = m from the card's middle, y = height, z and w = radii).
 func ruin_card(center: Vector3, size: Vector2, yaw: float, mist: Color, haze: float, column: float, seed_: float, tops: Vector2,
-		sink: Vector2, roof := Vector4.ZERO, patches: Array[Vector4] = []) -> void:
+		sink: Vector2, roof := Vector4.ZERO, patches: Array[Vector4] = [], soften := 0.0) -> void:
 	var card := MeshInstance3D.new()
 	var q := QuadMesh.new()
 	q.size = size
@@ -1232,6 +1233,7 @@ func ruin_card(center: Vector3, size: Vector2, yaw: float, mist: Color, haze: fl
 	m.set_shader_parameter(&"roof_fall", Vector2(roof.z, roof.w))
 	m.set_shader_parameter(&"half_width", size.x * 0.5)
 	m.set_shader_parameter(&"course", RUIN_COURSE)
+	m.set_shader_parameter(&"soften", soften)
 	if patches.size() == 2:
 		m.set_shader_parameter(&"backdrop", 1.0)
 		m.set_shader_parameter(&"patch_a", patches[0])

@@ -64,7 +64,9 @@ const BANK_Y := Vector2(-4.0, -1.6)
 const BANK_DRIFT := Vector2(0.015, 0.03)
 ## The far: ruins in the haze to the north and west (their towers and pylons are the cards' own).
 const RUIN_DIST: Array[float] = [70.0, 95.0]
-const RUIN_HAZE: Array[float] = [0.35, 0.6]
+const RUIN_HAZE: Array[float] = [0.55, 0.78]
+## How much the ruins' tops melt into the mist.
+const RUIN_SOFTEN := 0.8
 const RUIN_SIZE := Vector2(320.0, 110.0)
 const RUIN_TOP := 20.0
 const RUIN_STONE := Color(0.035, 0.045, 0.07)
@@ -432,7 +434,7 @@ func _far() -> void:
 	var ahead := Vector3(-sin(yaw), 0, -cos(yaw))
 	for k in RUIN_DIST.size():
 		var at := Vector3(eye.x, RUIN_TOP - RUIN_SIZE.y * 0.5, eye.z) + ahead * RUIN_DIST[k]
-		kit.ruin_card(at, RUIN_SIZE, yaw, MIST, RUIN_HAZE[k], 8.0 - k * 2.0, 3.0 + k * 13.0, Vector2(-4.0, 6.0), Vector2(-12.0, -28.0))
+		kit.ruin_card(at, RUIN_SIZE, yaw, MIST, RUIN_HAZE[k], 8.0 - k * 2.0, 3.0 + k * 13.0, Vector2(-4.0, 6.0), Vector2(-12.0, -28.0), Vector4.ZERO, [], RUIN_SOFTEN)
 		var card := get_child(get_child_count() - 1) as MeshInstance3D
 		var cm := card.material_override as ShaderMaterial
 		cm.set_shader_parameter(&"stone_color", RUIN_STONE)

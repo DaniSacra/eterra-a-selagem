@@ -140,6 +140,7 @@ static func dress(node: MeshInstance3D, style: Style, shape: int, color: Color, 
 	put(m, &"color", color)
 	put(m, &"tile_m", 0.0)
 	put(m, &"plate", 0.0)
+	put(m, &"drop", 0.0)
 	put(m, &"plate_red", 0.0)
 	put(m, &"aim_px", 0.0)
 	put(m, &"fill_early", FILL_EARLY)
