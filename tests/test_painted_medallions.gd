@@ -18,7 +18,7 @@ func test_every_blessing_has_its_painted_medallion() -> void:
 		var b: Boon = load("res://data/boons/" + f)
 		assert_not_null(BoonArt.medallion(b.id), "assets/ui/boons/%s.png" % b.id)
 		n += 1
-	assert_eq(n, 77)
+	assert_eq(n, 81)
 
 
 func test_the_paintings_import_with_mipmaps() -> void:

@@ -695,14 +695,21 @@ func _boons() -> void:
 		"gap": [0.0], "status": &"burn", "status_power": [6, 8, 10]}), S.ULT)
 	_boon(76, &"ultimo_geada", F.GEADA, 5, [], _skill(K.METEOR, {"trigger": T.ULT, "damage": [60, 90, 130], "radius": [4.0, 4.5, 5.0],
 		"gap": [0.0], "status": &"freeze", "status_power": [2.0, 2.2, 2.5]}), S.ULT)
+	# Lote R9 (bencaos_por_botao.md 2.1): the four cells the Warrior's table left empty, only stats and triggers that exist.
+	_boon(77, &"ultimo_radiante", F.LUZ, 8, [_mod(&"damage_pct", 0.3, [0.15, 0.15], &"ultimate"), _fixed(&"ult_charge_pct", 0.15, [0.08, 0.08])], null, S.ULT)
+	_boon(78, &"passo_claro", F.LUZ, 10, [], _skill(K.NOVA, {"trigger": T.DODGE, "damage": [14, 20, 28], "cooldown": [1.0], "radius": [3.0, 3.4, 3.8]}), S.DASH)
+	_boon(79, &"investida_firme", F.VIGILIA, 11, [], _skill(K.CONSECRATE, {"trigger": T.RUSH, "damage": [6, 9, 12], "radius": [2.5, 2.8, 3.1],
+		"duration": [3.0], "gap": [3.0], "status": &"slow", "status_power": [3.0]}), S.RUSH)
+	_boon(80, &"ultimo_firme", F.VIGILIA, 11, [], _skill(K.CONSECRATE, {"trigger": T.ULT, "damage": [10, 15, 22], "radius": [3.5, 4.0, 4.5],
+		"duration": [4.0], "gap": [0.0], "status": &"slow", "status_power": [4.0]}), S.ULT)
 	# The Elos (E3-02): one gift of each family's list. Burn and frost come from any gift of the flame or the frost; the
 	# light that hits on its own (the fan, the scourge) is what aurora and chama_viva change; bastiao bursts the
 	# Vigília's shield; rastro and passo_frio ride the dodge of any Vigília gift.
 	var chama := [&"brasas", &"redemoinho", &"lamina_ardente", &"golpe_brasa", &"pesado_brasa", &"circulo_brasa", &"passo_brasa", &"omega_brasa", &"chuva_brasas", &"ultimo_brasa"]
 	var geada := [&"toque_geada", &"estilhaco", &"peso_inverno", &"golpe_geada", &"circulo_geada", &"passo_geada", &"geada_final", &"floco_errante", &"omega_geada", &"ultimo_geada"]
 	var luz_hits := [&"onda_maior", &"flagelo"]
-	var luz := [&"consolo", &"onda_maior", &"flagelo", &"golpe_radiante", &"pesado_radiante", &"circulo_radiante", &"passo_radiante", &"final_radiante", &"onda_clara"]
-	var vigilia := [&"passos", &"escudo", &"firmeza", &"golpe_firme", &"pesado_firme", &"circulo_firme", &"vigia_firme", &"vigilia_longa", &"guarda_atenta"]
+	var luz := [&"consolo", &"onda_maior", &"flagelo", &"golpe_radiante", &"pesado_radiante", &"circulo_radiante", &"passo_radiante", &"final_radiante", &"onda_clara", &"ultimo_radiante", &"passo_claro"]
+	var vigilia := [&"passos", &"escudo", &"firmeza", &"golpe_firme", &"pesado_firme", &"circulo_firme", &"vigia_firme", &"vigilia_longa", &"guarda_atenta", &"investida_firme", &"ultimo_firme"]
 	_elo(12, &"vapor", 12, [_mod(&"steam_time", 2)], [chama, geada])
 	_elo(13, &"aurora", 13, [_mod(&"freeze_time", 0.8, [], &"luz")], [luz_hits, geada])
 	_elo(14, &"chama_viva", 14, [_mod(&"burn_dps", 5, [], &"luz")], [chama, [&"flagelo", &"onda_maior"]])
@@ -717,15 +724,15 @@ func _boons() -> void:
 	_boon(22, &"pesado_brasa", F.CHAMA, 0, [], _skill(K.CONSECRATE, {"trigger": T.SPECIAL, "damage": [6, 9, 12], "radius": [2.5],
 		"duration": [3.0], "gap": [3.0], "status": &"burn", "status_power": [4, 5, 6]}), S.SPECIAL)
 	_boon(23, &"pesado_radiante", F.LUZ, 7, [_mod(&"damage_pct", 0.3, [0.15, 0.15], &"heavy")], null, S.SPECIAL)
-	_boon(24, &"pesado_firme", F.VIGILIA, 15, [_fixed(&"reach_pct", 0.15, [0.07, 0.08], &"heavy"), _mod(&"damage_pct", 0.1, [0.05, 0.05], &"heavy")], null, S.SPECIAL)
+	_boon(24, &"pesado_firme", F.VIGILIA, 15, [_fixed(&"wave_size_pct", 0.15, [0.07, 0.08], &"heavy"), _mod(&"damage_pct", 0.1, [0.05, 0.05], &"heavy")], null, S.SPECIAL)  # (the wave's size: the Warrior's wave takes its reach from the blade)
 	_boon(25, &"circulo_brasa", F.CHAMA, 1, [_mod(&"detonate_dmg", 14, [6, 6], &"cast")], null, S.CAST)
 	_boon(26, &"circulo_geada", F.GEADA, 4, [_mod(&"freeze_time", 1.0, [0.4, 0.4], &"cast"), _fixed(&"reach_pct", 0.2, [0.1, 0.1], &"cast")], null, S.CAST)
 	_boon(27, &"circulo_radiante", F.LUZ, 6, [_mod(&"damage_pct", 0.3, [0.15, 0.15], &"cast")], null, S.CAST)
-	_boon(28, &"circulo_firme", F.VIGILIA, 9, [_fixed(&"cast_size_pct", 0.25, [0.15, 0.15]), _fixed(&"reach_pct", 0.25, [0.15, 0.15], &"cast")], null, S.CAST)
+	_boon(28, &"circulo_firme", F.VIGILIA, 9, [_fixed(&"reach_pct", 0.25, [0.15, 0.15], &"cast"), _mod(&"damage_pct", 0.1, [0.05, 0.05], &"cast")], null, S.CAST)  # (the Brado reads reach and damage; cast_size_pct only served the old circle)
 	_boon(29, &"passo_brasa", F.CHAMA, 16, [_mod(&"dodge_ember_dps", 6, [3, 3])], null, S.DASH)
 	_boon(30, &"passo_geada", F.GEADA, 17, [], _skill(K.FAN, {"trigger": T.RUSH, "damage": [14, 20, 28], "count": [3, 5, 7], "radius": [10],
 		"gap": [5.0], "status": &"freeze", "status_power": [0.6, 0.8, 1.0]}), S.RUSH)
-	_boon(31, &"passo_radiante", F.LUZ, 10, [_mod(&"damage_pct", 0.4, [0.2, 0.2], &"dash"), _fixed(&"dome_heal", 1.0, [0.5, 0.5], &"dash")], null, S.RUSH)  # (dome_heal: the Maga's Suspensao heals for who it held)
+	_boon(31, &"passo_radiante", F.LUZ, 10, [_mod(&"damage_pct", 0.4, [0.2, 0.2], &"dash"), _fixed(&"move_speed_pct", 0.05, [0.03, 0.03])], null, S.RUSH)  # (move_speed_pct: the dodge of the Space runs faster)
 	# Fatia 2 (sistemas.md 1.6, 3.6): 2 to 3 Blessings more a family, all on their own (no action taken), so an angel
 	# meets a hand with three offers more often; Geada and Vigília (six each) first. Only stats the game knows.
 	_boon(32, &"geada_final", F.GEADA, 3, [_mod(&"freeze_time", 0.6, [0.3, 0.3], &"finisher")])

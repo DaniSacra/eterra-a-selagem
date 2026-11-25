@@ -132,7 +132,7 @@ func test_gifts_change_moves_of_the_tree_not_new_attacks() -> void:
 		for tag in node.tags:
 			tags[tag] = true
 	# skills carry "skill" and their family's tag (Boon.FAMILY_TAG)
-	for extra: StringName in [&"mark", &"ember", &"skill"] + Boon.FAMILY_TAG + Combat.CAST_TAGS:
+	for extra: StringName in [&"mark", &"ember", &"skill", &"ultimate"] + Boon.FAMILY_TAG + Combat.CAST_TAGS:
 		tags[extra] = true
 	for b in state.catalog:
 		for m in b.mods:
@@ -313,9 +313,9 @@ func test_grow_offers_only_owned_gifts_that_can_grow() -> void:
 
 
 ## BO-2: the attack, the special and the Brado have a gift of every family; the Investida, the dodge and the ultimate the
-## families done so far (Sarael and Nivael are complete, the others come in C6).
+## families done so far (R9 gave Luz and Vigília their Investida, dodge and ultimate cells).
 func test_each_action_has_a_gift_of_its_families() -> void:
-	var want := {Boon.Slot.ATTACK: 7, Boon.Slot.SPECIAL: 7, Boon.Slot.CAST: 7, Boon.Slot.DASH: 3, Boon.Slot.RUSH: 6, Boon.Slot.ULT: 2}
+	var want := {Boon.Slot.ATTACK: 7, Boon.Slot.SPECIAL: 7, Boon.Slot.CAST: 7, Boon.Slot.DASH: 4, Boon.Slot.RUSH: 7, Boon.Slot.ULT: 4}
 	for slot: Boon.Slot in want:
 		var families := {}
 		for b in state.catalog:

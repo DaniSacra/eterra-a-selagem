@@ -34,14 +34,16 @@ muda nada), **vazio** (a família não tem Bênção desse slot).
 
 ## 2. Guerreiro: 4 famílias x 5 botões e a travessia
 
+**Estado após o Lote R9 (2026-11-24): a tabela abaixo já inclui as 4 Bênçãos novas e as correções de `pesado_firme`, `circulo_firme` e `passo_radiante`; a leitura "4 células vazias" do parágrafo seguinte e a seção 2.1 são o histórico da proposta (nomes ainda provisórios).** Teste: `tests/test_boon_warrior_reads.gd`.
+
 Fúria saiu (nenhuma Bênção nem Dom lê `fury_*`; conferido). O encaixe que ela dava às famílias não existe mais, e o que segura o herói agora são as tags acima.
 
 | Família | Esquerdo | Direito | Q (Brado) | E (Investida) | Shift (Corte do Juízo) | Espaço |
 |---|---|---|---|---|---|---|
 | **Chama** | faz: `golpe_brasa` (light:burn_dps; vale na Investida, na Lança e no Supremo, que levam light) | faz: `pesado_brasa` (chão em brasa quando a onda sai) | parcial: `circulo_brasa` só detona queimadura de Bênção, então pede `golpe_brasa` antes | faz: `redemoinho` (orbes queimam depois da Investida) | faz: `ultimo_brasa` | faz: `passo_brasa` (rastro de brasa) |
 | **Geada** | parcial: `golpe_geada` (spin:freeze_time) só no giro, o 3º golpe; é de propósito, o giro é o fecho | faz: `toque_geada` (a onda tem a tag `wave`, então estilhaça o que está congelado) | faz: `circulo_geada` (congela; o alcance vale) | faz: `passo_geada` | faz: `ultimo_geada` | faz: `floco_errante` |
-| **Luz** | faz: `golpe_radiante` | faz: `pesado_radiante` | faz: `circulo_radiante` (dano do Brado) | parcial: `passo_radiante` (dano sim; a cura do domo, `dome_heal`, só a Maga lê) | **vazio** | **vazio** |
-| **Vigília** | faz: `golpe_firme` (alcance e dano do golpe) | parcial: `pesado_firme` (dano sim; o alcance `reach_pct` não vale, porque o alcance da onda do Guerreiro é o da lâmina: `Combat.throw_wave`) | parcial: `circulo_firme` (alcance do Brado sim; `cast_size_pct` só serve ao círculo antigo e à Voragem, nada no Brado) | **vazio** | **vazio** | faz: `passos` (carga de esquiva e velocidade) |
+| **Luz** | faz: `golpe_radiante` | faz: `pesado_radiante` | faz: `circulo_radiante` (dano do Brado) | faz: `passo_radiante` (dano da Investida e velocidade; a cura do domo saiu, R9) | faz: `ultimo_radiante` (R9: dano e carga do Supremo) | faz: `passo_claro` (R9: anel de luz na esquiva) |
+| **Vigília** | faz: `golpe_firme` (alcance e dano do golpe) | faz: `pesado_firme` (R9: `wave_size_pct` da onda e dano) | faz: `circulo_firme` (R9: alcance e dano do Brado) | faz: `investida_firme` (R9: chão firme que prende) | faz: `ultimo_firme` (R9: chão firme ao soltar o Supremo) | faz: `passos` (carga de esquiva e velocidade) |
 
 **Resultado: 4 células vazias** (Luz no Shift e no Espaço, Vigília no E e no Shift) e 3 parciais por estatística que o Guerreiro não lê. Toda família tem efeito em algum botão,
 mas Luz e Vigília ficam sem Bênção em 2 dos 6 lugares, e é aí que o jogador do Guerreiro com Q e E "sem retorno" sente falta (uma das queixas de `kits_review_2026-11-24.md`).
