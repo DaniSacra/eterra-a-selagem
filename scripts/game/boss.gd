@@ -33,6 +33,9 @@ extends RefCounted
 
 signal defeated
 signal phase_changed(phase: int)
+## SW-O4 (the first descent): his life of the last phase (last_phase) is gone and he does not go on to the next one: he
+## kneels, invulnerable, and the Game plays the short ending. Not a victory: nothing of `defeated`.
+signal tutorial_end
 ## The moments of the fight (an attack chosen or landing, the ritual, the fall): captures wait on them
 ## (--shot-on=boss:<name>).
 signal moment(name: StringName)
@@ -43,7 +46,7 @@ signal cue(name: StringName, at: Vector2, dir: Vector2, size: float, seconds: fl
 ## each of those dead falling and when it ends (left 0). Also readable at any time: ritual_left(), ritual_total().
 signal ritual_changed(left: int, total: int)
 
-enum State { ENTER, CHASE, SCYTHE, REAP, BLADES, STORM, ERUPTIONS, CURSE, SUMMON, DASH_WARN, DASH, ROAR, TO_CENTER, RITUAL, STUNNED, DYING, RECOVER, RUPTURE, BARRAGE }
+enum State { ENTER, CHASE, SCYTHE, REAP, BLADES, STORM, ERUPTIONS, CURSE, SUMMON, DASH_WARN, DASH, ROAR, TO_CENTER, RITUAL, STUNNED, DYING, RECOVER, RUPTURE, BARRAGE, TUTORIAL_END }
 
 ## T5b P1-4 (docs/qa/t5b_boss_fight.md): his body turns at most BODY_TURN degrees a second toward where he faces (e.dir,
 ## which his attacks still set at once: the warnings and the blows do not move); it snapped 100 to 137 degrees in one
@@ -159,6 +162,8 @@ const VICTORY_SEAL := 2.4
 ## As he falls his glow goes out and his body darkens to stone (ART_REVIEW B1 of cycle 9: never a white body at his
 ## fall), quickly at first (eased out over VICTORY_DIM_TIME game seconds, so it shows inside the fall's slow motion):
 ## his colour times VICTORY_DIM, VICTORY_GREY of the way to grey, his painted glow, edge and pale crest to nothing.
+## The default of hp_scale for --boss-short (the first descent's data says the same, 0.6).
+const SHORT_HP_SCALE := 0.6
 const VICTORY_DIM := 0.55
 const VICTORY_GREY := 0.5
 const VICTORY_DIM_TIME := 0.3
@@ -170,6 +175,11 @@ var def: BossDef
 var e: Enemy
 var director: BossDirector
 var phase := 1
+## SW-O4: the phase where the fight ends instead of passing to the next (0: he goes through all of them, the normal
+## fight). The first descent sets 1 (FirstDescentDef.boss_last_phase); --boss-short does it for tests.
+var last_phase := 0
+## SW-O4: the share of his life kept when last_phase is set (FirstDescentDef.boss_hp_scale); phase 1's span shrinks with it.
+var hp_scale := 1.0
 var state := State.ENTER
 ## Where the fight ends (the ending plays here).
 var center := Vector2.ZERO
@@ -281,6 +291,11 @@ func setup(g: Game, enemy_def: EnemyDef) -> void:
 	var at := g.arena.boss_spawn if g.arena.round_floor() else g.arena.door_pos + Vector2(0, Arena.STAIRS_DEPTH + enemy_def.radius)
 	e = g.horde.spawn(enemy_def, at, false)
 	e.dir = Vector2.DOWN
+	if Dev.has("boss-short"):  # (dev: the first descent's Morvath without playing it)
+		last_phase = 1
+		hp_scale = SHORT_HP_SCALE
+	if last_phase > 0:
+		e.max_hp *= hp_scale
 	e.hp = e.max_hp * Dev.num("boss-hp", 1.0)
 	# --boss-hp starts him further down (dev): the phase of that life, without the ones before
 	phase = BossRules.phase_for(e.hp / e.max_hp, def.thresholds)
@@ -344,6 +359,10 @@ func _advance(dt: float) -> void:
 		return
 	if e == null or not e.alive:
 		return
+	if state == State.TUTORIAL_END:
+		_anim(&"stunned")  # (on his knees, still: the Game's short ending runs over him)
+		e.stun_t = 0.1
+		return
 	# how deep he stood in the paladin when the frame began, as the crowd measured it (BUG-104: measured again here,
 	# after the crowd had already eased him out once, he melted out twice a frame: 6 m/s as the paladin dashed through)
 	var was := e.was_in_target
@@ -367,7 +386,10 @@ func _advance(dt: float) -> void:
 	if state != State.ENTER and state != State.ROAR and state != State.TO_CENTER and state != State.RITUAL:
 		var want := BossRules.next_phase(phase, e.hp / e.max_hp, def.thresholds)
 		if want > phase:
-			_change_phase(want)
+			if last_phase > 0 and phase >= last_phase:
+				_tutorial_end()
+			else:
+				_change_phase(want)
 			return
 	if phase >= def.final_light_phase:
 		_step_final(dt)
@@ -1496,6 +1518,22 @@ func _change_phase(next: int) -> void:
 	moment.emit(&"phase")
 
 
+## SW-O4: the life of the last phase is gone (hp is held at its floor): whatever he was doing stops, he kneels
+## invulnerable and the Game plays the short ending (tutorial_end). Not counted as a victory or a death.
+func _tutorial_end() -> void:
+	_cancel()
+	_go(State.TUTORIAL_END)
+	e.invulnerable = true
+	e.hp = maxf(e.hp, e.hp_floor)
+	stats.tutorial_end = true
+	stats.phase_time = BossRules.phase_times(stats.phase_at, _clock)
+	game.fx.shake(3.0)
+	game.fx.ring(e.pos, 6.0, SPECTRAL, 0.6, 0.15, true)
+	cue.emit(&"tutorial_end", e.pos, Vector2.ZERO, 0.0, 0.0)
+	moment.emit(&"tutorial_end")
+	tutorial_end.emit()
+
+
 ## The last phase: the portal behind him burns with his fire, unsteady (a slow violet pulse through his spectral
 ## green), and he is more corrupted (his edge in the corrupted green, burning brighter).
 func _corrupt() -> void:
@@ -1538,7 +1576,7 @@ func _cancel() -> void:
 
 ## His armor broke: he staggers, and stands up armored again.
 func break_armor() -> void:
-	if state == State.STUNNED or state == State.DYING or state == State.RITUAL:
+	if state == State.STUNNED or state == State.DYING or state == State.RITUAL or state == State.TUTORIAL_END:
 		return
 	_stun(def.stagger_time)
 
@@ -1551,7 +1589,7 @@ func _on_struck(target: Enemy, tags: Array[StringName], _damage: float) -> void:
 	if state == State.RECOVER and not _punished:
 		_punished = true
 		stats.punished = int(stats.punished) + 1
-	if def.posture > 0.0 or phase < def.stagger_from_phase or state in [State.STUNNED, State.ROAR, State.RITUAL, State.TO_CENTER, State.DYING]:
+	if def.posture > 0.0 or phase < def.stagger_from_phase or state in [State.STUNNED, State.ROAR, State.RITUAL, State.TO_CENTER, State.DYING, State.TUTORIAL_END]:
 		return
 	if not tags.has(&"heavy") or tags.has(&"mark"):
 		return

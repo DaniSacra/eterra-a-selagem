@@ -79,8 +79,10 @@ func test_the_station_opens_where_the_forjadors_choice_did() -> void:
 	var d := SaveData.defaults()
 	assert_false(HubGate.is_open(d, HubPlan.VINE), "closed on a new save")
 	SaveData.hero(d, SaveData.FIRST_HERO).firsts = {"guardian": 1}
-	assert_true(HubGate.is_open(d, HubPlan.VINE), "the first guardian, as the Preparo's did")
-	assert_eq(HubGate.is_open(d, HubPlan.VINE), Vine.open(d))
+	assert_false(HubGate.is_open(d, HubPlan.VINE), "SW-O5: no longer the first guardian")
+	d.runs = 4
+	HubGate.mark_presented(d, [HubPlan.TREE, HubPlan.SMITH, HubPlan.BOOK])  # (one new station per visit)
+	assert_true(HubGate.is_open(d, HubPlan.VINE), "the fourth descent (Milestones)")
 	var e := SaveData.defaults()
 	e.vine.bought = ["vida_1"]
 	assert_true(HubGate.is_open(e, HubPlan.VINE), "anything bought keeps it open")

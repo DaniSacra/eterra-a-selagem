@@ -9,7 +9,7 @@ extends RefCounted
 ## Nothing for the robot, a smoke run or --nosave; --guide=<id>|all forces them (captures; not written).
 
 const DIR := "res://data/hub_guide/"
-const CONDITIONS: Array[StringName] = [&"open", &"always", &"wins", &"account", &"maga"]
+const CONDITIONS: Array[StringName] = [&"open", &"always", &"wins", &"account", &"maga", &"ult"]
 
 static var _catalog: Array[HubGuideDef] = []
 
@@ -44,7 +44,9 @@ static func due(data: Dictionary, def: HubGuideDef) -> bool:
 		&"wins":
 			return Juramentos.unlocked(data)
 		&"account":
-			return Vine.open(data)
+			return HubGate.is_open(data, HubPlan.VINE)
+		&"ult":
+			return HubGate.is_open(data, Milestones.ULT)
 		&"maga":
 			return SaveData.hero_open(data, "maga")
 	return false

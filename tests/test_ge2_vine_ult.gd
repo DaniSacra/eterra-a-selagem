@@ -62,6 +62,7 @@ func test_the_ultimate_of_a_loadout_is_fixed() -> void:
 	var block := SaveData.hero(data, "warrior")
 	block.mastery_xp = HeroDef.warrior().mastery.total_to(12)
 	block.ultimate = "vortex"
+	data.runs = 6  # (SW-O5: the Ultimate's milestone)
 	assert_eq(HeroLoadout.new(HeroDef.warrior(), data).ultimate(), &"cleave", "a saved choice is ignored")
 	block.mastery_xp = 0
 	assert_eq(HeroLoadout.new(HeroDef.warrior(), data).ultimate(), &"")

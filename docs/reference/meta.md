@@ -307,3 +307,14 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 ## Coragem e cura do Supremo (2026-11-24)
 - Coragem (`scripts/core/courage.gd`, BL-02): cada morte na sala 5 ou antes dá à descida seguinte +3 de vida máxima e 1 romã (a primeira Bênção pega cresce um nível), até 3 pilhas; zera ao passar da sala 5, ao vencer ou com Juramento. Salvo por herói em `heroes.<id>.courage` (sem migração); nunca no robô nem em `--nosave`. Linha no início: `courage_start`.
 - O Supremo cura `Game.ULT_HEAL` (10%) da vida máxima ao começar (`player.ult_started` em `game.gd`).
+
+## Ultimate e Morvath curto (SW-O4/SW-O5, 2026-11-25)
+- **Ultimate por marco**: `HeroLoadout.ultimate()` devolve `&""` até `Milestones.ult_open(data)` (6 descidas e Maestria 2 no `runs`/`mastery_xp`
+  do Guerreiro; ou apresentada, `hub.presented` com `ult`). A ultimate em si segue abrindo na Maestria do `UltDef.mastery_level` (3 no dado
+  hoje: a tabela do documento diz 2, o dado manda). O `Game` (3A1) e o 5º losango do `Hud` (3A3) devem fazer a mesma pergunta onde chamam
+  `ult_for_weapon`.
+- **Morvath curto** (`Boss`): `last_phase` (0 = todas as fases) e `hp_scale` (vida mantida, 1,0); com `last_phase > 0` a vida máxima é
+  multiplicada por `hp_scale` e, quando a vida dessa fase acaba (a vida fica no piso dela), em vez de `_change_phase` ele entra em
+  `State.TUTORIAL_END`: invulnerável, de joelhos (anim `stunned`), sem atacar, e emite `tutorial_end` (também `moment`/`cue` `tutorial_end`,
+  `stats.tutorial_end`). Não emite `defeated`; quem ouve (o `Game`) toca o fim curto. Opção só de teste: `--boss-short` (fase 1, escala 0,6).
+  Testes: `tests/test_boss_short.gd`.
