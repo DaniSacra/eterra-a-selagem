@@ -31,6 +31,7 @@ recharge_windup = 0.6400000000000001
 raise_count = 2
 raise_max = 2
 raise_kind = &"archer"
+raise_damage = 0.6
 raise_cd_min = 10.0
 raise_cd_max = 14.0
 raise_first = 4.0

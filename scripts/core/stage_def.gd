@@ -178,6 +178,8 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var trial_cost_base := 10.0
 @export var trial_cost_per_depth := 0.5
 @export var trial_cards := 3
+## BL-03: the slab is not offered while the paladin has less than this share of his life (the Provação costs life).
+@export var trial_min_hp_frac := 0.6
 @export var trial_rarity_chance: Array[float] = [0.4, 0.1, 0.0]
 ## The Altar Esquecido (E5, Altar): a door to it once in a run, within these depths, with this chance a room; what its
 ## two trades ask and give.

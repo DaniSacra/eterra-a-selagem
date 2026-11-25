@@ -427,7 +427,7 @@ func _enemies() -> void:
 		"escort": [&"guard"] as Array[StringName],
 		# Daniel 2026-11-23: it calls two archers at a time to the floor's edge, away from him (3 standing at most, one call every 10 to 14 s),
 		# so he has to go after them; the orbs stay
-		"raise_count": 2, "raise_max": 2, "raise_kind": &"archer", "raise_cd_min": 10.0, "raise_cd_max": 14.0, "raise_first": 4.0,
+		"raise_count": 2, "raise_max": 2, "raise_kind": &"archer", "raise_cd_min": 10.0, "raise_cd_max": 14.0, "raise_first": 4.0, "raise_damage": 0.6,
 		"shot_count": 5, "shot_spread": 84.0, "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER,
 		# C1d (chefes_c1d.md): A2, after a fan it backs 8 m and looses 3 slow orbs that turn after him (once in 12 s); A3 it armors 3 servants (40)
 		"volley_count": 3, "volley_every": 12.0, "volley_back": 8.0, "volley_back_time": 1.5, "volley_windup": 1.0, "volley_speed": 4.0,
@@ -1053,6 +1053,7 @@ func _stage() -> void:
 	st.trial_cost_base = 10.0
 	st.trial_cost_per_depth = 0.5
 	st.trial_cards = 3
+	st.trial_min_hp_frac = 0.6
 	st.trial_rarity_chance = [0.4, 0.1, 0.0] as Array[float]
 	# The Altar Esquecido (ours): a door to it once, 20% a room from the 2nd to the 8th; 10 of the most life for a
 	# pomegranate, or 75 gold (half a Blessing in the shop) for 25 more Magia
@@ -1411,7 +1412,7 @@ func _crypt() -> RoomLayout:
 	l.hazard.warn = TEACH_WARN
 	# A1, RP-12: the oil urns beside the slabs (late)
 	l.hazard.also = _urns(PackedVector2Array(CRYPT_URNS), PackedVector4Array(CRYPT_OIL))
-	l.hazard.also.also = _spikes([Vector2(-4.0, -4.5), Vector2(3.0, 1.6)], 0.4)
+	l.hazard.also.also = _spikes([Vector2(-4.0, -4.5), Vector2(3.0, 1.6)], TEACH_FROM)
 	l.variants[0].hazard = _plates([_rect(-3.4, -0.4, -6.3, -3.3), _rect(1.4, 4.4, -6.3, -3.3)], PLATES_FROM)
 	# RP-16: an arrow slit on the north wall each side of the dividing wall, firing south down its corridor to the row of
 	# the south sarcophagi; the slab on one side arms the slit of the other (the pack lured beyond the wall)
@@ -1419,7 +1420,7 @@ func _crypt() -> RoomLayout:
 		Vector4(SLIT_WEST, -10.4, SLIT_WEST, 2.4)])
 	# AT-H2: the niche's skeleton on the west wall, beside the slabs and the slits (from the 4th room)
 	l.variants[0].hazard.also = _niche()
-	l.variants[0].hazard.also.also = _spikes([Vector2(-4.5, -2.0), Vector2(2.0, -2.0)], 0.4)
+	l.variants[0].hazard.also.also = _spikes([Vector2(-4.5, -2.0), Vector2(2.0, -2.0)], TEACH_FROM)
 	return l
 
 
@@ -1606,7 +1607,9 @@ func _rift() -> RoomLayout:
 	l.hazard = _breath(RIFT_BREATH + [_rect(-10.8, -8.0, -7, -1)], RIFT_BREATH_PUSH + [Vector2(-BREATH_PUSH, 0)])
 	l.variants = [_variant(b, fallen, [_rect(-19.5, -15.5, -12, -7)])]
 	# B (the north bridge fallen): its west stretch along the fallen bridge's brink, away from the second hole
-	l.hazard.also = _sag([_rect(14, 17, -11, -8), _rect(14, 17, 9, 12)], 0.4)
+	# RD-02: the east slabs wake early with the long warning, as the Crypt A's (Fendas A comes in the 2nd to 4th rooms)
+	l.hazard.also = _sag([_rect(14, 19, -11.5, -8.8), _rect(13, 17, 8.2, 12)], TEACH_FROM)
+	l.hazard.also.warn = TEACH_WARN
 	l.variants[0].hazard = _breath(RIFT_BREATH + [_rect(-10.0, -7.2, -13, -7)], RIFT_BREATH_PUSH + [Vector2(-BREATH_PUSH, 0)])
 	# A1, RP-20: stones from the vault over the east platform's fight (north of the columns, off the north door, and the
 	# middle of the platform), beside the breath (which does not hurt)
@@ -1661,6 +1664,9 @@ func _garden() -> RoomLayout:
 	# SR-P1: two wall traps in the east and south fields where the fight goes (from 0.3 of the descent, every 6 s): the
 	# east wall's, firing west along y -7 between the north door and the east door; the south wall's, firing north at x -0.5
 	l.hazard.also = _trap(GARDEN_TRAPS, 0.3, 5.0, 4.0)
+	# RD-02: one slab to learn in the east field (awake from the 2nd room, warning 1.5 s), off the traps' lines and the spawns
+	l.hazard.also.also = _plates([_rect(5.5, 10.5, -2.5, 2.5)], TEACH_FROM)
+	l.hazard.also.also.warn = TEACH_WARN
 	l.obstacles.append_array(_trap_blocks(GARDEN_TRAPS))
 	var b: Array[ArenaObstacle] = [trunk]
 	for pts: Array in [[Vector2(-4.1, -5.7), Vector2(-2.4, -5.8), Vector2(-0.7, -5.7), Vector2(0.9, -5.4)],

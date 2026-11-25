@@ -263,3 +263,12 @@ func _worst_way(map: RunMap, r: RunMap.Room) -> int:
 		var fight := n.kind == RunMap.Kind.COMBAT or n.kind == RunMap.Kind.MINIBOSS
 		low = mini(low, (1 if fight else 0) + _worst_way(map, n))
 	return low
+
+
+func test_slab_not_offered_below_the_life_share() -> void:
+	assert_eq(stage.trial_min_hp_frac, 0.6, "data")
+	assert_true(Trials.healthy(stage, 18.0, 30.0), "exactly 60%")
+	assert_false(Trials.healthy(stage, 17.9, 30.0), "below 60%")
+	assert_true(Trials.healthy(stage, 30.0, 30.0))
+	assert_ne(T.t(&"trial_slab_risk"), "trial_slab_risk", "the card warns of the risk")
+	assert_false(T.t(&"trial_slab_risk").contains("—"), "no em-dash")

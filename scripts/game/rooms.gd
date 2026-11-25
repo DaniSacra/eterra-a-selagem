@@ -1295,7 +1295,8 @@ const TRIAL_COLOR := Color(0.52, 0.36, 0.78)
 ## DV-1: the slab shows where the graph put the "?" (RunMap.Room.trial; its dice were thrown when the map was drawn),
 ## when it still may (Trials.open_at), and the "?" turns into the room it is (RunMap.reveal).
 func _roll_slab() -> void:
-	if not room.trial or map.depth >= stage.rooms or not trials.open_at(stage, map.depth, map.fights_left()):
+	if not room.trial or map.depth >= stage.rooms or not Trials.healthy(stage, game.player.hp, game.player.max_hp) \
+			or not trials.open_at(stage, map.depth, map.fights_left()):
 		return
 	var at: Variant = _free_spot(SLAB_CLEAR)
 	if at == null:
@@ -1385,7 +1386,7 @@ func _slab_marker(at: Vector2, cost: int) -> Node3D:
 	TrialLook.entry_slab(root, at)
 	game.column(at, SLAB_THREAD, SLAB_THREAD_RADIUS, SLAB_THREAD_HEIGHT, SLAB_ARM)
 	var sign := DoorSign.make(T.t(&"room_trial"), T.t(&"trial_cost", {"n": cost}), DoorGlyph.Kind.TRIAL)
-	sign.add_note(T.t(&"trial_slab_offer") + "\n" + T.t(&"trial_slab_refuse"))
+	sign.add_note(T.t(&"trial_slab_offer") + "\n" + T.t(&"trial_slab_risk") + "\n" + T.t(&"trial_slab_refuse"))
 	sign.position = Vector3(at.x, MARK_SIGN_Y, at.y)
 	root.add_child(sign)
 	_slab_sign = sign

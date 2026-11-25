@@ -155,6 +155,8 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## C1e: whom it raises (an EnemyDef id; the knight and the elder raise the soldier) and, for a SUPPORT, the fewest meters from the paladin a body rises.
 @export var raise_kind: StringName = &"skeleton"
 @export var raise_far := 3.0
+## Scale of the damage of whom this one raises (the elder's archers deal less than the common ones: Lote R7); 1 = the same.
+@export var raise_damage := 1.0
 ## PRIEST (the Elder, Daniel 2026-11-23): when raise_cd_max > 0 it calls raise_count of its raise_kind (never more than
 ## raise_max of its own standing) to the floor's edge, away from the paladin, every raise_cd_min to raise_cd_max seconds
 ## (the first after raise_first), instead of raising skeletons round itself every other cast.

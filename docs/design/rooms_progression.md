@@ -1661,3 +1661,15 @@ Quem pagar o Cavaleiro mais caro deve mexer em `HOUSE_FROM`, no tempo entre pedr
   descidas (metade na variante B, dormindo), 3 delas com a laje acordada, uma com 3 golpes sem acertar inimigo, dano ao herói 0.
   O aceite (8 de 12 com golpe em inimigo) não é atingido: a Cripta sai pouco até a sala 4. Próximo passo se importar: lajes de aprender
   na variante B também, ou em outra sala do início.
+
+## Lote R7 (2026-11-24): arqueiros chamados, laje de aprender em mais salas, Provação com vida (BL-01, RD-02, BL-03)
+- Ancião: campo novo `EnemyDef.raise_damage` (escala do dano de quem ele chama; `Enemy.dmg_scale`, lido em `Horde._out`), 0,6 no
+  Ancião (`make_data.gd`); arqueiros comuns intocados (teste em `test_c1d_elder`). R 0,6, 12 sementes `--start=miniboss`:
+  antes (orbes x0,8) 9 de 12, dano 22 do Ancião + 7 de arqueiros; depois 12 de 12 sobrevivem à sala, luta 63 a 102 s (média 85),
+  dano levado 31 em média (arqueiros 7, Ancião 24). O dano abaixo de 16 NÃO foi atingido: vem das orbes do próprio Ancião.
+- Laje de aprender (`TEACH_FROM` 0,15, aviso 1,5 s): Cripta A e B (laje e grade), Fendas A (lajes que cedem, maiores) e Jardim A (uma
+  laje de 5 x 5 m no campo leste). Jardim B não cabe (a sala guarda no máximo 2 PLATES) e uma grade não entra em Fendas e Jardim (uma
+  LINE por sala). R 0,6, 12 sementes, até a sala 4: golpe em inimigo em 6 de 12 descidas (era 3 a 4); aceite de 8 de 12 não
+  atingido; dano ao herói 0 em todas. Próximo passo: laje que arma por tempo no lugar do pisão (o bando não pisa nela sozinho).
+- Provação: `StageDef.trial_min_hp_frac` 0,6; a laje não aparece com vida abaixo de 60% (`Trials.healthy`, antes de `open_at`: o
+  descanso não começa) e o cartão traz a linha `trial_slab_risk`.

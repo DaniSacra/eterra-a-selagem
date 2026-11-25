@@ -248,7 +248,7 @@ var _clock := 0.0
 
 ## What an enemy's blow is worth now: the director's scale, less the Fraqueza while it lasts.
 func _out(e: Enemy) -> float:
-	return DamageCalc.weakened(damage_scale, weak_cut, e.weak_t > 0.0)
+	return DamageCalc.weakened(damage_scale, weak_cut, e.weak_t > 0.0) * e.dmg_scale
 
 
 func _ready() -> void:
@@ -1375,7 +1375,9 @@ func _raise_dead(e: Enemy, n: int, kind: StringName = &"", at_edge := false) -> 
 		edge = edge_spots(n)
 	for k in n:
 		var at: Vector2 = edge[k] if at_edge else raise_spot(e.pos, k)
-		out.append(spawn(skeleton, at, true))
+		var born := spawn(skeleton, at, true)
+		born.dmg_scale = e.def.raise_damage
+		out.append(born)
 		fx.burst(&"shadow", Vector3(at.x, 0.3, at.y))
 	if n > 0:
 		Audio.play(&"summon")

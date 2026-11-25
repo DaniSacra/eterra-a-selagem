@@ -56,7 +56,7 @@ func test_fair_and_whole() -> void:
 		assert_almost_eq(h.hero_damage, 10.0, 0.001, "10 to him")
 		assert_gte(h.warn, 1.2, "never less than the enemies' warning")
 		assert_gte(h.start_delay, 5.0, "calm at the start")
-		assert_gte(h.from_progress, 0.3, "asleep early in the descent")
+		assert_gte(h.from_progress, 0.15, "asleep until the 2nd room (RD-02: the slab to learn wakes at 0.15)")
 		for r in _rects(h):
 			for q in [r.position, r.end, r.position + Vector2(r.size.x, 0), r.position + Vector2(0, r.size.y), r.get_center()]:
 				assert_true(l.floor.covers(q), "%s whole on the floor at %s" % [l.id, q])
