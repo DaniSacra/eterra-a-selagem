@@ -343,3 +343,25 @@ Especificação em `docs/art/combate_c1_leitura.md`; só desenho e som, a simula
 - `Player._make_ult_ring`: segundo anel no chão com o shader `hero_ring` (sem shader novo), 3,1 m, âmbar `(1, 0.72, 0.22)`; pulsa 1,5 s ao encher
   (abre 1,3x e assenta) e respira leve até o uso (`Player.ult_ring_look`, testado em `tests/test_ult_ring.gd`). Som `ult_ready` (sino de duas notas, síntese em `audio.gd`).
 - Tiro 3 da Maga (nó com tags `bolt` e `finisher`): `dart` a 0,62 de tom e recuo do bastão de 4 quadros e 0,1 m contra a mira (`_step_kick`).
+
+## Passe de força nos efeitos do Guerreiro (2026-11-24; o Daniel: "os efeitos estão muito fracos")
+Só visual: nenhum número de jogo mudou; `--smoke=120 --stress=300 --seed=5` dá o mesmo `RESULT` antes e depois (passo 2,91 para 2,96 ms, média 7,20 para 7,26 ms, 143 para 142 fps no CPU sem tela). Nenhum shader novo (reaproveita `ring`, `chip`, `wisp`, `slash`, `crescent`, `contact`), então o aquecimento (`warmup.gd`) não muda; a luz pontual não é material.
+| Efeito (constante em `scripts/game/fx.gd`) | Antes | Depois |
+|---|---|---|
+| Corte 1 a 3 e giro: início da malha de luz e de tinta (`SLASH_INNER`, `INK_INNER`) | 0,12 | 0,05 (faixa mais larga) |
+| Brilho do corte (`SLASH_BOOST` x `Feel.slash_intensity` 1,7) | x1,0 | x1,35 |
+| Núcleo do corte (`SLASH_CORE`, fundo e luz) | 0,7 e 0,4 | 0,82 e 0,62 |
+| Dourado do corte sem família (`SLASH_GOLD`), mais perto do verde da Emeth | 0,45 | 0,30 |
+| Meia-lua do golpe final (`CRESCENT_INNER`, `CRESCENT_BODY`, `CRESCENT_GROW`, `CRESCENT_TIME`) | 0,6, 0,5, 1,5x, 0,30 s | 0,5, 0,65, 1,7x, 0,34 s |
+| Brilho do giro (`CRESCENT_SPIN_PEAK`) | 0,36 | 0,50 |
+| Clarão do acerto (`CONTACT_SPIKES`, comum / pesado, em m) | 0,25 a 0,6 / 0,4 a 0,9 | 0,4 a 0,9 / 0,6 a 1,4 |
+| Clarão do acerto (`CONTACT_GROW`, `CONTACT_TIME`) | 1,25x, 0,05 s | 1,4x, 0,08 s |
+| Talho no inimigo (`GASH_BOOST`, `GASH_LIFE`) | x1, x1 | x1,3 comprimento, x1,25 duração |
+| Pisca do inimigo (`crowd.gdshader`: `hit_warm`, `hit_gold`, `hit_floor`) | (1,0,5,0,22), (1,0,78,0,36), 0,2 | (1,0,56,0,26), (1,0,84,0,46), 0,32 |
+| Morte, `burst(&"bone")`: lascas, velocidade, tamanho, vida | 8, 5,5, 0,2, 0,6 s | 12, 6,5, 0,26, 0,7 s |
+| Pó de osso da morte (`wisps`: quantidade, tamanho, vida, abertura) | 2, 0,4, 1,4 s, 1,6 | 3, 0,5, 1,5 s, 1,9 |
+| Luz pontual (`hit_light`, novo): acerto pesado, final, Apogeu, Brado, Supremo | nenhuma | energia 1,8 a 4,0, alcance 4 a 9 m, 0,14 s, no máximo `LIGHT_POOL` 3 ao mesmo tempo (a mais velha cede); sem luz no Compatibility |
+| `Fx.shock` (novo): anel grosso no chão, anel fino a 1,45x, 7 a 14 pedras e osso, poeira, luz | nenhum | Golpe Carregado (poder 0,6, raio 1,8 m), golpe final (1,0, 2,4 m), Apogeu (1,6, 3,3 m, `omega`), Brado (0,7, 0,8 do alcance), cada duas lajes do Supremo Corte do Juízo (1,0, 1,5 m) |
+| `Fx.dash_trail` (novo): 3 fiapos de poeira e 6 lascas da cor da Emeth ao longo da Investida | nenhum | em todo golpe com tag `dash` |
+Tetos: as pedras entram no `budget` de motes (40 por quadro) e na reserva de 192; poeira e osso no de rajadas (6). Teste novo `test_hit_lights_are_capped_and_fade`; `test_fx_on_hit` ajustado (o Brado e a Investida agora soltam pedras e lascas, e o final tem 3 anéis: o dele mais os dois do `shock`).
+Para conferir (ver o relatório): a distorção do Brado (refração de tela) não foi feita; fica o anel duplo mais as pedras e a luz.

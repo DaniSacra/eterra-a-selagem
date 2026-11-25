@@ -281,6 +281,7 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			if shout:
 				fx.ring(origin, reach, color, 0.4, 0.15, true)
 				fx.ring(origin, reach * 0.6, color, 0.28, 0.2)
+				fx.shock(origin, reach * 0.8, color, 0.7)
 			elif not finisher:
 				# (a finisher's crescent is the ring flying out: one circle, not rings inside rings)
 				fx.ring(origin, reach, color, 0.35, 0.15, true)
@@ -348,6 +349,8 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		if finisher:
 			fx.kick_split(FINISHER_SPLIT)
 			fx.ring(struck[0].pos, FINISHER_RING, color, FINISHER_RING_TIME, 1.0 + struck[0].y, true)
+		if omega or finisher or heavy:
+			fx.shock(struck[0].pos, FINISHER_RING * (2.2 if omega else 1.6 if finisher else 1.2), color, 1.6 if omega else 1.0 if finisher else 0.6)
 		Audio.play(CombatSounds.EVENTS[&"hit_heavy" if heavy else &"hit"])
 		_play_material(CombatSounds.loudest(_mats))
 	match node.effect:
@@ -464,6 +467,8 @@ func _draw_swing(node: ComboNode, shape: Dictionary, origin: Vector2, dir: Vecto
 		# a thrust: straight, as wide as it reaches, never the arc of a cut
 		for way: Vector2 in ([dir, -dir] if node.both_ways else [dir]):
 			fx.thrust(origin, way, reach, node.width, color, time, 0.9, node.has_tag(&"omega"))
+			if node.has_tag(&"dash"):
+				fx.dash_trail(origin, way, reach, color)
 			var tip := origin + way * reach * 0.9
 			fx.chips(Vector3(tip.x, 0.9, tip.y), Vector3(way.x, 0.2, way.y), color, motes, 4.0, 0.12, 0.4, 0.5, Fx.MOTE_GOLD_EVERY)
 	else:
