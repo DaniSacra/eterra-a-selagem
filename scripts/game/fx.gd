@@ -57,6 +57,43 @@ const SMOKE_RING_EMBERS := 7
 const BEAM := preload("res://assets/shaders/beam.gdshader")
 const IMPACT := preload("res://assets/shaders/impact.gdshader")
 const IMPACT_POOL := 40
+## Effects pass 2026-11-25 (the Game Director's three missing ingredients: painted textures, light that bursts, contrast).
+## Textures drawn by tools/make_fx_textures.gd.
+const HIT_STAR := preload("res://assets/shaders/hit_star.gdshader")
+const PUFF := preload("res://assets/shaders/puff.gdshader")
+const SCORCH := preload("res://assets/shaders/scorch.gdshader")
+const STAR4_TEX := preload("res://assets/textures/fx/star4.png")
+const STAR6_TEX := preload("res://assets/textures/fx/star6.png")
+const PUFF_TEX := preload("res://assets/textures/fx/puff_sheet.png")
+const PAINT_TEX := preload("res://assets/textures/fx/brush_streaks.png")
+const STAR_POOL := 14
+const PUFF_POOL := 12
+const SCORCH_POOL := 6
+const BUDGET_STARS := 5
+const BUDGET_PUFFS := 4
+## The flash star's quad (m across) for a common blow and a heavy one, its HDR light (the glow threshold is 1.3; the
+## Compatibility renderer, with no glow worth the name, gets STAR_LIGHT_COMPAT), and how long it lives (s).
+const STAR_SIZE := Vector2(2.7, 4.4)
+const STAR_LIGHT := Vector2(3.2, 4.6)
+const STAR_LIGHT_COMPAT := 1.0
+const STAR_TIME := Vector2(0.15, 0.24)
+## A death: the dust puff (m across, s) and the flash of its first frames.
+const PUFF_SIZE := 2.4
+const PUFF_TIME := 0.7
+const DEATH_STAR_SIZE := 1.6
+## The floor darkening under a strong effect: radius factor over the effect's, opacity, seconds.
+const SCORCH_GROW := 1.25
+const SCORCH_OPACITY := 0.55
+const SCORCH_TIME := 0.7
+## The screen's flash (white-warm, additive) of the biggest blows: the most it adds to a pixel, and its length (real s).
+const SCREEN_FLASH_PEAK := 0.28
+const SCREEN_FLASH_TIME := 0.09
+## The third blow's arc, drawn this much larger so the trail is bigger than the paladin (drawing only; the reach is Combat's).
+const FINISHER_SLASH_SCALE := 1.22
+## The brush streaks' share in the paladin's own arcs, and how much whiter their edge is (family colour stays in the fringe).
+const SLASH_PAINT := 0.75
+const SLASH_EDGE_WHITE := 0.4
+const SLASH_WIRE_CAP := 2.6
 const THRUST := preload("res://assets/shaders/emeth_thrust.gdshader")
 const THRUST_POOL := 4
 ## V-04: seconds the thrust's light takes to reach its point and to leave it, and the crystal spikes of the Omega.
@@ -181,7 +218,7 @@ const SLASH_BOOST := 1.35
 const SLASH_STYLE_CORE_LIGHT := 0.35
 const SLASH_STYLE_CORE_DEPTH := 0.75
 const SLASH_STYLE_VEIL := 1.0
-const SLASH_STYLE_WIRE := 1.5
+const SLASH_STYLE_WIRE := 2.4
 ## E1-2: the paladin's own cut is a true emerald (hue 150, never the gold the plain colour is pulled toward), its edge
 ## thicker per blow (blow 1, 2, 3: SLASH_EDGE_PX x 1.0, 1.2, 1.6), the screen peak its own, and its core cleared over his body.
 const SLASH_EMERALD := Color(0.28, 0.95, 0.62)
@@ -315,6 +352,9 @@ var rumble := true
 var split := 0.0
 ## Seconds left of the impact frame (the screen in flat black and white), read by the screen pass.
 var frame_left := 0.0
+## Seconds left of the screen flash (white-warm, read by the screen pass as flash_level()).
+var flash_left := 0.0
+var _flash_peak := 0.0
 var shake_scale := 1.0
 ## The "impact_frames" option (SaveData): false, no impact frame ever.
 var impact_frames := true
@@ -380,6 +420,10 @@ var _rings: Array[Dictionary] = []
 var _later_rings: Array[Dictionary] = []
 var _smoke_rings: Array[Dictionary] = []
 var _contacts: Array[Dictionary] = []
+var _stars: Array[Dictionary] = []
+var _puff_pool: Array[Dictionary] = []
+var _scorches: Array[Dictionary] = []
+var _compat := false
 var _spikes: Array[Dictionary] = []
 var _marks: Array[Dictionary] = []
 var _beams: Array[Dictionary] = []
@@ -394,7 +438,7 @@ var _gold_at := -1
 var _gold_sum := 0
 ## The paladin's head in the world (Player sets it each frame): no number stands within NumberTally.HERO_CLEAR of it.
 var hero_head := Vector3.INF
-var budget := FxBudget.new({&"motes": BUDGET_MOTES, &"gashes": BUDGET_GASHES, &"bursts": BUDGET_BURSTS, &"contacts": BUDGET_GASHES, &"marks": BUDGET_GASHES})
+var budget := FxBudget.new({&"motes": BUDGET_MOTES, &"gashes": BUDGET_GASHES, &"bursts": BUDGET_BURSTS, &"contacts": BUDGET_GASHES, &"marks": BUDGET_GASHES, &"stars": BUDGET_STARS, &"puffs": BUDGET_PUFFS})
 var _font: Font
 var _arc_meshes: Dictionary = {}
 var _boss_scythes: Array[Dictionary] = []
@@ -448,6 +492,7 @@ static func fade_ramp(c: Color) -> Gradient:
 
 
 func setup(cam: Camera3D, over: Control) -> void:
+	_compat = RenderingServer.get_current_rendering_method() == "gl_compatibility"
 	Dev.seed_rng(_rng, 6)
 	camera = cam
 	overlay = over
@@ -502,6 +547,27 @@ func setup(cam: Camera3D, over: Control) -> void:
 		(e.node as MeshInstance3D).sorting_offset = 11.0
 		(e.node as MeshInstance3D).extra_cull_margin = 2.0
 		_contacts.append(e)
+	for i in STAR_POOL:
+		var e := _effect_node(HIT_STAR, cq)
+		(e.node as MeshInstance3D).sorting_offset = 13.0
+		(e.node as MeshInstance3D).extra_cull_margin = 3.0
+		(e.mat as ShaderMaterial).set_shader_parameter(&"star", STAR4_TEX if i % 2 == 0 else STAR6_TEX)
+		_stars.append(e)
+	for i in PUFF_POOL:
+		var e := _effect_node(PUFF, cq)
+		(e.node as MeshInstance3D).sorting_offset = 9.0
+		(e.node as MeshInstance3D).extra_cull_margin = 3.0
+		(e.mat as ShaderMaterial).set_shader_parameter(&"sheet", PUFF_TEX)
+		_puff_pool.append(e)
+	var flat := PlaneMesh.new()
+	flat.size = Vector2(2, 2)
+	for i in SCORCH_POOL:
+		var e := _effect_node(SCORCH, flat)
+		(e.mat as ShaderMaterial).render_priority = -3
+		(e.mat as ShaderMaterial).set_shader_parameter(&"sheet", PUFF_TEX)
+		_scorches.append(e)
+	for e in _slashes:
+		(e.mat as ShaderMaterial).set_shader_parameter(&"paint", PAINT_TEX)
 	var prism := CylinderMesh.new()
 	prism.top_radius = 0.0
 	prism.bottom_radius = 1.0
@@ -651,6 +717,10 @@ func burst(kind: StringName, pos: Vector3, dir: Vector3 = Vector3.ZERO) -> void:
 		# AD2-06: it was born at the floor and read as a white blob there; now from the body (at least chest height: the
 		# call from the death sits at 0.6) and falling a little, never a solid drop (wisp.gdshader's alpha is its own)
 		wisps(Vector3(pos.x, maxf(pos.y, BONE_DUST_AT), pos.z), Vector3.UP, BONE_DUST, 3, 1.0, 0.5, 1.5, 1.9, -0.25)
+		# effects pass: the death bursts as light inside a flipbook puff of bone dust (no blood), with a small hot star
+		var at := Vector3(pos.x, maxf(pos.y, BONE_DUST_AT), pos.z)
+		puff(at, PUFF_SIZE, BONE_DUST, 1.0)
+		hit_star(at, Color(1.0, 0.9, 0.7), DEATH_STAR_SIZE / STAR_SIZE.x, false)
 
 
 ## Smoke wisps (vfx_pass_spec.md 5.6, wisp.gdshader): soft torn cards that rise (rise m/s2 up), widen and come apart,
@@ -746,6 +816,9 @@ func behind(pos: Vector3, meters: float) -> Vector3:
 func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, time: float = 0.2, flip: bool = false, height: float = 0.9, ink_under: bool = true, blade: float = BLADE_REACH) -> void:
 	# the blow's weight from the time it was asked with (Combat: 0.12 a cut, 0.16 heavy, 0.3 the finisher)
 	var level := 2 if time >= 0.25 else 1 if time >= 0.14 else 0
+	if blade > 0.0 and level == 2:
+		reach *= FINISHER_SLASH_SCALE
+		blade *= FINISHER_SLASH_SCALE
 	time = maxf(time, SLASH_MIN_LIFE)
 	var tilt := _rng.randf_range(-0.08, 0.08)
 	var s: Dictionary = _take(_slashes)
@@ -783,6 +856,9 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 	(s.mat as ShaderMaterial).set_shader_parameter(&"style_core_light", SLASH_STYLE_CORE_LIGHT if own else 0.216)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"style_core_depth", SLASH_STYLE_CORE_DEPTH if own else 0.6)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"style_wire_glow", SLASH_STYLE_WIRE if own else 0.0)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"style_wire_cap", SLASH_WIRE_CAP if own and not _compat else 1.3)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"paint_amt", SLASH_PAINT if own else 0.0)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"edge_white", SLASH_EDGE_WHITE if own else 0.0)
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"style_veil", SLASH_STYLE_VEIL if own else 0.72)
 	if family == Boon.Family.CHAMA:
 		# the tail's tongues rise off it (vfx_pass_spec.md 5.3): 3 to 5 tongue slivers along the back of the arc
@@ -867,6 +943,67 @@ func contact(pos: Vector3, dir: Vector3, color: Color, heavy: bool = false, leve
 		aim = Vector2(dir.dot(b.x), dir.dot(b.y))
 		aim = aim.normalized() if aim.length_squared() > 0.0001 else Vector2(1, 0)
 	mat.set_shader_parameter(&"aim", aim)
+	hit_star(pos, color, 1.0, heavy)
+
+
+## The flash where a blow lands: a white-hot painted star (a 4 or 6 pointed one, torn rays) that turns to the blow's colour
+## in 3 to 6 frames, HDR so the glow takes it. heavy: bigger, brighter, a frame longer. Drawn only.
+func hit_star(pos: Vector3, color: Color, scale_: float = 1.0, heavy: bool = false) -> void:
+	if not budget.allows(&"stars"):
+		return
+	var e: Dictionary = _take(_stars)
+	var k := 1 if heavy else 0
+	var size := STAR_SIZE[k] * scale_
+	(e.node as Node3D).position = pos
+	(e.node as Node3D).scale = Vector3.ONE * size * 0.5
+	e.time = STAR_TIME[k]
+	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"color", color)
+	mat.set_shader_parameter(&"life", 0.0)
+	mat.set_shader_parameter(&"rot", _rng.randf() * TAU)
+	mat.set_shader_parameter(&"intensity", STAR_LIGHT[k] if not _compat else STAR_LIGHT_COMPAT)
+
+
+## A puff of bone dust that opens, curls and comes apart in a flipbook of 8 painted frames; lit: its first frames burst
+## with warm light (a death). Drawn only. size is meters across.
+func puff(pos: Vector3, size: float = PUFF_SIZE, tint: Color = BONE_DUST, lit: float = 0.0, time: float = PUFF_TIME) -> void:
+	if not budget.allows(&"puffs"):
+		return
+	var e: Dictionary = _take(_puff_pool)
+	(e.node as Node3D).position = pos
+	(e.node as Node3D).scale = Vector3.ONE * size * 0.5
+	e.time = time
+	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"color", tint.lerp(Color(0.62, 0.58, 0.5), 0.5))
+	mat.set_shader_parameter(&"life", 0.0)
+	mat.set_shader_parameter(&"lit", lit if not _compat else 0.0)
+	mat.set_shader_parameter(&"rot", _rng.randf() * TAU)
+
+
+## The floor darkened under a strong effect so the light over it reads against the green stone. radius in meters.
+func scorch(center: Vector2, radius: float, opacity: float = SCORCH_OPACITY, time: float = SCORCH_TIME) -> void:
+	var e: Dictionary = _take(_scorches)
+	(e.node as Node3D).position = Vector3(center.x, 0.035, center.y)
+	(e.node as Node3D).scale = Vector3.ONE * radius * SCORCH_GROW
+	e.time = time
+	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"life", 0.0)
+	mat.set_shader_parameter(&"opacity", opacity)
+	mat.set_shader_parameter(&"rot", _rng.randf() * TAU)
+
+
+## A flash of the whole screen (white-warm, a frame or two): only the Golpe Carregado, the Apogeu, the Brado and the
+## Supremo ask for it, never a common blow; off with the comfort options (impact frames and shake).
+func screen_flash(power: float = 1.0) -> void:
+	if not impact_frames or shake_scale <= 0.0:
+		return
+	_flash_peak = SCREEN_FLASH_PEAK * clampf(power, 0.2, 1.5)
+	flash_left = SCREEN_FLASH_TIME
+
+
+## How much the screen pass adds this frame (0 to SCREEN_FLASH_PEAK).
+func flash_level() -> float:
+	return _flash_peak * clampf(flash_left / SCREEN_FLASH_TIME, 0.0, 1.0)
 
 
 ## A burst where something breaks (armor): two crossed cuts, upright. size 1 is IMPACT_SIZE meters across.
@@ -964,7 +1101,7 @@ func showing(kind: StringName) -> int:
 				if l.visible:
 					shown += 1
 			return shown
-	var pools := {&"gashes": _impacts, &"slashes": _slashes, &"thrusts": _thrusts, &"crescents": _crescents, &"rings": _rings, &"smoke_rings": _smoke_rings, &"contacts": _contacts, &"marks": _marks, &"glints": _glints,
+	var pools := {&"gashes": _impacts, &"slashes": _slashes, &"thrusts": _thrusts, &"crescents": _crescents, &"rings": _rings, &"smoke_rings": _smoke_rings, &"contacts": _contacts, &"stars": _stars, &"puffs": _puff_pool, &"scorches": _scorches, &"marks": _marks, &"glints": _glints,
 		&"boss_scythes": _boss_scythes, &"boss_wakes": _boss_wakes}
 	var count := 0
 	for e: Dictionary in pools.get(kind, []):
@@ -1173,6 +1310,10 @@ func shock(center: Vector2, radius: float, color: Color, power: float = 1.0) -> 
 		_spray(at, Vector3.UP, STONE, n, 6.0 + 2.0 * power, 0.14, 0.55, 1.1, MOTE_GRAVITY * 1.6, false)
 	burst(&"dust", at)
 	hit_light(at + Vector3.UP * 0.8, color, 1.6 + 1.2 * power, radius * 2.2 + 3.0)
+	# effects pass: the floor darkens under it, a puff of dust rolls out and a wide star bursts at the centre
+	scorch(center, radius, SCORCH_OPACITY * clampf(0.6 + power * 0.4, 0.6, 1.2))
+	puff(at + Vector3.UP * 0.3, radius * 1.8 + 1.2, BONE_DUST, 0.0, 0.6)
+	hit_star(at + Vector3.UP * 0.6, color, radius * 0.9 + 0.5, true)
 
 
 ## The Investida's trail: dust kicked up along the line it runs and a few slivers of its colour (the thrust is drawn by `thrust`).
@@ -1551,6 +1692,7 @@ func tick(delta: float) -> Vector3:
 	_shake = maxf(0.0, _shake - delta * (0.6 + _shake * 6.0))
 	split = maxf(0.0, split - delta * 3.0)
 	frame_left = maxf(0.0, frame_left - delta)
+	flash_left = maxf(0.0, flash_left - delta)
 	_punch_t += delta
 	_kick *= maxf(0.0, 1.0 - delta * 14.0)
 	if _shake <= 0.0:
@@ -1683,6 +1825,19 @@ func animate(delta: float) -> void:
 			var mi: Node3D = c.node
 			mi.scale = Vector3.ONE * c.size * lerpf(1.0, CONTACT_GROW, c.life) / CONTACT_GROW
 			(c.mat as ShaderMaterial).set_shader_parameter(&"life", c.life)
+	for st in _stars:
+		if (st.node as Node3D).visible:
+			_age(st, delta)
+			(st.mat as ShaderMaterial).set_shader_parameter(&"life", st.life)
+	for pf in _puff_pool:
+		if (pf.node as Node3D).visible:
+			_age(pf, delta)
+			(pf.mat as ShaderMaterial).set_shader_parameter(&"life", pf.life)
+			(pf.node as Node3D).position.y += delta * 0.5
+	for sc in _scorches:
+		if (sc.node as Node3D).visible:
+			_age(sc, delta)
+			(sc.mat as ShaderMaterial).set_shader_parameter(&"life", sc.life)
 	for sp in _spikes:
 		if (sp.node as Node3D).visible:
 			_step_spike(sp, delta)

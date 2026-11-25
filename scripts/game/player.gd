@@ -920,6 +920,7 @@ func _start_dodge(move: Vector2) -> void:
 	# B-b: no mix into the dash (its pose is there on the frame of the press, as its 19 frames of shelter are)
 	_play(&"Dash", DASH_CLIP_SPEED, 0.0, 0.0)
 	fx.burst(&"dust", Vector3(pos.x, 0.2, pos.y), Vector3(-_dodge_dir.x, 0, -_dodge_dir.y))
+	fx.puff(Vector3(pos.x, 0.45, pos.y) - Vector3(_dodge_dir.x, 0, _dodge_dir.y) * 0.4, 1.7, Fx.BONE_DUST, 0.0, 0.45)
 	Audio.play(&"dodge")
 	dodged.emit(_dodge_dir)
 

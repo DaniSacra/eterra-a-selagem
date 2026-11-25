@@ -284,6 +284,9 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 				fx.ring(origin, reach, color, 0.4, 0.15, true, true)
 				fx.ring_later(origin, reach, color, 0.08)
 				fx.shock(origin, reach * 0.8, color, 0.7)
+				# effects pass: the cry bursts light at his chest and flashes the screen once
+				fx.hit_star(Vector3(origin.x, 1.1, origin.y), color, 1.5, true)
+				fx.screen_flash(0.8)
 			elif not finisher:
 				# (a finisher's crescent is the ring flying out: one circle, not rings inside rings)
 				fx.ring(origin, reach, color, 0.35, 0.15, true)
@@ -356,6 +359,8 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		if finisher:
 			fx.kick_split(FINISHER_SPLIT)
 			fx.ring(struck[0].pos, FINISHER_RING, color, FINISHER_RING_TIME, 1.0 + struck[0].y, true)
+		if omega or heavy:
+			fx.screen_flash(1.0 if omega else 0.7)  # only the charged blow and the special, never the common cut
 		if omega or finisher or heavy:
 			fx.shock(struck[0].pos, FINISHER_RING * (2.2 if omega else 1.6 if finisher else 1.2), color, 1.6 if omega else 1.0 if finisher else 0.6)
 		Audio.play(CombatSounds.EVENTS[&"hit_heavy" if heavy else &"hit"], hit_pitch(node))
@@ -544,6 +549,7 @@ func _apogee_weight(node: ComboNode, dir: Vector2) -> void:
 	fx.shake(APOGEE_SHAKE)
 	fx.kick(dir, KICK_OMEGA)
 	fx.punch(1.5)
+	fx.screen_flash(1.0)
 	Music.blow()
 	Audio.play(CombatSounds.EVENTS[&"apogee"])
 

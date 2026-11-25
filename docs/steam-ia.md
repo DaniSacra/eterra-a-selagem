@@ -92,3 +92,8 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   (`ElementBook`, `ElementLook`, pips de estado `StatePips`), a Videira dos Dons e os 12 Dons provisórios são código e dados escritos
   por um assistente de IA (Claude), sem gerador de imagem nem de áudio; as cores dos três elementos são constantes no código. O modelo
   da Maga continua o do Meshy já declarado, ainda uma prévia a refazer antes do final.
+
+- **Texturas de efeito (2026-11-25, passe de efeitos)**: `assets/textures/fx/star4.png`, `star6.png` (estrelas de impacto),
+  `puff_sheet.png` (8 quadros de poeira de osso) e `brush_streaks.png` (riscos de pincel seco) são desenhadas por código
+  (`tools/make_fx_textures.gd`, ruído e gradientes em `Image`), escritas por um assistente de IA (Claude), como a música; nenhum
+  gerador de imagem, nenhuma imagem de origem, nenhum pacote externo.
