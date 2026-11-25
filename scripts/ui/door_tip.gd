@@ -11,6 +11,8 @@ extends Control
 
 ## Metres from a door's use spot where the ring is full and where it starts to answer (the box itself follows Arena.exit_at).
 const NEAR := 4.2
+## U-1: the box and the "F enters" key show only with the doors open and the hero this close (metres) to the door's spot.
+const TIP_RANGE := 6.0
 const RING_FAR := 7.5
 const FADE := 0.15
 const WIDTH := 270.0
@@ -81,7 +83,14 @@ func _doors() -> Array[RunMap.Room]:
 ## The door the key works on now (-1: none): the same test as Rooms.usable and the interact press, the exit zone the hero
 ## stands in (Arena.exit_at), so the box shows exactly while F enters.
 func near_door() -> int:
-	return door_at(game.arena, game.player.pos, _doors().size())
+	var doors := _doors()
+	var i := door_at(game.arena, game.player.pos, doors.size())
+	return i if i >= 0 and tip_allowed(true, game.player.pos.distance_to(game.arena.door_label(i))) else -1
+
+
+## U-1 (pure): the tip is for open doors only (Rooms.Phase.OPEN) and a hero within TIP_RANGE of the door.
+static func tip_allowed(doors_open: bool, distance: float) -> bool:
+	return doors_open and distance <= TIP_RANGE
 
 
 ## The test itself (pure): the exit zone of `pos` when it is one of the `count` open doors, else -1.

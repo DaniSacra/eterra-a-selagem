@@ -36,6 +36,11 @@ const LIFE := Vector2(244, 19)
 const MAGICK := Vector2(196, 15)
 ## Magia's bar as wide as life's (the stack reads as one block, Magia on top).
 const MAGICK_WIDE := Vector2(244, 15)
+## U-3: the Warrior's Magia is a thin, quiet bar under the life (the sword does the work); it lights for HOT_TIME seconds
+## when it rises, is spent or its buttons are held, and only then says its number.
+const MAGICK_THIN := Vector2(196, 8)
+const MAGICK_IDLE_ALPHA := 0.5
+const HOT_TIME := 1.6
 ## Lining figures (UiKit.number_font): at these sizes the numbers stand 9 px tall or more at 720 lines.
 const LIFE_FONT := 16
 const MAGICK_FONT := 15
@@ -60,6 +65,22 @@ const ROW_CAPTION := 20.0
 const BARS_GAP := 12.0
 const CHARGE := Vector2(196, 6)
 const BAR_GAP := 2.0 * UiKit.FRAME + 1.0
+## The bars beside the medallion, life over Magia over the ultimate's charge. thin: the Warrior's quiet Magia (U-3); the
+## Maga, whose staff lives on it, keeps it wide with its number and the drop.
+func _layout_bars(thin: bool) -> void:
+	_magick_thin = thin
+	var mag := MAGICK_THIN if thin else MAGICK_WIDE
+	var x := MARGIN + CREST + BARS_GAP
+	var stack := CHARGE.y + LIFE.y + mag.y + 2.0 * BAR_GAP
+	var low := MARGIN + (CREST - stack) * 0.5
+	_place(_charge, Control.PRESET_BOTTOM_LEFT, Vector2(x, -low), CHARGE)
+	_place(_life, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + CHARGE.y + mag.y + 2.0 * BAR_GAP)), LIFE)
+	_magick.custom_minimum_size = mag
+	_magick.icon = HudBar.Mark.NONE if thin else HudBar.Mark.DROP
+	_place(_magick, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + CHARGE.y + BAR_GAP)), mag)
+	_magick.queue_redraw()
+
+
 ## The build column on the right edge: where its middle stands (share of the height) and the room it keeps (the edge
 ## chevrons stay out of it). The coins' corner and the gifts over it.
 const COLUMN_MID := 0.46
@@ -139,6 +160,10 @@ const BODY_HEIGHT := 2.4
 ## size, how far inside the screen something counts as in view, and the frame they sit on (left, top, right, bottom:
 ## clear of the texts at the top, the boss's bar and the bottom row).
 const POINTERS := 3
+## U-5: shooters about to fire from out of view, at most this many arrows, from this many seconds before the shot.
+const SHOOTER_ARROWS := 2
+const SHOOTER_WARN := 1.0
+const SHOOTER_COLOR := Color(1.0, 0.78, 0.4)
 const POINTER_SIZE := 18.0
 const VIEW_INSET := 16.0
 ## (The bottom clears the caption over the ultimate's diamond, "Maestria 2", BUG-111.)
@@ -169,6 +194,9 @@ var _crest: HeroCrest
 var _crest_hero: StringName = &""
 var _life: HudBar
 var _magick: HudBar
+var _magick_thin := true
+var _magick_hot := 0.0
+var _magick_last := -1.0
 ## The ultimate's charge, thin under the life bar.
 var _charge: HudBar
 var _charge_shown := false
@@ -234,6 +262,7 @@ var _passives: HBoxContainer
 var _arrow: Label
 var _arrow_mark: HudMark
 var _pointers: Array[HudMark] = []
+var _shooter_marks: Array[HudMark] = []
 ## Morvath's entrance card (show_entrance) and its seconds left.
 var _entrance: VBoxContainer
 var _entrance_veil: HudVeil
@@ -291,6 +320,10 @@ func _ready() -> void:
 	_arrow_mark = _pointer()
 	for i in POINTERS:
 		_pointers.append(_pointer())
+	for i in SHOOTER_ARROWS:
+		var m := _pointer()
+		m.color = SHOOTER_COLOR
+		_shooter_marks.append(m)
 	# the moment an Elo forms: in the notices' place under the clock, well above the paladin
 	# the open doors' seals and, near one, what it holds (DoorTip)
 	door_tip = DoorTip.new()
@@ -464,21 +497,18 @@ func _update_entrance(delta: float) -> void:
 
 ## Bottom left: the medallion and, beside it, Magia over life over the ultimate's thin charge, centred on its height.
 func _build_life() -> void:
-	var x := MARGIN + CREST + BARS_GAP
-	var stack := CHARGE.y + LIFE.y + MAGICK.y + 2.0 * BAR_GAP
-	var low := MARGIN + (CREST - stack) * 0.5
 	_charge = HudBar.new().setup(UiKit.OLD_GOLD.lightened(0.15), CHARGE, 1, false, UiKit.OLD_GOLD.darkened(0.45))
 	_charge.name = "charge"
 	add_child(_charge)
-	_place(_charge, Control.PRESET_BOTTOM_LEFT, Vector2(x, -low), CHARGE)
 	_life = HudBar.new().setup(LIFE_COLOR, LIFE, LIFE_FONT, false, LIFE_BOTTOM)
 	add_child(_life)
 	_life.icon = HudBar.Mark.HEART
-	_place(_life, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + CHARGE.y + MAGICK.y + 2.0 * BAR_GAP)), LIFE)
-	_magick = HudBar.new().setup(MAGICK_COLOR, MAGICK_WIDE, MAGICK_FONT, false, MAGICK_BOTTOM)
+	_magick = HudBar.new().setup(MAGICK_COLOR, MAGICK_THIN, MAGICK_FONT, false, MAGICK_BOTTOM)
 	add_child(_magick)
-	_magick.icon = HudBar.Mark.DROP
-	_place(_magick, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + CHARGE.y + BAR_GAP)), MAGICK_WIDE)
+	_layout_bars(true)
+	var x := MARGIN + CREST + BARS_GAP
+	var stack := CHARGE.y + LIFE.y + MAGICK_WIDE.y + 2.0 * BAR_GAP
+	var low := MARGIN + (CREST - stack) * 0.5
 	_crest = HeroCrest.new().setup(CREST)
 	add_child(_crest)
 	_place(_crest, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN, -MARGIN), Vector2(CREST, CREST))
@@ -532,10 +562,8 @@ func _build_actions() -> void:
 	var width := row.get_combined_minimum_size().x
 	_place(row, Control.PRESET_CENTER_BOTTOM, Vector2(0.0, -MARGIN), Vector2(width, height))
 	row.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	var under: Array[Control] = []
-	under.assign(_slots + [_ult_slot])
+	# U-4: no dark box behind the diamonds (only the move's name keeps its small veil, see _build_combo)
 	_row_band = HudVeil.new()
-	_row_band.covers = under
 	add_child(_row_band)
 	move_child(_row_band, row.get_index())
 	_buff = BuffMark.new().setup(BoonIcon.SHOUT_GLYPH)
@@ -792,7 +820,7 @@ func _process(delta: float) -> void:
 
 func _update_life(p: Player) -> void:
 	_life.show_value(p.hp / p.max_hp, "%d / %d" % [ceili(p.hp), roundi(p.max_hp)])
-	_magick.show_value(p.magick.ratio(), "%d / %d" % [floori(p.magick.value), roundi(p.magick.max_value)])
+	_update_magick(p)
 	if _last_hp >= 0.0 and p.hp < _last_hp - 0.01:
 		_crest.flash = 1.0
 	_last_hp = p.hp
@@ -800,6 +828,32 @@ func _update_life(p: Player) -> void:
 	_vignette.danger = _crest.danger if game.mode == Game.Mode.PLAY and p.hp > 0.0 else 0.0
 	_curse_badge.ratio = p.curse.ratio()
 	_crest.tint = Color(CURSE_COLOR, CURSE_TINT * _curse_badge.shown())
+
+
+## U-3: the Magia as the hero's kit asks. The Maga: the full bar with its number. The Warrior: thin and dim, lit (with its
+## number) while it rises or falls, or while the buttons that spend it are held.
+func _update_magick(p: Player) -> void:
+	var thin := game.hero == null or game.hero.arcane == null
+	if thin != _magick_thin:
+		_layout_bars(thin)
+	var value := p.magick.value
+	var text := "%d / %d" % [floori(value), roundi(p.magick.max_value)]
+	if not thin:
+		_magick.modulate.a = 1.0
+		_magick.show_value(p.magick.ratio(), text)
+		return
+	var dt := get_process_delta_time()
+	if magick_wakes(_magick_last, value, Controls.held(&"heavy_attack")):
+		_magick_hot = HOT_TIME
+	_magick_hot = maxf(0.0, _magick_hot - dt)
+	_magick_last = value
+	_magick.modulate.a = lerpf(MAGICK_IDLE_ALPHA, 1.0, clampf(_magick_hot / 0.4, 0.0, 1.0))
+	_magick.show_value(p.magick.ratio(), text if _magick_hot > 0.0 else "")
+
+
+## Whether the thin Magia lights: it changed by a point or more since last looked, or a button that spends it is held.
+static func magick_wakes(last: float, now: float, held: bool) -> bool:
+	return held or (last >= 0.0 and absf(now - last) >= 1.0)
 
 
 func _update_slots(p: Player) -> void:
@@ -1170,6 +1224,37 @@ func _update_pointers(chief: Enemy) -> void:
 			used += 1
 	for i in range(used, POINTERS):
 		_pointers[i].visible = false
+	_update_shooters(view, frame)
+
+
+## Whether an enemy is a shooter about to fire: winding up a ranged attack with SHOOTER_WARN seconds or fewer to go.
+static func shooter_warning(e: Enemy) -> bool:
+	if not e.alive or e.state != Enemy.State.WINDUP:
+		return false
+	match e.def.behavior:
+		EnemyDef.Behavior.ARCHER, EnemyDef.Behavior.PRIEST, EnemyDef.Behavior.CASTER, EnemyDef.Behavior.BEAM:
+			return e.def.attack_windup - e.state_t <= SHOOTER_WARN
+	return false
+
+
+## U-5: a thin arrow on the edge for each shooter (at most SHOOTER_ARROWS, the nearest) aiming from out of view.
+func _update_shooters(view: Rect2, frame: Rect2) -> void:
+	var used := 0
+	if game.mode == Game.Mode.PLAY:
+		var from := game.player.pos
+		var found: Array[Enemy] = []
+		for e in game.horde.list:
+			if shooter_warning(e) and _edge(e.pos, view, frame) != null:
+				found.append(e)
+		if found.size() > SHOOTER_ARROWS:
+			found.sort_custom(func(a: Enemy, b: Enemy) -> bool: return a.pos.distance_squared_to(from) < b.pos.distance_squared_to(from))
+		for e in found:
+			if used >= SHOOTER_ARROWS:
+				break
+			_point(_shooter_marks[used], _edge(e.pos, view, frame), frame)
+			used += 1
+	for i in range(used, SHOOTER_ARROWS):
+		_shooter_marks[i].visible = false
 
 
 ## Where on the frame the chevron for a point of the floor goes; null while that point is on screen.
