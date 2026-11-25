@@ -424,3 +424,9 @@ A cena da primeira descida: só o que já existe (preto, uma estrela, a luz de E
   das malhas pintadas por 0,4 s; a lâmina e o resto ficam ocultos até acabar. No `warmup_set.res` (entrada acrescentada por
   `tools/make_warmup.gd`, sem regerar o conjunto).
 - **Para ver sozinha** (sem o 3A1): `--arrival` toca sobre a primeira sala; `--arrival-hold=SEGUNDOS` congela o relógio num instante.
+
+## Pente fino lote B (2026-11-25)
+- Tiros dos conjuradores, do sacerdote e do Ancião: `DEAD_MAGENTA` (`make_data.gd`) virou verde doentio (matiz cerca de 100); `enemy_orb.gdshader` sem miolo preto (`core_tone`). Rosa fica só da maldição.
+- "Mais Vida": `Rooms._reward_color` e `RewardShaft.TONE` em vermelho-coração apagado (matiz 6 a 8). Pendente (dono de `reward_gem.gd`): `ENAMEL_HEART` ainda é 345.
+- Redemoinho de Fogo (`Skills._step_orbit`): corpo laranja, miolo âmbar, brilho aditivo e cauda de três brasas.
+- Raio-x dos avisos: global `warn_pos` (`project.godot`), posto por `Ground._publish_warning` (o aviso mais perto do herói) e lido em `see_through.gdshaderinc` como terceiro "quem" ao lado de `hero_pos` e `boss_pos`.
