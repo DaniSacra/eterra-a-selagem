@@ -392,13 +392,24 @@ func test_the_leg_hold_outlasts_the_chain_and_the_dodge_cuts_it() -> void:
 	assert_false(runner.planted(), "the dodge cuts it")
 
 
-func test_no_blow_of_the_combo_moves_the_paladin() -> void:
+func test_no_blow_of_the_combo_walks_the_paladin_but_each_steps_as_it_lands() -> void:
+	# PT-25-4 and PT-25-11 (it replaces "struck standing still"): no walking and no lunge before the blow; each blow of
+	# the combo takes a short step as it lands, the finisher the longest
 	var tree: ComboTree = load("res://data/combos/paladin.tres")
 	for node: ComboNode in tree.all_nodes():
 		if node.has_tag(&"dash"):
 			continue  # the Investida carries him along its line
-		assert_eq(node.lunge, 0.0, "%s is struck standing still" % node.id)
+		assert_eq(node.lunge, 0.0, "%s has no lunge from the press" % node.id)
 		assert_eq(node.move_scale, 0.0, "%s keeps no walking" % node.id)
+		if node.has_tag(&"light") and node.input == ComboNode.In.LIGHT:
+			assert_between(node.step, 0.2, 1.0, "%s steps a little as it lands" % node.id)
+	var by := {}
+	for node: ComboNode in tree.all_nodes():
+		by[node.id] = node
+	assert_almost_eq((by[&"cut1"] as ComboNode).step, 0.3, 0.001)
+	assert_almost_eq((by[&"cut2"] as ComboNode).step, 0.3, 0.001)
+	assert_almost_eq((by[&"cut3"] as ComboNode).step, 0.8, 0.001)
+	assert_gt((by[&"cut3"] as ComboNode).step, (by[&"cut2"] as ComboNode).step, "the finisher's step is the longest")
 
 
 func test_the_combo_slows_as_it_goes() -> void:

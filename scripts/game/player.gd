@@ -294,6 +294,7 @@ func _ready() -> void:
 	runner.move_started.connect(_on_move_started)
 	runner.move_hit.connect(func(node: ComboNode) -> void:
 		_follow_through(node)
+		_step_in(node)
 		_body_layer(node)
 		struck.emit(node, pos, facing))
 	runner.move_glint.connect(func(node: ComboNode, time: float) -> void:
@@ -1050,6 +1051,13 @@ func _on_move_started(node: ComboNode) -> void:
 
 ## The blow landed: the rest of its clip is the recovery, played over the recovery's length (ComboNode.follow_speed)
 ## instead of at the windup's speed (cut1's came back 3.7 times too fast); a short clip then holds its last pose.
+## PT-25-4 and PT-25-11: the short step the blow takes as it lands (ComboNode.step). The walk's own rules stop it at
+## bodies (stop_walker) and walls (sweep); the Investida's lunge, which starts on the press, is never touched.
+func _step_in(node: ComboNode) -> void:
+	if node.step > 0.0:
+		_lunge += facing * node.step * LUNGE_DECAY  # (adds: the last blow's tail is still fading when the next lands)
+
+
 func _follow_through(node: ComboNode) -> void:
 	_anim.speed_scale = 1.0
 	if _anim.current_animation == &"":

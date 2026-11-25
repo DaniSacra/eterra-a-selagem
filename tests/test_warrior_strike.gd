@@ -49,33 +49,46 @@ func _frame(p: Player, taps: Array = [], held: Array = []) -> void:
 	pad.released.clear()
 
 
-func test_the_basic_attack_never_moves_him_with_the_direction_held() -> void:
+func test_the_basic_attack_only_steps_as_it_lands_with_the_direction_held() -> void:
+	# PT-25-4: the windup is struck standing still and the direction held never walks him; the blow's own step
+	# (ComboNode.step, along the aim) is all that carries him until the legs are free
 	var p := _room()
 	pad.move = Vector2.RIGHT
 	var at := p.pos
+	var hit := [false]  # (a lambda keeps no copy of a bool)
+	p.runner.move_hit.connect(func(_n: ComboNode) -> void: hit[0] = true)
 	_frame(p, [&"light_attack"])
 	var frames := 0
 	while p.runner.planted() and frames < 60:
-		assert_almost_eq(p.pos.distance_to(at), 0.0, 0.001, "still on frame %d" % frames)
+		if not hit[0]:
+			assert_almost_eq(p.pos.distance_to(at), 0.0, 0.001, "still in the windup, frame %d" % frames)
+		assert_almost_eq(p.pos.x, at.x, 0.001, "the direction held never walks him sideways")
 		assert_ne(p.get(&"_current_anim"), &"Run", "never the run while planted")
 		_frame(p)
 		frames += 1
 	assert_gt(frames, 10, "planted from the press through the leg hold")
+	assert_almost_eq(at.y - p.pos.y, 0.3, 0.06, "cut1 stepped 0.3 m along the aim")
 	_frame(p)
 	assert_gt(p.pos.x, at.x, "walks once the legs are free")
 
 
-func test_the_whole_combo_never_moves_him() -> void:
+func test_the_whole_combo_steps_forward_a_little_each_blow() -> void:
 	var p := _room()
 	pad.move = Vector2.RIGHT
 	var at := p.pos
 	var ids: Array[StringName] = []
 	p.runner.move_started.connect(func(n: ComboNode) -> void: ids.append(n.id))
 	_frame(p, [&"light_attack"])
-	for i in 50:
+	for i in 80:
 		_frame(p, [&"light_attack"] if not ids.has(&"cut3") else [])
-		assert_almost_eq(p.pos.distance_to(at), 0.0, 0.001)
+		if ids.size() == 3 and not p.runner.is_attacking():
+			break
 	assert_eq(ids, [&"cut1", &"cut2", &"cut3"] as Array[StringName])
+	pad.move = Vector2.ZERO
+	for i in 30:
+		_frame(p)  # (the last step's tail fades)
+	assert_almost_eq(at.y - p.pos.y, 1.4, 0.15, "0.3 + 0.3 + 0.8 m along the aim")
+	assert_almost_eq(p.pos.x, at.x, 0.001, "and none sideways")
 
 
 func test_after_the_special_and_its_omega_the_legs_come_back() -> void:

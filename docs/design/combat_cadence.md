@@ -1009,3 +1009,22 @@ O Ancião e os atiradores (besteiro, lanceiro) ficam como estão. Os avisos fina
 | 4 | 40% | investida dupla (a única coisa que o Cavaleiro já tinha e o Butcher não) | sim |
 
 Fica de fora: as ondas no chão que perseguem (fase 2 do Butcher) e as erupções (fase 4), que pedem zonas novas; no lugar, a fase 4 usa a investida em fileira de 2 que o Cavaleiro já tinha. Risco: com espera zero e dano 12 o Cavaleiro bate muito mais no robô (ver `balance.md`, SW-REA).
+
+
+## 15. Passinho em todo golpe (PT-25-4 e PT-25-11, 2026-11-25): a regra "parado" do início deste documento foi substituída
+
+Pedido do Daniel: "atacar e andar um pouquinho é sempre melhor, mesmo que seja um passinho pequeno". A preparação continua parada
+e as pernas continuam presas (`move_hold`); no instante do impacto o corpo dá um passo curto na mira (`ComboNode.step`, `STEP` em
+`tools/make_data.gd`), que para nos corpos e nas paredes. Nada mudou nos tempos de preparação, recuperação e janela da matriz de
+`sworn_phase1` (seção 13).
+
+| Golpe | Preparação | Impacto | Passo à frente (novo) | Recuperação | Pernas presas |
+|---|---|---|---|---|---|
+| E1 (`cut1`) | 0,08 s | f5 | **0,3 m** (era 0) | 8 f | 11 f |
+| E2 (`cut2`) | 0,13 s | f8 | **0,3 m** (era 0) | 13 f | 19 f |
+| E3 (`cut3`, giro) | 0,28 s + 0,08 de brilho | f22 | **0,8 m** (era 0) | 18 f | 30 f |
+| 5 golpes (`cut4`, `thrust4`) | 0,12 / mesmo da estocada | no impacto | 0,3 m / 0,3 m | 9 f | 12 f |
+
+Soma do combo: 1,4 m (medido no teste: 1,4 m com 0,15 de folga). O passo largo do final é para alcançar quem os golpes 1 e 2 empurraram
+(0,1 m cada, `COMBO_PUSH`). Não toca na Investida (`lunge`, da pressão do botão), nem no especial, nem nas Ômegas. A julgar
+no jogo: se parecer deslize, baixar `STEP` ou encurtar o decaimento (`Player.LUNGE_DECAY`).
