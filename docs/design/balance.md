@@ -818,3 +818,25 @@ Robô, `smoke.sh 900 --seed=N`, sementes 1 a 6 (antes = HEAD `94e74f5`; depois =
 | 6 | 14, morreu fase 3, 709 s | 8, morreu, 416 s |
 
 `stuck` 0 nas 12 partidas. Chegaram a Morvath 4 de 6 nas duas medições, uma vitória em cada. Mortes antes de Morvath: 2 antes (salas 11 e 12), 3 depois (salas 6, 8 e 8: arqueiros, Cavaleiro e Ancião levaram a vida no robô). Dano levado por tipo (soma das 6 partidas, só inimigos e hazards; vida do herói 40): antes arqueiro 93, mago 93, Cavaleiro 55, Ancião 33, Canalizador 33, guarda de elite 29, guarda 10, esqueleto 5; depois arqueiro 60, mago 85, Cavaleiro 45, Ancião 18, guarda 16, esqueleto 15, Armadilheiro 8, corredor 7, arqueiro de elite 5. Os ratos não aparecem entre os que ferem (a mordida de 3 quase nunca acerta o robô), nem o Capitão (2 lutas, 0 de dano). Sinal de saúde: no começo direto na sala do guardião (`--start=miniboss`, sementes 3, 4 e 7, 200 s) a vida levada pelo Cavaleiro caiu de 23 para 5 e a do Ancião de 12 para 6, porque a barra de atordoamento de 3,5 s quebra com especial e Investida (as quebras do robô: especial 4 e Investida 2 contra 0 antes). Seis sementes são pouco para separar ruído de efeito: a morte na sala 6 da semente 3 é a luta do Cavaleiro com 36 de vida na entrada e 28 de dano levado, e o início direto na mesma luta deu o contrário. Se o Daniel achar a descida mais fácil ou difícil, os botões são `poise_mult` (quantas pancadas quebram) e `poise_stun` em `tools/make_data.gd`.
+
+
+## SW-REA (2026-11-25): recuperação mais curta, Cavaleiro do Butcher e Morvath sem espera (gameplay-engineer; `docs/design/sworn_rea_butcher_2026-11-25.md`)
+
+Números novos em `tools/make_data.gd` (`ENEMY_RECOVER`, `recover_time`, `gap_*`, `knight`, `_bosses`); tabela de tempos em `combat_cadence.md` 14. Robô headless 60 fps, `smoke.sh 900`, sementes 1 a 6, mesmo HEAD (`dd53f8c`) antes e depois.
+
+| Semente | Antes | Depois |
+|---|---|---|
+| 1 | sala 14, 680 s, Morvath na meta | sala 14, 604 s, morreu em Morvath (245 de vida dele) |
+| 2 | sala 14, 549 s, morreu em Morvath | **sala 5, 148 s, morreu no Cavaleiro** |
+| 3 | sala 14, 487 s, morreu em Morvath | **sala 10, 329 s, morreu no Cavaleiro** |
+| 4 | sala 14, 782 s, morreu em Morvath | sala 14, 612 s, sobreviveu (14 de vida) |
+| 5 | sala 14, 609 s | sala 14, 548 s, morreu em Morvath |
+| 6 | sala 12, 454 s, morreu antes | sala 14, 560 s, morreu em Morvath |
+
+Mortes antes de Morvath: 1 antes, 2 depois (as duas pelo Cavaleiro). Dano levado do Cavaleiro (soma da partida): 0, 16, 16, 0, 5, 12 antes; 30, 35, 55, 8, 6, 20 depois. Intervalo médio entre a recuperação e o próximo aviso do Cavaleiro (`idle.mean`): 0,46 a 0,64 s antes, 0,11 a 0,21 s depois (a espera de IA do Butcher é zero).
+
+`--start=miniboss` (200 s): a semente 7 é a única com Cavaleiro; antes ele durou 36,5 s e tirou 18, agora 33,6 s e tirou 12, com 27 golpes punidos em 24 avisos (10 em 21 antes). Sementes 3 e 4 sem Cavaleiro (Ancião); sem regressão.
+
+Morvath (`--start=boss --boons=25 --seed=5`, 120 s): antes 99 s e 40 de vida, 7 foices, 6 ceifas, 1 rajada; depois 103 s e 40 de vida, 5 foices, 5 ceifas, 2 rajadas, 4 lâminas e 3 chamados. Intervalo médio entre ataques 0,31 s antes e 0,15 s depois.
+
+Velocidade do Cavaleiro: com 6,0 m/s o herói (6,75) ainda se afasta. Teste com 4,5 m/s nas sementes 2, 3 e 6: a 2 passou da sala 5 (chegou em Morvath), a 3 e a 6 continuaram morrendo no Cavaleiro (55 e 36 de dano). A velocidade não é o que pesa; é a espera zero com dano 12. Se o Daniel achar demais, alavancas por ordem: `gap_max` 0,15 para 0,5, `attack_damage` 12 para 10, velocidade 5,0. Ficou 6,0 como pedido.

@@ -971,3 +971,41 @@ combo pode sair; as janelas moram em `ComboNode.cancel_*_from` (`tools/make_data
 - Antes, especial e Brado esperavam a recuperação inteira; agora cortam a preparação e a recuperação (o golpe cortado antes do impacto não acerta).
 - A pausa antes era só o "espera" em velocidade cheia mais 10 ms a 6% (o que se sente é o trecho lento); agora a pausa total é o número da tabela (20 ms em velocidade cheia e o resto a 6%), constantes `Combat.PAUSE_*` num lugar só.
 - Esquiva medida (SW-C6): 0,2 s (SWORN 0,2), 5,6 m (SWORN 2,5), protegido de 0 a 0,2 s (SWORN igual), recarga 0,8 s a contar do começo da esquiva (SWORN 0,8), 1 carga (+1 pela Bênção Passos; SWORN 1, +1 na meta). Igual ou melhor, sem mudança.
+
+
+## 14. Recuperação e espera depois do golpe, e o Cavaleiro do Butcher (2026-11-25, `docs/design/sworn_rea_butcher_2026-11-25.md`; testes em `tests/test_knight_phases.gd`)
+
+Pedido do Daniel: "ainda acho os bosses meio lentos, tanto no ataque quanto na recuperação... a janela de contra-ataque fica meio grande... o nosso cavaleiro é parecido com o butcher do SWORN, vamos pegar os mesmos números e mecânicas, só não coloca o pulo". Medido: os chefes de SWORN (Butcher, Lady Kay) não esperam nada entre um ataque e outro, só a cauda da animação; os comuns leves ficam parados 0,6 a 0,85 s.
+
+**Parado depois do golpe (`recover_time`) e tempo até o próximo dano** (recuperação + espera 0,25 a 0,75 dos comuns + aviso final):
+
+| Inimigo | Parado antes | Parado agora | Até o próximo dano antes | Agora |
+|---|---|---|---|---|
+| Esqueleto (elite) | 1,2 (1,0) | 0,75 (0,65) | 2,05 a 2,55 | 1,6 a 2,1 |
+| Corredor | 1,35 | 0,8 | 2,3 a 2,8 | 1,75 a 2,25 |
+| Trinca (elite) | 1,0 (0,8) | 0,7 (0,6) | 1,9 a 2,4 | 1,6 a 2,1 |
+| Rato de osso | 0,7 | 0,6 | 1,45 a 1,95 | 1,35 a 1,85 |
+| Saltador | 1,0 | 0,8 | 1,9 a 2,4 | 1,7 a 2,2 |
+| Escudo (elite) | 1,1 (1,1) | 1,0 (0,9) | 2,3 a 2,8 (aviso 0,92) | 1,95 a 2,45 (aviso 0,70) |
+| Esqueleto grande | 1,4 | 1,1 | 2,5 a 3,0 (aviso 0,88) | 2,05 a 2,55 (aviso 0,70) |
+| Corredor grande | 1,2 | 1,0 | 2,65 a 3,15 | 2,45 a 2,95 |
+| Varredor | 1,4 | 1,1 | 2,6 | 2,3 |
+| Feiticeiro | 0,8 | 0,65 | pelo `attack_cooldown` | igual |
+| Capitão | 1,1, espera 0,4 a 1,4 (0,3 a 0,8 no fim) | 1,0, espera 0,2 a 0,8 (0,1 a 0,4) | 2,7 a 3,7 | 2,4 a 3,0 |
+| Cavaleiro | 0,55, espera 0,3 a 1,5 (0,2 a 0,7) | 0,9, espera 0 a 0,15 (0 a 0,05) | 1,45 a 2,65 | 1,55 a 1,70 |
+| Morvath | espera 0,1 a 0,7 (0,05 a 0,3); ceifa dupla 1,4; tempestade 0,9 | espera 0 a 0,3 (0 a 0,1); 1,1; 0,8 | 1,3 a 2,9 | 1,0 a 2,5 |
+
+O Ancião e os atiradores (besteiro, lanceiro) ficam como estão. Os avisos finais do Escudo e do Esqueleto grande saem de 0,875 no `make_data` (o `_quick` multiplica por 0,8 e dá 0,70) em vez de `exact_windup`, para o golpe de perto do Escudo seguir o `_quick`. Nos chefes e guardiões o sorteio some, mas `gap_max` fica acima de 0 (0,15 no Cavaleiro, 0,3 em Morvath): `gap_max` 0 devolve o jogo ao `AFTER_RECOVER`.
+
+**Cavaleiro, "Butcher sem pulo"**: vida 500 e armadura 1400, 6,0 m/s (o herói anda 6,75), investida com aviso 0,65, arranque 24 m/s por 0,3 s (7,2 m), dano 12, uma por vez, alcance 12, cooldown 1,8; arremesso de escudo com anel (cooldown 10, primeiro 5, sem distância máxima; aviso da queda 0,85 s, voo 1,1, anel 7,5 m/s, 22 m, dano 12 e 6); golpe de perto 8; guarda por tempo no papel do giro louco (a cada 10 s, aviso 0,85, 3,2 s, anda a 50%, golpe a cada 0,53 s a até 4 m, dano 8); `raise_max` 4. Mantidos: investida rápida, onda que só a esquiva atravessa, golpe forte tira o escudo, `wall_stun`, barra de atordoamento x1,25.
+
+**Fases por vida** (`KnightPhase`, `EnemyDef.roar_marks`, `guard_up_life`, `raise_life`, `KnightMove.from_life`; porcentagem da resistência total, vida mais armadura):
+
+| Fase | Entra em | Soma | Rugido |
+|---|---|---|---|
+| 1 | 100% | investida, golpe de perto, arremesso do escudo | |
+| 2 | 80% | guarda por tempo, só com o herói a até 6 m; termina com 2 s parado | sim, 1,78 s parado e atingível |
+| 3 | 60% | chamado de 3 esqueletos, no máximo 4 vivos, a cada 30 s (o primeiro a 10 s da luta) | |
+| 4 | 40% | investida dupla (a única coisa que o Cavaleiro já tinha e o Butcher não) | sim |
+
+Fica de fora: as ondas no chão que perseguem (fase 2 do Butcher) e as erupções (fase 4), que pedem zonas novas; no lugar, a fase 4 usa a investida em fileira de 2 que o Cavaleiro já tinha. Risco: com espera zero e dano 12 o Cavaleiro bate muito mais no robô (ver `balance.md`, SW-REA).

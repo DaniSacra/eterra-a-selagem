@@ -128,6 +128,9 @@ var spots: Array[Vector2] = []
 var open_t := 0.0
 ## KNIGHT (K3): seconds its guard stays up by time, and to the next one (EnemyDef.guard_up_time).
 var guard_t := 0.0
+## KNIGHT (SW-REA): the roars it has given (KnightPhase.crossed) and the seconds it still stands after its guard fell.
+var roars := 0
+var still_t := 0.0
 var guard_cd := 0.0
 ## KNIGHT (EnemyDef.moves): seconds left on each move of its priority list (AttackList), one clock a move.
 var move_cd: Array[float] = []

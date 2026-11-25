@@ -309,7 +309,7 @@ func test_the_runner_warns_enough() -> void:
 	# 2026-11-23 ("ataca mais rapido"): the study's median for a common is 0.67 s; a heavy blow never under 0.6 s
 	for id in [&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"guard", &"guard_elite", &"knight"]:
 		var def: EnemyDef = load("res://data/enemies/%s.tres" % id)
-		var least := 0.6 if id in [&"skeleton", &"runner", &"knight"] else 0.7 if id in [&"skeleton_elite", &"runner_elite"] else 0.9
+		var least := 0.6 if id in [&"skeleton", &"runner", &"knight"] else 0.7 if id in [&"skeleton_elite", &"runner_elite"] else 0.7 if id in [&"guard", &"guard_elite"] else 0.9
 		assert_gte(def.attack_windup, least - 0.001, "%s warns enough" % id)
 
 
@@ -431,6 +431,11 @@ func test_the_knight_raises_its_dead() -> void:
 	_room()
 	var k := game.horde.spawn(game.horde.def(&"knight"), Vector2(8.0, 0.0), false)
 	var d := k.def
+	# SW-REA: the call is the third phase's (60% and under), once every raise_cooldown seconds
+	k.hp = k.max_hp * 0.5
+	k.armor = k.max_armor * 0.5
+	k.roars = 2
+	k.call_cd = 0.0
 	var most := 0
 	var calls := 0
 	var was: StringName = &""

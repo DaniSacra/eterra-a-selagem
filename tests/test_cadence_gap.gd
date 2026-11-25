@@ -57,9 +57,9 @@ func test_idle_stats_leave_earned_time_out() -> void:
 
 func test_data_gaps_for_knight_and_morvath() -> void:
 	var k := load("res://data/enemies/knight.tres") as EnemyDef
-	assert_eq([k.gap_min, k.gap_max, k.gap_min0, k.gap_max0], [0.3, 1.5, 0.2, 0.7])
+	assert_eq([k.gap_min, k.gap_max, k.gap_min0, k.gap_max0], [0.0, 0.15, 0.0, 0.05])  # SW-REA 2026-11-25: the Butcher waits nothing (was 0.3 to 1.5)
 	var b := load("res://data/bosses/morvath.tres") as BossDef
-	assert_eq([b.gap_min, b.gap_max, b.gap_min0, b.gap_max0], [0.1, 0.7, 0.05, 0.3])
+	assert_eq([b.gap_min, b.gap_max, b.gap_min0, b.gap_max0], [0.0, 0.3, 0.0, 0.1])
 	for a in b.attacks:
 		assert_true(a.layers.is_empty(), "%s: attacks come one at a time (Daniel, 2026-11-23)" % a.id)
 
@@ -76,9 +76,9 @@ func test_knight_rests_a_random_gap_after_its_recovery() -> void:
 		h._behave(k, 0.016)
 		seen.append(k.cooldown)
 	for g in seen:
-		assert_gte(g, 0.3)
-		assert_lte(g, 1.5)
-	assert_gt(seen.max() - seen.min(), 0.1, "not always the same")
+		assert_gte(g, 0.0)
+		assert_lte(g, 0.15)
+	assert_gt(seen.max() - seen.min(), 0.02, "not always the same")
 
 
 func test_elder_calls_two_archers_to_the_edge_away_from_the_paladin() -> void:

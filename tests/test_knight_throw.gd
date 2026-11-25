@@ -65,7 +65,8 @@ func test_wave_grows_after_its_delay_and_outruns_the_hero() -> void:
 	assert_almost_eq(ShockRing.radius_at(0.75, 1.2, 12.0, 0.25), 1.2 + 6.0, 0.001)
 	var f := load(Feel.PATH) as Feel
 	var sprint := f.speed * f.sprint_scale
-	assert_gt(_knight_def().ring_speed, sprint, "faster than the sprint: it cannot be outrun")
+	assert_gt(_knight_def().ring_speed, f.speed, "faster than the walk (SW-REA: the Butcher's 7.5 m/s; only the dodge crosses it, the sprint outruns it in the open)")
+	assert_gt(sprint, f.speed)
 	assert_eq(ShockRing.caught_in(5.0, 12.0, sprint) < INF, true)
 	assert_eq(ShockRing.caught_in(5.0, 12.0, 20.0), INF)
 
@@ -97,7 +98,7 @@ func test_armor_feels_only_strong_blows() -> void:
 
 func test_knight_is_quick_but_readable() -> void:
 	var d := _knight_def()
-	assert_lte(d.attack_windup, 0.6, "the charge's wind-up 0.6 s (it was 1.0)")
+	assert_lte(d.attack_windup, 0.65, "the charge's wind-up 0.65 s (SW-REA; it was 1.0)")
 	assert_lte(d.close_windup, 0.5, "the close blow 0.5 s (it was 0.8)")
 	assert_gte(d.attack_windup, 0.4, "a heavy blow is never under 0.4 s")
 	assert_gte(d.close_windup, 0.4)
@@ -112,7 +113,7 @@ func test_knight_is_quick_but_readable() -> void:
 	for m in d.moves:
 		if m.id == &"charge":
 			most = maxi(most, m.count)
-	assert_gte(most, 3, "the triple charge comes in a later phase")
+	assert_gte(most, 2, "the double charge comes in the last phase (40%)")
 
 
 func test_commons_wind_ups_tightened_with_a_floor() -> void:

@@ -108,7 +108,7 @@ func test_the_soldier_recovers_standing_still() -> void:
 	_room()
 	var e := _spawn(&"skeleton", Vector2(2.6, 0.0))
 	e.cooldown = 0.0
-	assert_almost_eq(e.def.recover_time, 1.2, 0.001)
+	assert_almost_eq(e.def.recover_time, 0.75, 0.001)  # SW-REA 2026-11-25: 1.2 before
 	var seen := false
 	for f in 240:
 		_frame()
@@ -126,9 +126,9 @@ func test_the_soldier_recovers_standing_still() -> void:
 	assert_eq(e.state, Enemy.State.WALK)
 
 
-## Every kind that recovers has the number of its counterpart in Hades II.
+## Every kind that recovers: SW-REA (2026-11-25) shortened them to the SWORN light enemies' (0.6 to 0.85 s standing).
 func test_recover_times() -> void:
-	var want := {&"skeleton": 1.2, &"skeleton_elite": 1.0, &"runner": 1.35, &"runner_elite": 0.5, &"guard": 1.1, &"archer": 0.6, &"mage": 0.8}
+	var want := {&"skeleton": 0.75, &"skeleton_elite": 0.65, &"runner": 0.8, &"runner_elite": 0.5, &"guard": 1.0, &"archer": 0.6, &"mage": 0.65}
 	for id: StringName in want:
 		var d: EnemyDef = load("res://data/enemies/%s.tres" % id)
 		assert_almost_eq(d.recover_time, float(want[id]), 0.001, String(id))

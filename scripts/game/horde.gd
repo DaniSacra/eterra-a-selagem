@@ -57,6 +57,8 @@ const KNIGHT_CALLS := 3
 const KNIGHT_GUARD := 4
 ## The knight winds up to hurl its shield (EnemyDef.throw_*).
 const KNIGHT_THROW := 5
+## The knight roars at the entry of a phase (EnemyDef.roar_marks), standing and hittable.
+const KNIGHT_ROAR := 6
 ## A charge follows him only from here on: closer, there would be no time to leave its line (docs/qa/c1_cadencia.md).
 const CHARGE_FOLLOW_FROM := 5.0
 ## Ranged enemies: the last seconds of a wind-up in which the aim no longer follows the paladin (his sidestep is
@@ -418,6 +420,7 @@ func _timers(e: Enemy, dt: float) -> void:
 	e.shove_t = maxf(0.0, e.shove_t - dt)
 	e.open_t = maxf(0.0, e.open_t - dt)
 	e.guard_cd -= dt
+	e.still_t = maxf(0.0, e.still_t - dt)
 	e.volley_cd -= dt
 	e.away_t = maxf(0.0, e.away_t - dt)
 	for k in e.move_cd.size():
@@ -426,6 +429,9 @@ func _timers(e: Enemy, dt: float) -> void:
 		e.guard_t = maxf(0.0, e.guard_t - dt)
 		if e.guard_t <= 0.0:
 			e.guard_cd = e.def.guard_up_every  # (K3: the next guard counts from this one's fall)
+			if e.def.guard_up_rest > 0.0 and e.state == Enemy.State.WALK:
+				e.still_t = e.def.guard_up_rest  # (the Butcher's spin ends with it standing, the window to punish)
+				e.cooldown = maxf(e.cooldown, e.def.guard_up_rest)
 	e.block_t = maxf(0.0, e.block_t - dt)
 	e.edge_t = maxf(0.0, e.edge_t - dt)
 	e.crack_t = maxf(0.0, e.crack_t - dt)
@@ -1010,9 +1016,17 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 					fx.ring(e.pos, d.radius + 0.8, EnemyFx.STEEL, 0.3, 0.15, true)
 					Audio.play(CombatSounds.EVENTS[&"ward"])
 				return
+			if e.memo == KNIGHT_ROAR:
+				e.dir = toward
+				if e.state_t >= d.roar_time:
+					e.memo = 0
+					e.cooldown = maxf(e.cooldown, 0.4)
+					_set_state(e, Enemy.State.WALK, &"walk")
+				return
 			if e.memo == KNIGHT_CALLS:
 				if e.state_t >= d.attack_windup:
 					e.rows = 0
+					e.call_cd = d.raise_cooldown
 					e.raised.append_array(_raise_dead(e, _calls(e)))
 					_set_state(e, Enemy.State.ATTACK, &"summon", false)
 				return
@@ -1078,10 +1092,26 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.dir = e.dir.slerp(toward, minf(1.0, dt * 6.0))
 				e.pos -= toward * _speed(e) * dt
 				return
+			if e.still_t > 0.0:
+				# the end of its guard: it stands, turning to him, and nothing else (the punish window)
+				e.facing_him = true
+				e.dir = e.dir.slerp(toward, minf(1.0, dt * 6.0))
+				return
+			if d.roar_time > 0.0 and target_alive and e.guard_t <= 0.0 and e.open_t <= 0.0 and e.away_t <= 0.0 \
+					and KnightPhase.roar_due(d.roar_marks, e.roars, toughness(e)):
+				# a phase begins: it stops and roars, hittable
+				e.roars = KnightPhase.crossed(d.roar_marks, toughness(e))
+				e.memo = KNIGHT_ROAR
+				e.dir = toward
+				_set_state(e, Enemy.State.WINDUP, &"summon")
+				fx.ring(e.pos, d.radius + 1.6, EnemyFx.STEEL, 0.5, 0.2, true)
+				fx.shake(2.0)
+				Audio.play(CombatSounds.EVENTS[&"summon"])
+				return
 			var guarded := e.guard_t > 0.0
 			_behave_melee_walk(e, dt, toward, dist)
 			if d.guard_up_time > 0.0 and not guarded and e.guard_cd <= 0.0 and target_alive and e.open_t <= 0.0 and e.away_t <= 0.0 \
-					and e.armor > d.armor * d.guard_up_armor:
+					and e.armor > d.armor * d.guard_up_armor and KnightPhase.guard_open(d.guard_up_life, d.guard_up_reach, toughness(e), dist):
 				e.memo = KNIGHT_GUARD
 				e.dir = toward
 				_set_state(e, Enemy.State.WINDUP, &"brace")
@@ -1096,7 +1126,8 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 					e.state_t = d.attack_windup - d.guard_up_hit_windup
 					e.cooldown = d.guard_up_hit_every
 				return
-			if d.raise_count > 0 and e.rows >= d.raise_every and e.cooldown <= 0.0 and target_alive and _calls(e) > 0:
+			if d.raise_count > 0 and e.rows >= d.raise_every and e.cooldown <= 0.0 and target_alive and toughness(e) <= d.raise_life \
+					and (d.raise_cooldown <= 0.0 or e.call_cd <= 0.0) and _calls(e) > 0:
 				# CV-2 (Daniel, 2026-11-22): it stands still, sword and shield up, and its dead rise
 				e.memo = KNIGHT_CALLS
 				e.dir = toward

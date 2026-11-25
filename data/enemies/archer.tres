@@ -27,6 +27,7 @@ attack_windup = 0.6400000000000001
 recover_time = 0.6
 windup_settle = 0.25
 recharge_windup = 0.6400000000000001
+roar_marks = PackedFloat32Array()
 guard_up_hit_windup = 0.68
 volley_windup = 0.8
 shot_relock = 0.4

@@ -191,6 +191,18 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 @export var guard_up_hit_every := 1.6
 @export var guard_up_hit_range := 1.6
 @export var guard_back_mult := 1.5
+## SW-REA (the Butcher's mad spin): the guard by time opens only with its toughness under guard_up_life of the full bar and the
+## paladin within guard_up_reach m (0: any), and it stands still guard_up_rest seconds when the guard falls by itself.
+@export var guard_up_life := 1.0
+@export var guard_up_reach := 0.0
+@export var guard_up_rest := 0.0
+## SW-REA (the Butcher's phases): its call opens only under raise_life of its toughness and, when raise_cooldown is over 0, no
+## oftener than that many seconds (the first after raise_first). roar_marks: the shares of toughness at which it stops and
+## roars roar_time seconds, hittable (KnightPhase).
+@export var raise_life := 1.0
+@export var raise_cooldown := 0.0
+@export var roar_marks := PackedFloat32Array()
+@export var roar_time := 0.0
 @export var guard_up_hit_damage := 12.0
 @export var guard_up_hit_windup := 0.85
 ## KNIGHT (K2): when the Brado takes its close slam, it stands open (stunned) this many seconds (0: it does not open).

@@ -28,7 +28,7 @@ func test_warnings_by_weight() -> void:
 	for id in ["skeleton", "runner", "mage", "archer", "priest", "saltador", "lancador", "trinca", "bone_rat"]:
 		assert_between(_def(id).attack_windup, 0.5, 0.7001, id + " common")
 	for id in ["skeleton_elite", "runner_elite", "mage_elite", "archer_elite", "guard_elite", "priest_elite", "trinca_elite", "priest_elder", "skeleton_big"]:
-		assert_between(_def(id).attack_windup, 0.8, 1.0001, id + " elite")
+		assert_between(_def(id).attack_windup, 0.7 if id in ["guard_elite", "skeleton_big"] else 0.8, 1.0001, id + " elite")
 	for id in ["varredor", "varredor_elite", "canalizador", "runner_big"]:
 		assert_between(_def(id).attack_windup, 1.2, 1.6, id + " big area")
 	assert_eq(_def("capitao").attack_windup, 1.2)
