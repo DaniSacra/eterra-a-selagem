@@ -48,4 +48,5 @@ cover_hug = 3.125
 max_attackers = 3
 close_windup = 0.52
 rating = 24.0
+cost = 9
 role = &"control"

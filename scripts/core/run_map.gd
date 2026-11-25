@@ -427,6 +427,11 @@ func _build() -> bool:
 			fountains.append(g - 1)
 	if _rng.randf() < stage.fountain_more_chance:
 		fountains.append_array(_event_depths(maxi(stage.fountain_depth_min, miniboss_depth + 1), stage.fountain_depth_max, 1.0, true, fountains))
+	# SW-R2: the rest after a guardian: one of the two doors of the room after him is a fountain too (the shop's room is not one)
+	if stage.rest_after_guardian:
+		for g: int in [miniboss_depth, miniboss2_depth]:
+			if g > 0 and g + 1 < stage.rooms and not fountains.has(g + 1):
+				fountains.append(g + 1)
 	var altar: Array[int] = []
 	if stage.altar_layout != null:
 		altar = _event_depths(stage.altar_depth_min, stage.altar_depth_max, stage.altar_chance, false, fountains)
@@ -577,8 +582,9 @@ func _place_arenas(d: int) -> void:
 				if not fresh.is_empty():
 					fit = fresh
 			r.variant = fit[roll % fit.size()] if r.kind != Kind.SHOP else 0
-			if r.kind != Kind.SHOP:
-				# (a shop is no fight's arena: the route shop of DV-2 never uses up the hall's)
+			if r.kind != Kind.SHOP and not (r.kind == Kind.FOUNTAIN and stage.rest_after_guardian):
+				# (a shop is no fight's arena: the route shop of DV-2 never uses up the hall's; nor do the fountains and the rests of
+				# SW-R2, four in a descent: the hall is the only place that has one)
 				uses[r.layout] = int(uses.get(r.layout, 0)) + 1
 			taken.append(r.layout)
 		_uses[id] = uses
@@ -594,6 +600,7 @@ func _place_arenas(d: int) -> void:
 ## angels when its card off the angels' deck says so (StageDef.angel_deck, dice of their own: the map of before stays).
 func _draw_rewards(d: int) -> void:
 	var used: Array[int] = []
+	var fixed_taken := 0
 	for id in layers[d]:
 		var r := nodes[id]
 		var most := 0
@@ -605,6 +612,16 @@ func _draw_rewards(d: int) -> void:
 				# the hall's: no door shows it; PT-8 (Daniel, 2026-11-23): a guardian's door shows its own angel, so the
 				# two guardians side by side are two different Blessings and the fight is chosen by the angel
 				r.meeting = r.kind != Kind.MINIBOSS
+			continue
+		# SW-R2: a depth with fixed rewards gives them to its rooms of fight in order (the rest are drawn as always)
+		var fixed: PackedInt32Array = stage.fixed_rewards.get(d, PackedInt32Array())
+		if fixed_taken < fixed.size():
+			r.reward = fixed[fixed_taken] as Reward
+			fixed_taken += 1
+			used.append(r.reward)
+			_enchants[id] = most
+			if r.reward == Reward.BOON:
+				r.meeting = _angel_deck.draw(_angel_rng, func(_c: int) -> bool: return true) == 1
 			continue
 		var beside := {}
 		for p in _parents[id]:

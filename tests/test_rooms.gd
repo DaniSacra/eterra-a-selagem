@@ -29,8 +29,8 @@ func test_waves_carry_about_the_difficulty() -> void:
 			for w in waves:
 				assert_false(w.is_empty(), "no empty wave")
 				for id: StringName in w:
-					total += (defs[id] as EnemyDef).rating
-			var want := EncounterGen.difficulty(stage, depth) * EncounterGen.budget(stage, depth)  # (C1b: a room's own share)
+					total += (defs[id] as EnemyDef).cost_of()
+			var want := EncounterGen.cost_budget(stage, depth)  # (SW-R1: a room's own budget, in head costs)
 			assert_gte(total, want * 0.5, "depth %d" % depth)
 
 
@@ -75,7 +75,7 @@ func test_map_runs_opening_guardian_shop_boss() -> void:
 	assert_eq(kinds.count(RunMap.Kind.MINIBOSS), 2, "both guardians, then Morvath (Daniel, 2026-11-22)")
 	assert_eq(kinds[kinds.size() - 2], RunMap.Kind.SHOP)
 	assert_eq(map.depth, stage.rooms + 1)
-	assert_lte(fountains, 2, "the fountain taken whenever its door shows (one before each guardian)")
+	assert_lte(fountains, 4, "the fountain taken whenever its door shows (one before each guardian, a rest after each: SW-R2)")
 	var guardian := kinds.find(RunMap.Kind.MINIBOSS) + 2
 	assert_between(guardian, stage.miniboss_depth_min, stage.miniboss_depth_max)
 

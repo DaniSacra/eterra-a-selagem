@@ -650,3 +650,25 @@ PT-6 e PT-11 entraram na `arpg-3d` (merge sem conflito, dados regerados sem dife
 
 - **PT-6b (2026-11-25)**: as portas em uso são as primeiras da lista `exits` (`exit_count`), então as duas primeiras ficam juntas no canto nordeste (4,2 m entre centros, fora da parede leste) e a terceira à esquerda; Altar com as duas na parede leste. `tests/test_door_corner.gd` trava a regra.
 - **PT-6b, sala 1 (Salão)**: `CatacombHall.PORTAL_X` foi para 10,5 (o lance de degraus `FLIGHT`, estátuas, contrafortes, nichos, bandeira e urnas andam junto) e a escada leste desceu para o canto norte da parede (`EAST_GAP` z -13,6 a -10): portas em (10,5; -13,8) e (14,2; -11,8), 4,2 m. As pilhas de caixas do pé dos degraus foram para o lado oeste e a bilha/velas da parede leste para z -7,4. Teste em `tests/test_door_corner.gd`.
+
+## Fase 2 do Plano SWORN, ritmo das salas e da descida (SW-R1 a SW-R3; 2026-11-25; `tests/test_sw_r.gd`)
+Números de referência: `docs/design/sworn_rea_kingswood_2026-11-25.md` seções 3.1 e 3.2. Plano e tabelas: `docs/design/rooms_progression.md`
+("Fase 2 SWORN").
+- **SW-R1, orçamento de inimigos.** `EnemyDef.cost` (dado em `ENEMY_COST` do `make_data.gd`; 0 vale 0,6 do `rating`, `cost_of()`): pequeno 1
+  (Rato de osso), comum 3, atirador 4, pesado 5, elite o dobro do tipo (6 a 12), maior 8 ou 9, Capitão 12. `StageDef.cost_curve` (um número por
+  sala 1 a 12; depois da lista, a dificuldade antiga x `cost_per_rating`) é o orçamento de UMA onda inteira (`EncounterGen.cost_budget`).
+  Cada sala de luta sorteia como é lutada (`EncounterGen.plan`, `Fight.mode`): `horde_share` 0,5 de horda (duas ondas de `horde_initial` e
+  `horde_reserve` 0,75, a reserva entra atrás da primeira assim que a fila esvazia, sem esperar o chão limpar: `Rooms._horde`), o resto
+  uma onda de `wave_coef_one` 1,0 ou, em `two_wave_share` 0,5, duas de `wave_coef_two` (0,6; SWORN 0,75, mas a nossa espera o chão limpar entre
+  as duas e leva 10 s a mais). A onda deixou de ser cortada no máximo de corpos de pé: é uma fila (no máximo `wave_most` 20) que sobe conforme há
+  lugar (`Fight.cap`, o que já valia). Sala longa (`long_depths`) virou toda sala de luta: corpos um a um e a última onda com 1 elite. `rooms[].budget`
+  e `rooms[].mode` (`horde`, `waves1`, `waves2`) no `RESULT` (`RoomTally.note`). `tools/budget_probe.gd` imprime cabeças, custo e modos por sala.
+- **SW-R2, âncoras.** `StageDef.rest_after_guardian`: uma das duas portas da sala depois de cada guardião (6 e 11) é uma fonte (o descanso, o
+  `Kind.FOUNTAIN` de sempre, 40% de cura; as duas portas seguem juntas; a fonte não gasta o uso do Salão em `arena_max_uses`).
+  `StageDef.fixed_rewards` (profundidade -> recompensas em ordem de slot, só nas portas de luta; as demais saem do baralho como sempre; as fixas
+  não tiram carta dele): 2 Bênção e Coração, 7 Romã e Magia, 11 Bênção e Ouro. A 1 já era Bênção, a loja é sempre a 13, os guardiões na 5 e na 10.
+  `Rooms.short_stage` zera os dois campos. Um caminho tem até 4 fontes (antes 2). `tools/run_map_probe.gd` conta as tentativas do grafo.
+- **SW-R3, zonas mortas.** `RoomLayout.far_spawn` (Fendas e Santuário 1,5): o peso de cada zona de nascimento (`Rooms.spawn_weights`) é a área
+  vezes (distância do centro dela ao herói sobre 8 m, entre 0,25 e 3) elevada a isso, então o próximo inimigo sobe do lado em que o herói não
+  está; as zonas tardias abrem depois de 4 cabeças (`Rooms.LATE_AFTER`) e não só na 2a onda, para a horda e a sala de uma onda também as usarem.
+  As áreas do Santuário `aisles` viraram `aisle_n` e `aisle_s`.

@@ -34,5 +34,6 @@ attack_width = 1.1
 per_room = 1
 close_windup = 0.6
 rating = 22.0
+cost = 5
 role = &"sweep"
 elite_version = &"varredor_elite"

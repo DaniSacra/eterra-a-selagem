@@ -70,7 +70,8 @@ func test_at_most_one_from_the_4th_room_always_beside_another_kind() -> void:
 					others += 1
 			assert_gt(others, 0, "a head of another role stands beside it")
 		for w: Array in f.waves:
-			assert_lte(EncounterGen.bodies(w, defs), maxi(f.ceiling, f.kinds.size()) + 1, "within the bodies the room allows")
+			assert_lte(EncounterGen.bodies(w, defs), stage.wave_most + 1, "within the queue the room allows (SW-R1: the floor holds f.cap of them)")
+			assert_lte(f.cap, f.ceiling)
 			assert_lte(f.ceiling, 20)
 	assert_gt(seen, 20, "it does come")
 

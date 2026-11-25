@@ -99,6 +99,11 @@ var _waves: Array[Array] = []
 var _mods: Dictionary = {}
 var _queue: Array[StringName] = []
 var _wave := -1
+## SW-R3: heads that rose in this room; from LATE_AFTER on the late zones are open even in the first wave (a horde has no second one).
+var _rose := 0
+## SW-R1: the room is a horde: the reserve rises behind the first wave as soon as its queue is empty, with no wait for the floor to clear.
+var _horde := false
+const LATE_AFTER := 4
 var _spawn_t := 0.0
 var _wave_wait := 0.0
 var _cap := 4
@@ -188,6 +193,8 @@ static func short_stage(full: StageDef, rooms_: int) -> StageDef:
 	st.rooms = rooms_
 	st.elite_from_depth = 2
 	st.miniboss2_depth_min = 0  # (one guardian: there is no room for two)
+	st.rest_after_guardian = false  # (SW-R2: the fixed doors and the rest are the long descent's)
+	st.fixed_rewards = {}
 	if rooms_ <= 4:
 		st.fountain_depth_min = 2
 		st.fountain_depth_max = 2
@@ -425,6 +432,8 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 	_waves.clear()
 	_mods.clear()
 	_wave = -1
+	_rose = 0
+	_horde = false
 	_wave_wait = START_DELAY
 	# nobody stands past the stage's ceiling, summons included; a fight lowers it to its tier's most
 	game.horde.alive_cap = stage.alive_cap
@@ -452,6 +461,9 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 			var fight := room.fight if room.fight != null else EncounterGen.generate(stage, room.depth, _defs, _rng, 1.0, layout)
 			_waves = _cursed_waves(game.juramentos.more_waves(fight.waves) if game.juramentos else fight.waves)
 			_mods = fight.mods.duplicate(true)
+			game.room_tally.note("budget", fight.budget)
+			_horde = fight.mode == EncounterGen.Mode.HORDE
+			game.room_tally.note("mode", "horde" if _horde else "waves%d" % fight.waves.size())
 			var rating := 0.0
 			for w: Array in fight.waves:
 				for id: StringName in w:
@@ -560,7 +572,9 @@ func _step_fight(dt: float) -> void:
 		return
 	var alive := game.horde.count()
 	if _wave + 1 < _waves.size():
-		if alive <= stage.wave_remaining:
+		if _horde:
+			_next_wave()  # (SW-R1: the reserve is queued behind the heads still waiting; the cap holds those standing)
+		elif alive <= stage.wave_remaining:
 			_wave_wait = stage.wave_delay
 			if EncounterGen.is_long(stage, room.depth) and room.kind == RunMap.Kind.COMBAT:
 				_wave_wait = stage.long_delay
@@ -637,7 +651,24 @@ const SPAWN_TRIES := 16
 ## Where an enemy rises (cycle C12, BUG-016): in one of the arena's spawn zones (anywhere on its floor when it has
 ## none), on free floor reached from where the paladin stands, never within SPAWN_CLEAR of him.
 func _spawn_point() -> Vector2:
-	return spawn_point(game.arena, game.player.pos, _rng, _wave > 0)
+	_rose += 1
+	return spawn_point(game.arena, game.player.pos, _rng, _wave > 0 or _rose > LATE_AFTER)
+
+
+## The weight of each spawn zone (the arena's, and the late ones when `late`): its area, times (its centre's distance from the paladin over
+## 8 m, between a quarter and 3) to the power of RoomLayout.far_spawn (SW-R3).
+static func spawn_weights(arena: Arena, hero: Vector2, late := false) -> PackedFloat32Array:
+	var zones: Array[Rect2] = arena.spawns.duplicate()
+	if late:
+		zones.append_array(arena.late_spawns)
+	var far: float = arena.layout.far_spawn if arena.layout != null else 0.0
+	var out := PackedFloat32Array()
+	for z: Rect2 in zones:
+		var w := maxf(z.get_area(), 0.01)
+		if far > 0.0:
+			w *= pow(clampf(z.get_center().distance_to(hero) / 8.0, 0.25, 3.0), far)
+		out.append(w)
+	return out
 
 
 static func spawn_point(arena: Arena, hero: Vector2, rng: RandomNumberGenerator, late := false) -> Vector2:
@@ -646,9 +677,9 @@ static func spawn_point(arena: Arena, hero: Vector2, rng: RandomNumberGenerator,
 		zones.append_array(arena.late_spawns)
 	if zones.is_empty():
 		zones.append(arena.shape().bounds().grow(-2.5))
-	var area := PackedFloat32Array()
-	for z: Rect2 in zones:
-		area.append(maxf(z.get_area(), 0.01))
+	var area := spawn_weights(arena, hero, late)
+	if area.size() != zones.size():
+		area = PackedFloat32Array([1.0])  # (no zone of its own: the whole floor)
 	var best := arena.resolve(zones[0].get_center(), 0.6)
 	for attempt in SPAWN_TRIES:
 		var z := zones[rng.rand_weighted(area)]

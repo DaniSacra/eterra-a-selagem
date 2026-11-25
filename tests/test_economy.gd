@@ -61,6 +61,7 @@ func test_doors_of_a_room_never_repeat_and_the_deck_runs_down() -> void:
 	# (a deck of 8 cards, so graphs of two rooms a layer run it down; the stage's of 21 seldom ends in a descent)
 	var small: StageDef = stage.duplicate()
 	small.reward_deck = PackedInt32Array([R.BOON, R.BOON, R.BOON, R.BOON, R.POM, R.HEART, R.MAGICK, R.GOLD])
+	small.fixed_rewards = {}  # (SW-R2: the fixed doors take no card off the deck)
 	for s in 50:
 		var map := RunMap.new(small, s)
 		var fights := 0

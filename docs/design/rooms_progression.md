@@ -25,6 +25,50 @@ como evolui e as métricas do robô que provam que ela joga diferente. Base das 
 
 ---
 
+## Fase 2 SWORN, ritmo das salas e da descida (2026-11-25; `room-designer`; SW-R1 a SW-R3)
+
+Referência: Kingswood (`docs/design/sworn_rea_kingswood_2026-11-25.md` 3.1 e 3.2): orçamento 4 na sala 0, 8 na 5, 6 logo depois do minichefe,
+11 do fim em diante; pequeno 1, comum 3, pesado 5, capitão 10; combate comum 50% ondas (uma de 1,0 ou duas de 0,75) e 50% horda (0,75 + 0,75);
+sala 2 com Bênção garantida e a 6 minichefe. Código e dados: `docs/reference/rooms.md` (Fase 2 do Plano SWORN).
+
+**A nossa escala.** O custo de uma cabeça (`EnemyDef.cost`): Rato de osso 1; comuns 3 (Soldado, Corredor, Saltador, Lançador, Gritador, Coveiro,
+Armadilheiro); atiradores 4 (Maga, Besteiro); pesados 5 (Escudeiro, Sacerdote, Trinca, Varredor, Canalizador); elites o dobro do tipo (6 a 12);
+maiores 8 e 9; Capitão 12 (o de SWORN é 10, o nosso tem 5,5 vezes a vida). O orçamento é o de UMA onda inteira, e o que um custo vale em segundos
+cresce com a profundidade (as elites e os pesados entram, a vida dos comuns é 1,6 vezes a de antes), por isso a nossa curva não é a de SWORN
+multiplicada: a forma é a dele (sobe até o guardião, cai na sala depois, sobe de novo) e os números saíram do tempo medido no robô.
+
+| Sala | SWORN | Nossa curva (custo de uma onda) | Tempo de luta no robô, antes | depois (n) | Vida ao entrar, antes | depois |
+|---|---|---|---|---|---|---|
+| 1 | 4 | 20 | 32 s | 29 s (6) | 40 | 40 |
+| 2 | 5,3 | 28 | 37 | 31 (6) | 38 | 38 |
+| 3 | 6,7 | 30 | 44 | 36 (6) | 34 | 38 |
+| 4 | 8 | 34 | 32 (3) | 44 (5) | 33 | 40 |
+| 5 guardião | 8 | (a luta de guardião de sempre) | 55 | 55 | 37 | 46 |
+| 6 respiro | 6 | 14 | 63 | 33 (3) | 31 | 44 |
+| 7 | 6,5 | 18 | 56 | 43 (6) | 27 | 46 |
+| 8 | 7 | 21 | 75 | 54 (5) | 29 | 46 |
+| 9 | 8,5 | 27 | 41 (1) | 51 (4) | 32 | 42 |
+| 10 guardião | | (idem) | 61 | 61 | 44 | 43 |
+| 11 respiro | 9 | 20 | 53 (4) | 62 (2) | 41 | 35 |
+| 12 | 11 | 22 | 32 (4) | 45 (6) | 38 | 46 |
+(Robô, `smoke 900`, sementes 1 a 6, só as salas de luta com 3 cabeças ou mais; n entre parênteses; a sala 11 tem poucas porque o robô toma a fonte.)
+Média de luta por sala 47,8 s antes (66% das salas entre 25 e 55 s) e 41,3 s depois (76% entre 25 e 55 s). Por modo: uma onda 28 s, duas ondas 40 s,
+horda 46 s. Chegada em Morvath: 4 de 6 antes, 5 de 6 depois (a semente 6 morreu na sala 12); `stuck` 0 nas duas.
+
+**O respiro.** A sala 6 pede 14 de orçamento contra 34 da 4 e 27 da 9 (a 11 pede 20): a luta mais leve da descida vem logo depois de cada guardião,
+e uma das duas portas da sala 6 e da 11 é uma fonte (SW-R2). Vida do robô ao entrar na sala 6: 31 antes, 44 depois.
+
+**Salas âncora (SW-R2).** Guardiões nas salas 5 e 10; loja na 13; Bênção na 1 e na 2; Coração na outra porta da 2; Romã e Magia na 7; Bênção
+e Ouro na 11; descanso (fonte) em uma porta da 6 e da 11. O resto sai do baralho como sempre. O teste (`test_sw_r.gd`, 300 descidas) trava tudo.
+Risco: 4 fontes possíveis num caminho (eram 2); a cura sobe se o jogador as tomar todas. Se o equilíbrio pedir, o descanso pode ganhar cura própria
+(`fountain_heal` menor) sem código novo no mapa.
+
+**Zonas mortas (SW-R3).** Fendas e Santuário sorteiam a zona de nascimento mais longe do herói (`far_spawn` 1,5). Fendas, herói na plataforma leste:
+167 de 300 cabeças sobem a oeste do vão contra 83 sem o peso (`test_sw_r.gd`). O tempo do herói por zona no robô quase não mudou nas Fendas
+(leste 82% antes, 77% depois, o herói luta onde os inimigos chegam; a meta de 60% **não** foi atingida, o que puxa o herói para o oeste é ouro e
+quebráveis nos cantos, que ficam com o `environment-artist`/AT-Q2). Santuário: as duas naves laterais, que antes eram uma zona só (`aisles` 61 a 65%),
+viraram `aisle_n` e `aisle_s`: nave 36%, naves 30% e 26%, colunata 6%, nenhuma acima de 60%; as de borda juntas passam de 15%.
+
 ## Feito em 2026-11-20 (gameplay-engineer): RP-16 e RP-17
 
 - **RP-16, seteira ligada à laje, na Cripta B.** As duas lajes do pé do muro divisor (RP-06) armam cada uma a seteira do

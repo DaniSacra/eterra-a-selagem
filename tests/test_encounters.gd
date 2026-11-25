@@ -70,8 +70,8 @@ func test_no_wave_and_no_floor_past_the_tier_or_twenty() -> void:
 				assert_lte(fight.cap, fight.ceiling)
 				assert_between(fight.waves.size(), 1, 3)
 				for w: Array in fight.waves:  # (C5: a head of a trinca stands for its figures: bodies, not heads)
-					assert_between(EncounterGen.bodies(w, defs), mini(r.x, st.long_fewest) if EncounterGen.is_long(st, depth) else r.x, r.y, "a wave fits its tier (depth %d, tier %d)" % [depth, fight.tier])
-					assert_lte(EncounterGen.bodies(w, defs), 20)
+					# (SW-R1: a wave is a queue that rises as the floor has room, the tier's range is what stands at once: cap)
+					assert_between(EncounterGen.bodies(w, defs), mini(r.x, st.long_fewest) if EncounterGen.is_long(st, depth) else r.x, st.wave_most + 1, "a wave fits its queue (depth %d, tier %d)" % [depth, fight.tier])
 
 
 func test_parts_grow_with_depth() -> void:

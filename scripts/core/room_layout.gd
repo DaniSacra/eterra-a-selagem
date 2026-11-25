@@ -85,6 +85,9 @@ enum Size { SMALL, MEDIUM, LARGE, LONG }
 @export var spawns: Array[Rect2] = []
 ## Zones used only from the second wave on (near the way in: the first wave never rises beside the paladin).
 @export var late_spawns: Array[Rect2] = []
+## SW-R3 (the dead zones): how much more a spawn zone far from the paladin weighs than one beside him (its distance over 8 m, to this
+## power; 0: by area only, as before). With zones on both sides of the room the next enemy rises on the side he is not standing on.
+@export var far_spawn := 0.0
 ## Its doors, in order (empty: the look places them, as the catacomb hall does).
 @export var exits: Array[ArenaExit] = []
 ## The box the point the camera looks at stays inside (zero size: the room's rectangle less Game.CAM_MARGIN).

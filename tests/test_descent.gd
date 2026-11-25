@@ -130,15 +130,15 @@ func _broken(map: RunMap, opening: StringName) -> String:
 		var kinds := way.map(func(r: RunMap.Room) -> int: return r.kind)
 		if kinds.count(RunMap.Kind.MINIBOSS) != 2 or kinds[12] != RunMap.Kind.SHOP or kinds[13] != RunMap.Kind.BOSS or kinds[4] != RunMap.Kind.MINIBOSS or kinds[9] != RunMap.Kind.MINIBOSS:
 			return "a way without its guardian, shop or Morvath"
-		if kinds.count(RunMap.Kind.FOUNTAIN) > 2:
-			return "three fountains on a way"
+		if kinds.count(RunMap.Kind.FOUNTAIN) > 4:
+			return "five fountains on a way"
 		if way.filter(func(r: RunMap.Room) -> bool: return r.trial).size() > 1:
 			return "two \"?\" on a way"
 		var uses := {}
 		for i in way.size():
 			var r: RunMap.Room = way[i]
 			# (a shop is no fight's arena: the route shop of DV-2 never uses the hall up)
-			if r.layout >= 0 and r.kind != RunMap.Kind.SHOP:
+			if r.layout >= 0 and r.kind != RunMap.Kind.SHOP and r.kind != RunMap.Kind.FOUNTAIN:  # (nor the fountains and the rests, SW-R2)
 				uses[r.layout] = int(uses.get(r.layout, 0)) + 1
 			if (r.kind == RunMap.Kind.COMBAT or r.kind == RunMap.Kind.MINIBOSS) and i > 0:
 				var l := stage.layouts[r.layout]
@@ -447,7 +447,7 @@ func test_the_three_arenas_of_e5() -> void:
 	assert_eq(s.size_class, RoomLayout.Size.LARGE)
 	assert_eq(s.depth, Vector2(0.4, 1.0))
 	assert_eq(s.area_at(Vector2(0, 0)), "nave")
-	assert_eq(s.area_at(Vector2(0, 10)), "aisles")
+	assert_eq(s.area_at(Vector2(0, 10)), "aisle_s")
 	assert_eq(s.variant(1).floor.holes.size(), 1, "B: the nave fell in")
 	var b: RoomLayout = by[&"bridge"]
 	assert_eq(b.size_class, RoomLayout.Size.LONG)

@@ -49,4 +49,5 @@ group = 4
 rise_time = 3.5
 close_windup = 0.52
 rating = 28.0
+cost = 10
 role = &"swarm"

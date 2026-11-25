@@ -1139,6 +1139,7 @@ area_names = PackedStringArray("bridge_n", "bridge_s", "south_way", "west", "eas
 obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_edqrd"), SubResource("Resource_4maq2"), SubResource("Resource_gwcyj"), SubResource("Resource_bxin2"), SubResource("Resource_tlv08"), SubResource("Resource_tc8an"), SubResource("Resource_slhqw"), SubResource("Resource_fxr16"), SubResource("Resource_s8mvf")])
 spawns = Array[Rect2]([Rect2(5, -13.5, 6, 3), Rect2(16, -8, 3.5, 6), Rect2(5, 7, 6, 5)])
 late_spawns = Array[Rect2]([Rect2(-17, -13, 6, 4)])
+far_spawn = 1.5
 exits = Array[ExtResource("2_kin83")]([SubResource("Resource_i4d1g"), SubResource("Resource_736p0"), SubResource("Resource_mwswc")])
 cam_bounds = Rect2(-6, -4, 13, 9)
 variants = Array[ExtResource("6_0uifc")]([SubResource("Resource_1lccg")])
@@ -2264,7 +2265,7 @@ floor = SubResource("Resource_cmyrb")
 hazard = SubResource("Resource_dvch8")
 gather_spots = PackedVector2Array()
 areas = Array[Rect2]([Rect2(-2.6, -1.5, 3, 3), Rect2(9.6, -1.5, 3, 3), Rect2(-22, -5.35, 44, 10.7), Rect2(-22, -14, 44, 8.65), Rect2(-22, 5.35, 44, 8.65)])
-area_names = PackedStringArray("hole_edge", "hole_edge", "nave", "aisles", "aisles")
+area_names = PackedStringArray("hole_edge", "hole_edge", "nave", "aisle_n", "aisle_s")
 
 [sub_resource type="Resource" id="Resource_hj5ps"]
 script = ExtResource("7_gcpwj")
@@ -2489,7 +2490,7 @@ obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_we4hx"), SubRes
 hazard = SubResource("Resource_0qmap")
 gather_spots = PackedVector2Array()
 areas = Array[Rect2]([Rect2(1, -5.35, 12, 10.7), Rect2(-22, -5.35, 44, 10.7), Rect2(-22, -14, 44, 8.65), Rect2(-22, 5.35, 44, 8.65)])
-area_names = PackedStringArray("colonnade", "nave", "aisles", "aisles")
+area_names = PackedStringArray("colonnade", "nave", "aisle_n", "aisle_s")
 
 [sub_resource type="Resource" id="Resource_fpmnw"]
 script = ExtResource("5_51rpt")
@@ -2511,10 +2512,11 @@ breakables = Array[ExtResource("1_63so8")]([SubResource("Resource_vk8gc"), SubRe
 gather_spots = PackedVector2Array()
 relic_spots = PackedVector2Array(-18.5, 10.5)
 areas = Array[Rect2]([Rect2(-22, -5.35, 44, 10.7), Rect2(-22, -14, 44, 8.65), Rect2(-22, 5.35, 44, 8.65)])
-area_names = PackedStringArray("nave", "aisles", "aisles")
+area_names = PackedStringArray("nave", "aisle_n", "aisle_s")
 obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_6o2d6"), SubResource("Resource_5i63d"), SubResource("Resource_qu1hp"), SubResource("Resource_333ks"), SubResource("Resource_v12nd"), SubResource("Resource_ev16v"), SubResource("Resource_p0kke"), SubResource("Resource_42xvp"), SubResource("Resource_d810h"), SubResource("Resource_gms2l"), SubResource("Resource_o5rgu"), SubResource("Resource_rd7xm"), SubResource("Resource_hi2o5"), SubResource("Resource_gwjfv"), SubResource("Resource_5dx42"), SubResource("Resource_mpe47"), SubResource("Resource_hte3m"), SubResource("Resource_e051g"), SubResource("Resource_nb2e8"), SubResource("Resource_6vftr"), SubResource("Resource_7gp4h"), SubResource("Resource_cer1y"), SubResource("Resource_j4xqv")])
 spawns = Array[Rect2]([Rect2(-20, -3, 6, 6), Rect2(-19, 8, 4, 3), Rect2(-8, -12, 6, 3.5), Rect2(4, 8, 8, 4), Rect2(-2, -12, 8, 3.5)])
 late_spawns = Array[Rect2]([Rect2(10, 8, 6, 4)])
+far_spawn = 1.5
 exits = Array[ExtResource("2_kin83")]([SubResource("Resource_vw57o"), SubResource("Resource_8ymur"), SubResource("Resource_uegtj")])
 cam_bounds = Rect2(-10, -2, 20, 4)
 variants = Array[ExtResource("6_0uifc")]([SubResource("Resource_4nt1u"), SubResource("Resource_2daau")])
@@ -3814,9 +3816,17 @@ mod_chance = 0.1
 wave_split = Array[PackedFloat32Array]([PackedFloat32Array(1), PackedFloat32Array(0.5, 0.5), PackedFloat32Array(0.3, 0.15, 0.55)])
 tier_alive = Array[Vector2i]([Vector2i(3, 6), Vector2i(7, 11), Vector2i(11, 15)])
 pools = Array[ExtResource("8_otjkh")]([SubResource("Resource_vql4w"), SubResource("Resource_shb6m"), SubResource("Resource_ny7te"), SubResource("Resource_cs4yg"), SubResource("Resource_y46rs"), SubResource("Resource_0xstb"), SubResource("Resource_21pvg"), SubResource("Resource_m63gs"), SubResource("Resource_u5i2a"), SubResource("Resource_vvay1"), SubResource("Resource_c7m72"), SubResource("Resource_3ba3k"), SubResource("Resource_bqax2"), SubResource("Resource_rqkun"), SubResource("Resource_j3syo"), SubResource("Resource_nt5bl"), SubResource("Resource_vjf33"), SubResource("Resource_ewiav"), SubResource("Resource_gvr0o"), SubResource("Resource_53ux3"), SubResource("Resource_pungu"), SubResource("Resource_im4cu"), SubResource("Resource_oxkdo"), SubResource("Resource_t2m83"), SubResource("Resource_jrwff"), SubResource("Resource_3vdl5"), SubResource("Resource_5lfwt"), SubResource("Resource_jg0s0"), SubResource("Resource_vxcd8"), SubResource("Resource_k8wtp"), SubResource("Resource_ehiul"), SubResource("Resource_5i08a"), SubResource("Resource_gck54"), SubResource("Resource_obdwm"), SubResource("Resource_au1mj"), SubResource("Resource_w43o0"), SubResource("Resource_7cdwf"), SubResource("Resource_bnpyn"), SubResource("Resource_e7cgp"), SubResource("Resource_pr65e"), SubResource("Resource_ei4x5")])
-long_depths = PackedInt32Array(2, 3, 4, 6, 7, 8, 9)
+long_depths = PackedInt32Array(1, 2, 3, 4, 6, 7, 8, 9, 11, 12)
 long_gap = Vector2(0.45, 0.75)
 long_delay = 0.8
+cost_curve = PackedFloat32Array(20, 28, 30, 34, 34, 14, 18, 21, 27, 27, 20, 22)
+wave_coef_two = 0.6
+rest_after_guardian = true
+fixed_rewards = {
+2: PackedInt32Array(1, 3),
+7: PackedInt32Array(2, 4),
+11: PackedInt32Array(1, 5)
+}
 reward_deck = PackedInt32Array(1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 3, 8, 9, 10, 10, 11)
 gold_per_depth = 0.8
 silver_elite = 2

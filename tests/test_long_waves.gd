@@ -21,14 +21,15 @@ func _fight(depth: int, seed_: int) -> EncounterGen.Fight:
 	return EncounterGen.generate(stage, depth, defs, rng)
 
 
-func test_the_short_rooms_are_long() -> void:
-	for depth in [2, 3, 4, 6, 7, 8, 9]:
+func test_every_fight_room_rises_one_by_one() -> void:
+	for depth in [1, 2, 3, 4, 6, 7, 8, 9, 11, 12]:
 		assert_true(EncounterGen.is_long(stage, depth), "room %d is long" % depth)
-	for depth in [1, 5, 10]:
-		assert_false(EncounterGen.is_long(stage, depth), "room %d is not" % depth)
+	for depth in [5, 10]:
+		assert_false(EncounterGen.is_long(stage, depth), "room %d is a guardian's" % depth)
 
 
-func test_three_waves_the_last_with_an_elite() -> void:
+func test_the_last_wave_carries_an_elite() -> void:
+	# (SW-R1: a room is one wave, two or a horde; the last of them carries the elite when a kind of the fight has one)
 	var with_elite := 0
 	var tried := 0
 	for depth in [4, 6, 7, 8, 9]:
@@ -37,8 +38,7 @@ func test_three_waves_the_last_with_an_elite() -> void:
 			if f.waves.is_empty():
 				continue
 			tried += 1
-			assert_eq(f.waves.size(), 3, "room %d seed %d: 3 waves" % [depth, seed_])
-			var last: Array = f.waves[2]
+			var last: Array = f.waves[f.waves.size() - 1]
 			var elite := false
 			for id: StringName in last:
 				elite = elite or (defs[id] as EnemyDef).elite
@@ -51,22 +51,6 @@ func test_three_waves_the_last_with_an_elite() -> void:
 			for w in f.waves:
 				assert_gte(EncounterGen.bodies(w, defs), 1)
 	assert_gt(with_elite, tried / 2, "most of them could")
-
-
-func test_the_life_is_about_the_same() -> void:
-	# the heads' rating of a long room is not above the room's difficulty by more than one head of the most expensive kind
-	for depth in [2, 4, 7]:
-		for seed_ in 8:
-			var f := _fight(depth, seed_ + 1)
-			var total := 0.0
-			var dearest := 0.0
-			for w in f.waves:
-				for id: StringName in w:
-					var r := (defs[id] as EnemyDef).rating
-					total += r
-					dearest = maxf(dearest, r)
-			var want := EncounterGen.difficulty(stage, depth) * EncounterGen.budget(stage, depth)
-			assert_lt(total, want * 1.35 + 3.0 * dearest, "room %d seed %d: %f of %f" % [depth, seed_, total, want])
 
 
 func test_a_wall_is_found_along_the_line() -> void:
