@@ -1777,3 +1777,17 @@ a pede. A posição da faixa ficou com o dono do lote (o room-designer não escr
 - O realce de ouro do quebrável mais perto do caminho (SW-O3) não entrou: é arte (`environment-artist`); o `Rooms.ante_ctx()` já diz
   quando um vaso inteiro está a 5 m.
 - O robô com `--first`: sai da Antessala em cerca de 15 s de jogo (ver `docs/reference/rooms.md`, "Primeira descida guiada").
+
+### Antessala que ensina e o riacho (PT-25-8 e PT-25-9, 2026-11-25, E2)
+
+- **Mudou**: as 3 lajes de aprender saíram. No lugar, um **riacho** de parede a parede (`ANTE_GAP`, x -16,5 a 16,5, z -10,6 a -8,0, 2,6 m de largura) entre a entrada
+  (sudoeste, z 18,1) e a porta (nordeste, mouth z -17 a -12,6): só a esquiva (5,6 m) atravessa; andar para na margem. entre as jarras do oeste (z -6,6 e -12,4) e a 1,5 m ou mais da boca da porta, com
+  espaço na margem norte para treinar Brado e Investida. Sem dano (`gap_fall` 0).
+- **Ideia de jogo**: a esquiva deixa de ser uma regra no papel e vira o caminho; uma pessoa que nunca jogou só sai da sala fazendo o gesto. A porta só acende depois das dicas e da
+  Bênção, então a Antessala sempre termina com a pessoa tendo usado ataque, especial, esquiva, Brado e Investida e tendo uma Bênção.
+- **Regra do perigo/obstáculo reaproveitável** (E4): `RoomLayout.gaps` (retângulos de 2 a 4 m) e `gap_fall` (dano de cair, devolve à margem mais perto, nunca mata); um
+  obstáculo novo com esse comportamento é só dado. Nas salas comuns será opcional (nunca a única passagem) com um quebrável ou baú do outro lado.
+- **Métricas** (robô `--first`, 4 sementes: 3, 5, 7, 11): sai da Antessala em 7,7 s, primeira Bênção aos 7,2 s (era 68 s antes e 2 min de meta), `stuck` 0, chega a Morvath nas 4.
+  Descida normal (sementes 5 e 9, 900 s): chega a Morvath, `stuck` 0.
+- **Riscos**: texto das dicas passa de 70 caracteres (a linha de objetivo tem 380 px de base, o `ui-ux-designer` confere em 720p); os inimigos de uma sala com riacho ainda o
+  atravessam andando (a E4 decide o caminho deles); a recompensa do 1 virou Ouro (a Bênção veio na Antessala), a conta de Bênçãos da guiada fica igual (4).

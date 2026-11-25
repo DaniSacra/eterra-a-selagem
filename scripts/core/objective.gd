@@ -8,12 +8,12 @@ extends RefCounted
 ##   place: &"run" or &"hub"; kind: the room's kind as a lowercase name (&"ante", &"combat", &"miniboss", &"shop",
 ##   &"boss"...); fighting; reward_waiting; doors_open (how many); first_choice (two doors for the first time);
 ##   screen: &"" none, &"boon" the Blessing's screen, &"other" any other; near_plates; near_breakable; crossed_plates;
-##   broke_one; hub_new_station (the Árvore waits to be visited).
+##   broke_one; lesson (PT-25-8: the Antessala's tip now, AnteLesson.key; it comes before the rest there); hub_new_station (the Árvore waits to be visited).
 
 ## A save with this many descents or fewer still has the line when the option is on (the tutorial and two more: D-O3 b).
 const OBJ_RUNS := 3
 const KEYS: Array[StringName] = [&"obj_explore", &"obj_dodge", &"obj_break", &"obj_find_way", &"obj_win", &"obj_take",
-		&"obj_bless", &"obj_door", &"obj_guardian", &"obj_shop", &"obj_morvath", &"obj_hub_tree", &"obj_hub_portal"]
+		&"obj_bless", &"lesson_attack", &"lesson_special", &"lesson_dodge", &"lesson_shout", &"lesson_rush", &"obj_door", &"obj_guardian", &"obj_shop", &"obj_morvath", &"obj_hub_tree", &"obj_hub_portal"]
 ## Metres from the plates and from a breakable at which the Antessala speaks of them (FirstDescentDef obj_*_near).
 const DODGE_NEAR := 6.0
 const BREAK_NEAR := 5.0
@@ -54,6 +54,9 @@ static func pick(ctx: Dictionary) -> StringName:
 
 ## The Antessala: the plates when near and not crossed, a breakable when near and none broken, then the way.
 static func _ante(ctx: Dictionary) -> StringName:
+	var lesson: StringName = ctx.get("lesson", &"")
+	if lesson != &"":
+		return lesson
 	var crossed := bool(ctx.get("crossed_plates", false))
 	if bool(ctx.get("near_plates", false)) and not crossed:
 		return &"obj_dodge"
@@ -75,7 +78,8 @@ static func text(key: StringName) -> String:
 	if key == &"":
 		return ""
 	return T.t(key, {"attack": UiKit.action_label(&"light_attack"), "dodge": UiKit.action_label(&"dodge"),
-			"interact": UiKit.action_label(&"interact")})
+			"interact": UiKit.action_label(&"interact"), "special": UiKit.action_label(&"heavy_attack"),
+			"shout": UiKit.action_label(&"shout"), "rush": UiKit.action_label(&"rush")})
 
 
 ## The Dev flags that FirstDescent.active reads (the document's list), passed as it asks for them.

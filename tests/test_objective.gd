@@ -32,6 +32,11 @@ func test_one_case_per_key() -> void:
 		&"obj_morvath": {"kind": &"boss", "fighting": true},
 		&"obj_hub_tree": {"place": &"hub", "hub_new_station": true},
 		&"obj_hub_portal": {"place": &"hub"},
+		&"lesson_attack": {"kind": &"ante", "lesson": &"lesson_attack"},
+		&"lesson_special": {"kind": &"ante", "lesson": &"lesson_special"},
+		&"lesson_dodge": {"kind": &"ante", "lesson": &"lesson_dodge"},
+		&"lesson_shout": {"kind": &"ante", "lesson": &"lesson_shout"},
+		&"lesson_rush": {"kind": &"ante", "lesson": &"lesson_rush"},
 	}
 	assert_eq(cases.size(), Objective.KEYS.size(), "every key has a case")
 	for key: StringName in cases:

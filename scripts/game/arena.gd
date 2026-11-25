@@ -158,6 +158,11 @@ func _build(layout: RoomLayout, exit_count: int, seed_: int) -> void:
 	hall_look = null
 	_hall = layout == null
 	self.layout = layout
+	gaps.clear()
+	gap_fall = 0.0
+	if layout != null:
+		gaps.append_array(layout.gaps)
+		gap_fall = layout.gap_fall
 	if layout != null:
 		id = layout.id
 		name_key = layout.name_key
@@ -223,6 +228,9 @@ func _build(layout: RoomLayout, exit_count: int, seed_: int) -> void:
 ## Floor beyond the room's rectangle where one may still walk (the catacomb hall's landing by the way in), each
 ## rectangle with the same 1.2 m margin as the room.
 var walk: Array[Rect2] = []
+## PT-25-9: the streams and rifts a dash crosses and walking does not (GapRule), and what falling into one costs.
+var gaps: Array[Rect2] = []
+var gap_fall := 0.0
 
 
 # ---------- arenas (cycle C12): what it is, what blocks, where to walk ----------
@@ -314,6 +322,11 @@ func sweep(from: Vector2, to: Vector2, radius: float) -> Vector2:
 	for i in n:
 		p = resolve(p + step, radius)
 	return p
+
+
+## PT-25-9: where a body on foot ends that goes from `from` to `to` (GapRule.keep_out); a dash never asks.
+func keep_out_of_gaps(from: Vector2, to: Vector2) -> Vector2:
+	return to if gaps.is_empty() else GapRule.keep_out(gaps, from, to)
 
 
 ## AT-CA2: what stops a body of this radius at p: "piece@x,z" of the deepest obstacle of the room's plan that

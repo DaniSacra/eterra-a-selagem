@@ -280,6 +280,13 @@ func step(dt: float, game: Game) -> void:
 		if goal == null:
 			goal = game.rooms.bot_goal()
 		pad.move = _steer(game, p, _way(game, p, goal as Vector2, dt)) if goal != null and p.distance_to(goal) > 0.3 else Vector2.ZERO
+		if goal != null and not game.arena.gaps.is_empty():
+			# PT-25-9: a stream only the dash crosses: from its bank, one dash toward the goal
+			var hop := GapRule.hop(game.arena.gaps, p, goal as Vector2, Feel.live().dodge_speed * Feel.live().dodge_time * 0.75)
+			if hop != Vector2.ZERO and game.player.dodge_charges > 0 and game.player.state == Player.State.MOVE:
+				pad.move = hop
+				pad.release(&"dodge")
+				pad.press(&"dodge")
 		_queue = ""
 		_hold = 0.0
 		_seen.clear()
