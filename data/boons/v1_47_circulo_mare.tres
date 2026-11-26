@@ -5,9 +5,9 @@
 
 [sub_resource type="Resource" id="Resource_txx83"]
 script = ExtResource("1_aykxw")
-stat = &"cel_cd_cut"
-base = 0.1
-per_level = PackedFloat32Array(0.03, 0.03)
+stat = &"cel_speed"
+base = 0.12
+per_level = PackedFloat32Array(0.04, 0.04)
 by_rarity = false
 
 [resource]

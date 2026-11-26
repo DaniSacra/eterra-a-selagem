@@ -76,16 +76,16 @@ func test_the_six_buttons_say_what_each_holds() -> void:
 	st.take(st.find(&"passo_radiante"), Boon.Rarity.COMMON)
 	st.take(st.find(&"golpe_brasa"), Boon.Rarity.COMMON)
 	var held := AbilityList.held_by_action(st)
-	assert_eq(held[&"rush"], st.find(&"passo_radiante"), "the Investida is E's")
+	assert_eq(held[&"dodge"], st.find(&"passo_radiante"), "GP-1: the Investida's Blessing sits on the dodge")
 	assert_eq(held[&"light_attack"], st.find(&"golpe_brasa"))
-	assert_false(held.has(&"dodge"))
+	assert_false(held.has(&"ultimate"))
 	var list := AbilityList.new().setup(240.0)
 	add_child_autofree(list)
 	list.show_held(st)
-	assert_eq(list.held_text(&"rush"), T.t(&"boon_passo_radiante"))
-	assert_eq(list.held_text(&"dodge"), "", "a free button says nothing")
+	assert_eq(list.held_text(&"dodge"), T.t(&"boon_passo_radiante"))
+	assert_eq(list.held_text(&"ultimate"), "", "a free button says nothing")
 	list.show_held(_state())
-	assert_eq(list.held_text(&"rush"), "")
+	assert_eq(list.held_text(&"dodge"), "")
 
 
 func test_never_seen_means_the_codex_has_no_count() -> void:

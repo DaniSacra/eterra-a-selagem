@@ -58,6 +58,12 @@ const OVERRIDE := "user://feel_override.tres"
 ## The fewest seconds between two impact frames (Combat).
 @export_range(0.0, 30.0, 0.5) var impact_frame_every := 10.0
 
+@export_group("Hold")
+## GP-1 (ButtonIntent): seconds a blow button is held before it stops being a tap and becomes the held blow (0.20 s).
+@export_range(0.05, 0.6, 0.01) var hold_threshold := 0.2
+## A held blow with no Magia for it: false = the Magia bar flashes and nothing strikes; true = the tap's blow comes out at the threshold.
+@export var hold_fallback_tap := false
+
 @export_group("Poise")
 ## C1b (Poise): the share of a common enemy's full poise each button's blow takes, by DealtBy source (Dictionary: no
 ## slider). A source missing here takes none.

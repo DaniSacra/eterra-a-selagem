@@ -148,7 +148,7 @@ func test_gifts_change_moves_of_the_tree_not_new_attacks() -> void:
 		for tag in node.tags:
 			tags[tag] = true
 	# skills carry "skill" and their family's tag (Boon.FAMILY_TAG)
-	for extra: StringName in [&"mark", &"ember", &"skill", &"ultimate"] + Boon.FAMILY_TAG + Combat.CAST_TAGS:
+	for extra: StringName in [&"mark", &"ember", &"skill", &"ultimate", &"dash"] + Boon.FAMILY_TAG + Combat.CAST_TAGS:
 		tags[extra] = true
 	for b in state.catalog:
 		for m in b.mods:

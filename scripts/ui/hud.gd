@@ -1040,7 +1040,7 @@ func _update_shout_tip(p: Player) -> void:
 		return
 	if not q.visible or game.bot != null or not FirstTips.enabled() or game.mode != Game.Mode.PLAY:
 		return
-	if FirstTips.shout_due(Save.data, _shout_told, Bot.shout_worth(game, p.pos)):
+	if FirstTips.shout_due(Save.data, _shout_told, false):  # (GP-1: no Brado; the HUD pass removes this tip)
 		_shout_told += 1
 		_shout_tip_t = FirstTips.SHOUT_TIME
 		q.caption = T.t(&"hud_shout_tip", {"key": UiKit.action_label(&"shout")})

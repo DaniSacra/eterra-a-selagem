@@ -43,7 +43,7 @@ func test_every_move_of_the_special_is_the_wave() -> void:
 			var title := T.t((m.node as ComboNode).title)
 			assert_false(title.to_lower().contains("seta"), "%s in %s" % [title, path])
 	assert_eq(T.t(&"move_wave"), "Onda de Luz")
-	assert_true(T.t(&"howto_heavy_attack_desc").contains("onda de luz"))
+	assert_false(T.t(&"howto_heavy_attack_desc").to_lower().contains("seta"), "GP-1: the right button is the Corte Circular and the Lança")
 
 
 # ---------- QW-110: one word for each action ----------

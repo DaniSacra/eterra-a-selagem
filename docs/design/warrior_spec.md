@@ -1,5 +1,7 @@
 # O Guerreiro: especificação canônica do primeiro herói
 
+> **Obsoleto em parte (GP-1, 2026-11-26)**: botões, golpes, Brado, Investida, Fúria e Dons foram substituídos por `docs/design/heroes/warrior_v1_2026-11-26.md`.
+
 - **Data**: 2026-11-16 (noite). **Autor**: Game Director (sessão principal).
 - **Pedido**: correção oficial do Product Owner, "o primeiro herói jogável é o GUERREIRO" (não o Explorador, não o
   Guardião), com a prancha "Bíblia de Arte do Guerreiro de Eterra" (feita por IA, só local em

@@ -24,7 +24,7 @@ poise_weights = {
 "cast_omega": 0.7,
 "crystal": 0.25,
 "dash": 0.5,
-"omega_attack": 0.7,
+"omega_attack": 1.0,
 "omega_special": 0.7,
 "shout": 0.6,
 "special": 0.6,

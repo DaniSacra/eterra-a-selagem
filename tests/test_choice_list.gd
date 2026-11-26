@@ -36,21 +36,21 @@ func test_a_blessing_names_the_button_it_changes() -> void:
 	var st := _state()
 	assert_eq(st.find(&"golpe_brasa").button(), &"light_attack")
 	assert_eq(st.find(&"pesado_brasa").button(), &"heavy_attack")
-	assert_eq(st.find(&"circulo_brasa").button(), &"shout")
-	assert_eq(st.find(&"passo_radiante").button(), &"rush", "limited to the dash tag: the Investida")
+	assert_eq(st.find(&"circulo_brasa").button(), &"heavy_attack", "GP-1: the Poder is on the right button")
+	assert_eq(st.find(&"passo_radiante").button(), &"dodge", "GP-1: the Investida's Blessings sit on the dodge")
 	assert_eq(st.find(&"passo_brasa").button(), &"dodge", "the embers' trail is the dodge")
 	assert_eq(st.find(&"passos").button(), &"dodge")
-	assert_eq(st.find(&"passo_frio").button(), &"rush", "an Elo reads its own tag")
+	assert_eq(st.find(&"passo_frio").button(), &"dodge", "an Elo reads its own tag")
 
 
-func test_the_column_puts_the_investida_on_e_and_the_dodge_on_space() -> void:
+func test_the_column_puts_both_dodge_blessings_on_space() -> void:
 	var st := _state()
 	var col := BuildColumn.new().setup()
 	add_child_autofree(col)
 	st.take(st.find(&"passo_radiante"), Boon.Rarity.COMMON)
 	col.show_build(st)
-	assert_eq(col.entries[3].icon.boon, st.find(&"passo_radiante"), "E")
-	assert_null(col.entries[5].icon.boon, "Space stays empty")
+	assert_null(col.entries[3].icon.boon, "GP-1: no button E")
+	assert_eq(col.entries[5].icon.boon, st.find(&"passo_radiante"), "Space")
 	var st2 := _state()
 	st2.take(st2.find(&"passo_brasa"), Boon.Rarity.COMMON)
 	col.show_build(st2)
@@ -90,7 +90,7 @@ func test_the_blessings_are_lines_one_under_the_other_with_the_real_key() -> voi
 			assert_eq((plaque as Label).text, UiKit.action_label(cards[i].button()), "the key the player has now")
 		else:
 			assert_true(plaque is TextureRect, "a mouse button is the mouse icon (PT-26-1)")
-	assert_eq((cards[1].find_child("Key", true, false) as Label).text, UiKit.action_label(&"rush"), "the Investida says E, not Space")
+	assert_eq((cards[1].find_child("Key", true, false) as Label).text, UiKit.action_label(&"dodge"), "the Investida's Blessing says Space")
 	for c in cards:
 		for other in [choice.list, choice.glossary]:
 			assert_false(c.get_global_rect().intersects((other as Control).get_global_rect()), "nothing over the lines")
@@ -101,10 +101,10 @@ func test_the_list_lights_the_button_of_the_blessing_in_focus() -> void:
 	await wait_process_frames(3)
 	assert_true(choice.list.is_lit(&"light_attack"), "the first card has the focus")
 	choice.cards()[1].grab_focus()
-	assert_true(choice.list.is_lit(&"rush"))
+	assert_true(choice.list.is_lit(&"dodge"))
 	choice.cards()[2].grab_focus()
-	assert_true(choice.list.is_lit(&"shout"))
-	assert_false(choice.list.is_lit(&"rush"))
+	assert_true(choice.list.is_lit(&"heavy_attack"))
+	assert_false(choice.list.is_lit(&"dodge"))
 
 
 func test_a_blessing_that_acts_alone_lights_none() -> void:

@@ -11,5 +11,5 @@ desc_key = &"psalm_sentinela_desc"
 hint_key = &"psalm_sentinela_hint"
 line_key = &"psalm_sentinela_line"
 slot = 3
-requires = Array[PackedStringArray]([PackedStringArray("circulo_brasa", "circulo_geada", "circulo_radiante", "circulo_firme"), PackedStringArray("escudo", "passos", "firmeza", "golpe_firme", "pesado_firme"), PackedStringArray("bastiao", "rastro", "passo_frio", "dom:voz_do_leao", "dom:imposicao", "dom:forca_concentrada")])
+requires = Array[PackedStringArray]([PackedStringArray("circulo_brasa", "circulo_geada", "circulo_radiante", "circulo_firme"), PackedStringArray("escudo", "passos", "firmeza", "golpe_firme", "pesado_firme"), PackedStringArray("bastiao", "rastro", "passo_frio", "dom:alcance_marcial", "dom:imposicao", "dom:forca_concentrada")])
 damage = 30.0

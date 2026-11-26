@@ -48,13 +48,13 @@ func test_the_named_moves_exist() -> void:
 	var names := {}
 	for m in tree.named_moves():
 		names[m.node.id] = ComboTree.notation(m.path, m.from_dodge, {"dodge": "Esquiva", "charge": "D segurado", "charge_light": "E segurado"})
-	assert_eq(names.get(&"lance"), "E segurado")
+	# GP-1: the left button's hold is the Esmagador (E segurado), the right's tap the Corte Circular (D) and its hold the Lança (D segurado)
+	assert_eq(names.get(&"smash"), "E segurado")
 	assert_eq(names.get(&"cut3"), "E E E")
-	assert_eq(names.get(&"bolt"), "D")
-	assert_false(names.has(&"burst"), "no held special since 2026-11-21")
-	assert_eq(names.get(&"dash_cut"), "Investida")
-	assert_eq(names.get(&"shout"), "Brado")
-	assert_eq(names.size(), 5)
+	assert_eq(names.get(&"sweep"), "D")
+	assert_eq(names.get(&"lance"), "D segurado")
+	assert_false(names.has(&"bolt") or names.has(&"dash_cut") or names.has(&"shout"), "the burst, the Investida and the Brado left the buttons")
+	assert_eq(names.size(), 4)
 
 
 ## The attack is three swings (as the first weapon of Hades II): 20, 25, then 60 all around.
@@ -83,30 +83,32 @@ func test_attack_damage_and_timing_follow_hades() -> void:
 	assert_almost_eq(cut3.chain_window, 0.6, 0.001)
 
 
-func test_the_special_strikes_only_with_its_bolt() -> void:
+func test_the_right_tap_is_the_corte_circular() -> void:
 	play(H)
-	assert_eq(started, [&"bolt"] as Array[StringName])
-	assert_eq(runner.node.damage, 0.0)
-	assert_eq(runner.node.effect, ComboNode.Effect.WAVE)
-	assert_eq(runner.node.effect_power, 55.0, "55 (C1b rebalance 2026-11-23)")
+	assert_eq(started, [&"sweep"] as Array[StringName])
+	assert_eq(runner.node.damage, 35.0)
+	assert_eq(runner.node.shape, ComboNode.Shape.CIRCLE)
+	assert_eq(runner.node.effect, ComboNode.Effect.NONE, "it is no Brado: no buff")
 
 
-func test_the_special_can_follow_any_swing() -> void:
+func test_the_corte_circular_can_follow_any_swing() -> void:
 	play_all([L, H])
-	assert_eq(started, [&"cut1", &"bolt"] as Array[StringName])
+	assert_eq(started, [&"cut1", &"sweep"] as Array[StringName])
 
 
-func test_the_special_has_no_held_version_any_more() -> void:
-	assert_false(runner.charge_available(), "the Omega special left the Warrior's tree (2026-11-21)")
-	assert_true(runner.charge_available(ComboNode.In.CHARGE_LIGHT), "the attack's Omega stays")
+func test_both_buttons_have_a_held_blow() -> void:
+	assert_true(runner.charge_available(), "the right's hold is the Lança")
+	assert_true(runner.charge_available(ComboNode.In.CHARGE_LIGHT), "the left's the Esmagador")
 
 
-func test_the_omega_attack_strikes_both_ways() -> void:
-	var lance := ComboTree.find(tree.neutral, ComboNode.In.CHARGE_LIGHT)
+func test_the_lance_strikes_both_ways() -> void:
+	var lance := ComboTree.find(tree.neutral, ComboNode.In.CHARGE)
 	assert_true(lance.both_ways)
 	assert_eq(lance.damage, 150.0)
 	assert_almost_eq(lance.charge_time, 0.8, 0.001)
 	assert_eq(lance.magick_cost, 20.0)
+	var smash := ComboTree.find(tree.neutral, ComboNode.In.CHARGE_LIGHT)
+	assert_eq([smash.damage, smash.magick_cost, smash.charge_time], [75.0, 12.0, 0.6])
 
 
 ## A charge pressed while a swing ends is honoured (the paladin fires the Omega when the charge fills).
@@ -116,7 +118,7 @@ func test_a_buffered_omega_starts_after_the_swing() -> void:
 	run(0.05)
 	runner.press(ComboNode.In.CHARGE_LIGHT)
 	run(1.0)
-	assert_eq(started, [&"cut1", &"lance"] as Array[StringName])
+	assert_eq(started, [&"cut1", &"smash"] as Array[StringName])
 
 
 func test_the_dodge_opens_no_move_of_its_own() -> void:
@@ -170,15 +172,17 @@ func test_buffer_keeps_a_press_from_the_start_of_the_swing() -> void:
 	assert_eq(started, [&"cut1", &"cut2"] as Array[StringName], "pressed in the windup: it waits for the swing to end")
 
 
-## A press that cannot start yet in the open (the Investida still on its 5 s cooldown) is dropped after buffer_time.
+## A press that cannot start yet in the open (a move on its cooldown: the Maga's, here the Corte Circular given 5 s) is dropped after buffer_time.
 func test_buffer_drops_a_press_that_waits_in_the_open() -> void:
-	var rush := ComboNode.In.RUSH
-	play(rush)
-	run(ComboTree.find(tree.neutral, rush).chain_window + 0.01)
-	assert_gt(runner.cooldown_left(&"dash_cut"), tree.buffer_time + 0.02, "still on its cooldown")
-	runner.press(rush)
-	run(runner.cooldown_left(&"dash_cut") + 0.1)
-	assert_eq(started, [&"dash_cut"] as Array[StringName], "the press waited only buffer_time")
+	tree = tree.duplicate(true)
+	ComboTree.find(tree.neutral, H).cooldown = 5.0
+	runner.tree = tree
+	play(H)
+	run(ComboTree.find(tree.neutral, H).chain_window + 0.01)
+	assert_gt(runner.cooldown_left(&"sweep"), tree.buffer_time + 0.02, "still on its cooldown")
+	runner.press(H)
+	run(runner.cooldown_left(&"sweep") + 0.1)
+	assert_eq(started, [&"sweep"] as Array[StringName], "the press waited only buffer_time")
 
 
 func test_chain_window_is_per_node() -> void:
@@ -292,8 +296,8 @@ func test_the_drawn_arc_is_exactly_what_the_blow_reaches() -> void:
 func test_only_finishers_glint() -> void:
 	var glinting := 0
 	for n in tree.all_nodes():
-		if n.has_tag(&"finisher"):
-			assert_between(n.glint, 0.06, 0.12, "%s is a finisher: it glints 0.06 to 0.12 s" % n.id)
+		if n.has_tag(&"finisher") or n.has_tag(&"smash"):
+			assert_between(n.glint, 0.06, 0.12, "%s is a finisher (or the Esmagador): it glints 0.06 to 0.12 s" % n.id)
 			glinting += 1
 		else:
 			assert_eq(n.glint, 0.0, "%s glints but is not a finisher" % n.id)
@@ -337,14 +341,15 @@ func test_only_omega_moves_cost_magick() -> void:
 		if n.has_tag(&"omega"):
 			assert_gt(n.magick_cost, 0.0, String(n.id))
 			assert_true(n.input == ComboNode.In.CHARGE or n.input == ComboNode.In.CHARGE_LIGHT, String(n.id))
-		elif n.id == &"bolt":
-			assert_eq(n.magick_cost, 12.0, "the rajada pays 12 Magia on its tap (weak start, 2026-11-21)")
+		elif n.id == &"sweep":
+			assert_eq(n.magick_cost, 8.0, "the Corte Circular pays 8 Magia on its tap")
 		else:
 			assert_eq(n.magick_cost, 0.0, String(n.id))
 
 
 func test_holding_light_offers_the_omega_attack() -> void:
-	assert_eq(runner.charge_move(ComboNode.In.CHARGE_LIGHT).id, &"lance")
+	assert_eq(runner.charge_move(ComboNode.In.CHARGE_LIGHT).id, &"smash")
+	assert_eq(runner.charge_move(ComboNode.In.CHARGE).id, &"lance")
 
 
 func test_sweep_follows_the_arm() -> void:
@@ -384,10 +389,9 @@ func test_feet_planted_from_the_press_to_the_end_of_the_leg_hold() -> void:
 func test_the_leg_hold_outlasts_the_chain_and_the_dodge_cuts_it() -> void:
 	runner.press(H)
 	run(0.2)
-	assert_eq(runner.node.id, &"bolt")
-	run(0.5)
-	assert_true(runner.planted(), "the special holds the legs 0.71 s after the dart")
-	assert_almost_eq(runner.legs_left(), 0.71 - 0.6, 0.02)
+	assert_eq(runner.node.id, &"sweep")
+	assert_true(runner.planted(), "the Corte Circular holds the legs 0.35 s after it lands")
+	assert_almost_eq(runner.legs_left(), 0.35 - 0.02, 0.03)
 	runner.on_dodge()
 	assert_false(runner.planted(), "the dodge cuts it")
 

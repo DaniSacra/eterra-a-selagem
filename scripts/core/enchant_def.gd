@@ -21,3 +21,5 @@ extends Resource
 ## Gifts (talent ids) and Encantos it never comes with (auditoria.md 3.1: Lâmina Tríplice is the Corte Crescente's
 ## substitute, Retorno do Corte none of the dash's chains).
 @export var excludes: Array[StringName] = []
+## GP-1 (D-13): kept in the catalog but never offered nor inscribed (it reads a move the hero no longer has).
+@export var reserve := false

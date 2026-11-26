@@ -144,12 +144,12 @@ func test_the_hud_greets_a_material_found_in_the_corner() -> void:
 	assert_true(hud._coins.get_global_rect().position.x > hud.get_viewport_rect().size.x * 0.6, "bottom right")
 
 
-# ---------- H2: the rajada's price and the Brado's buff ----------
+# ---------- H2: the special's price (GP-1: the Brado is gone, so is its buff mark: the UI pass removes the HUD code) ----------
 
 func test_the_rajada_shows_its_cost_and_says_without_magia() -> void:
 	var hud := await _run()
 	var special: ActionSlot = hud._slots[1]
-	assert_eq(special.cost, 12, "the rajada's 12 Magia (weak start)")
+	assert_eq(special.cost, 20, "GP-1: the special slot is the Lança, 20 Magia")
 	assert_eq(special.caption, "", "paid: no words")
 	game.player.magick.value = 0.0
 	await wait_process_frames(2)
@@ -158,19 +158,6 @@ func test_the_rajada_shows_its_cost_and_says_without_magia() -> void:
 	game.player.magick.value = game.player.magick.max_value
 	await wait_process_frames(2)
 	assert_eq(special.caption, "")
-
-
-func test_the_buff_shows_while_the_brado_runs_beside_the_bars() -> void:
-	var hud := await _run()
-	assert_false(hud._buff.visible)
-	game.player.gifts.rally(5.0, 0.2, 0.15)
-	await wait_process_frames(2)
-	assert_true(hud._buff.visible)
-	var bars: Rect2 = hud._life.get_global_rect()
-	var b := hud._buff.get_global_rect()
-	assert_gt(b.position.x, bars.end.x, "beside the bars")
-	assert_almost_eq(b.get_center().y, bars.get_center().y, 2.0)
-	assert_false(b.intersects(hud._ult_slot.get_global_rect()))
 
 
 func test_the_buff_mark_has_an_emerald_dot_only_while_the_brado_absorbs() -> void:

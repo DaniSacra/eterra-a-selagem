@@ -6,7 +6,9 @@ extends RefCounted
 ## L attack, H special, C special held (Omega special), O attack held (Omega attack), Q circle of light, d dash.
 ## How near a shot being readied keeps the robot from the attack's Omega (shot_coming).
 const SHOT_NEAR := 12.0
-const COMBOS: Array[String] = ["LLL", "H", "LLL", "O", "LL", "H", "dL", "LLL", "H"]
+## L: a tap of the left; S: the Corte Circular (a tap of the right); O: the Esmagador (the left held); T: the Lança (the right held);
+## d: a dodge. A blow that costs Magia the robot cannot pay, or that has nothing to hit, is a plain L.
+const COMBOS: Array[String] = ["LLL", "S", "LLL", "O", "LL", "T", "dL", "LLL", "S"]
 const GAP := 0.25
 ## C1b: the share of its poise left from which the bot breaks a common with the special.
 const WORN := 0.55
@@ -199,34 +201,33 @@ func _ult_now(game: Game, p: Vector2, dir: Vector2) -> bool:
 	return false
 
 
-## The Brado de Guerra is ready and SHOUT_PACK or more enemies stand within its reach.
-static func shout_worth(game: Game, at: Vector2) -> bool:
+## GP-1: the Warrior's strong blows (the Corte Circular on a tap of the right button, the Esmagador and the Lança held). The robot
+## sweeps when SWEEP_PACK or more stand within the circle, smashes what is within SMASH_NEAR m and throws the Lança at what is within
+## LANCE_FAR m, each only with the Magia for it.
+const SWEEP_PACK := 2
+const SWEEP_REACH := 3.2
+const SMASH_NEAR := 2.4
+const LANCE_FAR := 11.0
+## Seconds the robot holds the left button for the Esmagador (it fills in 0.6) and the right for the Lança (0.8).
+const SMASH_HOLD := 0.8
+const LANCE_HOLD := 1.0
+
+
+## The Corte Circular is worth its Magia: it can pay and the pack (or a blow about to fall) is within the circle.
+static func sweep_worth(game: Game, at: Vector2) -> bool:
 	var p := game.player
-	if Dev.has("bot-no-shout") or Dev.has("bot-mouse") or p.state != Player.State.MOVE:  # (--bot-no-shout: the robot before the Brado, to compare)
-		return false
-	if p.runner.cooldown_left(&"shout") > 0.0 or ComboTree.find(p.tree.neutral, ComboNode.In.SHOUT) == null:
+	var node := ComboTree.find(p.tree.neutral, ComboNode.In.HEAVY)
+	if node == null or not p.magick.can_pay(p._cost_now(node)):
 		return false
 	var near: Array[Enemy] = []
-	game.horde.in_circle(at, SHOUT_REACH, near)
-	# CB-0: it takes one blow whole too: cried with a blow about to fall on him, near
-	return near.size() >= SHOUT_PACK or near.any(func(e: Enemy) -> bool: return e.state == Enemy.State.WINDUP)
+	game.horde.in_circle(at, SWEEP_REACH, near)
+	return near.size() >= SWEEP_PACK
 
 
-## The Investida (E) is ready: the robot uses it to close in on an enemy that is a few steps off (RUSH_FAR) and, short of
-## Magia for the rajada, on one right in front of it (RUSH_NEAR), for the 3 Magia each enemy it reaches gives back.
-const RUSH_NEAR := 3.5
-const RUSH_FAR := 8.0
-
-
-static func rush_worth(game: Game, to: float) -> bool:
-	var p := game.player
-	if Dev.has("bot-no-rush") or Dev.has("bot-mouse") or p.state != Player.State.MOVE or ComboTree.find(p.tree.neutral, ComboNode.In.RUSH) == null:
-		return false
-	if p.runner.cooldown_left(&"dash_cut") > 0.0 or p.runner.is_attacking():
-		return false
-	if to > RUSH_NEAR + 1.0:
-		return to < RUSH_FAR
-	return not p.magick.can_pay(Player.omega_cost(ComboTree.find(p.tree.neutral, ComboNode.In.HEAVY).magick_cost, 0.0))
+## A held blow (CHARGE_LIGHT or CHARGE) is paid for now.
+static func can_hold(game: Game, input: ComboNode.In) -> bool:
+	var node := ComboTree.find(game.player.tree.neutral, input)
+	return node != null and game.player.magick.can_pay(game.player._cost_now(node))
 
 
 ## The paladin fell (Game._on_player_died): was it while pinned?
@@ -328,18 +329,6 @@ func step(dt: float, game: Game) -> void:
 		# the bodies of the crowd hold it: the dash goes through them
 		pad.press(&"dodge")
 		_stuck = 0.0
-	# C1d, the Corte do rastro: the boss's curse in the air is cut by the wave (the special), thrown at it
-	var cut: Variant = curse_aim(game, p)
-	if cut != null and _wait <= 0.0 and game.player.state == Player.State.MOVE and game.player.magick.can_pay(Player.omega_cost(
-			ComboTree.find(game.player.tree.neutral, ComboNode.In.HEAVY).magick_cost, 0.0)):
-		pad.aim = (cut as Vector2 - p).normalized()
-		pad.move = Vector2.ZERO
-		pad.press(&"heavy_attack")
-		_held = &"heavy_attack"
-		_hold = 0.06
-		_wait = 0.5
-		_queue = ""
-		return
 	var through: Variant = ring_dash(game, p)
 	if through != null:
 		pad.move = through as Vector2
@@ -379,19 +368,6 @@ func step(dt: float, game: Game) -> void:
 		# the ultimate as soon as it is full and worth it (the pack in the band or the Voragem, or a big one)
 		pad.press(&"ultimate")
 		return
-	if shout_worth(game, p):
-		# the Brado de Guerra (Q) with a pack close: 3 or more within its 4 m (it recharges for 12 s)
-		pad.press(&"shout")
-		_queue = ""
-		_hold = 0.0
-		pad.release(&"heavy_attack")
-		pad.release(&"light_attack")
-		return
-	if _wait <= 0.0 and _queue.is_empty() and column == null and rush_worth(game, to.length()):
-		# the Investida: in to an enemy a few steps off, or for the Magia when the rajada is out of it
-		pad.press(&"rush")
-		_wait = 0.7
-		return
 	if _hold > 0.0:
 		_hold -= dt
 		if _hold <= 0.0:
@@ -406,31 +382,42 @@ func step(dt: float, game: Game) -> void:
 		_queue = COMBOS[_pick % COMBOS.size()]
 		_pick += 1
 		if column == null and _guarded(game, target):
-			_queue = "H" + _queue  # CB-0: the special opens a shield's guard
+			_queue = "T" + _queue  # CB-0: the Lança (heavy) opens a shield's guard
 		elif column == null and _worn(game, target):
-			_queue = "H" + _queue  # C1b: a common worn halfway is broken by the special, not by one more blow
+			_queue = "O" + _queue  # C1b: a common worn halfway is broken by the Esmagador, not by one more blow
 	var key := _queue[0]
 	_queue = _queue.substr(1)
 	_wait = GAP if not _queue.is_empty() else 0.7
 	match key:
 		"L":
 			pad.press(&"light_attack")
-		"H":
-			if game.player.magick.can_pay(Player.omega_cost(ComboTree.find(game.player.tree.neutral, ComboNode.In.HEAVY).magick_cost, 0.0)):
-				# the rajada (8 Magia) only with Magia and an enemy in its line
-				pad.press(&"heavy_attack")
+		"S":
+			if sweep_worth(game, p):
+				pad.press(&"heavy_attack")  # a tap: let go in 0.06 s, before the hold threshold
 				_held = &"heavy_attack"
 				_hold = 0.06
+			elif to.length() <= SMASH_NEAR and can_hold(game, ComboNode.In.CHARGE_LIGHT) and not shot_coming(game, p):
+				# a lone target: the Esmagador in the Ritmo's window (GP-1) instead of the circle
+				pad.press(&"light_attack")
+				_held = &"light_attack"
+				_hold = SMASH_HOLD
 			else:
 				pad.press(&"light_attack")
 		"O":
-			if shot_coming(game, p):
-				# (C19, combat_cadence.md 8.3: never planted in the attack's Omega with a shot being readied near)
-				pad.press(&"light_attack")
-			else:
+			if to.length() <= SMASH_NEAR and can_hold(game, ComboNode.In.CHARGE_LIGHT) and not shot_coming(game, p):
+				# (C19, combat_cadence.md 8.3: never planted in a charge with a shot being readied near)
 				pad.press(&"light_attack")
 				_held = &"light_attack"
-				_hold = 0.9
+				_hold = SMASH_HOLD
+			else:
+				pad.press(&"light_attack")
+		"T":
+			if to.length() <= LANCE_FAR and can_hold(game, ComboNode.In.CHARGE) and not shot_coming(game, p):
+				pad.press(&"heavy_attack")
+				_held = &"heavy_attack"
+				_hold = LANCE_HOLD
+			else:
+				pad.press(&"light_attack")
 		"d":
 			pad.move = to.normalized() if to.length() > 0.1 else Vector2.RIGHT
 			pad.press(&"dodge")
@@ -551,10 +538,10 @@ func _keep_away(game: Game, p: Vector2, boss: Vector2, first: bool, dt: float) -
 			_hold -= dt
 			if _hold <= 0.0:
 				pad.release(&"heavy_attack")
-		elif _wait <= 0.0:
+		elif _wait <= 0.0 and can_hold(game, ComboNode.In.CHARGE):
 			pad.press(&"heavy_attack")
 			_held = &"heavy_attack"
-			_hold = 0.06
+			_hold = LANCE_HOLD
 			_wait = KITE_THROW
 		return
 	var out := away.normalized() if away.length() > 0.1 else Vector2.RIGHT

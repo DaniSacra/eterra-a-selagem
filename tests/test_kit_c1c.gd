@@ -9,15 +9,19 @@ var feed: KitFeed
 
 
 func before_each() -> void:
-	hero = load("res://data/heroes/warrior.tres")
+	# GP-1: the Warrior has no Brado to recharge (cd_refund_*, cd_floor are 0 in his data); the rules stay for a hero that has one
+	# (the Maga's), so they are tested with the numbers the Warrior had
+	hero = (load("res://data/heroes/warrior.tres") as HeroDef).duplicate()
+	hero.cd_refund_hit = 0.3
+	hero.cd_refund_break = 1.5
+	hero.cd_floor = 8.0
 	feed = KitFeed.new(hero)
 
 
 func test_the_numbers_are_data() -> void:
-	assert_eq(hero.magick_on_break, 3.0)
-	assert_eq(hero.cd_refund_hit, 0.3)
-	assert_eq(hero.cd_refund_break, 1.5)
-	assert_eq(hero.cd_floor, 8.0)
+	var warrior: HeroDef = load("res://data/heroes/warrior.tres")
+	assert_eq(warrior.magick_on_break, 3.0)
+	assert_eq([warrior.cd_refund_hit, warrior.cd_refund_break, warrior.cd_floor], [0.0, 0.0, 0.0], "GP-1: no Brado, nothing to refund")
 	var tree: ComboTree = load(hero.combos)
 	for id: StringName in [&"cut1", &"cut2", &"cut3"]:
 		assert_eq(_node(tree, id).magick_per_hit, 0.5, str(id))
@@ -56,7 +60,7 @@ func test_four_breaks_in_one_second_stop_at_the_cap() -> void:
 		total += feed.break_magick(&"attack")
 	assert_eq(total, 3.0, "3 a second at most")
 	feed.step(1.0)
-	assert_eq(feed.break_magick(&"dash"), 3.0, "the window moved on")
+	assert_eq(feed.break_magick(&"attack"), 3.0, "the window moved on")
 
 
 func test_hits_and_breaks_share_the_cap() -> void:
@@ -66,7 +70,7 @@ func test_hits_and_breaks_share_the_cap() -> void:
 
 
 func test_no_magick_from_the_shout_or_the_ultimate() -> void:
-	for s in [&"shout", &"ultimate", &"burn", &"cast", &"embers"]:
+	for s in [&"shout", &"dash", &"ultimate", &"burn", &"cast", &"embers"]:
 		assert_eq(feed.break_magick(s), 0.0, str(s))
 		assert_eq(feed.break_refund(s), 0.0, str(s))
 
@@ -84,7 +88,12 @@ func test_one_wave_refunds_at_most_eight() -> void:
 
 
 func _armed_runner() -> ComboRunner:
-	var runner := ComboRunner.new(load(hero.combos))
+	# the Corte Circular as a move on the Brado's button, 12 s of recharge (what the Brado was)
+	var tree: ComboTree = (load(hero.combos) as ComboTree).duplicate(true)
+	var move := ComboTree.find(tree.neutral, ComboNode.In.HEAVY)
+	move.input = SH
+	move.cooldown = 12.0
+	var runner := ComboRunner.new(tree)
 	runner.press(SH)
 	for i in 120:
 		runner.step(1.0 / 60.0)

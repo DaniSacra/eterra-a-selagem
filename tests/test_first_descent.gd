@@ -156,7 +156,7 @@ func test_finish_writes_first_and_never_goes_back() -> void:
 
 func test_a_new_save_has_first_pending() -> void:
 	assert_eq(SaveData.defaults().first, 0)
-	assert_eq(SaveData.VERSION, 16)
+	assert_eq(SaveData.VERSION, 17)
 
 
 func test_version_15_with_descents_played_is_done_and_a_new_one_is_pending() -> void:

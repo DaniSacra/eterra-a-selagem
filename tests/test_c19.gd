@@ -184,7 +184,7 @@ func test_the_omega_charge_walks_at_hades_numbers() -> void:
 	var hero := HeroDef.warrior()
 	assert_almost_eq(hero.charge_move_light, 0.03, 0.0001, "Swing5SelfSlowCharge 0.03")
 	assert_almost_eq(hero.charge_turn_light, 0.0, 0.0001, "RotationMultiplier 1e-8")
-	assert_almost_eq(hero.charge_move_heavy, 0.6, 0.0001, "inferred from WeaponStaffBoltInstantStop")
+	assert_almost_eq(hero.charge_move_heavy, 0.03, 0.0001, "GP-1: the Lança charges as slow as the Esmagador (spec 6)")
 	game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
 	add_child_autofree(game)
 	game.rooms.start_at(RunMap.Kind.FOUNTAIN)
@@ -194,7 +194,7 @@ func test_the_omega_charge_walks_at_hades_numbers() -> void:
 	p._charge_action = &"light_attack"
 	assert_almost_eq(p.charge_move_scale(), 0.03, 0.0001)
 	p._charge_action = &"heavy_attack"
-	assert_almost_eq(p.charge_move_scale(), 0.6, 0.0001)
+	assert_almost_eq(p.charge_move_scale(), 0.03, 0.0001)
 	p._start_dodge(Vector2.RIGHT)
 	assert_false(p.charging, "the dodge cuts the charge")
 	assert_almost_eq(p.charge_move_scale(), 1.0, 0.0001)

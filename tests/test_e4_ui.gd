@@ -116,10 +116,10 @@ func test_opened_by_names_a_gift() -> void:
 	for id in [&"circulo_brasa", &"escudo"]:
 		state.levels[id] = 1
 	var p := Psalms.new(Psalms.load_catalog()).find(&"sentinela")
-	var held := Psalms.held_of(state, [&"voz_do_leao"] as Array[StringName])
+	var held := Psalms.held_of(state, [&"alcance_marcial"] as Array[StringName])
 	var names := BoonChoice.opened_by(p, held)
 	assert_eq(names.size(), 3)
-	assert_eq(names[2], T.t(HeroDef.warrior().talents().find(&"voz_do_leao").name_key))
+	assert_eq(names[2], T.t(HeroDef.warrior().talents().find(&"alcance_marcial").name_key))
 	assert_eq(Psalms.matching(p, {}).size(), 0, "nothing opens it with nothing held")
 
 

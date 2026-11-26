@@ -81,7 +81,7 @@ func test_places_go_from_the_centre_along_three_axes() -> void:
 	# Combo up, Ímpeto bottom left, Domínio bottom right: entry by the centre, apex at the tip, two middles side by side
 	for row: Array in [[&"disciplina", &"cadencia", &"maestria_marcial", &"apogeu", 0.0],
 			[&"forca_concentrada", &"determinacao", &"concentracao", &"forca_titanica", 240.0],
-			[&"ruptura", &"voz_do_leao", &"imposicao", &"investida_implacavel", 120.0]]:
+			[&"ruptura", &"alcance_marcial", &"imposicao", &"investida_implacavel", 120.0]]:
 		var ax: float = row[4]
 		var entry := def.find(row[0])
 		var apex := def.find(row[3])
@@ -108,7 +108,7 @@ func test_open_order_entry_then_a_middle_then_the_apex() -> void:
 	assert_eq(book.open_problem(&"forca_titanica", 20, ["forca_concentrada", "concentracao"], memory), Talents.Problem.OK, "one middle is enough")
 	assert_eq(book.open_problem(&"forca_titanica", 20, ["determinacao"], memory), Talents.Problem.OK, "an older save opened out of order keeps the path")
 	assert_eq(book.open_problem(&"ruptura", 20, [], memory), Talents.Problem.OK, "other branches do not wait for this one")
-	assert_eq(book.open_problem(&"voz_do_leao", 20, ["forca_concentrada"], memory), Talents.Problem.PATH, "nor count for it")
+	assert_eq(book.open_problem(&"alcance_marcial", 20, ["forca_concentrada"], memory), Talents.Problem.PATH, "nor count for it")
 
 
 func test_open_in_refuses_out_of_order_and_spends_nothing() -> void:

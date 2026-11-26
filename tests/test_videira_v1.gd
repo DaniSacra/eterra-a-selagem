@@ -225,7 +225,7 @@ func test_open_after_the_forge() -> void:
 
 
 func test_save_version_12_opens_older_files_with_nothing_bought() -> void:
-	assert_eq(SaveData.VERSION, 16)
+	assert_eq(SaveData.VERSION, 17)
 	for v in [1, 6, 7, 9, 11]:
 		var out := SaveData.merged({"version": v, "runs": 2})
 		assert_eq(out.version, SaveData.VERSION)

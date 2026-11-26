@@ -91,9 +91,14 @@ func test_no_lean_in_a_blow() -> void:
 		_frame(p)
 	pad.move = Vector2.RIGHT
 	_frame(p, [&"light_attack"])
+	_frame(p)  # (GP-1: a tap plays on its release: the click frames' run lean settles back as he plants, never past the run's own)
+	var frames := 0
 	while p.runner.planted():
-		assert_almost_eq(_model(p).rotation.x, 0.0, 0.0001, "planted in the blow, upright")
+		assert_lt(absf(_model(p).rotation.x), 0.2, "planted in the blow: no lean beyond the run's")
+		if frames > 25:
+			assert_almost_eq(_model(p).rotation.x, 0.0, 0.0001, "planted in the blow, upright")
 		_frame(p)
+		frames += 1
 
 
 func test_the_finisher_holds_its_last_pose_then_eases_into_the_guard() -> void:
@@ -103,7 +108,7 @@ func test_the_finisher_holds_its_last_pose_then_eases_into_the_guard() -> void:
 	# the chain to the spin (cut3), each press when the next blow may come
 	var spun := false
 	for i in 240:
-		var taps: Array = [&"light_attack"] if not spun else []
+		var taps: Array = [&"light_attack"] if not spun and i % 2 == 0 else []
 		_frame(p, taps)
 		if p.runner.node != null and p.runner.node.tags.has(&"finisher"):
 			spun = true
@@ -125,7 +130,7 @@ func test_walking_cuts_the_finisher_hold() -> void:
 	var anim := p.get(&"_anim") as AnimationPlayer
 	var spun := false
 	for i in 240:
-		_frame(p, [&"light_attack"] if not spun else [])
+		_frame(p, [&"light_attack"] if not spun and i % 2 == 0 else [])
 		if p.runner.node != null and p.runner.node.tags.has(&"finisher"):
 			spun = true
 		if spun and not p.runner.is_attacking() and not anim.is_playing():

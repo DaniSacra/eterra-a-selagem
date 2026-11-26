@@ -171,6 +171,7 @@ func test_it_starts_on_the_press_frame_protected_and_spends_the_charge() -> void
 func test_it_cuts_a_blow_in_its_windup_and_keeps_the_presses_made_in_it() -> void:
 	await _start(&"cleave")
 	_press(&"light_attack")
+	_step()  # (GP-1: a tap plays on its release)
 	assert_true(game.player.runner.is_attacking(), "a blow under way")
 	_step()
 	_press(&"ultimate")

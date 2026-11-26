@@ -188,7 +188,7 @@ func test_the_numbers_of_the_document_are_the_numbers_in_play() -> void:
 	var want := {&"golpe_brasa": [&"cel_burn_dps", 3.5], &"pesado_brasa": [&"cel_burn_dps", 5.0], &"golpe_geada": [&"cel_cold", 1.0],
 		&"toque_geada": [&"cel_cold", 2.0], &"golpe_radiante": [&"cel_crit", 0.10], &"circulo_radiante": [&"cel_crit", 0.15],
 		&"golpe_firme": [&"cel_impact", 1.0], &"pesado_firme": [&"cel_impact", 2.0], &"golpe_veu": [&"cel_weak", 2.0],
-		&"pesado_veu": [&"cel_weak", 3.0], &"golpe_mare": [&"cel_speed", 0.12], &"circulo_mare": [&"cel_cd_cut", 0.10],
+		&"pesado_veu": [&"cel_weak", 3.0], &"golpe_mare": [&"cel_speed", 0.12], &"circulo_mare": [&"cel_speed", 0.12],
 		&"golpe_marca": [&"cel_mark", 3.0], &"pesado_marca": [&"cel_echo", 0.40], &"circulo_marca": [&"cel_echo", 0.35],
 		&"combustao": [&"cel_combust_dmg", 9.0], &"fogo_crescente": [&"cel_burn_dps_pct", 0.2], &"estilhaco": [&"cel_shatter_pct", 0.4],
 		&"fortuna_celestial": [&"cel_crit_global", 0.05], &"esplendor": [&"cel_crit_mult_global", 0.2], &"prosperidade": [&"gold_pct", 0.1],

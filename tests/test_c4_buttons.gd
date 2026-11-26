@@ -7,7 +7,7 @@ extends GutTest
 const SARAEL: Array[StringName] = [&"golpe_brasa", &"pesado_brasa", &"circulo_brasa", &"passo_brasa", &"chuva_brasas"]
 const NIVAEL: Array[StringName] = [&"golpe_geada", &"toque_geada", &"circulo_geada", &"floco_errante", &"peso_inverno"]
 ## The buttons in the order of the five slots of each angel's list above.
-const BUTTONS: Array[StringName] = [&"light_attack", &"heavy_attack", &"shout", &"dodge", &"ultimate"]
+const BUTTONS: Array[StringName] = [&"light_attack", &"heavy_attack", &"heavy_attack", &"dodge", &"ultimate"]
 ## Sarael's and Nivael's old Blessings that left the draw (Chama and Geada, kept for an old save).
 const RESERVE: Array[StringName] = [&"brasas", &"lamina_ardente", &"omega_brasa", &"redemoinho", &"ultimo_brasa", &"passo_geada",
 	&"ultimo_geada", &"geada_final", &"omega_geada"]
@@ -189,10 +189,10 @@ func test_each_move_of_the_tree_sets_off_its_button() -> void:
 	assert_eq(got[&"cut1"], -1)
 	assert_eq(got[&"cut2"], -1)
 	assert_eq(got[&"cut3"], SkillDef.Trigger.FINISHER)
-	assert_eq(got[&"bolt"], SkillDef.Trigger.SPECIAL)
-	assert_eq(got[&"lance"], SkillDef.Trigger.OMEGA)
-	assert_eq(got[&"shout"], SkillDef.Trigger.SHOUT)
-	assert_eq(got[&"dash_cut"], SkillDef.Trigger.RUSH)
+	assert_eq(got[&"smash"], SkillDef.Trigger.OMEGA, "the Esmagador, held on the left")
+	assert_eq(got[&"lance"], SkillDef.Trigger.SPECIAL, "GP-1: the Lança is the Especial's")
+	assert_eq(got[&"sweep"], SkillDef.Trigger.SHOUT, "the Corte Circular is the Poder's (CAST)")
+	assert_false(got.has(&"bolt") or got.has(&"dash_cut"), "no rajada, no Investida")
 
 
 func _arena() -> void:

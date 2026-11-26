@@ -104,7 +104,7 @@ func test_devotion_refuses_what_does_not_fit() -> void:
 	assert_true(l.toggle(&"disciplina")) # 2 of 6
 	l = _loadout(XP_3, ["disciplina", "forca_concentrada"]) # 4 of 8
 	assert_eq(l.used(), 4)
-	var ids := ["disciplina", "cadencia", "maestria_marcial", "forca_concentrada", "determinacao", "concentracao", "ruptura", "voz_do_leao", "imposicao"]
+	var ids := ["disciplina", "cadencia", "maestria_marcial", "forca_concentrada", "determinacao", "concentracao", "ruptura", "alcance_marcial", "imposicao"]
 	var d := _loadout(2470, ids)
 	assert_eq(d.used(), 22)
 	assert_eq(d.devotion(), 25)

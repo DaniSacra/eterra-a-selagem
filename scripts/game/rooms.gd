@@ -524,6 +524,9 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 		if xz.size() == 2:
 			game.player.place(Vector2(float(xz[0]), float(xz[1])))
 	game.player.magick.gain(game.player.magick.max_value)  # Magia is full in every room (Hades II)
+	game.player.reset_intents()  # GP-1: a new room starts with every button at rest and no Ritmo armed
+	if game.hero_gifts != null:
+		game.hero_gifts.rhythm.clear()
 	if first_def != null and room.depth == 1 and ante_s < 0.0:
 		ante_s = snappedf(game.time, 0.1)  # (SW-O3: the seconds from the start to the Antessala's door)
 	game.room_tally.enter(room.depth, String(game.arena.id), game.player.hp, game.time, room.kind == RunMap.Kind.BOSS,
@@ -720,9 +723,7 @@ func _start_lesson() -> void:
 	if first_def == null:
 		_open_ante()
 		return
-	var tree := game.player.tree
-	lesson = AnteLesson.new(ComboTree.find(tree.neutral, ComboNode.In.SHOUT) != null,
-			ComboTree.find(tree.neutral, ComboNode.In.RUSH) != null)
+	lesson = AnteLesson.new(game.hero.arcane != null)
 	if game.bot != null:
 		for s in lesson.steps:
 			if s != &"dodge" and s != &"blessing":
@@ -765,7 +766,8 @@ func _on_struck(node: ComboNode, _o: Vector2, _d: Vector2) -> void:
 		SkillDef.Trigger.SPECIAL:
 			lesson.feed(&"special")
 		SkillDef.Trigger.SHOUT:
-			lesson.feed(&"shout")
+			lesson.feed(&"shout")  # the Maga's Arco
+			lesson.feed(&"power")  # the Warrior's Corte Circular
 		SkillDef.Trigger.RUSH:
 			lesson.feed(&"rush")
 		-1:

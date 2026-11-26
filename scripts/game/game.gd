@@ -27,7 +27,8 @@ signal psalm_taken(psalm: PsalmDef, first: bool)
 const MAGICK_PER_KILL := 1.0
 ## The Encantos' offers are drawn on dice of the room (the run's seed salted with this).
 const ENCHANT_SALT := 5813
-const MAGICK_PER_ELITE := 40.0
+## GP-1 (D-5): 24 of the 30 (40 of the 50 before: the same share).
+const MAGICK_PER_ELITE := 24.0
 const WAVES := "res://data/waves/catacombs.tres"
 ## The Supremo heals this share of the max life as it starts (Q6).
 const ULT_HEAL := 0.10
@@ -310,6 +311,7 @@ func _ready() -> void:
 			room_tally.touch(time))
 
 	player.struck.connect(combat.strike)
+	player.dodge_ended.connect(combat.dodge_through)  # GP-1: Investida Implacável, the roll through the crowd
 	# BO-2: a Blessing of a button sets its skill off when that button's move lands (after the blow, so it burns first)
 	player.struck.connect(func(node: ComboNode, _o: Vector2, _d: Vector2) -> void:
 		var which := Skills.trigger_of(node)
@@ -326,6 +328,7 @@ func _ready() -> void:
 			omegas += 1)
 	player.struck.connect(func(node: ComboNode, _o: Vector2, _d: Vector2) -> void: _count_slot(node))
 	player.ult_started.connect(func(_dir: Vector2) -> void:
+		hero_gifts.rhythm.clear()  # (GP-1, D-11: the protected gesture inherits no Ritmo)
 		player.heal(player.max_hp * ULT_HEAL)  # the Supremo gives back a tenth of the life as it starts
 		_use(&"shift"))
 	player.glinted.connect(combat.glint)
@@ -1470,6 +1473,7 @@ func _on_killed(e: Enemy) -> void:
 
 func _on_player_died() -> void:
 	mode = Mode.OVER
+	hero_gifts.rhythm.clear()
 	if bot:
 		bot.on_died()
 	if boss:
@@ -1645,6 +1649,7 @@ func _on_pad_connection(_device: int, connected: bool) -> void:
 
 func _open_pause() -> void:
 	mode = Mode.PAUSE
+	player.reset_intents()  # GP-1: a button held through the pause plays nothing when it comes back
 	var pause := PauseMenu.new()
 	_screen = pause
 	ui.add_child(pause)

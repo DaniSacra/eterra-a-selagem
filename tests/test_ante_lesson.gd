@@ -13,14 +13,12 @@ func test_the_tips_come_one_at_a_time_in_order() -> void:
 	l.feed(&"light")
 	assert_eq(l.key(), &"lesson_attack", "two clicks are not three")
 	l.feed(&"light")
-	assert_eq(l.key(), &"lesson_special")
-	l.feed(&"special")
+	assert_eq(l.key(), &"lesson_power", "GP-1: the Corte Circular after the combo")
+	l.feed(&"power")
 	assert_eq(l.key(), &"lesson_dodge")
 	l.feed(&"crossed")
-	assert_eq(l.key(), &"lesson_shout")
-	l.feed(&"shout")
-	assert_eq(l.key(), &"lesson_rush")
-	l.feed(&"rush")
+	assert_eq(l.key(), &"lesson_special", "the Lança")
+	l.feed(&"special")
 	assert_eq(l.key(), &"obj_bless", "then the Blessing")
 	assert_true(l.blessing_due())
 	assert_false(l.done())
@@ -35,16 +33,19 @@ func test_a_finisher_alone_makes_the_clicks_and_a_gesture_out_of_turn_still_coun
 	l.feed(&"finisher")
 	assert_true(l.is_done(&"attack"))
 	assert_true(l.is_done(&"dodge"))
-	assert_eq(l.current(), &"special", "the line asks the first one not done")
+	assert_eq(l.current(), &"power", "the line asks the first one not done")
 
 
-func test_a_hero_without_brado_or_investida_skips_them() -> void:
-	var l := AnteLesson.new(false, false)
+func test_the_warrior_has_no_brado_or_investida_step_and_the_maga_keeps_hers() -> void:
+	var l := AnteLesson.new()
 	assert_false(l.steps.has(&"shout"))
 	assert_false(l.steps.has(&"rush"))
-	for e in [&"finisher", &"special", &"crossed"]:
+	for e in [&"finisher", &"power", &"special", &"crossed"]:
 		l.feed(e)
 	assert_true(l.blessing_due())
+	var m := AnteLesson.new(true)
+	assert_true(m.steps.has(&"shout") and m.steps.has(&"rush"))
+	assert_false(m.steps.has(&"power"))
 
 
 func test_the_robot_skips_every_tip_but_the_stream_and_the_blessing() -> void:
@@ -60,7 +61,7 @@ func test_the_robot_skips_every_tip_but_the_stream_and_the_blessing() -> void:
 func test_every_tip_has_its_text_with_the_binding() -> void:
 	for k in AnteLesson.KEYS.values():
 		assert_ne(T.t(k), String(k), "%s has its text" % k)
-	for k: StringName in [&"lesson_attack", &"lesson_special", &"lesson_dodge", &"lesson_shout", &"lesson_rush"]:
+	for k: StringName in [&"lesson_attack", &"lesson_special", &"lesson_power", &"lesson_dodge", &"lesson_shout", &"lesson_rush"]:
 		assert_false(Objective.text(k).contains("{"), "%s has no hole left" % k)
 		assert_false(Objective.text(k).contains("—"), "no long dash")
 	assert_eq(Objective.pick({"kind": &"ante", "lesson": &"lesson_dodge", "near_plates": true}), &"lesson_dodge", "the tip first in the Antessala")
