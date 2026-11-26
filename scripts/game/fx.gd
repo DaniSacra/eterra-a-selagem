@@ -2304,22 +2304,28 @@ func _take(pool: Array[Dictionary]) -> Dictionary:
 ## The label of tally entry i shows text; the labels of entries the tally let go are hidden.
 func _show_label(i: int, text: String, color: Color, size: int, outline: int = 0) -> void:
 	for k in _labels.size():
-		if not _tally.entries[k].shown:
+		if not _tally.entries[k].shown and _labels[k].visible:  # (DT-4: not set again when it already is)
 			_labels[k].visible = false
 	var l := _labels[i]
-	l.text = text
-	l.add_theme_font_size_override(&"font_size", size)
-	l.add_theme_color_override(&"font_color", color)
-	if outline > 0:
-		l.add_theme_constant_override(&"outline_size", outline)
-	else:
-		l.remove_theme_constant_override(&"outline_size")
+	if l.text != text:
+		l.text = text
+	# the look is set only when it changed (a swing's many numbers reuse the same few looks)
+	var look := [size, color, outline]
+	if not l.has_meta(&"look") or l.get_meta(&"look") != look:
+		l.set_meta(&"look", look)
+		l.add_theme_font_size_override(&"font_size", size)
+		l.add_theme_color_override(&"font_color", color)
+		if outline > 0:
+			l.add_theme_constant_override(&"outline_size", outline)
+		else:
+			l.remove_theme_constant_override(&"outline_size")
 	l.visible = true
 	l.size = Vector2.ZERO
-	l.pivot_offset = l.get_combined_minimum_size() * 0.5
+	var half := l.get_combined_minimum_size() * 0.5  # (DT-4: asked once, not twice)
+	l.pivot_offset = half
 	var at := _tally.entries[i].pos
 	if camera and not camera.is_position_behind(at):
-		l.position = camera.unproject_position(at) - l.get_combined_minimum_size() * 0.5
+		l.position = camera.unproject_position(at) - half
 	else:
 		l.visible = false
 		_tally.hide(i)

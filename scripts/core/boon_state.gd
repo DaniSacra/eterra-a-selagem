@@ -54,6 +54,14 @@ var _cache: Dictionary = {}
 ## stat with tags: [stat, tags] -> total, cleared with _cache (QA 2026-11-26: a blow's ~15 tagged stat calls per enemy walked
 ## the whole catalog each; 300 enemies struck at once cost 60 ms).
 var _tag_cache: Dictionary = {}
+## Bumped whenever the caches are cleared: whoever memoizes stat() for a while (Combat, per blow) checks it (DT-4).
+var version := 0
+
+
+func _invalidate() -> void:
+	_cache.clear()
+	_tag_cache.clear()
+	version += 1
 
 
 func _init(boons: Array[Boon] = []) -> void:
@@ -314,8 +322,7 @@ func take(b: Boon, at: Boon.Rarity = Boon.Rarity.COMMON, at_level: int = 0) -> i
 		lv = mini(lv, b.max_level)
 	levels[b.id] = lv
 	rarities[b.id] = maxi(rarity(b.id), at) if b.has_rarity() else Boon.Rarity.COMMON
-	_cache.clear()
-	_tag_cache.clear()
+	_invalidate()
 	return levels[b.id]
 
 
@@ -336,15 +343,13 @@ func still_free(b: Boon) -> bool:
 ## Equips the hero's Gifts for the descent (Talents.check decides which are valid).
 func equip_talents(defs: Array[TalentDef]) -> void:
 	talents = defs
-	_cache.clear()
-	_tag_cache.clear()
+	_invalidate()
 
 
 ## Carries the Forja's ranks for the descent (Game._equip_forge).
 func equip_forge(ranks: Array[ForgeRank]) -> void:
 	forge = ranks
-	_cache.clear()
-	_tag_cache.clear()
+	_invalidate()
 
 
 ## Takes an Encanto for this descent (Fatia 2): its numbers count in stat from now on. False when already taken.
@@ -352,16 +357,14 @@ func take_enchant(e: EnchantDef) -> bool:
 	if e == null or enchants.has(e):
 		return false
 	enchants.append(e)
-	_cache.clear()
-	_tag_cache.clear()
+	_invalidate()
 	return true
 
 
 ## Adds numbers won outside the Blessings (E5, the Provação): they count in stat from now on.
 func grant(mods: Array[BoonMod]) -> void:
 	granted.append_array(mods)
-	_cache.clear()
-	_tag_cache.clear()
+	_invalidate()
 
 
 ## Sum of a stat over every owned gift and equipped Gift. With tags, only modifiers that are untagged or match one of
