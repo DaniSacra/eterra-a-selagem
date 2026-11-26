@@ -25,6 +25,14 @@ Cada entrega é um lote fechado com exe no fim, capturas na GPU e push. O detalh
 
 Decisões do Daniel em aberto: textos a aprovar (chegada, objetivo, dicas, O Leão / O Cálice / A Espada, fim curto, os da E2), D-O8 (cânone), regra de troca de Bênção no mesmo botão, (a) ou (b) da E6, música nova do Santuário, Meshy.
 
+## Rodada 2026-11-26b FEITA (exe `abcc4c89`; o Daniel olha ao voltar)
+- Anjo com 1 carta (de novo): causa achada, no V1 um botão ocupado sai do sorteio e a família do anjo secava (44% das ofertas curtas na simulação). Agora a mão completa com Bênçãos de outros anjos, com a legenda "De outro anjo: <família>" (`Encounter.cards`, `boon_guest_family`). Só fica curta quando o catálogo inteiro acaba.
+- Equilíbrio Bênçãos V1 (`balance.md`, "Bênçãos V1 (2026-11-26)"): os números do CSV eram bem mais fracos que antes; Sarael para baixo, os outros 6 para cima. Morvath fica com 1989 de vida em média (CSV 3588, antes do V1 1444). Em aberto: Passos Leves (Galael) talvez fraco, só o teste dele diz; CSV não atualizado.
+- Hub rodadas 2 e 3: patamares e escadas de verdade (o herói sobe), escadaria do Aposento, flores limpas e menores, 2ª árvore vermelha, glicínia, praça baixa no lugar do abismo ao sul da Videira, Videira como gazebo com a fonte, piso creme miúdo, balaústres finos, arco na Vigília, toldo vinho. Capturas r8, r9, r9b.
+- Varredura de agentes: QA (pico do `--stress=300` de 87 para ~30 ms, cache do `BoonState.stat`; teste que anda pelas escadas), UI (losangos de estado sobre a vida do inimigo), salas (8 sementes, nenhuma trava; teste novo), combate (nada a corrigir), assets (KayKit duplicado e sem uso fora, ~1,4 MB; água do canal mais calma).
+- Textos a aprovar: `boon_guest_family` ("De outro anjo: {f}").
+- Em aberto: shaders sem uso (`dome_film`, `dome_clock`, `fury_ember`, `dark_water_matte`); estados aplicam mesmo quando a guarda reduz o golpe (decisão de design); Brado é 1% do dano no chefe.
+
 ## Rodada 2026-11-26 dia FEITA (exe `bfe20c8a`; o Daniel olha ao voltar)
 - Bênçãos V1 (`docs/design/bencaos_v1/`, relatório em `IMPLEMENTACAO.md`): 7 anjos x 9 poderes (35 principais, 28 complementares), sem troca (botão ocupado sai do sorteio), E sem Bênção, Duos/Encantos fora do sorteio, camada `Celestial` (Queimadura, Frio, Impacto, Fraqueza, Penumbra, Eco, crítico de Lumael), HUD separa principais e complementares. Números do CSV, ainda sem equilíbrio medido.
 - Hub refeito em 6 rodadas comparando com `01-arte-aprovada.jpg` (galeria `docs/gallery/hub_refine_2026-11-26/`, r0 a r7): crepúsculo, abismo azul-noite com penhascos, cachoeiras e copas, fachadas creme com telha, estandartes e vãos acesos, Portão em arco com leões e vista, Videira com parreira e fonte, vitrais âmbar, estufa, lanternas âmbar, menos muretas.
