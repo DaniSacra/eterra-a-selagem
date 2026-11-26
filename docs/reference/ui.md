@@ -741,3 +741,18 @@ livro (o livro não passa de 1,9 alturas de largura, `BookDesk.side_room`, ou se
   `LIT`, corpo escuro); nas cartas e na lista de Habilidades 1,25x. O nome do golpe que aparece acima da fileira
   (`_move`) é o golpe executado, continua. Ouro: fica sem rótulo (a moeda diz); decisão do designer.
   Capturas a olhar: `--bot --autopick --seed=5 --shot-at=9` em 1280x720 e 1920x1080, e com 8+ Bênçãos.
+
+## Revisão de UI de 2026-11-26 (ART_REVIEW itens 1, 13 a 16 e quickwins)
+- **Placa do rodapé** (`Hud._build_floor_veil`, nó `FloorVeil`): gradiente de tinta de 0 a 55% (`FLOOR_VEIL_ALPHA`), 100 px a
+  720 linhas (150 a 1080), entre 25% e 75% da largura, sob a barra de ações; o braseiro do cenário não aparece mais atrás dos losangos.
+- **Maestria do Supremo**: selado, o losango não tem legenda flutuante; o nome embaixo troca "Supremo" por "Maestria N"
+  (`label_text`). A legenda "Pronta"/"Carga N%" fica como estava (`Hud.ult_caption`).
+- **Contador de recarga** (`ActionSlot._draw_secs`): desenhado por último, sobre uma placa de tinta em losango, para o traço
+  de recarga e as cargas não formarem "(4)" ou "-2-". Mesmo estilo em todo losango.
+- **Cartas de Bênção de botão**: `BoonChoice.facts` não mostra "A cada" (o `cooldown` delas não é usado); mostra "Intervalo"
+  (`gap`) quando há. Só Bênção automática (`SkillDef.alone`) diz "A cada N s".
+- **Forja**: a folha "Como a Forja funciona" tem 3 frases (`forge_how_1..3`) e o fecho é "{key}  Começar" em dourado.
+- **Videira**: sem rosto no Leão; os vértices da juba sem nó viram estrelas fracas (`VineLayout.FAINT`, `faint()`), desenhadas
+  em `VineSky`; rótulo de raiz crescida com filete verde `#94A76A` (`VineTag.VINE_GREEN`); "Raízes crescidas no céu todo: n de m"
+  (a contagem é do total das três figuras); a barra diz "Segure para regar".
+- Texto "Clique esquerdo/direito" só nas chaves `mouse_1`/`mouse_2`; em todo o resto o ícone do mouse (`MouseGlyph`).

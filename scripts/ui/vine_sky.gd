@@ -72,6 +72,11 @@ func _figure(b: StringName) -> void:
 	# the strokes that finish the figure
 	for stroke in VineLayout.outline(b):
 		draw_polyline(_screen(stroke), Color(tint, 0.3 * a), 1.5 + 0.5 * cam.progress(), true)
+	# the faint stars that fill the figure (no node, no tag): small dim points
+	for p in VineLayout.faint(b):
+		var at := cam.to_screen(p)
+		draw_circle(at, star_r() * 0.32, Color(tint.lerp(RING_DIM, 0.6), 0.55 * a))
+		draw_circle(at, star_r() * 0.14, Color(1, 1, 1, 0.5 * a))
 	# the line of light from the root, segment by segment
 	var chain := VineLayout.chain(b, nodes.size())
 	for i in nodes.size():

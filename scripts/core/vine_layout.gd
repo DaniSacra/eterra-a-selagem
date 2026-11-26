@@ -28,13 +28,16 @@ const NODES := {
 const ROOT := {&"vida": Vector2(0, 95), &"provisao": Vector2(0, 100), &"perseveranca": Vector2(0, 105)}
 ## The faint strokes that finish the figure (not nodes, nothing to buy): offsets from the centre.
 const OUTLINE := {
-	&"vida": [[Vector2(55, -65), Vector2(85, 0), Vector2(50, 55), Vector2(0, 95)],
-		[Vector2(-28, -5), Vector2(-12, -12)], [Vector2(12, -12), Vector2(28, -5)],
-		[Vector2(-10, 25), Vector2(10, 25), Vector2(0, 38), Vector2(-10, 25)]],
+	&"vida": [[Vector2(55, -65), Vector2(85, 0), Vector2(50, 55), Vector2(0, 95)]],
 	&"provisao": [[Vector2(0, 45), Vector2(65, -45)], [Vector2(-65, -45), Vector2(-30, -52), Vector2(30, -52), Vector2(65, -45)],
 		[Vector2(-40, 100), Vector2(0, 92), Vector2(40, 100)]],
 	&"perseveranca": [[Vector2(-42, 50), Vector2(42, 50)],
 		[Vector2(-12, 40), Vector2(-12, -70), Vector2(0, -105), Vector2(12, -70), Vector2(12, 40)]],
+}
+## Faint stars that are not nodes (nothing to buy, no tag): the lion's mane vertices that lost their node, and a few
+## inside it that fill the mane without drawing a face (UI review 2026-11-26, item 13). Offsets from the centre.
+const FAINT := {
+	&"vida": [Vector2(85, 0), Vector2(50, 55), Vector2(-30, 20), Vector2(22, -34), Vector2(38, 14), Vector2(-22, -42)],
 }
 ## The light of each figure.
 const TINT := {&"vida": Color("f0b85a"), &"provisao": Color("b48cf0"), &"perseveranca": Color("78e6d2")}
@@ -85,6 +88,14 @@ static func outline(branch: StringName) -> Array[PackedVector2Array]:
 		for p: Vector2 in stroke:
 			pts.append(CENTER[branch] + p)
 		out.append(pts)
+	return out
+
+
+## The faint stars of a figure in world px (empty for a figure without any).
+static func faint(branch: StringName) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for p: Vector2 in FAINT.get(branch, []):
+		out.append(CENTER[branch] + p)
 	return out
 
 

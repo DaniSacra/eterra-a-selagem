@@ -92,7 +92,8 @@ func test_a_new_save_has_none_and_the_hud_says_the_mastery_it_needs() -> void:
 	var slot: ActionSlot = game.hud._ult_slot
 	assert_true(slot.visible, "the diamond is there, sealed")
 	assert_true(slot.sealed)
-	assert_eq(slot.caption, "Maestria 3")
+	assert_eq(slot.caption, "", "nothing floats over the diamond")
+	assert_eq(slot.label_text, "Maestria 3", "the name under it says what it asks")
 	var refused := [0]
 	game.player.ult_refused.connect(func() -> void: refused[0] += 1)
 	await _tap_r()

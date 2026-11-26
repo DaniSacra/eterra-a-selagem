@@ -113,6 +113,17 @@ func test_the_numbers_run_in_one_line_with_the_real_values() -> void:
 	assert_lte(facts.get_child_count(), 2)
 
 
+func test_a_button_blessing_never_says_every_n_seconds() -> void:
+	var state := BoonState.new(BoonState.load_catalog())
+	var b := state.find(&"pesado_brasa")
+	for r: Array in BoonChoice.facts(b, 1):
+		assert_ne(r[0], &"cd", "a button's skill is not periodic")
+	var gap: Array = BoonChoice.facts(b, 1).filter(func(r: Array) -> bool: return r[0] == &"gap")
+	assert_eq(gap.size(), 1, "the pause between two firings instead")
+	var auto := BoonChoice.facts(state.find(&"brasas"), 1).filter(func(r: Array) -> bool: return r[0] == &"cd")
+	assert_eq(auto.size(), 1, "an automatic one keeps its period")
+
+
 func test_the_rarity_stands_beside_the_name() -> void:
 	var choice := _choice([&"golpe_brasa"])
 	await wait_process_frames(2)

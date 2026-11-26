@@ -279,8 +279,6 @@ func _draw() -> void:
 		padlock(self, c + Vector2(0, r * 0.08), r * 0.34, LOCK.lightened(0.55))
 	if sealed:
 		padlock(self, c + Vector2(0, r * 0.08), r * 0.34, UiKit.OLD_GOLD.lightened(0.35))
-	if secs_left > 0 and waiting:
-		_draw_secs(c)
 	if pulse and not busy():
 		_draw_ready(c, r)
 	if _release > 0.0:
@@ -294,6 +292,9 @@ func _draw() -> void:
 			draw_polyline(done, UiKit.PALE, UiKit.FRAME, true)
 	if _flash > 0.0:
 		draw_polyline(_closed(_diamond(c, r + 2.0 + 4.0 * (1.0 - _flash))), Color(UiKit.PALE, _flash * 0.8), 1.5, true)
+	if secs_left > 0 and waiting:
+		# last, over the sweep line and the pips: one style for every slot (UI review 2026-11-26, item 16)
+		_draw_secs(c)
 	for i in charges_max:
 		var p := c + Vector2((i - (charges_max - 1) * 0.5) * CHARGE_GAP, r * 0.46)
 		draw_colored_polygon(_diamond(p, CHARGE + 1.5), UiKit.INK)
@@ -330,6 +331,7 @@ func _draw_secs(c: Vector2) -> void:
 	var font := UiKit.number_font()
 	var text := str(secs_left)
 	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, SECS_FONT).x
+	draw_colored_polygon(_diamond(c, side * 0.25 + 1.0), Color(UiKit.INK, 0.78))
 	var base := Vector2(c.x - w * 0.5, c.y + (font.get_ascent(SECS_FONT) - font.get_descent(SECS_FONT)) * 0.5).round()
 	draw_string_outline(font, base, text, HORIZONTAL_ALIGNMENT_LEFT, -1, SECS_FONT, 5, UiKit.INK)
 	draw_string(font, base, text, HORIZONTAL_ALIGNMENT_LEFT, -1, SECS_FONT, UiKit.PALE)

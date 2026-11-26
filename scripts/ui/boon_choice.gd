@@ -676,7 +676,11 @@ static func facts(b: Boon, level: int, mult: float = 1.0) -> Array:
 		return out
 	if b.skill:
 		out.append([&"dmg", T.t(&"fact_dmg"), UiKit.whole(b.skill.damage_at(level, mult))])
-		out.append([&"cd", T.t(&"fact_cd"), T.t(&"fact_seconds", {"n": UiKit.format_number(b.skill.get_cooldown(level))})])
+		if b.skill.alone():
+			out.append([&"cd", T.t(&"fact_cd"), T.t(&"fact_seconds", {"n": UiKit.format_number(b.skill.get_cooldown(level))})])
+		elif b.skill.get_gap(level) > 0.0:
+			# a button's skill never fires "every N s" (its cooldown field is unused): the pause between two firings
+			out.append([&"gap", T.t(&"fact_gap"), T.t(&"fact_seconds", {"n": UiKit.format_number(b.skill.get_gap(level))})])
 		if b.skill.get_count(level) > 1:
 			out.append([&"count", T.t(&"fact_count"), str(b.skill.get_count(level))])
 	for m in b.mods:

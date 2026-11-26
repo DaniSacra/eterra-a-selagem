@@ -12,6 +12,7 @@ const RUBRIC_LIT := Color(0.55, 0.10, 0.08)
 ## The least contrast (WCAG ratio) the name and the price keep against the tag face.
 const MIN_CONTRAST := 4.5
 const GREEN_BACK := Color(0.78, 1.08, 0.72)
+const VINE_GREEN := Color("94A76A")
 const CHECK_W := 20.0
 const CHECK := Color("5f6b2e")
 const NAME_SIZE := 15
@@ -98,6 +99,8 @@ func _draw() -> void:
 		draw_circle(Vector2(size.x * 0.5, 6.0), 2.5, BURNT)
 	if owned:
 		var c := Vector2(PAD + 10.0, r.get_center().y)
+		# the vine's green filet under the name of a root already grown
+		draw_line(Vector2(PAD + CHECK_W, r.size.y - 9.0), Vector2(r.size.x - PAD, r.size.y - 9.0), VINE_GREEN, 2.0, true)
 		draw_polyline(PackedVector2Array([c + Vector2(-5, 0), c + Vector2(-1, 4), c + Vector2(6, -5)]), CHECK, 2.5, true)
 
 
