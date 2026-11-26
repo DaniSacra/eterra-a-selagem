@@ -37,7 +37,7 @@ const DOOR_IRON := Color(0.09, 0.09, 0.1)
 ## Hub refine round 1: an open door shows the warm light of the room inside (the art's doors are lit), and the future
 ## rooms' doors carry a gold padlock (the art's Area Futura).
 const DOOR_GLOW := Color(1.0, 0.56, 0.22)
-const DOOR_GLOW_ENERGY := 0.8
+const DOOR_GLOW_ENERGY := 0.45  # final pass 2026-11-26: the box face samples only a slice of the gradient, so the doorway read as a flat orange plate; dimmer
 ## Round 2: the doorway is dark inside with the warm light coming up from the foot (HubLook.lit_opening), the open
 ## Videira's door is no door at all (its pergola shows through), and the future rooms' doors are stone arches with a
 ## wooden leaf (a pointed panel) set into the wall. Round 4: the leaf's winding faced away from the camera (culled: the doorway
@@ -180,6 +180,7 @@ func _door(id: StringName, closed: bool) -> void:
 func _door_glow() -> StandardMaterial3D:
 	if _glow == null:
 		_glow = HubLook.lit_opening(DOOR_GLOW, DOOR_GLOW_ENERGY, DOOR_TOP, DOOR_MID)
+		_glow.uv1_scale = Vector3(1.0, 2.0, 1.0)  # a BoxMesh face holds half the atlas height: twice over, each face runs the whole gradient
 	return _glow
 
 

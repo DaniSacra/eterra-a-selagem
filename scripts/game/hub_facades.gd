@@ -142,7 +142,7 @@ static func ogive_mesh(span: float, spring: float, radius: float, colors: Array[
 func _warm_glass() -> StandardMaterial3D:
 	if _glass_mat == null:
 		# round 6: a dark head with the light pooling low, not a flat plate (the ogive's UV.y is 0 at the apex)
-		_glass_mat = HubLook.lit_opening(AMBER, 1.3, 0.05, 0.25)
+		_glass_mat = HubLook.lit_opening(AMBER, 0.75, 0.05, 0.25)  # final pass: the Aposento arch blew out to white
 		_glass_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	return _glass_mat
 
