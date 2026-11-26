@@ -27,7 +27,7 @@ const FRONT_FALLEN := 0.25
 ## Funerary niches (width, height, depth into the wall), their sill on the ledge: on the north wall at these x, on the
 ## west at these z; those in STATUE_NICHES (by order: north then west) hold a hooded statue instead of shelves.
 const NICHE := Vector3(1.7, 3.1, 0.9)
-const NORTH_NICHES: Array[float] = [-8.5, -2.5]
+const NORTH_NICHES: Array[float] = [-9.6, -6.4]
 const WEST_NICHES: Array[float] = [-7.5, 8.5]
 const STATUE_NICHES: Array[int] = [1, 2]
 const STATUE := 2.1
@@ -211,6 +211,10 @@ const NORTH_URNS: Array[Vector2] = [Vector2(-10.75, 0.42), Vector2(-10.45, 0.3),
 const WEST_URNS: Array[Vector2] = [Vector2(-2.55, 0.48), Vector2(-2.25, 0.32), Vector2(0.9, 0.4), Vector2(-0.75, 0.36), Vector2(-0.45, 0.5)]
 const URN_CLEAR := 0.25
 ## A burnt-out stub beside the north urn at x -1.2 (A2).
+## SL-02: how deep the doorway's recess goes into the north wall (m), where the dim light of a door in use hangs (height, out in front of the wall).
+const DOOR_DEPTH := 1.2
+const DOOR_LIGHT_UP := 3.0
+const DOOR_LIGHT_OUT := 0.8
 const NORTH_STUB := Vector2(-0.95, 0.12)
 ## Candles at the statues' feet (A4): how many lit on the sill in front of each statue niche, how far out of the
 ## wall's face; their light (one for each niche).
@@ -430,6 +434,7 @@ func dress_steps() -> Array[Callable]:
 			_heap()
 			_entry(),
 		_slabs,
+		_fountain,
 		func() -> void:
 			_candles()
 			_cold_shaft()
@@ -513,7 +518,11 @@ func _back_walls() -> void:
 			continue
 		var w := absf(e.mouth.size.x)
 		var cx := e.mouth.get_center().x - north_a.x
-		north.append(Vector4(cx - w * 0.5 - JAMB, cx + w * 0.5 + JAMB, 0.0, WALL_DOOR.y + 0.4))
+		if i >= exits_used:
+			continue  # SL-02: a way not in use is plain wall
+		# SL-02 (PT-25-10): the doorway's recess is cut up to its springing line; the pointed top is drawn on the wall (HallDoor.doorway)
+		north.append(Vector4(cx - CatacombHall.DOOR_CLEAR.x * 0.5 - CatacombHall.DOOR_FRAME, cx + CatacombHall.DOOR_CLEAR.x * 0.5 + CatacombHall.DOOR_FRAME,
+			0.0, HallDoor.spring_of(CatacombHall.DOOR_CLEAR.x, CatacombHall.DOOR_CLEAR.y, CatacombHall.DOOR_ARC)))
 		deep.append(0.0)
 	for o in layout.obstacles:
 		if o.piece == &"brazier" and o.center.y < _north:
@@ -552,8 +561,8 @@ func _back_niches() -> void:
 	# the arches of the north door, the banners with the lion over the fire bowls
 	for i in layout.exits.size():
 		var e := layout.exits[i]
-		if in_wall(i):
-			door_arch(Vector2(e.mouth.get_center().x, _north), Vector2(0, 1), absf(e.mouth.size.x), WALL_SET + 0.45)
+		if in_wall(i) and i < exits_used:
+			_north_door(e.mouth.get_center().x)
 	for o in layout.obstacles:
 		if o.piece == &"brazier" and o.center.y < _north:
 			var from := kit.root.get_child_count()
@@ -562,6 +571,138 @@ func _back_niches() -> void:
 			for i in range(from, kit.root.get_child_count()):
 				nodes.append(kit.root.get_child(i))
 			_banners.append([o.center.x, nodes])
+
+
+## SL-02 (PT-25-10, docs/art/ref/sala02_2026-11-25): the doors are the hall's big closed ones (HallDoor.doorway: two leaves
+## in a pointed arch, black inside, no stairs), in the north wall's face; the chosen one opens (Arena.open_exit).
+var _doors_built: Array[HallDoor] = []
+
+
+func _north_door(x: float) -> void:
+	var order := m.ashlar(0.0, STONE * WALL_TINT * CatacombHall.PORTAL_ORDER_TINT)
+	_doors_built.append(HallDoor.doorway(m, kit.root, order, Vector3(x, 0.0, _north - WALL_SET), CatacombHall.DOOR_CLEAR,
+		CatacombHall.DOOR_ARC, CatacombHall.DOOR_FRAME, DOOR_DEPTH, CatacombHall.DOOR_FACE_OUT))
+
+
+## The way's light only (a dim cool one in front of each door in use, which Arena.light_exit wakes): no stairs, no grille,
+## no medallion rod (the medallion hangs in the doorway).
+func _doors() -> void:
+	arena.exit_rod = false
+	for i in mini(exits_used, layout.exits.size()):
+		var e := layout.exits[i]
+		var l := OmniLight3D.new()
+		l.position = Vector3(e.mouth.get_center().x, DOOR_LIGHT_UP, _north + DOOR_LIGHT_OUT)
+		l.light_color = Color(0.5, 0.45, 0.6)
+		l.light_energy = DOOR_DIM
+		l.omni_range = 7.0
+		l.light_cull_mask = ~Arena.CROWD_LAYER
+		add_child(l)
+		arena._exit_lights.append(l)
+
+
+## Opens the leaves of door i, in the order of the doors in use.
+func open_door_leaves(i: int) -> void:
+	if i >= 0 and i < _doors_built.size():
+		_doors_built[i].open()
+
+
+## SL-02 (docs/art/ref/sala02_2026-11-25, "water_feature"): the broken fountain of the north-east corner. A ruined wall of the
+## crypt's stone stands behind the east edge (its middle z, its width, height, the lower height of its broken end, its depth
+## and how far out of the floor's edge x), a spout in it (height) and a thin fall to a shallow basin on the floor (centre,
+## size x and z; its water the canal's, shallow and walkable, only a dressing) with a low broken rim (height, the share of its
+## stones standing), and a run-off to the south-west. Everything here is under the knee on the floor or behind the edge:
+## nothing collides, nothing slows, nothing hurts. The pack's basin (10, -4.4) moved south-east to clear the slab at
+## (8..11, -7.5..-4.5) and the oil urn at (11.2, -1.6).
+const FOUNTAIN_WALL := Vector4(-3.4, 3.0, 3.5, 2.3)  # (centre z, width, height, the broken end's height)
+const FOUNTAIN_OUT := 0.9
+const FOUNTAIN_DEPTH := 0.9
+const FOUNTAIN_SPOUT := 1.9
+const FOUNTAIN_FALL := Vector2(0.7, 0.25)
+const FOUNTAIN_BASIN := Vector4(10.6, -3.4, 2.4, 2.4)
+const FOUNTAIN_RIM := Vector2(0.22, 0.7)
+const FOUNTAIN_RUNOFF: Array[Vector2] = [Vector2(9.6, -2.5), Vector2(8.7, -1.5), Vector2(7.9, -0.4)]
+const FOUNTAIN_RUNOFF_WIDTH := Vector2(0.9, 0.35)
+const FOUNTAIN_LIGHT := Color(0.5, 0.7, 0.85)
+const FOUNTAIN_LIGHT_AT := Vector3(10.4, 1.6, -3.3)
+const FOUNTAIN_ENERGY := 0.9
+const FOUNTAIN_SEED := 7733
+const FALL_SHADER := preload("res://assets/shaders/waterfall.gdshader")
+
+
+func _fountain() -> void:
+	var edge := _east + FOUNTAIN_OUT
+	var stone := m.ashlar(0.0, STONE * WALL_TINT)
+	var wall := FOUNTAIN_WALL
+	# the wall in three stepped parts (its north end the lowest, broken): z centre, length, height
+	for part: Vector3 in [Vector3(wall.x - 1.0, 1.0, wall.w), Vector3(wall.x + 0.1, 1.2, wall.z), Vector3(wall.x + 1.1, 0.8, wall.z * 0.88)]:
+		m.block(Vector3(edge, 0.0, part.x), Vector3(FOUNTAIN_DEPTH, part.z, part.y), 0.0, stone)
+	var sz := wall.x + 0.1
+	# the spout: a carved block jutting from the wall's face and a dark mouth in it
+	var face := edge - FOUNTAIN_DEPTH * 0.5
+	m.block(Vector3(face - 0.2, FOUNTAIN_SPOUT - 0.2, sz), Vector3(0.5, 0.4, 0.45), 0.0, stone)
+	var hollow := m.stone(0.0, HOLLOW * 0.4)
+	m.box(Vector3(face - 0.46, FOUNTAIN_SPOUT - 0.12, sz), Vector3(0.08, 0.22, 0.26), 0.0, hollow, false)
+	# the fall: a quad from the spout to the basin, facing the room
+	var fall := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	var drop := FOUNTAIN_SPOUT - FOUNTAIN_FALL.y
+	quad.size = Vector2(FOUNTAIN_FALL.x, drop)
+	fall.mesh = quad
+	var fm := ShaderMaterial.new()
+	fm.shader = FALL_SHADER
+	fall.material_override = fm
+	fall.position = Vector3(face - 0.62, FOUNTAIN_FALL.y + drop * 0.5, sz)
+	fall.rotation.y = -PI * 0.5
+	fall.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	kit.root.add_child(fall)
+	# the basin and the run-off: the canal's water (shallow, walkable)
+	var water := Canal.water(Vector2(FOUNTAIN_BASIN.x, FOUNTAIN_BASIN.y), false, _compat())
+	water.set_shader_parameter(&"deep", Color(0.05, 0.1, 0.13))
+	water.set_shader_parameter(&"shallow", Color(0.1, 0.19, 0.23))
+	var b := FOUNTAIN_BASIN
+	var lens := PackedVector2Array()
+	var lens_w := PackedFloat32Array()
+	var lens_wide := PackedFloat32Array()
+	for k in 9:
+		var u := float(k) / 8.0
+		lens.append(Vector2(b.x, b.y + (u - 0.5) * b.w))
+		var w := b.z * pow(sin(PI * clampf(u, 0.05, 0.95)), 0.5)
+		lens_w.append(w)
+		lens_wide.append(w * Canal.BANK)
+	kit.root.add_child(CatacombHall.floor_strip(lens, 1.0, Canal.DAMP_Y, HallLife.decal(HallLife.WATER_DAMP, 0.55), false, lens_wide))
+	kit.root.add_child(CatacombHall.floor_strip(lens, 1.0, Canal.WATER_Y, water, false, lens_w))
+	var run := PackedVector2Array([Vector2(b.x - 0.4, b.y + b.w * 0.4)])
+	run.append_array(PackedVector2Array(FOUNTAIN_RUNOFF))
+	var run_w := PackedFloat32Array()
+	var run_wide := PackedFloat32Array()
+	for k in run.size():
+		run_w.append(lerpf(FOUNTAIN_RUNOFF_WIDTH.x, FOUNTAIN_RUNOFF_WIDTH.y, float(k) / (run.size() - 1)))
+		run_wide.append(run_w[k] * Canal.BANK)
+	kit.root.add_child(CatacombHall.floor_strip(run, 1.0, Canal.DAMP_Y, HallLife.decal(HallLife.WATER_DAMP, 0.6), false, run_wide))
+	kit.root.add_child(CatacombHall.floor_strip(run, 1.0, Canal.WATER_Y + 0.001, water, false, run_w))
+	kit.root.add_child(CatacombHall.floor_strip(PackedVector2Array([Vector2(b.x - 0.6, b.y), Vector2(b.x - 2.4, b.y + 1.2)]), 2.6, Canal.DAMP_Y - 0.002,
+		HallLife.decal(HallLife.WATER_MOSS, 0.7, true), false))
+	# the broken rim: stones round the basin's edge, some fallen away
+	var r := RandomNumberGenerator.new()
+	r.seed = FOUNTAIN_SEED
+	for k in 14:
+		if r.randf() > FOUNTAIN_RIM.y:
+			continue
+		var a := TAU * float(k) / 14.0
+		var at := Vector2(b.x + cos(a) * (b.z * 0.5 + 0.1), b.y + sin(a) * (b.w * 0.5 + 0.1))
+		if at.x > _east - 0.4:
+			continue
+		var h := FOUNTAIN_RIM.x * r.randf_range(0.55, 1.0)
+		m.box(Vector3(at.x, h * 0.5 - 0.01, at.y), Vector3(0.45, h, 0.34), -a + PI * 0.5, null, true)
+	# the cold accent (no shadow, never on the crowd): water the colour of the room, not magic
+	var l := OmniLight3D.new()
+	l.position = FOUNTAIN_LIGHT_AT
+	l.light_color = FOUNTAIN_LIGHT
+	l.light_energy = FOUNTAIN_ENERGY
+	l.omni_range = 5.0
+	l.shadow_enabled = false
+	l.light_cull_mask = ~Arena.CROWD_LAYER
+	add_child(l)
 
 
 func _niche(at: Vector2, facing: Vector2, statue: bool, mat: Material, hollow: Material, bone: Material) -> void:
@@ -609,7 +750,20 @@ func _wall(a: Vector2, b: Vector2, out: Vector2, openings: Array[Vector4], deep:
 		elif deep[i] < 0.0:
 			_part(a, b, out, o.x, o.y, t0 + NICHE.z, t1, o.z, o.w, mat)
 	# a string course and the cornice, the whole length
-	_part(a, b, out, 0.0, length, t0 - COURSE.y, t0, COURSE.x, COURSE.x + 0.22, mat)
+	# (the string course stops at a doorway: its leaves and arch stand in the face)
+	var doors: Array[Vector2] = []
+	for i in openings.size():
+		if deep[i] == 0.0 and openings[i].z == 0.0:
+			doors.append(Vector2(openings[i].x, openings[i].y))
+	doors.sort_custom(func(p: Vector2, q: Vector2) -> bool: return p.x < q.x)
+	var runs: Array[Vector2] = []
+	var at := 0.0
+	for d in doors:
+		runs.append(Vector2(at, d.x))
+		at = d.y
+	runs.append(Vector2(at, length))
+	for r in runs:
+		_part(a, b, out, r.x, r.y, t0 - COURSE.y, t0, COURSE.x, COURSE.x + 0.22, mat)
 	_part(a, b, out, 0.0, length, t0 - CORNICE.y, t1, WALL_HEIGHT - CORNICE.x, WALL_HEIGHT, mat)
 
 
@@ -1138,7 +1292,7 @@ func _dress_styled_steps() -> Array[Callable]:
 					_inscription(sm, at, ink)
 			# the cold glow behind the north door, the mist beyond the cut walls
 			for i in layout.exits.size():
-				if in_wall(i):
+				if in_wall(i) and i < exits_used:
 					_door_glow(layout.exits[i], divider != null)
 			var mist := FRONT_MIST_COLOR * 2.0
 			var c := Vector2((_west + _east) * 0.5, (_north + _south) * 0.5)

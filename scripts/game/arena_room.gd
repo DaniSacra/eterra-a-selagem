@@ -2164,6 +2164,11 @@ func in_wall(_i: int) -> bool:
 	return false
 
 
+## SL-02: opens the leaves of door i, for an arena whose doors have them (the Cripta's); nothing otherwise.
+func open_door_leaves(_i: int) -> void:
+	pass
+
+
 ## Every door of the layout: its stairs going down out of the room from the end of its mouth; a door used gets its
 ## light (dim until it opens: Arena.light_exit) and, unless a fire bowl of the layout stands within 3 m, a warm
 ## lantern on the pillar beside it; a door not used keeps its stairs but its mouth is closed at the edge by a low iron

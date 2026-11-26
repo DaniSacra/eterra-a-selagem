@@ -10,8 +10,17 @@ extends Node3D
 const THICK := 0.1
 const WOOD := Color(0.085, 0.056, 0.04)
 const IRON := Color(0.1, 0.1, 0.115)
-const STRAPS: Array[float] = [0.2, 0.55, 0.9]
-const STRAP := Vector2(0.16, 0.05)
+const STRAPS: Array[float] = [0.14, 0.4, 0.66, 0.92]
+const STRAP := Vector2(0.18, 0.05)
+## PT-25-10 (big doors): the planks' battens on each leaf (how many, their width, how much thicker than the leaf), their
+## wood, and the ring pull at the meeting stile (radius, tube, height as a share of the spring line).
+const BATTENS := 3
+const BATTEN := Vector2(0.09, 0.03)
+const BATTEN_WOOD := Color(0.06, 0.04, 0.03)
+const RING := Vector2(0.14, 0.022)
+const RING_AT := 0.5
+## What the doorway's black is (nothing glows) and how deep the stone jambs reach back from the wall face.
+const BLACK := Color(0.012, 0.012, 0.016)
 ## How far a leaf swings when it opens (radians) and how long it takes (s).
 const OPEN_ANGLE := PI * 0.5
 const OPEN_TIME := 0.45
@@ -32,6 +41,36 @@ static func make(parent: Node3D, at: Vector3, span: float, height: float, arc: f
 	parent.add_child(d)
 	d._build(span, height, arc)
 	return d
+
+
+## The whole doorway of a wall (PT-25-10, the hall's and the crypt's): at `at` (the middle of the opening on the wall's
+## face, on the floor, the wall facing +z) the stone jambs `frame` wide (stone `order`) lining a recess `depth` deep, a
+## threshold, the ring of voussoirs, the black cap and the black face at the back, and the closed leaves standing `out`
+## in front of the face. The wall round it is the caller's (it cuts the opening). Returns the door.
+static func doorway(m: Masonry, root: Node3D, order: Material, at: Vector3, clear: Vector2, arc: float, frame: float,
+		depth: float, out: float) -> HallDoor:
+	var hw := clear.x * 0.5
+	var spring := spring_of(clear.x, clear.y, arc)
+	var zf := at.z
+	for sd: float in [-1.0, 1.0]:
+		m.block(Vector3(at.x + sd * (hw + frame * 0.5), 0.0, zf + 0.15 - (depth + 0.25) * 0.5),
+			Vector3(frame, spring, depth + 0.25 + 0.15), 0.0, order)
+	m.block(Vector3(at.x, -0.5, zf + 0.15 - (depth + 0.15) * 0.5), Vector3(clear.x, 0.49, depth + 0.15), 0.0, order)
+	m.voussoir_arch(Vector3(at.x, 0.0, zf + out), Vector2(0, 1), clear.x, spring, frame, 0.4, order, arc)
+	var black := StandardMaterial3D.new()
+	black.albedo_color = BLACK
+	black.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	black.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var whole := outline(clear.x, clear.y, arc)
+	var cap := outline(clear.x, clear.y, arc, false, true)
+	for z: float in [zf + out * 0.5, zf - depth]:
+		var f := MeshInstance3D.new()
+		f.mesh = face(cap if z > zf - 0.5 else whole)
+		f.material_override = black
+		f.position = Vector3(at.x, 0.0, z)
+		f.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		root.add_child(f)
+	return make(root, Vector3(at.x, 0.0, zf + out + 0.05), clear.x, clear.y, arc)
 
 
 ## The spring line's height under the pointed top (the arch rises sqrt(r^2 - cx^2) over it).
@@ -112,6 +151,31 @@ func _build(span: float, height: float, arc: float) -> void:
 			strap.position = Vector3(half * 0.5, spring * share, 0.0)
 			strap.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			hinge.add_child(strap)
+		var plank := StandardMaterial3D.new()
+		plank.albedo_color = BATTEN_WOOD
+		plank.roughness = 0.95
+		for k in BATTENS:
+			var batten := MeshInstance3D.new()
+			var bb := BoxMesh.new()
+			bb.size = Vector3(BATTEN.x, spring * 1.02, THICK + BATTEN.y)
+			batten.mesh = bb
+			batten.material_override = plank
+			batten.position = Vector3(half * (float(k) + 0.5) / BATTENS, spring * 0.51, 0.0)
+			batten.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			hinge.add_child(batten)
+		# a ring pull at the meeting stile
+		var ring := MeshInstance3D.new()
+		var torus := TorusMesh.new()
+		torus.inner_radius = RING.x - RING.y
+		torus.outer_radius = RING.x + RING.y
+		torus.rings = 12
+		torus.ring_segments = 6
+		ring.mesh = torus
+		ring.material_override = iron
+		ring.rotation.x = PI * 0.5
+		ring.position = Vector3(half - 0.3, spring * RING_AT, THICK * 0.5 + RING.y * 1.5)
+		ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		hinge.add_child(ring)
 
 
 ## A leaf's solid: the polygon (x from the hinge, which is its first point's x) pushed `thick` deep, both faces and the edges.

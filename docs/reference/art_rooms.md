@@ -687,3 +687,25 @@ Primeira sala do grande ajuste de layout. Vale para toda sala que reusa o `hall`
 - **Luz local (só estilizado):** luz dourada principal vinda de noroeste (`STY_WARM_FROM` (-22; 18; -20) mirando o centro, raio 8) e preenchimento frio fraco (`STY_COLD_FILL`, omni sem sombra em (0; 14; 10), não no navegador). Câmera, exposição global e materiais compartilhados intactos. A paleta de pedra e piso (petróleo, ajustada nas revisões anteriores) ficou como estava: a afinação para o "Último Esplendor" depende das capturas da GPU.
 - **Desvios do pacote:** a âncora do sinal ficou a 2,6 m de altura (2,1 deixava o disco de 2,8 m deitado sobre o batente); as folhas abrem para dentro (a parede tem recuo), não em fachada; a rua das estátuas da doca ficou três (uma por nicho) em vez de duas ao lado do portal; as fendas e tochas externas das portas são o braseiro do píer NE e as velas já existentes (sem tocha nova); loja e fonte: a pilha de caixas do pé leste dos degraus passou ao lado leste da escada e o pano da loja (`SHOP_CLOTHS`, `SHOP_URNS`) acompanha. A Antessala segue sem obelisco sul.
 - Testes: `tests/test_sl01_hall.gd` (portas, zonas, âncoras, três estados, escada leste, água, entulho), `test_hall_artpack.gd` (sem medalhão, moldura nem leão), `test_hall_life.gd`, `test_room_style.gd`, `test_arena_layout.gd` ajustados.
+
+## E4 (2026-11-25): canal, portas grandes, Cripta SL-02
+- **Canal (`scripts/game/canal.gd`, `Canal`)**: uma peça só para o rio do Salão (`CatacombHall._ground`) e o riacho de esquiva da
+  Antessala (`GapFloor`), para parecerem o mesmo canal: musgo e umidade, meio-fio de pedra baixo (`KERB_HEIGHT` 0,11) nas duas
+  margens (o piso é uma placa só; o rebaixo é lido pelo meio-fio e pela sombra da beira no shader), água de
+  `shallow_water.gdshader` com sombra de beira (`rim_shadow`) e reflexo em riscos (`reflect_*`, `view_yaw`). Vaus: trechos sem
+  meio-fio (`WATER_FORDS`). Na Antessala (`layout.gaps` não vazio) o rio começa ao sul do riacho e a primeira poça sai.
+  O meio-fio é só visual (nada colide); o riacho de esquiva usa as mesmas peças em água mais escura.
+- **Portas grandes (PT-25-10)**: `HallDoor.doorway` monta a porta inteira (batentes, soleira, anel de aduelas, preto, duas folhas
+  com tábuas, tiras e argola). Salão: `DOOR_CLEAR` 3,0 x 5,2, moldura 0,3, 1,2 m de vão entre as aberturas; o medalhão
+  (`DOOR_SIGN`: 0,05 à frente da borda, altura 2,55) fica DENTRO do vão e o texto logo abaixo (`DOOR_SIGN_TEXT` 0,8). Cripta:
+  as mesmas portas na face da parede norte (`CryptLook._north_door`), `ArenaExit.medal_up` 2,5 / `sign_up` 0,8 (`CRYPT_MEDAL`),
+  sem degraus nem grade; a porta fora de uso é parede lisa; `Arena.open_exit` abre a escolhida (`ArenaRoom.open_door_leaves`).
+  Mouth 3,0 m (`CRYPT_DOOR`); a terceira porta foi de -2,0 para -3,0 (`CRYPT_THIRD`) para a urna de óleo (-1,6; -10) não fechar a boca.
+- **Salão, mais detalhe (`CatacombHall._detail`)**: faixas de musgo no pé das paredes, folhas secas em um só mesh
+  (`LEAF_DRIFTS`), velas apagadas e potes nos cantos e ao pé das portas; nada colide nem passa de 0,3 m, o miolo fica livre.
+- **Cripta SL-02**: colisão e perigos das variantes A e B mantidos (os sarcófagos e colunas da planta do pacote não foram
+  movidos: os perigos e testes se apoiam neles). Nichos do norte em -9,6 e -6,4 (as portas ficam entre eles). Braseiros da parede norte
+  entre as portas (4,9) e a leste (9,7). Fonte quebrada no nordeste (`CryptLook._fountain`): muro em ruína atrás da borda leste,
+  bica, queda (`waterfall.gdshader`), bacia rasa (-0,5 de borda quebrada, 2,4 x 2,4 em (10,6; -3,4), deslocada da (10; -4,4) do
+  pacote para não cair em cima da laje e da urna), escoamento a sudoeste, um ponto frio de luz. Água andável e sem efeito.
+- Testes: `tests/test_sl02_crypt.gd`; `test_sl01_hall`, `test_pt2_door_medallion`, `test_room_style` seguem as portas e a luz nova.

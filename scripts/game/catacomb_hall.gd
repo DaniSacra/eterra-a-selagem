@@ -40,24 +40,23 @@ const STATUE_OFF := 1.3
 ## hang (m in front of the edge, height) and where the paladin stands to use them (the zone: width, depth, inside the
 ## floor's walkable edge).
 const DOOR_X: Array[float] = [7.6, 11.8]
-const DOOR_CLEAR := Vector2(2.4, 3.6)
-const DOOR_FRAME := 0.35
+const DOOR_CLEAR := Vector2(3.0, 5.2)
+const DOOR_FRAME := 0.3
 const DOOR_ARC := 0.8
 const DOOR_WALL_Z := -HALF.y - 0.3
-const DOOR_SIGN := Vector2(2.0, 5.0)
+## PT-25-10: the medallion hangs IN the doorway (a hair in front of the closed leaves, over the floor's edge), at this height.
+const DOOR_SIGN := Vector2(0.05, 2.55)
 ## The warm light on the doors' wall: where it hangs (between the two doors, in front of the wall), colour (#F3C47D
 ## leaning amber), energy and reach. No shadow, never on the crowd.
 const DOOR_TORCH_AT := Vector3(9.7, 3.4, -HALF.y + 1.6)
 const DOOR_TORCH := Color(1.0, 0.74, 0.42)
 const DOOR_TORCH_ENERGY := 2.4
 const DOOR_TORCH_RANGE := 7.5
-const DOOR_SIGN_TEXT := 3.4
+const DOOR_SIGN_TEXT := 0.8
 const DOOR_ZONE := Vector2(3.0, 2.6)
 ## How far the door's black face and its leaves stand in front of the wall's face, a leaf's thickness.
 const DOOR_FACE_OUT := 0.12
 const DOOR_DEPTH := 1.2
-## The doors' black (neutral, nothing glows: the inside is only dark) and the leaves' dark wood and iron.
-const DOOR_BLACK := Color(0.012, 0.012, 0.016)
 ## The landing west of the south standing stone (the way in): its x range and how far south it reaches; the gap of
 ## its steps down (x range).
 const LANDING := Vector2(-16.0, -3.6)
@@ -148,7 +147,7 @@ const FACADE_FILL_CONE := 70.0
 ## back) behind the statues and the tall window of the doors' wall (width, height, over the floor) with a mullion.
 const PLINTH := Vector2(1.0, 0.25)
 const DAIS_CORNICES: Array[float] = [7.4]
-const DOOR_CORNICES: Array[float] = [4.4, 8.0]
+const DOOR_CORNICES: Array[float] = [6.5, 8.9]
 const CORNICE := Vector2(0.25, 0.2)
 const NICHE := Vector3(2.0, 6.2, 0.4)
 const NICHE_DARK := 0.3
@@ -592,6 +591,7 @@ func build_steps(exit_count: int) -> Array[Callable]:
 		_urns,
 		_frame,
 		_ground,
+		_detail,
 		func() -> void: HallLife.dress(kit.root, kit.styled()),
 		_stylize_rest,
 	]
@@ -1109,11 +1109,6 @@ func _door_wall() -> void:
 		var w: float = edges[k + 1] - edges[k]
 		m.block(Vector3((edges[k] + edges[k + 1]) * 0.5, -DEPTH, zf - 1.6), Vector3(w, DEPTH + top, 3.2), 0.0, wall)
 		m.block(Vector3((edges[k] + edges[k + 1]) * 0.5, 0.0, zf + PLINTH.y * 0.5 - 0.05), Vector3(w, PLINTH.x, PLINTH.y + 0.1), 0.0, wall, false)
-	var black := StandardMaterial3D.new()
-	black.albedo_color = DOOR_BLACK
-	black.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	black.cull_mode = BaseMaterial3D.CULL_DISABLED
-	var depth := DOOR_DEPTH
 	_doors_built.clear()
 	for k in DOOR_X.size():
 		var dx := DOOR_X[k]
@@ -1121,24 +1116,9 @@ func _door_wall() -> void:
 		var span_r := edges[2 + k * 2]
 		# over the doorway: the wall from the springing line up, in front of the recess
 		m.block(Vector3((span_l + span_r) * 0.5, spring, zf - 1.6), Vector3(span_r - span_l, top - spring, 3.2), 0.0, wall)
-		# the jambs, the recess's side walls: from the wall's face back past the black face
-		for sd: float in [-1.0, 1.0]:
-			m.block(Vector3(dx + sd * (hw + DOOR_FRAME * 0.5), 0.0, zf + 0.15 - (depth + 0.25) * 0.5),
-				Vector3(DOOR_FRAME, spring, depth + 0.25 + 0.15), 0.0, order)
-		# a threshold in the recess's floor, the ring of stones round the arch
-		m.block(Vector3(dx, -0.5, zf + 0.15 - (depth + 0.15) * 0.5), Vector3(DOOR_CLEAR.x, 0.49, depth + 0.15), 0.0, order)
-		m.voussoir_arch(Vector3(dx, 0.0, zf + DOOR_FACE_OUT), Vector2(0, 1), DOOR_CLEAR.x, spring, DOOR_FRAME, 0.4, order, DOOR_ARC)
-		# the black: the cap of the arch in the wall's plane, the whole opening at the back of the recess
-		var whole := HallDoor.outline(DOOR_CLEAR.x, DOOR_CLEAR.y, DOOR_ARC)
-		var cap := HallDoor.outline(DOOR_CLEAR.x, DOOR_CLEAR.y, DOOR_ARC, false, true)
-		for z: float in [zf + DOOR_FACE_OUT * 0.5, zf - depth]:
-			var face := MeshInstance3D.new()
-			face.mesh = HallDoor.face(cap if z > zf - 0.5 else whole)
-			face.material_override = black
-			face.position = Vector3(dx, 0.0, z)
-			face.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			kit.root.add_child(face)
-		_doors_built.append(HallDoor.make(kit.root, Vector3(dx, 0.0, zf + DOOR_FACE_OUT + 0.05), DOOR_CLEAR.x, DOOR_CLEAR.y, DOOR_ARC))
+		# jambs, threshold, arch ring, the black and the leaves (PT-25-10: the big doors, the medallion hangs in them)
+		_doors_built.append(HallDoor.doorway(m, kit.root, order, Vector3(dx, 0.0, zf), DOOR_CLEAR, DOOR_ARC, DOOR_FRAME,
+			DOOR_DEPTH, DOOR_FACE_OUT))
 	# cornices across the whole wall (the arches' crowns stay under the first), buttresses and a window in its east bay
 	var mat := m.ashlar(0.0)
 	for ch: float in DOOR_CORNICES:
@@ -1248,6 +1228,9 @@ const WATER_LINE: Array[Vector2] = [Vector2(-9.0, -11.0), Vector2(-6.0, -9.0), V
 const WATER_WIDTH := Vector2(1.15, 1.4)
 const WATER_POOLS: Array[Vector4] = [Vector4(-8.0, -9.0, 4.0, 2.5), Vector4(-11.0, 9.0, 2.6, 2.3)]
 const WATER_Y := 0.016
+## SL-01b: where the kerbs of the canal are left open (shares of its length, from the north): the two pools' ends and a ford the paladin wades.
+const WATER_FORDS_STREAM: Array[Vector2] = [Vector2(0.0, 0.12), Vector2(0.62, 1.0)]
+const WATER_FORDS: Array[Vector2] = [Vector2(0.0, 0.22), Vector2(0.38, 0.46), Vector2(0.72, 1.0)]
 const WATER_SMOOTH := 4
 const WATER_BANK := Vector3(1.55, 0.5, 0.012)
 const WATER_MOSS := Vector3(3.0, 0.6, 0.008)
@@ -1266,38 +1249,19 @@ func _ground() -> void:
 	node.name = "HallGround"
 	kit.root.add_child(node)
 	ArenaKit.style_only(node)
-	var water := ShaderMaterial.new()
-	water.shader = preload("res://assets/shaders/shallow_water.gdshader")
-	water.set_shader_parameter(&"sheen_at", STY_WARM_AT)
-	if ArenaRoom.compat():
-		water.set_shader_parameter(&"glint", 0.25)
-		water.set_shader_parameter(&"sheen", 0.15)
-	var damp := HallLife.decal(HallLife.WATER_DAMP, WATER_BANK.y)
+	var water := Canal.water(STY_WARM_AT, false, ArenaRoom.compat())
 	var moss := HallLife.decal(HallLife.WATER_MOSS, WATER_MOSS.y, true)
-	# the stream: its line smoothed, swelling and narrowing
-	var line := PackedVector2Array()
-	var widths := PackedFloat32Array()
-	for i in WATER_LINE.size() - 1:
-		var p0 := WATER_LINE[maxi(i - 1, 0)]
-		var p1 := WATER_LINE[i]
-		var p2 := WATER_LINE[i + 1]
-		var p3 := WATER_LINE[mini(i + 2, WATER_LINE.size() - 1)]
-		for k in WATER_SMOOTH:
-			var t := float(k) / WATER_SMOOTH
-			line.append(Vector2(
-				0.5 * ((2.0 * p1.x) + (-p0.x + p2.x) * t + (2.0 * p0.x - 5.0 * p1.x + 4.0 * p2.x - p3.x) * t * t + (-p0.x + 3.0 * p1.x - 3.0 * p2.x + p3.x) * t * t * t),
-				0.5 * ((2.0 * p1.y) + (-p0.y + p2.y) * t + (2.0 * p0.y - 5.0 * p1.y + 4.0 * p2.y - p3.y) * t * t + (-p0.y + 3.0 * p1.y - 3.0 * p2.y + p3.y) * t * t * t)))
-			var along := (float(i) + t) / float(WATER_LINE.size() - 1)
-			widths.append(lerpf(WATER_WIDTH.x, WATER_WIDTH.y, 0.5 + 0.5 * sin(along * TAU * 1.5 + 0.6)))
-	line.append(WATER_LINE[WATER_LINE.size() - 1])
-	widths.append(WATER_WIDTH.x)
-	var wide := PackedFloat32Array()
-	for w in widths:
-		wide.append(w * WATER_BANK.x)
-	node.add_child(floor_strip(line, 1.0, WATER_BANK.z, damp, false, wide))
-	node.add_child(floor_strip(line, 1.0, WATER_Y, water, false, widths))
+	var damp := HallLife.decal(HallLife.WATER_DAMP, WATER_BANK.y)
+	# the river: a sunken canal (Canal: kerbs, damp, reflection), open at two fords; the Antessala's stream is the same piece
+	# (the Antessala's own stream, GapFloor, takes the north end: the river starts south of it and its first pool is left out)
+	var stream := arena.layout != null and not arena.layout.gaps.is_empty()
+	var points: Array[Vector2] = WATER_LINE.slice(3) if stream else WATER_LINE
+	var path := Canal.smooth(points, WATER_WIDTH)
+	Canal.dress(node, path[0], path[1], water, true, WATER_FORDS_STREAM if stream else WATER_FORDS)
 	# the pools: a lens along x, narrow at both ends
 	for p in WATER_POOLS:
+		if stream and p.y < -5.0:
+			continue
 		var lens := PackedVector2Array()
 		var lens_w := PackedFloat32Array()
 		var lens_wide := PackedFloat32Array()
@@ -1324,6 +1288,67 @@ func _ground() -> void:
 			size.y = minf(RUBBLE_TOP - 0.02, lerpf(0.08, RUBBLE_TOP, (1.0 - d) * r.randf_range(0.5, 1.0)))
 			var b := sty.box(Vector3(at.x, size.y * 0.5 - 0.02, at.y), size, r.randf() * TAU, null, false)
 			b.rotate_object_local(Vector3.RIGHT, r.randf_range(-0.15, 0.15))
+
+
+## SL-01b: what the picture has and the hall lacked, all of it flat on the floor or under the knee and clear of the
+## fight's middle (MIDDLE_AT, MIDDLE_CLEAR): bands of moss along the wall foots and the canal, drifts of dry leaves
+## (where, how many in each, how far they spread, their size and colour), and a few more candles (unlit, no light) and pots
+## in the corners and at the doors' feet. Nothing collides.
+const MOSS_BANDS: Array[Vector4] = [Vector4(-14.6, -9.0, -14.6, 11.0), Vector4(-2.0, -14.4, 13.5, -14.4), Vector4(15.0, -9.0, 15.0, 9.0),
+	Vector4(-9.0, 14.4, 2.0, 14.4)]
+const MOSS_BAND := Vector2(1.5, 0.6)
+const LEAF_DRIFTS: Array[Vector3] = [Vector3(-9.5, -5.0, 14.0), Vector3(-10.5, 2.0, 12.0), Vector3(-11.5, 10.0, 12.0),
+	Vector3(9.8, -13.2, 12.0), Vector3(14.0, -10.5, 8.0), Vector3(13.5, 12.0, 10.0), Vector3(-3.0, 13.2, 8.0), Vector3(14.2, 3.0, 8.0)]
+const LEAF_SPREAD := 1.7
+const LEAF_SIZE := Vector2(0.11, 0.2)
+const LEAF_COLOR := Color(0.23, 0.17, 0.07)
+const LEAF_COLOR_B := Color(0.2, 0.2, 0.09)
+const LEAF_Y := 0.02
+const DETAIL_SEED := 5821
+const DETAIL_CANDLES: Array[Vector3] = [Vector3(5.1, 0.0, -13.9), Vector3(14.1, 0.0, -13.6), Vector3(14.6, 0.0, 6.5), Vector3(-13.9, 0.0, 5.0)]
+const DETAIL_POTS: Array[Vector3] = [Vector3(5.6, 0.0, -14.1), Vector3(14.5, 0.0, 7.4), Vector3(13.7, 0.0, -14.0), Vector3(-14.3, 0.0, 4.2)]
+
+
+func _detail() -> void:
+	var node := Node3D.new()
+	node.name = "HallDetail"
+	kit.root.add_child(node)
+	ArenaKit.style_only(node)
+	var moss := HallLife.decal(HallLife.WATER_MOSS, WATER_MOSS.y, true)
+	for b in MOSS_BANDS:
+		node.add_child(floor_strip(PackedVector2Array([Vector2(b.x, b.y), Vector2(b.z, b.w)]), MOSS_BAND.x, WATER_MOSS.z + 0.001, moss, false))
+	# the leaves: flat little quads, one mesh for all of them
+	var r := RandomNumberGenerator.new()
+	r.seed = DETAIL_SEED
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_normal(Vector3.UP)
+	for d in LEAF_DRIFTS:
+		for _k in roundi(d.z):
+			var at := Vector2(d.x, d.y) + Vector2.from_angle(r.randf() * TAU) * sqrt(r.randf()) * LEAF_SPREAD
+			if at.distance_to(MIDDLE_AT) < MIDDLE_CLEAR * 0.6:
+				continue
+			var size := Vector2(r.randf_range(LEAF_SIZE.x, LEAF_SIZE.y), r.randf_range(LEAF_SIZE.x, LEAF_SIZE.y) * 0.6)
+			var u := Vector2.from_angle(r.randf() * TAU)
+			var v := Vector2(-u.y, u.x)
+			var c := LEAF_COLOR.lerp(LEAF_COLOR_B, r.randf())
+			st.set_color(c)
+			for q: Vector2 in [-u * size.x - v * size.y, u * size.x - v * size.y, u * size.x + v * size.y,
+					-u * size.x - v * size.y, u * size.x + v * size.y, -u * size.x + v * size.y]:
+				st.add_vertex(Vector3(at.x + q.x, LEAF_Y + 0.001 * r.randf(), at.y + q.y))
+	var leaves := MeshInstance3D.new()
+	leaves.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.roughness = 0.95
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	leaves.material_override = mat
+	leaves.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	node.add_child(leaves)
+	for c in DETAIL_CANDLES:
+		_candles(c, 3, false, false, _rng.randf() < 0.5)
+	for p in DETAIL_POTS:
+		m.pot(p, 0.8 + 0.2 * _rng.randf())
 
 
 ## The Antessala of the guided descent: the hall dressed as its variant 1, the only one of the hall with slabs that strike.

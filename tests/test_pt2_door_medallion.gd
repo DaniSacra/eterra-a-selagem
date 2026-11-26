@@ -24,7 +24,11 @@ func test_every_anchor_is_in_the_arch_of_its_door() -> void:
 			var m := a.door_anchor(i)
 			var edge := l.exits[i].edge()
 			assert_lt(Vector2(m.x, m.z).distance_to(edge), 2.5, "%s door %d: on the door's edge" % [l.id, i])
-			assert_gt(m.y, 3.0, "%s door %d: above the paladin's head and the passage" % [l.id, i])
+			if l.id == &"crypt":
+				# PT-25-10: the Cripta's disc hangs inside its big door, over the paladin's head
+				assert_between(m.y, 2.0, 3.5, "%s door %d: in the doorway" % [l.id, i])
+			else:
+				assert_gt(m.y, 3.0, "%s door %d: above the paladin's head and the passage" % [l.id, i])
 			assert_lt(m.y - RewardGem.RADIUS * RewardGem.DOOR_SCALE, ArenaRoom.WALL_DOOR.y, "%s door %d: floats over the lintel, its foot under the crown" % [l.id, i])
 			assert_lt(a.door_sign_y(i), m.y - RewardGem.RADIUS * RewardGem.DOOR_SCALE + 0.01, "%s door %d: text starts under the disc" % [l.id, i])
 			assert_eq(a.door_at_anchor(Vector2(m.x, m.z)), i, "%s door %d: found by its anchor" % [l.id, i])
