@@ -573,3 +573,14 @@ Os 10 itens do art-director. Tudo provisório (formas simples).
    voltado para a praça, com dois estandartes e lampiões (`_vigil_niche`, `VIGIL_ARCH_*`). O nicho baixo antigo saiu.
 9. **Folhagem**: `IVY_A`, `TREE_DARK`, `LEAF_DARK`, `CYPRESS_A` e o cipreste do cenário mais claros (~30%); `STY_CROWN_RAGGED` 0,08.
 10. **Toldo do Mercador**: vinho `AWNING_CLOTH` e creme `AWNING_STRIPE` (0.9, 0.82, 0.68).
+
+## PM-2 (2026-11-26 noite; environment-artist, SEM captura: conferir na GPU)
+- Fundo (item 4): `HubLook.MIST` (o plano opaco do abismo e a névoa das falésias) e `MIST_RIM` de azul-marinho para lilás
+  `(0.2, 0.18, 0.3)` / `(0.38, 0.31, 0.48)`; mar de nuvens `SEA_FAR`/`SEA_NEAR` lilás, `SEA_CLOUD` 1,2 e escala 0,11 (mais
+  mancha); céu `SKY_TOP` mais azul e `SKY_HORIZON` lilás. Novas serras a oeste, `RIDGES_WEST` (cartões virados para leste em
+  u -38, -58, -92, `_ridge_card`), para o vazio ao lado do piso não ser liso. Se o canto esquerdo da `r8_arrive` ainda sair
+  chapado, subir `SEA_CLOUD` ou aproximar a primeira serra.
+- Folhagem (item 9): `IVY_A` e `TREE_DARK` com o valor subido cerca de 30% (sombra oliva), cipreste `CYPRESS_SHADE` 1,2 (era
+  0,95), borda das folhas `STY_CROWN_RAGGED` 0,05 (era 0,08).
+- Hera e cipreste (item 7), nicho em arco (8) e Portão de lado: já feitos na rodada 3 (`IVY_EVERY` 4 só nas bordas, `VIGIL_ARCH`,
+  `GATE_WALL_H`); só conferir nas capturas.

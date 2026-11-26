@@ -43,6 +43,10 @@ uniform float half_width = 150.0;
 uniform float course = 1.6;
 uniform float joint = 0.08;
 uniform float spread = 0.12;
+// Painted stone (0: flat): how much a coarse mottle breaks each block and how much the stone darkens toward its
+// foot (the top keeps its value), so a far tower is a gradient, not a flat silhouette.
+uniform float paint = 0.0;
+uniform float paint_foot = 0.45;
 // The cave's roof (0, 0: none): its height (m) and how much lower it hangs to the west; where along the card it
 // starts to drop and where it is at its lowest (m from the card's middle).
 uniform vec2 roof = vec2(0.0);
@@ -190,6 +194,9 @@ void fragment() {
 	float bx = lat / (course * 1.7) + hash1(vec2(row, seed + 3.3));
 	float value = 1.0 - spread + 2.0 * spread * hash1(vec2(floor(bx), row + seed));
 	value *= 1.0 - joint * step(fract(y / course), 0.12);
+	float mottle_stone = noise(vec2(lat * 0.9, y * 0.55) + seed) * 0.65 + noise(vec2(lat * 2.7, y * 1.6)) * 0.35;
+	value *= 1.0 + paint * (mottle_stone - 0.5) * 2.0;
+	value *= 1.0 - paint * paint_foot * smoothstep(0.0, 10.0, min(under, 10.0));
 	vec3 col = stone_color * value;
 	col = mix(col, edge_color, edge * (1.0 - soften) * (1.0 - smoothstep(0.0, edge_height, under)));
 	float sunk = smoothstep(sink.x, sink.y, y);

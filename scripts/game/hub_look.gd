@@ -55,7 +55,7 @@ const SHRUB_B := Color(0.5, 0.6, 0.3)
 ## Art review 2026-11-21 item 5 (stylized look): the shrubs' leaves muted (the vivid orange is the hazard's colour,
 ## saturation under 0.45), bigger and less ragged so the cards stop reading as blocky noise.
 const STY_CROWN_LEAVES := 5.0
-const STY_CROWN_RAGGED := 0.08
+const STY_CROWN_RAGGED := 0.05  # PM-2: a thinner edge (was 0.08)
 const SHRUB_TALL := Vector2(1.0, 1.7)
 const SHRUB_WIDE := 1.5
 const SHRUB_EVERY := 1.4
@@ -158,11 +158,11 @@ const SCROLL := Color(0.64, 0.57, 0.44)
 # ---------- air and light ----------
 ## SV-R: the air under the far ridges (HubScenery draws them) and the cliffs of the drop: pale blue haze, warm grey stone
 ## (palette 04-paleta-e-iluminacao.md: water and distant mist #527F8C, shaded stone #8F8775), never a dark panel.
-const MIST := Color(0.07, 0.075, 0.14)
+const MIST := Color(0.2, 0.18, 0.3)  # PM-2: lilac dusk void, not flat navy (was 0.07, 0.075, 0.14)
 ## Round 3: the void is night-blue indigo, nearly black right under the platform and going lighter and violet with the
 ## distance (the horizon's haze): the abyss planes' rim colour and the distances (m from the room's middle) it takes over.
 ## Round 4: night blue, little saturated (#141a33 to #2a2848), the haze toward the horizon a grey-blue and lighter.
-const MIST_RIM := Color(0.17, 0.17, 0.3)
+const MIST_RIM := Color(0.38, 0.31, 0.48)  # PM-2: was 0.17, 0.17, 0.3
 const MIST_RIM_RANGE := Vector2(24.0, 110.0)
 const CLIFF := {&"stone_color": Color(0.3, 0.28, 0.25), &"edge_color": Color(0.5, 0.46, 0.4), &"mist_color": MIST,
 	&"glow_color": Color(0.5, 0.6, 0.7)}

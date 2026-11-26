@@ -13,6 +13,8 @@ extends RefCounted
 const LIMESTONE := Color("D3C5A7")
 const SHADED_STONE := Color("8F8775")
 const CYPRESS_GREEN := Color("52683D")
+## The cypress' shadow side as a share of its green (PM-2: was 0.95, near black on screen).
+const CYPRESS_SHADE := 1.2
 const VINE_GREEN := Color("94A76A")
 const WATER_BLUE := Color("527F8C")
 const OLD_GOLD := Color("B68A48")
@@ -25,7 +27,7 @@ const WISTERIA_A := Color(0.34, 0.26, 0.46)
 const WISTERIA_B := Color(0.6, 0.52, 0.72)
 const LEAF_DARK := Color(0.27, 0.39, 0.19)
 const LEAF_LIGHT := Color(0.42, 0.54, 0.26)
-const TREE_DARK := Color(0.29, 0.44, 0.21)
+const TREE_DARK := Color(0.38, 0.52, 0.25)  # PM-2: the leaf shadow olive, not black (was 0.29, 0.44, 0.21)
 const TREE_LIGHT := Color(0.5, 0.62, 0.3)
 const RED_LEAF_A := Color(0.46, 0.08, 0.1)
 const RED_LEAF_B := Color(0.84, 0.26, 0.16)
@@ -259,7 +261,7 @@ const BACKDROP_TALL := Vector2(4.0, 6.5)
 const BACKDROP_MIN_V := 24.0
 const BACKDROP_DEEP := Vector2(2.2, 3.4)
 const BACKDROP_SINK := 3.0
-const IVY_A := Color(0.2, 0.32, 0.14)
+const IVY_A := Color(0.3, 0.42, 0.17)  # PM-2: olive shadow (was 0.2, 0.32, 0.14)
 const IVY_B := Color(0.34, 0.46, 0.2)
 const WALL_WISTERIA_EVERY := Vector2(1.7, 2.7)  # round 2: denser than 2.4 to 3.6
 const CASCADE_ON: Array[StringName] = [&"book", &"heroes", &"smith", &"tree", &"vendor"]
@@ -302,16 +304,24 @@ const RIDGES: Array[Dictionary] = [
 	{&"v": 70.0, &"w": 360.0, &"h": 120.0, &"y": -60.0, &"low": Color(0.1, 0.14, 0.18), &"top": Color(0.22, 0.26, 0.28), &"base": 0.6, &"amp": 0.3, &"seed": 21.0},
 ]
 const RIDGE_U := 14.0
+## PM-2 (art review 2026-11-26b item 4): the same ridges seen over the west edge, so the void beside the floor is lilac
+## mountain and not flat navy: each card stands this far west of the plan's middle (u), centred on `v` (along it, so
+## `w` covers the whole west rim), turned to face east.
+const RIDGES_WEST: Array[Dictionary] = [
+	{&"u": -92.0, &"v": 20.0, &"w": 420.0, &"h": 150.0, &"y": -60.0, &"low": Color(0.3, 0.26, 0.42), &"top": Color(0.58, 0.48, 0.62), &"base": 0.62, &"amp": 0.3, &"seed": 41.0},
+	{&"u": -58.0, &"v": 20.0, &"w": 340.0, &"h": 120.0, &"y": -60.0, &"low": Color(0.22, 0.2, 0.34), &"top": Color(0.44, 0.37, 0.5), &"base": 0.66, &"amp": 0.28, &"seed": 47.0},
+	{&"u": -38.0, &"v": 20.0, &"w": 260.0, &"h": 90.0, &"y": -60.0, &"low": Color(0.16, 0.15, 0.27), &"top": Color(0.33, 0.29, 0.42), &"base": 0.7, &"amp": 0.25, &"seed": 53.0},
+]
 ## The sky (a standing card behind the ridges) and the sea of cloud under the floor (a flat plane), as gradients.
 const SKY_SHADER := preload("res://assets/shaders/hub_sky.gdshader")
-const SKY_TOP := Color(0.2, 0.24, 0.5)
-const SKY_HORIZON := Color(0.66, 0.54, 0.7)
+const SKY_TOP := Color(0.24, 0.3, 0.58)
+const SKY_HORIZON := Color(0.74, 0.6, 0.78)
 const SEA_Y := -30.0
 const SEA_SIZE := 900.0
-const SEA_FAR := Color(0.3, 0.25, 0.36)
-const SEA_NEAR := Color(0.07, 0.08, 0.16)
-const SEA_CLOUD := 0.7
-const SEA_CLOUD_SCALE := 0.07  # waves of cloud the near camera can tell apart (a view is only tens of metres wide)
+const SEA_FAR := Color(0.5, 0.42, 0.58)
+const SEA_NEAR := Color(0.24, 0.22, 0.38)
+const SEA_CLOUD := 1.2
+const SEA_CLOUD_SCALE := 0.11  # waves of cloud the near camera can tell apart (a view is only tens of metres wide)
 const SKY_CARD := Vector4(260.0, 900.0, 320.0, -60.0)  # v, width, height, bottom y
 
 var look: HubLook
@@ -395,7 +405,7 @@ func build(layout: RoomLayout) -> void:
 	look.add_crowns(_roof_spots, _roof_tall, LEAF_DARK, LEAF_LIGHT, PERGOLA_LEAF.x, "PergolaRoof", true)
 	look.add_crowns(_grape_spots, _grape_tall, GRAPE_A, GRAPE_B, 0.42, "Grapes", false, true, 0.4)
 	_clear_cypresses()
-	look.add_crowns(_cypress_spots, _cypress_tall, CYPRESS_GREEN * 0.95, CYPRESS_GREEN * 1.25, 1.25, "Cypresses", false)
+	look.add_crowns(_cypress_spots, _cypress_tall, CYPRESS_GREEN * CYPRESS_SHADE, CYPRESS_GREEN * 1.35, 1.25, "Cypresses", false)
 	look.add_crowns(_deep_spots, _deep_tall, DEEP_A, DEEP_B, 1.6, "DeepCypresses", false)
 	look.add_crowns(_deep_round_spots, _deep_round_tall, DEEP_A, DEEP_B, 3.2, "DeepTrees", true)
 	look.add_crowns(_tree_spots, _tree_tall, TREE_DARK, TREE_LIGHT, 4.2, "Trees", true)
@@ -1649,21 +1659,29 @@ func _ridges() -> void:
 	sea.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	look.frame.add_child(sea)
 	for r in RIDGES:
-		var mi := MeshInstance3D.new()
-		mi.name = "Ridge"
-		var q := QuadMesh.new()
-		q.size = Vector2(r[&"w"], r[&"h"])
-		mi.mesh = q
-		var mat := ShaderMaterial.new()
-		mat.shader = RIDGE_SHADER
-		mat.set_shader_parameter(&"low_color", r[&"low"])
-		mat.set_shader_parameter(&"top_color", r[&"top"])
-		mat.set_shader_parameter(&"ridge", Vector2(r[&"base"], r[&"amp"]))
-		mat.set_shader_parameter(&"seed", r[&"seed"])
-		mi.material_override = mat
-		mi.position = _at(RIDGE_U, float(r[&"y"]) + float(r[&"h"]) * 0.5, float(r[&"v"]))
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		look.frame.add_child(mi)
+		_ridge_card(r, RIDGE_U, float(r[&"v"]), 0.0)
+	for r in RIDGES_WEST:
+		_ridge_card(r, float(r[&"u"]), float(r[&"v"]), PI * 0.5)
+
+
+## One ridge card of the far mountains at (u, v), turned `yaw` about the vertical (0 faces south, the camera).
+func _ridge_card(r: Dictionary, u: float, v: float, yaw: float) -> void:
+	var mi := MeshInstance3D.new()
+	mi.name = "Ridge"
+	var q := QuadMesh.new()
+	q.size = Vector2(r[&"w"], r[&"h"])
+	mi.mesh = q
+	var mat := ShaderMaterial.new()
+	mat.shader = RIDGE_SHADER
+	mat.set_shader_parameter(&"low_color", r[&"low"])
+	mat.set_shader_parameter(&"top_color", r[&"top"])
+	mat.set_shader_parameter(&"ridge", Vector2(r[&"base"], r[&"amp"]))
+	mat.set_shader_parameter(&"seed", r[&"seed"])
+	mi.material_override = mat
+	mi.position = _at(u, float(r[&"y"]) + float(r[&"h"]) * 0.5, v)
+	mi.rotation.y = yaw
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	look.frame.add_child(mi)
 
 
 func _gradient_mat(top: Color, bottom: Color, vertical: float, cloud: float) -> ShaderMaterial:

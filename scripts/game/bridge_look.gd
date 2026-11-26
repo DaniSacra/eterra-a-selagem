@@ -69,6 +69,9 @@ const RUIN_HAZE: Array[float] = [0.55, 0.78]
 const RUIN_SOFTEN := 0.8
 const RUIN_SIZE := Vector2(320.0, 110.0)
 const RUIN_TOP := 20.0
+## The far towers' painted stone (abyss_ruins.gdshader paint): mottle strength and the darkening toward the foot.
+const RUIN_PAINT := 0.45
+const RUIN_PAINT_FOOT := 0.5
 const RUIN_STONE := Color(0.035, 0.045, 0.07)
 const RUIN_EDGE := Color(0.12, 0.16, 0.24)
 
@@ -439,6 +442,8 @@ func _far() -> void:
 		var cm := card.material_override as ShaderMaterial
 		cm.set_shader_parameter(&"stone_color", RUIN_STONE)
 		cm.set_shader_parameter(&"edge_color", RUIN_EDGE)
+		cm.set_shader_parameter(&"paint", RUIN_PAINT)
+		cm.set_shader_parameter(&"paint_foot", RUIN_PAINT_FOOT)
 		_ruin_mats.append(cm)
 
 

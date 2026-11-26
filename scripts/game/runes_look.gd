@@ -104,7 +104,7 @@ const STYLE := {
 ## Item 4 of the cycle: the grid at rest discreet (the frames' and marks' ivory trace nearer the stone,
 ## rune_tiles.gdshaderinc), the strong amber only on a tile that arms.
 ## Art review 2026-11-21 item 8: the quiet (safe) stone at most about 1.25 times its neighbours (paint_quiet_value 0.5 read near white).
-const STY_REST := {&"paint_trace_share": 0.2, &"paint_quiet_value": 0.36}
+const STY_REST := {&"paint_trace_share": 0.2, &"paint_quiet_value": 0.3}
 ## Art review 2026-11-21 item 1: the outer face of the wall keeps its stone to 1 m under the floor and sinks into the
 ## mist (near black) by 5 m, so the bottom of the frame is no flat, dark wall.
 const STY_DEPTH_SINK := {&"sink_top": -1.0, &"sink_bottom": -5.0}
