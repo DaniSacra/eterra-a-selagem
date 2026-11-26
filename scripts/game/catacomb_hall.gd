@@ -1301,8 +1301,8 @@ const LEAF_DRIFTS: Array[Vector3] = [Vector3(-9.5, -5.0, 14.0), Vector3(-10.5, 2
 	Vector3(9.8, -13.2, 12.0), Vector3(14.0, -10.5, 8.0), Vector3(13.5, 12.0, 10.0), Vector3(-3.0, 13.2, 8.0), Vector3(14.2, 3.0, 8.0)]
 const LEAF_SPREAD := 1.7
 const LEAF_SIZE := Vector2(0.11, 0.2)
-const LEAF_COLOR := Color(0.23, 0.17, 0.07)
-const LEAF_COLOR_B := Color(0.2, 0.2, 0.09)
+const LEAF_COLOR := Color(0.1, 0.065, 0.03)
+const LEAF_COLOR_B := Color(0.08, 0.075, 0.035)
 const LEAF_Y := 0.02
 const DETAIL_SEED := 5821
 const DETAIL_CANDLES: Array[Vector3] = [Vector3(5.1, 0.0, -13.9), Vector3(14.1, 0.0, -13.6), Vector3(14.6, 0.0, 6.5), Vector3(-13.9, 0.0, 5.0)]

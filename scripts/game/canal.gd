@@ -18,7 +18,7 @@ const KERB_SHADE := Vector2(0.72, 1.12)
 ## The damp bank as wide as the water, times this; the moss a little wider.
 const BANK := 1.55
 const MOSS_BANK := 2.1
-const KERB_STONE := Color(0.30, 0.31, 0.33)
+const KERB_STONE := Color(0.12, 0.115, 0.11)
 const KERB_SIDE := Color(0.11, 0.12, 0.14)
 ## Points of the smoothed line per segment of the given path.
 const SMOOTH := 4
