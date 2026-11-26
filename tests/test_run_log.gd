@@ -75,10 +75,9 @@ func test_a_real_run_counts_and_names_what_hurt_last() -> void:
 	_start()
 	var heard: Array = []
 	game.run_logged.connect(func(outcome: String, e: Dictionary) -> void: heard.append([outcome, e]))
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 7 # fixed: a random defensive boon could block the blows below
 	# never the Escudo: its shield would take the blow below (the offer depends on the pool, which grows with new Blessings)
-	var b: Boon = game.boons.offers(rng, 3).filter(func(o: Boon) -> bool: return o.id != &"escudo")[0]
+	# (GP-2: a fixed offensive Blessing; the pool of 9 angels can offer one whose guard takes the blow below)
+	var b: Boon = game.boons.find(&"golpe_peste")
 	game._take(b)
 	game.player.dodged.emit(Vector2.RIGHT)
 	game.player.cast_released.emit(game.player.pos, true)

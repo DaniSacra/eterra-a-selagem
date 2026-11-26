@@ -3,7 +3,7 @@ extends GutTest
 ## play for him: it carries a skill (a button fires it), or a stat the game reads, on a tag one of his blows carries.
 
 ## Stats some code of the Warrior's game reads (Combat, Ultimates, Game, Player).
-const READ: Array[StringName] = [&"damage_pct", &"reach_pct", &"wave_size_pct", &"burn_dps", &"freeze_time", &"shatter_pct",
+const READ: Array[StringName] = [&"damage_pct", &"reach_pct", &"wave_size_pct", &"burn_dps", &"dodge_plague_dps", &"freeze_time", &"shatter_pct",
 	&"detonate_dmg", &"dodge_ember_dps", &"dodge_charges", &"move_speed_pct", &"max_hp", &"heal_on_kill", &"ult_charge_pct",
 	&"steam_time", &"shield_cooldown", &"shield_burst", &"weak_time", &"mark_time", &"stun_pct", &"armor_pct", &"cast_dps", &"magick_max", &"weak_pct", &"push_pct", &"shove_pct", &"crit_pct", &"gold_pct"]
 ## Tags the Warrior's blows, Brado, Investida and Corte do Juizo carry (tools/make_data.gd, _tree).

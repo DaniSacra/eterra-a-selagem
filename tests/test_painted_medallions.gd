@@ -24,7 +24,7 @@ func test_every_blessing_has_its_painted_medallion_or_the_drawn_icon() -> void:
 		else:
 			assert_lt(b.icon, 23, "%s has neither painting nor a drawn glyph" % b.id)
 		n += 1
-	assert_eq(n, 114)
+	assert_eq(n, 132)  # 114 + the 18 of Zerael and Saarael (GP-2)
 	assert_gt(painted, 60)
 
 
