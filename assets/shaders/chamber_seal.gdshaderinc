@@ -1,8 +1,8 @@
 // The Chamber of the Seal's own floor (included by catacomb_floor.gdshaderinc when CHAMBER is defined; uniforms set by
 // BossChamber, values over time by SealLook; docs/art/boss_chamber_spec.md 2.2, 2.3 and 6):
 // - the seal in the middle, in the stone (fixed): a double ring of inlaid old gold, a band of lozenges and leaves, eight
-//   long points of lighter stone outlined in gold with a darker half, leaves between them, and in its heart the standing
-//   lion in raised stone (assets/textures/seal/lion_sdf.res, drawn by hand in lion.svg), with a gold edge and dark cuts;
+//   outer ward of a ring of chain links, eight locking bars and carved runes (a prison seal: no radial points, no rays,
+//   D-66), and in its heart the standing lion in raised stone (assets/textures/seal/lion_sdf.res, drawn by hand in lion.svg), with a gold edge and dark cuts;
 // - the crack of violet light across the lion, growing with Morvath's phases, its burnt edge and the stain round it;
 // - a light layer over the rings that may turn (the stone never does): lit points, rings and runes of the ritual, the
 //   wave of the ritual, the flash of its breaking, the flicker and tremor of the last phase, the traces of the victory;
@@ -22,16 +22,21 @@ uniform vec2 seal_inner = vec2(2.82, 2.96);
 uniform float seal_filet = 0.06;
 uniform vec2 seal_lozenge = vec2(0.22, 0.12);
 uniform float seal_band_contrast = 0.5;
-// C11 polish (the points read as thin outlines next to the reference's star): wider at the base, a thicker gold edge,
-// a bronze inlay over the lighter stone (its darker half darker still) and a fine gold spine down the middle; all of it
-// metal and stone in the albedo, nothing emitted at rest.
+// The prison ward round the double ring (no points, no rays; D-66): the outer ring's radius (two filets), the ring of
+// chain links (radius, link count, half length and half width of the long and of the end-on link, filet), the eight
+// locking bars (radial from, to; half width; dark slot half width), the carved runes' strip (from, to; cells) and the
+// old gold's dimming, with the faint violet fissures in the stone (reach in m, strength).
+uniform float seal_ward = 5.0;
+uniform vec3 seal_chain = vec3(4.28, 40.0, 0.045);
+uniform vec4 seal_link = vec4(0.3, 0.1, 0.1, 0.1);
+uniform vec3 seal_lock = vec3(4.02, 4.66, 0.3);
+uniform float seal_lock_slot = 0.045;
+uniform vec3 seal_rune_strip = vec3(4.68, 4.9, 40.0);
+uniform float seal_gold_dim = 0.8;
+uniform float seal_point_edge = 0.06;
+uniform vec2 seal_fissure = vec2(4.9, 0.55);
+// Kept for the victory's traces: the ward's reach and the lit lock's extent.
 uniform vec3 seal_point = vec3(3.66, 5.15, 0.86);
-uniform float seal_point_edge = 0.085;
-uniform float seal_point_stone = 1.12;
-uniform float seal_point_dark = 0.7;
-uniform float seal_point_bronze = 0.4;
-uniform float seal_point_spine = 0.035;
-uniform vec2 seal_leaf = vec2(4.0, 0.4);
 // The lion: its distance field (red: body, green: cuts; 0.5 on the edge, `seal_lion_spread` pixels to the full swing
 // on a `seal_lion_px` texture covering `seal_lion_span` m), the field's point laid on the seal's middle (m, in the
 // texture's frame), its body's value, gold edge (m), the shadow it casts down the screen (m) and its darkness.
@@ -121,14 +126,8 @@ float chamber_joints(vec2 wp) {
 	if (d > seal_point.y + 0.1) {
 		return 1.0;
 	}
-	float heart = 1.0 - smoothstep(seal_inner.y - 0.05, seal_inner.y + 0.05, d);
-	float k = floor(atan(q.y, q.x) / 0.7853982 + 0.5);
-	vec2 ax = vec2(cos(k * 0.7853982), sin(k * 0.7853982));
-	float u = dot(q, ax);
-	float v = abs(dot(q, vec2(-ax.y, ax.x)));
-	float in_point = step(seal_outer.x, u) * step(v, seal_point.z * (seal_point.y - u) / (seal_point.y - seal_point.x));
-	float band = step(seal_inner.x, d) * step(d, seal_outer.y);
-	return 1.0 - max(max(heart, in_point), band * 0.6);
+	float carved = 1.0 - smoothstep(seal_ward + 0.1, seal_ward + 0.15, d);
+	return 1.0 - carved;
 }
 
 // A filet (a thin inlaid line) at distance x from its middle: 1 on it.
@@ -189,7 +188,7 @@ void seal_draw(vec2 wp, inout vec3 c, inout vec3 emit, inout vec2 lean, inout fl
 	vec2 q = seal_frame(wp);
 	float d = length(q);
 	float ang = atan(q.y, q.x);
-	vec3 gold = mix(gold_dark, gold_light, 0.55 + 0.45 * noise(wp * 6.0));
+	vec3 gold = mix(gold_dark, gold_light, 0.55 + 0.45 * noise(wp * 6.0)) * seal_gold_dim;
 	float gold_k = 0.0;
 	float glow = 0.0;
 	vec3 light = vec3(0.0);
@@ -246,32 +245,56 @@ void seal_draw(vec2 wp, inout vec3 c, inout vec3 emit, inout vec2 lean, inout fl
 		orn = 1.0 - smoothstep(0.9, 1.05, length(vec2(l32.y / lw, l32.x / (seal_lozenge.y * 0.5))) + abs(l32.y / lw) * 0.4);
 	}
 	gold_k = max(gold_k, orn * seal_band_contrast);
-	// ---- the eight points: lighter stone, a darker half, a gold edge
+	// ---- the ward: an outer ring, a ring of chain links, eight locking bars and a strip of carved runes
 	float k8 = floor(ang / 0.7853982 + 0.5);
 	vec2 ax = vec2(cos(k8 * 0.7853982), sin(k8 * 0.7853982));
 	float u = dot(q, ax);
 	float v = dot(q, vec2(-ax.y, ax.x));
-	float slope = seal_point.z / (seal_point.y - seal_point.x);
-	float pedge = (seal_point.z * (seal_point.y - u) / (seal_point.y - seal_point.x) - abs(v)) / sqrt(1.0 + slope * slope);
-	float past = step(seal_outer.y, u);
-	float in_point = step(0.0, pedge) * past;
-	c *= mix(1.0, seal_point_stone * (v < 0.0 ? seal_point_dark : 1.0), in_point);
-	c = mix(c, gold_dark * (v < 0.0 ? seal_point_dark : 1.0), in_point * seal_point_bronze);
-	float p_edge = filet(pedge - seal_point_edge * 0.5, seal_point_edge) * past * step(u, seal_point.y);
+	float ward = max(filet(d - seal_ward, seal_filet), filet(d - seal_ward - 0.16, seal_filet));
+	float in_ward = step(seal_outer.y, d) * step(d, seal_ward + 0.2);
+	c *= 1.0 - in_ward * 0.12;
+	c *= 1.0 - step(seal_ward + 0.02, d) * step(d, seal_ward + 0.14) * 0.4;
+	gold_k = max(gold_k, ward);
+	// the chain: links alternate long and end-on, drawn as thin gold outlines
+	float n_link = seal_chain.y;
+	float a_link = 6.2831853 / n_link;
+	float k_link = floor(ang / a_link + 0.5);
+	vec2 ax_l = vec2(cos(k_link * a_link), sin(k_link * a_link));
+	vec2 ll = vec2(dot(q, ax_l) - seal_chain.x, dot(q, vec2(-ax_l.y, ax_l.x)));
+	bool long_link = mod(k_link, 2.0) < 0.5;
+	vec2 half_link = long_link ? vec2(seal_link.x, seal_link.y) : vec2(seal_link.z, seal_link.w);
+	float link_e = length(vec2(ll.y / half_link.x, ll.x / half_link.y)) - 1.0;
+	float link = filet(link_e * half_link.y, seal_chain.z) * step(abs(ll.x), 0.2);
+	gold_k = max(gold_k, link);
+	// the locking bars: a plate with a dark slot, blunt ends, at the eight bearings
+	vec2 lock_c = vec2(u - (seal_lock.x + seal_lock.y) * 0.5, v);
+	float lock_hl = (seal_lock.y - seal_lock.x) * 0.5;
+	vec2 lock_q = abs(lock_c) - vec2(lock_hl, seal_lock.z);
+	float lock_d = max(lock_q.x, lock_q.y);
+	float in_lock = step(lock_d, 0.0) * step(0.0, u);
+	c *= mix(1.0, 1.1, in_lock);
+	c = mix(c, c * 0.35, in_lock * step(abs(lock_c.y), seal_lock_slot) * step(abs(lock_c.x), lock_hl * 0.7));
+	float p_edge = filet(lock_d + seal_point_edge * 0.5, seal_point_edge) * step(0.0, u);
 	gold_k = max(gold_k, p_edge);
-	gold_k = max(gold_k, filet(v, seal_point_spine) * in_point * 0.8);
+	// carved runes (dark, worn) in the strip between the chain and the outer ring
+	if (d > seal_rune_strip.x && d < seal_rune_strip.y) {
+		float r_cells = seal_rune_strip.z;
+		float r01 = fract(ang / 6.2831853) * r_cells;
+		vec2 rcell = vec2(fract(r01) * (seal_rune_strip.x * 6.2831853 / r_cells), d - seal_rune_strip.x);
+		float rg = rune_glyph(rcell, vec2(seal_rune_strip.x * 6.2831853 / r_cells, seal_rune_strip.y - seal_rune_strip.x), floor(r01));
+		c *= 1.0 - 0.45 * (1.0 - smoothstep(0.012, 0.026, rg));
+	}
+	// old gold, dimmed; the violet is Morvath's: faint fissures in the stone of the ward
+	float fiss_r = abs(fbm(q * 1.7 + 5.0) - 0.5);
+	float fiss = (1.0 - smoothstep(0.008, 0.03, fiss_r)) * smoothstep(seal_inner.y, seal_outer.y, d)
+		* (1.0 - smoothstep(seal_fissure.x, seal_fissure.x + 0.3, d));
+	c = mix(c, c * vec3(0.55, 0.3, 0.9), fiss * seal_fissure.y * seal_spot);
 	// which points are lit (from the one pointing at Morvath, clockwise on the screen)
 	float idx = mod(k8 + 2.0, 8.0);
 	float rel = mod(idx - seal_first_point + 8.0, 8.0);
 	float lit = clamp(seal_points - rel, 0.0, 1.0);
 	// the ritual's wave from the heart to the tips
 	float wave = 1.0 + seal_wave * sin(6.2831853 * (0.7 * seal_clock) - d * 1.4);
-	// ---- the leaves between the points
-	float a_gap = (floor(ang / 0.7853982) + 0.5) * 0.7853982;
-	vec2 gax = vec2(cos(a_gap), sin(a_gap));
-	vec2 gl = vec2(dot(q, gax) - seal_leaf.x, dot(q, vec2(-gax.y, gax.x)));
-	float leaf = 1.0 - smoothstep(0.9, 1.05, length(vec2(gl.x / (seal_leaf.y * 0.5), gl.y / (seal_leaf.y * 0.2))));
-	gold_k = max(gold_k, leaf);
 	// ---- the crack, its burn and stain, or its scar once healed
 	vec4 cr = crack_at(q);
 	float violet = seal_violet_left;
