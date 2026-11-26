@@ -488,9 +488,8 @@ func _edge_points(step: float, inset: float, clear := PLANT_CLEAR, with_water :=
 				if not _on_floor(edge + normal * 0.25):
 					into = -normal
 				var p := edge + into * inset
-				if HubPlan.near_plaza(edge):
-					continue  # the lower plaza has its own dressing (_plaza)
-				if _on_floor(p) and (free_of_blocks or not _blocked(p, clear)) and p.y > -16.4:
+				# (the lower plaza has its own dressing, _plaza: nothing along its walls)
+				if not HubPlan.near_plaza(edge) and _on_floor(p) and (free_of_blocks or not _blocked(p, clear)) and p.y > -16.4:
 					out.append([p, -into])
 				s += step * _rng.randf_range(0.8, 1.25)
 	return out
@@ -1190,7 +1189,7 @@ func _vigil_niche() -> void:
 	back.basis = Basis(Vector3.UP, PI * 0.5)
 	look.frame.add_child(back)
 	for sd: float in [-1.0, 1.0]:
-		facades.banner(face + 0.02, tall - 0.5, w.y + sd * (n.x * 0.5 + n.w + 0.55), 0.55, 1.6, PI * 0.5)
+		facades.banner(face + 0.02, tall - 0.5, w.y + sd * (n.x * 0.5 + n.w + 0.33), 0.5, 1.6, PI * 0.5)
 		var lp := _at(face + 0.2, 1.3, w.y + sd * (n.x * 0.5 + n.w + 0.12))
 		_lantern_xf.append(Transform3D(Basis.from_scale(Vector3.ONE * LAMP_LANTERN), lp))
 

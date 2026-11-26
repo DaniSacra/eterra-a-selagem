@@ -88,18 +88,18 @@ const STAIR_EPS := 0.01
 const PLAZA_DROP := 1.2
 const PLAZA_GAP := 0.4
 const PLAZA: Array[Vector2] = [
-	Vector2(-11.8, -17.0), Vector2(2.8, -17.0), Vector2(2.8, -15.3), Vector2(1.55, -12.4), Vector2(0.0, -12.4),
+	Vector2(-11.8, -17.0), Vector2(2.8, -17.0), Vector2(2.8, -15.3), Vector2(1.25, -11.6), Vector2(0.0, -11.6),
 	Vector2(0.0, -9.0), Vector2(-3.8, -9.0), Vector2(-3.8, -8.3), Vector2(-7.8, -8.3), Vector2(-7.8, -9.0), Vector2(-11.8, -9.0),
 ]
 ## The part of the plaza the field lowers (what the tab's top, over the planter, leaves out).
 const PLAZA_LOW: Array[Vector2] = [
-	Vector2(-11.8, -17.0), Vector2(2.8, -17.0), Vector2(2.8, -15.3), Vector2(1.55, -12.4), Vector2(0.0, -12.4),
+	Vector2(-11.8, -17.0), Vector2(2.8, -17.0), Vector2(2.8, -15.3), Vector2(1.25, -11.6), Vector2(0.0, -11.6),
 	Vector2(0.0, -8.95), Vector2(-11.8, -8.95),
 ]
-const PLAZA_FLIGHTS: Array[Vector4] = [Vector4(-11.8, -12.4, -7.8, -8.2), Vector4(-3.8, -12.4, 0.0, -8.2)]
-const PLANTER_BOX := Vector4(-5.8, -10.5, 2.0, 1.9)  # centre u, v, half u, v (between the flights)
+const PLAZA_FLIGHTS: Array[Vector4] = [Vector4(-11.8, -11.6, -7.8, -8.2), Vector4(-3.8, -11.6, 0.0, -8.2)]
+const PLANTER_BOX := Vector4(-5.8, -10.1, 2.0, 1.5)  # centre u, v, half u, v (between the flights)
 const PLANTER_HEIGHT := 1.7  # over the plaza's floor (0.5 over the terrace)
-const PLAZA_BED := Vector4(-4.5, -14.8, 3.0, 0.9)
+const PLAZA_BED := Vector4(-4.5, -13.9, 2.6, 0.6)
 const PLAZA_BED_HEIGHT := 0.45
 ## How far from the plaza's walls the scenery keeps off (no rock, ivy or rail of the old cliff in it).
 const PLAZA_ZONE := 1.3
@@ -197,7 +197,7 @@ const HERO_STEPS_HALF := Vector2(1.5, 0.6)
 const HERO_PLINTH := 0.8
 const HERO_STEP_COUNT := 5
 ## Round 3: the stone screen of the Ponto de Vigília's arch, just west of its brazier (centre u, v, half u, half v): it blocks.
-const VIGIL_ARCH := Vector4(-24.95, -10.2, 0.25, 2.5)
+const VIGIL_ARCH := Vector4(-24.95, -10.2, 0.25, 2.2)
 const ALCHEMIST_BENCH := Vector4(-19.4, 4.2, 0.55, 1.1)
 const BED_HEIGHT := 0.55
 ## Focus: a station comes into focus 2.2 m from its use point and leaves it at 2.8; the one in focus only gives way to
