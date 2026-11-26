@@ -221,6 +221,9 @@ func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replace
 		# what is left of the height goes over the trade, so it always stands at the bottom
 		box.add_child(_fill())
 		if replaces != null:
+			# PT-26-3: a plain replace says so first, in a warning colour, naming the Blessing that goes
+			if not upgrade:
+				box.add_child(_replace_warning(replaces))
 			# what goes out and what comes in, in that order (UI-HB1: a trade said plainly, also on a plain replace)
 			box.add_child(_swap(replaces, replaced_rarity, b, rarity))
 	_finish(true)
@@ -519,6 +522,15 @@ func _tab(text: String, col: Color, edge: Color, mark: Control = null) -> PanelC
 	tab.offset_top = -TAB_RISE
 	tab.offset_bottom = TAB_H - TAB_RISE
 	return tab
+
+
+## "Substitui: <name>": the card takes the place of a Blessing the hero already has on the same action.
+func _replace_warning(old: Boon) -> Label:
+	var l := _text(T.t(&"choice_replaces", {"name": T.t("boon_" + String(old.id))}), WARN, 16, UiKit.BOLD_FONT)
+	l.name = &"ReplaceWarning"
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	return l
 
 
 ## An exchange's trade, in the order it happens: "Sai" with the glyph, name and rarity of the Blessing that goes, then

@@ -31,6 +31,7 @@ var _price: MaterialCount
 var _have: Label
 var _free: Label
 var _why: Label
+var _when: Label
 var _button: ForgeTouch
 
 
@@ -83,6 +84,18 @@ func setup() -> ForgePlate:
 	_why.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_why.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(_why)
+	# PT-26-6: the three columns say what they are, and what is forged says when it counts
+	for h: Array in [[&"forge_col_what", 94.0], [&"forge_col_change", 300.0], [&"forge_col_cost", 740.0]]:
+		var head := UiKit.label(T.t(h[0]).to_upper(), Color(UiKit.OLD_GOLD, 0.8), 11, UiKit.BOLD_FONT)
+		head.name = "head_%s" % String(h[0]).trim_prefix("forge_col_")
+		head.position = Vector2(float(h[1]), 4.0)
+		add_child(head)
+	_when = UiKit.label(T.t(&"forge_when_next"), UiKit.DIM, 15)
+	_when.name = "when"
+	_when.position = Vector2(740, 108)
+	_when.size = Vector2(240, 44)
+	_when.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	add_child(_when)
 	_button = ForgeTouch.new()
 	_button.name = "button"
 	_button.position = BUTTON_AT
@@ -118,6 +131,7 @@ func show_info(p_info: ForgeInfo, p_hammer: ForgeHammer, p_icon: StringName = &"
 	_button.visible = acts
 	_button.mouse_filter = Control.MOUSE_FILTER_STOP if acts else Control.MOUSE_FILTER_IGNORE
 	_why.visible = not acts
+	_when.visible = acts and info.rank != null
 	_why.text = info.why
 	_why.add_theme_color_override(&"font_color", UiKit.PALE if good else UiKit.DIM)
 	queue_redraw()

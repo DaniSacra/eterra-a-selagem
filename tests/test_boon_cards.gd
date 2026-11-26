@@ -120,6 +120,11 @@ func test_long_text_and_replacement_fit_the_card() -> void:
 	assert_not_null(trade, "the replaced gift is named (UI-HB1: what goes out and what comes in)")
 	assert_eq((trade.find_child("OutName", true, false) as Label).text, T.t(&"boon_toque_geada"))
 	assert_eq((trade.find_child("InName", true, false) as Label).text, T.t(&"boon_pesado_firme"))
+	# PT-26-3: the card warns, by name, which Blessing it replaces; one that replaces nothing says nothing
+	var warn := cards[2].find_child("ReplaceWarning", true, false) as Label
+	assert_not_null(warn, "the warning is on the card")
+	assert_eq(warn.text, "Substitui: %s" % T.t(&"boon_toque_geada"))
+	assert_null(cards[0].find_child("ReplaceWarning", true, false), "a card that replaces nothing has no warning")
 	for c in cards:
 		assert_lte(c.size.y, BoonCard.SIZE.y + 1.0, "%s grows past the card" % c.boon.id)
 

@@ -61,6 +61,32 @@ func test_holding_until_the_ring_fills_buys_once() -> void:
 	assert_eq(heard.size(), 1, "the ring stops after the purchase")
 
 
+func test_holding_the_mouse_on_a_star_waters_it() -> void:
+	var s := _screen(30)
+	s.zoom_in(&"vida")
+	var h: HoldPress = s.holds[&"vida_1"]
+	var b: Button = s.buds[&"vida_1"]
+	b.gui_input.emit(_mouse(true))
+	assert_true(h.holding())
+	h._process(HoldPress.TIME * 0.5)
+	assert_eq(s.vine.state(s._data, &"vida_1"), Vine.State.AVAILABLE)
+	h._process(HoldPress.TIME)
+	assert_eq(s.vine.state(s._data, &"vida_1"), Vine.State.OWNED)
+
+
+func test_holding_the_tag_fills_the_star_ring() -> void:
+	var s := _screen(30)
+	s.zoom_in(&"vida")
+	(s.tags[&"vida_1"] as Button).gui_input.emit(_mouse(true))
+	assert_true((s.holds[&"vida_1"] as HoldPress).holding())
+
+
+func test_a_star_press_in_the_whole_sky_does_not_hold() -> void:
+	var s := _screen(30)
+	(s.buds[&"vida_1"] as Button).gui_input.emit(_mouse(true))
+	assert_false((s.holds[&"vida_1"] as HoldPress).holding(), "from the sky a press opens the figure")
+
+
 func test_a_disabled_button_does_not_hold() -> void:
 	var s := _screen(0)
 	s.water_button.gui_input.emit(_mouse(true))
