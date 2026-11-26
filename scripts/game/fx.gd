@@ -1943,7 +1943,7 @@ func animate(delta: float) -> void:
 		l.scale = Vector2.ONE * pop
 		l.position = sp - l.size * 0.5 * pop
 		# numbers over one another (several targets struck together): lift this one above the ones already placed
-		var box := Rect2(l.position, l.size * pop).grow_individual(-2.0, -4.0, -2.0, -4.0)
+		var box := Rect2(l.position, (l.size * pop).max(Vector2(4.0, 8.0))).grow_individual(-2.0, -4.0, -2.0, -4.0)  # an empty label shrunk below zero spammed "Rect2 size is negative"
 		for _k in NUMBER_STACK_TRIES:
 			var hit := false
 			for q in placed:
