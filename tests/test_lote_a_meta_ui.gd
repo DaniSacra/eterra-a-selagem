@@ -115,7 +115,7 @@ func test_forge_enter_says_hammer_and_the_plate_says_the_same() -> void:
 	f.open(d, ForgeScreen.Tab.EMETH)
 	var bar := f.find_child("action_bar", true, false) as ActionBar
 	assert_eq(bar.item(&"ui_accept").verb.text, f.info.verb().to_upper() if f.info.verb() != "" else T.t(&"bar_hammer").to_upper())
-	assert_string_contains(T.t(&"forge_hold_hint"), "Aperte três vezes ou segure")
+	assert_string_contains(T.t(&"forge_hold_hint"), "Aperte 3 vezes ou segure")
 
 
 func test_forge_names_what_each_closed_point_lacks() -> void:

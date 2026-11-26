@@ -9,7 +9,7 @@ func test_the_key_stands_inside_the_sentence() -> void:
 	assert_true(plain.begins_with("O ataque ["), plain)
 	assert_false(plain.contains("{"), plain)
 	var marked := BoonChoice.describe(b, 1, 1.0, true)
-	assert_true(marked.contains("[lb]"), "the key in bbcode with its brackets escaped")
+	assert_true(marked.contains("[lb]") or marked.contains("[img"), "the key in bbcode: brackets escaped, or the mouse icon (PT-26-1)")
 
 
 func test_every_blessing_of_a_button_says_its_key_or_none_misses_a_placeholder() -> void:
