@@ -92,7 +92,7 @@ func test_the_built_hub_is_lifted_where_the_upper_terrace_stands() -> void:
 			var box := mi.global_transform * mi.get_aabb()
 			lo = minf(lo, box.position.y)
 			hi = maxf(hi, box.end.y)
-	assert_almost_eq(lo, 0.0, 0.05, "the floor's lower level")
+	assert_almost_eq(lo, -HubPlan.PLAZA_DROP, 0.05, "the floor's lowest level (the plaza south of the Videira)")
 	assert_almost_eq(hi, HubPlan.TIER_H, 0.05, "and its upper")
 	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
 

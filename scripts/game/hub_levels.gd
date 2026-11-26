@@ -43,7 +43,7 @@ static func low_v() -> float:
 ## The lift of the field at a world point (x, z), the cosine and sine of the frame's yaw given (hot loop).
 static func _lift(x: float, z: float, cs: float, sn: float) -> float:
 	var v := -sn * x - cs * z
-	if v < low_v():
+	if v < low_v() and (v < HubPlan.PLAZA_FOOT or v > HubPlan.PLAZA_TOP):
 		return 0.0
 	return HubPlan.ramp_at(Vector2(cs * x - sn * z, v))
 
@@ -121,10 +121,14 @@ static func _raise_mesh(mi: MeshInstance3D, shared: bool, cs: float, sn: float) 
 	var xf := mi.global_transform
 	var box := xf * mi.get_aabb()
 	var top_v := -INF
+	var bottom_v := INF
 	for k in 8:
 		var c := box.get_endpoint(k)
-		top_v = maxf(top_v, -sn * c.x - cs * c.z)
-	if top_v < low_v():
+		var cv := -sn * c.x - cs * c.z
+		top_v = maxf(top_v, cv)
+		bottom_v = minf(bottom_v, cv)
+	# (the plaza south of the Videira is under the lower terrace: a mesh that reaches into its band is lowered too)
+	if top_v < low_v() and (bottom_v > HubPlan.PLAZA_TOP or top_v < HubPlan.PLAZA_FOOT):
 		return
 	if shared or not (mi.mesh is ArrayMesh):
 		var lift := _lift(xf.origin.x, xf.origin.z, cs, sn)
@@ -205,6 +209,7 @@ static func stairs(look: HubLook) -> void:
 			look._bar(HubLook.at(uc, top + 0.01, v0 + NOSING.y * 0.5), Vector3(wide + 0.04, NOSING.x, NOSING.y), nosing)
 			look._bar(HubLook.at(uc, top - rise * RISER_SHADOW * 0.5 - 0.02, v0 - 0.015), Vector3(wide, rise * RISER_SHADOW, 0.03), shade)
 
+	_plaza_flights(look, stone, tread, nosing, shade)
 	# the parapet over the slit beside the main axis' flight: a stepped wall, coped, from the lower floor
 	var b := HubPlan.STAIR_B
 	var cut := HubPlan.STAIR_CUT
@@ -221,3 +226,25 @@ static func stairs(look: HubLook) -> void:
 	var cap_top := HubPlan.TIER_H + PARAPET_TALL
 	look._bar(HubLook.at(cu, cap_top * 0.5, cut[2].y + 0.2), Vector3(PARAPET_WIDE, cap_top, 0.5), stone)
 	look._bar(HubLook.at(cu, cap_top + COPING.y * 0.5, cut[2].y + 0.2), Vector3(PARAPET_WIDE + COPING.x, COPING.y, 0.5 + COPING.z), nosing)
+
+
+## The plaza's two flights (HubPlan.PLAZA_FLIGHTS), going down toward -v from their head: the same treads, mirrored.
+static func _plaza_flights(look: HubLook, stone: Material, tread: Material, nosing: Material, shade: Material) -> void:
+	var n := HubPlan.STAIR_STEPS
+	var drop := HubPlan.PLAZA_DROP
+	if drop <= 0.0:
+		return
+	var rise := drop / n
+	for z in HubPlan.PLAZA_FLIGHTS:
+		var wide := z.z - z.x
+		var uc := (z.x + z.z) * 0.5
+		var run := (z.w - z.y) / n
+		for k in n:
+			var top := -rise * (k + 1)
+			var vs := z.w - run * (k + 1)  # the tread's south (lower) edge, where it drops
+			var vc := vs + run * 0.5
+			var depth := top + drop + FOOT
+			look._bar(HubLook.at(uc, top - depth * 0.5, vc), Vector3(wide, depth, run), tread)
+			look._bar(HubLook.at(uc, top - TREAD_THICK * 0.5 + 0.02, vc), Vector3(wide, TREAD_THICK, run), stone)
+			look._bar(HubLook.at(uc, top + 0.01, vs + NOSING.y * 0.5), Vector3(wide + 0.04, NOSING.x, NOSING.y), nosing)
+			look._bar(HubLook.at(uc, top - rise * RISER_SHADOW * 0.5, vs - 0.015), Vector3(wide, rise * RISER_SHADOW, 0.03), shade)

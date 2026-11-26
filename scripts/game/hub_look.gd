@@ -46,7 +46,7 @@ const CYPRESS_CARD := Vector2(0.9, 1.4)
 const CYPRESS_CARDS := 9.0
 ## Leaves on a crown's card (canopy.gdshader).
 const CROWN_LEAVES := 7.0
-const CYPRESS_A := Color(0.2, 0.26, 0.14)
+const CYPRESS_A := Color(0.26, 0.34, 0.18)
 const CYPRESS_B := Color(0.36, 0.44, 0.24)
 ## The raised beds' shrubs (HUB-D, H-P0-3: beds of pale flowers read as coffins): green leaves, a crown this
 ## tall and wide every SHRUB_EVERY metres along the bed.
@@ -55,12 +55,11 @@ const SHRUB_B := Color(0.5, 0.6, 0.3)
 ## Art review 2026-11-21 item 5 (stylized look): the shrubs' leaves muted (the vivid orange is the hazard's colour,
 ## saturation under 0.45), bigger and less ragged so the cards stop reading as blocky noise.
 const STY_CROWN_LEAVES := 5.0
-const STY_CROWN_RAGGED := 0.12
+const STY_CROWN_RAGGED := 0.08
 const SHRUB_TALL := Vector2(1.0, 1.7)
 const SHRUB_WIDE := 1.5
 const SHRUB_EVERY := 1.4
-## The Videira's fountain stands in the middle of its bed: no shrub of the bed's row within this of the middle.
-const FOUNTAIN_CLEAR := 2.1
+const VINE_PLINTH := Vector2(0.9, 0.2)  # the vase's round plinth: radius, height
 
 # ---------- the stations ----------
 ## Vendedor (spec 3.2; HUB-D): the awning's back and front heights, how far it reaches south and north of the
@@ -75,10 +74,10 @@ const AWNING_RIDGE := Vector2(0.62, 5.0)
 const AWNING_DEPTH := Vector2(1.5, 2.4)
 const AWNING_HALF := 2.9
 const VALANCE := Vector2(0.28, 1.6)
-const AWNING_CLOTH := Color(0.5, 0.12, 0.17)
+const AWNING_CLOTH := Color(0.44, 0.1, 0.15)
 ## Every other run of the cloth along v a muted wine (HV-C 6.2: hue 355, saturation 0.35, never the danger's red; an
 ## awning, not a sign); runs a metre.
-const AWNING_STRIPE := Color(0.84, 0.74, 0.58)
+const AWNING_STRIPE := Color(0.9, 0.82, 0.68)
 const AWNING_RUNS := 2.0
 const AWNING_LION := 1.5
 const POST_R := 0.07
@@ -171,8 +170,8 @@ const CLIFF := {&"stone_color": Color(0.3, 0.28, 0.25), &"edge_color": Color(0.5
 ## going into the lilac mist of the abyss planes (their opaque floor is about this share of MIST).
 const CLIFF_SHADER := preload("res://assets/shaders/hub_cliff.gdshader")
 ## Round 4: warm grey stone and moss, no pink, darker than the paving.
-const CLIFF_ROCK_A := Color(0.4, 0.36, 0.31)
-const CLIFF_ROCK_B := Color(0.23, 0.22, 0.24)
+const CLIFF_ROCK_A := Color(0.46, 0.42, 0.45)
+const CLIFF_ROCK_B := Color(0.3, 0.28, 0.34)
 const CLIFF_MOSS := Color(0.17, 0.3, 0.12)
 const CLIFF_MIST_SHARE := 0.55
 const CLIFF_FADE := Vector2(1.0, 15.0)
@@ -194,8 +193,11 @@ const AIR := {
 	&"moon_shadow": true,
 }
 ## The classic look's floor (F7): the warm limestone of the stylized one, so the square is not the hall's rose slab.
+## Round 3: small paving (HUB_SLAB, half the hall's slab) with finer joints (HUB_JOINT), in cream honey (STY_FLOOR_STONE).
+const HUB_SLAB := 0.6
+const HUB_JOINT := 0.03
 const CLASSIC_FLOOR := {
-	&"unit": 1.2, &"stone_a": Color(0.30, 0.29, 0.27), &"stone_b": Color(0.40, 0.38, 0.35),
+	&"unit": HUB_SLAB, &"joint_width": HUB_JOINT, &"stone_a": Color(0.30, 0.29, 0.27), &"stone_b": Color(0.40, 0.38, 0.35),
 	&"joint_color": Color(0.10, 0.09, 0.09), &"moss_color": Color(0.30, 0.29, 0.27), &"petal_color": Color(0.30, 0.29, 0.27),
 	&"missing": 0.0, &"cracked": 0.2, &"split2": 0.45, &"tinted": 0.1,
 }
@@ -205,10 +207,10 @@ const STY_SHADOW_GLOW := Color(0.2, 0.19, 0.4)
 const STY_VIGNETTE := Vector3(0.5, 0.45, 1.3)
 ## Round 3: the paving is warm cream-rose (the art's), not grey-brown; the dark is kept for the rim and the void.
 const STY_STONE := Color(0.66, 0.58, 0.5)
-const STY_FLOOR_STONE := Color(0.8, 0.66, 0.56)
+const STY_FLOOR_STONE := Color(0.86, 0.75, 0.58)
 const STYLE := {
 	&"stone": STY_STONE, &"floor_stone": STY_FLOOR_STONE, &"shadow": Color(0.7, 0.66, 0.88),
-	&"joint_cold": Color(0.92, 0.89, 0.9), &"slab_paint": Vector2(0.82, 1.18), &"slab_hue": 6.0, &"olive_share": 0.03,
+	&"joint_cold": Color(0.92, 0.89, 0.9), &"slab_paint": Vector2(0.82, 1.18), &"slab_hue": 3.0, &"olive_share": 0.03,
 	&"edge_value": 1.0, &"pool_saturation": 0.8, &"metal": true,
 	&"fire": {&"candle_range": 3.5, &"candle_gain": 1.2, &"bowl_range": 4.2, &"bowl_gain": 0.95},
 	&"air": {&"sky": Color(0.3, 0.24, 0.42), &"fog": DUSK_FOG, &"fog_height_density": HUB_FOG_HEIGHT, &"ambient": DUSK_AMBIENT,
@@ -268,10 +270,12 @@ const CANOPY_SHADER := preload("res://assets/shaders/canopy.gdshader")
 const FLOWER_SHADER := preload("res://assets/shaders/hub_flower.gdshader")
 const BLOOM_CARDS := 3
 const BLOOM_SPREAD := 0.34
-const BLOOM_TALL := 1.15
-const BLOOM_WIDE := 0.82
+## Round 3: small clumps (the tufts were the hero's size): half the height, more and smaller blossoms.
+const BLOOM_TALL := 0.6
+const BLOOM_WIDE := 0.62
+const BLOOM_CLUMP := 1.0  # the width a flower bed's clump is given (HubScenery)
 const BLOOM_LEAN := 0.22
-const BLOOM_BLOSSOMS := 7.0
+const BLOOM_BLOSSOMS := 14.0
 const TASSEL_WIDE := 1.25
 const TASSEL_BLOSSOMS := 11.0
 const BLOOM_LEAF_A := Color(0.13, 0.2, 0.1)
@@ -820,18 +824,13 @@ func add_blooms(spots: Array[Vector3], talls: Array[float], petal_a: Color, peta
 	frame.add_child(mi)
 
 
-## V2: the Videira's arch of stone on its footprint (two pillars, a lintel with its corner blocks, a low plinth between
-## them) and the vase with its young vine in the middle (VineStation; `grow_vine` shows what the save has bought).
-func _vine_arch(c: Vector2, o: ArenaObstacle) -> void:
+## V2: the Videira's vase with its young vine (VineStation; `grow_vine` shows what the save has bought) on a low round plinth
+## before the gazebo. Round 3: no stone portico over it (it hid the fountain): the footprint is still its collider.
+func _vine_arch(c: Vector2, _o: ArenaObstacle) -> void:
 	var mat := stone()
-	var hx := o.half.x
-	var h := o.height
-	for side in [-1.0, 1.0]:
-		fm.block(at(c.x + side * (hx - 0.25), 0.0, c.y), Vector3(0.5, h - 0.4, o.half.y * 2.0), 0.0, mat)
-		fm.block(at(c.x + side * (hx - 0.85), h - 0.9, c.y), Vector3(0.7, 0.5, o.half.y * 2.0 - 0.1), 0.0, mat)
-	fm.block(at(c.x, h - 0.4, c.y), Vector3(hx * 2.0 + 0.2, 0.4, o.half.y * 2.0 + 0.08), 0.0, mat)
-	fm.block(at(c.x, 0.0, c.y), Vector3(hx * 2.0 - 0.5, 0.2, o.half.y * 2.0 - 0.1), 0.0, mat)
-	vine_station = VineStation.make(frame, at(c.x, 0.0, c.y))
+	fm.shaft(at(c.x, 0.0, c.y), VINE_PLINTH.x, VINE_PLINTH.y, mat)
+	fm.shaft(at(c.x, VINE_PLINTH.y, c.y), VINE_PLINTH.x - 0.15, 0.06, mat)
+	vine_station = VineStation.make(frame, at(c.x, VINE_PLINTH.y + 0.06, c.y))
 
 
 ## The planting as the save has grown it (Vine.growth: nodes bought by branch; VineStation.grown).
@@ -883,26 +882,13 @@ func show_heroes(data: Dictionary) -> void:
 
 ## A raised bed (HUB-D): a box of stone with its coping, dark earth, copper shrubs along it (drawn in _crowns), a few
 ## pale flowers at their feet.
-func _bed(c: Vector2, o: ArenaObstacle) -> void:
-	var h := o.height
-	fm.block(at(c.x, 0.0, c.y), Vector3(o.half.x * 2.0, h - 0.08, o.half.y * 2.0), 0.0, stone())
-	fm.block(at(c.x, h - 0.08, c.y), Vector3(o.half.x * 2.0 + 0.14, 0.08, o.half.y * 2.0 + 0.14), 0.0, stone(), false)
-	fm.block(at(c.x, h - 0.06, c.y), Vector3(o.half.x * 2.0 - 0.24, 0.07, o.half.y * 2.0 - 0.24), 0.0, _plain(Color(0.09, 0.07, 0.05), 1.0), false)
-	_decal(at(c.x, h + 0.02, c.y), Vector2(o.half.x * 2.0 - 0.3, o.half.y * 2.0 - 0.3), {
-		&"kind": 3, &"leaf_dark": FLOWER_EARTH, &"leaf_light": FLOWER_OCHRE, &"litter_cell": 0.11,
-		&"litter_size": Vector2(0.06, 0.1), &"litter_cover": 0.35})
-	var long := o.half.x >= o.half.y
-	var length := (o.half.x if long else o.half.y) * 2.0
-	var n := maxi(1, roundi(length / SHRUB_EVERY))
-	var r := RandomNumberGenerator.new()
-	r.seed = int(absf(c.x) * 13.0 + absf(c.y) * 7.0)
-	for k in n:
-		var t := (k + 0.5) / n - 0.5
-		var p := c + (Vector2(t * length, 0.0) if long else Vector2(0.0, t * length))
-		if p.distance_to(Vector2(HubPlan.VINE_BED.x, HubPlan.VINE_BED.y)) < FOUNTAIN_CLEAR:
-			continue
-		_shrub_spots.append(Vector3(p.x, h, p.y))
-		_shrub_tall.append(r.randf_range(SHRUB_TALL.x, SHRUB_TALL.y))
+func _bed(c: Vector2, _o: ArenaObstacle) -> void:
+	# round 3: the Videira's floor is a round dais of stone (the fountain's), a round step round it, no dark soil
+	var h := HubPlan.BED_HEIGHT
+	var r := HubScenery.GAZEBO_DAIS
+	fm.shaft(at(c.x, 0.0, c.y), r.x + 0.5, r.y, stone())
+	fm.shaft(at(c.x, 0.0, c.y), r.x, h - 0.08, stone())
+	fm.shaft(at(c.x, h - 0.08, c.y), r.x + 0.1, 0.08, stone())
 
 
 ## HV-C, the Alquimista's space (hv_santuario_vigilia_art.md 4; reserved, Q-OF7, no figure, no use): on the footprint

@@ -15,6 +15,8 @@ extends RefCounted
 ## main axis) that rise toward +v. `ramp_at` is the smooth field (what HubLevels lifts the drawn meshes by),
 ## `height_at` the stepped one (the hero's feet: the treads). TIER_H 0 makes the hub flat again (everything off).
 ## The two future rooms at -1.2 m stay visual (their sunken yards).
+## Round 3: the chasm between their corridors is a lower plaza at -PLAZA_DROP (PLAZA, PLAZA_FLIGHTS: the flights go down from the
+## Videira's side), in the same field (ramp_at, height_at).
 
 ## The stations.
 const PORTAL := &"portal"
@@ -77,6 +79,35 @@ const STAIR_STEPS := 6
 const STAIR_CUT: Array[Vector2] = [Vector2(12.4, 10.4), Vector2(13.0, 10.4), Vector2(13.0, 14.06), Vector2(12.4, 14.06)]
 const GARDEN_SHRINK := 0.15
 const STAIR_EPS := 0.01
+## Round 3 (2026-11-26): the chasm south of the Videira (the notch of OUTLINE between the two future rooms' corridors) is a
+## lower plaza, PLAZA_DROP under the lower terrace: PLAZA is its floor (a polygon PLAZA_GAP in from the notch's walls, so a
+## slit of void keeps the corridors and the Mercador's way apart from it) and PLAZA_FLIGHTS the two wide flights that
+## go down into it from the Videira's side (rects u0, v0 (foot), u1, v1 (head); they descend toward -v). The tab joins the
+## floor between them (no enclosed hole); a planter (PLANTER_BOX) fills the space between the flights and a flower bed
+## (PLAZA_BED) stands in the middle of the plaza. PLAZA_DROP 0 turns it into plain floor again (the field).
+const PLAZA_DROP := 1.2
+const PLAZA_GAP := 0.4
+const PLAZA: Array[Vector2] = [
+	Vector2(-11.8, -17.0), Vector2(2.8, -17.0), Vector2(2.8, -15.3), Vector2(1.55, -12.4), Vector2(0.0, -12.4),
+	Vector2(0.0, -9.0), Vector2(-3.8, -9.0), Vector2(-3.8, -8.3), Vector2(-7.8, -8.3), Vector2(-7.8, -9.0), Vector2(-11.8, -9.0),
+]
+## The part of the plaza the field lowers (what the tab's top, over the planter, leaves out).
+const PLAZA_LOW: Array[Vector2] = [
+	Vector2(-11.8, -17.0), Vector2(2.8, -17.0), Vector2(2.8, -15.3), Vector2(1.55, -12.4), Vector2(0.0, -12.4),
+	Vector2(0.0, -8.95), Vector2(-11.8, -8.95),
+]
+const PLAZA_FLIGHTS: Array[Vector4] = [Vector4(-11.8, -12.4, -7.8, -8.2), Vector4(-3.8, -12.4, 0.0, -8.2)]
+const PLANTER_BOX := Vector4(-5.8, -10.5, 2.0, 1.9)  # centre u, v, half u, v (between the flights)
+const PLANTER_HEIGHT := 1.7  # over the plaza's floor (0.5 over the terrace)
+const PLAZA_BED := Vector4(-4.5, -14.8, 3.0, 0.9)
+const PLAZA_BED_HEIGHT := 0.45
+## How far from the plaza's walls the scenery keeps off (no rock, ivy or rail of the old cliff in it).
+const PLAZA_ZONE := 1.3
+## The box the plaza's field lives in (u0, u1; the v of its foot and of the top of its flights): a quick reject.
+const PLAZA_U := Vector2(-12.4, 3.6)
+const PLAZA_ZONE_BOX := Rect2(-13.5, -18.5, 18.0, 11.3)
+const PLAZA_FOOT := -17.6
+const PLAZA_TOP := -8.0
 ## The basin that keeps the lower level (WATER_2, the Videira's garden) is index 1 of water().
 
 ## Where the hero appears (the Ponto de Vigília, a corner of the west) and the camera's point: the far camera looks
@@ -165,6 +196,8 @@ const HERO_STEPS := Vector2(-1.0, 20.6)
 const HERO_STEPS_HALF := Vector2(1.5, 0.6)
 const HERO_PLINTH := 0.8
 const HERO_STEP_COUNT := 5
+## Round 3: the stone screen of the Ponto de Vigília's arch, just west of its brazier (centre u, v, half u, half v): it blocks.
+const VIGIL_ARCH := Vector4(-24.95, -10.2, 0.25, 2.5)
 const ALCHEMIST_BENCH := Vector4(-19.4, 4.2, 0.55, 1.1)
 const BED_HEIGHT := 0.55
 ## Focus: a station comes into focus 2.2 m from its use point and leaves it at 2.8; the one in focus only gives way to
@@ -186,6 +219,21 @@ static func floor_polys() -> Array[PackedVector2Array]:
 			for p in cut:
 				next.append_array(Geometry2D.clip_polygons(p, box))
 			cut = next
+		if PLAZA_DROP > 0.0:
+			var add: Array[PackedVector2Array] = [PackedVector2Array(PLAZA)]
+			for f in PLAZA_FLIGHTS:
+				add.append(PackedVector2Array([Vector2(f.x, f.y), Vector2(f.z, f.y), Vector2(f.z, f.w + 0.3), Vector2(f.x, f.w + 0.3)]))
+			for q in add:
+				var merged: Array[PackedVector2Array] = []
+				var cur := q
+				for p in cut:
+					var m := Geometry2D.merge_polygons(p, cur)
+					if m.size() == 1:
+						cur = m[0]
+					else:
+						merged.append(p)
+				merged.append(cur)
+				cut = merged
 		_polys = cut
 	return _polys
 
@@ -219,7 +267,7 @@ static func ramp_at(p: Vector2) -> float:
 			return TIER_H * (p.y - z.y) / (z.w - z.y)
 	if p.y >= TIER_V and not _in_garden(p):
 		return TIER_H
-	return 0.0
+	return _plaza_ramp(p)
 
 
 ## The stepped field: on a flight the tread under the point (the hero's feet), else ramp_at.
@@ -230,7 +278,48 @@ static func height_at(p: Vector2) -> float:
 		if p.x >= z.x - STAIR_EPS and p.x <= z.z + STAIR_EPS and p.y >= z.y and p.y <= z.w:
 			var k := minf(floorf((p.y - z.y) / (z.w - z.y) * STAIR_STEPS) + 1.0, float(STAIR_STEPS))
 			return TIER_H * k / STAIR_STEPS
+	if PLAZA_DROP > 0.0 and p.y < PLAZA_TOP and p.y > PLAZA_FOOT:
+		for z in PLAZA_FLIGHTS:
+			if p.x >= z.x - STAIR_EPS and p.x <= z.z + STAIR_EPS and p.y >= z.y and p.y <= z.w:
+				var k := minf(floorf((z.w - p.y) / (z.w - z.y) * STAIR_STEPS) + 1.0, float(STAIR_STEPS))
+				return -PLAZA_DROP * k / STAIR_STEPS
 	return ramp_at(p)
+
+
+## The plaza's share of the field: down the flights toward -v (smooth), PLAZA_DROP under the lower terrace on its floor.
+static func _plaza_ramp(p: Vector2) -> float:
+	if PLAZA_DROP <= 0.0 or p.y >= PLAZA_TOP or p.y < PLAZA_FOOT:
+		return 0.0
+	for z in PLAZA_FLIGHTS:
+		if p.x >= z.x - STAIR_EPS and p.x <= z.z + STAIR_EPS and p.y >= z.y and p.y <= z.w:
+			return -PLAZA_DROP * (z.w - p.y) / (z.w - z.y)
+	if p.x < PLAZA_U.x or p.x > PLAZA_U.y:
+		return 0.0
+	if _plaza_low.is_empty():
+		_plaza_low = Geometry2D.offset_polygon(PackedVector2Array(PLAZA_LOW), PLAZA_GAP * 0.5)
+	for g in _plaza_low:
+		if Geometry2D.is_point_in_polygon(p, g):
+			return -PLAZA_DROP
+	return 0.0
+
+
+static var _plaza_low: Array[PackedVector2Array] = []
+static var _plaza_zone: Array[PackedVector2Array] = []
+static var _plaza_tight: Array[PackedVector2Array] = []
+
+
+## Whether a point (local) is within PLAZA_ZONE of the plaza (what its scenery keeps off) or, with `tight`, within a hair of
+## its own edges (not the old walls of the notch, PLAZA_GAP away).
+static func near_plaza(p: Vector2, tight := false) -> bool:
+	if PLAZA_DROP <= 0.0 or not PLAZA_ZONE_BOX.has_point(p):
+		return false
+	if _plaza_zone.is_empty():
+		_plaza_zone = Geometry2D.offset_polygon(PackedVector2Array(PLAZA), PLAZA_ZONE)
+		_plaza_tight = Geometry2D.offset_polygon(PackedVector2Array(PLAZA), 0.15)
+	for g in (_plaza_tight if tight else _plaza_zone):
+		if Geometry2D.is_point_in_polygon(p, g):
+			return true
+	return false
 
 
 ## Ground height at a world point (x, z), for a camera's yaw.
@@ -375,6 +464,9 @@ static func layout(yaw_deg: float = Feel.live().cam_yaw, closed: Array[StringNam
 		box.call(HERO_STAND, HERO_STAND_HALF, &"hub_heroes", 2.6),
 		box.call(HERO_STEPS, HERO_STEPS_HALF, &"hub_heroes_steps", HERO_PLINTH),
 		box.call(Vector2(VINE_BED.x, VINE_BED.y), Vector2(VINE_BED.z, VINE_BED.w), &"hub_bed", BED_HEIGHT),
+		box.call(Vector2(VIGIL_ARCH.x, VIGIL_ARCH.y), Vector2(VIGIL_ARCH.z, VIGIL_ARCH.w), &"hub_vigil_arch", 3.5),
+		box.call(Vector2(PLANTER_BOX.x, PLANTER_BOX.y), Vector2(PLANTER_BOX.z, PLANTER_BOX.w), &"hub_planter", PLANTER_HEIGHT),
+		box.call(Vector2(PLAZA_BED.x, PLAZA_BED.y), Vector2(PLAZA_BED.z, PLAZA_BED.w), &"hub_plaza_bed", PLAZA_BED_HEIGHT),
 		box.call(Vector2(ALCHEMIST_BENCH.x, ALCHEMIST_BENCH.y), Vector2(ALCHEMIST_BENCH.z, ALCHEMIST_BENCH.w), &"hub_alchemist", 2.2),
 	]
 	for b in BUILDINGS:

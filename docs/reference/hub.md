@@ -543,3 +543,33 @@ no plano (colisão, `FloorShape`, `NavGrid`); só os pés do herói e o desenho 
   Riscos sem ver: a fatia de piso entre o parapeito e a praça do Mercador; balaústres/falésias nas laterais dos lances seguem a rampa lisa
   e os degraus em bloco ficam por cima (pode aparecer o chão liso entre eles); o solo do jardim (`Garden`) na borda sul fica 0,84 m abaixo da
   galeria (muro de arrimo = a falésia); coisas criadas depois do build (nada conhecido) ficariam sem a altura.
+
+## Rodada 3 (2026-11-26; environment-artist, SEM captura: às cegas, conferir na GPU; lista em `docs/art/ART_REVIEW_2026-11-26b.md`)
+Os 10 itens do art-director. Tudo provisório (formas simples).
+1. **Praça baixa no lugar do abismo** (`HubPlan`, `HubLevels`, `HubScenery._plaza`): o recorte do `OUTLINE` entre os dois corredores das Áreas
+   Futuras segue como está (paredes do recorte = borda do piso com corrimão); dentro dele há um piso novo, `PLAZA` (0,4 m `PLAZA_GAP` para dentro
+   das paredes, então uma fresta de vazio separa a praça dos corredores e do caminho do Portão), `PLAZA_DROP` 1,2 abaixo do terraço baixo, com
+   dois lances largos (`PLAZA_FLIGHTS`, 6 degraus, descem para -v a partir de v -8,2, lado da Videira), um jardineira de pedra entre eles
+   (`PLANTER_BOX`, obstáculo `hub_planter`) e um canteiro grande de flores no meio (`PLAZA_BED`, `hub_plaza_bed`). `floor_polys()` junta
+   (`merge_polygons`) contorno, praça e lances num piso só (sem buraco novo: o espaço entre os lances é piso sob a jardineira, uma aba de
+   `PLAZA` sobe até v -8,3). Campo de altura: `ramp_at` ganha `_plaza_ramp` (lances lisos e `PLAZA_DROP` em `PLAZA_LOW`), `height_at` os degraus
+   (descendo). `HubLevels` agora também abaixa o que está na faixa da praça (`PLAZA_FOOT`..`PLAZA_TOP`) e `stairs` desenha os degraus
+   (`_plaza_flights`). Decoração do cenário some perto da praça (`HubPlan.near_plaza`: plantas, pedras, hera, corrimão da própria praça; o corrimão
+   das paredes do recorte fica, olhando para baixo); lampiões e flores da praça em `_plaza`. `EXTRA_FALLS` 0: cachoeira só em `FALLS` (u >= 16).
+   `PLAZA_DROP` 0 devolve o chão plano. Sem mudança em portas, `USE`, `ANCHOR`, `ARRIVAL`, `HubGate`; os pátios das Áreas Futuras continuam a -1,2
+   (no mesmo nível da praça). Segurança: a praça é alcançável só pelos lances; as Áreas Futuras seguem fechadas (as portas estão nos corredores, a 0).
+2. **Videira, gazebo redondo** (`HubScenery._pergola`, `GAZEBO_*`): anel de 8 colunas creme em volta da fonte, cornija de pedra, coroa de folhas
+   aberta sobre a fonte e mais rala para a câmera, cachos e uvas entre as colunas; piso: degrau redondo de pedra (`HubLook._bed`, `GAZEBO_DAIS`),
+   sem terra escura; fonte mais larga (`FOUNTAIN_BASIN` 1,9). O pórtico de pedra saiu (`_vine_arch`: só o vaso numa base redonda; o colisor
+   `VINE_ARCH` fica). Não mexi no `USE` da Videira (-7, -5, a 2,3 m do vaso, dentro do foco de 2,2 m do vaso... a conferir na captura).
+3. **Piso**: `STY_FLOOR_STONE` (0.86, 0.75, 0.58), `slab_hue` 3, lajes de 0,6 m (`HUB_SLAB`, era 1,2) e juntas de 0,03 (`HUB_JOINT`).
+4. **Fundo**: céu `SKY_TOP` azul só no alto, `SKY_HORIZON` lilás; falésia cinza-lilás (`CLIFF_ROCK_*`) e rocha em pé atrás das bordas oeste e norte
+   (`HubScenery._backdrop`, `BACKDROP_*`: blocos de 6 a 9,5 m, musgo e cipreste no topo).
+5. **Flores** (`HubLook.BLOOM_*`): 0,6 de altura, 14 flores por tufo, largura `BLOOM_CLUMP` 1,0; três tons por canteiro (roxo, magenta, creme 15% `CREAM_SHARE`).
+6. **Balaustrada fina** (`HubScenery._thin_rail`, `RAIL_*`): pilar 0,5 m, 0,8 m com o capitel, corrimão creme (pedra de fachada), balaústres pequenos,
+   lanterna a cada 4 pilares.
+7. **Hera e ciprestes**: `IVY_EVERY` 4; nenhum cipreste a menos de `PATH_CLEAR` 3 m dos caminhos (`_clear_cypresses`).
+8. **Ponto de Vigília**: arco ogival alto (vão 2,4, 3 m) num pano de parede (`HubPlan.VIGIL_ARCH`, obstáculo `hub_vigil_arch`) logo a oeste do braseiro,
+   voltado para a praça, com dois estandartes e lampiões (`_vigil_niche`, `VIGIL_ARCH_*`). O nicho baixo antigo saiu.
+9. **Folhagem**: `IVY_A`, `TREE_DARK`, `LEAF_DARK`, `CYPRESS_A` e o cipreste do cenário mais claros (~30%); `STY_CROWN_RAGGED` 0,08.
+10. **Toldo do Mercador**: vinho `AWNING_CLOTH` e creme `AWNING_STRIPE` (0.9, 0.82, 0.68).
