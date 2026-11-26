@@ -1965,8 +1965,8 @@ func _rift() -> RoomLayout:
 	# nobody rises on a bridge or in the south way; the first wave across the rift, the west zone from the second
 	# PM-3: the paladin stood 71% of the time in the east (he comes in at the south-west, but the early zones were all east and
 	# the far side drew the packs to him there): the packs rise in the west (two zones) and the east (three, the small south-east bridge head among them); the whole bridge head and the west wall for the late ones; no far-side draw (the pack rises where the fight is)
-	l.spawns = [_rect(-18.5, -12, 1, 6), _rect(-17, -11, -13, -9), _rect(5, 11, -13.5, -10.5), _rect(16, 19.5, -8, -2), _rect(6, 10, 8, 12)]
-	l.late_spawns = [_rect(5, 11, 7, 12), _rect(-18.5, -12, -3, 3)]
+	l.spawns = [_rect(-17, -11, -13, -9), _rect(5, 11, -13.5, -10.5), _rect(16, 19.5, -8, -2), _rect(6, 10, 8, 12)]
+	l.late_spawns = [_rect(5, 11, 7, 12)]  # integration: the west wall zones sat on the stream gaps and on unreached floor (test_arenas, test_room_gaps)
 	l.far_spawn = 0.0
 	l.cam_bounds = _rect(-6, 7, -4, 5)
 	# RP-01: which bridge, or the way round the south

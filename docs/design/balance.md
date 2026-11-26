@@ -955,7 +955,7 @@ Leitura: o ajuste leva o natural a meio caminho do antigo (1989 contra 1444); a 
 
 ## PM-4 (2026-11-26 noite, room-designer): fontes por caminho
 
-**Integração (Game Director):** ficou `fountains_per_path = 3`, não 2: uma fonte antes do segundo guardião (cura possível 120% em vez de 80%), porque o teste das crianças já achou difícil. Medir de novo com o Guerreiro V1.
+**Integração (Game Director):** PM-3 nas Fendas: as zonas da parede oeste (cedo e tardia) caíam no riacho e em chão fora de alcance (`test_arenas`, `test_room_gaps`); ficou só a do noroeste cedo e o `far_spawn` 0. Ficou `fountains_per_path = 3`, não 2: uma fonte antes do segundo guardião (cura possível 120% em vez de 80%), porque o teste das crianças já achou difícil. Medir de novo com o Guerreiro V1.
 Antes: 4 fontes em todo caminho possível (salas 4, 6, 9 e 11; 300 mapas), cura 160% da vida. Depois: `fountains_per_path` 2 (salas 4 e 6), cura 80%,
 sem fonte da sala 7 à 13. Robô 12 sementes: vida média ao entrar nas salas 7 a 13 de 40,0 para 27,1; Morvath alcançado 8 de 12 nas duas medidas.
 Se for duro demais para o novato, o botão é `st.fountains_per_path = 3` em `make_data` (uma fonte antes do segundo guardião) e regerar `stage`.
