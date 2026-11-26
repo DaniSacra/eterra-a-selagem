@@ -38,6 +38,11 @@ const CONTACT_LIGHT_TIME := 0.08
 const CONTACT_SPARKS := 4
 const CONTACT_SPARK_LIFE := 0.12
 const CONTACT_GROW := 1.4
+## PM-1, stylized: so many ink fragments (never more than 5, never a ring), the dark core's radius (m), the star a
+## heavy blow keeps (scale of the usual one).
+const CONTACT_INK_FRAGMENTS := Vector2i(3, 5)
+const CONTACT_INK_CORE := 0.14
+const CONTACT_INK_HEAVY_STAR := 0.6
 const CONTACT_SPIKES := Vector2(0.4, 0.9)
 const CONTACT_SPIKES_HEAVY := Vector2(0.6, 1.4)
 ## An enemy's blow landing (smoke_ring): how many may show at once, the screen's ceiling of its rim (V-12: 205) and the
@@ -284,6 +289,10 @@ const IMPACT_SIZE := 1.0
 const NUMBER_LIFT := 1.0
 ## Times a number that lands on another one on the screen is lifted above it (and no further).
 const NUMBER_STACK_TRIES := 4
+## QW-1: of those, the tries that move a number sideways (alternating by label) before it climbs, and the pixels it rises
+## with each step aside.
+const NUMBER_SIDE_TRIES := 2
+const NUMBER_SIDE_LIFT := 6.0
 ## Which numbers show is NumberTally's: one per target that counts up while the hits keep coming, at most
 ## NUMBER_CROWD within NUMBER_CROWD_RADIUS meters and NumberTally.MAX_SHOWN on screen; finishers never hidden.
 const NUMBER_CROWD := NumberTally.CROWD
@@ -963,7 +972,12 @@ func contact(pos: Vector3, dir: Vector3, color: Color, heavy: bool = false, leve
 	mat.set_shader_parameter(&"life", 0.0)
 	mat.set_shader_parameter(&"seed", _rng.randf())
 	# review: 6 or 7 (with 5 and the fan's spikes on one line it could read as a 4-point star)
-	mat.set_shader_parameter(&"count", float(_rng.randi_range(6, 7)))
+	# PM-1 (stylized): brush ink, 3 to 5 fragments in a fan toward the blade, a dark core with an ivory-mint rim; the
+	# classic look keeps the star
+	var ink := VisualProfile.stylized()
+	mat.set_shader_parameter(&"ink", 1.0 if ink else 0.0)
+	mat.set_shader_parameter(&"count", float(_rng.randi_range(CONTACT_INK_FRAGMENTS.x, CONTACT_INK_FRAGMENTS.y) if ink else _rng.randi_range(6, 7)))
+	mat.set_shader_parameter(&"heart_m", CONTACT_INK_CORE if ink else 0.12)
 	mat.set_shader_parameter(&"half_m", e.size)
 	mat.set_shader_parameter(&"spike_min_m", spikes.x)
 	mat.set_shader_parameter(&"spike_max_m", spikes.y)
@@ -982,7 +996,11 @@ func contact(pos: Vector3, dir: Vector3, color: Color, heavy: bool = false, leve
 		aim = Vector2(dir.dot(b.x), dir.dot(b.y))
 		aim = aim.normalized() if aim.length_squared() > 0.0001 else Vector2(1, 0)
 	mat.set_shader_parameter(&"aim", aim)
-	hit_star(pos, color, 1.0, heavy)
+	# the ink look has no white-hot star under it (it was the cross at the middle of every blow); a heavy blow keeps a small one
+	if not ink:
+		hit_star(pos, color, 1.0, heavy)
+	elif heavy:
+		hit_star(pos, color, CONTACT_INK_HEAVY_STAR, true)
 
 
 ## The flash where a blow lands: a white-hot painted star (a 4 or 6 pointed one, torn rays) that turns to the blow's colour
@@ -1944,14 +1962,23 @@ func animate(delta: float) -> void:
 		l.position = sp - l.size * 0.5 * pop
 		# numbers over one another (several targets struck together): lift this one above the ones already placed
 		var box := Rect2(l.position, (l.size * pop).max(Vector2(4.0, 8.0))).grow_individual(-2.0, -4.0, -2.0, -4.0)  # an empty label shrunk below zero spammed "Rect2 size is negative"
+		# QW-1: the first NUMBER_SIDE_TRIES times it moves aside (to the right or the left, by turns of the label, a few
+		# pixels up as well) so repeated hits fan out beside each other; only then does it climb above
+		var box_x := box.position.x
+		var side := 1.0 if i % 2 == 0 else -1.0
 		for _k in NUMBER_STACK_TRIES:
 			var hit := false
 			for q in placed:
 				if q.intersects(box):
-					box.position.y = q.position.y - box.size.y
+					if _k < NUMBER_SIDE_TRIES:
+						box.position.x = q.end.x + 2.0 if side > 0.0 else q.position.x - box.size.x - 2.0
+						box.position.y -= NUMBER_SIDE_LIFT
+					else:
+						box.position.y = q.position.y - box.size.y
 					hit = true
 			if not hit:
 				break
+		l.position.x += box.position.x - box_x
 		l.position.y = box.position.y - 4.0
 		placed.append(box)
 		l.modulate.a = 1.0 - smoothstep(0.45, NumberTally.LIFE, e.life)

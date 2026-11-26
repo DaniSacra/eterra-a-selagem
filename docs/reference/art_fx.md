@@ -450,3 +450,21 @@ A cena da primeira descida: só o que já existe (preto, uma estrela, a luz de E
 - **Laje 2x2** (`HazardPiece.plate` + `hazard_mark.gdshader`): junta em cruz 1,6x a espessura da junta (cerca de 10 cm),
   chevron com traço 0,11 e braço 0,4, cor `chev_mul` mais escura (0,5, 0,4, 0,26).
 - **Lajes soltas do Salão** (`hall_life.gd`): `SLAB_TINT` 0,62 sobre a pedra do piso (laje e lasca).
+
+## Lote 1 de 2026-11-26 (BG-1, PM-1, QW-1, DT-1)
+- **BG-1, auditoria no código**: `RewardShaft` ligado (rooms.gd: sala vencida, cada item da loja; game.gd: fonte): FEITO. Traço branco vertical
+  (`impact.gdshader`, `pale` 0,35 sob `GASH_SCREEN`), `glint` sem cobrir o herói (`over_body`), `hero_burst(light)` baixo (`HERO_LIGHT_TOP`),
+  clarão de Morvath no violeta (`own_flash`), preparo do Feiticeiro (miolo e anéis no cajado, sem acima do limiar): FEITO nas notas da seção do
+  pass de VFX e sem regressão no código. Contato com miolo branco e cruz (a captura `docs/gallery/lote1_2026-11-26/before_hit.png` mostrou
+  disco branco): CORRIGIDO (abaixo). Onda do especial: o acerto passa por `contact`, então herdou a correção; a onda em si é faixa (`band`).
+  Círculo: `family_mark` LUZ forma 2, sem disco chapado no código (NÃO REPRODUZIDO; conferir em captura).
+- **PM-1 (a), tinta no contato (só estilizado, CLASSIC igual)**: `contact.gdshader` ganhou o uniform `ink` (Fx liga com `VisualProfile.stylized()`):
+  3 a 5 fragmentos (`CONTACT_INK_FRAGMENTS`) todos num leque para o lado da lâmina e curvados, núcleo escuro (`CONTACT_INK_CORE` 0,14 m) deslocado
+  para a lâmina com aro marfim-menta, sem coração branco; `Fx.contact` não chama mais `hit_star` (só o golpe pesado, a 0,6). O `clap`
+  redondo e branco do `hit_star.gdshader` cai a 12% no estilizado (`art_style`).
+- **PM-1 (b), coleta**: `RewardShaft` já tinha descida, poça, respiração e retirada no `take()`; o que mudou foi a leitura de coluna larga e
+  chapada: `TOP_RADIUS` 0,4, `FOOT_RADIUS` 0,85, `SHAFT_BODY` 0,2 e `SHAFT_SIDE_SOFT` 3,4.
+- **QW-1**: números sobrepostos primeiro saem para o lado (`NUMBER_SIDE_TRIES` 2, alternando direita e esquerda por rótulo, `NUMBER_SIDE_LIFT` 6 px),
+  só depois sobem.
+- **DT-1**: apagados `dome_film`, `dome_clock`, `fury_ember`, `dark_water_matte` (e `.uid`); sem referência em código, cenas, dados e testes; as
+  quatro entradas saíram de `assets/warmup/warmup_set.res` (regravado por script, 36 KB para 179 KB no disco; `test_warmup` verde).

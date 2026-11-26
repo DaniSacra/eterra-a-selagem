@@ -1,4 +1,4 @@
-// The body of dark_water.gdshader and dark_water_matte.gdshader (see the first for what it draws).
+// The body of dark_water.gdshader (see it for what it draws).
 
 uniform int form = 0;
 uniform vec3 deep : source_color = vec3(0.05, 0.09, 0.12);
