@@ -121,8 +121,11 @@ Memória de vídeo dos assados juntos: 79,0 MB (medido). Elites usam o mesmo ass
 
 ## 4. Cenário do KayKit (Kay Lousberg, CC0; provisório desde o início)
 
-`assets/models/dungeon/` (26 peças) e `assets/models/dungeon_r/` (43 peças, "Dungeon Remastered"), cada peça um `.glb`
-(18 peças são iguais byte a byte nas duas pastas). Desde a C1 todas usam um material só,
+`assets/models/dungeon_r/` (35 peças, "Dungeon Remastered"), cada peça um `.glb`. **2026-11-26 (varredura):** a pasta `dungeon/`
+acabou (16 peças eram cópias byte a byte das de `dungeon_r/`; as 5 únicas, banner_patternA_white, banner_thin_yellow, barrel_large,
+wall_broken e wall_cracked, foram para `dungeon_r/`; `Arena.DUNGEON` aponta para lá) e 18 peças sem nenhuma referência foram apagadas
+(torch_lit, chest_gold, banners vermelhos, chaveiro, velas finas, ladrilhos pequenos e a grelha, entre outras): 1,37 MB a menos no disco,
+os mesmos no pacote antes de comprimir. Onde a tabela abaixo diz `dungeon/`, leia `dungeon_r/`. Desde a C1 todas usam um material só,
 `assets/models/kaykit_material.tres` (a paleta `assets/models/kaykit_palette.png`, 1024 x 1024 BC7 com mipmaps, e a
 rugosidade 0,45 do kit), pelo `_subresources` de cada `.glb.import` (`use_external`) com
 `gltf/embedded_image_handling=0`: as 69 cópias extraídas da mesma paleta (mesmo hash) foram apagadas. Licenças `LICENSE_KayKit_Dungeon.txt` e `_Dungeon_Remastered.txt` (idênticas). Uso: `Arena._place`
@@ -345,3 +348,15 @@ Gerador `tools/make_fx_textures.gd` (rodar com `-s`; saída em `assets/textures/
 43 KB), `brush_streaks.png` (512x128, 66 KB). Uso: `hit_star.gdshader` e `puff.gdshader` e `scorch.gdshader` (`Fx.hit_star`, `Fx.puff`,
 `Fx.scorch`), `slash.gdshader` (`paint`). Total 145 KB no disco; importação padrão (sem VRAM, são pequenas). Estado: definitivo
 para o passe; a conferir na captura da GPU (tamanho e brilho das estrelas).
+
+## 15. Varredura de 2026-11-26 (ativos e shaders)
+
+- `shallow_water.gdshader` (riacho do Salão, usado por `Canal` e `GapFloor`): brilho e contraste baixados para a faixa ler como fundo e
+  não competir com os avisos do chão (`sheen` 0,16 para 0,07, `reflect_amount` 0,42 para 0,26, `glint` 0,12 para 0,08, `moss` 0,35 para 0,22,
+  `roughness` 0,14 para 0,4, `SPECULAR` 0,35 para 0,2). Só valores; sem custo novo. Conferir na captura da sala de combate.
+- Sem referência no código, nos dados nem nos testes e ainda no repositório (nada apagado, só registrado): shaders `dome_film`, `dome_clock`
+  (a película da Tempestade da Maga, parada), `fury_ember` (Fúria saiu) e `dark_water_matte` (citado só em documento do Santuário; arquivos do
+  hub não foram tocados nesta varredura); o conjunto de aquecimento cobre todos (`test_warmup`), então apagar pede regerar `tools/make_warmup.sh`.
+  Sem uso e já fora do pacote: as fontes Meshy `enemy_*`, armas de teste e `-preview.png`. Retratos `angel_*.jpg` e as faixas de música
+  são carregados por nome montado (não são lixo).
+- Medalhões de UI (126 PNG, 38 MB, `compress/mode=0`) ficam: já registrados na TA-08; passar a VRAM/WebP muda pixel e fica para o `art-director` aprovar.

@@ -16,7 +16,7 @@ const SCENES := [
 	"res://assets/models/meshy/hero_explorer/hero_explorer-rigged.glb",
 	"res://assets/models/meshy/emeth/emeth.glb",
 ]
-const KIT_DIRS := ["res://assets/models/dungeon/", "res://assets/models/dungeon_r/"]
+const KIT_DIRS := ["res://assets/models/dungeon_r/"]
 ## What the vram mode loads one by one: the textures of the hero, the Emeth, the rock relief and the title.
 const VRAM_TEXTURES := [
 	"res://assets/models/meshy/hero_explorer/hero_explorer-rigged_Image_0.jpg",
@@ -27,11 +27,11 @@ const VRAM_TEXTURES := [
 	"res://assets/ui/boons/aurora.png",
 ]
 ## The KayKit pieces a whole descent loads (traced with --verbose over every arena, variant and event room).
-const KIT_LOADED := ["dungeon/banner_patternA_white", "dungeon/banner_thin_yellow", "dungeon/barrel_large",
-	"dungeon/candle_lit", "dungeon/candle_triple", "dungeon/floor_tile_large", "dungeon/pillar", "dungeon/pillar_decorated",
-	"dungeon/rubble_half", "dungeon/rubble_large", "dungeon/stairs_wide", "dungeon/sword_shield_broken",
-	"dungeon/torch_mounted", "dungeon/wall", "dungeon/wall_arched", "dungeon/wall_broken", "dungeon/wall_corner",
-	"dungeon/wall_cracked", "dungeon_r/box_small", "dungeon_r/rubble_half", "dungeon_r/rubble_large"]
+const KIT_LOADED := ["dungeon_r/banner_patternA_white", "dungeon_r/banner_thin_yellow", "dungeon_r/barrel_large",
+	"dungeon_r/candle_lit", "dungeon_r/candle_triple", "dungeon_r/floor_tile_large", "dungeon_r/pillar", "dungeon_r/pillar_decorated",
+	"dungeon_r/rubble_half", "dungeon_r/rubble_large", "dungeon_r/stairs_wide", "dungeon_r/sword_shield_broken",
+	"dungeon_r/torch_mounted", "dungeon_r/wall", "dungeon_r/wall_arched", "dungeon_r/wall_broken", "dungeon_r/wall_corner",
+	"dungeon_r/wall_cracked", "dungeon_r/box_small"]
 
 var _keep: Array[Resource] = []
 

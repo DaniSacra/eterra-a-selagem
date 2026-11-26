@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dm4bpjlep1cdt"
-path="res://.godot/imported/wall_cracked.glb-5d2a245d51272ff83ff8945db57bddfc.scn"
+path="res://.godot/imported/wall_cracked.glb-3e0c8ba9ac2a7f8b06725cccb1932bc6.scn"
 
 [deps]
 
-source_file="res://assets/models/dungeon/wall_cracked.glb"
-dest_files=["res://.godot/imported/wall_cracked.glb-5d2a245d51272ff83ff8945db57bddfc.scn"]
+source_file="res://assets/models/dungeon_r/wall_cracked.glb"
+dest_files=["res://.godot/imported/wall_cracked.glb-3e0c8ba9ac2a7f8b06725cccb1932bc6.scn"]
 
 [params]
 

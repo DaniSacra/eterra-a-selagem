@@ -16,7 +16,7 @@ const VRAM := {
 	"res://assets/textures/rock_surface/rock_surface_nor_gl_1k.jpg": {"compress/normal_map": 1},
 	"res://assets/textures/rock_surface/rock_surface_disp_1k.jpg": {"compress/channel_pack": 1},
 }
-const KIT_DIRS := ["res://assets/models/dungeon/", "res://assets/models/dungeon_r/"]
+const KIT_DIRS := ["res://assets/models/dungeon_r/"]
 const KIT_MATERIAL := "res://assets/models/kaykit_material.tres"
 
 
@@ -68,7 +68,7 @@ func test_every_kaykit_piece_shares_one_palette() -> void:
 			assert_true(mat.get("use_external/enabled", false), dir + f)
 			assert_eq(mat.get("use_external/path", ""), KIT_MATERIAL, dir + f)
 			assert_eq(c.get_value("params", "gltf/embedded_image_handling"), 0, "%s: no texture of its own" % [dir + f])
-	assert_gt(count, 60, "every piece checked")
+	assert_gt(count, 30, "every piece checked")
 	var scene: Node = (load(KIT_DIRS[0] + "wall.glb") as PackedScene).instantiate()
 	var mesh := _first_mesh(scene)
 	var m := mesh.mesh.surface_get_material(0) as StandardMaterial3D

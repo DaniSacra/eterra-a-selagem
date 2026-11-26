@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://sp85bdsfe1wq"
-path="res://.godot/imported/banner_shield_red.glb-43fa35d23905f0c9029b6dcdf11f795c.scn"
+uid="uid://chct8s58m38hq"
+path="res://.godot/imported/wall_broken.glb-3c98f124dfa2b0644c59274130f3237f.scn"
 
 [deps]
 
-source_file="res://assets/models/dungeon_r/banner_shield_red.glb"
-dest_files=["res://.godot/imported/banner_shield_red.glb-43fa35d23905f0c9029b6dcdf11f795c.scn"]
+source_file="res://assets/models/dungeon_r/wall_broken.glb"
+dest_files=["res://.godot/imported/wall_broken.glb-3c98f124dfa2b0644c59274130f3237f.scn"]
 
 [params]
 

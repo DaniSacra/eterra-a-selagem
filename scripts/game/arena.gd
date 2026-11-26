@@ -6,7 +6,7 @@ extends Node3D
 
 const HALF := 36.0
 const TILE := 4.0
-const DUNGEON := "res://assets/models/dungeon/"
+const DUNGEON := "res://assets/models/dungeon_r/"
 ## Layer of the crowd: torches do not light it (CrowdRenderer adds the hero's light itself).
 const CROWD_LAYER := 2
 ## Pillars that stand in the hall: (x, z) and the radius that blocks movement.

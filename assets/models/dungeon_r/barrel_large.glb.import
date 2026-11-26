@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://bqxbwuhqi2yj3"
-path="res://.godot/imported/floor_dirt_large_rocky.glb-3250c81b94d245ef77b6eb5f1f123976.scn"
+uid="uid://b4ul4eb6y220j"
+path="res://.godot/imported/barrel_large.glb-7f84f94c1a92155662919a814a793d6e.scn"
 
 [deps]
 
-source_file="res://assets/models/dungeon/floor_dirt_large_rocky.glb"
-dest_files=["res://.godot/imported/floor_dirt_large_rocky.glb-3250c81b94d245ef77b6eb5f1f123976.scn"]
+source_file="res://assets/models/dungeon_r/barrel_large.glb"
+dest_files=["res://.godot/imported/barrel_large.glb-7f84f94c1a92155662919a814a793d6e.scn"]
 
 [params]
 

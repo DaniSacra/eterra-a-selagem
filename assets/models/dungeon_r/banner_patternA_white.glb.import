@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://co6lbaddoisj"
-path="res://.godot/imported/column.glb-23001e6e1e85a3d8bf6bcf2db8ad951c.scn"
+uid="uid://c5sy180b524tq"
+path="res://.godot/imported/banner_patternA_white.glb-0e4ef23a173d236c60312c0edb09e294.scn"
 
 [deps]
 
-source_file="res://assets/models/dungeon/column.glb"
-dest_files=["res://.godot/imported/column.glb-23001e6e1e85a3d8bf6bcf2db8ad951c.scn"]
+source_file="res://assets/models/dungeon_r/banner_patternA_white.glb"
+dest_files=["res://.godot/imported/banner_patternA_white.glb-0e4ef23a173d236c60312c0edb09e294.scn"]
 
 [params]
 

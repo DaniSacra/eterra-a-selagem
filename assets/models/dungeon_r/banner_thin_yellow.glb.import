@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://be517oion7yls"
-path="res://.godot/imported/sword_shield_broken.glb-3970990fcdadce04ff29d1602d30e65d.scn"
+uid="uid://cxpkbyyn3skw2"
+path="res://.godot/imported/banner_thin_yellow.glb-dc0206d6453ce8a12c1051a3fcf6caba.scn"
 
 [deps]
 
-source_file="res://assets/models/dungeon/sword_shield_broken.glb"
-dest_files=["res://.godot/imported/sword_shield_broken.glb-3970990fcdadce04ff29d1602d30e65d.scn"]
+source_file="res://assets/models/dungeon_r/banner_thin_yellow.glb"
+dest_files=["res://.godot/imported/banner_thin_yellow.glb-dc0206d6453ce8a12c1051a3fcf6caba.scn"]
 
 [params]
 
