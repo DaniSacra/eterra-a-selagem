@@ -23,9 +23,9 @@ const FASCIA_COLOR := Color(0.11, 0.07, 0.07)
 const IRON := Color(0.1, 0.1, 0.11)
 const WISTERIA_A := Color(0.34, 0.26, 0.46)
 const WISTERIA_B := Color(0.6, 0.52, 0.72)
-const LEAF_DARK := Color(0.2, 0.3, 0.14)
+const LEAF_DARK := Color(0.27, 0.39, 0.19)
 const LEAF_LIGHT := Color(0.42, 0.54, 0.26)
-const TREE_DARK := Color(0.22, 0.34, 0.16)
+const TREE_DARK := Color(0.29, 0.44, 0.21)
 const TREE_LIGHT := Color(0.5, 0.62, 0.3)
 const RED_LEAF_A := Color(0.46, 0.08, 0.1)
 const RED_LEAF_B := Color(0.84, 0.26, 0.16)
@@ -86,7 +86,7 @@ const FALL_GAP := 0.85
 const FALL_LIP := 0.06
 const FALL_NARROW := 0.55
 const FALL_OPEN := Vector2(12.0, 2.0)
-const EXTRA_FALLS := 3
+const EXTRA_FALLS := 0  # round 3: the falls are only FALLS (the east, under the Portão's bridge); none in the middle
 const EXTRA_FALL_APART := 9.0
 const EXTRA_FALL_WIDTH := Vector2(1.5, 2.2)
 const EXTRA_FALL_DROP := Vector2(16.0, 21.0)
@@ -98,9 +98,15 @@ const RAILS: Array[Vector4] = [
 ]
 
 # ---------- pergola (the Videira) ----------
-const PERGOLA_POSTS := Vector4(-11.0, -2.0, -0.6, 3.4)  # u0, u1, v0, v1
+## Round 3: the Videira is a round gazebo, not a rectangular pergola: a ring of GAZEBO_COLUMNS cream columns (GAZEBO_RADIUS from
+## the fountain, PERGOLA_HEIGHT tall) round the fountain, a stone cornice joining them, a wreath of leaves on it (open over
+## the fountain: WREATH_HOLE m from the middle, thinner toward the camera by PERGOLA_GAP) with grapes and tassels hanging
+## between the columns, on a round stone dais (GAZEBO_DAIS) with a round step.
+const GAZEBO_RADIUS := 3.4
+const GAZEBO_COLUMNS := 8
+const GAZEBO_DAIS := Vector2(4.3, 0.28)  # radius of the floor's stone and of its round step beyond the dais
 const PERGOLA_HEIGHT := 2.9
-const PERGOLA_COLUMNS := 3
+const WREATH_HOLE := 1.9
 const RAFTER := Vector2(0.9, 0.12)  # every, thickness
 const RAFTER_WOOD := Color(0.3, 0.19, 0.11)
 ## Round 3: the pergola's roof closed in vine leaves (crown width and height; a leaf crown every PERGOLA_LEAF_EVERY m, the south
@@ -127,8 +133,10 @@ const VIGIL_BED_INSET := 0.3
 const VIGIL_RAIL_INSET := 0.22
 ## Round 6: the bed's continuous low wall (thickness, height, coping height).
 const VIGIL_WALL := Vector3(0.3, 0.5, 0.08)
-const VIGIL_NICHE := Vector4(1.7, 0.55, 0.32, 0.6)  # span, spring, ring, how far the dark stands in
-const VIGIL_NICHE_U := -26.6
+## Round 3: the arch behind the fire (HubPlan.VIGIL_ARCH is its wall): the opening's span, the outer apex's height over the floor, its
+## curve (the share of the span) and the ring's width; the wall's height.
+const VIGIL_ARCH_OPENING := Vector4(2.4, 3.0, 0.62, 0.4)
+const VIGIL_ARCH_WALL_TALL := 3.5
 const VIGIL_PLANT_EVERY := 0.95
 const VIGIL_STEP := 0.2  # the dais' second step: its radius share over the third
 const FUTURE_YARDS: Array[Vector4] = [Vector4(-21.0, -26.0, -8.0, -17.0), Vector4(-1.0, -26.0, 12.0, -17.0)]
@@ -172,19 +180,30 @@ const GARDEN_SOIL := Color(0.2, 0.13, 0.09)
 const GARDEN_EVERY := 1.15
 const GARDEN_EDGE := 0.55
 ## Round 2: the garden's shares of lilac and magenta clumps (half what they were; the rest is shrub or bare earth).
-const GARDEN_LILAC := 0.2
-const GARDEN_MAGENTA := 0.1
+const GARDEN_LILAC := 0.3
+const CREAM_SHARE := 0.15  # round 3: the share of the lilac clumps that are cream-white
+const CREAM_A := Color(0.72, 0.66, 0.54)
+const CREAM_B := Color(0.97, 0.93, 0.84)
+const GARDEN_MAGENTA := 0.2
 const GARDEN_BARE := 0.8
 const GARDEN_CYPRESS_EDGE := 1.3
 ## The fountain on the Videira's bed (the middle of the pergola): basin radius, rim height, water radius, pedestal radius.
-const FOUNTAIN_BASIN := Vector4(1.55, 0.26, 1.36, 0.3)
-const FOUNTAIN_RIM_BLOCKS := 14
+const FOUNTAIN_BASIN := Vector4(1.9, 0.28, 1.7, 0.3)  # round 3: wider, the light water is the gazebo's centre
+const FOUNTAIN_RIM_BLOCKS := 18
 const FOUNTAIN_FALLS := 8
 ## Low balustrades along the outer edges that look at the camera or the sides (the art's low creamy wall with its
 ## lanterns): inset from the edge, share of the usual height, shortest run, every Nth post carries a lantern.
 const RAIL_INSET := 0.6
 const RAIL_LOW := 0.8
 const RAIL_MIN := 2.5
+## Round 3: thin cream rails: posts RAIL_POST wide and RAIL_POST_TALL high (with their cap, 0.8 m in all: the hero's chest is over
+## the rail), a rail of RAIL_BAR (height, depth) on top at RAIL_TOP, small turned balusters between, a post every RAIL_GAP m.
+const RAIL_POST := Vector3(0.5, 0.64, 0.62)  # width, shaft height, cap width
+const RAIL_CAP_TALL := 0.16
+const RAIL_BAR := Vector2(0.1, 0.24)
+const RAIL_TOP := 0.7
+const RAIL_GAP := 2.4
+const RAIL_BALUSTER := 0.1
 const RAIL_LANTERN_EVERY := 4  # round 3: one lantern every fourth post (was every second)
 const RAIL_CLEAR := 1.5
 ## Round 5: a rail only where the edge looks over a drop (no floor within RAIL_TRENCH beyond it: between two courts one rail
@@ -229,9 +248,18 @@ const ROCK_TILT := 0.14
 const ROCK_TALL_SHARE := 0.35
 const ROCK_STEP_OUT := 0.65  # how much further out each step down stands
 const ROCK_STEP_DROP := Vector2(0.9, 1.7)
-const IVY_EVERY := 2.6
+const IVY_EVERY := 4.0  # round 3: was 2.6 (curtains only on the cliff faces, never a column on the paving)
+const PATH_CLEAR := 3.0  # no cypress nearer than this to a way (PATH_MAIN, PATH_GATE)
 const IVY_TALL := Vector2(2.0, 5.5)
-const IVY_A := Color(0.14, 0.24, 0.1)
+## Round 3: the rock behind the west and north edges: every BACKDROP_EVERY m, blocks (wide, tall over the floor, deep) sunk
+## BACKDROP_SINK under it.
+const BACKDROP_EVERY := 2.6
+const BACKDROP_WIDE := Vector2(3.2, 4.6)
+const BACKDROP_TALL := Vector2(4.0, 6.5)
+const BACKDROP_MIN_V := 24.0
+const BACKDROP_DEEP := Vector2(2.2, 3.4)
+const BACKDROP_SINK := 3.0
+const IVY_A := Color(0.2, 0.32, 0.14)
 const IVY_B := Color(0.34, 0.46, 0.2)
 const WALL_WISTERIA_EVERY := Vector2(1.7, 2.7)  # round 2: denser than 2.4 to 3.6
 const CASCADE_ON: Array[StringName] = [&"book", &"heroes", &"smith", &"tree", &"vendor"]
@@ -276,8 +304,8 @@ const RIDGES: Array[Dictionary] = [
 const RIDGE_U := 14.0
 ## The sky (a standing card behind the ridges) and the sea of cloud under the floor (a flat plane), as gradients.
 const SKY_SHADER := preload("res://assets/shaders/hub_sky.gdshader")
-const SKY_TOP := Color(0.08, 0.09, 0.2)
-const SKY_HORIZON := Color(0.5, 0.38, 0.42)
+const SKY_TOP := Color(0.2, 0.24, 0.5)
+const SKY_HORIZON := Color(0.66, 0.54, 0.7)
 const SEA_Y := -30.0
 const SEA_SIZE := 900.0
 const SEA_FAR := Color(0.3, 0.25, 0.36)
@@ -314,6 +342,8 @@ var _deep_spots: Array[Vector3] = []
 var _deep_tall: Array[float] = []
 var _deep_round_spots: Array[Vector3] = []
 var _deep_round_tall: Array[float] = []
+var _cream_spots: Array[Vector3] = []
+var _cream_tall: Array[float] = []
 var _magenta_spots: Array[Vector3] = []
 var _magenta_tall: Array[float] = []
 var _lantern_xf: Array[Transform3D] = []
@@ -345,23 +375,27 @@ func build(layout: RoomLayout) -> void:
 	_fountain()
 	_vigil_post()
 	_future_yards()
+	_plaza()
 	facades.gate()
 	_balustrades()
 	_edges()
 	_planters()
 	_cliffs()
+	_backdrop()
 	_red_tree()
 	_wall_flowers()
 	_build_lanterns()
 	look.add_crowns(_leaf_spots, _leaf_tall, LEAF_DARK, LEAF_LIGHT, 1.5, "Shrubs", false)
 	# round 2: clean clumps and tassels (hub_flower.gdshader), not the canopy's speckled cards
-	look.add_blooms(_flower_spots, _flower_tall, WISTERIA_A, WISTERIA_B, 1.3, "Flowers")
-	look.add_blooms(_magenta_spots, _magenta_tall, MAGENTA_A, MAGENTA_B, 1.3, "Magentas")
+	look.add_blooms(_flower_spots, _flower_tall, WISTERIA_A, WISTERIA_B, HubLook.BLOOM_CLUMP, "Flowers")
+	look.add_blooms(_magenta_spots, _magenta_tall, MAGENTA_A, MAGENTA_B, HubLook.BLOOM_CLUMP, "Magentas")
+	look.add_blooms(_cream_spots, _cream_tall, CREAM_A, CREAM_B, HubLook.BLOOM_CLUMP, "Creams")
 	look.add_blooms(_wisteria_spots, _wisteria_tall, WISTERIA_A, WISTERIA_B, HANG_WIDTH, "Wisteria", true)
 	look.add_crowns(_ivy_spots, _ivy_tall, IVY_A, IVY_B, 0.8, "Ivy", false, true, 0.7)
 	look.add_crowns(_roof_spots, _roof_tall, LEAF_DARK, LEAF_LIGHT, PERGOLA_LEAF.x, "PergolaRoof", true)
 	look.add_crowns(_grape_spots, _grape_tall, GRAPE_A, GRAPE_B, 0.42, "Grapes", false, true, 0.4)
-	look.add_crowns(_cypress_spots, _cypress_tall, CYPRESS_GREEN * 0.7, CYPRESS_GREEN * 1.25, 1.25, "Cypresses", false)
+	_clear_cypresses()
+	look.add_crowns(_cypress_spots, _cypress_tall, CYPRESS_GREEN * 0.95, CYPRESS_GREEN * 1.25, 1.25, "Cypresses", false)
 	look.add_crowns(_deep_spots, _deep_tall, DEEP_A, DEEP_B, 1.6, "DeepCypresses", false)
 	look.add_crowns(_deep_round_spots, _deep_round_tall, DEEP_A, DEEP_B, 3.2, "DeepTrees", true)
 	look.add_crowns(_tree_spots, _tree_tall, TREE_DARK, TREE_LIGHT, 4.2, "Trees", true)
@@ -455,7 +489,8 @@ func _edge_points(step: float, inset: float, clear := PLANT_CLEAR, with_water :=
 				if not _on_floor(edge + normal * 0.25):
 					into = -normal
 				var p := edge + into * inset
-				if _on_floor(p) and (free_of_blocks or not _blocked(p, clear)) and p.y > -16.4:
+				# (the lower plaza has its own dressing, _plaza: nothing along its walls)
+				if not HubPlan.near_plaza(edge) and _on_floor(p) and (free_of_blocks or not _blocked(p, clear)) and p.y > -16.4:
 					out.append([p, -into])
 				s += step * _rng.randf_range(0.8, 1.25)
 	return out
@@ -746,8 +781,12 @@ func _edge_distance(p: Vector2, poly: PackedVector2Array) -> float:
 func plant(kind: int, spot: Vector3, tall: float) -> void:
 	match kind:
 		0:
-			_flower_spots.append(spot)
-			_flower_tall.append(tall)
+			if _rng.randf() < CREAM_SHARE:
+				_cream_spots.append(spot)
+				_cream_tall.append(tall)
+			else:
+				_flower_spots.append(spot)
+				_flower_tall.append(tall)
 		1:
 			_magenta_spots.append(spot)
 			_magenta_tall.append(tall)
@@ -1015,46 +1054,48 @@ func _fall(f: Vector4) -> void:
 
 # ---------- the Videira's pergola ----------
 
-## Stone columns and timber over the Videira's bed (the arch stands south of it), wisteria hanging from the beams.
+## The round gazebo over the fountain (see GAZEBO_*): columns, a cornice of stone between them, a wreath of leaves and grapes on it,
+## tassels of wisteria and bunches of grapes hanging between the columns; no wall, so the water shows from every side.
 func _pergola() -> void:
-	var p := PERGOLA_POSTS
+	var c := Vector2(HubPlan.VINE_BED.x, HubPlan.VINE_BED.y)
 	var stone := look.stone()
-	var wood := look._plain(RAFTER_WOOD, 0.85)
-	var us: Array[float] = []
-	for i in PERGOLA_COLUMNS:
-		us.append(lerpf(p.x, p.y, float(i) / (PERGOLA_COLUMNS - 1)))
-	for u in us:
-		for v: float in [p.z, p.w]:
-			look.fm.block(_at(u, 0.0, v), Vector3(0.45, 0.25, 0.45), 0.0, stone, false)
-			look.fm.block(_at(u, 0.25, v), Vector3(0.32, PERGOLA_HEIGHT - 0.25, 0.32), 0.0, stone, false)
-			look.fm.block(_at(u, PERGOLA_HEIGHT, v), Vector3(0.5, 0.14, 0.5), 0.0, stone, false)
-	for v: float in [p.z, p.w]:
-		look._bar(_at((p.x + p.y) * 0.5, PERGOLA_HEIGHT + 0.14 + RAFTER.y * 0.5, v), Vector3(p.y - p.x + 0.6, RAFTER.y * 1.4, 0.2), wood)
-	var u := p.x
-	while u <= p.y + 0.01:
-		look._bar(_at(u, PERGOLA_HEIGHT + 0.14 + RAFTER.y * 1.7, (p.z + p.w) * 0.5), Vector3(0.1, RAFTER.y, p.w - p.z + 0.6), wood)
-		var hang := _rng.randf_range(1.3, 1.9)
-		_wisteria_spots.append(Vector3(u, PERGOLA_HEIGHT - hang, p.z + _rng.randf_range(0.0, p.w - p.z)))
-		_wisteria_tall.append(hang)
-		u += RAFTER.x * 1.6
-	# round 3: the roof of vine closed over the beams (the south half thinner so the fountain shows) and grape clusters hanging
-	var v := p.z - 0.3
-	while v <= p.w + 0.3:
-		var south := inverse_lerp(p.w + 0.3, p.z - 0.3, v)
-		var x := p.x - 0.5
-		while x <= p.y + 0.5:
+	var fm := look.fm
+	for k in GAZEBO_COLUMNS:
+		var a := TAU * (k + 0.5) / GAZEBO_COLUMNS
+		var p := c + Vector2(cos(a), sin(a)) * GAZEBO_RADIUS
+		var y := HubPlan.BED_HEIGHT
+		fm.shaft(_at(p.x, y, p.y), 0.34, 0.18, stone)
+		fm.shaft(_at(p.x, y + 0.18, p.y), 0.22, PERGOLA_HEIGHT - 0.18 - y, stone)
+		fm.shaft(_at(p.x, PERGOLA_HEIGHT, p.y), 0.32, 0.16, stone)
+		# the cornice: a beam to the next column
+		var q := c + Vector2(cos(a + TAU / GAZEBO_COLUMNS), sin(a + TAU / GAZEBO_COLUMNS)) * GAZEBO_RADIUS
+		var mid := (p + q) * 0.5
+		var yaw := atan2((q - p).y, (q - p).x)
+		fm.block(_at(mid.x, PERGOLA_HEIGHT + 0.16, mid.y), Vector3(p.distance_to(q), 0.22, 0.34), yaw, stone, false)
+		fm.block(_at(mid.x, PERGOLA_HEIGHT + 0.38, mid.y), Vector3(p.distance_to(q) + 0.1, 0.08, 0.42), yaw, stone, false)
+		# between this column and the next: a cluster of wisteria and grapes hanging from the beam
+		var m := (a + TAU / GAZEBO_COLUMNS * 0.5)
+		for j in 3:
+			var aa := a + TAU / GAZEBO_COLUMNS * (0.2 + 0.3 * j)
+			var h := c + Vector2(cos(aa), sin(aa)) * (GAZEBO_RADIUS - 0.05)
+			var hang := _rng.randf_range(1.0, 1.7)
+			_wisteria_spots.append(Vector3(h.x, PERGOLA_HEIGHT - hang, h.y))
+			_wisteria_tall.append(hang)
+			var g := _rng.randf_range(GRAPE_HANG.x, GRAPE_HANG.y)
+			_grape_spots.append(Vector3(h.x + cos(m) * 0.15, PERGOLA_HEIGHT - g, h.y + sin(m) * 0.15))
+			_grape_tall.append(g)
+	# the wreath of vine leaves on the cornice, open over the fountain and thinner on the camera's side (south, -v)
+	var r := WREATH_HOLE
+	while r <= GAZEBO_RADIUS + 0.6:
+		var n := maxi(6, roundi(TAU * r / PERGOLA_LEAF_EVERY))
+		for i in n:
+			var a := TAU * (i + _rng.randf_range(-0.2, 0.2)) / n
+			var south := clampf(-sin(a) * 0.5 + 0.5, 0.0, 1.0)
 			if _rng.randf() > PERGOLA_GAP * south:
-				_roof_spots.append(Vector3(x + _rng.randf_range(-0.25, 0.25), PERGOLA_HEIGHT + 0.08, v + _rng.randf_range(-0.2, 0.2)))
-				_roof_tall.append(PERGOLA_LEAF.y * _rng.randf_range(0.85, 1.15))
-			x += PERGOLA_LEAF_EVERY
-		v += PERGOLA_LEAF_EVERY
-	u = p.x
-	while u <= p.y + 0.01:
-		for k in GRAPE_PER_RAFTER:
-			var hang := _rng.randf_range(GRAPE_HANG.x, GRAPE_HANG.y)
-			_grape_spots.append(Vector3(u + _rng.randf_range(-0.3, 0.3), PERGOLA_HEIGHT - hang, _rng.randf_range(p.z, p.w)))
-			_grape_tall.append(hang)
-		u += RAFTER.x
+				var p := c + Vector2(cos(a), sin(a)) * r
+				_roof_spots.append(Vector3(p.x, PERGOLA_HEIGHT + 0.2, p.y))
+				_roof_tall.append(PERGOLA_LEAF.y * _rng.randf_range(0.8, 1.1))
+		r += PERGOLA_LEAF_EVERY * 0.9
 
 
 # ---------- the Ponto de Vigília ----------
@@ -1110,13 +1151,12 @@ func _vigil_bed(stone: Material) -> void:
 	for c: Vector2 in [Vector2(inner.x + 0.5, inner.w - 0.25), Vector2(inner.z - 0.5, inner.w - 0.6)]:
 		_cypress_spots.append(Vector3(c.x, top + 0.05, c.y))
 		_cypress_tall.append(_rng.randf_range(2.4, 3.2))
-	# wisteria down the faces, off the niche's width
+	# wisteria down the south face
 	var u := r.x + 0.5
 	while u < r.z - 0.3:
-		if absf(u - VIGIL_NICHE_U) > VIGIL_NICHE.x * 0.5 + 0.4:
-			var hang := _rng.randf_range(1.3, 2.0)
-			_wisteria_spots.append(Vector3(u, 2.45 - hang, r.y - 0.42))
-			_wisteria_tall.append(hang)
+		var hang := _rng.randf_range(1.3, 2.0)
+		_wisteria_spots.append(Vector3(u, 2.45 - hang, r.y - 0.42))
+		_wisteria_tall.append(hang)
 		u += _rng.randf_range(0.8, 1.2)
 	var w := r.y + 0.6
 	while w < r.w - 0.4:
@@ -1128,20 +1168,30 @@ func _vigil_bed(stone: Material) -> void:
 
 ## A low niche of voussoirs in the mass's south face (facing the camera) with a dark back, a wine standard and a lantern each side.
 func _vigil_niche() -> void:
-	var n := VIGIL_NICHE
-	var face := VIGIL_RECT.y - 0.1
-	var foot := _at(VIGIL_NICHE_U, 0.0, face - 0.05)
-	look.fm.voussoir_arch(foot, HubLook.SOUTH, n.x, n.y, n.z, 0.45, look.facade_stone(), 0.62)
+	# round 3: a tall pointed arch of cream stone in a screen wall just west of the brazier, open to the square (VIGIL_ARCH)
+	var w := HubPlan.VIGIL_ARCH
+	var face := w.x + w.z  # the wall's east face (u)
+	var wall: Material = look.facade_stone()
+	var n := VIGIL_ARCH_OPENING
+	var r := n.x * n.z
+	var cx := r - n.x * 0.5
+	var spring := n.y - sqrt((r + n.w) * (r + n.w) - cx * cx)
+	var tall := VIGIL_ARCH_WALL_TALL
+	look.fm.block(_at(w.x, 0.0, w.y), Vector3(w.z * 2.0, tall, w.w * 2.0), 0.0, wall, false)
+	look.fm.block(_at(w.x, tall, w.y), Vector3(w.z * 2.0 + 0.14, 0.12, w.w * 2.0 + 0.14), 0.0, look.stone(), false)
+	var foot := _at(face - 0.2, 0.0, w.y)
+	look.fm.voussoir_arch(foot, Vector2(1.0, 0.0), n.x, spring, n.w, 0.45, wall, n.z)
 	for sd: float in [-1.0, 1.0]:
-		look.fm.block(_at(VIGIL_NICHE_U + sd * (n.x * 0.5 + n.z * 0.5), 0.0, face - 0.05), Vector3(n.z, n.y + 0.05, 0.45), 0.0, look.facade_stone(), false)
+		look.fm.block(_at(face - 0.2, 0.0, w.y + sd * (n.x * 0.5 + n.w * 0.5)), Vector3(0.45, spring + 0.05, n.w), 0.0, wall, false)
 	var back := MeshInstance3D.new()
-	back.mesh = HubFacades.ogive_mesh(n.x, n.y, 0.62, [], 8)
-	back.material_override = look._plain(Color(0.09, 0.06, 0.06), 1.0)
-	back.position = foot + Vector3(0, 0, 0.02)
+	back.mesh = HubFacades.ogive_mesh(n.x, spring, n.z, [], 8)
+	back.material_override = look._plain(Color(0.14, 0.09, 0.08), 1.0)
+	back.position = _at(face + 0.01, 0.0, w.y)
+	back.basis = Basis(Vector3.UP, PI * 0.5)
 	look.frame.add_child(back)
-	facades.banner(VIGIL_NICHE_U, 1.55, face - 0.2, 0.62, 1.4)
 	for sd: float in [-1.0, 1.0]:
-		var lp := _at(VIGIL_NICHE_U + sd * (n.x * 0.5 + n.z + 0.45), 1.25, face - 0.15)
+		facades.banner(face + 0.02, tall - 0.5, w.y + sd * (n.x * 0.5 + n.w + 0.33), 0.5, 1.6, PI * 0.5)
+		var lp := _at(face + 0.2, 1.3, w.y + sd * (n.x * 0.5 + n.w + 0.12))
 		_lantern_xf.append(Transform3D(Basis.from_scale(Vector3.ONE * LAMP_LANTERN), lp))
 
 
@@ -1176,6 +1226,93 @@ func _future_yards() -> void:
 			look.fm.block(_at(mouth.x, top - 0.01, -17.35 - k * 0.45 - 0.2), Vector3(tread.x + 0.06, STEP_NOSING_H, 0.1), 0.0, nosing, false)
 		_lamp(Vector2(mouth.x - mouth.z + 0.4, -15.9), true)
 		_lamp(Vector2(mouth.x + mouth.z - 0.4, -15.9), true)
+
+
+# ---------- the lower plaza (round 3) ----------
+const PLAZA_STONE_TOP := Vector2(0.14, 0.08)  # the bed's coping: how much wider, how tall
+const PLAZA_SOIL := Color(0.26, 0.18, 0.12)
+const PLAZA_BED_EVERY := 0.55
+const PLAZA_BLOOM := Vector2(0.7, 1.1)  # the clumps' height factor
+const PLAZA_LAMPS: Array[Vector2] = [Vector2(-11.2, -16.4), Vector2(2.2, -16.4), Vector2(-11.2, -13.0), Vector2(1.3, -13.4)]
+
+
+## The chasm south of the Videira is a lower plaza (HubPlan.PLAZA): a planter between its two flights, a big bed of
+## flowers in its middle (kerbed stone, dark soil, clumps of lilac, magenta and cream) and four lamps.
+func _plaza() -> void:
+	if HubPlan.PLAZA_DROP <= 0.0:
+		return
+	var stone: Material = look.stone()
+	var soil: Material = look._plain(PLAZA_SOIL, 1.0)
+	for spec: Array in [[HubPlan.PLANTER_BOX, HubPlan.PLANTER_HEIGHT], [HubPlan.PLAZA_BED, HubPlan.PLAZA_BED_HEIGHT]]:
+		var b: Vector4 = spec[0]
+		var h: float = spec[1]
+		look.fm.block(_at(b.x, 0.0, b.y), Vector3(b.z * 2.0, h - PLAZA_STONE_TOP.y, b.w * 2.0), 0.0, stone, false)
+		look.fm.block(_at(b.x, h - PLAZA_STONE_TOP.y, b.y), Vector3(b.z * 2.0 + PLAZA_STONE_TOP.x, PLAZA_STONE_TOP.y, b.w * 2.0 + PLAZA_STONE_TOP.x), 0.0, stone, false)
+		look._bar(_at(b.x, h - 0.03, b.y), Vector3(b.z * 2.0 - 0.3, 0.07, b.w * 2.0 - 0.3), soil)
+		var u := b.x - b.z + 0.35
+		while u < b.x + b.z - 0.3:
+			var v := b.y - b.w + 0.3
+			while v < b.y + b.w - 0.25:
+				var spot := Vector3(u + _rng.randf_range(-0.2, 0.2), h, v + _rng.randf_range(-0.2, 0.2))
+				var roll := _rng.randf()
+				if roll < 0.55:
+					plant(0, spot, _rng.randf_range(PLAZA_BLOOM.x, PLAZA_BLOOM.y))
+				elif roll < 0.8:
+					plant(1, spot, _rng.randf_range(PLAZA_BLOOM.x, PLAZA_BLOOM.y))
+				else:
+					plant(2, spot, _rng.randf_range(0.4, 0.7))
+				v += PLAZA_BED_EVERY * _rng.randf_range(0.8, 1.3)
+			u += PLAZA_BED_EVERY * _rng.randf_range(0.8, 1.3)
+	for p in PLAZA_LAMPS:
+		_lamp(p, true)
+
+
+# ---------- the way's clear, the mountain behind ----------
+
+## Round 3: no cypress within PATH_CLEAR of a way (they stood in the middle of the squares); they stay on the edges and behind.
+func _clear_cypresses() -> void:
+	var keep_spots: Array[Vector3] = []
+	var keep_tall: Array[float] = []
+	for i in _cypress_spots.size():
+		var p := Vector2(_cypress_spots[i].x, _cypress_spots[i].z)
+		var near := false
+		for line: Array[Vector2] in [PATH_MAIN, PATH_GATE]:
+			for k in line.size() - 1:
+				near = near or p.distance_to(Geometry2D.get_closest_point_to_segment(p, line[k], line[k + 1])) < PATH_CLEAR
+		if not near:
+			keep_spots.append(_cypress_spots[i])
+			keep_tall.append(_cypress_tall[i])
+	_cypress_spots = keep_spots
+	_cypress_tall = keep_tall
+
+
+## Round 3: the grey-lilac rock of the mountain standing up behind the west and north edges (BACKDROP_TALL over the floor at the
+## least), moss and cypresses on its top: the hub sits in a cliff, not in front of an empty sky.
+func _backdrop() -> void:
+	var rock := _rock_material()
+	var placed := 0
+	for e in _edge_points(BACKDROP_EVERY, 0.0, 0.0, false, true):
+		var p: Vector2 = e[0]
+		var out: Vector2 = e[1]
+		if out.y < 0.5 or p.y < BACKDROP_MIN_V:
+			continue  # only the far north rim: west and inner edges put the rock between the camera and the floor
+		if p.distance_to(RED_TREE_AT) < RED_TREE_CLEAR or p.distance_to(Vector2(RED_TREE_2.x, RED_TREE_2.y)) < RED_TREE_CLEAR:
+			continue
+		var along := Vector2(-out.y, out.x)
+		var wide := _rng.randf_range(BACKDROP_WIDE.x, BACKDROP_WIDE.y)
+		var tall := _rng.randf_range(BACKDROP_TALL.x, BACKDROP_TALL.y)
+		var deep := _rng.randf_range(BACKDROP_DEEP.x, BACKDROP_DEEP.y)
+		var c := p + out * (deep * 0.5 + _rng.randf_range(0.6, 1.6))
+		var size := Vector3(wide, tall + BACKDROP_SINK, deep)
+		var mi := look.fm.block(_at(c.x, -BACKDROP_SINK, c.y), size, atan2(along.y, along.x), rock, false)
+		mi.mesh = look.fm.bevel_mesh(size, ROCK_CHAMFER, _rng.randi_range(0, 7), _rng.randf_range(0.2, 0.5))
+		mi.basis = Basis.from_euler(Vector3(_rng.randf_range(-ROCK_TILT, ROCK_TILT), atan2(along.y, along.x) + _rng.randf_range(-0.2, 0.2), _rng.randf_range(-ROCK_TILT, ROCK_TILT)))
+		_leaf_spots.append(Vector3(c.x, tall - 0.2, c.y))
+		_leaf_tall.append(_rng.randf_range(0.8, 1.4))
+		placed += 1
+		if placed % 3 == 0:
+			_cypress_spots.append(Vector3(c.x + along.x * 0.4, tall - 0.3, c.y + along.y * 0.4))
+			_cypress_tall.append(_rng.randf_range(CYPRESS_TALL.x, CYPRESS_TALL.y))
 
 
 # ---------- plants and lamps ----------
@@ -1257,8 +1394,8 @@ func _window_material() -> StandardMaterial3D:
 ## A low cream balustrade along every outer edge that is not behind a building, the future rooms' mouths or an existing
 ## rail, inset from the lip; every second post carries a lit lantern.
 func _balustrades() -> void:
-	var mat := look.stone()
-	var post_top := Masonry.POST.y * RAIL_LOW + Masonry.POST_STEP.y + Masonry.POST_CAP.y
+	var mat: Material = look.facade_stone()
+	var post_top := RAIL_POST.y + RAIL_CAP_TALL
 	for poly in HubPlan.floor_polys():
 		var n := poly.size()
 		for i in n:
@@ -1271,7 +1408,7 @@ func _balustrades() -> void:
 			var normal := Vector2(-dir.y, dir.x)
 			var mid := (a + b) * 0.5
 			var into := normal if _on_floor(mid + normal * 0.25) else -normal
-			if -into.y > 0.35 or mid.y < -16.4 or _rail_taken(mid) or _near_mass(mid):
+			if -into.y > 0.35 or mid.y < -16.4 or _rail_taken(mid) or _near_mass(mid) or HubPlan.near_plaza(mid, true):
 				continue
 			var p0 := a + dir * 0.5 + into * RAIL_INSET
 			var p1 := b - dir * 0.5 + into * RAIL_INSET
@@ -1279,13 +1416,36 @@ func _balustrades() -> void:
 				continue
 			if _facing_court(mid, into):
 				continue
-			look.fm.balustrade(_at(p0.x, 0.0, p0.y), _at(p1.x, 0.0, p1.y), true, mat, RAIL_LOW)
-			var spans := maxi(1, roundi(p0.distance_to(p1) / Masonry.POST_GAP))
+			var spans := maxi(1, roundi(p0.distance_to(p1) / RAIL_GAP))
+			_thin_rail(p0, p1, spans, mat)
 			for k in range(0, spans + 1, RAIL_LANTERN_EVERY):
 				var q := p0.lerp(p1, float(k) / spans)
 				if not _lantern_free(q):
 					continue
 				_lantern_xf.append(Transform3D(Basis.from_scale(Vector3.ONE * LANTERN_SIZE), _at(q.x, post_top + LANTERN_SIZE * 0.5 + 0.02, q.y)))
+
+
+## A thin cream balustrade from a to b in `spans` bays (see RAIL_*): square posts with a cap, a bar on top, a curb and balusters.
+func _thin_rail(a: Vector2, b: Vector2, spans: int, mat: Material) -> void:
+	var fm := look.fm
+	var yaw := atan2((b - a).y, (b - a).x)
+	for i in spans + 1:
+		var p := a.lerp(b, float(i) / spans)
+		fm.block(_at(p.x, 0.0, p.y), Vector3(RAIL_POST.x, RAIL_POST.y, RAIL_POST.x), yaw, mat, false)
+		fm.block(_at(p.x, RAIL_POST.y, p.y), Vector3(RAIL_POST.z, RAIL_CAP_TALL, RAIL_POST.z), yaw, mat, false)
+	for i in spans:
+		var p0 := a.lerp(b, float(i) / spans)
+		var p1 := a.lerp(b, float(i + 1) / spans)
+		var mid := (p0 + p1) * 0.5
+		var span := p0.distance_to(p1) - RAIL_POST.x
+		fm.block(_at(mid.x, RAIL_TOP - RAIL_BAR.x, mid.y), Vector3(span, RAIL_BAR.x, RAIL_BAR.y), yaw, mat, false)
+		fm.block(_at(mid.x, 0.0, mid.y), Vector3(span, 0.1, RAIL_BAR.y), yaw, mat, false)
+		var shaft := RAIL_TOP - RAIL_BAR.x - 0.1
+		var count := maxi(2, roundi(span / 0.34))
+		for k in count:
+			var q := p0.lerp(p1, (k + 1.0) / (count + 1.0))
+			fm.block(_at(q.x, 0.1, q.y), Vector3(RAIL_BALUSTER, shaft, RAIL_BALUSTER), yaw, mat, false)
+			fm.block(_at(q.x, 0.1 + shaft * 0.3, q.y), Vector3(RAIL_BALUSTER * 1.5, shaft * 0.3, RAIL_BALUSTER * 1.5), yaw, mat, false)
 
 
 ## Round 5: a ledge rock is not a crate: a third of them stand tall and narrow, the rest vary in all three sizes; each is
