@@ -332,3 +332,54 @@ arco da Videira, estandarte dos heróis, banca do Alquimista), reposicionadas.
 - Céu: com a câmera Perto (pitch 30, fov 24) o fundo é o mar de nuvens e a faixa de montanhas a 160 m ou mais não aparecia.
   `RIDGES` aproximadas (v 70, 110, 160) com a crista entre y 12 e 42, `SEA_Y` -30, `SEA_CLOUD_SCALE` 0,07 (nuvens que a
   câmera distingue), cartão do céu mais baixo (gradiente se vê). Ajustar à vista se ainda sair chapado.
+
+## Refino do Santuário, rodada 1 (2026-11-26; environment-artist, SEM captura: tudo às cegas, conferir na GPU)
+Pedido do Daniel: o hub estava feio ("fundo branco, paredão cinza, prédios caixa, piscina, postes pretos, bolas verdes").
+Meta: ficar perto de `docs/art/ref/hub01_2026-11-25/eterra_hub/01-arte-aprovada.jpg`. Só visual: colisão, planta, pontos de uso
+e `HubPlan` intactos (testes `test_hub*` passam). Arquivos: `hub_scenery.gd`, `hub_facades.gd` (novo, `HubFacades`),
+`hub_blockout.gd`, `hub_look.gd`, `arena_room.gd` (gancho `cliff_material()`), shaders `hub_cliff` e `hub_vista` (novos).
+- **Fundo (item 1)**: o branco era o plano opaco do abismo (`kit.abyss`, a -22 m, cor `MIST` x ruído), não o céu. `HubLook.MIST`
+  agora lilás de crepúsculo `(0.44, 0.33, 0.46)` (o plano opaco fica ~0,5 disso; as três camadas translúcidas, mais claras,
+  viram bancos de névoa lilás). Céu `SKY_TOP` violeta, `SKY_HORIZON` pêssego, mar `SEA_*` e as três serras `RIDGES` em
+  roxo/pêssego/verde-escuro (antes azul-claro); `AIR` com névoa lilás-rosada e lua dourada (`DUSK_GOLD`), `STY_MOON` 1,05 e
+  `STY_AMBIENT_GAIN` 0,98 (mais contraste, sombras seguem azuladas).
+- **Penhascos (item 2)**: `ArenaRoom.cliff_material()` (gancho novo, `null` nas outras salas) devolve, no hub, o
+  `hub_cliff.gdshader`: rocha quente em estratos com rachaduras, musgo/capim nos primeiros metros sob a borda, lavagem dourada
+  no alto e, descendo (`CLIFF_FADE` 2 a 19 m), afunda na névoa lilás do abismo. Por cima (`HubScenery._cliffs`): tufos de
+  arbusto, flores e glicínia pendendo da face (a cada 2,2 m de borda) e saliências de rocha (a cada 6 m, blocos com o mesmo
+  material, musgo em cima), menos sob a ponte e as quedas. Uma queda nova no sul do Portão (`FALLS`).
+- **Muretas**: balaústre baixo (`RAIL_LOW` 0,8) por todas as bordas externas que olham para a câmera ou para os lados
+  (`_balustrades`: fora das atrás de prédio, da ponte e das bocas dos quartos futuros), a cada 2º poste uma lanterna;
+  canteiros de pedra com flores lilás/magenta junto a elas (`_planters`, substituem os tufos soltos).
+- **Prédios (item 3)**: parede em calcário creme (`HubLook.facade_stone()`, cor própria `OWN_KEEP`, no lugar do ashlar azul-cinza),
+  telhas terracota mais vivas, janelas de vidro âmbar (`WINDOW_GLOW`), caixas de flores sob as janelas (antes tufos no chão),
+  pilastras com base e capitel, portas abertas mostram o interior aceso (`DOOR_GLOW`), duas lanternas em cada porta
+  (`HubFacades._door_lanterns`, um MultiMesh com as do balaústre). Por estação (`HubFacades`): **Aposento** = grande arco
+  ogival de vidro âmbar com travessas, dois estandartes vinho com o leão, tapete vermelho com bordas douradas para o sul;
+  **Biblioteca** e **Capela dos Dons** = vitral colorido (cunhas vermelho/ouro/turquesa/violeta) em arco de aduelas; Capela
+  com pináculo dourado; **Alquimista** = estufa de vidro (moldura dourada, painéis, telhado de quatro águas de vidro, plantas
+  em flor, luz); **Mercador** = toldo vinho e creme (`AWNING_CLOTH`, `AWNING_STRIPE`); **Ponto de Vigília** = bacia redonda
+  de pedra em dois degraus (antes um bloco quadrado), estandarte vinho; **Portões das Áreas Futuras** = cadeado de ouro.
+  Estandartes do Portão e da Vigília trocados pelos de `HubFacades.banner` (vinho; o `fk.banner` estilizado é petróleo).
+  **Portão** = dois leões de pedra sentados (caixas) nos pés dos pilares e a vista violeta no vão (`hub_vista.gdshader`
+  atrás da folha de luz: céu dourado-violeta, duas serras, estrada clara).
+- **Videira (item 4)**: o tanque grande (`WATER_2`) virou **jardim elevado** (`GARDEN_BASIN`: terra a 0,36 m em meio-fio de
+  pedra, flores lilás/magenta, arbustos, alguns ciprestes; é buraco do piso, ninguém anda) e a bacia pequena ficou só nas
+  outras duas; **fonte redonda** no meio da pérgola, em cima do canteiro (`HubScenery._fountain`: borda em blocos, água,
+  pedestal, taça, cortina e jato com `waterfall.gdshader`, uma luz quente). O canteiro (`_bed`) não põe arbustos onde a
+  fonte fica (`FOUNTAIN_CLEAR`).
+- **Postes (item 5)**: os de ferro preto saíram; `_lamp` agora é pilar de calcário com lanterna acesa, a cada 21 m de borda
+  (antes 9,5) mais as lanternas dos balaústres e das portas (emissivo, um MultiMesh; sem luz própria).
+- **Vegetação (item 6)**: nas prateleiras de rocha, 3 de cada 4 viram pares de ciprestes escuros (antes bolas verdes); árvore
+  vermelha grande no canto noroeste (`RED_TREE_AT`); glicínia pendente nas paredes e nos penhascos; canteiros e jardim.
+- **Chão (item 7)**: faixa de brilho dourado discreto (`_path_glow`, aditivo, 1,5 m) no caminho Vigília, Videira, Dons/Aposento
+  e no ramal do Portão; só onde os dois lados são piso (verificado: 100% das amostras no piso).
+- **Luz (item 8)**: crepúsculo (lua dourada, névoa lilás) e, de pontual, só 5 OmniLights novas (arco do Aposento, vitral da
+  Biblioteca, vitral dos Dons, estufa, fonte; `NOT_FIRE`, `~CROWD_LAYER`, sem sombra), o resto emissivo.
+- **Shaders novos (para o aquecimento)**: `assets/shaders/hub_cliff.gdshader`, `assets/shaders/hub_vista.gdshader`.
+- **Opções de captura**: chegada `--hub --hub-open=all --shot-at=3`; estações `--hero-at=<portal|vendor|tree|smith|book|vine|heroes>`;
+  o Aposento (arco e tapete) com `--hero-at=heroes`, o Portão com `--hero-at=portal`.
+- **Ficou de fora / para a rodada 2**: rampas e escadas de verdade (o piso é plano e a planta não muda); o Aposento sem
+  escada (só tapete); interiores; telhado da Forja aberto com toldo (a peça da forja ocupa a fachada); árvores de folha
+  vermelha só uma; céu e serras só se veem de fato com a câmera Longe; o brilho do caminho e as cores do penhasco/névoa foram
+  escolhidos sem ver, ajustar por `HubLook.MIST`, `CLIFF_*`, `PATH_GLOW`, `STY_MOON`.
