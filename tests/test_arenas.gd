@@ -82,7 +82,7 @@ func test_every_door_and_spawn_zone_is_reached_and_no_island_is_cut_off() -> voi
 		# everything else is crumbs left between a piece and an edge (smaller than a body can stand on twice)
 		var sizes := nav.island_sizes()
 		for i in sizes.size():
-			if i != home:
+			if i != home and c.layout.gaps.is_empty():  # (PT-25-9: the patch a stream shuts off is meant to be cut off; test_room_gaps)
 				assert_lt(sizes[i], 12, "%s: an island of %d cells cut off" % [c.name, sizes[i]])
 		assert_true(a.nav.walkable(a.middle), "%s: the reward rises on free floor" % c.name)
 		assert_true(nav.reachable(a.start, a.middle), "%s: and the paladin reaches it" % c.name)
@@ -465,6 +465,9 @@ func test_breakables_stand_where_they_may() -> void:
 			assert_false(a.overlaps(at, p.radius), "%s: %s off every piece" % [name, at])
 			if not a.inside(at, 1.6) or a.overlaps(at, 1.2):
 				leaning[p.group] = true
+			for gr in l.gaps:  # PT-25-9: the patch of a stream, ringed by water, is its own cover
+				if _rect_gap(gr, at) <= 1.5:
+					leaning[p.group] = true
 			assert_between(p.height, 0.35, 1.0, "%s: low" % name)
 			for z in a.exit_zones:
 				assert_gte(_rect_gap(z, at), 1.5, "%s: %s off a door" % [name, at])

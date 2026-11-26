@@ -121,6 +121,9 @@ static func plate(parent: Node3D, r: Rect2, windup: float, k := Kind.PLATE, way 
 	var params := {&"joint": JOINT}
 	if k == Kind.PLATE:
 		params[&"chev_four"] = 1.0
+		# PT-25-10: the slab is 2 x 2 tiles (cross joint, a chevron in each tile)
+		params[&"tiles"] = 2.0
+		params[&"chev_open"] = 0.3
 	elif k == Kind.SAG:
 		pass  # SR-P2: the slab that gives has no arrows, only the cracks and the dust of its sinking
 	else:

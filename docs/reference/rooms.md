@@ -718,10 +718,20 @@ Números de referência: `docs/design/sworn_rea_kingswood_2026-11-25.md` seçõe
     chão (2 a 4 m) que o andar não entra e a esquiva (5,6 m) vence; é dado do layout e serve a qualquer sala (as travessias opcionais da E4 usam o mesmo). Na Antessala:
     `ANTE_GAP` (x -16,5 a 16,5, z -10,6 a -8,0), de parede a parede, entre o jogador (sudoeste) e a porta (nordeste). `Player.step` põe quem anda de volta na margem de onde veio
     (`GapRule.keep_out`) e quem sai da esquiva dentro dele na margem mais perto; `gap_fall` > 0 fere o que a sala disser (`Ground.GAP_SOURCE`, "Derrotado por: Queda na Fenda"),
-    0 na Antessala. A grade de caminho (`NavGrid`) não vê o riacho (o robô dispara a esquiva da margem com `GapRule.hop`, `Bot`, até 0,9 m da margem); inimigos ainda andam sobre ele
-    (a E4 precisa decidir). Desenho placeholder: `GapFloor` (água escura, espuma nas margens), no `Rooms._enter_with`. `Rooms.plates_crossed` agora diz "passou o riacho".
+    0 na Antessala. A grade `Arena.nav` (inimigos, `FlowField`, nascimentos) fecha o riacho como chão que ninguém pisa (`NavGrid.build(..., gaps)`); `Arena.nav_dash` é a mesma sala com o riacho aberto e é a do
+    robô (`Bot._way`, que dispara a esquiva da margem com `GapRule.hop`, até 0,9 m da margem). Inimigo não atravessa: `Horde` passa cada um por `Arena.keep_out_of_gaps` depois do `sweep`
+    (andando ou empurrado fica na margem), atirador atira por cima (projétil não olha o riacho). Teste `tests/test_room_gaps.gd`. Desenho placeholder: `GapFloor` (água escura, espuma nas margens), no `Rooms._enter_with`. `Rooms.plates_crossed` agora diz "passou o riacho".
     As três lajes de aprender do SW-O3 saíram (o riacho ensina a esquiva no lugar delas).
   - `idle_blink` (25 s parado) e `broke_one` continuam; `Rooms.ante_ctx()` dá `near_plates` (perto do riacho), `near_breakable`, `crossed_plates`, `broke_one`, `lesson`.
+- **Travessias opcionais** (E4, PT-25-9, `make_data` `_ring`, `SANCTUARY_ISLAND`, `RIFT_ISLAND`, `GAP_BAND` 2 m): um canteiro de chão cercado por água ou fenda de 2 m que só a esquiva pega, com um grupo
+  de 2 quebráveis em cima como prêmio (quebrável não dá ouro nem Magia; uma bolsa de ouro de verdade fica para o gameplay-engineer). Nunca no caminho: portas, nascimentos, laje, entrada e
+  recompensa ficam na ilha do herói (`test_room_gaps.gd`). Santuário (A, B e C): ilha 3 x 2 m no meio da nave, a oeste (x -10 a -7), anel de x -12 a -5, z -3 a 3; na B as pedras da abóbada
+  começam em x -3,5 e o segundo espeto foi para (-7,5; -4,5). Fendas (A e B): ilha de 3,5 x 3 m colada à parede oeste (x -21 a -17,5, z 3,5 a 6,5), anel só em cima, embaixo e a leste.
+  A ilha conta como encosto dos quebráveis (`test_arenas`) e não entra na conta de "ilha cortada". O robô não busca as ilhas (anotado). Garden, Cripta, Runas e Ponte não tinham canto livre
+  de nascimento, laje, raiz ou porta; ficam sem travessia.
+- **Laje de pisar 2 x 2** (E4, PT-25-10): a laje do `PLATES` agora é 2 x 2 placas de 1,25 m (2,5 m de lado, era um bloco de 3 x 3), `make_data` `SLAB_TILE` e `_plates(..., tiled)`; cada laje antiga
+  mantém o centro. O desenho (`HazardPiece.plate`, `hazard_mark.gdshader` `tiles`) leva a junta em cruz e uma seta em cada placa. Laje que cede (`sag`) e placa de espetos não mudaram.
+  A laje inteira fere junto.
 - **Chegada** (SW-O1): `Rooms._play_arrival` carrega `scripts/game/arrival_scene.gd` se existir (`play(game, at)`, `finished`, `skip()`), uma vez, na Antessala da guiada; o preto de
   `Rooms._fade` abre em `arrival_open_at`/`arrival_open_s` do dado e qualquer ataque, esquiva ou interação depois de `arrival_skip_after` chama `skip()`. Sem o arquivo: a sala abre como as outras.
 - **RESULT** com a guiada: `first` 1, `ante_s` (segundos de jogo até a porta da Antessala) e `first_boon_s` (a primeira Bênção oferecida). Sem a guiada o `RESULT` é o de sempre.

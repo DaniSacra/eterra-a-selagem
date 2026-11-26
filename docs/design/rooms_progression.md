@@ -1791,3 +1791,17 @@ a pede. A posição da faixa ficou com o dono do lote (o room-designer não escr
   Descida normal (sementes 5 e 9, 900 s): chega a Morvath, `stuck` 0.
 - **Riscos**: texto das dicas passa de 70 caracteres (a linha de objetivo tem 380 px de base, o `ui-ux-designer` confere em 720p); os inimigos de uma sala com riacho ainda o
   atravessam andando (a E4 decide o caminho deles); a recompensa do 1 virou Ouro (a Bênção veio na Antessala), a conta de Bênçãos da guiada fica igual (4).
+
+### Travessias opcionais, lajes 2 x 2 e inimigos contra o riacho (PT-25-9 e PT-25-10, 2026-11-25, E4)
+- **Inimigos e o riacho (decidido)**: o riacho é chão que ninguém pisa. `Arena.nav` o fecha (as ilhas de caminho mudam, os nascimentos só caem do lado do herói, o `FlowField` contorna);
+  `Horde` segura cada inimigo na margem (`Arena.keep_out_of_gaps`, vale também para empurrão e investida); atirador atira por cima. `Arena.nav_dash` guarda a grade aberta para o herói e o robô.
+- **Santuário** (A, B, C, profundidade 0,4 a 1): uma ilha 3 x 2 m na nave, a oeste, ao redor 2 m de água; prêmio, 2 quebráveis (urna e oferenda). A pergunta: gastar uma esquiva (e a posição
+  no meio do combate) por um prêmio pequeno. Custa à nave aberta cerca de 7 x 6 m de chão que os inimigos contornam. B: as pedras da abóbada saíram de cima da ilha.
+- **Fendas** (A e B, profundidade 0,05 a 1): uma ilha 3,5 x 3 m colada à parede oeste, longe do combate do leste; prêmio, 2 caixotes. Nunca no caminho do robô nem da porta (as portas ficam no leste).
+- Salas sem travessia por falta de canto livre (nascimento, laje, raiz, porta): Jardim, Cripta, Runas, Ponte, casas dos guardiões. O Salão (SL-01) fica com o environment-artist.
+- **Laje 2 x 2**: 2,5 m de lado (4 placas de 1,25 m), mesmo centro das de antes; fere junto; aviso e dano iguais. Métrica: lajes por sala, `hazard.hero_damage` e `armed_by_*` no `RESULT` não
+  mudaram de forma nas sementes 1 a 4 (a área caiu de 9 para 6,25 m2, então pisam menos).
+- **Métricas** (robô, 900 s, `--bot-reaction=0.25`, sementes 1 a 4): chega a Morvath nas 4 (boss_at 449, 412, 325, 379 s), `stuck` 0. O robô não busca as ilhas (os quebráveis de lá contam 0 a
+  partir dele); quem mede o prêmio é o jogador.
+- **Pendências**: bolsa de ouro de verdade do outro lado (quebrável não dá ouro: gameplay-engineer); pilar com vaso (não há peça de pilar com vaso; anotado para o environment-artist, o dado já
+  aceita um `ArenaObstacle` com `piece` novo); arte da água da ilha e da junta em cruz da laje (placeholder `GapFloor` e `hazard_mark`).

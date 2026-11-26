@@ -46,7 +46,7 @@ enum Kind { GRID, PLATES, LINE, DROPS, URNS }
 @export var hero_damage := 4.0
 @export var enemy_damage := 35.0
 
-## PLATES: the slabs (each a rectangle of the floor, 3 x 3 m), the seconds a struck slab rests before it may arm again,
+## PLATES: the slabs (each a rectangle of the floor, 2 x 2 tiles of 1.25 m = 2.5 m, PT-25-10), the seconds a struck slab rests before it may arm again,
 ## and the share of the descent (EncounterGen.progress) from which they arm at all: before it they lie on the floor
 ## drawn at rest and never strike (the frame teaches without hurting).
 @export var plates: Array[Rect2] = []

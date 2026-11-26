@@ -1294,15 +1294,22 @@ func _variant(obstacles: Array[ArenaObstacle], floor: FloorShape = null, late: A
 	return v
 
 
-## RP-06 (H-2, docs/design/rooms_progression.md): slabs of 3 x 3 m that anyone stepping on arms (the paladin or an enemy:
+## PT-25-10 (Daniel, 2026-11-25; the SWORN's step slab): a slab is 2 x 2 tiles of SLAB_TILE metres (2.5 m a side, was one block
+## of 3 x 3), drawn with its cross joint (HazardPiece.plate); the whole slab strikes together, a short clear area.
+const SLAB_TILE := 1.25
+## RP-06 (H-2, docs/design/rooms_progression.md): slabs (now 2 x 2 tiles, see SLAB_TILE) that anyone stepping on arms (the paladin or an enemy:
 ## the steam trap of the Hades II), marked at rest; 1.2 s lighting from the edge to the middle (never under an enemy's
 ## wind-up), a strike of 0.25 s on whoever stands on it with the runes' numbers (A1: 10 to him, 60 to an enemy), 5 s
 ## before it may arm again, nothing in the first 3 s; asleep (drawn, never striking) before the descent reaches `from`.
 ## Each slab at least 6 m from the way in and off the doors' mouths (test_plates.gd).
-func _plates(rects: Array[Rect2], from := 0.0) -> HazardDef:
+func _plates(rects: Array[Rect2], from := 0.0, tiled := true) -> HazardDef:
 	var h := HazardDef.new()
 	h.kind = HazardDef.Kind.PLATES
-	h.plates = rects
+	var slabs: Array[Rect2] = []
+	for r in rects:
+		# the 2 x 2 slab keeps the middle of the block it replaces
+		slabs.append(Rect2(r.get_center() - Vector2.ONE * SLAB_TILE, Vector2.ONE * SLAB_TILE * 2.0) if tiled else r)
+	h.plates = slabs
 	# combat_cadence.md 9.4 (P0 with the 10): 1.2 s (was 1.0), an enemy may arm it under him while he is locked
 	h.warn = 1.2
 	h.fire = 0.25
@@ -1321,6 +1328,35 @@ func _plates(rects: Array[Rect2], from := 0.0) -> HazardDef:
 ## far bank. It never hurts (gap_fall 0): one who lands in it is put back on the nearest bank. (SW-O3's three teaching slabs
 ## were here until PT-25-9; the stream teaches the dodge in their place.)
 const ANTE_GAP := Rect2(-16.5, -10.6, 33.0, 2.6)
+
+
+## PT-25-9, the optional crossings of the common rooms (docs/design/rooms_progression.md, "Travessias"): a patch of floor
+## (`inner`) that a ring of water or rift GAP_BAND metres across (2 m: the dash is 5.6) shuts off from the rest, so only the
+## dash gets on it, with a breakable group on it for the reward. Never on the way: no door, spawn, slab or the way in is
+## inside or against it (tests/test_room_gaps.gd). `sides` says which sides of the ring are left out (against a wall).
+const GAP_BAND := 2.0
+
+
+func _ring(inner: Rect2, sides := "nsew") -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	var b := GAP_BAND
+	var wide := Rect2(inner.position.x - (b if "w" in sides else 0.0), inner.position.y, inner.size.x + (b if "w" in sides else 0.0)
+		+ (b if "e" in sides else 0.0), inner.size.y)
+	if "n" in sides:
+		out.append(Rect2(wide.position.x, inner.position.y - b, wide.size.x, b))
+	if "s" in sides:
+		out.append(Rect2(wide.position.x, inner.end.y, wide.size.x, b))
+	if "w" in sides:
+		out.append(Rect2(inner.position.x - b, inner.position.y, b, inner.size.y))
+	if "e" in sides:
+		out.append(Rect2(inner.end.x, inner.position.y, b, inner.size.y))
+	return out
+
+
+## The Santuário's patch of the nave, west of the middle (the aisles' columns stand at z 6 and -6, the west spawn at x -14).
+const SANCTUARY_ISLAND := Rect2(-10.0, -1.0, 3.0, 2.0)
+## The Fendas' patch against the west wall (x -21), between the way in's side and the breakable crates of the south-west.
+const RIFT_ISLAND := Rect2(-21.0, 3.5, 3.5, 3.0)
 
 
 func _ante_variant() -> ArenaVariant:
@@ -1626,7 +1662,8 @@ func _place_breakables(st: StageDef) -> void:
 					[[F.PLANK, -20.5, 9.75, 0.35], [F.CRATE, -19.7, 9.75, 0.7], [F.PLANK, -20.5, 8.95, 0.35]],
 					[[F.CRATE, 10.0, 14.5, 0.7], [F.PLANK, 10.8, 14.5, 0.35]],
 				]
-				l.breakables = _breakable_groups(rift + [[[F.CRATE, -7.5, -14.5, 0.6], [F.PLANK, -8.3, -14.5, 0.35]]])
+				# PT-25-9: the last group on the patch against the west wall that only a dash reaches (RIFT_ISLAND)
+				l.breakables = _breakable_groups(rift + [[[F.CRATE, -20.3, 4.3, 0.7], [F.PLANK, -19.5, 4.3, 0.35]]])
 			&"garden":
 				l.breakables = _breakable_groups([
 					[[F.BRANCH, 16.5, -13.5, 0.8], [F.SAPLING, 15.7, -13.5, 0.4], [F.BRANCH, 16.5, -12.7, 0.6]],
@@ -1638,7 +1675,8 @@ func _place_breakables(st: StageDef) -> void:
 					[[F.URN, -21.5, -13.5, 0.85], [F.OFFERING, -20.7, -13.5, 0.4], [F.VASE, -21.5, -12.7, 0.6]],
 					[[F.VASE, 21.5, 13.5, 0.6], [F.OFFERING, 20.7, 13.5, 0.4], [F.URN, 21.5, 12.7, 0.8]],
 					[[F.OFFERING, -8.5, 13.5, 0.4], [F.VASE, -9.3, 13.5, 0.55]],
-					[[F.URN, -17.0, -13.5, 0.8], [F.OFFERING, -16.2, -13.5, 0.4]],
+					# PT-25-9: on the patch only a dash reaches (SANCTUARY_ISLAND), in place of the north-west corner's second group
+					[[F.URN, -9.2, -0.4, 0.85], [F.OFFERING, -8.4, 0.3, 0.4]],
 				])
 			# 2026-11-23: the guardians' houses, by the west wall either side of the way in, the north wall and the south-east
 			&"knight_hall":
@@ -1756,6 +1794,7 @@ func _rift() -> RoomLayout:
 	l.variant_depth = Vector2(0.1, 0.6)
 	l.variants[0].depth = Vector2(0.34, 1.0)
 	_gate(l, Vector2(-9.0, 12.6), -15.0, [14.0, 18.2, 9.8])
+	l.gaps = _ring(RIFT_ISLAND, "nse")
 	# nobody rises on a bridge or in the south way; the first wave across the rift, the west zone from the second
 	l.spawns = [_rect(5, 11, -13.5, -10.5), _rect(16, 19.5, -8, -2), _rect(5, 11, 7, 12)]
 	l.late_spawns = [_rect(-17, -11, -13, -9)]
@@ -2555,8 +2594,8 @@ func _sanctuary() -> RoomLayout:
 	l.variants[0].hazard = crumble
 	# A1, RP-20: stones from the torn vault over the nave round the hole (the rent above it), 6.5 m and more from the
 	# way in; never on the hole (a square only whole on the floor)
-	crumble.also = _rocks([_rect(-8.0, 13.0, -5.2, 5.2)])
-	crumble.also.also = _spikes([Vector2(-16.0, -3.0), Vector2(-9.0, -0.5)], 0.55)
+	crumble.also = _rocks([_rect(-3.5, 13.0, -5.2, 5.2)])  # (PT-25-9: from x -3.5, off the patch of SANCTUARY_ISLAND)
+	crumble.also.also = _spikes([Vector2(-16.0, -3.0), Vector2(-7.5, -4.5)], 0.55)  # (PT-25-9: the second one off the patch)
 	_areas(l.variants[0], ["hole_edge", _rect(-2.6, 0.4, -1.5, 1.5), "hole_edge", _rect(9.6, 12.6, -1.5, 1.5),
 		"nave", _rect(-22, 22, -5.35, 5.35), "aisle_n", _rect(-22, 22, -14, -5.35), "aisle_s", _rect(-22, 22, 5.35, 14)])
 	# A1, RP-18, C "Colunata": the east of the nave becomes a grid of nine low columns (2.5 m: they stop shots and bodies
@@ -2586,6 +2625,7 @@ func _sanctuary() -> RoomLayout:
 	_areas(vc, ["colonnade", _rect(1.0, 13.0, -5.35, 5.35), "nave", _rect(-22, 22, -5.35, 5.35),
 		"aisle_n", _rect(-22, 22, -14, -5.35), "aisle_s", _rect(-22, 22, 5.35, 14)])
 	l.variants.append(vc)
+	l.gaps = _ring(SANCTUARY_ISLAND)
 	return l
 
 
@@ -2597,7 +2637,7 @@ func _sanctuary() -> RoomLayout:
 ## Drawn with the pit grate's piece (HazardPiece.grate). Asleep before `from`, nothing in the first 5 s.
 const SPIKE_PLATE := 2.4
 func _spike_plates(rects: Array[Rect2], from: float) -> HazardDef:
-	var h := _plates(rects, from)
+	var h := _plates(rects, from, false)
 	h.plate_source = &"spikeplate"
 	h.warn = 1.2
 	h.fire = 0.6
@@ -2811,7 +2851,7 @@ func _trap(specs: Array, from: float, cycle: float, cycle_late := 0.0) -> Hazard
 ## longer than the enemies' 1.2 s: he may leave), then it falls, 10 to him and 60 to an enemy standing on it, 8 s before
 ## the floor is back (6 s from 0.7 of the descent). Asleep before `from` and 5 s of calm at the start.
 func _sag(rects: Array[Rect2], from: float) -> HazardDef:
-	var h := _plates(rects, from)
+	var h := _plates(rects, from, false)
 	h.plate_source = &"sag"
 	h.dwell = 0.7
 	h.enemy_dwell = 0.35

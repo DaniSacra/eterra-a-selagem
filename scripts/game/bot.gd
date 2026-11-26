@@ -965,7 +965,7 @@ func _threatened(game: Game, q: Vector2) -> bool:
 ## holes and obstacles (made again for each arena).
 func _way(game: Game, from: Vector2, goal: Vector2, dt: float) -> Vector2:
 	var straight := (goal - from).normalized()
-	var nav := game.arena.nav
+	var nav := game.arena.nav_dash
 	if nav == null or nav.clear_line(from, goal):
 		return straight
 	if _field == null or _field.grid != nav:
