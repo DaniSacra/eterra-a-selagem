@@ -15,6 +15,11 @@ const GATE_RING := 0.45
 const GATE_SPRING := 2.2
 const GATE_W := 3.6
 const GATE_H := 5.0
+## The walls beside the gate stand low so the block does not fill the screen; only the arch's head (this much wider
+## than the opening on each side) rises to HubPlan.GATE_HEIGHT.
+const GATE_LIGHT_TINT := Color(1.0, 0.76, 0.34)
+const GATE_WALL_H := 3.2
+const GATE_HEAD_SIDE := 1.4
 const GATE_DARK := Color(0.02, 0.05, 0.035)
 const DOOR_WOOD := Color(0.2, 0.12, 0.07)
 const DOOR_IRON := Color(0.09, 0.09, 0.1)
@@ -64,8 +69,11 @@ func _gate() -> void:
 	var mat := look.ashlar()
 	var half := GATE_W * 0.5
 	# the wall south and north of the opening, the lintel over it, the stone behind
-	_slab(face, g.z, g.y, mid - half, 0.0, HubPlan.GATE_HEIGHT, mat)
-	_slab(face, g.z, mid + half, g.w, 0.0, HubPlan.GATE_HEIGHT, mat)
+	var head := half + GATE_HEAD_SIDE
+	_slab(face, g.z, g.y, mid - head, 0.0, GATE_WALL_H, mat)
+	_slab(face, g.z, mid + head, g.w, 0.0, GATE_WALL_H, mat)
+	_slab(face, g.z, mid - head, mid - half, 0.0, HubPlan.GATE_HEIGHT, mat)
+	_slab(face, g.z, mid + half, mid + head, 0.0, HubPlan.GATE_HEIGHT, mat)
 	_slab(face, g.z, mid - half, mid + half, GATE_H, HubPlan.GATE_HEIGHT, mat)
 	var inner := look.m.stone(0.0, look.stone_tint() * HubLook.INNER_TINT)
 	var facing := Vector2(-1.0, 0.0)
@@ -76,6 +84,7 @@ func _gate() -> void:
 	look.fm.block(HubLook.at(face, -0.02, mid), Vector3(4.4, 0.04, GATE_W + 0.2), 0.0, inner, false)
 	var r := HubLook._portal_arc() * GATE_W
 	look.fk.portal_glow(HubLook.at(g.x + 4.0, GATE_H * 0.5, mid), -PI * 0.5, Vector2(GATE_W, GATE_H), Vector3(GATE_SPRING, GATE_W, r))
+	look.fk.light_portal(look.fk.portals.size() - 1, true, GATE_LIGHT_TINT)  # Elun's warm gold, never the catacombs' green
 	var lights: Array = look.fk.portals[look.fk.portals.size() - 1]
 	look.station_lights[HubPlan.PORTAL] = lights[1]
 

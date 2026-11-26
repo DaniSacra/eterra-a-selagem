@@ -709,3 +709,11 @@ Primeira sala do grande ajuste de layout. Vale para toda sala que reusa o `hall`
   bica, queda (`waterfall.gdshader`), bacia rasa (-0,5 de borda quebrada, 2,4 x 2,4 em (10,6; -3,4), deslocada da (10; -4,4) do
   pacote para não cair em cima da laje e da urna), escoamento a sudoeste, um ponto frio de luz. Água andável e sem efeito.
 - Testes: `tests/test_sl02_crypt.gd`; `test_sl01_hall`, `test_pt2_door_medallion`, `test_room_style` seguem as portas e a luz nova.
+
+## Salão, revisão 2026-11-26 (environment-artist)
+- Rio largo (`WATER_WIDTH` 2,4 a 3,3 m) e a linha termina na mureta oeste (-14,2; 13,4); continua andável (`test_sl01_hall`).
+- Obelisco sul movido para x 1,0 (antes -2,6, no meio da tela sobre a chegada) e baixado a 2,0 m (colisão igual).
+- Muretas do lado sul mais baixas (`SOUTH_RAIL_LOW` 0,7, parâmetro `low` de `Masonry.balustrade`) para não tapar o herói; a
+  mureta sul agora começa no fim do patamar (`LANDING.y`).
+- O herói nasce na borda esquerda da tela: a chegada é no patamar (x -11,6, z 18,1) e a câmera é limitada pelos limites da
+  sala; é posição/câmera (gameplay), só anotado.
