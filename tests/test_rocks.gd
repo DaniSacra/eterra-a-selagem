@@ -138,7 +138,7 @@ func test_in_a_real_room_it_strikes_and_is_counted() -> void:
 	game.horde.clear_crowd()
 	game.rooms._queue.clear()
 	game.rooms._waves.clear()
-	var at := Vector2(-5.0, 0.0)
+	var at := Vector2(-1.0, 0.0)  # (PT-25-9: the stones start at x -3.5, off the patch)
 	var e := game.horde.spawn(game.horde.def(&"guard"), at + Vector2(0.3, 0.3), false)
 	var hp := game.player.hp
 	game.player.invuln = 0.0

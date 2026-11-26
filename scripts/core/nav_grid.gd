@@ -22,9 +22,10 @@ var islands := 0
 
 
 ## The grid over `bounds` for this floor (and the extra rectangles of floor, each `walk_margin` in from its sides),
-## less what blocks the way, every free cell `clearance` from anything blocked.
+## less what blocks the way, every free cell `clearance` from anything blocked. `gaps` (PT-25-9, RoomLayout.gaps: the
+## streams and rifts only a dash crosses) are floor nobody walks on, so the enemies' flow goes round them.
 static func build(bounds: Rect2, floor: FloorShape, walk: Array[Rect2] = [], walk_margin := 0.0, blockers: Array[ArenaObstacle] = [],
-		clearance := CLEARANCE, size := CELL) -> NavGrid:
+		clearance := CLEARANCE, size := CELL, gaps: Array[Rect2] = []) -> NavGrid:
 	var g := NavGrid.new()
 	g.cell = size
 	g.origin = bounds.position
@@ -39,6 +40,8 @@ static func build(bounds: Rect2, floor: FloorShape, walk: Array[Rect2] = [], wal
 	for o in blockers:
 		if o.blocks_move:
 			g._block(raw, o)
+	for r in gaps:
+		g._fill_rect(raw, r, 0)
 	g._shrink(raw, clearance)
 	g._find_islands()
 	return g

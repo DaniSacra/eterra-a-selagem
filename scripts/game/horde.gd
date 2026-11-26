@@ -374,6 +374,8 @@ func step(dt: float) -> void:
 			keep_off_target(e, e.was_in_target, dt)
 		# swept from where it stood: a push or a lunge stops at the abyss's edge, never across a hole (D-28)
 		e.pos = arena.sweep(e.last_pos, e.pos, e.def.radius)
+		if not arena.gaps.is_empty():
+			e.pos = arena.keep_out_of_gaps(e.last_pos, e.pos)  # PT-25-9: no enemy crosses a stream on foot nor is pushed into it
 		e.y = e.height()
 		_drawn_motion(e, dt)
 	_step_shields(dt)

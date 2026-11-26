@@ -252,6 +252,8 @@ var cam_bounds := Rect2()
 var cover_low: Array[ArenaObstacle] = []
 ## Where bodies can walk (NavGrid, made at the end of build) and the enemies' shared way to the paladin.
 var nav: NavGrid
+## The same floor with the gaps open (what the paladin and his robot may cross by dashing); `nav` when the room has none.
+var nav_dash: NavGrid
 var flow: FlowField
 ## Meters of a step of a swept move (sweep): well under the narrowest wall of floor between two holes.
 const SWEEP_STEP := 0.2
@@ -277,7 +279,9 @@ func _finish(from: RoomLayout) -> void:
 	cover_low = blockers()
 	_bounds = Rect2()
 	_bounds = bounds()
-	nav = NavGrid.build(_bounds.grow(1.0), shape(), walk, WALL, cover_low)
+	nav = NavGrid.build(_bounds.grow(1.0), shape(), walk, WALL, cover_low, NavGrid.CLEARANCE, NavGrid.CELL, gaps)
+	# PT-25-9: the enemies' grid shuts the streams and rifts; the paladin's (the robot's) leaves them open, the dash crosses
+	nav_dash = nav if gaps.is_empty() else NavGrid.build(_bounds.grow(1.0), shape(), walk, WALL, cover_low)
 	flow = FlowField.new(nav)
 	if not nav.walkable(middle):
 		# the reward rises on floor a body stands on (a root may cross the middle of the camera's box)

@@ -17,6 +17,9 @@ uniform float sink_edge = 0.62;
 uniform float sink_edge_width = 0.1;
 // the light's side, in the quad's own axes (x, y): the edges facing it take the sinking's shadow
 uniform vec2 light_side = vec2(-0.5, -0.85);
+// PT-25-10: a slab of tiles x tiles squares (the SWORN's 2 x 2 step slab): the joint runs between the tiles too and each
+// tile carries its own chevron pointing at the slab's middle (chev_four is then not used)
+uniform float tiles = 1.0;
 // chevrons: four pointing in (one a side) or `chev_count` nested at chev_at pointing chev_dir (metres, quad axes)
 uniform float chev_four = 0.0;
 uniform int chev_count = 0;
@@ -59,7 +62,19 @@ void fragment() {
 		mul *= mix(1.0, sink_edge, sink * inside * clamp(lit_edge * 1.4, 0.0, 1.0));
 	}
 	float c = 0.0;
-	if (chev_four > 0.5) {
+	if (tiles > 1.5 && joint > 0.0) {
+		// the cross joint between the tiles (the slab's own joint at half the border's strength), sunk with the slab
+		vec2 inner = abs(p);
+		float cross_w = mix(joint, joint_sunk, sink) * 0.6;
+		float on_cross = 1.0 - smoothstep(cross_w * 0.45, cross_w * 0.5, min(inner.x, inner.y));
+		mul *= mix(1.0, mix(joint_mul, joint_mul * 0.6, sink), on_cross);
+		vec2 q = vec2(half_size.x * 0.5);
+		for (int k = 0; k < 4; k++) {
+			vec2 at = vec2(k % 2 == 0 ? -q.x : q.x, k < 2 ? -q.y : q.y);
+			vec2 toward = normalize(-at);
+			c = max(c, chevron(p, at + toward * chev_open * 0.2, toward));
+		}
+	} else if (chev_four > 0.5) {
 		c = max(c, chevron(p, vec2(half_size.x - chev_in - chev_open * 0.35, 0.0), vec2(-1.0, 0.0)));
 		c = max(c, chevron(p, vec2(-half_size.x + chev_in + chev_open * 0.35, 0.0), vec2(1.0, 0.0)));
 		c = max(c, chevron(p, vec2(0.0, half_size.y - chev_in - chev_open * 0.35), vec2(0.0, -1.0)));

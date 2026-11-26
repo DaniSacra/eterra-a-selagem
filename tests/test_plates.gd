@@ -138,9 +138,9 @@ func test_where_the_slabs_lie() -> void:
 				var r := h.plates[i]
 				var tag := "%s %d slab %d" % [id, v, i]
 				seen += 1
-				assert_eq(r.size, Vector2(3, 3), tag)
-				for x in 13:
-					for z in 13:
+				assert_eq(r.size, Vector2(2.5, 2.5), tag + ": PT-25-10, 2 x 2 tiles of 1.25 m")
+				for x in 11:
+					for z in 11:
 						var p := r.position + Vector2(x, z) * 0.25
 						assert_true(l.floor.covers(p), "%s: on the floor at %s" % [tag, p])
 						for o in l.obstacles:
