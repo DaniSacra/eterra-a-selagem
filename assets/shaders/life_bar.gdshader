@@ -69,61 +69,61 @@ void fragment() {
 		vec3 pc = k == 0 ? pip_burn : (k == 1 ? pip_frost : (k == 2 ? pip_weak : pip_mark));
 		ALBEDO = (q.x + q.y > 0.7) ? back_color : pc;
 		ALPHA = fade;
-		return;
-	}
-	bool armored = fill.g > 0.0;
-	bool common = elite < 0.5 && !armored && poise_gauge < 0.5;
-	float tall = size_m.y;
-	if (common) {
-		// thinner: the bottom of the quad is cut away, so the top (where the damage numbers start) does not move
-		if (uv.y > 1.0 - common_cut) {
-			discard;
+	} else {
+		bool armored = fill.g > 0.0;
+		bool common = elite < 0.5 && !armored && poise_gauge < 0.5;
+		float tall = size_m.y;
+		if (common) {
+			// thinner: the bottom of the quad is cut away, so the top (where the damage numbers start) does not move
+			if (uv.y > 1.0 - common_cut) {
+				discard;
+			}
+			uv.y /= 1.0 - common_cut;
+			tall *= 1.0 - common_cut;
 		}
-		uv.y /= 1.0 - common_cut;
-		tall *= 1.0 - common_cut;
-	}
-	float fy = frame_m / max(tall, 0.001);
-	float fx = frame_m / max(size_m.x, 0.001);
-	vec3 c = mix(back_color, elite_frame, elite);
-	float well = 1.0;
-	bool inside = uv.x > fx && uv.x < 1.0 - fx && uv.y > fy && uv.y < 1.0 - fy;
-	if (inside) {
-		float x = (uv.x - fx) / (1.0 - 2.0 * fx);
-		float y = (uv.y - fy) / (1.0 - 2.0 * fy);
-		c = back_color * 1.6;
-		well = 0.7;
-		if (poise_gauge > 0.5) {
-			if (x < fill.r) {
-				c = poise_color;
-				well = 1.0;
-			}
-		} else if (armored && y < armor_share) {
-			// the armor's own strip; a line of ink under it
-			if (y > armor_share - 0.12) {
-				c = back_color;
-				well = 1.0;
-			} else if (x < fill.g) {
-				c = armor_color;
-				well = 1.0;
-			}
-			if (ticks > 0.5 && y <= armor_share - 0.12) {
-				float px = max(fwidth(x), 0.0001);
-				for (int i = 1; i <= 3; i++) {
-					if (abs(x - 0.25 * float(i)) < px * 0.5) {
-						c = back_color;
+		float fy = frame_m / max(tall, 0.001);
+		float fx = frame_m / max(size_m.x, 0.001);
+		vec3 c = mix(back_color, elite_frame, elite);
+		float well = 1.0;
+		bool inside = uv.x > fx && uv.x < 1.0 - fx && uv.y > fy && uv.y < 1.0 - fy;
+		if (inside) {
+			float x = (uv.x - fx) / (1.0 - 2.0 * fx);
+			float y = (uv.y - fy) / (1.0 - 2.0 * fy);
+			c = back_color * 1.6;
+			well = 0.7;
+			if (poise_gauge > 0.5) {
+				if (x < fill.r) {
+					c = poise_color;
+					well = 1.0;
+				}
+			} else if (armored && y < armor_share) {
+				// the armor's own strip; a line of ink under it
+				if (y > armor_share - 0.12) {
+					c = back_color;
+					well = 1.0;
+				} else if (x < fill.g) {
+					c = armor_color;
+					well = 1.0;
+				}
+				if (ticks > 0.5 && y <= armor_share - 0.12) {
+					float px = max(fwidth(x), 0.0001);
+					for (int i = 1; i <= 3; i++) {
+						if (abs(x - 0.25 * float(i)) < px * 0.5) {
+							c = back_color;
+						}
 					}
 				}
-			}
-		} else {
-			if (x < fill.r) {
-				c = life_color * (common ? common_dim : 1.0);
-				well = 1.0;
-			} else if (x < fill.b) {
-				c = trail_color;
-				well = 1.0;
+			} else {
+				if (x < fill.r) {
+					c = life_color * (common ? common_dim : 1.0);
+					well = 1.0;
+				} else if (x < fill.b) {
+					c = trail_color;
+					well = 1.0;
+				}
 			}
 		}
+		ALBEDO = c;
+		ALPHA = 0.95 * fade * well;
 	}
-	ALBEDO = c;
-	ALPHA = 0.95 * fade * well;
 }
