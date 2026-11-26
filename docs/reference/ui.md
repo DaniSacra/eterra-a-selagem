@@ -764,3 +764,24 @@ livro (o livro não passa de 1,9 alturas de largura, `BookDesk.side_room`, ou se
   `pick` com `place: hub` devolve `&""`. A linha só existe nas salas da descida.
 - **Provação** (BG-2): o aviso "Provação"/"Altar" do HUD não aparece mais (a placa do ponto já diz o nome); os medalhões das duas portas da câmara
   ficam 22% menores (`RewardGem.TRIAL_DOOR_K`) para não se encostarem. A bolinha escura era o `DoorSeal` do anjo duplo, já com glifo desde `3da7495c`.
+
+## GP-1: interface do Guerreiro V1 (2026-11-26; testes em `tests/test_gp1_ui.gd`)
+- **HUD, quatro grupos** (`Hud._build_actions`): botão esquerdo, botão direito, Espaço e Shift (o losango do Supremo, antes da esquiva). Sem Q nem E
+  para o Guerreiro (`Controls.MAGA_ONLY` só constrói `shout`/`rush` quando `game.hero.arcane != null`; a Maga segue com Q e C no caminho antigo).
+  A dica "Q: Brado" (`_update_shout_tip`, `FirstTips.shout_due`) foi removida.
+- **Cada metade mostra toque e segurar** (`ActionSlot`): nome "Ataque · Esmagador" e "Poder · Lança" (`full_name`, `hud_slot_*` e `hud_hold_*`; o
+  espaço alarga com o nome), desenho do mouse embaixo (`MouseGlyph`), gema de custo em Magia no canto superior esquerdo (toque, `tap_cost`) e no superior
+  direito com anel (segurar, `hold_cost`); custo grátis não desenha gema. Cada gema escurece sozinha quando falta Magia (`tap_starved`/`hold_starved`;
+  o traço azul do losango segue o do segurar). Os custos vêm do nó da árvore com Força Titânica e desconto (`Hud._update_button`, `Player.cost_of`).
+- **Carga do segurar**: anel que enche o contorno do losango do botão segurado (`ActionSlot.charge`, `Player.charge_progress()`), azul e verde-água
+  ao encher; soltar cedo apaga sem custo.
+- **Recusa**: o sinal `magick_refused` acende o contorno vermelho do botão apertado por meio segundo (`ActionSlot.refuse`) e mantém o aviso "Sem Magia".
+- **Ritmo de Batalha**: arco dourado fino do lado de fora dos dois losangos enquanto armado (`ActionSlot.rhythm`, `BattleRhythm.share()`); sem barra
+  nova. A barra de Magia fina ganha marcas leves nos custos 8, 12 e 20 e acorda também enquanto há carga (`HudBar.ticks`).
+- **Telas**: `HowToScreen.ROWS` sem Brado e Investida (e em `HIDDEN`); `BuildColumn` e `AbilityList` com quatro botões (esquerdo, direito, Supremo,
+  esquiva); `HeroScreen` lista Ataque, Poder, Especial e Esquiva; `CodexScreen.move_marks` usa o Poder (toque) e o Especial (segurado) do botão direito;
+  a carta de Bênção escreve o gesto (`Boon.gesture_key`: toque, segurar, toque ou segurar) ao lado da marca do botão (`BoonCard._meta`, nome `Gesture`).
+- **Dicas**: `FirstTips` ganha `rhythm` (uma vez, ao armar o Ritmo, saves novos) e `controls_v1` (uma vez, em qualquer momento calmo, só para save com
+  descida feita; save novo tem a Antessala); placeholders `{power}` e `{interact}` em `TipToast.text_of`. Antessala já vinha no núcleo (`AnteLesson.ORDER`).
+- **Textos**: `howto_heavy_attack` e `action_heavy_attack` = "Poder e Especial"; `hero_skill_*`, `hero_passive_desc`, `gloss_armor_text`, `gloss_dash_cut_text`
+  e `howto_tip` sem Brado nem Investida.

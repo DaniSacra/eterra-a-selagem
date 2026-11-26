@@ -1,16 +1,15 @@
 class_name AbilityList
 extends PanelContainer
-## BC-1: the hero's six buttons listed beside the Blessings of the choice screen: the one the Blessing in focus changes
+## BC-1: the hero's four buttons (GP-1: left, right, Shift, Space) listed beside the Blessings of the choice screen: the one the Blessing in focus changes
 ## is lit in that Blessing's colour, the others stay quiet; a Blessing that changes none says "Age sozinha". Each line is
 ## the action's mark, its name and the plaque with the key the player has now (UiKit.action_label: the pad, a remapped
 ## key). Pure display: the screen calls show_for() each time the focus moves.
 ##   var list := AbilityList.new().setup(220.0)
-##   list.show_for(&"rush", color)        # &"": acts alone
+##   list.show_for(&"heavy_attack", color)        # &"": acts alone
 ## SW-B1: show_held(state) writes under each button the Blessing it already has (its medallion and name).
 
 ## The buttons in the order of the HUD's row: action, its mark (BoonIcon id; -1: the action's own by slot), its slot.
 const BUTTONS: Array[Array] = [[&"light_attack", -1, Boon.Slot.ATTACK], [&"heavy_attack", -1, Boon.Slot.SPECIAL],
-	[&"shout", BoonIcon.SHOUT_GLYPH, Boon.Slot.CAST], [&"rush", BoonIcon.RUSH_GLYPH, Boon.Slot.RUSH],
 	[&"ultimate", BoonIcon.ULT_GLYPH, Boon.Slot.ULT], [&"dodge", -1, Boon.Slot.DASH]]
 const NAME_SIZE := 16
 const MARK := 22.0

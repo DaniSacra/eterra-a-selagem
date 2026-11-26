@@ -35,6 +35,12 @@ var both_ends := false
 var font_size := 12
 ## Shares of the bar where a boss's next phases begin (thin notches across it).
 var marks := PackedFloat32Array()
+## GP-1: quiet ticks at these shares of the bar (the Magia's: where the Esmagador, the Corte Circular and the Lança cost).
+var ticks := PackedFloat32Array():
+	set(v):
+		if v != ticks:
+			ticks = v
+			queue_redraw()
 ## The boss's shield stands (0..1): the bar is veiled in its colour and framed in it.
 var shield := 0.0
 var shield_color := Color(0.4, 1.0, 0.75)
@@ -203,6 +209,8 @@ func _draw() -> void:
 		_ring(inner, inner.grow(UiKit.FRAME), Color(shield_color, shield))
 	for m in marks:
 		_draw_mark(body, m)
+	for t in ticks:
+		_band(body, t - 0.5 / size.x, t + 0.5 / size.x, Color(UiKit.PALE, 0.55), Color(UiKit.PALE, 0.55), 0.0, size.y)
 	for i in ritual_total:
 		_draw_seal(i)
 	if icon != Mark.NONE:

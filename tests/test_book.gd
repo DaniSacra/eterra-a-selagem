@@ -94,12 +94,11 @@ func test_the_hero_page_names_his_weapon_and_abilities_with_the_hud_marks() -> v
 	var s := _book(d)
 	var skills := s.find_child("skills", true, false)
 	var marks := skills.find_children("ActionMark", "Control", true, false)
-	assert_eq(marks.size(), 6, "five actions and the ultimate")
+	assert_eq(marks.size(), 5, "GP-1: Ataque, Poder, Especial, Esquiva and the ultimate")
 	var glyphs := marks.map(func(m: Node) -> int: return int(m.get_meta(&"glyph")))
-	for slot: Boon.Slot in [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.DASH]:
+	for slot: Boon.Slot in [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.DASH]:
 		assert_true(glyphs.has(BoonIcon.ACTION_GLYPH + slot), "action %d" % slot)
-	assert_true(glyphs.has(BoonIcon.SHOUT_GLYPH), "the Brado (Q)")
-	assert_true(glyphs.has(BoonIcon.RUSH_GLYPH), "the Investida (E)")
+	assert_false(glyphs.has(BoonIcon.SHOUT_GLYPH) or glyphs.has(BoonIcon.RUSH_GLYPH), "no Brado nor Investida for the Warrior")
 	assert_eq(skills.find_children("TalentMark", "Control", true, false).size(), 1, "the passive")
 
 

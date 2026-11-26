@@ -296,7 +296,7 @@ static func bound_name(action: StringName, pad: bool) -> String:
 ## The controls line (`title_controls` keyboard and mouse, `title_pad` gamepad) with the real bindings.
 static func controls_line(pad: bool) -> String:
 	var p := {}
-	for a: StringName in [&"light_attack", &"heavy_attack", &"dodge", &"shout", &"rush", &"ultimate", &"interact", &"pause"]:
+	for a: StringName in [&"light_attack", &"heavy_attack", &"dodge", &"ultimate", &"interact", &"pause"]:
 		p[String(a)] = bound_name(a, pad)
 	p["supremo"] = p["ultimate"]
 	var move := ""
