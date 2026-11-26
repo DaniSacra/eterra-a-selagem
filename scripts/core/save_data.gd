@@ -42,7 +42,7 @@ static func defaults() -> Dictionary:
 		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": true, "scale": 1, "shake": true, "impact_frames": true, "slow_motion": true, "color_split": true, "rumble": true, "quality": 0, "camera": "near", "camera_chosen": false, "objective": true, "bindings": {},
 			# PT-25-2: the shared options (profile.json) never went through the save's versions, so MUS-2's move is done
 			# on them once too (SaveSlots.options_of); a new profile has nothing to move
-			"music_moved": false,
+			"music_moved": false, "music_hub_moved": false,
 			# DT-RS2: the visual profile (VisualProfile.NAMES); a save from before has none and opens stylized
 			"look": "stylized",
 			# T5 (the PO's review): the piece chosen for each place (MusicCatalog; Music.piece_for falls back to the default)
@@ -178,6 +178,8 @@ static func merged(loaded: Variant) -> Dictionary:
 	# turns); a place still on the old default (blade_march) moves to the new one once, a piece picked by hand stays
 	if version < 15:
 		move_music_defaults(out.options)
+	# PT-25-2 (2026-11-26): the PO picked Achaidh Cheide for the Santuário; the old default moves to it once, on any file
+	move_hub_default(out.options)
 	# files before version 16 (SW-O4): a save that played a descent has done the guided one; a new one still has it ahead
 	if version < 16:
 		out["first"] = FirstDescent.DONE if int(out.runs) > 0 else FirstDescent.PENDING
@@ -406,6 +408,16 @@ static func discover_move(data: Dictionary, id: String) -> bool:
 static func format_time(seconds: float) -> String:
 	var s := int(seconds)
 	return "%d:%02d" % [s / 60, s % 60]
+
+
+## 2026-11-26: the Santuário's piece is now Achaidh Cheide; a hub still on the MUS-2 default (Thatched Villagers) moves once,
+## by a flag (a piece picked by hand afterwards stays).
+static func move_hub_default(options: Dictionary) -> void:
+	if bool(options.get("music_hub_moved", false)):
+		return
+	if String(options.get("music_hub", "")) == "thatched_villagers":
+		options["music_hub"] = String(MusicCatalog.DEFAULT[MusicCatalog.HUB])
+	options["music_hub_moved"] = true
 
 
 ## MUS-2: a place still on the old default (blade_march) moves to its new default, once; a piece picked by hand stays.

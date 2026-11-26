@@ -19,8 +19,8 @@ const OPTION := {TITLE: "music_title", HUB: "music_hub", DUNGEON: "music_dungeon
 ## The default of each place: our own music everywhere, the title hearing the walk of the rooms' piece. MUS-1 (the
 ## PO, 2026-11-18: "músicas mais animadas, dinâmicas"): the fight music composed by the project (tools/make_music.gd)
 ## is the default; the pieces of before stay in the list.
-## MUS-2 (the PO, 2026-11-25): the Santuário has its own piece, and the rooms alternate (ALTERNATE) between two.
-const DEFAULT := {TITLE: &"blade_march", HUB: &"thatched_villagers", DUNGEON: &"alternate", MORVATH: &"morvath_battle"}
+## MUS-2 (the PO, 2026-11-25): the Santuário has its own piece (since 2026-11-26 Achaidh Cheide, his pick), and the rooms alternate (ALTERNATE) between two.
+const DEFAULT := {TITLE: &"blade_march", HUB: &"achaidh_cheide", DUNGEON: &"alternate", MORVATH: &"morvath_battle"}
 ## MUS-2: the rooms' own choice "Alternar": no files, it is the piece of ROTATION that the depth of the room asks for.
 const ALTERNATE := &"alternate"
 ## The pieces the descent takes turns with, one for each ROTATION_SPAN rooms: the rooms 1 to 5 the first (the guardian
@@ -50,6 +50,7 @@ const PIECES := {
 	&"gloom_descent": {"name": "music_gloom_descent", "file": "catacombs", "layers": 2, "loop": true, "solo": true, "places": [TITLE, HUB, DUNGEON]},
 	&"clash_defiant": {"name": "music_clash_defiant", "file": "morvath", "layers": 4, "loop": true, "solo": true, "places": [MORVATH]},
 	&"thatched_villagers": {"name": "music_thatched_villagers", "file": "thatched_villagers", "layers": 1, "loop": true, "places": [TITLE, HUB]},
+	&"achaidh_cheide": {"name": "music_achaidh_cheide", "file": "achaidh_cheide", "layers": 1, "loop": true, "places": [TITLE, HUB]},
 	&"heroic_age": {"name": "music_heroic_age", "file": "heroic_age", "layers": 1, "loop": true, "whole": true, "places": [TITLE, HUB, DUNGEON]},
 	&"alternate": {"name": "music_alternate", "layers": 0, "loop": true, "virtual": true, "places": [DUNGEON]},
 	&"room_won": {"name": "music_room_won", "file": "room_won", "layers": 1, "loop": false, "sting": true, "calm": true, "places": []},

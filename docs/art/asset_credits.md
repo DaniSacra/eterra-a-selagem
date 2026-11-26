@@ -24,6 +24,6 @@ Modelos do Meshy (herói, inimigos, Emeth) são de IA: `docs/steam-ia.md`.
 
 Lista por arquivo em `audio/LICENSES.md` (fonte da verdade): Kenney (Impact Sounds, RPG Audio; CC0), Iwan Gabovitch
 (qubodup, Swish; CC0), rubberduck (CC0), Little Robot Sound Factory (Fantasy Sound Effects Library; **CC BY 3.0**) e
-Kevin MacLeod ("Tempting Secrets", "Thatched Villagers", "Oppressive Gloom", "The Descent", "Heroic Age", "Ossuary 5 - Rest", "Clash Defiant"; **CC BY 4.0**). Os dois CC BY
+Kevin MacLeod ("Tempting Secrets", "Achaidh Cheide", "Thatched Villagers", "Oppressive Gloom", "The Descent", "Heroic Age", "Ossuary 5 - Rest", "Clash Defiant"; **CC BY 4.0**). Os dois CC BY
 estão no `CREDITOS.txt` ao lado do exe. Música própria, Salmos, vitória e ambiência: síntese do projeto
 (`tools/make_music.gd`, `tools/make_ambience.gd`).

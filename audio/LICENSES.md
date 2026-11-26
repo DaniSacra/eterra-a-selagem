@@ -9,6 +9,7 @@ pontos de laço): `docs/design/t5_audio.md`.
 | O quê | Arquivos | Autor | Licença |
 |---|---|---|---|
 | Título: "Tempting Secrets" (a abertura toca uma vez, o laço volta aos 16 s) | `music/title.ogg` | Kevin MacLeod, https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1300038 | CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) |
+| Santuário (PT-25-2, 2026-11-26, escolha do Daniel): "Achaidh Cheide" (laço de 120 s, 4 s de fusão para o começo) | `music/achaidh_cheide.ogg` | Kevin MacLeod, https://incompetech.com/music/royalty-free/mp3-royaltyfree/Achaidh%20Cheide.mp3 | CC BY 4.0 |
 | Santuário (MUS-2, 2026-11-25): "Thatched Villagers" (laço de 44 compassos a 93,75 bpm, do começo da peça) | `music/thatched_villagers.ogg` | Kevin MacLeod, https://incompetech.com/music/royalty-free/mp3-royaltyfree/Thatched%20Villagers.mp3 | CC BY 4.0 |
 | Salas, a segunda peça das salas (alterna com a Marcha das Lâminas a cada 5 salas): "Heroic Age" (laço de 48 compassos a 130 bpm) | `music/heroic_age.ogg` | Kevin MacLeod, https://incompetech.com/music/royalty-free/mp3-royaltyfree/Heroic%20Age.mp3 | CC BY 4.0 |
 | Transição da sala vencida: "Ossuary 5 - Rest" (trecho de 16 s, de 1:04 a 1:20, com entrada e saída suaves) | `music/room_won.ogg` | Kevin MacLeod, https://incompetech.com/music/royalty-free/mp3-royaltyfree/Ossuary%205%20-%20Rest.mp3 | CC BY 4.0 |

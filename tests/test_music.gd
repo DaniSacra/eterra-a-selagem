@@ -118,7 +118,7 @@ func test_every_track_is_there_in_time_and_small() -> void:
 	var bounds := {&"classic_catacombs": Vector2(60, 200), &"classic_morvath": Vector2(45, 120), &"tempting_secrets": Vector2(60, 200),
 		&"gloom_descent": Vector2(60, 200), &"clash_defiant": Vector2(45, 120), &"victory": Vector2(6, 15),
 		# MUS-1: the fight music, 60 to 100 s in whole bars
-		&"thatched_villagers": Vector2(100, 130), &"heroic_age": Vector2(80, 100), &"blade_march": Vector2(60, 100), &"deep_drums": Vector2(60, 100), &"iron_pulse": Vector2(60, 100), &"morvath_battle": Vector2(60, 100)}
+		&"thatched_villagers": Vector2(100, 130), &"achaidh_cheide": Vector2(100, 130), &"heroic_age": Vector2(80, 100), &"blade_march": Vector2(60, 100), &"deep_drums": Vector2(60, 100), &"iron_pulse": Vector2(60, 100), &"morvath_battle": Vector2(60, 100)}
 	for id: StringName in MusicCatalog.PIECES.keys().filter(MusicCatalog.is_real):
 		assert_true(cat.has(id), "piece %s" % id)
 		var spec := MusicCatalog.spec(id)
@@ -146,7 +146,7 @@ func test_every_track_is_there_in_time_and_small() -> void:
 		if f.ends_with(".ogg"):
 			total += FileAccess.get_file_as_bytes(Music.DIR + f).size()
 	# T5 (Músicas): our own rooms' and Morvath's music came back next to the recorded pieces (5.5 MB more)
-	assert_lt(total, 18 * 1024 * 1024, "the music stays small in the package")
+	assert_lt(total, 20 * 1024 * 1024, "the music stays small in the package")
 
 
 ## MUS-1: a loop of ours (all its layers summed, as the fight hears them) meets itself: the jump from its last

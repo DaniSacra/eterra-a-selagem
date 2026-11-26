@@ -140,6 +140,8 @@ func _ready() -> void:
 		open_menu.call_deferred()
 	if Dev.has("shot"):
 		_shot.call_deferred()
+	if Dev.has("smoke"):
+		_smoke.call_deferred()
 
 
 ## The graphics quality's screen effects (as Game.apply_options; the viewport's part is App.apply_options).
@@ -224,6 +226,8 @@ func lean() -> Vector2:
 
 ## Where the player pushes, on the floor (keys and sticks turn with the camera; the virtual pad gives floor ways).
 func move() -> Vector2:
+	if not _tour.is_empty() and Dev.has("bot"):
+		return _tour_dir()
 	var v := Controls.move()
 	return v if Controls.virtual != null else Feel.screen_to_floor(v, CamRig.yaw())
 
@@ -514,6 +518,40 @@ func descend() -> void:
 		station_sign.queue_free()
 	await create_tween().tween_property(_fade, ^"color:a", 1.0, FADE).finished
 	SceneGo.to(get_tree(), SceneGo.GAME)
+
+
+## BG-4, --hub --smoke=N: N seconds in the Santuário without a screen (with --bot the robot walks the use points of the
+## open stations in turn, with no interact), then the RESULT line and out.
+var _tour: Array[Vector2] = [] as Array[Vector2]
+var _tour_i := 0
+var smoke_walked := 0.0
+
+
+func _tour_dir() -> Vector2:
+	if _tour.is_empty():
+		return Vector2.ZERO
+	var d := _tour[_tour_i] - player.pos
+	if d.length() < 1.0:
+		_tour_i = (_tour_i + 1) % _tour.size()
+		return Vector2.ZERO
+	return d.normalized()
+
+
+func _smoke() -> void:
+	if Dev.has("bot"):
+		for id in HubPlan.STATIONS:
+			if is_open(id):
+				_tour.append(HubPlan.use_point(id))
+	var limit := Dev.num("smoke", 60.0)
+	var t := 0.0
+	var last := player.pos
+	while t < limit:
+		await get_tree().process_frame
+		t += 1.0 / 60.0
+		smoke_walked += player.pos.distance_to(last)
+		last = player.pos
+	print("RESULT hub secs=%.0f stations=%d walked=%.1f at=(%.1f,%.1f) focus=%s" % [limit, _tour.size(), smoke_walked, player.pos.x, player.pos.y, focus.current])
+	get_tree().quit()
 
 
 ## --shot=file.png: saves what the player sees after --shot-at seconds, then quits.
