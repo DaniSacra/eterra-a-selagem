@@ -94,22 +94,22 @@ func test_burn_renews_and_keeps_the_greater_dps_it_never_adds_up() -> void:
 	_take(&"golpe_brasa")
 	var e := _enemy()
 	_hit(e, ["light"])
-	assert_almost_eq(e.burn_dps, 4.0, 0.001)
+	assert_almost_eq(e.burn_dps, 3.5, 0.001)
 	assert_almost_eq(e.burn_t, 3.0, 0.001)
 	_run(1.0)
 	assert_lt(e.burn_t, 2.1)
 	_hit(e, ["light"])
-	assert_almost_eq(e.burn_dps, 4.0, 0.001, "the same DPS, not 8")
+	assert_almost_eq(e.burn_dps, 3.5, 0.001, "the same DPS, not 7")
 	assert_almost_eq(e.burn_t, 3.0, 0.001, "the time renewed")
 	_take(&"pesado_brasa")
 	_hit(e, ["heavy", "wave"])
-	assert_almost_eq(e.burn_dps, 6.0, 0.001, "the greater one is kept")
+	assert_almost_eq(e.burn_dps, 5.0, 0.001, "the greater one is kept")
 	_hit(e, ["light"])
-	assert_almost_eq(e.burn_dps, 6.0, 0.001, "and the lesser does not take it down")
+	assert_almost_eq(e.burn_dps, 5.0, 0.001, "and the lesser does not take it down")
 	_run(3.5)
 	assert_lte(e.burn_t, 0.0, "the fire went out")
 	_hit(e, ["light"])
-	assert_almost_eq(e.burn_dps, 4.0, 0.001, "a fire that went out starts over at its own")
+	assert_almost_eq(e.burn_dps, 3.5, 0.001, "a fire that went out starts over at its own")
 
 
 func test_complements_of_fire_change_dps_and_time_and_only_the_blessings_fire() -> void:
@@ -119,7 +119,7 @@ func test_complements_of_fire_change_dps_and_time_and_only_the_blessings_fire() 
 	_take(&"brasa_persistente")
 	var e := _enemy()
 	_hit(e, ["light"])
-	assert_almost_eq(e.burn_dps, 4.8, 0.001, "+20% DPS")
+	assert_almost_eq(e.burn_dps, 4.2, 0.001, "+20% DPS")
 	assert_almost_eq(e.burn_t, 3.9, 0.001, "+30% time")
 	# the native fire of a hero is not touched by them
 	var other := _enemy()
@@ -133,7 +133,7 @@ func test_rarity_scales_the_dps_of_the_burn() -> void:
 	_take(&"golpe_brasa", Boon.Rarity.LEGENDARY)
 	var e := _enemy()
 	_hit(e, ["light"])
-	assert_almost_eq(e.burn_dps, 10.0, 0.001, "2.5 times 4")
+	assert_almost_eq(e.burn_dps, 8.75, 0.001, "2.5 times 3.5")
 	assert_almost_eq(e.burn_t, 3.0, 0.001, "the time stays")
 
 
@@ -171,7 +171,7 @@ func test_combustion_after_three_applications_with_a_recharge_by_target() -> voi
 	var before := e.hp
 	_hit(e, ["light"])
 	assert_eq(int(game.combat.celestial.tally.get(&"combustion", 0)), 1)
-	assert_almost_eq(before - e.hp, 10.0 + 12.0, 1.5, "the blow and the 12 of fire")
+	assert_almost_eq(before - e.hp, 10.0 + 9.0, 1.5, "the blow and the 9 of fire")
 	for i in 3:
 		_hit(e, ["light"])
 	assert_eq(int(game.combat.celestial.tally.get(&"combustion", 0)), 1, "3 s of recharge on that enemy")
@@ -192,7 +192,7 @@ func test_contagion_jumps_once_and_not_again() -> void:
 	_hit(a, ["light"])
 	a.alive = false  # (it falls burning)
 	game.combat.celestial.on_killed(a)
-	assert_almost_eq(b.burn_dps, 2.0, 0.001, "50% of the DPS")
+	assert_almost_eq(b.burn_dps, 1.75, 0.001, "50% of the DPS")
 	assert_almost_eq(b.burn_t, 2.0, 0.001)
 	assert_gt(c.burn_t, 0.0)
 	var d := _enemy(Vector2(5.5, 0.5))
@@ -260,7 +260,7 @@ func test_shatter_once_by_freeze_and_the_crystals_jump() -> void:
 	assert_gt(e.frozen_t, 0.0)
 	var plain := _dealt(far, ["light"])
 	var shattered := _dealt(e, ["light"])
-	assert_almost_eq(shattered / plain, 1.25, 0.12, "+25% on the first blow of a freeze")
+	assert_almost_eq(shattered / plain, 1.4, 0.12, "+40% on the first blow of a freeze")
 	var second := _dealt(e, ["light"])
 	assert_almost_eq(second / plain, 1.0, 0.12, "once by freeze")
 	assert_eq(near.cel.cold, 1, "one stack to the one beside it")
@@ -377,7 +377,7 @@ func test_fraqueza_is_capped_and_vulnerabilidade_adds() -> void:
 	assert_almost_eq(e.weak_t, 2.5, 0.01, "2 s plus 25%")
 	assert_almost_eq(game.horde.weak_cut, Combat.WEAK_CUT, 0.001)
 	var more := _dealt(e, ["heavy", "wave"])
-	assert_almost_eq(more / plain, 1.1, 0.08, "+10% on the weakened")
+	assert_almost_eq(more / plain, 1.15, 0.08, "+15% on the weakened")
 	_hit(e, ["light"])
 	assert_almost_eq(e.weak_t, 2.5, 0.01, "renewed, never stacked")
 	game.boons.grant([_fixed_mod(&"weak_pct", 0.9)])
@@ -439,11 +439,11 @@ func test_cadence_speed_and_the_ceiling_of_a_total() -> void:
 			node = n
 			break
 	var tags := node.tags
-	assert_almost_eq(cel.attack_speed(tags), 0.10, 0.001)
+	assert_almost_eq(cel.attack_speed(tags), 0.12, 0.001)
 	for i in 8:
 		cel.on_action(node)
 	assert_eq(cel.cadence, 5, "five at most")
-	assert_almost_eq(cel.attack_speed(tags), 0.10 + 5 * 0.03, 0.001)
+	assert_almost_eq(cel.attack_speed(tags), 0.12 + 5 * 0.03, 0.001)
 	cel.step(3.1)
 	assert_eq(cel.cadence, 0, "3 s")
 	cel.haste_t = 5.0
@@ -505,7 +505,7 @@ func test_echoes_are_a_share_of_the_direct_damage_and_never_echo_again() -> void
 	_run(0.3)
 	assert_eq(before - direct, e.hp, "not yet: 0.4 s of delay")
 	_run(0.3)
-	assert_almost_eq(before - direct - e.hp, direct * 0.3, 1.5, "30% of the direct damage")
+	assert_almost_eq(before - direct - e.hp, direct * 0.4, 1.5, "40% of the direct damage")
 	_run(2.0)
 	assert_eq(int(game.combat.celestial.tally.get(&"echo", 0)), 1, "no echo of an echo")
 	# one second of recharge by target
@@ -581,7 +581,7 @@ func test_the_maga_carries_the_layer_with_her_own_states_apart() -> void:
 	_take(&"toque_geada")
 	var e := _enemy()
 	_hit(e, ["light", "bolt", "arcane", "fire"])
-	assert_almost_eq(e.burn_dps, 4.0, 0.001, "her primary: the attack's Blessing")
+	assert_almost_eq(e.burn_dps, 3.5, 0.001, "her primary: the attack's Blessing")
 	_hit(e, ["heavy", "bolt", "arcane", "ice"])
 	assert_eq(e.cel.cold, 2, "her special: the special's")
 	_hit(e, ["omega", "heavy", "cast", "arcane", "ice"])

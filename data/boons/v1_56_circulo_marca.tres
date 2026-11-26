@@ -6,7 +6,7 @@
 [sub_resource type="Resource" id="Resource_qo785"]
 script = ExtResource("1_bjjj4")
 stat = &"cel_echo"
-base = 0.25
+base = 0.35
 per_level = PackedFloat32Array()
 by_rarity = false
 

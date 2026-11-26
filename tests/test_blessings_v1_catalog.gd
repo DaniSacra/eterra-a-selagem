@@ -185,15 +185,15 @@ func test_every_rarity_scales_only_what_the_rules_allow() -> void:
 
 func test_the_numbers_of_the_document_are_the_numbers_in_play() -> void:
 	var state := BoonState.new(catalog)
-	var want := {&"golpe_brasa": [&"cel_burn_dps", 4.0], &"pesado_brasa": [&"cel_burn_dps", 6.0], &"golpe_geada": [&"cel_cold", 1.0],
+	var want := {&"golpe_brasa": [&"cel_burn_dps", 3.5], &"pesado_brasa": [&"cel_burn_dps", 5.0], &"golpe_geada": [&"cel_cold", 1.0],
 		&"toque_geada": [&"cel_cold", 2.0], &"golpe_radiante": [&"cel_crit", 0.10], &"circulo_radiante": [&"cel_crit", 0.15],
 		&"golpe_firme": [&"cel_impact", 1.0], &"pesado_firme": [&"cel_impact", 2.0], &"golpe_veu": [&"cel_weak", 2.0],
-		&"pesado_veu": [&"cel_weak", 3.0], &"golpe_mare": [&"cel_speed", 0.10], &"circulo_mare": [&"cel_cd_cut", 0.10],
-		&"golpe_marca": [&"cel_mark", 3.0], &"pesado_marca": [&"cel_echo", 0.30], &"circulo_marca": [&"cel_echo", 0.25],
-		&"combustao": [&"cel_combust_dmg", 12.0], &"fogo_crescente": [&"cel_burn_dps_pct", 0.2], &"estilhaco": [&"cel_shatter_pct", 0.25],
+		&"pesado_veu": [&"cel_weak", 3.0], &"golpe_mare": [&"cel_speed", 0.12], &"circulo_mare": [&"cel_cd_cut", 0.10],
+		&"golpe_marca": [&"cel_mark", 3.0], &"pesado_marca": [&"cel_echo", 0.40], &"circulo_marca": [&"cel_echo", 0.35],
+		&"combustao": [&"cel_combust_dmg", 9.0], &"fogo_crescente": [&"cel_burn_dps_pct", 0.2], &"estilhaco": [&"cel_shatter_pct", 0.4],
 		&"fortuna_celestial": [&"cel_crit_global", 0.05], &"esplendor": [&"cel_crit_mult_global", 0.2], &"prosperidade": [&"gold_pct", 0.1],
-		&"vulnerabilidade": [&"cel_weak_dmg_pct", 0.1], &"forca_inabalavel": [&"cel_stunned_dmg_pct", 0.2], &"ruptura": [&"cel_impact_need", -1.0],
-		&"cadencia": [&"cel_cadence", 0.03], &"turbilhao": [&"cel_whirl_dmg", 12.0], &"brisa_favoravel": [&"move_speed_pct", 0.05],
+		&"vulnerabilidade": [&"cel_weak_dmg_pct", 0.15], &"forca_inabalavel": [&"cel_stunned_dmg_pct", 0.3], &"ruptura": [&"cel_impact_need", -1.0],
+		&"cadencia": [&"cel_cadence", 0.03], &"turbilhao": [&"cel_whirl_dmg", 18.0], &"brisa_favoravel": [&"move_speed_pct", 0.05],
 		&"passos_leves": [&"dodge_charges", 1.0], &"passo_brasa": [&"dodge_ember_dps", 6.0], &"passo_firme": [&"cel_guard_time", 1.2]}
 	for id: StringName in want:
 		var b := state.find(id)
@@ -208,24 +208,24 @@ func test_the_numbers_of_the_document_are_the_numbers_in_play() -> void:
 	var glacial := state.find(&"circulo_geada").skill
 	_eq([glacial.get_status_power(1), glacial.get_radius(1), glacial.get_gap(1)], [2.0, 3.0, 4.0])
 	var winter := state.find(&"peso_inverno").skill
-	_eq([winter.damage[0], winter.get_radius(1), winter.get_status_power(1)], [40.0, 4.0, 3.0])
+	_eq([winter.damage[0], winter.get_radius(1), winter.get_status_power(1)], [55.0, 4.0, 3.0])
 	var judge := state.find(&"ultimo_radiante").skill
-	_eq([judge.get_count(1), judge.damage[0], judge.get_status_power(1)], [3, 15.0, 0.15])
+	_eq([judge.get_count(1), judge.damage[0], judge.get_status_power(1)], [3, 24.0, 0.15])
 	var quake := state.find(&"ultimo_firme").skill
-	_eq([quake.damage[0], quake.get_radius(1), quake.get_status_power(1)], [30.0, 6.0, 3.0])
+	_eq([quake.damage[0], quake.get_radius(1), quake.get_status_power(1)], [45.0, 6.0, 3.0])
 	var power := state.find(&"circulo_firme").skill
-	_eq([power.damage[0], power.get_status_power(1), power.get_radius(1), power.get_gap(1)], [10.0, 2.0, 3.0, 4.0])
+	_eq([power.damage[0], power.get_status_power(1), power.get_radius(1), power.get_gap(1)], [14.0, 2.0, 3.0, 4.0])
 	_eq([state.find(&"fios_cinza").skill.get_radius(1), state.find(&"fios_cinza").skill.get_gap(1), state.find(&"fios_cinza").skill.get_status_power(1)], [2.0, 3.0, 2.0])
 	_eq([state.find(&"crepusculo").skill.get_radius(1), state.find(&"crepusculo").skill.get_status_power(1)], [7.0, 5.0])
 	_eq([state.find(&"circulo_veu").skill.get_radius(1), state.find(&"circulo_veu").skill.get_status_power(1)], [3.0, 4.0])
 	var gust := state.find(&"pesado_mare").skill
-	_eq([gust.damage[0], gust.get_gap(1)], [8.0, 1.0])
+	_eq([gust.damage[0], gust.get_gap(1)], [14.0, 1.0])
 	var flakes := state.find(&"floco_errante").skill
 	_eq([flakes.get_count(1), flakes.get_duration(1), flakes.get_status_power(1), flakes.status_gap], [2, 3.0, 1.0, 1.0])
 	var storm := state.find(&"vendaval")
-	_eq([storm.mods[0].base, storm.mods[1].base, storm.mods[2].base], [0.2, 0.1, 5.0])
+	_eq([storm.mods[0].base, storm.mods[1].base, storm.mods[2].base], [0.3, 0.1, 5.0])
 	var army := state.find(&"exercito_ecos")
-	_eq([army.mods[0].base, army.mods[1].base], [0.25, 5.0])
+	_eq([army.mods[0].base, army.mods[1].base], [0.4, 5.0])
 	assert_eq(state.find(&"pesado_radiante").mods[1].base, 0.25)
 	assert_eq(state.find(&"olhar_rapido").mods[0].base, 3.0)
 	assert_eq(state.find(&"olhar_rapido").mods[1].base, 3.0)

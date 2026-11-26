@@ -6,7 +6,7 @@
 [sub_resource type="Resource" id="Resource_5x5x3"]
 script = ExtResource("1_tmqlu")
 stat = &"weak_pct"
-base = 0.05
+base = 0.08
 per_level = PackedFloat32Array()
 by_rarity = false
 
