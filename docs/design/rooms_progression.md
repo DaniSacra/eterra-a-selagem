@@ -1805,3 +1805,16 @@ a pede. A posição da faixa ficou com o dono do lote (o room-designer não escr
   partir dele); quem mede o prêmio é o jogador.
 - **Pendências**: bolsa de ouro de verdade do outro lado (quebrável não dá ouro: gameplay-engineer); pilar com vaso (não há peça de pilar com vaso; anotado para o environment-artist, o dado já
   aceita um `ArenaObstacle` com `piece` novo); arte da água da ilha e da junta em cruz da laje (placeholder `GapFloor` e `hazard_mark`).
+
+## Varredura 2026-11-26b (room-designer, pedido do PO: achar e corrigir o que for contido)
+- **Novo teste** `tests/test_room_sweep.gd` (3 testes, todas as plantas e variantes, mais a Provação e o Altar): (1) relíquia e veia (`relic_spots`, `gather_spots`) em chão livre, alcançáveis a pé a
+  partir da entrada e fora de ilha de esquiva; (2) nenhum perigo que fere o herói a menos de 2 m da entrada nem a 1 m do centro de uma porta, e `start_delay` de pelo menos 3 s (o sopro das Fendas só
+  empurra, 0 de dano, e fica de fora da regra); (3) toda sala com travessia tem ao menos uma zona de nascimento andável da entrada. Passam sem mudar dado: nenhum achado a corrigir nesses pontos.
+- **Robô** (900 s, `--bot-reaction=0.25`, sementes 1 a 8): `stuck` 0 em todas; 6 chegam a Morvath (boss_at 390 a 522 s); as sementes 5 (sala 7, Santuário) e 6 (sala 10, Casa do Ancião) morreram em
+  combate (vida 0, golpes de mago, padre e corpo a corpo), não por trava. Sem inimigo preso, sem porta nem quebrável inalcançável (os testes de `test_arenas` e `test_room_gaps` seguem verdes).
+- **Tempo por sala** (média das 8 sementes): Salão 13 s (abertura curta de propósito), Jardim 30 s, Cripta 34 s, Runas 36 s, casa do Cavaleiro 37 s, Ponte 41 s, Fendas 50 s, Santuário 50 s,
+  casa do Ancião 57 s. A curva é crescente e sem sala fora de faixa; o Santuário e as Fendas são as mais longas por causa das ilhas e dos magos.
+- **Dano do perigo ao herói** (soma das 8 sementes): Runas 50 (5 golpes de 10), armadilha de lâmina do Santuário 10 (1 golpe), nenhum nas Fendas, Jardim, Cripta e Ponte. Nada de golpe no começo de sala.
+- **Em aberto** (não contido): o robô não busca ilhas de esquiva nem relíquias de propósito (quem mede o prêmio é o jogador); o dano do perigo aos inimigos não aparece em `rooms[]` (só o
+  `hurt_by` do herói), então a proporção herói e inimigos continua só pelos testes de `hazard`; `Rooms.spawn_point` cai no centro da primeira zona se nenhuma tentativa for alcançável (hoje
+  nenhuma planta chega lá, o teste 3 trava o caso das travessias).
