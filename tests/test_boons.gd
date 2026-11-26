@@ -351,3 +351,16 @@ func test_vigia_firme_is_in_the_reserve_and_never_offered() -> void:
 	assert_not_null(b)
 	assert_true(b.reserve, "Vigia Firme does nothing under StunRule.NONE, so it waits in the reserve")
 	assert_false(state.offerable(b))
+
+
+func test_version_changes_whenever_the_numbers_may_have_changed() -> void:
+	# DT-4: Combat keeps a blow's stat answers while this stays the same, so it must move with every change
+	var v := state.version
+	state.take(state.catalog[0])
+	assert_ne(state.version, v, "taking a Blessing")
+	v = state.version
+	state.grant([])
+	assert_ne(state.version, v, "granting numbers")
+	v = state.version
+	state.equip_forge([])
+	assert_ne(state.version, v, "equipping the Forja")

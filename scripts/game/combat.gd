@@ -885,6 +885,40 @@ func _apogee(e: Enemy, dmg: float, tags: Array[StringName]) -> float:
 	return extra
 
 
+## DT-4: boons.stat(name, tags) for a blow that strikes many enemies: the answer depends on the tags and the Blessings, not
+## on the target, so it is kept while the same tags array is used and the Blessings do not change (BoonState.version).
+var _memo_tags: Array[StringName] = []
+var _memo_boons: BoonState = null
+var _memo_version := -1
+var _memo_size := -1
+var _memo: Dictionary = {}
+
+
+func _tag_stat(stat_name: StringName, tags: Array[StringName]) -> float:
+	if not is_same(tags, _memo_tags) or not is_same(boons, _memo_boons) or boons.version != _memo_version or tags.size() != _memo_size:
+		_memo_size = tags.size()
+		_memo_tags = tags
+		_memo_boons = boons
+		_memo_version = boons.version
+		_memo.clear()
+	if _memo.has(stat_name):
+		return _memo[stat_name]
+	var v := boons.stat(stat_name, tags)
+	_memo[stat_name] = v
+	return v
+
+
+## number_color for the blow being dealt, kept like _tag_stat (it walks the Blessings: family_on).
+func _blow_color(tags: Array[StringName], big: bool) -> Color:
+	_tag_stat(&"burn_dps", tags)  # (makes the memo belong to these tags)
+	var key := &"#color_big" if big else &"#color"
+	if _memo.has(key):
+		return _memo[key]
+	var c := number_color(tags, big)
+	_memo[key] = c
+	return c
+
+
 ## One enemy takes one hit, with every gift applied. counts: it is a blow of the paladin (feeds the combo counter).
 ## Returns true when it died.
 func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, knockback: float, counts: bool = true, big: bool = false) -> bool:
@@ -896,19 +930,19 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 		return false
 	var frozen := e.frozen_t > 0.0
 	# BO-2: the shatter belongs to a button's tags (the special's wave, a shot that is no combo count, shatters too)
-	var shatter := boons.stat(&"shatter_pct", tags) if frozen and (counts or tags.has(&"wave") or tags.has(&"blast")) else 0.0
-	var dmg := DamageCalc.hit(base, boons.stat(&"damage_pct", tags), e.air_t > 0.0, frozen and shatter > 0.0, shatter, e.def.undead, boons.stat(&"undead_mult"))
-	dmg *= 1.0 + boons.stat(&"final_pct", tags)  # Força Titânica: x3 at the very end of the Golpe Carregado's damage_pct
-	dmg = DamageCalc.marked(dmg, MARK_CRIT + boons.stat(&"crit_pct", tags), e.mark_t > 0.0)
+	var shatter := _tag_stat(&"shatter_pct", tags) if frozen and (counts or tags.has(&"wave") or tags.has(&"blast")) else 0.0
+	var dmg := DamageCalc.hit(base, _tag_stat(&"damage_pct", tags), e.air_t > 0.0, frozen and shatter > 0.0, shatter, e.def.undead, boons.stat(&"undead_mult"))
+	dmg *= 1.0 + _tag_stat(&"final_pct", tags)  # Força Titânica: x3 at the very end of the Golpe Carregado's damage_pct
+	dmg = DamageCalc.marked(dmg, MARK_CRIT + _tag_stat(&"crit_pct", tags), e.mark_t > 0.0)
 	dmg = DamageCalc.shoved(dmg, boons.stat(&"shove_pct"), e.shove_t > 0.0)
 	var direct := celestial.active() and CelRules.is_direct(tags)
 	if direct:
 		dmg *= celestial.direct_mult(e, tags)  # V1: the target's state (weakened, stunned, frozen) and the Blessing crit
-	var push_pct := boons.stat(&"push_pct", tags)
-	dmg *= 1.0 + _resisted(e, push_pct, boons.stat(&"freeze_time", tags))
+	var push_pct := _tag_stat(&"push_pct", tags)
+	dmg *= 1.0 + _resisted(e, push_pct, _tag_stat(&"freeze_time", tags))
 	if e.armor > 0.0:
 		# the armor bar goes faster: the special's base, and armor_pct of the blow's tags (Peso, Onda Pesada, Ferro na Investida)
-		dmg *= 1.0 + (ARMOR_SPECIAL if tags.has(&"heavy") else 0.0) + boons.stat(&"armor_pct", tags)
+		dmg *= 1.0 + (ARMOR_SPECIAL if tags.has(&"heavy") else 0.0) + _tag_stat(&"armor_pct", tags)
 		# a tough armor feels only the strong blows, unless its shield is away (the knight's opening)
 		dmg *= 1.0 if horde.shield_away(e) else DamageCalc.armor_scale(e.def.armor_soft, tags)
 	var shut := false  # the guard shut it (drawing: grey number, steel sparks)
@@ -930,11 +964,11 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	var hp_before := e.hp
 	kill_tags = tags
 	horde.dealing = source if source != &"" else DealtBy.source(tags)
-	horde.stun_scale = 0.0 if _no_stun else 1.0 + boons.stat(&"stun_pct", tags)
-	horde.break_scale = 1.0 + boons.stat(&"stun_pct", tags)
+	horde.stun_scale = 0.0 if _no_stun else 1.0 + _tag_stat(&"stun_pct", tags)
+	horde.break_scale = 1.0 + _tag_stat(&"stun_pct", tags)
 	horde.strong = tags.has(OMEGA_TAG)
 	horde.heavy_blow = tags.has(&"heavy")
-	var died := horde.damage(e, dmg, away, knockback, GUARD_NUMBER if shut else number_color(tags, big), true, big)
+	var died := horde.damage(e, dmg, away, knockback, GUARD_NUMBER if shut else _blow_color(tags, big), true, big)
 	horde.stun_scale = 1.0
 	horde.break_scale = 1.0
 	horde.strong = false
@@ -960,7 +994,7 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 				horde.damage(other, maxf(1.0, roundf(dmg * SHATTER_SPLASH)), (other.pos - e.pos).normalized(), 5.0, FROST)
 		horde.dealing = &""
 	# BO-2, Sarael's Brado: whoever already burns takes the fire all at once and stops burning (it does not burn again)
-	var detonation := boons.stat(&"detonate_dmg", tags)
+	var detonation := _tag_stat(&"detonate_dmg", tags)
 	if detonation > 0.0 and not died and e.burn_t > 0.0:
 		e.burn_t = 0.0
 		fx.burst(&"fire", Vector3(e.pos.x, 1.0, e.pos.y))
@@ -971,14 +1005,14 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 		celestial.after_hit(e, tags, dmg, died, shut)  # V1: the statuses and the echo of the action's Blessings
 	if died:
 		return true
-	var burn := boons.stat(&"burn_dps", tags)
+	var burn := _tag_stat(&"burn_dps", tags)
 	if burn > 0.0:
 		_burn(e, burn)
-	var freeze := boons.stat(&"freeze_time", tags)
+	var freeze := _tag_stat(&"freeze_time", tags)
 	if freeze > 0.0 and shatter <= 0.0:
 		_freeze(e, freeze, tags)
-	_weaken(e, boons.stat(&"weak_time", tags))
-	_mark(e, boons.stat(&"mark_time", tags))
+	_weaken(e, _tag_stat(&"weak_time", tags))
+	_mark(e, _tag_stat(&"mark_time", tags))
 	return false
 
 
