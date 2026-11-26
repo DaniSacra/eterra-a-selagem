@@ -29,6 +29,14 @@ func _ids(cards: Array[BoonState.Card]) -> Array[StringName]:
 	return out
 
 
+func _family_count(a: AngelDef, cards: Array[BoonState.Card]) -> int:
+	var n := 0
+	for c in cards:
+		if Encounter.belongs(state, c.boon, a.family):
+			n += 1
+	return n
+
+
 func test_a_held_slot_is_out_of_the_draw_and_nothing_is_replaced() -> void:
 	state.take(state.find(&"golpe_brasa"))
 	for seed_ in 80:
@@ -110,7 +118,8 @@ func test_the_angel_offers_up_to_three_and_the_ones_it_has() -> void:
 		var n := Encounter.supply(state, sarael)
 		var cards := Encounter.cards(state, sarael, rng)
 		seen[cards.size()] = true
-		assert_eq(cards.size(), mini(n, 3), "after %s" % id)
+		assert_eq(_family_count(sarael, cards), mini(n, 3), "after %s" % id)
+		assert_eq(cards.size(), 3, "short hands are completed from other angels")
 		assert_true(Encounter.eligible(state, sarael) == (n >= 1))
 		for c in cards:
 			assert_false(state.level(c.boon.id) > 0, "%s is held and offered again" % c.boon.id)
@@ -121,12 +130,13 @@ func test_the_angel_offers_up_to_three_and_the_ones_it_has() -> void:
 		state.take(state.find(id))
 	# one left (Fogo Crescente): one card, as it is
 	var last := Encounter.cards(state, sarael, rng)
-	assert_eq(_ids(last), [&"fogo_crescente"] as Array[StringName])
+	assert_eq(_ids(last)[0], &"fogo_crescente", "the angel's own card comes first")
+	assert_eq(_family_count(sarael, last), 1)
 	assert_true(Encounter.eligible(state, sarael))
 	state.take(state.find(&"fogo_crescente"))
 	assert_eq(Encounter.supply(state, sarael), 0)
 	assert_false(Encounter.eligible(state, sarael), "an exhausted angel is not met")
-	assert_eq(Encounter.cards(state, sarael, rng).size(), 0)
+	assert_eq(_family_count(sarael, Encounter.cards(state, sarael, rng)), 0)
 
 
 func test_two_cards_are_shown_as_two() -> void:
@@ -136,7 +146,8 @@ func test_two_cards_are_shown_as_two() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 9
 	var cards := Encounter.cards(state, sarael, rng)
-	assert_eq(cards.size(), 2, "the Supremo and Fogo Crescente")
+	assert_eq(_family_count(sarael, cards), 2, "the Supremo and Fogo Crescente")
+	assert_eq(cards.size(), 3, "completed from another angel (PT-25-1)")
 	assert_eq(Encounter.supply(state, sarael), 2)
 
 

@@ -9,6 +9,14 @@ func _state(ult_open: bool) -> BoonState:
 	return s
 
 
+func _supply(state: BoonState) -> int:
+	var n := 0
+	for b in state.catalog:
+		if state.level(b.id) <= 0 and state.offerable(b):
+			n += 1
+	return n
+
+
 func test_eligible_angel_always_has_three_cards() -> void:
 	var book := Encounter.new(Encounter.load_catalog())
 	var stage: StageDef = load("res://data/stages/catacombs.tres")
@@ -22,7 +30,7 @@ func test_eligible_angel_always_has_three_cards() -> void:
 				if not Encounter.eligible(state, a):
 					continue
 				var cards := Encounter.cards(state, a, rng, 3, stage.rarity_chance, stage.elo_chance, stage.trade_chance)
-				if cards.size() != mini(3, Encounter.supply(state, a)):  # (V1: one or two are shown as they are)
+				if cards.size() != mini(3, _supply(state)):  # (completed from other angels when its family is short)
 					bad.append("%s run %d room %d held %d: %d cards" % [a.id, run, room, state.owned().size(), cards.size()])
 			if run % 3 == 0:
 				for k in 2:

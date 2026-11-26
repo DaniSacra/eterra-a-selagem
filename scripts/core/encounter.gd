@@ -138,13 +138,18 @@ static func holds(state: BoonState, angel: AngelDef) -> bool:
 	return false
 
 
-## The angel's cards: BoonState.draw over its family only, with the stage's chances: up to n, fewer when the family has
-## fewer valid ones (V1: no filler, no replacement).
+## The angel's cards: BoonState.draw over its family first, up to n. When its family has fewer valid ones (slots filled
+## by what the hand holds), the hand is completed from the other families' offerable Blessings, so an angel met always
+## puts n cards on the table while the whole catalog can (PT-25-1: a screen with a single card). Same dice, same rules.
 static func cards(state: BoonState, angel: AngelDef, rng: RandomNumberGenerator, n: int = 3,
 		chances: Array[float] = Boon.RARITY_CHANCE, elo_chance: float = Boon.ELO_CHANCE,
 		trade_chance: float = Boon.TRADE_CHANCE) -> Array[BoonState.Card]:
-	return state.draw(rng, n, chances, elo_chance, trade_chance,
+	var out := state.draw(rng, n, chances, elo_chance, trade_chance,
 		func(b: Boon) -> bool: return belongs(state, b, angel.family))
+	if out.size() < n:
+		out.append_array(state.draw(rng, n - out.size(), chances, elo_chance, trade_chance,
+			func(b: Boon) -> bool: return not belongs(state, b, angel.family)))
+	return out
 
 
 ## The angel whose family the hand holds most (Blessings held of it, an Elo counting for both of its families); the
