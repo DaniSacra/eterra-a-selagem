@@ -87,3 +87,32 @@ func test_the_column_lists_every_blessing_with_its_state() -> void:
 		assert_true(b in shown, "%s is on the column" % b.id)
 	assert_eq(shown.size(), taken.size())
 	assert_gt(col.size.y, BuildColumn.height_for(0, 1), "the extras make it taller")
+
+
+func test_the_column_names_each_row_hides_level_one_and_caps_its_height() -> void:
+	var st := _state()
+	var col := BuildColumn.new().setup()
+	add_child_autofree(col)
+	var n := 0
+	for b in st.catalog:
+		if not b.is_duo() and n < 20:
+			st.take(b, Boon.Rarity.COMMON)
+			n += 1
+	col.show_build(st)
+	var rows := 0
+	for e in col.entries:
+		if e.visible:
+			rows += 1
+			assert_eq(e.name_label.text, T.t("boon_" + String(e.boon.id)), "the row names its Blessing")
+			assert_eq(e.level_label.text, "", "level 1 is not written")
+	var extras := col.find_child("extras", true, false).get_children()
+	assert_lte(rows + extras.size(), BuildColumn.MAX_ROWS, "never taller than MAX_ROWS rows")
+	assert_not_null(col.find_child("More", true, false), "the rest is a +N")
+
+
+func test_the_diamonds_carry_their_short_names() -> void:
+	for a in Hud.ACTIONS:
+		assert_ne(T.t("hud_slot_" + String(a)), "hud_slot_" + String(a), "%s has a short name" % a)
+	var s := ActionSlot.new().setup(&"light_attack", Boon.Slot.ATTACK, 36.0, 7.0)
+	assert_gte(s.custom_minimum_size.y, 36.0 + ActionSlot.NAME_H, "room for the name under the key")
+	s.free()

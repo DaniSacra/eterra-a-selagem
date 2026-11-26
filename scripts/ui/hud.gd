@@ -91,14 +91,14 @@ func _layout_bars(thin: bool) -> void:
 ## The build column on the right edge: where its middle stands (share of the height) and the room it keeps (the edge
 ## chevrons stay out of it). The coins' corner and the gifts over it.
 const COLUMN_MID := 0.46
-const EDGE_RIGHT := BuildColumn.WIDTH + 22.0
+const EDGE_RIGHT := BuildColumn.WIDTH + BuildColumn.MARGIN + 12.0
 const PASSIVE_LIFT := 40.0
 ## The Brado's buff beside the life bar: the gap right of it.
 const BUFF_GAP := 12.0
 ## The vignette stands from this share of life down (the medallion's ring warns from the same).
 const DANGER_FROM := 0.3## The hit count right of the last diamond, and the bottom of the edge chevrons' frame over the whole block.
 const ROW_COUNT_GAP := 12.0
-const ROW_EDGE_BOTTOM := 128.0
+const ROW_EDGE_BOTTOM := 148.0
 const FONT_SMALL := 15
 const FONT_TEXT := 19
 const FONT_CLOCK := 22
@@ -176,7 +176,7 @@ const SHOOTER_COLOR := Color(1.0, 0.78, 0.4)
 const POINTER_SIZE := 18.0
 const VIEW_INSET := 16.0
 ## (The bottom clears the caption over the ultimate's diamond, "Maestria 2", BUG-111.)
-const EDGE_INSET := Vector4(30.0, 96.0, EDGE_RIGHT, 128.0)
+const EDGE_INSET := Vector4(30.0, 96.0, EDGE_RIGHT, 148.0)
 ## The actions in the order of the diamonds (left button, right button, Q the Brado, E the Investida, then the ultimate's
 ## diamond on Shift, then the dodge on Space: docs/design/heroes/guerreiro.md 3), with the gift slot that changes each.
 ## The Brado takes the circle's Blessing slot (CAST); the Investida has none (Boon.Slot.NONE). A diamond of a move the
@@ -563,8 +563,8 @@ func _build_column() -> void:
 	# a fixed middle (the foot rows grow it both ways: the top moves a little, the Blessings never)
 	_column.anchor_top = COLUMN_MID
 	_column.anchor_bottom = COLUMN_MID
-	_column.offset_right = 0.0
-	_column.offset_left = -BuildColumn.WIDTH
+	_column.offset_right = -BuildColumn.MARGIN
+	_column.offset_left = -BuildColumn.WIDTH - BuildColumn.MARGIN
 	_column.offset_top = -BuildColumn.height_for(0) * 0.5
 	_column.offset_bottom = BuildColumn.height_for(0) * 0.5
 
@@ -580,8 +580,10 @@ func _build_actions() -> void:
 	for i in ACTIONS.size():
 		if i == ULT_AT:
 			_ult_slot = ActionSlot.new().setup(&"ultimate", Boon.Slot.NONE, ROW_DIAMOND, ROW_KEY_DROP)
+			_ult_slot.label_text = T.t(&"hud_slot_ultimate")
 			row.add_child(_ult_slot)
 		var s := ActionSlot.new().setup(ACTIONS[i], SLOTS[i], ROW_DIAMOND, ROW_KEY_DROP)
+		s.label_text = T.t("hud_slot_" + String(ACTIONS[i]))
 		if ACTIONS[i] == &"shout":
 			s.glyph = BoonIcon.SHOUT_GLYPH
 		elif ACTIONS[i] == &"rush":
@@ -589,7 +591,7 @@ func _build_actions() -> void:
 		row.add_child(s)
 		_slots.append(s)
 	# centred on the screen's middle whatever the number of diamonds (the row's own box is as wide as the six)
-	var height := ROW_DIAMOND + ActionSlot.KEY_H * 0.5 + ROW_KEY_DROP
+	var height := ActionSlot.height_for(ROW_DIAMOND, ROW_KEY_DROP)
 	var width := row.get_combined_minimum_size().x
 	_place(row, Control.PRESET_CENTER_BOTTOM, Vector2(0.0, -MARGIN), Vector2(width, height))
 	row.grow_horizontal = Control.GROW_DIRECTION_BOTH

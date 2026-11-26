@@ -2,11 +2,13 @@ class_name MouseGlyphArt
 extends RefCounted
 ## The pixels of MouseGlyph (no autoloads, so tools/make_mouse_icons.gd can run it as a plain script).
 
-const W := 17.0
-const H := 22.0
+const W := 18.0
+const H := 26.0
 ## The icon is saved at SCALE times its size in the UI, each pixel sampled SAMPLES x SAMPLES times.
-const SCALE := 2
+const SCALE := 3
 const SAMPLES := 4
+## The bound button: a strong gold, so left and right read apart at 28 px (the rest of the body stays dark).
+const LIT := Color(1.0, 0.8, 0.18)
 
 
 ## The drawing: ink body under an old gold rim, the bound button in ivory, the seams in old gold.
@@ -28,13 +30,13 @@ static func rasterize(button: int) -> Image:
 
 ## The colour of the point p (in the W x H box) for the lit button.
 static func _shade(p: Vector2, button: int) -> Color:
-	var rim := 2.0
+	var rim := 2.2
 	var d := _rounded_box(p - Vector2(W, H) * 0.5, Vector2(W, H) * 0.5, 8.0)
 	if d > 0.0:
 		return Color(0, 0, 0, 0)
 	if d > -rim:
 		return Color('8e7444')
-	var split := rim + 8.0
+	var split := rim + 10.0
 	var mid := W * 0.5
 	var lit := false
 	match button:
@@ -43,12 +45,12 @@ static func _shade(p: Vector2, button: int) -> Color:
 		MOUSE_BUTTON_RIGHT:
 			lit = p.y < split and p.x > mid + 0.5
 		MOUSE_BUTTON_MIDDLE:
-			lit = absf(p.x - mid) < 1.5 and p.y > rim + 1.0 and p.y < rim + 7.0
+			lit = absf(p.x - mid) < 2.0 and p.y > rim + 1.5 and p.y < rim + 8.0
 	if lit:
-		return Color(0.94, 0.9, 0.82)
+		return LIT
 	if (absf(p.x - mid) < 0.5 and p.y < split) or absf(p.y - split) < 0.5:
 		return Color('8e7444')
-	return Color(0.04, 0.03, 0.05, 0.95)
+	return Color(0.03, 0.025, 0.04, 0.97)
 
 
 ## Signed distance to a box (half size `half`) with rounded corners of radius r: negative inside.
