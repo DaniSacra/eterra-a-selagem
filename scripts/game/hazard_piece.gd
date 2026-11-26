@@ -123,7 +123,10 @@ static func plate(parent: Node3D, r: Rect2, windup: float, k := Kind.PLATE, way 
 		params[&"chev_four"] = 1.0
 		# PT-25-10: the slab is 2 x 2 tiles (cross joint, a chevron in each tile)
 		params[&"tiles"] = 2.0
-		params[&"chev_open"] = 0.3
+		# art review 2026-11-26: read from above at 1080: a bolder stroke and open arm, a darker mark in each tile
+		params[&"chev_open"] = 0.4
+		params[&"chev_stroke"] = 0.11
+		params[&"chev_mul"] = Color(0.5, 0.4, 0.26)
 	elif k == Kind.SAG:
 		pass  # SR-P2: the slab that gives has no arrows, only the cracks and the dust of its sinking
 	else:

@@ -18,22 +18,33 @@ uniform float ripple_scale = 2.6;
 uniform float ripple_speed = 0.22;
 uniform float ripple_bend = 0.55;
 // the warm glints of the candles and the braziers on the ripples' crests: their colour and how much
-uniform vec3 glint_color : source_color = vec3(0.95, 0.7, 0.36);
-uniform float glint = 0.35;
+// (art review 2026-11-26: the crest glints read as embers, so they are now a pale cold gold and weaker; the gold comes
+// mostly from the sheen of the lights, spread wide)
+uniform vec3 glint_color : source_color = vec3(0.85, 0.72, 0.5);
+uniform float glint = 0.12;
+// the moss and dark silt under the water that replace the orange flecks: its colour, how much of the surface it covers
+uniform vec3 moss_color : source_color = vec3(0.2, 0.27, 0.13);
+uniform float moss = 0.35;
 // the warm light's reflection: where on the floor it lands (x, z), how far it reaches (m) and how strongly the
 // surface returns it (the water mirrors the gold where the light hits and stays blue-grey in the shade)
 uniform vec2 sheen_at = vec2(-2.0, 0.0);
 uniform float sheen_radius = 12.0;
-uniform float sheen = 0.1;
+uniform float sheen = 0.16;
 uniform float roughness = 0.14;
 // SL-01b, the sunken channel: the shadow the kerbs cast on the water (how dark, how far in from the bank, a share of
 // the half width) and the cold light the surface returns, as streaks stretched along the view's depth like the
 // reflections of upright things (their colour, how strongly, the camera's yaw in degrees)
 uniform float rim_shadow = 0.5;
 uniform float rim_width = 0.3;
-uniform vec3 reflect_color : source_color = vec3(0.45, 0.6, 0.72);
-uniform float reflect_amount = 0.3;
+// the reflected blue-grey (#536F7A, never brighter: the review caught a flat electric blue at some yaws)
+uniform vec3 reflect_color : source_color = vec3(0.33, 0.44, 0.48);
+uniform float reflect_amount = 0.42;
 uniform float view_yaw = 35.0;
+
+// the dodge islands' stream (GapFloor): a broken pale foam line along each bank, so it reads "not for walking, jump it"
+// (0 = none, the hall's wading stream has none)
+uniform float foam = 0.0;
+uniform vec3 foam_color : source_color = vec3(0.62, 0.66, 0.66);
 
 varying vec3 world;
 
@@ -68,6 +79,11 @@ void fragment() {
 	vec3 n = normalize(vec3(-gx * ripple_bend * 12.0, 1.0, -gz * ripple_bend * 12.0));
 	NORMAL = normalize((VIEW_MATRIX * vec4(n, 0.0)).xyz);
 	ALBEDO = mix(shallow, deep, smoothstep(0.0, 0.6, across));
+	float flecks = smoothstep(0.58, 0.8, noise(world.xz * 3.1 + 7.0) * 0.65 + noise(world.xz * 7.3) * 0.35);
+	ALBEDO = mix(ALBEDO, moss_color * 0.5, moss * flecks);
+	float foam_band = smoothstep(0.02, 0.07, across) * (1.0 - smoothstep(0.1, 0.2, across));
+	float foam_break = smoothstep(0.35, 0.65, noise(vec2(UV.x * 2.2 + TIME * 0.12, UV.y * 5.0)) * 0.7 + noise(world.xz * 5.0) * 0.3);
+	float foam_k = foam * foam_band * foam_break;
 	ALBEDO *= 1.0 - rim_shadow * (1.0 - smoothstep(0.0, rim_width, across));
 	float yaw = radians(view_yaw);
 	vec2 right = vec2(cos(yaw), -sin(yaw));
@@ -78,6 +94,8 @@ void fragment() {
 	SPECULAR = 0.35;
 	// a faint glint on the crests, strongest where the surface leans (it never glows on its own)
 	float lit = 1.0 - smoothstep(0.0, sheen_radius, distance(world.xz, sheen_at));
-	EMISSION = reflect_color * reflect_amount * streak * smoothstep(0.0, rim_width * 1.5, across) + glint_color * (glint * smoothstep(0.62, 0.9, h) * 0.25 + sheen * lit * (0.4 + 0.6 * h) * smoothstep(0.0, 0.5, across));
+	EMISSION = min(reflect_color * reflect_amount * streak * smoothstep(0.0, rim_width * 1.5, across), reflect_color * 0.5) + glint_color * (glint * smoothstep(0.7, 0.95, h) * 0.25 + sheen * lit * (0.4 + 0.6 * h) * smoothstep(0.0, 0.5, across));
+	ALBEDO = mix(ALBEDO, foam_color, foam_k);
+	EMISSION += foam_color * foam_k * 0.12;
 	ALPHA = alpha * edge;
 }
