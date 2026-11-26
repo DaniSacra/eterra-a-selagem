@@ -45,8 +45,11 @@ const SHOP_CANNOT := 0.3
 ## and the medallion).
 const CAP_SHARE := 0.85
 ## The frustum (m) and the pool's radius (m).
-const TOP_RADIUS := 0.6
-const FOOT_RADIUS := 1.25
+## PM-1 (2026-11-26 capture: a wide flat column): narrower, with softer sides and a lighter body; the pool carries the weight.
+const TOP_RADIUS := 0.4
+const FOOT_RADIUS := 0.85
+const SHAFT_BODY := 0.2
+const SHAFT_SIDE_SOFT := 3.4
 const HEIGHT := 18.0
 const POOL_RADIUS := 1.7
 const POOL_Y := 0.035
@@ -144,6 +147,8 @@ func _ready() -> void:
 	_shaft.scale = Vector3(1.0, HEIGHT, 1.0)
 	_shaft.position.y = HEIGHT * 0.5
 	_shaft.material_override = _material(SHAFT_SHADER, cap, gain)
+	(_shaft.material_override as ShaderMaterial).set_shader_parameter(&"body", SHAFT_BODY)
+	(_shaft.material_override as ShaderMaterial).set_shader_parameter(&"side_soft", SHAFT_SIDE_SOFT)
 	_shaft.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_shaft)
 	_pool = MeshInstance3D.new()

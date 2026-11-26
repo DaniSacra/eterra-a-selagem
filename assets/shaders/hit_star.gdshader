@@ -12,6 +12,8 @@ uniform float intensity = 3.0;
 uniform float rot = 0.0;
 // 0..1: how long the white-hot part lasts (a share of life)
 uniform float hot = 0.3;
+// PM-1: in the stylized look (art_style 1) the round white clap under the star is nearly gone (it read as a white disc over the target).
+global uniform float art_style;
 
 void vertex() {
 	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0], INV_VIEW_MATRIX[1], INV_VIEW_MATRIX[2], MODEL_MATRIX[3]);
@@ -28,7 +30,7 @@ void fragment() {
 	float heat = 1.0 - smoothstep(0.0, hot, life);
 	vec3 tint = mix(color.rgb / max(max(color.r, max(color.g, color.b)), 0.001), vec3(1.0, 0.97, 0.9), heat);
 	// a round clap of white light under the star while hot
-	float clap = exp(-dot(p, p) * 14.0) * heat;
+	float clap = exp(-dot(p, p) * 14.0) * heat * mix(1.0, 0.12, art_style);
 	vec3 light = (tint * s * fade + vec3(1.0, 0.95, 0.85) * clap * 0.9) * intensity;
 	if (max(light.r, max(light.g, light.b)) < 0.01) discard;
 	ALBEDO = light;
