@@ -323,3 +323,12 @@ arco da Videira, estandarte dos heróis, banca do Alquimista), reposicionadas.
   O guia `ult` (estação `tree`, texto `guide_ult`) entra no `_hub_guide` do `make_data.gd`. A frase de abertura `hub_open_ult` está em `HubGate.TEXT`.
 - Mudou em relação a antes: a Prata (15 de Prata não abre mais a Forja), Videira não abre mais com o primeiro guardião, Estandarte
   só com a primeira vitória (antes com o Vendedor). Quem já tinha apresentado fica como estava.
+
+## Revisão de arte 2026-11-26 (Portão e céu; environment-artist, sem captura ainda)
+- Portão (`HubBlockout._gate`, `HubScenery._gate_dressing`): os muros ao lado da abertura baixaram para `GATE_WALL_H` (3,2 m);
+  só a cabeça do arco (a abertura mais `GATE_HEAD_SIDE` de cada lado) sobe até `HubPlan.GATE_HEIGHT`, com capa própria. Colisão
+  e ponto de uso intactos. Luz do Portão dourada de Elun: folha e luzes por `light_portal(..., GATE_LIGHT_TINT)`, coluna
+  `GATE_LIGHT_COLOR`, poça `STATION_POOLS` do portal em dourado (nada de verde).
+- Céu: com a câmera Perto (pitch 30, fov 24) o fundo é o mar de nuvens e a faixa de montanhas a 160 m ou mais não aparecia.
+  `RIDGES` aproximadas (v 70, 110, 160) com a crista entre y 12 e 42, `SEA_Y` -30, `SEA_CLOUD_SCALE` 0,07 (nuvens que a
+  câmera distingue), cartão do céu mais baixo (gradiente se vê). Ajustar à vista se ainda sair chapado.

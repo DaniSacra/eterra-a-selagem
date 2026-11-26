@@ -358,7 +358,8 @@ func point(base: Vector3, width: float, height: float, yaw: float = 0.0, top := 
 
 ## A balustrade from a to b on the floor: chunky capped posts at both ends and every POST_GAP meters, a thick rail
 ## on top, a curb at the foot and bellied square balusters between each pair of posts. mat: its stone (none: stone()).
-func balustrade(a: Vector3, b: Vector3, end_posts := true, mat: Material = null) -> void:
+## low: the share of the usual height (posts and rail).
+func balustrade(a: Vector3, b: Vector3, end_posts := true, mat: Material = null, low := 1.0) -> void:
 	var length := Vector2(b.x - a.x, b.z - a.z).length()
 	if length < 0.3:
 		return
@@ -370,14 +371,15 @@ func balustrade(a: Vector3, b: Vector3, end_posts := true, mat: Material = null)
 		if not end_posts and (i == 0 or i == spans):
 			continue
 		var p := a.lerp(b, float(i) / spans)
-		post(p, yaw, POST.y, mat)
-	var shaft := RAIL_TOP - RAIL.x - CURB
+		post(p, yaw, POST.y * low, mat)
+	var rail_top := RAIL_TOP * low
+	var shaft := rail_top - RAIL.x - CURB
 	for i in spans:
 		var p0 := a.lerp(b, float(i) / spans)
 		var p1 := a.lerp(b, float(i + 1) / spans)
 		var mid := (p0 + p1) * 0.5
 		var span := p0.distance_to(p1) - POST.x
-		box(mid + Vector3(0, RAIL_TOP - RAIL.x * 0.5, 0), Vector3(span, RAIL.x, RAIL.y), yaw, mat)
+		box(mid + Vector3(0, rail_top - RAIL.x * 0.5, 0), Vector3(span, RAIL.x, RAIL.y), yaw, mat)
 		box(mid + Vector3(0, CURB * 0.5, 0), Vector3(span, CURB, RAIL.y + 0.1), yaw, mat)
 		for k in BALUSTERS:
 			var t := (k + 1.0) / (BALUSTERS + 1.0)

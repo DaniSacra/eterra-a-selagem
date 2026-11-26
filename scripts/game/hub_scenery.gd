@@ -77,6 +77,7 @@ const RAFTER_WOOD := Color(0.3, 0.19, 0.11)
 # ---------- the gate's frame and light ----------
 const GATE_FRAME := Vector3(2.4, 2.6, 6.2)  # how far west of the face, half the way's width, pillar height
 const GATE_LIGHT := Vector2(5.0, 16.0)
+const GATE_LIGHT_COLOR := Color(1.0, 0.78, 0.38)
 
 # ---------- the Ponto de Vigília and the future rooms ----------
 const VIGIL_FLAME := Vector3(-22.6, 0.0, -10.2)
@@ -108,21 +109,22 @@ const RIDGE_SHADER := preload("res://assets/shaders/hub_ridge.gdshader")
 ## Each ridge card: distance north of the plan's middle v, width, height, bottom y, colour near the crest, colour at its
 ## top, ridge base share and amplitude, the seed.
 const RIDGES: Array[Dictionary] = [
-	{&"v": 190.0, &"w": 700.0, &"h": 170.0, &"y": -80.0, &"low": Color(0.64, 0.72, 0.8), &"top": Color(0.78, 0.84, 0.9), &"base": 0.55, &"amp": 0.35, &"seed": 3.0},
-	{&"v": 130.0, &"w": 520.0, &"h": 150.0, &"y": -80.0, &"low": Color(0.46, 0.6, 0.62), &"top": Color(0.62, 0.74, 0.76), &"base": 0.5, &"amp": 0.32, &"seed": 11.0},
-	{&"v": 80.0, &"w": 360.0, &"h": 130.0, &"y": -70.0, &"low": Color(0.28, 0.42, 0.3), &"top": Color(0.44, 0.56, 0.44), &"base": 0.46, &"amp": 0.3, &"seed": 21.0},
+	{&"v": 160.0, &"w": 700.0, &"h": 170.0, &"y": -60.0, &"low": Color(0.5, 0.62, 0.74), &"top": Color(0.7, 0.8, 0.9), &"base": 0.6, &"amp": 0.3, &"seed": 3.0},
+	{&"v": 110.0, &"w": 520.0, &"h": 140.0, &"y": -60.0, &"low": Color(0.36, 0.52, 0.58), &"top": Color(0.56, 0.7, 0.74), &"base": 0.62, &"amp": 0.3, &"seed": 11.0},
+	{&"v": 70.0, &"w": 360.0, &"h": 120.0, &"y": -60.0, &"low": Color(0.22, 0.38, 0.28), &"top": Color(0.4, 0.55, 0.42), &"base": 0.6, &"amp": 0.3, &"seed": 21.0},
 ]
 const RIDGE_U := 14.0
 ## The sky (a standing card behind the ridges) and the sea of cloud under the floor (a flat plane), as gradients.
 const SKY_SHADER := preload("res://assets/shaders/hub_sky.gdshader")
 const SKY_TOP := Color(0.42, 0.62, 0.84)
 const SKY_HORIZON := Color(0.98, 0.88, 0.7)
-const SEA_Y := -45.0
+const SEA_Y := -30.0
 const SEA_SIZE := 900.0
 const SEA_FAR := Color(0.98, 0.9, 0.76)
-const SEA_NEAR := Color(0.6, 0.72, 0.84)
-const SEA_CLOUD := 0.5
-const SKY_CARD := Vector4(260.0, 900.0, 520.0, -120.0)  # v, width, height, bottom y
+const SEA_NEAR := Color(0.7, 0.78, 0.88)
+const SEA_CLOUD := 0.7
+const SEA_CLOUD_SCALE := 0.07  # waves of cloud the near camera can tell apart (a view is only tens of metres wide)
+const SKY_CARD := Vector4(260.0, 900.0, 320.0, -60.0)  # v, width, height, bottom y
 
 var look: HubLook
 var _rng := RandomNumberGenerator.new()
@@ -582,11 +584,13 @@ func _gate_dressing() -> void:
 	look.fm.block(_at(fu, GATE_FRAME.z + 0.3, mid), Vector3(1.1, 0.7, GATE_FRAME.y * 2.0 + 1.4), 0.0, stone, false)
 	look.fm.block(_at(fu, GATE_FRAME.z + 1.0, mid), Vector3(0.8, 0.4, GATE_FRAME.y * 2.0 + 0.4), 0.0, stone, false)
 	look._lion(_at(fu - 0.41, GATE_FRAME.z + 0.65, mid), Basis(Vector3.UP, -PI * 0.5), 0.8, HubLook.MEDALLION_GOLD)
-	look.fm.block(_at((g.x + g.z) * 0.5, HubPlan.GATE_HEIGHT, (g.y + g.w) * 0.5), Vector3(g.z - g.x + 0.5, 0.35, g.w - g.y + 0.5), 0.0, stone, false)
+	look.fm.block(_at((g.x + g.z) * 0.5, HubBlockout.GATE_WALL_H, (g.y + g.w) * 0.5), Vector3(g.z - g.x + 0.5, 0.35, g.w - g.y + 0.5), 0.0, stone, false)
+	var head := HubBlockout.GATE_W * 0.5 + HubBlockout.GATE_HEAD_SIDE
+	look.fm.block(_at((g.x + g.z) * 0.5, HubPlan.GATE_HEIGHT, mid), Vector3(g.z - g.x + 0.5, 0.35, head * 2.0 + 0.5), 0.0, stone, false)
 	_light_column(Vector3(face + 0.5, 0.0, mid))
 
 
-## A soft column of the portal's green-white light standing over the gate: a vertical card facing south, fading upward.
+## A soft column of Elun's warm gold light standing over the gate: a vertical card facing south, fading upward.
 func _light_column(p: Vector3) -> void:
 	var grad := Gradient.new()
 	grad.colors = PackedColorArray([Color(1, 1, 1, 0.0), Color(1, 1, 1, 0.4), Color(1, 1, 1, 0.0)])
@@ -602,7 +606,7 @@ func _light_column(p: Vector3) -> void:
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = Color(0.5, 1.0, 0.72)
+	mat.albedo_color = GATE_LIGHT_COLOR
 	mat.albedo_texture = tex
 	mat.no_depth_test = false
 	var mi := MeshInstance3D.new()
@@ -732,4 +736,5 @@ func _gradient_mat(top: Color, bottom: Color, vertical: float, cloud: float) -> 
 	mat.set_shader_parameter(&"bottom_color", bottom)
 	mat.set_shader_parameter(&"vertical", vertical)
 	mat.set_shader_parameter(&"cloud", cloud)
+	mat.set_shader_parameter(&"cloud_scale", SEA_CLOUD_SCALE)
 	return mat

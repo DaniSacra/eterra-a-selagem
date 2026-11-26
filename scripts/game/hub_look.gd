@@ -209,7 +209,7 @@ const STY_POOLS: Array[Array] = [
 	# V2 and PT-9: the Videira's vase and the heroes' standards
 	[HubPlan.VINE, Vector3(-7.0, 1.0, -2.7), Vector3(-8.8, 9.0, -7.2), 5.0, 28.0, 13.0, Color(0.9, 1.0, 0.62)],
 	[HubPlan.HEROES, Vector3(-1.0, 1.4, 21.1), Vector3(-2.8, 9.0, 16.7), 5.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
-	[HubPlan.PORTAL, Vector3(34.5, 0.0, -6.0), Vector3(26.5, 8.0, -6.0), 14.0, 38.0, 13.0, Color(0.36, 1.0, 0.58)],
+	[HubPlan.PORTAL, Vector3(34.5, 0.0, -6.0), Vector3(26.5, 8.0, -6.0), 14.0, 38.0, 13.0, Color(1.0, 0.78, 0.4)],
 ]
 ## P1-A2 of the cycle's art review: the portal's pool (the last row) green and wide enough to read at the top of the
 ## screen on arriving with the near camera. P2-A7: the floor's outer ring (past the stations, from the fountain at the

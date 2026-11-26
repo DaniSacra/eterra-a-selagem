@@ -62,7 +62,8 @@ const DOOR_DEPTH := 1.2
 const LANDING := Vector2(-16.0, -3.6)
 const LANDING_END := 20.5
 const WAY_IN := Vector2(-13.6, -9.6)
-const SOUTH_STONE := Vector2(-2.6, 15.3)
+## Review 2026-11-26: moved 3.6 m east (it stood in the middle of the screen over the arrival, hiding the way in).
+const SOUTH_STONE := Vector2(1.0, 15.3)
 ## The east standing stone and the pier with a fire bowl by the north-east corner (x, z).
 const EAST_STONE := Vector2(16.3, 2.1)
 const EAST_PIER := Vector2(HALF.x + 1.0, -14.8)
@@ -124,7 +125,7 @@ const ABYSS_LIGHT_Y := -12.0
 ## Width of the two standing stones (thick and blunt, as in the picture).
 const OBELISK_SOUTH := 2.2
 ## GR-24: the entrance stele 45% lower (it stood behind the HUD's buttons, a tenth of the frame; the collision circle is the same).
-const OBELISK_SOUTH_HEIGHT := 2.6
+const OBELISK_SOUTH_HEIGHT := 2.0
 const OBELISK_EAST := 2.3
 ## The floor in front of the doors, always a little wet (x, z rect).
 const WET := Rect2(5.0, -15.0, 9.5, 4.0)
@@ -1224,8 +1225,11 @@ func _west() -> void:
 ## damp, both under the warnings' priority), the bank's damp (dark wet stone, wider than the water) and moss, and the
 ## chunks of a rubble heap (how many to the square metre, their size range, how tall at most).
 const WATER_LINE: Array[Vector2] = [Vector2(-9.0, -11.0), Vector2(-6.0, -9.0), Vector2(-8.0, -5.0), Vector2(-10.0, -1.0),
-	Vector2(-9.0, 3.0), Vector2(-12.0, 8.0), Vector2(-11.0, 13.0)]
-const WATER_WIDTH := Vector2(1.15, 1.4)
+	Vector2(-9.0, 3.0), Vector2(-11.5, 7.5), Vector2(-13.2, 11.5), Vector2(-14.2, 13.4)]
+## Review 2026-11-26: a wide river as in the approved painting (2.4 to 3.3 m), running out to the west balustrade.
+const WATER_WIDTH := Vector2(2.4, 3.3)
+## The balustrades of the south edge stand this share of the usual height, so a paladin walking behind one stays seen.
+const SOUTH_RAIL_LOW := 0.7
 const WATER_POOLS: Array[Vector4] = [Vector4(-8.0, -9.0, 4.0, 2.5), Vector4(-11.0, 9.0, 2.6, 2.3)]
 const WATER_Y := 0.016
 ## SL-01b: where the kerbs of the canal are left open (shares of its length, from the north): the two pools' ends and a ford the paladin wades.
@@ -1383,13 +1387,13 @@ func _landing() -> void:
 
 func _south(stairs_down: bool) -> void:
 	var z := HALF.y - 0.1
-	var a := Vector3(SOUTH_STONE.x + 1.0, 0, z)
+	var a := Vector3(LANDING.y + 0.4, 0, z)
 	var b := Vector3(HALF.x, 0, z)
 	if not stairs_down:
-		m.balustrade(a, b, true, _near())
+		m.balustrade(a, b, true, _near(), SOUTH_RAIL_LOW)
 		return
-	m.balustrade(a, Vector3(SOUTH_GAP.x, 0, z), true, _near())
-	m.balustrade(Vector3(SOUTH_GAP.y, 0, z), b, true, _near())
+	m.balustrade(a, Vector3(SOUTH_GAP.x, 0, z), true, _near(), SOUTH_RAIL_LOW)
+	m.balustrade(Vector3(SOUTH_GAP.y, 0, z), b, true, _near(), SOUTH_RAIL_LOW)
 	_stairs_down(Vector3((SOUTH_GAP.x + SOUTH_GAP.y) * 0.5, 0, HALF.y), Vector2(0, 1), SOUTH_GAP.y - SOUTH_GAP.x)
 
 
