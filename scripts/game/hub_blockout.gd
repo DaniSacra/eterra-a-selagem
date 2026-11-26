@@ -25,8 +25,15 @@ const DOOR_WOOD := Color(0.2, 0.12, 0.07)
 const DOOR_IRON := Color(0.09, 0.09, 0.1)
 ## Hub refine round 1: an open door shows the warm light of the room inside (the art's doors are lit), and the future
 ## rooms' doors carry a gold padlock (the art's Area Futura).
-const DOOR_GLOW := Color(1.0, 0.66, 0.3)
-const DOOR_GLOW_ENERGY := 1.1
+const DOOR_GLOW := Color(1.0, 0.56, 0.22)
+const DOOR_GLOW_ENERGY := 0.95
+## Round 2: the doorway is dark inside with the warm light coming up from the foot (HubLook.lit_opening), the open
+## Videira's door is no door at all (its pergola shows through), and the future rooms' doors are stone arches with a
+## wooden leaf (a pointed panel) set into the wall.
+const DOOR_TOP := 0.06
+const ARCH_SPRING := 1.6
+const ARCH_RING := 0.38
+const ARCH_ARC := 0.62
 const LOCK_GOLD := Color(0.72, 0.55, 0.22)
 const LOCK_SIZE := Vector3(0.44, 0.38, 0.1)
 var _glow: StandardMaterial3D
@@ -114,6 +121,11 @@ func _door(id: StringName, closed: bool) -> void:
 	var stone := look.stone()
 	var along := Vector2(1.0, 0.0) if across_u else Vector2(0.0, 1.0)
 	var c := Vector2(d.x, d.y)
+	if id == HubPlan.VINE and not closed:
+		return
+	if id == HubPlan.FUTURE_A or id == HubPlan.FUTURE_B:
+		_arched_door(c, long_half * 2.0)
+		return
 	for sd: float in [-1.0, 1.0]:
 		var p := c + along * sd * (long_half + JAMB.x * 0.5)
 		look.fm.block(HubLook.at(p.x, 0.0, p.y), Vector3(JAMB.x if across_u else JAMB.z, h + JAMB.y, JAMB.z if across_u else JAMB.x), 0.0, stone, false)
@@ -130,17 +142,31 @@ func _door(id: StringName, closed: bool) -> void:
 			_padlock(c, h)
 	else:
 		var gap := Vector3(long_half * 2.0, h, 0.04) if across_u else Vector3(0.04, h, long_half * 2.0)
-		look.fm.block(HubLook.at(c.x, 0.0, c.y), gap, 0.0, _door_glow(), false)
+		look._bar(HubLook.at(c.x, h * 0.5, c.y), gap, _door_glow())
 
 
 func _door_glow() -> StandardMaterial3D:
 	if _glow == null:
-		_glow = StandardMaterial3D.new()
-		_glow.albedo_color = DOOR_GLOW * 0.4
-		_glow.emission_enabled = true
-		_glow.emission = DOOR_GLOW
-		_glow.emission_energy_multiplier = DOOR_GLOW_ENERGY
+		_glow = HubLook.lit_opening(DOOR_GLOW, DOOR_GLOW_ENERGY, DOOR_TOP)
 	return _glow
+
+
+## A future room's door (closed): a ring of stone voussoirs round a pointed wooden leaf with iron straps, set into the wall
+## facing the camera (south), and the gold padlock on it.
+func _arched_door(c: Vector2, span: float) -> void:
+	var h := HubPlan.DOOR_HEIGHT
+	var foot := HubLook.at(c.x, 0.0, c.y - 0.1)
+	look.fm.voussoir_arch(foot, Vector2(0.0, 1.0), span, ARCH_SPRING, ARCH_RING, 0.5, look.stone(), ARCH_ARC)
+	var leaf := MeshInstance3D.new()
+	leaf.mesh = HubFacades.ogive_mesh(span, ARCH_SPRING, ARCH_ARC, [], 8)
+	leaf.material_override = look._plain(DOOR_WOOD, 0.85)
+	leaf.position = foot
+	look.frame.add_child(leaf)
+	for k in 2:
+		look._bar(foot + Vector3(0, ARCH_SPRING * (0.4 + 0.45 * k), 0.03), Vector3(span * 0.96, 0.1, 0.04), look._plain(DOOR_IRON, 0.6))
+	for sd: float in [-1.0, 1.0]:
+		look.fm.block(HubLook.at(c.x + sd * (span * 0.5 + ARCH_RING * 0.5), 0.0, c.y - 0.1), Vector3(ARCH_RING, ARCH_SPRING + 0.1, 0.5), 0.0, look.stone(), false)
+	_padlock(c, h)
 
 
 ## A gold padlock on the leaf's south face: a body and a shackle (two posts and a bar), seen from the camera.

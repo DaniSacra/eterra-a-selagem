@@ -159,22 +159,28 @@ const SCROLL := Color(0.64, 0.57, 0.44)
 # ---------- air and light ----------
 ## SV-R: the air under the far ridges (HubScenery draws them) and the cliffs of the drop: pale blue haze, warm grey stone
 ## (palette 04-paleta-e-iluminacao.md: water and distant mist #527F8C, shaded stone #8F8775), never a dark panel.
-const MIST := Color(0.44, 0.33, 0.46)
+const MIST := Color(0.15, 0.1, 0.27)
 const CLIFF := {&"stone_color": Color(0.3, 0.28, 0.25), &"edge_color": Color(0.5, 0.46, 0.4), &"mist_color": MIST,
 	&"glow_color": Color(0.5, 0.6, 0.7)}
 ## Hub refine round 1: the platform is the top of a mountain at dusk. The cliffs are warm layered rock (hub_cliff.gdshader)
 ## going into the lilac mist of the abyss planes (their opaque floor is about this share of MIST).
 const CLIFF_SHADER := preload("res://assets/shaders/hub_cliff.gdshader")
-const CLIFF_ROCK_A := Color(0.56, 0.45, 0.35)
-const CLIFF_ROCK_B := Color(0.38, 0.32, 0.31)
-const CLIFF_MOSS := Color(0.3, 0.42, 0.17)
-const CLIFF_MIST_SHARE := 0.5
-const CLIFF_FADE := Vector2(2.0, 19.0)
+const CLIFF_ROCK_A := Color(0.46, 0.37, 0.32)
+const CLIFF_ROCK_B := Color(0.27, 0.24, 0.3)
+const CLIFF_MOSS := Color(0.2, 0.32, 0.15)
+const CLIFF_MIST_SHARE := 0.55
+const CLIFF_FADE := Vector2(1.0, 15.0)
+## Round 2: the face's cool shadow (violet, the rock away from the light) and how much it darkens going down.
+const CLIFF_SHADE := Color(0.2, 0.17, 0.36)
+const CLIFF_DEEP_DARK := 0.65
 ## The hub's air (spec 4.1: lighter and warmer than any room, the cold in the sky and the vista) and its stylized look.
-const DUSK_GOLD := Color(1.0, 0.8, 0.55)
+const DUSK_GOLD := Color(1.0, 0.76, 0.56)
+## Round 2: the air is dusk, not noon: a cold violet ambient and a dark indigo fog; the warm lights are what shine.
+const DUSK_FOG := Color(0.17, 0.12, 0.3)
+const DUSK_AMBIENT := Color(0.6, 0.58, 0.82)
 const AIR := {
-	&"sky": Color(0.5, 0.42, 0.52), &"fog": Color(0.62, 0.5, 0.52), &"fog_depth": Vector2(90.0, 220.0),
-	&"ambient": Color(0.86, 0.8, 0.8), &"ambient_gain": 1.4, &"moon": DUSK_GOLD, &"moon_energy": 1.1,
+	&"sky": Color(0.3, 0.24, 0.42), &"fog": DUSK_FOG, &"fog_depth": Vector2(110.0, 240.0),
+	&"ambient": DUSK_AMBIENT, &"ambient_gain": 1.0, &"moon": DUSK_GOLD, &"moon_energy": 1.1,
 	&"moon_shadow": true,
 }
 ## The classic look's floor (F7): the warm limestone of the stylized one, so the square is not the hall's rose slab.
@@ -185,14 +191,14 @@ const CLASSIC_FLOOR := {
 }
 ## C1V N3 (docs/art/identidade_c1v.md 2.1, the hall's recipe, only in the stylized look): the shadow band's tint, the room's own hue
 ## (docs/art/plano_pintado_a_mao.md 5); the vignette is the hall's, the hub's softer.
-const STY_SHADOW_GLOW := Color(0.15, 0.40, 0.55)
+const STY_SHADOW_GLOW := Color(0.2, 0.22, 0.58)
 const STY_VIGNETTE := Vector3(0.5, 0.45, 1.3)
 const STYLE := {
-	&"stone": Color(0.68, 0.62, 0.52), &"floor_stone": Color(0.62, 0.57, 0.48), &"shadow": Color(0.78, 0.86, 0.92),
+	&"stone": Color(0.56, 0.5, 0.48), &"floor_stone": Color(0.5, 0.46, 0.43), &"shadow": Color(0.62, 0.66, 0.92),
 	&"joint_cold": Color(0.86, 0.93, 0.98), &"slab_paint": Vector2(0.82, 1.18), &"slab_hue": 6.0, &"olive_share": 0.03,
 	&"edge_value": 1.0, &"pool_saturation": 0.8, &"metal": true,
 	&"fire": {&"candle_range": 3.5, &"candle_gain": 1.2, &"bowl_range": 4.2, &"bowl_gain": 0.95},
-	&"air": {&"sky": Color(0.5, 0.42, 0.52), &"fog": Color(0.62, 0.5, 0.52), &"ambient": Color(0.86, 0.8, 0.8),
+	&"air": {&"sky": Color(0.3, 0.24, 0.42), &"fog": DUSK_FOG, &"ambient": DUSK_AMBIENT,
 		&"ambient_gain": STY_AMBIENT_GAIN, &"moon": DUSK_GOLD, &"moon_energy": STY_MOON, &"moon_shadow": true},
 	&"shadow_glow": STY_SHADOW_GLOW, &"vignette": STY_VIGNETTE,
 }
@@ -206,8 +212,8 @@ const STYLE := {
 ## glow reads the more for it on arriving, and a pale green pool at the foot of its flight (the top of the screen on
 ## arriving, where the camera holds the portal itself out of the frame) points the way. Each pool: station, aim (u, height, v), from (u, height, v), energy, cone
 ## (degrees), reach, colour.
-const STY_AMBIENT_GAIN := 0.98
-const STY_MOON := 1.05
+const STY_AMBIENT_GAIN := 0.62
+const STY_MOON := 0.85
 const STY_KEY_SHARE := 0.8
 const STY_FORGE_GAIN := 1.5
 const STY_POOLS: Array[Array] = [
@@ -239,7 +245,7 @@ const STY_COMPAT_MOON := 0.3
 const STY_COMPAT_KEY := 0.5
 ## A soft fill over the square (no shadow), so the floor reads as the lightest of the game (spec 4.2).
 const KEY := Color(1.0, 0.97, 0.92)
-const KEY_ENERGY := 0.75
+const KEY_ENERGY := 0.4
 const LION_SHADER := preload("res://assets/shaders/altar_lion.gdshader")
 const PAGE_SHADER := preload("res://assets/shaders/hub_page.gdshader")
 const CANOPY_SHADER := preload("res://assets/shaders/canopy.gdshader")
@@ -310,8 +316,8 @@ func cliff_look() -> Dictionary:
 
 ## The buildings' wall: warm cream limestone ashlar that keeps its own colour in the stylized look (the art's calcário e
 ## marfim, 04-paleta-e-iluminacao.md): the room's grey-blue ashlar read as a brick box.
-const WALL_A := Color(0.62, 0.53, 0.41)
-const WALL_B := Color(0.8, 0.7, 0.55)
+const WALL_A := Color(0.5, 0.42, 0.35)
+const WALL_B := Color(0.68, 0.58, 0.47)
 var _wall_mat: ShaderMaterial
 
 
@@ -333,6 +339,8 @@ func cliff_material() -> Material:
 	mat.set_shader_parameter(&"moss_color", CLIFF_MOSS)
 	mat.set_shader_parameter(&"mist_color", MIST * CLIFF_MIST_SHARE)
 	mat.set_shader_parameter(&"fade", CLIFF_FADE)
+	mat.set_shader_parameter(&"shade_color", CLIFF_SHADE)
+	mat.set_shader_parameter(&"deep_dark", CLIFF_DEEP_DARK)
 	return mat
 
 
@@ -865,6 +873,28 @@ func _alchemist(c: Vector2, o: ArenaObstacle) -> void:
 
 
 ## An unshaded flame-like material of colour c (a lamp's small flame; under the glow).
+## Round 2: warm light from below, not a flat yellow pane: the emission runs from `top` (a dim ember at the head of the
+## opening) to the full colour at the foot (a vertical gradient on a box's side faces, UV y 0 at the top).
+static func lit_opening(color: Color, energy: float, top := 0.12) -> StandardMaterial3D:
+	var grad := Gradient.new()
+	grad.colors = PackedColorArray([Color(top, top * 0.6, top * 0.4), Color(1, 1, 1)])
+	grad.offsets = PackedFloat32Array([0.0, 1.0])
+	var tex := GradientTexture2D.new()
+	tex.gradient = grad
+	tex.fill_from = Vector2(0.5, 0.0)
+	tex.fill_to = Vector2(0.5, 1.0)
+	tex.width = 4
+	tex.height = 64
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color * 0.15
+	mat.emission_enabled = true
+	mat.emission = color
+	mat.emission_texture = tex
+	mat.emission_energy_multiplier = energy
+	mat.roughness = 0.5
+	return mat
+
+
 func _glow_mat(c: Color) -> StandardMaterial3D:
 	var key := [c, -1.0]
 	if not _plain_mats.has(key):
