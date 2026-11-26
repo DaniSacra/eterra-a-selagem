@@ -40,10 +40,10 @@ const COMET_UP := 8.0
 const COMET_SIDE := 7.0
 const COMET_END := 0.9
 const COMET_EASE := 1.4
-const HEAD_SIZE := 1.8
+const HEAD_SIZE := 1.0
 const HEAD_LIGHT := 1.6
 const TAIL_COUNT := 14
-const TAIL_STEP := 0.03
+const TAIL_STEP := 0.045
 const TAIL_SIZE := 1.1
 const TAIL_LIGHT := 0.75
 ## The landing: the screen's flash (alpha at most), the floor ring's radius (m) and height, the light that stays round

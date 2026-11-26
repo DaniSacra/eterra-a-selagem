@@ -11,9 +11,9 @@ const SEED := 3109
 ## The decals' height over the slabs (above the rugs' and the trails', under the warnings).
 const Y := 0.01
 ## The cracks: how many, their length (m) and width, how far each leg runs, the colour.
-const CRACKS := 7
+const CRACKS := 4
 const CRACK_LENGTH := Vector2(2.4, 4.8)
-const CRACK_WIDTH := 0.07
+const CRACK_WIDTH := 0.13
 const CRACK_LEG := Vector2(0.4, 0.9)
 const CRACK_COLOR := Color(0.015, 0.016, 0.022)
 ## The dust: smudges (how many, their width m, length m), the colour of the dirt.
