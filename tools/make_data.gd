@@ -995,14 +995,14 @@ func _v1_boons() -> void:
 	_v(&"sombra_revelada", F.MARCA, 22, S.NONE, [_vm(&"cel_echo_marked_pct", 0.2, 0.08, true), _vm(&"cel_bleed_crit", 0.25)], null, [], ["mark", "echo"])
 	_v(&"ressonancia", F.MARCA, 22, S.NONE, [_vm(&"cel_echo_cd_cut", 0.1)], null, [], ["echo"])
 	# Zerael (Peste, angel id zerael): Veneno. Provisional icon 12 (the steam's clouds) until the 18 icons are painted.
-	_v(&"golpe_peste", F.PESTE, 12, S.ATTACK, [_vm(&"cel_poison_dps", 0.8, 0.3, true), _vm(&"cel_poison", 1)], null, ["poison"])
-	_v(&"pesado_peste", F.PESTE, 12, S.SPECIAL, [_vm(&"cel_poison_dps", 1.2, 0.4, true), _vm(&"cel_poison", 3)], null, ["poison"])
+	_v(&"golpe_peste", F.PESTE, 12, S.ATTACK, [_vm(&"cel_poison_dps", 0.6, 0.22, true), _vm(&"cel_poison", 1)], null, ["poison"])
+	_v(&"pesado_peste", F.PESTE, 12, S.SPECIAL, [_vm(&"cel_poison_dps", 0.9, 0.3, true), _vm(&"cel_poison", 3)], null, ["poison"])
 	_v(&"circulo_peste", F.PESTE, 12, S.CAST, [], _vs(K.CONSECRATE, {"trigger": T.SHOUT, "damage": [0.0], "radius": [2.5], "duration": [4.0],
 		"gap": [3.0], "status": &"poison", "status_power": [1.0], "status_gap": 1.0}), ["poison"])
 	_v(&"passo_peste", F.PESTE, 12, S.DASH, [_vm(&"dodge_plague_dps", 1.0, 0.5, true)], null, ["poison"])
 	_v(&"epidemia_celestial", F.PESTE, 12, S.ULT, [], _vs(K.NOVA, {"trigger": T.ULT, "damage": [24, 36, 52], "radius": [7.0],
 		"status": &"poison", "status_power": [3.0]}), ["poison"])
-	_v(&"saturacao", F.PESTE, 12, S.NONE, [_vm(&"cel_sat_dmg", 12, 6, true)], null, [], ["poison"])
+	_v(&"saturacao", F.PESTE, 12, S.NONE, [_vm(&"cel_sat_dmg", 9, 4.5, true)], null, [], ["poison"])
 	_v(&"peste_persistente", F.PESTE, 12, S.NONE, [_vm(&"cel_poison_time_pct", 0.3, 0.1), _vm(&"cel_poison_cold", 1)], null, [], ["poison"])
 	_v(&"deterioracao", F.PESTE, 12, S.NONE, [_vm(&"cel_poison_grow", 0.06, 0.03)], null, [], ["poison"])
 	_v(&"contagio", F.PESTE, 12, S.NONE, [_vm(&"cel_poison_spread", 0.5, 0.1)], null, [], ["poison"])
