@@ -1,29 +1,72 @@
 # Backlog de A Selagem
 
-## PACOTES 2026-11-26 (3 zips do ChatGPT, LER PRIMEIRO) — esperando o Daniel decidir os conflitos
-Textos em `docs/design/packs_2026-11-26/` (`herois_v1`, `p0_bencaos_v2`, `vfx`); imagens do VFX só locais em `docs/art/ref/vfx_2026-11-26/`.
-Os três mandam "não fazer push"; vale a regra do Daniel (sempre commit e push).
+## Backlog priorizado (2026-11-26 noite): tudo o que está aberto, numa lista só
+Junta o que ficou aberto nas rodadas até o exe `abcc4c89` (seções abaixo, revisões `qa_2026-11-26b.md` e `ART_REVIEW_2026-11-26b.md`)
+com os 3 pacotes do ChatGPT de 2026-11-26 (textos em `docs/design/packs_2026-11-26/`: `vfx` = PK-1, `herois_v1` = PK-2,
+`p0_bencaos_v2` = PK-3; imagens do VFX só locais em `docs/art/ref/vfx_2026-11-26/`). Os pacotes mandam "não fazer push":
+vale a regra do Daniel (sempre commit e push). As seções abaixo ficam como histórico e detalhe.
 
-| # | Pacote | O que pede | Tamanho | Conflita com |
-|---|---|---|---|---|
-| PK-1 | **VFX direção artística** (`vfx`) | Fase A auditoria do HEAD com capturas (antecipação, contato, dissipação); Fase B P0 de leitura (RewardShaft ligado, `contact` sem cruz branca, traço branco vertical, `glint` sobre o herói, lascas acima da cabeça, flash de Morvath); Fase C 6 assinaturas "tinta em movimento" (Emeth/combo, especial e Corte do Juízo, Maga 3 elementos, 7 famílias com forma própria e não só cor, mortos e Morvath, coleta); só VFX, nada de gameplay, sala ou câmera | grande, mas fatiável | nada; só o especial (EF-02) espera a decisão dos controles |
-| PK-2 | **Heróis V1 redesign** (`herois_v1`) | Controles novos: esquerdo toque = Combo, esquerdo segurar = Golpe Esmagador (75, 12 Mana), direito toque = Corte Circular 360° (35, 8), direito segurar = Lança da Emeth (o golpe carregado de hoje), Shift Supremo, Espaço esquiva, E só interação; **Q e E deixam de ser combate (Brado e Investida saem)**. Guerreiro 40 HP / 30 Mana, sem regen, passiva Ritmo de Batalha; 12 Dons novos (Combo, Ímpeto, Domínio). Maga volta: 30 HP / 50 Mana, regen 2/s, Centelha/Arco/Estilhaço/Geada, 3 reações, 12 Dons. Um Supremo por arma | muito grande | PK-3 (controles), E6, decisão 2026-11-21 (Brado no E, interagir no F), Maga estacionada, D-64 (pacote chama de "Punho de Elun") |
-| PK-3 | **P0 Guerreiro + Bênçãos V2** (`p0_bencaos_v2`) | Regras V2 (tipos de dano, condições, reações com orçamento e sem recursão, medidor de frio/impacto em chefes); catálogo 9 anjos x 9 = 81 (novos: **Zerael, Peste** e **Baraqel, Trovão**); 12 arquétipos de teste; Guerreiro: E6 em protótipo (A giro / B afastar, recomenda B), Brado reavaliado, **preserva Q Brado e E Investida** | muito grande | PK-2 (controles e slots de Bênção), cânone (nomes de anjos novos) |
+### 1. Bugs
+| id | o quê | origem | dono |
+|---|---|---|---|
+| BG-1 | Efeitos a confirmar no jogo de hoje e corrigir só se ainda acontecem: facho de recompensa (`RewardShaft`) ligado à sala vencida, loja e fonte; contato com miolo branco e pontas em cruz; traço branco vertical sobre a vítima; `glint` cobrindo o herói; lascas acesas acima da cabeça; clarão de Morvath perdendo o violeta; onda do especial acertando em cruz de 4 pontas; Círculo com disco branco chapado; preparo do Feiticeiro acima do teto | PK-1 fase B | technical-artist, art-director confere |
+| BG-2 | Bolinha escura ao lado do medalhão da Bênção; na Provação os dois medalhões se encostam e o título aparece duas vezes | sobras SW fase 1 | ui-ux-designer |
+| BG-3 | Retângulo (`Rect2`) negativo na Maga | PK-3 testes | gameplay-engineer |
+| BG-4 | `--smoke` ignora `--hub`: o robô não testa o Santuário | QA 26b | qa-performance |
 
-Conflitos que só o Daniel resolve (recomendações do Game Director entre parênteses):
-- **C-1 Controles:** PK-2 (sem Q/E, toque e segurar) ou PK-3 (Q Brado, E Investida, E6 A/B)? (**PK-2**: resolve a E6 sozinho, porque o Corte Circular é o giro com afastamento; tira o Brado de 1% do dano; menos botões ajuda as crianças. Os slots das Bênçãos V2 viram Ataque, Ataque Potente, Poder, Especial, Esquiva, Supremo.)
-- **C-2 Interação:** PK-2 põe no E; hoje é F (2026-11-21). (Manter no F se o E deixar de ser combate? Tanto faz; seguir PK-2, E.)
-- **C-3 Maga:** PK-2 retoma a Maga; PK-3 diz não mexer. (Primeiro o Guerreiro e as Bênçãos V2; a Maga em lote próprio depois.)
-- **C-4 Supremos:** hoje o Guerreiro tem dois (`00_cleave`, `01_vortex`); os pacotes pedem um só, Corte do Juízo. (Seguir: Voragem fica guardada.)
-- **C-5 Cânone:** Zerael e Baraqel são nomes novos de anjo; Baraqel (Baraqiel) é um dos Vigilantes caídos no livro de Enoque. (Confirmar com o Daniel ou trocar o nome.) "Punho de Elun" não aparece no jogo (D-64).
-- **C-6 Ordem:** o Daniel ainda não testou o exe `abcc4c89`. (Testar antes de mexer nos controles.)
+### 2. Erros e dívidas técnicas
+| id | o quê | dono |
+|---|---|---|
+| DT-1 | Shaders sem uso: `dome_film`, `dome_clock`, `fury_ember`, `dark_water_matte` (apagar depois de conferir) | technical-artist |
+| DT-2 | O Guerreiro ainda referencia duas ultimates (`00_cleave`, `01_vortex`); a decisão de 2026-11-24 é Corte do Juízo único, Voragem guardada (conferir se a seleção já sumiu e limpar o dado) | gameplay-engineer |
+| DT-3 | CSV das Bênçãos desatualizado (fonte é `make_data.gd`); regerar do dado | balance-designer |
+| DT-4 | Custo por golpe com 150+ inimigos ainda 25 a 35 ms no `--stress=300` | qa-performance |
+| DT-5 | Morvath assado acima de 60 MB (TA-07), medalhões acima de 512 px (TA-08), `disk_report.sh` (TA-02), `docs/steam-ia.md` em dia (TA-12) | technical-artist |
 
-Ordem proposta, cada uma com exe:
-1. **L1 VFX P0** (PK-1 fases A e B + assinatura 1 combo/contato + 6 coleta): independe das decisões; technical-artist, art-director revisa.
-2. **L2 Guerreiro V1** (PK-2 Guerreiro + controles + HUD + Antessala + migração de save dos Dons), depois da C-1.
-3. **L3 Bênçãos V2, parte 1** (PK-3 regras V2 + remapeamento de slots + Zerael e Baraqel, depois da C-5) e balanceamento com 12 sementes.
-4. **L4 VFX famílias** (PK-1 assinatura 4, as 9 famílias) e especial/Supremo (assinaturas 2 e 5).
-5. **L5 Maga V1** (PK-2 Maga + assinatura 3).
+### 3. Quickwins (horas)
+| id | o quê | dono |
+|---|---|---|
+| QW-1 | Números de dano empilhados (`fx.gd`) | technical-artist |
+| QW-2 | Capitão chama ajudantes na pose de andar (falta pose de chamado) | gameplay-engineer |
+| QW-3 | Aviso da pedra que cai (`DropFloor`) chapado; xadrez claro das Runas; torres de ruína chapadas da ponte | environment-artist |
+| QW-4 | Faixa de água e musgo da sala com brilho forte que compete com os avisos no chão | environment-artist |
+| QW-5 | Linha de objetivo no Santuário: ligar ou apagar as chaves | ui-ux-designer |
+| QW-6 | Dicas longas na linha de objetivo em 720p | ui-ux-designer |
+| QW-7 | Passos Leves (Galael) talvez fraco: medir fora do robô | balance-designer |
+
+### 4. Pequenas melhorias (até 1 dia)
+| id | o quê | dono |
+|---|---|---|
+| PM-1 | **VFX, auditoria e primeira amostra** (PK-1 fases A, B e assinaturas 1 e 6): capturas antecipação, contato e dissipação no HEAD; combo e contato da Emeth em pincelada (sem cruz, núcleo escuro, borda marfim-menta); coleta com facho suave, poça e retirada no pickup. Só VFX, nada de gameplay | technical-artist, art-director, combat-feel-director confere sincronia |
+| PM-2 | Santuário, o que falta da revisão 26b: fundo de falésias e montanhas no lugar do azul liso, hera só encostada em parede, nicho em arco atrás do fogo da Vigília, folhagem menos preta, Portão legível de lado, céu | environment-artist |
+| PM-3 | Fendas: o herói fica 77% do tempo no leste (ouro e quebráveis nos cantos) | room-designer |
+| PM-4 | Até 4 fontes por caminho: conferir a cura | balance-designer |
+| PM-5 | Estados das Bênçãos aplicam mesmo quando a guarda reduz o golpe (PK-3 propõe: só golpe que causa dano) | decisão do Daniel, depois gameplay-engineer |
+
+### 5. Grandes projetos (cada um um lote com exe)
+| id | o quê | depende de | donos |
+|---|---|---|---|
+| GP-1 | **Guerreiro V1 e controles novos** (PK-2): esquerdo toque Combo, segurar Golpe Esmagador; direito toque Corte Circular 360°, segurar Lança da Emeth (o golpe carregado de hoje); Shift Supremo; E só interação; Brado e Investida saem; 40 de vida e 30 de Magia, passiva Ritmo de Batalha, 12 Dons novos com migração de save; HUD, Antessala e dicas novas. Resolve a E6 e o Brado de 1% | C-1 | hero-designer, gameplay-engineer, ui-ux-designer |
+| GP-2 | **Bênçãos V2** (PK-3): regras de dano, condições e reações com orçamento e sem recursão; medidor de frio e impacto em chefes; 9 anjos x 9 = 81, dois novos (Peste e Trovão); slots remapeados para os botões do GP-1; 12 arquétipos medidos em 12 sementes | GP-1 (slots), C-5 | gameplay-engineer, balance-designer |
+| GP-3 | **VFX "tinta em movimento"** (PK-1 assinaturas 2 a 5): especial e Corte do Juízo, famílias dos anjos com forma própria, mortos e Morvath, Maga | PM-1 aprovada; especial depois do GP-1 | technical-artist, art-director |
+| GP-4 | **Salas 03 a 14** (E7), uma por pacote do ChatGPT | pacotes do Daniel | environment-artist, room-designer |
+| GP-5 | **Maga V1** (PK-2): 30 de vida, 50 de Magia, regeneração, Centelha, Arco Voltaico, Estilhaço, Geada, 3 reações, 12 Dons | C-3, depois do GP-2 | hero-designer, gameplay-engineer |
+| GP-6 | Modelos Meshy (Cavaleiro, Ancião, armadura do Guerreiro), retrato do herói no HUD | autorização de créditos | technical-artist |
+| GP-7 | Salas maiores e acabamento por arena (lista (C) da rodada 2026-11-25), heróis novos (Ladina, Paladino) | depois | room-designer, hero-designer |
+
+### 6. Decisões do Daniel (recomendação do Game Director entre parênteses)
+- **C-1 Controles:** PK-2 (sem Q e E, toque e segurar) ou PK-3 (mantém Q Brado e E Investida, E6 em (a)/(b))? (**PK-2**: o Corte Circular já é a opção (b), tira o Brado fraco e tem menos botões para as crianças.)
+- **C-2 Interação** no E (PK-2) em vez do F de hoje. (Seguir o PK-2 se o C-1 for PK-2.)
+- **C-3 Maga:** PK-2 retoma, PK-3 diz não mexer. (Depois do Guerreiro e das Bênçãos V2.)
+- **C-4 Um Supremo por arma** no Guerreiro (Corte do Juízo). (Sim, já decidido em 2026-11-24; ver DT-2.)
+- **C-5 Cânone:** anjos novos Zerael e Baraqel. Baraqel (Baraqiel) é um dos Vigilantes caídos do livro de Enoque. (Trocar o nome ou confirmar.) "Punho de Elun" não aparece no jogo (D-64).
+- **C-6 Testar o exe `abcc4c89`** antes de mexer nos controles.
+- Seguem de antes: textos a aprovar (Antessala, Espólios, objetivo, "De outro anjo: {f}"), música nova do Santuário (3 candidatas em Downloads), D-O8, Meshy, estados com guarda (PM-5).
+
+### Ordem recomendada
+1. BG-1 a BG-4, DT-1 a DT-3 e QW-1 a QW-7 num lote só, junto com a PM-1 (não dependem de decisão). Exe.
+2. PM-2 a PM-4. Exe.
+3. GP-1 (depois do C-1 e do teste do C-6), GP-2, GP-3, GP-5, nessa ordem, um exe por projeto. GP-4 quando chegarem pacotes.
 
 ## ENTREGAS (2026-11-25 noite, LER PRIMEIRO na conversa nova)
 
