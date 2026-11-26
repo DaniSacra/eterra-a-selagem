@@ -70,6 +70,13 @@ const FALL_SHADER := preload("res://assets/shaders/waterfall.gdshader")
 const FALLS: Array[Vector4] = [Vector4(16.4, -15.7, 2.6, 15.0), Vector4(22.0, -15.7, 2.6, 16.0), Vector4(28.1, -13.6, 2.4, 14.0),
 	Vector4(35.5, -12.2, 2.6, 17.0)]
 const FALL_TURN := 0.0
+## Round 3: the falls are white-blue and thin out to nothing in the mist before the foot (FALL_VANISH: the share of the drop).
+const FALL_COLOR := Color(0.82, 0.93, 1.0)
+const FALL_VANISH := 0.4
+const EXTRA_FALLS := 3
+const EXTRA_FALL_APART := 9.0
+const EXTRA_FALL_WIDTH := Vector2(1.5, 2.2)
+const EXTRA_FALL_DROP := Vector2(16.0, 21.0)
 const FALL_MIST := Color(0.5, 0.46, 0.66)
 ## Balustrades along the edges that look over the drop (a, b in u, v), inset from the floor's edge.
 const RAILS: Array[Vector4] = [
@@ -83,6 +90,19 @@ const PERGOLA_HEIGHT := 2.9
 const PERGOLA_COLUMNS := 3
 const RAFTER := Vector2(0.9, 0.12)  # every, thickness
 const RAFTER_WOOD := Color(0.3, 0.19, 0.11)
+## Round 3: the pergola's roof closed in vine leaves (crown width and height; a leaf crown every PERGOLA_LEAF_EVERY m, the south
+## half thinner by up to PERGOLA_GAP so the fountain under it is seen), and grape clusters hanging from the beams.
+const PERGOLA_LEAF := Vector2(2.0, 0.9)
+const PERGOLA_LEAF_EVERY := 1.05
+const PERGOLA_GAP := 0.55
+const GRAPE_A := Color(0.2, 0.06, 0.3)
+const GRAPE_B := Color(0.46, 0.2, 0.56)
+const GRAPE_PER_RAFTER := 3
+const GRAPE_HANG := Vector2(0.55, 1.0)
+## The fountain's clear water (the basin's own, brighter than the hub's pools).
+const FOUNTAIN_DEEP := Color(0.34, 0.62, 0.7)
+const FOUNTAIN_SHALLOW := Color(0.62, 0.9, 0.94)
+const FOUNTAIN_SPARKLE := 0.4
 
 # ---------- the gate's frame and light ----------
 const GATE_FRAME := Vector3(2.4, 2.6, 6.2)  # how far west of the face, half the way's width, pillar height
@@ -91,11 +111,24 @@ const GATE_LIGHT_COLOR := Color(1.0, 0.78, 0.38)
 
 # ---------- the Ponto de Vigília and the future rooms ----------
 const VIGIL_FLAME := Vector3(-22.6, 0.0, -10.2)
+## Round 3: the Vigilia's mass is a raised garden bed (a soil bed on top inside a balustrade, flowers, two cypresses,
+## wisteria down its faces) with a low niche of voussoirs in its south face holding a standard, and the fire's dais is
+## cream stone (the bowl reads as the arrival's centre).
+const VIGIL_RECT := Vector4(-28.0, -12.0, -25.2, -5.0)
+const VIGIL_BED_INSET := 0.3
+const VIGIL_RAIL_INSET := 0.22
+const VIGIL_NICHE := Vector4(1.7, 0.55, 0.32, 0.6)  # span, spring, ring, how far the dark stands in
+const VIGIL_NICHE_U := -26.6
+const VIGIL_PLANT_EVERY := 0.95
+const VIGIL_STEP := 0.2  # the dais' second step: its radius share over the third
 const FUTURE_YARDS: Array[Vector4] = [Vector4(-21.0, -26.0, -8.0, -17.0), Vector4(-1.0, -26.0, 12.0, -17.0)]
 const YARD_DROP := 1.2
 const YARD_STEPS := 5
 const YARD_WALL := Vector2(0.5, 1.1)
-const YARD_FLOOR := Color(0.5, 0.47, 0.41)
+const YARD_FLOOR := Color(0.62, 0.56, 0.48)
+## Round 3: the yards' stairs are cream stone with a lighter nosing on every step (not dark boards).
+const STEP_NOSING := Color(0.9, 0.82, 0.68)
+const STEP_NOSING_H := 0.05
 
 # ---------- plants and lamps along the edges ----------
 const EDGE_INSET := 0.7
@@ -138,9 +171,30 @@ const FOUNTAIN_FALLS := 8
 const RAIL_INSET := 0.6
 const RAIL_LOW := 0.8
 const RAIL_MIN := 2.5
-const RAIL_LANTERN_EVERY := 2
+const RAIL_LANTERN_EVERY := 4  # round 3: one lantern every fourth post (was every second)
 const RAIL_CLEAR := 1.5
-const LANTERN_SIZE := 0.3
+const LANTERN_SIZE := 0.2
+const LAMP_LANTERN := 0.24  # a lamp post's lantern
+## Round 3: the lanterns are amber (never white), each with a small cap of dark iron over it and a soft halo; the pool of
+## light each throws on the paving is HubGlow's.
+const LANTERN_COLOR := Color(1.0, 0.5, 0.14)
+const LANTERN_ENERGY := 1.5
+const LANTERN_CAP := Vector3(1.9, 0.9, 1.9)  # times the lantern's size: width, height, depth of the iron cap
+const LANTERN_CAP_COLOR := Color(0.07, 0.065, 0.07)
+const LANTERN_HALO := 5.5  # the halo's size, times the lantern's
+const LANTERN_HALO_COLOR := Color(1.0, 0.55, 0.2, 0.55)
+const LANTERN_POOL := Vector2(2.1, 0.34)  # radius of a lantern's pool of light on the paving and its strength
+## The squares' warm pools (centre u, v; radius; strength; colour): the arrival and its fire, the Videira, the Aposento's
+## carpet, the Mercador, the Dons, the Forja, the Livro, the Portao. The paving is warm in the middle and dark only at the rim.
+const FIRE_POOL := Color(1.0, 0.5, 0.2)
+const GOLD_POOL := Color(1.0, 0.72, 0.36)
+const SQUARE_POOLS: Array[Array] = [
+	[Vector2(-22.6, -10.2), 4.8, 0.62, FIRE_POOL], [Vector2(-24.0, -6.0), 3.6, 0.3, GOLD_POOL],
+	[Vector2(-7.0, -5.4), 5.2, 0.46, GOLD_POOL], [Vector2(-1.0, 19.0), 5.4, 0.5, GOLD_POOL],
+	[Vector2(12.0, 5.6), 4.6, 0.42, GOLD_POOL], [Vector2(10.0, -3.0), 4.6, 0.42, GOLD_POOL],
+	[Vector2(-17.6, 15.6), 5.0, 0.5, FIRE_POOL], [Vector2(19.0, 18.6), 4.4, 0.4, GOLD_POOL],
+	[Vector2(33.0, -6.0), 5.4, 0.5, GOLD_POOL], [Vector2(3.0, 6.0), 4.8, 0.3, GOLD_POOL],
+]
 ## Planters of stone with flowers along the rails (the art's canteiros), every so many metres of edge.
 const PLANTER_EVERY := 9.0
 const PLANTER_INSET := 1.55
@@ -148,23 +202,36 @@ const PLANTER := Vector3(2.6, 0.45, 0.75)
 ## The cliffs: tufts of shrub, flowers and hanging wisteria on the face, and ledges of rock (the hub_cliff stone).
 const CLIFF_TUFT_EVERY := 2.2
 const CLIFF_TUFT_DEPTH := Vector2(0.5, 8.5)
-const LEDGE_EVERY := 6.0
+const LEDGE_EVERY := 4.0
+## Round 3: stacks of rock stepping out and down the face (the talus), and ivy hanging from the lip.
+const ROCK_STEP_EVERY := 3.4
+const ROCK_STEPS := Vector2i(2, 4)
+const ROCK_STEP_SIZE := Vector3(2.8, 1.3, 1.5)  # along the edge, tall, out of the face
+const ROCK_STEP_OUT := 0.65  # how much further out each step down stands
+const ROCK_STEP_DROP := Vector2(0.9, 1.7)
+const IVY_EVERY := 2.6
+const IVY_TALL := Vector2(2.0, 5.5)
+const IVY_A := Color(0.14, 0.24, 0.1)
+const IVY_B := Color(0.34, 0.46, 0.2)
+const HANG_WIDTH := 0.95  # a wisteria tassel's width at the top
+const HANG_TALL := Vector2(2.0, 3.8)  # a cliff tassel, from the lip down
 ## Round 2: the dark crowns far down: every so often along the edge, this far out and this deep, this tall.
-const DEEP_EVERY := 3.5
+const DEEP_EVERY := 2.4
 const DEEP_OUT := Vector2(1.5, 9.0)
 const DEEP_DEPTH := Vector2(7.0, 22.0)
 const DEEP_TALL := Vector2(3.0, 6.0)
-const DEEP_A := Color(0.05, 0.07, 0.12)
-const DEEP_B := Color(0.14, 0.15, 0.24)
+const DEEP_A := Color(0.07, 0.09, 0.16)
+const DEEP_B := Color(0.2, 0.21, 0.34)
 const LEDGE := Vector3(3.2, 1.0, 1.8)  # along the edge, tall, out of the face
 const LEDGE_DEPTH := Vector2(1.8, 13.0)
 ## The main way's glow (Vigilia, Videira, Dons, Aposento, Portao): width, how far apart the samples.
 const PATH_WIDTH := 1.5
 const PATH_STEP := 0.6
-const PATH_DOT_STEP := 1.3
-const PATH_DOT_OFFSET := 0.45
-const PATH_DOT := 0.12  # half length of a lit stone
-const PATH_GLOW := Color(0.62, 0.42, 0.16)
+## Round 3: no lit pebbles; a continuous line of slightly lighter paving stones (two rows of PATH_TILE m squares with PATH_TILE_GAP
+## between them, each its own light) along the main way.
+const PATH_TILE := 0.62
+const PATH_TILE_GAP := 0.07
+const PATH_TILE_COLOR := Color(0.1, 0.075, 0.045)
 const PATH_MAIN: Array[Vector2] = [Vector2(-23.0, -7.0), Vector2(-14.0, -7.0), Vector2(-7.0, -6.0), Vector2(2.0, -6.0),
 	Vector2(4.0, 0.0), Vector2(4.0, 12.0), Vector2(1.0, 17.5)]
 const PATH_GATE: Array[Vector2] = [Vector2(2.0, -6.0), Vector2(5.0, -13.0), Vector2(25.0, -13.0), Vector2(32.0, -6.0), Vector2(36.0, -6.0)]
@@ -205,6 +272,13 @@ var _flower_spots: Array[Vector3] = []
 var _flower_tall: Array[float] = []
 var _wisteria_spots: Array[Vector3] = []
 var _wisteria_tall: Array[float] = []
+var _falls_all: Array[Vector4] = FALLS.duplicate()  # the plan's falls and the extra ones (the cliffs leave them bare)
+var _ivy_spots: Array[Vector3] = []
+var _ivy_tall: Array[float] = []
+var _roof_spots: Array[Vector3] = []
+var _roof_tall: Array[float] = []
+var _grape_spots: Array[Vector3] = []
+var _grape_tall: Array[float] = []
 var _leaf_spots: Array[Vector3] = []
 var _leaf_tall: Array[float] = []
 var _cypress_spots: Array[Vector3] = []
@@ -259,7 +333,10 @@ func build(layout: RoomLayout) -> void:
 	look.add_crowns(_leaf_spots, _leaf_tall, LEAF_DARK, LEAF_LIGHT, 1.5, "Shrubs", false)
 	look.add_crowns(_flower_spots, _flower_tall, WISTERIA_A, WISTERIA_B, 1.3, "Flowers", false)
 	look.add_crowns(_magenta_spots, _magenta_tall, MAGENTA_A, MAGENTA_B, 1.3, "Magentas", false)
-	look.add_crowns(_wisteria_spots, _wisteria_tall, WISTERIA_A, WISTERIA_B, 1.1, "Wisteria", false)
+	look.add_crowns(_wisteria_spots, _wisteria_tall, WISTERIA_A, WISTERIA_B, HANG_WIDTH, "Wisteria", false, true)
+	look.add_crowns(_ivy_spots, _ivy_tall, IVY_A, IVY_B, 0.8, "Ivy", false, true, 0.7)
+	look.add_crowns(_roof_spots, _roof_tall, LEAF_DARK, LEAF_LIGHT, PERGOLA_LEAF.x, "PergolaRoof", true)
+	look.add_crowns(_grape_spots, _grape_tall, GRAPE_A, GRAPE_B, 0.42, "Grapes", false, true, 0.4)
 	look.add_crowns(_cypress_spots, _cypress_tall, CYPRESS_GREEN * 0.7, CYPRESS_GREEN * 1.25, 1.25, "Cypresses", false)
 	look.add_crowns(_deep_spots, _deep_tall, DEEP_A, DEEP_B, 1.6, "DeepCypresses", false)
 	look.add_crowns(_deep_round_spots, _deep_round_tall, DEEP_A, DEEP_B, 3.2, "DeepTrees", true)
@@ -630,22 +707,78 @@ func add_lanterns(xf: Array[Transform3D]) -> void:
 
 
 func _build_lanterns() -> void:
-	if _lantern_xf.is_empty():
-		return
+	var glow := HubGlow.new(_on_floor)
+	for sq: Array in SQUARE_POOLS:
+		glow.pool(sq[0], sq[1], sq[2], sq[3])
+	if not _lantern_xf.is_empty():
+		_lantern_meshes()
+		for xf in _lantern_xf:
+			glow.pool(Vector2(xf.origin.x, -xf.origin.z), LANTERN_POOL.x, LANTERN_POOL.y, FIRE_POOL.lerp(GOLD_POOL, 0.5))
+	glow.build(look.frame)
+
+
+## The lanterns' meshes, each over the same transforms: the amber boxes (one MultiMesh, "Lanterns"), a cap of dark iron
+## over each and a soft halo round each (a card turned to the camera).
+func _lantern_meshes() -> void:
 	var bm := BoxMesh.new()
 	bm.size = Vector3.ONE
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = bm
-	mm.instance_count = _lantern_xf.size()
+	var cap := PrismMesh.new()
+	cap.size = Vector3.ONE
+	var halo := QuadMesh.new()
+	halo.size = Vector2.ONE
+	var body := MultiMesh.new()
+	body.transform_format = MultiMesh.TRANSFORM_3D
+	body.mesh = bm
+	body.instance_count = _lantern_xf.size()
+	var caps := MultiMesh.new()
+	caps.transform_format = MultiMesh.TRANSFORM_3D
+	caps.mesh = cap
+	caps.instance_count = _lantern_xf.size()
+	var halos := MultiMesh.new()
+	halos.transform_format = MultiMesh.TRANSFORM_3D
+	halos.mesh = halo
+	halos.instance_count = _lantern_xf.size()
 	for i in _lantern_xf.size():
-		mm.set_instance_transform(i, _lantern_xf[i])
-	var mi := MultiMeshInstance3D.new()
-	mi.name = "Lanterns"
-	mi.multimesh = mm
-	mi.material_override = _window_material()
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	look.frame.add_child(mi)
+		var xf := _lantern_xf[i]
+		var size := xf.basis.get_scale().x
+		body.set_instance_transform(i, xf)
+		var top := xf.origin + Vector3(0.0, size * 0.5, 0.0)
+		caps.set_instance_transform(i, Transform3D(Basis.from_scale(LANTERN_CAP * size), top + Vector3(0.0, LANTERN_CAP.y * size * 0.5, 0.0)))
+		halos.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3.ONE * size * LANTERN_HALO), xf.origin))
+	var lit := StandardMaterial3D.new()
+	lit.albedo_color = LANTERN_COLOR * 0.2
+	lit.emission_enabled = true
+	lit.emission = LANTERN_COLOR
+	lit.emission_energy_multiplier = LANTERN_ENERGY
+	var iron := StandardMaterial3D.new()
+	iron.albedo_color = LANTERN_CAP_COLOR
+	iron.roughness = 0.6
+	iron.metallic = 0.3
+	var grad := Gradient.new()
+	grad.colors = PackedColorArray([Color(1, 1, 1, 1), Color(1, 1, 1, 0)])
+	grad.offsets = PackedFloat32Array([0.0, 1.0])
+	var tex := GradientTexture2D.new()
+	tex.gradient = grad
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	tex.width = 64
+	tex.height = 64
+	var halo_mat := StandardMaterial3D.new()
+	halo_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	halo_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	halo_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	halo_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	halo_mat.albedo_color = LANTERN_HALO_COLOR
+	halo_mat.albedo_texture = tex
+	halo_mat.disable_receive_shadows = true
+	for part: Array in [["Lanterns", body, lit], ["LanternCaps", caps, iron], ["LanternHalos", halos, halo_mat]]:
+		var mi := MultiMeshInstance3D.new()
+		mi.name = part[0]
+		mi.multimesh = part[1]
+		mi.material_override = part[2]
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		look.frame.add_child(mi)
 
 
 # ---------- the Videira's fountain ----------
@@ -663,6 +796,10 @@ func _fountain() -> void:
 		var a := TAU * i / FOUNTAIN_RIM_BLOCKS
 		var p := c + Vector2(cos(a), sin(a)) * (f.x - 0.1)
 		fm.block(_at(p.x, y + f.y, p.y), Vector3(TAU * f.x / FOUNTAIN_RIM_BLOCKS + 0.04, 0.2, 0.32), a + PI * 0.5, stone, false)
+	var clear := _water_mat.duplicate() as ShaderMaterial
+	clear.set_shader_parameter(&"deep", FOUNTAIN_DEEP)
+	clear.set_shader_parameter(&"shallow", FOUNTAIN_SHALLOW)
+	clear.set_shader_parameter(&"reflect_amount", FOUNTAIN_SPARKLE)
 	var water := MeshInstance3D.new()
 	var disc := CylinderMesh.new()
 	disc.top_radius = f.z
@@ -671,7 +808,7 @@ func _fountain() -> void:
 	disc.radial_segments = 20
 	disc.rings = 1
 	water.mesh = disc
-	water.material_override = _water_mat
+	water.material_override = clear
 	water.position = _at(c.x, y + f.y + 0.02, c.y)
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	look.frame.add_child(water)
@@ -686,7 +823,7 @@ func _fountain() -> void:
 	bd.height = 0.02
 	bd.radial_segments = 14
 	bowl.mesh = bd
-	bowl.material_override = _water_mat
+	bowl.material_override = clear
 	bowl.position = _at(c.x, top + 1.18, c.y)
 	bowl.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	look.frame.add_child(bowl)
@@ -740,6 +877,32 @@ func _bridge() -> void:
 	look.fm.block(_at((BRIDGE_U.x + BRIDGE_U.y) * 0.5, -0.5, face), Vector3(BRIDGE_U.y - BRIDGE_U.x, 0.3, 0.4), 0.0, look.stone(), false)
 	for f in FALLS:
 		_fall(f)
+	for f in _extra_falls():
+		_fall(f)
+		_falls_all.append(f)
+
+
+## Round 3: a few more white falls down the south cliffs (where the edge faces the camera, off the bridge, the buildings
+## and the falls there already), picked off the edge: u, v, width, drop.
+func _extra_falls() -> Array[Vector4]:
+	var out: Array[Vector4] = []
+	var taken: Array[Vector2] = []
+	for f in FALLS:
+		taken.append(Vector2(f.x, f.y))
+	for e in _edge_points(1.5, 0.05, 0.0, false, true):
+		if out.size() >= EXTRA_FALLS:
+			break
+		var p: Vector2 = e[0]
+		var normal: Vector2 = e[1]
+		if normal.y > -0.95 or _under_bridge(p) or _near_mass(p) or p.y < -16.0:
+			continue
+		var clear := true
+		for t in taken:
+			clear = clear and t.distance_to(p) > EXTRA_FALL_APART
+		if clear:
+			taken.append(p)
+			out.append(Vector4(p.x, p.y - 0.15, _rng.randf_range(EXTRA_FALL_WIDTH.x, EXTRA_FALL_WIDTH.y), _rng.randf_range(EXTRA_FALL_DROP.x, EXTRA_FALL_DROP.y)))
+	return out
 
 
 ## A fall hanging from just under the lip down `drop`, foam at its foot, a haze where it lands.
@@ -750,14 +913,16 @@ func _fall(f: Vector4) -> void:
 	mi.mesh = q
 	var mat := ShaderMaterial.new()
 	mat.shader = FALL_SHADER
-	mat.set_shader_parameter(&"color", Color(WATER_BLUE.r, WATER_BLUE.g, WATER_BLUE.b).lightened(0.35))
-	mat.set_shader_parameter(&"alpha", 0.8)
+	mat.set_shader_parameter(&"color", FALL_COLOR)
+	mat.set_shader_parameter(&"foam_color", FALL_COLOR)
+	mat.set_shader_parameter(&"alpha", 0.9)
+	mat.set_shader_parameter(&"vanish", FALL_VANISH)
 	mat.set_shader_parameter(&"streaks", 6.0)
 	mi.material_override = mat
 	mi.position = _at(f.x, -0.4 - f.w * 0.5, f.y)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	look.frame.add_child(mi)
-	look.fk.mist_bank(_at(f.x, -0.4 - f.w, f.y - 0.6), Vector2(f.z * 3.0, 2.2), FALL_MIST, 0.35, 0.3, 0.2)
+	look.fk.mist_bank(_at(f.x, -0.4 - f.w * 0.85, f.y - 0.6), Vector2(f.z * 3.0, 2.2), FALL_MIST, 0.35, 0.3, 0.2)
 
 
 # ---------- the Videira's pergola ----------
@@ -780,14 +945,28 @@ func _pergola() -> void:
 	var u := p.x
 	while u <= p.y + 0.01:
 		look._bar(_at(u, PERGOLA_HEIGHT + 0.14 + RAFTER.y * 1.7, (p.z + p.w) * 0.5), Vector3(0.1, RAFTER.y, p.w - p.z + 0.6), wood)
-		var hang := _rng.randf_range(1.0, 1.5)
+		var hang := _rng.randf_range(1.3, 1.9)
 		_wisteria_spots.append(Vector3(u, PERGOLA_HEIGHT - hang, p.z + _rng.randf_range(0.0, p.w - p.z)))
 		_wisteria_tall.append(hang)
 		u += RAFTER.x * 1.6
-	# the green roof of vine over the beams
-	for k in 5:
-		_leaf_spots.append(Vector3(lerpf(p.x, p.y, (k + 0.5) / 5.0), PERGOLA_HEIGHT + 0.1, (p.z + p.w) * 0.5 + _rng.randf_range(-0.8, 0.8)))
-		_leaf_tall.append(0.8)
+	# round 3: the roof of vine closed over the beams (the south half thinner so the fountain shows) and grape clusters hanging
+	var v := p.z - 0.3
+	while v <= p.w + 0.3:
+		var south := inverse_lerp(p.w + 0.3, p.z - 0.3, v)
+		var x := p.x - 0.5
+		while x <= p.y + 0.5:
+			if _rng.randf() > PERGOLA_GAP * south:
+				_roof_spots.append(Vector3(x + _rng.randf_range(-0.25, 0.25), PERGOLA_HEIGHT + 0.08, v + _rng.randf_range(-0.2, 0.2)))
+				_roof_tall.append(PERGOLA_LEAF.y * _rng.randf_range(0.85, 1.15))
+			x += PERGOLA_LEAF_EVERY
+		v += PERGOLA_LEAF_EVERY
+	u = p.x
+	while u <= p.y + 0.01:
+		for k in GRAPE_PER_RAFTER:
+			var hang := _rng.randf_range(GRAPE_HANG.x, GRAPE_HANG.y)
+			_grape_spots.append(Vector3(u + _rng.randf_range(-0.3, 0.3), PERGOLA_HEIGHT - hang, _rng.randf_range(p.z, p.w)))
+			_grape_tall.append(hang)
+		u += RAFTER.x
 
 
 # ---------- the Ponto de Vigília ----------
@@ -798,15 +977,76 @@ func _vigil_post() -> void:
 	var f := VIGIL_FLAME
 	var stone := look.stone()
 	var wall: Material = look.facade_stone()
-	look.fm.shaft(_at(f.x, 0.0, f.z), 1.75, 0.16, stone)
-	look.fm.shaft(_at(f.x, 0.16, f.z), 1.35, 0.2, stone)
-	look.fm.shaft(_at(f.x, 0.36, f.z), 0.62, 0.39, wall)
+	# the dais: two round steps of cream stone, then the pedestal of the bowl
+	look.fm.shaft(_at(f.x, 0.0, f.z), 1.75, 0.16, wall)
+	look.fm.shaft(_at(f.x, 0.16, f.z), 1.35, VIGIL_STEP, wall)
+	look.fm.shaft(_at(f.x, 0.16 + VIGIL_STEP, f.z), 0.62, 0.2, wall)
 	look.fk.brazier(Vector2(f.x, -f.z), 0.75, false, 1.6, true)
 	var iron := look._plain(IRON, 0.6)
 	var pole := _at(f.x + 1.5, 0.0, f.z)
 	look._bar(pole + Vector3(0, 1.6, 0), Vector3(0.09, 3.2, 0.09), iron)
 	look._bar(pole + Vector3(0, 3.15, 0), Vector3(1.0, 0.07, 0.07), iron)
 	facades.banner(f.x + 1.5, 3.1, f.z, 0.85, 1.9)
+	_vigil_bed(stone)
+	_vigil_niche()
+
+
+## The mass of the Vigilia as a raised bed: soil inside a cream balustrade on top, flowers, two cypresses, wisteria hanging
+## down its south and east faces.
+func _vigil_bed(stone: Material) -> void:
+	var r := VIGIL_RECT
+	var top := 2.4 + 0.12
+	var inner := Vector4(r.x + VIGIL_BED_INSET, r.y + VIGIL_BED_INSET, r.z - VIGIL_BED_INSET, r.w - VIGIL_BED_INSET)
+	look.fm.block(_at((inner.x + inner.z) * 0.5, top, (inner.y + inner.w) * 0.5), Vector3(inner.z - inner.x, 0.1, inner.w - inner.y), 0.0, look._plain(GARDEN_SOIL, 1.0), false)
+	var q := Vector4(r.x + VIGIL_RAIL_INSET, r.y + VIGIL_RAIL_INSET, r.z - VIGIL_RAIL_INSET, r.w - VIGIL_RAIL_INSET)
+	var corners: Array[Vector2] = [Vector2(q.x, q.y), Vector2(q.z, q.y), Vector2(q.z, q.w), Vector2(q.x, q.w)]
+	for i in 4:
+		var a := corners[i]
+		var b := corners[(i + 1) % 4]
+		look.fm.balustrade(_at(a.x, top, a.y), _at(b.x, top, b.y), true, stone, RAIL_LOW)
+	var v := inner.y + 0.3
+	var row := 0
+	while v < inner.w - 0.2:
+		for u: float in [lerpf(inner.x, inner.z, 0.3), lerpf(inner.x, inner.z, 0.72)]:
+			plant((row + int(u * 10.0)) % 3, Vector3(u + _rng.randf_range(-0.12, 0.12), top + 0.05, v), _rng.randf_range(0.5, 0.95))
+		v += VIGIL_PLANT_EVERY
+		row += 1
+	for c: Vector2 in [Vector2(inner.x + 0.5, inner.w - 0.25), Vector2(inner.z - 0.5, inner.w - 0.6)]:
+		_cypress_spots.append(Vector3(c.x, top + 0.05, c.y))
+		_cypress_tall.append(_rng.randf_range(2.4, 3.2))
+	# wisteria down the faces, off the niche's width
+	var u := r.x + 0.5
+	while u < r.z - 0.3:
+		if absf(u - VIGIL_NICHE_U) > VIGIL_NICHE.x * 0.5 + 0.4:
+			var hang := _rng.randf_range(1.3, 2.0)
+			_wisteria_spots.append(Vector3(u, 2.45 - hang, r.y - 0.42))
+			_wisteria_tall.append(hang)
+		u += _rng.randf_range(0.8, 1.2)
+	var w := r.y + 0.6
+	while w < r.w - 0.4:
+		var hang := _rng.randf_range(1.2, 1.9)
+		_wisteria_spots.append(Vector3(r.z + 0.4, 2.45 - hang, w))
+		_wisteria_tall.append(hang)
+		w += _rng.randf_range(1.1, 1.7)
+
+
+## A low niche of voussoirs in the mass's south face (facing the camera) with a dark back, a wine standard and a lantern each side.
+func _vigil_niche() -> void:
+	var n := VIGIL_NICHE
+	var face := VIGIL_RECT.y - 0.1
+	var foot := _at(VIGIL_NICHE_U, 0.0, face - 0.05)
+	look.fm.voussoir_arch(foot, HubLook.SOUTH, n.x, n.y, n.z, 0.45, look.facade_stone(), 0.62)
+	for sd: float in [-1.0, 1.0]:
+		look.fm.block(_at(VIGIL_NICHE_U + sd * (n.x * 0.5 + n.z * 0.5), 0.0, face - 0.05), Vector3(n.z, n.y + 0.05, 0.45), 0.0, look.facade_stone(), false)
+	var back := MeshInstance3D.new()
+	back.mesh = HubFacades.ogive_mesh(n.x, n.y, 0.62, [], 8)
+	back.material_override = look._plain(Color(0.09, 0.06, 0.06), 1.0)
+	back.position = foot + Vector3(0, 0, 0.02)
+	look.frame.add_child(back)
+	facades.banner(VIGIL_NICHE_U, 1.55, face - 0.2, 0.62, 1.4)
+	for sd: float in [-1.0, 1.0]:
+		var lp := _at(VIGIL_NICHE_U + sd * (n.x * 0.5 + n.z + 0.45), 1.25, face - 0.15)
+		_lantern_xf.append(Transform3D(Basis.from_scale(Vector3.ONE * LAMP_LANTERN), lp))
 
 
 # ---------- the future rooms ----------
@@ -816,6 +1056,7 @@ func _vigil_post() -> void:
 func _future_yards() -> void:
 	var floor_mat := look.m.stone(-YARD_DROP, look.stone_tint() * YARD_FLOOR)
 	var wall := look.ashlar()
+	var nosing := look._plain(STEP_NOSING, 0.8)
 	for yi in FUTURE_YARDS.size():
 		var y := FUTURE_YARDS[yi]
 		var c := Vector2(y.x + y.z, y.y + y.w) * 0.5
@@ -830,7 +1071,9 @@ func _future_yards() -> void:
 		var mouth := HubPlan.DOORS[HubPlan.FUTURE_A if yi == 0 else HubPlan.FUTURE_B] as Vector4
 		for k in YARD_STEPS:
 			var top := -YARD_DROP / (YARD_STEPS + 1) * (k + 1)
-			look.fm.block(_at(mouth.x, -YARD_DROP, -17.35 - k * 0.45), Vector3(mouth.z * 2.0 + 1.0, top + YARD_DROP, 0.45), 0.0, look.stone(), false)
+			var tread := Vector3(mouth.z * 2.0 + 1.0, top + YARD_DROP, 0.45)
+			look.fm.block(_at(mouth.x, -YARD_DROP, -17.35 - k * 0.45), tread, 0.0, look.facade_stone(), false)
+			look.fm.block(_at(mouth.x, top - 0.01, -17.35 - k * 0.45 - 0.2), Vector3(tread.x + 0.06, STEP_NOSING_H, 0.1), 0.0, nosing, false)
 		_lamp(Vector2(mouth.x - mouth.z + 0.4, -15.9))
 		_lamp(Vector2(mouth.x + mouth.z - 0.4, -15.9))
 
@@ -956,8 +1199,7 @@ func _lamp(p: Vector2) -> void:
 	fm.block(_at(p.x, 0.0, p.y), Vector3(0.5, 0.5, 0.5), 0.0, stone, false)
 	fm.block(_at(p.x, 0.5, p.y), Vector3(0.3, 1.1, 0.3), 0.0, stone, false)
 	fm.block(_at(p.x, 1.6, p.y), Vector3(0.46, 0.12, 0.46), 0.0, stone, false)
-	_lantern_xf.append(Transform3D(Basis.from_scale(Vector3.ONE * LANTERN_SIZE), _at(p.x, 1.72 + LANTERN_SIZE * 0.5, p.y)))
-	fm.block(_at(p.x, 1.72 + LANTERN_SIZE, p.y), Vector3(LANTERN_SIZE + 0.12, 0.09, LANTERN_SIZE + 0.12), 0.0, stone, false)
+	_lantern_xf.append(Transform3D(Basis.from_scale(Vector3.ONE * LAMP_LANTERN), _at(p.x, 1.72 + LAMP_LANTERN * 0.5, p.y)))
 
 
 func _window_material() -> StandardMaterial3D:
@@ -1055,15 +1297,42 @@ func _cliffs() -> void:
 		var depth := lerpf(CLIFF_TUFT_DEPTH.x, CLIFF_TUFT_DEPTH.y, pow(_rng.randf(), 2.2))
 		var at := Vector3(p.x + out.x * 0.35, -depth, p.y + out.y * 0.35)
 		var roll := _rng.randf()
-		if roll < 0.5:
+		if roll < 0.4:
 			_leaf_spots.append(at)
 			_leaf_tall.append(_rng.randf_range(1.0, 1.8))
-		elif roll < 0.72:
+		elif roll < 0.58:
 			plant(_rng.randi() % 2, at, _rng.randf_range(0.8, 1.3))
 		else:
-			var hang := _rng.randf_range(1.4, 2.4)
-			_wisteria_spots.append(Vector3(at.x, -hang - 0.2, at.z))
+			# round 3: a tassel hung from the lip (its top at the paving's level, against the rock), never a bubble in the air
+			var hang := _rng.randf_range(HANG_TALL.x, HANG_TALL.y)
+			_wisteria_spots.append(Vector3(p.x + out.x * 0.2, 0.1 - hang, p.y + out.y * 0.2))
 			_wisteria_tall.append(hang)
+	# round 3: ivy hanging in long curtains from the lip, and stacks of rock stepping out and down the face
+	for e in _edge_points(IVY_EVERY, 0.05, 0.0, false, true):
+		var p: Vector2 = e[0]
+		var out: Vector2 = e[1]
+		if _under_bridge(p):
+			continue
+		var tall := _rng.randf_range(IVY_TALL.x, IVY_TALL.y)
+		_ivy_spots.append(Vector3(p.x + out.x * 0.18, 0.05 - tall, p.y + out.y * 0.18))
+		_ivy_tall.append(tall)
+	for e in _edge_points(ROCK_STEP_EVERY, 0.0, 0.0, false, true):
+		var p: Vector2 = e[0]
+		var out: Vector2 = e[1]
+		if _under_bridge(p):
+			continue
+		var along := Vector2(-out.y, out.x)
+		var yaw := atan2(along.y, along.x)
+		var y := -_rng.randf_range(ROCK_STEP_DROP.x, ROCK_STEP_DROP.y)
+		var steps := _rng.randi_range(ROCK_STEPS.x, ROCK_STEPS.y)
+		for k in steps:
+			var size := Vector3(ROCK_STEP_SIZE.x * _rng.randf_range(0.65, 1.2), ROCK_STEP_SIZE.y * _rng.randf_range(0.8, 1.3), ROCK_STEP_SIZE.z * _rng.randf_range(0.8, 1.3))
+			var c := p + out * (size.z * 0.5 - 0.2 + ROCK_STEP_OUT * k) + along * _rng.randf_range(-0.6, 0.6)
+			look.fm.block(_at(c.x, y - size.y, c.y), size, yaw + _rng.randf_range(-0.2, 0.2), rock, false)
+			if k < 2:
+				_leaf_spots.append(Vector3(c.x, y, c.y))
+				_leaf_tall.append(_rng.randf_range(0.5, 1.0))
+			y -= size.y * 0.55 + _rng.randf_range(ROCK_STEP_DROP.x, ROCK_STEP_DROP.y) * 0.6
 	# round 2: dark crowns of cypress and trees far down the mountain, past the edge, going into the indigo mist
 	for e in _edge_points(DEEP_EVERY, 0.0, 0.0, false, true):
 		var p: Vector2 = e[0]
@@ -1073,7 +1342,7 @@ func _cliffs() -> void:
 		var q := p + out * _rng.randf_range(DEEP_OUT.x, DEEP_OUT.y)
 		var depth := _rng.randf_range(DEEP_DEPTH.x, DEEP_DEPTH.y)
 		var at := Vector3(q.x, -depth, q.y)
-		if _rng.randf() < 0.6:
+		if _rng.randf() < 0.55:
 			_deep_spots.append(at)
 			_deep_tall.append(_rng.randf_range(DEEP_TALL.x, DEEP_TALL.y))
 		else:
@@ -1097,7 +1366,7 @@ func _cliffs() -> void:
 func _under_bridge(p: Vector2) -> bool:
 	if p.y < BRIDGE_V.x + 0.6 and p.x > BRIDGE_U.x - 1.5 and p.x < BRIDGE_U.y + 1.5:
 		return true
-	for f in FALLS:
+	for f in _falls_all:
 		if absf(p.x - f.x) < f.z * 0.5 + 0.8 and absf(p.y - f.y) < 1.2:
 			return true
 	return false
@@ -1114,31 +1383,38 @@ func _red_tree() -> void:
 ## A faint gold glow laid along the main way (Vigilia to Videira to Dons to the Aposento, and on to the Portao), only
 ## where both of its sides are floor: the art's path of light.
 func _path_glow() -> void:
-	# round 2: no band, a dotted trail of small warm lit stones every PATH_DOT_STEP m, alternating either side of the line
+	# round 3: no pebbles; two rows of paving stones a little lighter than the rest, laid along the main way without a break
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = PATH_GLOW
+	mat.vertex_color_use_as_albedo = true
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var half := PATH_TILE * 0.5 - PATH_TILE_GAP * 0.5
 	for line: Array[Vector2] in [PATH_MAIN, PATH_GATE]:
-		var pts := _resample(line, PATH_DOT_STEP)
+		var pts := _resample(line, PATH_TILE)
 		for i in pts.size() - 1:
 			var a := pts[i]
 			var dir := (pts[i + 1] - a).normalized()
 			var side := Vector2(-dir.y, dir.x)
-			var c := a + side * PATH_DOT_OFFSET * (1.0 if i % 2 == 0 else -1.0) + dir * _rng.randf_range(-0.15, 0.15)
-			if not (_on_floor(c) and _on_floor(c + dir * PATH_DOT) and _on_floor(c - dir * PATH_DOT)):
-				continue
-			var hx := dir * PATH_DOT
-			var hz := side * PATH_DOT * 0.7
-			var q: Array[Vector3] = [_at(c.x - hx.x - hz.x, 0.03, c.y - hx.y - hz.y), _at(c.x + hx.x - hz.x, 0.03, c.y + hx.y - hz.y),
-				_at(c.x + hx.x + hz.x, 0.03, c.y + hx.y + hz.y), _at(c.x - hx.x + hz.x, 0.03, c.y - hx.y + hz.y)]
-			for k: int in [0, 1, 2, 0, 2, 3]:
-				st.add_vertex(q[k])
+			for row in 2:
+				var c := a + dir * PATH_TILE * 0.5 + side * PATH_TILE * (row - 0.5)
+				var hx := dir * half
+				var hz := side * half
+				var corners: Array[Vector2] = [c - hx - hz, c + hx - hz, c + hx + hz, c - hx + hz]
+				var ok := true
+				for q in corners:
+					ok = ok and _on_floor(q)
+				if not ok:
+					continue
+				var k := _rng.randf_range(0.45, 1.0)
+				st.set_color(Color(PATH_TILE_COLOR.r * k, PATH_TILE_COLOR.g * k, PATH_TILE_COLOR.b * k, 1.0))
+				for idx: int in [0, 1, 2, 0, 2, 3]:
+					st.add_vertex(_at(corners[idx].x, 0.03, corners[idx].y))
 	var mi := MeshInstance3D.new()
-	mi.name = "PathGlow"
+	mi.name = "PathTiles"
 	mi.mesh = st.commit()
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

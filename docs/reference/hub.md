@@ -408,3 +408,36 @@ Pedido: ficar crepúsculo (a rodada 1 saiu meio-dia lavado). Só visual; colisã
 - **9 Portas futuras** (`HubBlockout._arched_door`): arco de aduelas, folha de madeira ogival com tiras de ferro, ombreiras e
   cadeado; escada visual do pátio com 5 degraus (`YARD_STEPS`).
 - Ajuste fino: `HubLook.STY_AMBIENT_GAIN/STY_MOON/KEY_ENERGY/MIST/DUSK_*`, `CLIFF_*`, `HubScenery.DEEP_*`, `PATH_GLOW`.
+
+## Refino do Santuário, rodada 3 (2026-11-26; environment-artist, SEM captura: às cegas, conferir na GPU)
+Pedido: piso quente com poças de luz, vazio menos chapado, lanternas menores, Vigília proposital, escadas de pedra, pérgola densa,
+penhasco com relevo e glicínias presas. Só visual; colisão, `HubPlan` e pontos de uso intactos (`test_hub*` passam). Luzes: nenhuma
+nova (as poças são malha aditiva). **Shaders editados** (nenhum arquivo de shader novo; entrar no aquecimento se já listado):
+`abyss_fog.gdshader` (uniforms `rim_color`, `rim_range`, desligados nas outras salas) e `waterfall.gdshader` (uniform `vanish`).
+- **1 Piso quente** (`hub_look.gd`): `STY_FLOOR_STONE` (0,8/0,66/0,56) e `STY_STONE` creme-rosados, `shadow`/`joint_cold` menos frios,
+  `KEY` quente `(1,0,9,0,78)` com `KEY_ENERGY` 0,5, `STY_AMBIENT_GAIN` 0,72, escurecimento de borda a partir de `calm_radius` 40 (era 60).
+  Poças: `HubGlow` (`scripts/game/hub_glow.gd`, classe nova): discos suaves aditivos (centro e 3 anéis, cor de vértice, uma malha "WarmPools"),
+  vértices fora do piso são puxados para dentro. Uma por lanterna (`LANTERN_POOL` raio 2,1, força 0,34) e as das praças em
+  `HubScenery.SQUARE_POOLS` (chegada e fogo, Videira, Aposento, Mercador, Dons, Forja, Livro, Portão, praça central).
+- **2 Vazio**: `HubLook.MIST` índigo-azul `(0,075/0,085/0,17)`; `HubLook._abyss()` põe `MIST_RIM` violeta `(0,2/0,16/0,32)` nos planos do abismo
+  com a distância (`MIST_RIM_RANGE` 46 a 150 m do meio: escuro embaixo da plataforma, mais claro no horizonte); `STY_SHADOW_GLOW` menos azul.
+  Copas fundas mais claras e mais densas (`DEEP_A/B`, `DEEP_EVERY` 2,4); cachoeiras brancas (`FALL_COLOR`) que somem na névoa (`FALL_VANISH`
+  0,4) e mais 3 (`EXTRA_FALLS`, escolhidas na borda sul, `EXTRA_FALL_*`).
+- **3 Lanternas**: `RAIL_LANTERN_EVERY` 4 (um poste em quatro), `LANTERN_SIZE` 0,2, `LAMP_LANTERN` 0,24; âmbar `LANTERN_COLOR` com
+  `LANTERN_ENERGY` 1,5, capelinha de ferro (prisma, `LANTERN_CAP`) e halo (cartão voltado à câmera, `LANTERN_HALO*`), três MultiMeshes
+  ("Lanterns", "LanternCaps", "LanternHalos") sobre as mesmas transformadas.
+- **4 Vigília** (`_vigil_post`, `_vigil_bed`, `_vigil_niche`): a massa virou canteiro elevado (terra, balaústre, flores, dois ciprestes,
+  glicínia caindo pelas faces sul e leste) com nicho de aduelas na face sul (fundo escuro, estandarte, duas lanternas); a base da fogueira
+  em dois degraus redondos de pedra creme (`facade_stone`, antes invisíveis na cor do piso). Constantes `VIGIL_*`.
+- **5 Escadas futuras**: degraus em `facade_stone` creme com friso claro (`STEP_NOSING`), pátio `YARD_FLOOR` mais claro.
+- **6 Caminho**: sem pedrinhas; duas fileiras contínuas de lajotas um pouco mais claras (`PATH_TILE`, `PATH_TILE_GAP`, `PATH_TILE_COLOR`,
+  malha "PathTiles").
+- **7 Pérgola**: telhado de folhas fechado (`PERGOLA_LEAF`, `PERGOLA_LEAF_EVERY`, metade sul mais rala por `PERGOLA_GAP` para ver a fonte),
+  cachos de uva roxos pendurados (`GRAPE_*`, cartões pequenos em `add_crowns(..., hanging, card_scale)`), glicínia mais longa; água da fonte
+  clara (`FOUNTAIN_DEEP/SHALLOW/SPARKLE`).
+- **8 Penhasco**: pilhas de rocha que descem em degraus saindo da face (`ROCK_STEP_*`), mais saliências (`LEDGE_EVERY` 4), cortinas de hera
+  pendente (`IVY_*`).
+- **9 Glicínias**: `add_crowns(..., hanging := true)` vira o cacho de cabeça para baixo (largo no alto, ponta embaixo); nos penhascos o topo
+  fica no nível do piso junto à rocha e o cacho tem `HANG_TALL` 2 a 3,8 m (`HANG_WIDTH`).
+- Ajuste fino: `SQUARE_POOLS` e `LANTERN_POOL` (poças), `STY_FLOOR_STONE`, `MIST*`, `PERGOLA_*`, `ROCK_STEP_*`. Pontos de risco sem ver: a poça
+  da lanterna da borda sai pela metade (o resto fica sobre o vazio e é cortado); o telhado da pérgola pode esconder a fonte na câmera Perto.
