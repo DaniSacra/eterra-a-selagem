@@ -25,9 +25,26 @@ Anexos (na pasta junto deste pedido):
 - Retrato vertical 1024 x 1536, da cintura para cima, figura ocupando o lado esquerdo e o centro.
 - Pintura digital com pincelada visível, luz quente de velas, fundo de catacumba com arcos de pedra e velas,
   escuro e desfocado.
-- Uma mão estendida para a frente e para baixo, oferecendo (como os outros), ou segurando o elemento dela.
+- O molde (formato, pintura, fundo, broche) é o mesmo dos sete, mas cada anjo tem perfil e características
+  próprias: idade, tipo físico, traços do rosto, cabelo, pose e silhueta diferentes entre si e diferentes dos sete
+  (que hoje são quase todos jovens, de traços mediterrâneos, cabelo escuro ondulado e a mesma mão estendida).
+  Ver a seção 3A.
 - Um broche/medalhão redondo no peito com o símbolo do anjo (abaixo), em ouro velho.
 - Sem texto, sem moldura, sem logotipo.
+
+------------------------------------------------------------------
+3A. COMO OS DOIS SE DIFERENCIAM (lado a lado)
+------------------------------------------------------------------
+                 Zerael (Peste)                     Anjo do Trovão
+Idade            madura, ~50                        jovem, ~20
+Corpo            alta, esguia                       baixa, atlética
+Pele e rosto     negra retinta, rugas finas         clara, sardas, rosto redondo
+Cabelo           tranças longas grisalhas, no alto  curto, branco-prateado, eriçado
+Pose             de frente, parada, mãos em concha  três quartos, pousando, braço erguido
+Asas             fechadas e baixas                  abertas e altas
+Expressão        serena, quase sorri                riso aberto
+Silhueta         vertical e estreita                diagonal e aberta
+Roupa            manto longo que se desfaz         armadura leve e manto curto
 
 ------------------------------------------------------------------
 3. ANJO 8: ZERAEL, A PESTE
@@ -35,12 +52,15 @@ Anexos (na pasta junto deste pedido):
 Papel no jogo: veneno que se acumula no inimigo em camadas; quando enche, estoura em volta ("saturação"); a doença
 pula de um inimigo derrotado para o próximo. É a luz que faz o mal apodrecer por dentro, não uma doença do mundo.
 Temperamento: paciente, enigmática, fala devagar e baixo, quase sorri.
+Perfil: a mais velha da série, uma mulher madura (aparência de uns 50 anos), alta e esguia, imóvel.
 Visual:
-- Pele clara ou morena, rosto sereno e meio na sombra, olhos semicerrados.
-- Cabelo longo e liso, preso de lado, com folhas secas e ramos finos entrelaçados.
+- Pele negra retinta, maçãs do rosto altas, rugas finas nos olhos, olhar calmo e meio na sombra, semicerrado.
+- Cabelo em tranças longas e grisalhas, presas no alto da cabeça, com folhas secas e ramos finos entrelaçados.
+- Pose: de frente, parada, as DUAS mãos juntas na altura do peito em concha, segurando a névoa (não estende a mão).
+- Asas fechadas e baixas, quase um segundo manto.
 - Manto em amarelo-enxofre apagado e verde-líquen pálido, forro carvão; bordas que se desfazem em fiapos, como
   folha seca (não rasgado nem sujo).
-- Na mão estendida, uma névoa fina amarelo-esverdeada que sobe em fios, com pequenas sementes luminosas.
+- Entre as mãos, uma névoa fina amarelo-esverdeada que sobe em fios, com pequenas sementes luminosas.
 - Símbolo do broche: uma ampola em losango com uma gota dentro.
 Cores-chave: enxofre #C9B458, líquen #9FAE7A, carvão #2E2B26, ouro velho #B08A4A.
 
@@ -49,12 +69,16 @@ Cores-chave: enxofre #C9B458, líquen #9FAE7A, carvão #2E2B26, ouro velho #B08A
 ------------------------------------------------------------------
 Papel no jogo: carrega o inimigo de eletricidade; quando a carga enche, descarrega e o raio salta para os vizinhos.
 Temperamento: vibrante, impetuosa, ri com o estrondo, a mais rápida de todos.
+Perfil: a mais jovem da série, aparência de uns 20 anos, baixa e atlética, sempre em movimento.
 Visual:
-- Postura em movimento, como quem acabou de pousar; queixo erguido, olhar direto e alegre.
-- Cabelo curto e branco-prateado, eriçado pelo vento da tempestade.
+- Pele clara e sardenta, rosto redondo, nariz arrebitado, sorriso aberto mostrando os dentes, olhos claros acesos.
+- Cabelo branco-prateado bem curto, eriçado pelo vento da tempestade, uma mecha caindo na testa.
+- Pose: de três quartos, um joelho ainda dobrado como quem acabou de pousar, o corpo inclinado para a frente; o braço
+  erguido acima da cabeça segurando o relâmpago (não a mão estendida para baixo).
+- Asas abertas e altas, penas da ponta eriçadas.
 - Armadura leve de couro e placas finas cinza-ardósia sobre túnica clara; manto curto cinza-tempestade que estala
   na ponta.
-- Na mão estendida, um relâmpago pequeno e quebrado em zigue-zague, amarelo-pálido, com faíscas.
+- Na mão erguida, um relâmpago pequeno e quebrado em zigue-zague, amarelo-pálido, com faíscas.
 - Símbolo do broche: um raio de três segmentos atravessando uma nuvem estilizada.
 Cores-chave: ardósia #4E5866, cinza-tempestade #7D8590, amarelo-relâmpago #F1E08A, ouro velho #B08A4A.
 (Sem azul-violeta e sem índigo: ficam perto do violeta do vilão.)
