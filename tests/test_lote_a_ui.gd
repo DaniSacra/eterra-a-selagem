@@ -176,8 +176,9 @@ func test_the_hub_signs_hang_at_the_foot_off_the_hero() -> void:
 		if sign == null:
 			continue
 		assert_true(sign.under, "%s: under the thing" % id)
-		assert_eq(sign.position.y, 0.0, "%s: at its foot" % id)
-		var feet := Vector3(hub.player.pos.x, 0.0, hub.player.pos.y)
+		# hub round 2: stations stand on terraces; the foot is the level the thing stands on
+		assert_almost_eq(sign.position.y, HubPlan.ramp_at(Vector2(HubPlan.ANCHOR[id].x, HubPlan.ANCHOR[id].y)), 0.01, "%s: at its foot" % id)
+		var feet := Vector3(hub.player.pos.x, hub.player.position.y, hub.player.pos.y)  # on its terrace
 		var hero := StationSign.hero_box(cam.unproject_position(feet + Vector3(0, StationSign.HERO_HEIGHT, 0)), cam.unproject_position(feet))
 		assert_false(Rect2(sign.plate.position, sign.plate.size).intersects(hero), "%s: never over the hero" % id)
 	assert_false(HubPlan.STATIONS.has(&"alchemist"), "the Alquimista is a place, not a station")
