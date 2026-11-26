@@ -383,3 +383,28 @@ e `HubPlan` intactos (testes `test_hub*` passam). Arquivos: `hub_scenery.gd`, `h
   escada (só tapete); interiores; telhado da Forja aberto com toldo (a peça da forja ocupa a fachada); árvores de folha
   vermelha só uma; céu e serras só se veem de fato com a câmera Longe; o brilho do caminho e as cores do penhasco/névoa foram
   escolhidos sem ver, ajustar por `HubLook.MIST`, `CLIFF_*`, `PATH_GLOW`, `STY_MOON`.
+
+## Refino do Santuário, rodada 2 (2026-11-26; environment-artist, SEM captura: às cegas, conferir na GPU)
+Pedido: ficar crepúsculo (a rodada 1 saiu meio-dia lavado). Só visual; colisão, `HubPlan` e pontos de uso intactos
+(`test_hub*` passam). Nenhum shader novo (só `hub_cliff.gdshader` editado).
+- **1 Exposição** (`hub_look.gd`): `DUSK_AMBIENT` violeta frio (0,6/0,58/0,82), `DUSK_FOG` índigo escuro, `STY_AMBIENT_GAIN` 0,62,
+  `STY_MOON` 0,85, `KEY_ENERGY` 0,4, `STY_SHADOW_GLOW` violeta, pedra/piso/sombra do `STYLE` mais escuros e frios,
+  `WALL_A/B` do calcário mais escuros. As luzes quentes (janelas, lanternas, fogo) ficam como estavam e saltam.
+- **2 Vazio**: `MIST` índigo escuro (0,15/0,1/0,27); céu, serras e mar escurecidos (`SKY_*`, `SEA_*`, `RIDGES`); cachoeiras
+  mais longas (`FALLS`, 14 a 17 m) com `FALL_MIST` violeta; copas escuras de ciprestes e árvores lá embaixo
+  (`HubScenery._cliffs`, `DEEP_*`, listas `_deep_*`, `DEEP_A/B`).
+- **3 Penhasco** (`hub_cliff.gdshader`): blocos facetados (`facet_size`, cada célula com luz própria e fresta escura), sombra
+  fria `shade_color` (`CLIFF_SHADE`), escurece com a profundidade (`deep_dark`, `CLIFF_DEEP_DARK`), `CLIFF_FADE` 1 a 15 m,
+  rocha `CLIFF_ROCK_A/B` e musgo `CLIFF_MOSS` mais escuros.
+- **4 Vãos**: `HubLook.lit_opening(cor, energia, topo)` (emissão em gradiente vertical, escuro em cima, quente embaixo) nas
+  portas abertas (`HubBlockout.DOOR_GLOW`, `DOOR_TOP`) e nas janelas (`HubScenery.WINDOW_TOP`, `GLASS_GLOW`). A porta aberta
+  da Videira não desenha mais batentes nem lintel nem brilho (a pérgola aparece).
+- **5 Telhados**: `TERRACOTTA` (1,05/0,5/0,38), beiral `FASCIA` 0,2 em `FASCIA_COLOR` escuro.
+- **6 Flores**: jardim da Videira com `GARDEN_LILAC` 0,2 e `GARDEN_MAGENTA` 0,1 (antes 0,4 e 0,3), canteiros com 3 plantas
+  em vez de 4, `WISTERIA_*` e `MAGENTA_*` menos saturados.
+- **7 Caminho**: sem faixa; trilha de pedrinhas acesas (`_path_glow`, `PATH_DOT_STEP` 1,3, `PATH_DOT_OFFSET`, `PATH_GLOW`).
+- **8 Chegada**: a Vigília ("vigil") não ganha telhado nem janelas (massa e colisão iguais), bacia aberta ao céu.
+  Ficou de fora: o arco de pedra atrás da fogueira.
+- **9 Portas futuras** (`HubBlockout._arched_door`): arco de aduelas, folha de madeira ogival com tiras de ferro, ombreiras e
+  cadeado; escada visual do pátio com 5 degraus (`YARD_STEPS`).
+- Ajuste fino: `HubLook.STY_AMBIENT_GAIN/STY_MOON/KEY_ENERGY/MIST/DUSK_*`, `CLIFF_*`, `HubScenery.DEEP_*`, `PATH_GLOW`.

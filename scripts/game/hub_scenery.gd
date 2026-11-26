@@ -17,32 +17,35 @@ const VINE_GREEN := Color("94A76A")
 const WATER_BLUE := Color("527F8C")
 const OLD_GOLD := Color("B68A48")
 const SUN_WARM := Color("F4DBAB")
-const TERRACOTTA := Color(1.7, 0.7, 0.42)
+const TERRACOTTA := Color(1.05, 0.5, 0.38)
+## Round 2: the roofs are darker, duller clay with a dark fascia and tile rows of their own tint.
+const FASCIA_COLOR := Color(0.11, 0.07, 0.07)
 const IRON := Color(0.1, 0.1, 0.11)
-const WISTERIA_A := Color(0.36, 0.22, 0.48)
-const WISTERIA_B := Color(0.66, 0.5, 0.76)
+const WISTERIA_A := Color(0.34, 0.26, 0.46)
+const WISTERIA_B := Color(0.6, 0.52, 0.72)
 const LEAF_DARK := Color(0.2, 0.3, 0.14)
 const LEAF_LIGHT := Color(0.42, 0.54, 0.26)
 const TREE_DARK := Color(0.22, 0.34, 0.16)
 const TREE_LIGHT := Color(0.5, 0.62, 0.3)
 const RED_LEAF_A := Color(0.46, 0.08, 0.1)
 const RED_LEAF_B := Color(0.84, 0.26, 0.16)
-const MAGENTA_A := Color(0.46, 0.12, 0.34)
-const MAGENTA_B := Color(0.86, 0.46, 0.7)
+const MAGENTA_A := Color(0.4, 0.2, 0.34)
+const MAGENTA_B := Color(0.68, 0.5, 0.64)
 const WINDOW_GLOW := Color(1.0, 0.72, 0.38)
 
 # ---------- roofs, windows, corners ----------
 ## Eaves out of the wall, the rise as a share of the short side (and its limits), the fascia's thickness.
 const EAVE := 0.5
 const ROOF_RISE := Vector3(0.3, 0.9, 1.5)
-const FASCIA := 0.12
+const FASCIA := 0.2
 const CORNER_STONE := Vector2(0.45, 0.2)  # width and how far it stands out
 ## A window: width, sill height (low houses: the second), height cap, frame and glass depth, how far from the wall.
 const WINDOW := Vector4(0.85, 1.25, 1.7, 0.16)
 const WINDOW_LOW_SILL := 0.9
 const WINDOW_EVERY := 3.4
 const WINDOW_CLEAR := Vector2(1.3, 0.9)  # how far from a door or a piece along the wall, and out from it
-const GLASS_GLOW := 1.35
+const GLASS_GLOW := 1.5
+const WINDOW_TOP := 0.25  # a window's head keeps this share of its glow (the gradient's dark end)
 const MULLION := 0.05
 const SHUTTER_WOOD := Color(0.26, 0.15, 0.09)
 
@@ -64,9 +67,10 @@ const ARCH_RING := 0.4
 const ARCH_FOOT := -6.2
 const FALL_SHADER := preload("res://assets/shaders/waterfall.gdshader")
 ## The falls: u, v of the cliff face they hang on, width, drop (from just under the lip).
-const FALLS: Array[Vector4] = [Vector4(16.4, -15.7, 2.6, 9.0), Vector4(22.0, -15.7, 2.6, 9.0), Vector4(28.1, -13.6, 2.4, 8.0),
-	Vector4(35.5, -12.2, 2.6, 10.0)]
+const FALLS: Array[Vector4] = [Vector4(16.4, -15.7, 2.6, 15.0), Vector4(22.0, -15.7, 2.6, 16.0), Vector4(28.1, -13.6, 2.4, 14.0),
+	Vector4(35.5, -12.2, 2.6, 17.0)]
 const FALL_TURN := 0.0
+const FALL_MIST := Color(0.5, 0.46, 0.66)
 ## Balustrades along the edges that look over the drop (a, b in u, v), inset from the floor's edge.
 const RAILS: Array[Vector4] = [
 	Vector4(-28.7, -12.75, -19.3, -12.75), Vector4(7.0, -15.25, 25.7, -15.25), Vector4(7.6, -10.75, 23.6, -10.75),
@@ -89,7 +93,7 @@ const GATE_LIGHT_COLOR := Color(1.0, 0.78, 0.38)
 const VIGIL_FLAME := Vector3(-22.6, 0.0, -10.2)
 const FUTURE_YARDS: Array[Vector4] = [Vector4(-21.0, -26.0, -8.0, -17.0), Vector4(-1.0, -26.0, 12.0, -17.0)]
 const YARD_DROP := 1.2
-const YARD_STEPS := 3
+const YARD_STEPS := 5
 const YARD_WALL := Vector2(0.5, 1.1)
 const YARD_FLOOR := Color(0.5, 0.47, 0.41)
 
@@ -120,6 +124,10 @@ const GARDEN_RAISE := 0.36
 const GARDEN_SOIL := Color(0.2, 0.13, 0.09)
 const GARDEN_EVERY := 1.15
 const GARDEN_EDGE := 0.55
+## Round 2: the garden's shares of lilac and magenta clumps (half what they were; the rest is shrub or bare earth).
+const GARDEN_LILAC := 0.2
+const GARDEN_MAGENTA := 0.1
+const GARDEN_BARE := 0.8
 const GARDEN_CYPRESS_EDGE := 1.3
 ## The fountain on the Videira's bed (the middle of the pergola): basin radius, rim height, water radius, pedestal radius.
 const FOUNTAIN_BASIN := Vector4(1.55, 0.26, 1.36, 0.3)
@@ -141,12 +149,22 @@ const PLANTER := Vector3(2.6, 0.45, 0.75)
 const CLIFF_TUFT_EVERY := 2.2
 const CLIFF_TUFT_DEPTH := Vector2(0.5, 8.5)
 const LEDGE_EVERY := 6.0
+## Round 2: the dark crowns far down: every so often along the edge, this far out and this deep, this tall.
+const DEEP_EVERY := 3.5
+const DEEP_OUT := Vector2(1.5, 9.0)
+const DEEP_DEPTH := Vector2(7.0, 22.0)
+const DEEP_TALL := Vector2(3.0, 6.0)
+const DEEP_A := Color(0.05, 0.07, 0.12)
+const DEEP_B := Color(0.14, 0.15, 0.24)
 const LEDGE := Vector3(3.2, 1.0, 1.8)  # along the edge, tall, out of the face
 const LEDGE_DEPTH := Vector2(1.8, 13.0)
 ## The main way's glow (Vigilia, Videira, Dons, Aposento, Portao): width, how far apart the samples.
 const PATH_WIDTH := 1.5
 const PATH_STEP := 0.6
-const PATH_GLOW := Color(0.5, 0.34, 0.12)
+const PATH_DOT_STEP := 1.3
+const PATH_DOT_OFFSET := 0.45
+const PATH_DOT := 0.12  # half length of a lit stone
+const PATH_GLOW := Color(0.62, 0.42, 0.16)
 const PATH_MAIN: Array[Vector2] = [Vector2(-23.0, -7.0), Vector2(-14.0, -7.0), Vector2(-7.0, -6.0), Vector2(2.0, -6.0),
 	Vector2(4.0, 0.0), Vector2(4.0, 12.0), Vector2(1.0, 17.5)]
 const PATH_GATE: Array[Vector2] = [Vector2(2.0, -6.0), Vector2(5.0, -13.0), Vector2(25.0, -13.0), Vector2(32.0, -6.0), Vector2(36.0, -6.0)]
@@ -160,19 +178,19 @@ const RIDGE_SHADER := preload("res://assets/shaders/hub_ridge.gdshader")
 ## Each ridge card: distance north of the plan's middle v, width, height, bottom y, colour near the crest, colour at its
 ## top, ridge base share and amplitude, the seed.
 const RIDGES: Array[Dictionary] = [
-	{&"v": 160.0, &"w": 700.0, &"h": 170.0, &"y": -60.0, &"low": Color(0.5, 0.36, 0.52), &"top": Color(0.86, 0.6, 0.55), &"base": 0.6, &"amp": 0.3, &"seed": 3.0},
-	{&"v": 110.0, &"w": 520.0, &"h": 140.0, &"y": -60.0, &"low": Color(0.3, 0.24, 0.42), &"top": Color(0.58, 0.4, 0.5), &"base": 0.62, &"amp": 0.3, &"seed": 11.0},
+	{&"v": 160.0, &"w": 700.0, &"h": 170.0, &"y": -60.0, &"low": Color(0.3, 0.22, 0.4), &"top": Color(0.62, 0.4, 0.46), &"base": 0.6, &"amp": 0.3, &"seed": 3.0},
+	{&"v": 110.0, &"w": 520.0, &"h": 140.0, &"y": -60.0, &"low": Color(0.18, 0.14, 0.3), &"top": Color(0.38, 0.27, 0.4), &"base": 0.62, &"amp": 0.3, &"seed": 11.0},
 	{&"v": 70.0, &"w": 360.0, &"h": 120.0, &"y": -60.0, &"low": Color(0.14, 0.2, 0.2), &"top": Color(0.3, 0.34, 0.3), &"base": 0.6, &"amp": 0.3, &"seed": 21.0},
 ]
 const RIDGE_U := 14.0
 ## The sky (a standing card behind the ridges) and the sea of cloud under the floor (a flat plane), as gradients.
 const SKY_SHADER := preload("res://assets/shaders/hub_sky.gdshader")
-const SKY_TOP := Color(0.26, 0.2, 0.48)
-const SKY_HORIZON := Color(0.95, 0.62, 0.42)
+const SKY_TOP := Color(0.14, 0.11, 0.3)
+const SKY_HORIZON := Color(0.7, 0.42, 0.4)
 const SEA_Y := -30.0
 const SEA_SIZE := 900.0
-const SEA_FAR := Color(0.8, 0.5, 0.4)
-const SEA_NEAR := Color(0.3, 0.24, 0.42)
+const SEA_FAR := Color(0.36, 0.22, 0.34)
+const SEA_NEAR := Color(0.12, 0.09, 0.22)
 const SEA_CLOUD := 0.7
 const SEA_CLOUD_SCALE := 0.07  # waves of cloud the near camera can tell apart (a view is only tens of metres wide)
 const SKY_CARD := Vector4(260.0, 900.0, 320.0, -60.0)  # v, width, height, bottom y
@@ -193,6 +211,10 @@ var _cypress_spots: Array[Vector3] = []
 var _cypress_tall: Array[float] = []
 var _tree_spots: Array[Vector3] = []
 var _tree_tall: Array[float] = []
+var _deep_spots: Array[Vector3] = []
+var _deep_tall: Array[float] = []
+var _deep_round_spots: Array[Vector3] = []
+var _deep_round_tall: Array[float] = []
 var _magenta_spots: Array[Vector3] = []
 var _magenta_tall: Array[float] = []
 var _lantern_xf: Array[Transform3D] = []
@@ -212,8 +234,10 @@ func build(layout: RoomLayout) -> void:
 	facades = HubFacades.new(look, self)
 	for b in HubPlan.BUILDINGS:
 		var r: Vector4 = b[&"rect"]
-		_roof(r, b[&"h"])
 		_corners(r, b[&"h"])
+		if b[&"id"] == &"vigil":
+			continue  # round 2: the Vigília is an open basin under the sky, its wall bare behind it (no roof over the arrival)
+		_roof(r, b[&"h"])
 		_windows(r, b[&"h"])
 	facades.build()
 	_water()
@@ -237,6 +261,8 @@ func build(layout: RoomLayout) -> void:
 	look.add_crowns(_magenta_spots, _magenta_tall, MAGENTA_A, MAGENTA_B, 1.3, "Magentas", false)
 	look.add_crowns(_wisteria_spots, _wisteria_tall, WISTERIA_A, WISTERIA_B, 1.1, "Wisteria", false)
 	look.add_crowns(_cypress_spots, _cypress_tall, CYPRESS_GREEN * 0.7, CYPRESS_GREEN * 1.25, 1.25, "Cypresses", false)
+	look.add_crowns(_deep_spots, _deep_tall, DEEP_A, DEEP_B, 1.6, "DeepCypresses", false)
+	look.add_crowns(_deep_round_spots, _deep_round_tall, DEEP_A, DEEP_B, 3.2, "DeepTrees", true)
 	look.add_crowns(_tree_spots, _tree_tall, TREE_DARK, TREE_LIGHT, 4.2, "Trees", true)
 	_ridges()
 
@@ -359,7 +385,7 @@ func _roof(r: Vector4, h: float) -> void:
 	mi.position = _at(c.x, h + 0.12, c.y)
 	look.frame.add_child(mi)
 	# the fascia along the eaves (a darker board)
-	var board := look._plain(Color(0.2, 0.12, 0.08), 0.9)
+	var board := look._plain(FASCIA_COLOR, 0.9)
 	for s: float in [-1.0, 1.0]:
 		look._bar(_at(c.x, h + 0.06, c.y + s * hz), Vector3(hx * 2.0, FASCIA, FASCIA), board)
 		look._bar(_at(c.x + s * hx, h + 0.06, c.y), Vector3(FASCIA, FASCIA, hz * 2.0), board)
@@ -567,11 +593,11 @@ func _garden(poly: PackedVector2Array) -> void:
 			if roll < 0.08 and edge > GARDEN_CYPRESS_EDGE:
 				_cypress_spots.append(spot)
 				_cypress_tall.append(_rng.randf_range(2.4, 3.4))
-			elif roll < 0.4:
+			elif roll < GARDEN_LILAC:
 				plant(0, spot, _rng.randf_range(0.7, 1.2))
-			elif roll < 0.7:
+			elif roll < GARDEN_LILAC + GARDEN_MAGENTA:
 				plant(1, spot, _rng.randf_range(0.7, 1.2))
-			else:
+			elif roll < GARDEN_BARE:
 				plant(2, spot, _rng.randf_range(0.6, 1.1))
 		x += GARDEN_EVERY
 
@@ -731,7 +757,7 @@ func _fall(f: Vector4) -> void:
 	mi.position = _at(f.x, -0.4 - f.w * 0.5, f.y)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	look.frame.add_child(mi)
-	look.fk.mist_bank(_at(f.x, -0.4 - f.w, f.y - 0.6), Vector2(f.z * 3.0, 2.2), Color(0.85, 0.92, 0.95), 0.35, 0.3, 0.2)
+	look.fk.mist_bank(_at(f.x, -0.4 - f.w, f.y - 0.6), Vector2(f.z * 3.0, 2.2), FALL_MIST, 0.35, 0.3, 0.2)
 
 
 # ---------- the Videira's pergola ----------
@@ -936,12 +962,7 @@ func _lamp(p: Vector2) -> void:
 
 func _window_material() -> StandardMaterial3D:
 	if _window_mat == null:
-		_window_mat = StandardMaterial3D.new()
-		_window_mat.albedo_color = WINDOW_GLOW * 0.5
-		_window_mat.emission_enabled = true
-		_window_mat.emission = WINDOW_GLOW
-		_window_mat.emission_energy_multiplier = GLASS_GLOW
-		_window_mat.roughness = 0.4
+		_window_mat = HubLook.lit_opening(WINDOW_GLOW, GLASS_GLOW, WINDOW_TOP)
 	return _window_mat
 
 
@@ -1009,9 +1030,9 @@ func _planters() -> void:
 		var yaw := atan2(along.y, along.x)
 		look.fm.block(_at(c.x, 0.0, c.y), Vector3(PLANTER.x, PLANTER.y, PLANTER.z), yaw, stone, false)
 		look._bar(_at(c.x, PLANTER.y - 0.02, c.y), Vector3(PLANTER.x - 0.2, 0.05, PLANTER.z - 0.2), soil, Basis(Vector3.UP, yaw))
-		for k in 4:
-			var q := c + along * (-PLANTER.x * 0.36 + PLANTER.x * 0.24 * k)
-			plant(0 if (k + int(absf(c.x))) % 2 == 0 else 1, Vector3(q.x, PLANTER.y, q.y), _rng.randf_range(0.5, 0.85))
+		for k in 3:
+			var q := c + along * (-PLANTER.x * 0.3 + PLANTER.x * 0.3 * k)
+			plant(0 if (k + int(absf(c.x))) % 3 != 0 else 1, Vector3(q.x, PLANTER.y, q.y), _rng.randf_range(0.5, 0.85))
 
 
 # ---------- the mountain: cliffs, ledges, the red tree, the way's glow ----------
@@ -1043,6 +1064,21 @@ func _cliffs() -> void:
 			var hang := _rng.randf_range(1.4, 2.4)
 			_wisteria_spots.append(Vector3(at.x, -hang - 0.2, at.z))
 			_wisteria_tall.append(hang)
+	# round 2: dark crowns of cypress and trees far down the mountain, past the edge, going into the indigo mist
+	for e in _edge_points(DEEP_EVERY, 0.0, 0.0, false, true):
+		var p: Vector2 = e[0]
+		var out: Vector2 = e[1]
+		if _under_bridge(p):
+			continue
+		var q := p + out * _rng.randf_range(DEEP_OUT.x, DEEP_OUT.y)
+		var depth := _rng.randf_range(DEEP_DEPTH.x, DEEP_DEPTH.y)
+		var at := Vector3(q.x, -depth, q.y)
+		if _rng.randf() < 0.6:
+			_deep_spots.append(at)
+			_deep_tall.append(_rng.randf_range(DEEP_TALL.x, DEEP_TALL.y))
+		else:
+			_deep_round_spots.append(at)
+			_deep_round_tall.append(_rng.randf_range(DEEP_TALL.x, DEEP_TALL.y) * 0.8)
 	for e in _edge_points(LEDGE_EVERY, 0.0, 0.0, false, true):
 		var p: Vector2 = e[0]
 		var out: Vector2 = e[1]
@@ -1078,45 +1114,35 @@ func _red_tree() -> void:
 ## A faint gold glow laid along the main way (Vigilia to Videira to Dons to the Aposento, and on to the Portao), only
 ## where both of its sides are floor: the art's path of light.
 func _path_glow() -> void:
-	var grad := Gradient.new()
-	grad.colors = PackedColorArray([Color.BLACK, Color(1, 1, 1), Color.BLACK])
-	grad.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
-	var tex := GradientTexture2D.new()
-	tex.gradient = grad
-	tex.fill_from = Vector2(0.0, 0.5)
-	tex.fill_to = Vector2(1.0, 0.5)
-	tex.width = 64
-	tex.height = 4
+	# round 2: no band, a dotted trail of small warm lit stones every PATH_DOT_STEP m, alternating either side of the line
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_texture = tex
 	mat.albedo_color = PATH_GLOW
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for line: Array[Vector2] in [PATH_MAIN, PATH_GATE]:
-		var pts := _resample(line, PATH_STEP)
-		var st := SurfaceTool.new()
-		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var pts := _resample(line, PATH_DOT_STEP)
 		for i in pts.size() - 1:
 			var a := pts[i]
-			var b := pts[i + 1]
-			var dir := (b - a).normalized()
-			var side := Vector2(-dir.y, dir.x) * PATH_WIDTH * 0.5
-			if not (_on_floor(a + side) and _on_floor(a - side) and _on_floor(b + side) and _on_floor(b - side)):
+			var dir := (pts[i + 1] - a).normalized()
+			var side := Vector2(-dir.y, dir.x)
+			var c := a + side * PATH_DOT_OFFSET * (1.0 if i % 2 == 0 else -1.0) + dir * _rng.randf_range(-0.15, 0.15)
+			if not (_on_floor(c) and _on_floor(c + dir * PATH_DOT) and _on_floor(c - dir * PATH_DOT)):
 				continue
-			var q: Array[Vector3] = [_at(a.x + side.x, 0.03, a.y + side.y), _at(a.x - side.x, 0.03, a.y - side.y),
-				_at(b.x - side.x, 0.03, b.y - side.y), _at(b.x + side.x, 0.03, b.y + side.y)]
-			var uvs: Array[Vector2] = [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]
+			var hx := dir * PATH_DOT
+			var hz := side * PATH_DOT * 0.7
+			var q: Array[Vector3] = [_at(c.x - hx.x - hz.x, 0.03, c.y - hx.y - hz.y), _at(c.x + hx.x - hz.x, 0.03, c.y + hx.y - hz.y),
+				_at(c.x + hx.x + hz.x, 0.03, c.y + hx.y + hz.y), _at(c.x - hx.x + hz.x, 0.03, c.y - hx.y + hz.y)]
 			for k: int in [0, 1, 2, 0, 2, 3]:
-				st.set_uv(uvs[k])
 				st.add_vertex(q[k])
-		var mi := MeshInstance3D.new()
-		mi.name = "PathGlow"
-		mi.mesh = st.commit()
-		mi.material_override = mat
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		look.frame.add_child(mi)
+	var mi := MeshInstance3D.new()
+	mi.name = "PathGlow"
+	mi.mesh = st.commit()
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	look.frame.add_child(mi)
 
 
 ## The polyline's points every `step` m.

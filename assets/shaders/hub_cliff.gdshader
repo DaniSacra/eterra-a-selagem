@@ -17,6 +17,11 @@ uniform float moss_share = 0.75;
 // The light of the dusk on the face: a warm wash from the top, per metre it fades.
 uniform vec3 warm_color : source_color = vec3(1.0, 0.7, 0.4);
 uniform float warm_depth = 5.0;
+// Round 2: faceted blocks (each cell of the face its own light, a dark chink between them), the cool shadow the rock
+// takes away from the light and how much darker it gets at the bottom of the fade.
+uniform vec3 shade_color : source_color = vec3(0.2, 0.17, 0.36);
+uniform float deep_dark = 0.65;
+uniform vec2 facet_size = vec2(2.6, 1.7);
 
 varying vec3 world;
 varying vec3 wnormal;
@@ -59,6 +64,16 @@ void fragment() {
 	float grain = fbm(vec2(along * 0.55, world.y * 2.6));
 	vec3 c = mix(rock_a, rock_b, clamp(grain * 0.9 + band_v * 0.35 - 0.1, 0.0, 1.0));
 	c *= 0.82 + 0.3 * band_v;
+	// facets: irregular blocks, each a different face lit more or less, with a chink round it
+	vec2 fp = vec2(along / facet_size.x + 0.5 * mod(floor(world.y / facet_size.y), 2.0), world.y / facet_size.y);
+	vec2 cell = floor(fp);
+	vec2 inside = fract(fp);
+	float lit = hash1(cell + 7.0);
+	float slope = (inside.x * 0.6 + inside.y * 0.4) * (lit - 0.5);
+	c *= 0.62 + 0.7 * lit + slope * 0.5;
+	c = mix(c, shade_color, (1.0 - lit) * 0.35);
+	vec2 chink = min(inside, 1.0 - inside);
+	c *= mix(0.45, 1.0, smoothstep(0.0, 0.07, min(chink.x * 0.6, chink.y)));
 	// a dark seam at the foot of each band (a ledge's shadow) and upright cracks
 	float seam = fract((world.y + warp) * 1.7);
 	c *= mix(0.72, 1.0, smoothstep(0.0, 0.22, seam));
@@ -72,7 +87,8 @@ void fragment() {
 	c = mix(c, c * warm_color * 1.6, (1.0 - smoothstep(0.0, warm_depth, depth)) * 0.45);
 	// into the mist
 	float f = smoothstep(fade.x, fade.y, depth);
+	c *= 1.0 - deep_dark * smoothstep(fade.x, fade.y, depth);
 	ALBEDO = mix(c, mist_color, f * 0.9);
 	ROUGHNESS = 1.0;
-	EMISSION = mist_color * f * 0.5;
+	EMISSION = mist_color * f * 0.25;
 }
