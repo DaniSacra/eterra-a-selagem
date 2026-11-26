@@ -255,7 +255,8 @@ const IVY_TALL := Vector2(2.0, 5.5)
 ## BACKDROP_SINK under it.
 const BACKDROP_EVERY := 2.6
 const BACKDROP_WIDE := Vector2(3.2, 4.6)
-const BACKDROP_TALL := Vector2(6.0, 9.5)
+const BACKDROP_TALL := Vector2(4.0, 6.5)
+const BACKDROP_MIN_V := 24.0
 const BACKDROP_DEEP := Vector2(2.2, 3.4)
 const BACKDROP_SINK := 3.0
 const IVY_A := Color(0.2, 0.32, 0.14)
@@ -1293,8 +1294,8 @@ func _backdrop() -> void:
 	for e in _edge_points(BACKDROP_EVERY, 0.0, 0.0, false, true):
 		var p: Vector2 = e[0]
 		var out: Vector2 = e[1]
-		if out.y < 0.5 and out.x > -0.5:
-			continue
+		if out.y < 0.5 or p.y < BACKDROP_MIN_V:
+			continue  # only the far north rim: west and inner edges put the rock between the camera and the floor
 		if p.distance_to(RED_TREE_AT) < RED_TREE_CLEAR or p.distance_to(Vector2(RED_TREE_2.x, RED_TREE_2.y)) < RED_TREE_CLEAR:
 			continue
 		var along := Vector2(-out.y, out.x)
