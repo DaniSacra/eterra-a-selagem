@@ -25,6 +25,15 @@ Cada entrega é um lote fechado com exe no fim, capturas na GPU e push. O detalh
 
 Decisões do Daniel em aberto: textos a aprovar (chegada, objetivo, dicas, O Leão / O Cálice / A Espada, fim curto, os da E2), D-O8 (cânone), regra de troca de Bênção no mesmo botão, (a) ou (b) da E6, música nova do Santuário, Meshy.
 
+## PT-26, teste do Daniel no exe e2a59f82 (2026-11-25, madrugada) — FAZER AGORA, com a E4, a E5 e uma revisão de todos os agentes
+- **PT-26-1:** todo "Clique esquerdo" / "Clique direito" (dicas, HUD, telas, legendas de botões) vira um desenho de mouse mostrando qual botão; procurar em todos os lugares e fazer a arte.
+- **PT-26-2:** a tela de entrada do anjo (que espera Enter) só aparece quando há 2 anjos para escolher; com 1 anjo vai direto para as cartas.
+- **PT-26-3:** duas Bênçãos para a mesma habilidade (ele pegou duas para o E): a nova substitui a antiga. Mostrar na carta um aviso claro de que vai substituir e qual.
+- **PT-26-4:** o HUD mostrou só 1 Bênção do lado direito; mostrar todas, com estado ativo e recarga. O HUD em geral está difícil de entender: prioridade da revisão.
+- **PT-26-5:** a Videira compra segurando o botão esquerdo do mouse, igual aos Dons (não Enter).
+- **PT-26-6:** a Forja: ele não entendeu nada de como funciona. Deixar claro (o que faz, o que custa, o que muda).
+- Depois: E4, E5, e todos os agentes procurando bugs, erros, quickwins e pequenas melhorias, já desenvolvidos. Ele testa amanhã.
+
 ## PT-25, teste do Daniel no exe c233881b (2026-11-25 noite) — SÓ BACKLOG, não desenvolver até o Daniel mandar
 - **PT-25-1 (bug):** Sarael ofereceu só 1 Bênção na sala 3. Achar por que a tela veio com 1 carta e garantir 3, ou 2 com aviso quando o anjo não tem mais.
 - **PT-25-2:** música do Santuário. Conferir se `thatched_villagers` toca no Santuário (MUS-2). Daniel quer uma peça nova: separar 3 candidatas de licença livre para ele escolher (como `ASelagem-musicas-escolher`).
