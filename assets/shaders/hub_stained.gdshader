@@ -6,18 +6,18 @@ shader_type spatial;
 // (HubFacades.ogive_mesh: UV.y 0 at the apex, UV.x 0 to 1 across); the colours are the uniforms, set from HubFacades.STAINED.
 render_mode unshaded, cull_disabled, shadows_disabled, fog_disabled;
 
-uniform vec3 jewel_a : source_color = vec3(0.78, 0.5, 0.16);
-uniform vec3 jewel_b : source_color = vec3(0.46, 0.1, 0.17);
-uniform vec3 jewel_c : source_color = vec3(0.1, 0.18, 0.42);
-uniform vec3 jewel_d : source_color = vec3(0.2, 0.33, 0.18);
+uniform vec3 jewel_a : source_color = vec3(0.72, 0.46, 0.15);
+uniform vec3 jewel_b : source_color = vec3(0.34, 0.12, 0.15);
+uniform vec3 jewel_c : source_color = vec3(0.12, 0.17, 0.3);
+uniform vec3 jewel_d : source_color = vec3(0.8, 0.58, 0.26);
 uniform vec3 lead_color : source_color = vec3(0.03, 0.025, 0.03);
 // Lozenges across the panel, and the height of the panel over its width (so a lozenge stays a lozenge).
 uniform float cells = 4.0;
 uniform float aspect = 2.1;
 // Half the width of the lead came, in a lozenge's own units.
-uniform float lead = 0.075;
+uniform float lead = 0.05;
 // The light behind: its overall share and how much brighter the middle is than the rim.
-uniform float brightness = 0.85;
+uniform float brightness = 0.78;
 uniform float heart = 0.35;
 
 float hash(vec2 p) {
@@ -30,7 +30,8 @@ void fragment() {
 	vec2 cell = floor(q);
 	vec2 f = fract(q);
 	float pick = hash(cell);
-	vec3 c = pick < 0.28 ? jewel_a : (pick < 0.52 ? jewel_b : (pick < 0.8 ? jewel_c : jewel_d));
+	// round 6: about 60% warm amber/honey (a and d), a few wine (b) and deep blue (c) accents
+	vec3 c = pick < 0.32 ? jewel_a : (pick < 0.6 ? jewel_d : (pick < 0.8 ? jewel_b : jewel_c));
 	c *= 0.8 + 0.4 * hash(cell + 9.0);
 	// brighter at the heart of each piece of glass
 	float centre = 1.0 - clamp(length(f - 0.5) * 1.6, 0.0, 1.0);

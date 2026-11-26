@@ -17,7 +17,8 @@ const GLASS_FRAME := Color(0.78, 0.66, 0.4)
 const AMBER := Color(1.0, 0.72, 0.38)
 ## Round 4: the stained glass is a lattice of small lozenges in four muted jewel tones (amber, wine, deep blue, moss-green)
 ## in dark lead (hub_stained.gdshader), not wedges of pure colour.
-const STAINED: Array[Color] = [Color(0.78, 0.5, 0.16), Color(0.46, 0.1, 0.17), Color(0.1, 0.18, 0.42), Color(0.2, 0.33, 0.18)]
+## Round 6: ~60% amber and honey, a few wine and deep-blue accents, all muted (a, wine, blue, honey).
+const STAINED: Array[Color] = [Color(0.72, 0.46, 0.15), Color(0.34, 0.12, 0.15), Color(0.12, 0.17, 0.3), Color(0.8, 0.58, 0.26)]
 const STAINED_SHADER := preload("res://assets/shaders/hub_stained.gdshader")
 const CARPET := Color(0.46, 0.08, 0.12)
 const VISTA_SHADER := preload("res://assets/shaders/hub_vista.gdshader")
@@ -140,11 +141,8 @@ static func ogive_mesh(span: float, spring: float, radius: float, colors: Array[
 ## The wall light's glass: warm amber, lit from within (the windows' own).
 func _warm_glass() -> StandardMaterial3D:
 	if _glass_mat == null:
-		_glass_mat = StandardMaterial3D.new()
-		_glass_mat.albedo_color = AMBER * 0.5
-		_glass_mat.emission_enabled = true
-		_glass_mat.emission = AMBER
-		_glass_mat.emission_energy_multiplier = 1.3
+		# round 6: a dark head with the light pooling low, not a flat plate (the ogive's UV.y is 0 at the apex)
+		_glass_mat = HubLook.lit_opening(AMBER, 1.3, 0.05, 0.25)
 		_glass_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	return _glass_mat
 

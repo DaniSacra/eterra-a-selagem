@@ -28,7 +28,9 @@ const GATE_CORNICE := 0.3
 const GATE_LIGHT_TINT := Color(1.0, 0.76, 0.34)
 ## Round 5: the sheet (additive) and its lights at this share of the open portal's, so the violet view (mountains, road) shows
 ## through the opening and the gold stays on the rim.
-const GATE_SHEET_DIM := 0.6
+const GATE_SHEET_DIM := 0.3
+## Round 6: its lights (they gild the floor under the arch) at this share, so the floor does not blow out to white.
+const GATE_LIGHT_DIM := 0.4
 const GATE_DARK := Color(0.02, 0.05, 0.035)
 const DOOR_WOOD := Color(0.36, 0.21, 0.11)
 const DOOR_IRON := Color(0.09, 0.09, 0.1)
@@ -42,6 +44,7 @@ const DOOR_GLOW_ENERGY := 0.8
 ## showed the black behind it), now fixed in HubFacades.ogive_mesh.
 const DOOR_TOP := 0.03
 const DOOR_MID := 0.22  # round 5: the gradient's middle (see HubLook.lit_opening)
+const DOOR_HEAD := 0.45  # round 6: the dark band under the lintel (height)
 const DOOR_REVEAL := 0.14  # the dark reveal strips each side of an open doorway (width)
 const ARCH_SPRING := 0.8  # round 4: lower, so the arches in front of the camera do not hide the court
 const ARCH_RING := 0.38
@@ -125,7 +128,7 @@ func _gate() -> void:
 	var sheet := lights[0] as ShaderMaterial
 	sheet.set_shader_parameter(&"power", float(sheet.get_shader_parameter(&"power")) * GATE_SHEET_DIM)
 	for k in range(1, lights.size()):
-		(lights[k] as OmniLight3D).light_energy *= GATE_SHEET_DIM
+		(lights[k] as OmniLight3D).light_energy *= GATE_LIGHT_DIM
 	look.station_lights[HubPlan.PORTAL] = lights[1]
 
 
@@ -167,6 +170,9 @@ func _door(id: StringName, closed: bool) -> void:
 			var rp := c + along * sd * (long_half - DOOR_REVEAL * 0.5)
 			var rs := Vector3(DOOR_REVEAL, h, 0.12) if across_u else Vector3(0.12, h, DOOR_REVEAL)
 			look._bar(HubLook.at(rp.x, h * 0.5, rp.y), rs, reveal)
+		# round 6: the lintel's shadow over the head of the doorway (the opening is not a flat lit plate)
+		var head := Vector3(long_half * 2.0 - DOOR_REVEAL * 2.0, DOOR_HEAD, 0.12) if across_u else Vector3(0.12, DOOR_HEAD, long_half * 2.0 - DOOR_REVEAL * 2.0)
+		look._bar(HubLook.at(c.x, h - DOOR_HEAD * 0.5, c.y), head, reveal)
 		var sill := Vector3(long_half * 2.0, 0.08, 0.5) if across_u else Vector3(0.5, 0.08, long_half * 2.0)
 		look.fm.block(HubLook.at(c.x, 0.0, c.y), sill, 0.0, stone, false)
 
