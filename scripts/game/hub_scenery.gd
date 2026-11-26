@@ -74,8 +74,12 @@ const PERGOLA_COLUMNS := 3
 const RAFTER := Vector2(0.9, 0.12)  # every, thickness
 const RAFTER_WOOD := Color(0.3, 0.19, 0.11)
 
+# ---------- the gate's frame and light ----------
+const GATE_FRAME := Vector3(2.4, 2.6, 6.2)  # how far west of the face, half the way's width, pillar height
+const GATE_LIGHT := Vector2(5.0, 16.0)
+
 # ---------- the Ponto de Vigília and the future rooms ----------
-const VIGIL_FLAME := Vector3(-25.0, 0.0, -8.6)
+const VIGIL_FLAME := Vector3(-22.6, 0.0, -10.2)
 const FUTURE_YARDS: Array[Vector4] = [Vector4(-21.0, -26.0, -8.0, -17.0), Vector4(-1.0, -26.0, 12.0, -17.0)]
 const YARD_DROP := 1.2
 const YARD_STEPS := 3
@@ -104,14 +108,21 @@ const RIDGE_SHADER := preload("res://assets/shaders/hub_ridge.gdshader")
 ## Each ridge card: distance north of the plan's middle v, width, height, bottom y, colour near the crest, colour at its
 ## top, ridge base share and amplitude, the seed.
 const RIDGES: Array[Dictionary] = [
-	{&"v": 150.0, &"w": 420.0, &"h": 150.0, &"y": -40.0, &"low": Color(0.62, 0.7, 0.76), &"top": Color(0.74, 0.82, 0.86), &"base": 0.45, &"amp": 0.3, &"seed": 3.0},
-	{&"v": 100.0, &"w": 300.0, &"h": 110.0, &"y": -40.0, &"low": Color(0.46, 0.58, 0.58), &"top": Color(0.6, 0.7, 0.72), &"base": 0.4, &"amp": 0.28, &"seed": 11.0},
-	{&"v": 66.0, &"w": 220.0, &"h": 80.0, &"y": -34.0, &"low": Color(0.28, 0.4, 0.3), &"top": Color(0.42, 0.52, 0.42), &"base": 0.36, &"amp": 0.26, &"seed": 21.0},
+	{&"v": 190.0, &"w": 700.0, &"h": 170.0, &"y": -80.0, &"low": Color(0.64, 0.72, 0.8), &"top": Color(0.78, 0.84, 0.9), &"base": 0.55, &"amp": 0.35, &"seed": 3.0},
+	{&"v": 130.0, &"w": 520.0, &"h": 150.0, &"y": -80.0, &"low": Color(0.46, 0.6, 0.62), &"top": Color(0.62, 0.74, 0.76), &"base": 0.5, &"amp": 0.32, &"seed": 11.0},
+	{&"v": 80.0, &"w": 360.0, &"h": 130.0, &"y": -70.0, &"low": Color(0.28, 0.42, 0.3), &"top": Color(0.44, 0.56, 0.44), &"base": 0.46, &"amp": 0.3, &"seed": 21.0},
 ]
 const RIDGE_U := 14.0
-## The haze under the floor, a card low and wide: colour and alpha.
-const HAZE_COLOR := Color(0.72, 0.8, 0.84)
-const HAZE_ALPHA := 0.6
+## The sky (a standing card behind the ridges) and the sea of cloud under the floor (a flat plane), as gradients.
+const SKY_SHADER := preload("res://assets/shaders/hub_sky.gdshader")
+const SKY_TOP := Color(0.42, 0.62, 0.84)
+const SKY_HORIZON := Color(0.98, 0.88, 0.7)
+const SEA_Y := -45.0
+const SEA_SIZE := 900.0
+const SEA_FAR := Color(0.98, 0.9, 0.76)
+const SEA_NEAR := Color(0.6, 0.72, 0.84)
+const SEA_CLOUD := 0.5
+const SKY_CARD := Vector4(260.0, 900.0, 520.0, -120.0)  # v, width, height, bottom y
 
 var look: HubLook
 var _rng := RandomNumberGenerator.new()
@@ -508,17 +519,19 @@ func _pergola() -> void:
 
 # ---------- the Ponto de Vigília ----------
 
-## The arrival's post: a stone bowl on a round dais at the east face of its wall, a lit flame (the plan's one lit fire here), a
-## lion banner and the seal's lion in the wall over it.
+## The arrival's post: a stone bowl on a round dais south-east of its wall (out from under the roof, in sight on
+## arriving), a lit flame (the plan's one lit fire here) and a lion standard on a pole beside it.
 func _vigil_post() -> void:
 	var f := VIGIL_FLAME
 	var stone := look.stone()
 	look.fm.block(_at(f.x, 0.0, f.z), Vector3(1.3, 0.2, 1.3), 0.0, stone, false)
 	look.fm.block(_at(f.x, 0.2, f.z), Vector3(0.7, 0.55, 0.7), 0.0, look.ashlar(), false)
 	look.fk.brazier(Vector2(f.x, -f.z), 0.75, false, 1.6, true)
-	var face := HubPlan.BUILDINGS[0][&"rect"] as Vector4
-	look.fk.banner(_at(face.z + 0.05, 2.2, f.z + 1.8), PI * 0.5, Vector2(0.8, 1.7), 1, ArenaKit.Emblem.LION)
-	look._lion(_at(face.z + 0.03, 1.5, f.z + 0.0), Basis(Vector3.UP, PI * 0.5), 0.8, HubLook.MEDALLION_GOLD)
+	var iron := look._plain(IRON, 0.6)
+	var pole := _at(f.x + 1.5, 0.0, f.z)
+	look._bar(pole + Vector3(0, 1.6, 0), Vector3(0.09, 3.2, 0.09), iron)
+	look._bar(pole + Vector3(0, 3.15, 0), Vector3(1.0, 0.07, 0.07), iron)
+	look.fk.banner(pole + Vector3(0, 3.1, 0.06), 0.0, Vector2(0.85, 1.9), 1, ArenaKit.Emblem.LION)
 
 
 # ---------- the future rooms ----------
@@ -549,17 +562,58 @@ func _future_yards() -> void:
 
 # ---------- the gate ----------
 
-## The lion over the gate's arch and two standards beside it, a lantern on each side.
+## The gate, readable from the camera (it opens to the west, edge-on to it): a freestanding frame of two tall pillars and a
+## lintel across the way in front of the opening, lion statues' plinths at their feet, the lion over the arch, two
+## standards, lanterns, a stone cap, and a column of the portal's light rising over it (a card facing the camera).
 func _gate_dressing() -> void:
 	var g := HubPlan.GATE
 	var face := HubPlan.GATE_FACE_U
 	var mid := HubPlan.GATE_MID_V
-	look._lion(_at(face - 0.04, HubBlockout.GATE_H + 0.85, mid), Basis(Vector3.UP, -PI * 0.5), 0.7, HubLook.MEDALLION_GOLD)
+	var stone := look.ashlar()
+	var fu := face - GATE_FRAME.x
 	for s: float in [-1.0, 1.0]:
-		look.fk.banner(_at(face - 0.12, 4.2, mid + s * 3.1), -PI * 0.5, Vector2(1.0, 2.6), 1, ArenaKit.Emblem.LION)
-		_lamp(Vector2(face - 1.0, mid + s * 2.6 - 0.0))
-	# a stone cap over the gate's mass, so it reads as a monument and not a block
-	look.fm.block(_at((g.x + g.z) * 0.5, HubPlan.GATE_HEIGHT, (g.y + g.w) * 0.5), Vector3(g.z - g.x + 0.5, 0.35, g.w - g.y + 0.5), 0.0, look.ashlar(), false)
+		var v := mid + s * GATE_FRAME.y
+		look.fm.block(_at(fu, 0.0, v), Vector3(1.3, 0.5, 1.3), 0.0, stone, false)
+		look.fm.block(_at(fu, 0.5, v), Vector3(0.95, GATE_FRAME.z - 0.5, 0.95), 0.0, stone, false)
+		look.fm.block(_at(fu, GATE_FRAME.z, v), Vector3(1.2, 0.3, 1.2), 0.0, stone, false)
+		look.fk.banner(_at(fu - 0.5, GATE_FRAME.z - 0.6, v), -PI * 0.5, Vector2(0.9, 2.4), 1, ArenaKit.Emblem.LION)
+		look._lion(_at(fu - 0.49, 1.3, v), Basis(Vector3.UP, -PI * 0.5), 0.6, HubLook.MEDALLION_GOLD)
+		_lamp(Vector2(fu - 1.2, v))
+	look.fm.block(_at(fu, GATE_FRAME.z + 0.3, mid), Vector3(1.1, 0.7, GATE_FRAME.y * 2.0 + 1.4), 0.0, stone, false)
+	look.fm.block(_at(fu, GATE_FRAME.z + 1.0, mid), Vector3(0.8, 0.4, GATE_FRAME.y * 2.0 + 0.4), 0.0, stone, false)
+	look._lion(_at(fu - 0.41, GATE_FRAME.z + 0.65, mid), Basis(Vector3.UP, -PI * 0.5), 0.8, HubLook.MEDALLION_GOLD)
+	look.fm.block(_at((g.x + g.z) * 0.5, HubPlan.GATE_HEIGHT, (g.y + g.w) * 0.5), Vector3(g.z - g.x + 0.5, 0.35, g.w - g.y + 0.5), 0.0, stone, false)
+	_light_column(Vector3(face + 0.5, 0.0, mid))
+
+
+## A soft column of the portal's green-white light standing over the gate: a vertical card facing south, fading upward.
+func _light_column(p: Vector3) -> void:
+	var grad := Gradient.new()
+	grad.colors = PackedColorArray([Color(1, 1, 1, 0.0), Color(1, 1, 1, 0.4), Color(1, 1, 1, 0.0)])
+	grad.offsets = PackedFloat32Array([0.0, 0.3, 1.0])
+	var tex := GradientTexture2D.new()
+	tex.gradient = grad
+	tex.fill_from = Vector2(0.0, 1.0)
+	tex.fill_to = Vector2(0.0, 0.0)
+	tex.width = 4
+	tex.height = 128
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color(0.5, 1.0, 0.72)
+	mat.albedo_texture = tex
+	mat.no_depth_test = false
+	var mi := MeshInstance3D.new()
+	mi.name = "GateLight"
+	var q := QuadMesh.new()
+	q.size = Vector2(GATE_LIGHT.x, GATE_LIGHT.y)
+	mi.mesh = q
+	mi.material_override = mat
+	mi.position = p + Vector3(0, GATE_LIGHT.y * 0.5, 0)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	look.frame.add_child(mi)
 
 
 # ---------- plants and lamps ----------
@@ -631,8 +685,28 @@ func _window_material() -> StandardMaterial3D:
 
 # ---------- the far ridges ----------
 
-## Layers of mountain north of the plan, each paler than the one in front, and a haze under the floor (no grey slabs).
+## The sky and the sea of cloud, then layers of mountain north of the plan, each paler than the one in front: the void
+## round the floor reads as air with mountains in it, never a flat grey.
 func _ridges() -> void:
+	var sky := _gradient_mat(SKY_TOP, SKY_HORIZON, 1.0, 0.0)
+	var card := MeshInstance3D.new()
+	card.name = "Sky"
+	var cq := QuadMesh.new()
+	cq.size = Vector2(SKY_CARD.y, SKY_CARD.z)
+	card.mesh = cq
+	card.material_override = sky
+	card.position = _at(RIDGE_U, SKY_CARD.w + SKY_CARD.z * 0.5, SKY_CARD.x)
+	card.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	look.frame.add_child(card)
+	var sea := MeshInstance3D.new()
+	sea.name = "CloudSea"
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(SEA_SIZE, SEA_SIZE)
+	sea.mesh = pm
+	sea.material_override = _gradient_mat(SEA_FAR, SEA_NEAR, 0.0, SEA_CLOUD)
+	sea.position = _at(RIDGE_U, SEA_Y, SEA_SIZE * 0.4)
+	sea.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	look.frame.add_child(sea)
 	for r in RIDGES:
 		var mi := MeshInstance3D.new()
 		mi.name = "Ridge"
@@ -649,4 +723,13 @@ func _ridges() -> void:
 		mi.position = _at(RIDGE_U, float(r[&"y"]) + float(r[&"h"]) * 0.5, float(r[&"v"]))
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		look.frame.add_child(mi)
-	look.fk.mist_bank(_at(RIDGE_U, -9.0, 0.0), Vector2(220.0, 40.0), HAZE_COLOR, HAZE_ALPHA, 0.3, 0.3)
+
+
+func _gradient_mat(top: Color, bottom: Color, vertical: float, cloud: float) -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = SKY_SHADER
+	mat.set_shader_parameter(&"top_color", top)
+	mat.set_shader_parameter(&"bottom_color", bottom)
+	mat.set_shader_parameter(&"vertical", vertical)
+	mat.set_shader_parameter(&"cloud", cloud)
+	return mat
