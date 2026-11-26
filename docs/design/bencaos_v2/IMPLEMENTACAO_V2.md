@@ -2,11 +2,11 @@
 
 Autor: balance-designer, 2026-11-26. Só documento: nada foi implementado nem medido. Base: HEAD `9083e79c`, pacote `docs/design/packs_2026-11-26/p0_bencaos_v2/` (01, 02, 03, 05; o 04 está superado), `bencaos_v1/IMPLEMENTACAO.md`, `balance.md` ("Bênçãos V1") e a seção 8 de `heroes/warrior_v1_2026-11-26.md` (slots novos). Os números são **ponto de partida para medir**, não calibrados; o robô compara versões, não dá taxa de vitória de gente.
 
-Decisões do Daniel que valem aqui (não reabertas): 9 anjos x 9 (5 principais + 4 complementares) = 81; Zerael (Peste) aceito; o anjo do Trovão **não** é Baraqel (id técnico `thunder`, nome no jogo "Anjo do Trovão" até ele escolher); estado só com golpe que causa dano; sorteio 3:1 e mão completada por outros anjos como hoje; a Maga não muda.
+Decisões do Daniel que valem aqui (não reabertas): 9 anjos x 9 (5 principais + 4 complementares) = 81; Zerael (Peste) aceito; o anjo do Trovão **não** é Baraqel (id técnico `thunder`, nome no jogo "Saarael (Trovão)" até ele escolher); estado só com golpe que causa dano; sorteio 3:1 e mão completada por outros anjos como hoje; a Maga não muda.
 
 ## 0. Resumo e cortes (KISS)
 
-V2 = 63 poderes da V1 (37 ficam como estão, 26 mudam o efeito sem mudar o id) + 18 novos (Zerael e Anjo do Trovão). O motor novo é pequeno: três estados (Veneno, Sangramento, Eletrificação), um medidor de chefe, uma antecipação de DoT, uma propagação e um **limite de linhagem** que vale para tudo. Nada reescreve `Celestial`; ele cresce por cima do que existe.
+V2 = 63 poderes da V1 (37 ficam como estão, 26 mudam o efeito sem mudar o id) + 18 novos (Zerael e Saarael (Trovão)). O motor novo é pequeno: três estados (Veneno, Sangramento, Eletrificação), um medidor de chefe, uma antecipação de DoT, uma propagação e um **limite de linhagem** que vale para tudo. Nada reescreve `Celestial`; ele cresce por cima do que existe.
 
 **O que o pacote pede e eu cortei (e por quê):**
 
@@ -42,7 +42,7 @@ Totais: MANTÉM 37, MUDA 26, NOVO 18 = 81. Principais 45, complementares 36.
 | Galael (Vento) | `golpe_mare`, `passos_leves`, `vendaval`, `cadencia`, `brisa_favoravel` | `pesado_mare` (rajada propaga DoT), `circulo_mare` (vira velocidade do Poder, seção 8 do Guerreiro), `turbilhao` (propaga DoT), `fluxo_continuo` (ações distintas acumulam mais) | |
 | Qeshael (Penumbra) | `golpe_marca`, `circulo_marca`, `olhar_rapido`, `ressonancia` | `pesado_marca` (+ Sangramento), `exercito_ecos` (+ Sangramento), `eco_crescente` (+ Sangramento), `marca_persistente` (passa ao morrer), `sombra_revelada` (crítico sangra) | |
 | Zerael (Peste) | | | `golpe_peste`, `pesado_peste`, `circulo_peste`, `passo_peste`, `epidemia_celestial`, `saturacao`, `peste_persistente`, `deterioracao`, `contagio` |
-| Anjo do Trovão (`thunder`) | | | `golpe_trovao`, `pesado_trovao`, `circulo_trovao`, `passo_trovao`, `tempestade_celestial`, `descarga`, `conducao`, `sobrecarga`, `ressonancia_eletrica` |
+| Saarael (Trovão) (`thunder`) | | | `golpe_trovao`, `pesado_trovao`, `circulo_trovao`, `passo_trovao`, `tempestade_celestial`, `descarga`, `conducao`, `sobrecarga`, `ressonancia_eletrica` |
 
 Slots (nomes novos do Guerreiro; o enum `Boon.Slot` não muda): Ataque = `ATTACK` (toque e segurar), Especial = `SPECIAL` (Lança da Emeth, segurar o direito, 20 de Magia), Poder = `CAST` (Corte Circular, toque do direito, 8 de Magia), Esquiva = `DASH`, Supremo = `ULT`. O E (Interagir) não tem Bênção; a Investida saiu do Guerreiro.
 
@@ -115,7 +115,7 @@ Dado em `CelState`: `bleed_pool` (dano que falta), `bleed_t` (segundos). `CelRul
 - Quem aplica: `pesado_marca` (golpes do Especial em alvo **marcado**), `exercito_ecos` (durante a janela do Supremo, golpe direto em alvo marcado), `sombra_revelada` (golpe crítico em alvo marcado sem sangramento). Eco Crescente só multiplica a fatia.
 - **Crítico e sangramento**: o crítico engorda o `dmg` do golpe que aplica (proporcional), mas o tique nunca critica.
 
-### 2.5 Eletrificação e Descarga (Anjo do Trovão)
+### 2.5 Eletrificação e Descarga (Saarael (Trovão))
 
 Dado em `CelState`: `shock` (cargas, 0 a 5), `shock_t` (relógio), `discharge_cd`, `over_acc` (fração da Sobrecarga). `CelRules`: `SHOCK_MAX = 5`, `SHOCK_WINDOW = 6.0`, `DISCHARGE_CD = 4.0`, `DISCHARGE_REACH = 3.0` (raio da ressonância).
 
@@ -307,7 +307,7 @@ Acúmulos máx 5, tique 0,5 s, relógio único de 5 s (teto 8 s). Mods em ordem:
 | C | `deterioracao` | NOVO | `cel_poison_grow` 0,06 +0,03 por s, teto +30%; em dobro com Queimadura ou Sangramento no alvo | pede poison |
 | C | `contagio` | NOVO | `cel_poison_spread` 0,5 +0,1: ao morrer envenenado, copia essa fração dos acúmulos (mín 1) e metade do tempo a 2 inimigos a 3 m, uma vez | pede poison |
 
-### Anjo do Trovão (`F.TROVAO`, angel id `thunder`)
+### Saarael (Trovão) (`F.TROVAO`, angel id `thunder`)
 
 Cargas máx 5, janela 6 s, Descarga em 5 cargas, recarga 4 s por alvo, nunca atordoa.
 
@@ -360,12 +360,12 @@ Arte pendente: selo e glifo dos dois anjos (índices de símbolo 7 e 8 em `_ange
 
 ## 5. Textos para `data/text_pt.tres` (português do Brasil, sem travessão)
 
-**Marcados para o Daniel (frase e nome do anjo novo, neutros, provisórios):** `angel_zerael_line`, `angel_thunder`, `angel_thunder_line`. O nome "Zerael" já está aceito. Nada de lore novo.
+**Marcados para o Daniel (frase e nome do anjo novo, neutros, provisórios):** `angel_zerael_line`, `angel_thunder`, `angel_thunder_line`. Os nomes "Zerael" e "Saarael" (de sa'ar, tempestade; Daniel 2026-11-26) estão aceitos; o id técnico continua `thunder`. Nada de lore novo.
 
 ```
 "angel_zerael": "Zerael",
 "angel_zerael_line": "Paciente e quieto, espera o tempo trabalhar.",
-"angel_thunder": "Anjo do Trovão",
+"angel_thunder": "Saarael",
 "angel_thunder_line": "Veloz e direto, chega antes do aviso.",
 "family_peste": "Peste",
 "family_trovao": "Trovão",
@@ -541,7 +541,7 @@ Linha de base (V1 ajustada, `balance.md`): natural, Morvath restante média **19
 |---|---|
 | Natural, Morvath restante (média das 12) | **1500 a 2000** (a régua do repo; V1 ajustada 1989) e **1 a 3 vitórias em 12** |
 | Teto de cada um dos 9 monoanjos (9 poderes, tempo de luta) | **235 a 290 s** (sem Bênção 306); Sarael continua o mais forte, mas **nenhum monoanjo abaixo de 220 s nem acima de 300 s** |
-| Zerael e Anjo do Trovão no teto | **245 a 275 s** (entre Lumael e Velael); se um passar de Sarael, baixar `cel_poison_dps` ou `cel_discharge`; se ficar sobre 295, subir |
+| Zerael e Saarael (Trovão) no teto | **245 a 275 s** (entre Lumael e Velael); se um passar de Sarael, baixar `cel_poison_dps` ou `cel_discharge`; se ficar sobre 295, subir |
 | Nenhuma fonte passa de 30% do dano total de um anjo (`dealt_by`) e nenhum anjo tem fonte morta (0% em 12 sementes) | geral |
 | Controle e proteção (Shomael, Velael, Nivael) | dano sofrido por segundo **10% abaixo** do sem Bênção (Shomael hoje 0,634 contra 0,752); a Abertura deve aparecer **ao menos 1 vez por luta** em 8 das 12 sementes |
 | Chefe com Frio e Impacto | Nivael e Shomael no teto saem de "colados no zero" para **-8% a -15%** do tempo (efeito esperado da Abertura, cerca de +6% de dano) |
@@ -579,4 +579,4 @@ Descida inteira de cada par: `--angels=<a>,<b>` (ids de anjo: `sarael`, `nivael`
 
 ### O que fica para o Daniel
 
-Sensação do Veneno, da Abertura e da Descarga (o robô lê todo aviso e não procura cobertura); nome do Anjo do Trovão e as duas frases; `Passos Leves` (pendência da V1); se Zerael e o Anjo do Trovão aparecem com a frequência certa entre 9 anjos; o `runs.jsonl` das descidas dele (anjos escolhidos por sala e sala da morte) para recalibrar depois de gente.
+Sensação do Veneno, da Abertura e da Descarga (o robô lê todo aviso e não procura cobertura); nome do Saarael (Trovão) e as duas frases; `Passos Leves` (pendência da V1); se Zerael e o Saarael (Trovão) aparecem com a frequência certa entre 9 anjos; o `runs.jsonl` das descidas dele (anjos escolhidos por sala e sala da morte) para recalibrar depois de gente.

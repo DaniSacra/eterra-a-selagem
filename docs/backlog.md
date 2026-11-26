@@ -60,7 +60,7 @@ vale a regra do Daniel (sempre commit e push). As seções abaixo ficam como his
 4. Força Titânica sobe a Magia máxima para 40 só com esse Dom. 5. Dons removidos devolvem a Memória e liberam as Vagas.
 6. Só o Corte do Juízo; Voragem guardada. 7. Maga depois do Guerreiro e das Bênçãos V2, com o kit do PK-2.
 8. 5 botões de Bênção por anjo: Ataque (toque e segurar), Poder, Especial, Esquiva, Supremo (9 x 9).
-9. Zerael (Peste) aceito. 10. **Baraqel não serve** (anjo caído em Enoque): o Daniel escolhe outro nome; até lá "Anjo do Trovão".
+9. Zerael (Peste) aceito. 10. Baraqel não serve (anjo caído em Enoque): o anjo do Trovão se chama **Saarael** (de *sa'ar*, tempestade; escolhido pelo Daniel em 2026-11-26), id técnico `thunder`.
 11. Estados só com golpe que causa dano. 12. Sorteio 3:1 e mão completada por outros anjos, como hoje.
 13. Textos pendentes aprovados como estão. 14. Música do Santuário: **Achaidh Cheide**. 15. D-O8: só o Guerreiro na chegada, sem números na fala.
 16. Linha de objetivo no Santuário: apagar. 17. Meshy: nada por enquanto. 18. Salas 03 a 14 com os pacotes, uma por vez.
