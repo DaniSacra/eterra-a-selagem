@@ -1115,7 +1115,20 @@ static func key_plaque(action: StringName) -> PanelContainer:
 	sb.content_margin_top = 0
 	sb.content_margin_bottom = 1
 	p.add_theme_stylebox_override(&"panel", sb)
-	var l := UiKit.label(UiKit.action_label(action), IVORY, 15, UiKit.BOLD_FONT)
+	var k := UiKit.action_label(action)
+	var mouse := MouseGlyph.button_of(k) if UiKit.action_mouse_button(action) > 0 else 0
+	if mouse > 0:
+		# PT-26-1: the mouse button is a drawing, not words
+		var icon := TextureRect.new()
+		icon.name = &"Key"
+		icon.texture = MouseGlyph.texture(mouse)
+		icon.custom_minimum_size = Vector2(MouseGlyph.W, MouseGlyph.H) * 0.82
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_SCALE
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		p.add_child(icon)
+		return p
+	var l := UiKit.label(k, IVORY, 15, UiKit.BOLD_FONT)
 	l.name = &"Key"
 	p.add_child(l)
 	return p

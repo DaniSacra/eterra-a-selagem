@@ -713,3 +713,20 @@ livro (o livro não passa de 1,9 alturas de largura, `BookDesk.side_room`, ou se
   qualquer ação da Emeth, dica do martelo com "Voltar não gasta". Na primeira visita de cada save abre a folha "Como a Forja funciona"
   (`intro`, 4 frases; confirmar, voltar ou clique fecham; guarda `forge` em `data.hub.tips`, `FirstTips`); nunca sem save, com o robô ou nos
   testes. Para capturar a folha: `--forge-intro` (não grava). Sem mecânica nova.
+
+## PT-26 (2026-11-25): ícone de mouse e HUD mais legível
+- **Ícone de mouse** (`MouseGlyph`, `scripts/ui/mouse_glyph.gd`; o desenho em `MouseGlyphArt`, sem autoloads, salvo como
+  `assets/ui/keys/mouse_1|2|3.png` por `tools/make_mouse_icons.gd`): um mouse visto de cima com o botão certo aceso
+  (esquerdo, direito, meio). Onde o texto dizia "Clique esquerdo/direito": o losango do HUD (`ActionSlot._draw_mouse`),
+  a caixinha de tecla (`StationSign.KeyCap.mouse`, usada na barra de ações, Como jogar, Configurações), a placa da
+  carta e da lista de Habilidades (`BoonCard.key_plaque` vira `TextureRect`), a frase da carta (`BoonChoice.key_in_text`
+  com `marked`, `[img]`), a linha de objetivo e a dica (`UiKit.keyed_line` + `MouseGlyph.keyed(texto)`, que troca os
+  nomes por `[img]` e escapa `[`), e o valor da linha de tecla em Configurações. Com controle ou tecla continua o nome.
+  Para pôr em outro texto: `RichTextLabel` com `MouseGlyph.keyed(palavras)`. Teste: `tests/test_pt26_ui.gd`.
+- **Coluna de Bênçãos (direita) mostra todas** (`BuildColumn`): antes só a última Bênção de cada botão (`by_button`
+  sobrescrevia) e as passivas ficavam numa fileira escondida no canto de baixo (`Hud._passives`, agora oculta). Agora as
+  seis linhas por botão seguem, e as demais (passivas, repetidas no botão) vêm em linhas compactas (`extras`, até
+  `MAX_EXTRAS` 8 e "+N"). Estado: em recarga (varredura escura sobre o medalhão e os segundos, `hud_build_wait`),
+  pronta (ponto verde, `Entry.ready_dot`), passiva (sem ponto nem varredura, só o nível). `BuildColumn.tick(skills)` a cada quadro.
+- **Leitura do HUD**: legenda nas barras finas (`HudBar.caption`, "Supremo" na dourada, "Magia" na azul); segundos
+  restantes sobre os losangos Q e E em recarga (`ActionSlot.secs_left`, `Player.move_secs`).

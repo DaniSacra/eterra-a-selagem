@@ -84,9 +84,12 @@ func test_the_blessings_are_lines_one_under_the_other_with_the_real_key() -> voi
 		assert_gt(r.size.x, r.size.y * 2.0, "a wide line, not a tall card")
 		if i > 0:
 			assert_gte(r.position.y, cards[i - 1].get_global_rect().end.y, "one under the other")
-		var plaque := cards[i].find_child("Key", true, false) as Label
+		var plaque := cards[i].find_child("Key", true, false)
 		assert_not_null(plaque, "the key's plaque")
-		assert_eq(plaque.text, UiKit.action_label(cards[i].button()), "the key the player has now")
+		if plaque is Label:
+			assert_eq((plaque as Label).text, UiKit.action_label(cards[i].button()), "the key the player has now")
+		else:
+			assert_true(plaque is TextureRect, "a mouse button is the mouse icon (PT-26-1)")
 	assert_eq((cards[1].find_child("Key", true, false) as Label).text, UiKit.action_label(&"rush"), "the Investida says E, not Space")
 	for c in cards:
 		for other in [choice.list, choice.glossary]:
@@ -251,7 +254,11 @@ func test_every_blessing_card_says_the_word_of_its_own_button() -> void:
 		for l in card.find_children("*", "Label", true, false):
 			words.append((l as Label).text)
 		assert_true(words.has(T.t("action_" + String(b.button()))), "%s says %s" % [b.id, b.button()])
-		assert_eq((card.find_child("Key", true, false) as Label).text, UiKit.action_label(b.button()))
+		var key := card.find_child("Key", true, false)
+		if key is Label:
+			assert_eq((key as Label).text, UiKit.action_label(b.button()))
+		else:
+			assert_true(key is TextureRect, "%s: a mouse button is the icon" % b.id)
 
 
 func test_the_words_hide_the_title_and_the_hint_until_they_end() -> void:

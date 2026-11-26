@@ -416,6 +416,20 @@ func _state(b: Button, text: String, color: Color) -> void:
 	state.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	state.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	b.add_child(state)
+	var mouse := MouseGlyph.button_of(text)
+	if mouse > 0:
+		# PT-26-1: a mouse button is the drawing, not the words
+		state.text = ""
+		var icon := TextureRect.new()
+		icon.name = "mouse_icon"
+		icon.texture = MouseGlyph.texture(mouse)
+		icon.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT)
+		icon.offset_right = -14.0
+		icon.offset_left = -14.0 - MouseGlyph.W
+		icon.offset_top = -MouseGlyph.H * 0.5
+		icon.offset_bottom = MouseGlyph.H * 0.5
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(icon)
 
 
 func _input(event: InputEvent) -> void:

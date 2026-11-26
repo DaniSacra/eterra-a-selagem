@@ -71,8 +71,14 @@ var _over := 0.0
 var _text := ""
 ## A small mark at the bar's left end (UI 16): none, a heart (life) or a drop (Magia).
 enum Mark { NONE, HEART, DROP }
+const CAPTION_PX := 12
 const MARK_SIZE := 5.0
 const MARK_PAD := 11.0
+## PT-26: a word at the bar's right end, outside it, so the thin bars say what they are ("Magia", "Supremo").
+var caption := "":
+	set(v):
+		caption = v
+		queue_redraw()
 var icon := Mark.NONE:
 	set(v):
 		icon = v
@@ -201,6 +207,11 @@ func _draw() -> void:
 		_draw_seal(i)
 	if icon != Mark.NONE:
 		_draw_icon(Vector2(MARK_PAD, size.y * 0.5))
+	if caption != "":
+		var cf := UiKit.BOLD_FONT
+		var at := Vector2(size.x + 6.0, (size.y + cf.get_ascent(CAPTION_PX) - cf.get_descent(CAPTION_PX)) * 0.5).round()
+		UiKit.draw_shadow(self, cf, at, caption, CAPTION_PX)
+		draw_string(cf, at, caption, HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_PX, Color(fill_top.lightened(0.35), 0.9))
 	if _text != "":
 		var font := UiKit.number_font()
 		var w := font.get_string_size(_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x

@@ -260,12 +260,20 @@ class KeyCap:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
+	## The mouse button the key names (PT-26-1): drawn as the mouse icon, with no plate, not as words.
+	var mouse := 0
+
 	func set_key(p_text: String, pad: bool) -> void:
 		text = p_text
 		rounded = pad and p_text.length() <= 2
+		mouse = 0 if pad else MouseGlyph.button_of(p_text)
 		var tw := UiKit.BOLD_FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		custom_minimum_size = Vector2(maxf(height, tw + 8.0), height)
+		custom_minimum_size = Vector2(MouseGlyph.W + 8.0, maxf(height, MouseGlyph.H)) if mouse > 0 \
+				else Vector2(maxf(height, tw + 8.0), height)
 		queue_redraw()
 
 	func _draw() -> void:
+		if mouse > 0:
+			MouseGlyph.draw(self, size * 0.5, mouse, minf(height, size.y))
+			return
 		ActionSlot.key_plate(self, size * 0.5, text, font_size, height, rounded, line)

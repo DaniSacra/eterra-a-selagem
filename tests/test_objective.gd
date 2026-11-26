@@ -152,7 +152,7 @@ func test_the_line_changes_key_and_hides() -> void:
 	line.set_key(&"obj_explore")
 	assert_eq(line.key, &"obj_explore")
 	await wait_seconds(ObjectiveLine.OUT + ObjectiveLine.IN + 0.2)
-	assert_eq(line.find_children("*", "Label", false, false)[0].text, T.t(&"obj_explore"))
+	assert_eq(line.find_children("*", "RichTextLabel", false, false)[0].text, T.t(&"obj_explore"))
 	assert_almost_eq(line.modulate.a, 1.0, 0.05)
 	line.set_key(&"")
 	assert_eq(line.key, &"")

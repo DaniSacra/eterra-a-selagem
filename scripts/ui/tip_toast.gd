@@ -19,7 +19,7 @@ var showing := &""
 var _t := 0.0
 var _fight_t := 0.0
 var _quiet := 0.0
-var _label: Label
+var _label: RichTextLabel
 var _box: PanelContainer
 ## --tips forces them without writing: what was shown this time is kept here.
 var _scratch := {"runs": 0}
@@ -32,9 +32,9 @@ func _ready() -> void:
 	_box = PanelContainer.new()
 	_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_box.add_theme_stylebox_override(&"panel", UiKit.box(VEIL, UiKit.OLD_GOLD, 1, 10, 3))
-	_label = UiKit.label("", UiKit.PALE, TEXT_PX, UiKit.TEXT_FONT)
-	_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_label = UiKit.keyed_line(UiKit.PALE, TEXT_PX, true)
+	_label.add_theme_constant_override(&"shadow_outline_size", 0)
+	_label.text = " "
 	_label.custom_minimum_size.x = WIDTH
 	_box.add_child(_label)
 	_box.anchor_left = 0.5
@@ -71,7 +71,7 @@ func _process(delta: float) -> void:
 	_quiet = maxf(0.0, _quiet - delta)
 	if showing != &"":
 		_t -= delta
-		_label.text = text_of(showing)
+		_label.text = "[center]%s[/center]" % MouseGlyph.keyed(text_of(showing))
 		_box.modulate.a = clampf(minf(TIME - _t, _t) / FADE, 0.0, 1.0)
 		_box.visible = true
 		if _t <= 0.0:
@@ -105,7 +105,7 @@ func context(fighting: bool) -> Dictionary:
 func show_tip(id: StringName) -> void:
 	showing = id
 	_t = TIME
-	_label.text = text_of(id)
+	_label.text = "[center]%s[/center]" % MouseGlyph.keyed(text_of(id))
 	_box.reset_size()
 	FirstTips.mark(_data(), id)
 	if not Dev.has("tips"):

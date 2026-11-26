@@ -54,6 +54,7 @@ const LIGHT_GAP := 10.0
 const LIGHT_RISE := 7.0
 ## The caption over the diamond (T5): its size, how far over the frame, and the ready pulse's period and reach.
 const CAPTION_FONT := 14
+const SECS_FONT := 17
 const CAPTION_RISE := 6.0
 ## The ready ring: its gap from the frame, width, colour (Emeth's pale emerald, lit under the glow), how much it
 ## breathes and how fast; the pulse when it fills: seconds and reach.
@@ -156,6 +157,8 @@ var urgent := false
 var _pulse_t := 0.0
 ## 1 -> 0 over READY_PULSE seconds after it fills.
 var _ready_pulse := 0.0
+## PT-26: whole seconds left of a long recharge (Q, E), written over the diamond; 0: none.
+var secs_left := 0
 var _key := ""
 var _mouse := 0
 var _flash := 0.0
@@ -174,10 +177,14 @@ func setup(action_name: StringName, action_slot: Boon.Slot, side_px: float = DIA
 
 
 ## Called every frame by the HUD; redraws only when something changed.
-func refresh(b: Boon, wait_ratio: float, n: int = 0, n_max: int = 0, no_magick: bool = false) -> void:
+func refresh(b: Boon, wait_ratio: float, n: int = 0, n_max: int = 0, no_magick: bool = false, secs: float = 0.0) -> void:
 	var key := UiKit.action_label(action)
 	var mouse := UiKit.action_mouse_button(action)
 	wait_ratio = snappedf(clampf(wait_ratio, 0.0, 1.0), 0.01)
+	var whole_secs := ceili(secs) if wait_ratio > 0.0 else 0
+	if whole_secs != secs_left:
+		secs_left = whole_secs
+		queue_redraw()
 	if b == boon and wait_ratio == wait and n == charges and n_max == charges_max and key == _key and mouse == _mouse and no_magick == starved:
 		return
 	if wait > 0.0 and wait_ratio == 0.0:
@@ -256,6 +263,8 @@ func _draw() -> void:
 		padlock(self, c + Vector2(0, r * 0.08), r * 0.34, LOCK.lightened(0.55))
 	if sealed:
 		padlock(self, c + Vector2(0, r * 0.08), r * 0.34, UiKit.OLD_GOLD.lightened(0.35))
+	if secs_left > 0 and waiting:
+		_draw_secs(c)
 	if pulse and not busy():
 		_draw_ready(c, r)
 	if _release > 0.0:
@@ -286,6 +295,16 @@ func _draw() -> void:
 	_draw_key(Vector2(c.x, side + key_drop))
 	if caption != "":
 		_draw_caption(Vector2(c.x, c.y - r - CAPTION_RISE))
+
+
+## The seconds a recharge has left, in lining figures with an ink outline, over the middle of the diamond.
+func _draw_secs(c: Vector2) -> void:
+	var font := UiKit.number_font()
+	var text := str(secs_left)
+	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, SECS_FONT).x
+	var base := Vector2(c.x - w * 0.5, c.y + (font.get_ascent(SECS_FONT) - font.get_descent(SECS_FONT)) * 0.5).round()
+	draw_string_outline(font, base, text, HORIZONTAL_ALIGNMENT_LEFT, -1, SECS_FONT, 5, UiKit.INK)
+	draw_string(font, base, text, HORIZONTAL_ALIGNMENT_LEFT, -1, SECS_FONT, UiKit.PALE)
 
 
 ## The Magia cost: a small gem of Magia's blue with the number in lining figures, ink round both.
@@ -364,22 +383,9 @@ static func key_plate(ci: CanvasItem, at: Vector2, text: String, font_size: int,
 	return w
 
 
-## A mouse seen from above with the bound button lit.
+## A mouse seen from above with the bound button lit (MouseGlyph).
 func _draw_mouse(at: Vector2) -> void:
-	var body := Rect2(at - Vector2(8.5, 11.0), Vector2(17, 22))
-	draw_style_box(UiKit.box(Color(0.04, 0.03, 0.05, 0.95), UiKit.OLD_GOLD, int(UiKit.FRAME), 0, 8), body)
-	var inside := body.grow(-UiKit.FRAME)
-	var split := inside.position.y + 8.0
-	var button := Rect2(inside.position, Vector2(inside.size.x * 0.5 - 0.5, 8.0))
-	match _mouse:
-		MOUSE_BUTTON_RIGHT:
-			button.position.x = at.x + 0.5
-		MOUSE_BUTTON_MIDDLE:
-			button = Rect2(at.x - 1.5, inside.position.y + 1.0, 3.0, 6.0)
-	for part in Geometry2D.intersect_polygons(_capsule(inside), PackedVector2Array([button.position, Vector2(button.end.x, button.position.y), button.end, Vector2(button.position.x, button.end.y)])):
-		draw_colored_polygon(part, UiKit.PALE)
-	draw_line(Vector2(at.x, inside.position.y), Vector2(at.x, split), UiKit.OLD_GOLD, 1.0)
-	draw_line(Vector2(inside.position.x, split), Vector2(inside.end.x, split), UiKit.OLD_GOLD, 1.0)
+	MouseGlyph.draw(self, at, _mouse)
 
 
 ## The action's mark outside the HUD (stage 1A: the cards say the action with the HUD's own symbol): a small diamond

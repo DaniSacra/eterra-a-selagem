@@ -160,6 +160,18 @@ static func rich(bbcode: String, body: Color = PALE, size: int = 18) -> RichText
 	return r
 
 
+## A line of words that may name a mouse button (PT-26-1: it shows the mouse icon, MouseGlyph.keyed): one RichTextLabel,
+## the text font, the HUD's shadow, no wrapping unless wrap. Set its words with `r.text = MouseGlyph.keyed(words)`.
+static func keyed_line(color: Color, size: int, wrap: bool = false) -> RichTextLabel:
+	var r := rich("", color, size)
+	r.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if wrap else TextServer.AUTOWRAP_OFF
+	r.add_theme_color_override(&"font_shadow_color", SHADOW)
+	r.add_theme_constant_override(&"shadow_offset_x", 0)
+	r.add_theme_constant_override(&"shadow_offset_y", SHADOW_DROP)
+	r.add_theme_constant_override(&"shadow_outline_size", SHADOW_SPREAD)
+	return r
+
+
 static func shadow(l: Label) -> Label:
 	l.add_theme_color_override(&"font_shadow_color", SHADOW)
 	l.add_theme_constant_override(&"shadow_offset_x", 0)

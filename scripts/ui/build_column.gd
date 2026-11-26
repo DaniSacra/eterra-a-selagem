@@ -16,6 +16,11 @@ const FOOT_ICON := 26.0
 const PAD := 6.0
 const TAIL := 10.0
 const LEVEL_FONT := 12
+## PT-26-4: the Blessings that do not own a button's place (passives, a second one on the same button) in compact rows.
+const EXTRA_H := 32.0
+const EXTRA_ICON := 26.0
+const MAX_EXTRAS := 8
+const READY := Color(0.55, 0.9, 0.6)
 const BACK := Color(0.035, 0.027, 0.04, 0.8)
 const EMPTY := Color(0.42, 0.42, 0.46)
 ## The buttons in the row's order: the Blessing slot each holds (Boon.Slot.NONE: none can yet) and the mark of the
@@ -30,29 +35,85 @@ const ULT_AT := 4
 class Entry extends Control:
 	var icon: BoonIcon
 	var level_label: Label
+	## PT-26-4: the Blessing shown, and what its state says: recharging (a sweep over the medallion and the seconds
+	## left), ready (a small lit dot), or passive (no dot, no sweep: it works on its own).
+	var boon: Boon
+	var lv := 0
+	var rarity := Boon.Rarity.COMMON
+	var ready_dot := false
+	## Extras are compact: the medallion on the left, the words on its right.
+	var compact := false
 
-	func build() -> Entry:
-		custom_minimum_size = Vector2(WIDTH, ROW_H)
+	var dot: Control
+
+	func _draw_dot() -> void:
+		if ready_dot and icon != null and icon.boon != null:
+			var at := icon.position + Vector2(icon.size.x - 1.0, 4.0)
+			dot.draw_circle(at, 4.5, UiKit.INK)
+			dot.draw_circle(at, 3.0, BuildColumn.READY)
+
+	func build(is_compact: bool = false) -> Entry:
+		compact = is_compact
+		var side := EXTRA_ICON if compact else ICON
+		custom_minimum_size = Vector2(WIDTH, EXTRA_H if compact else ROW_H)
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
-		icon = BoonIcon.new().setup(null, ICON)
-		icon.position = Vector2((WIDTH - ICON) * 0.5, 2.0)
+		icon = BoonIcon.new().setup(null, side)
+		icon.position = Vector2(4.0, 2.0) if compact else Vector2((WIDTH - ICON) * 0.5, 2.0)
 		add_child(icon)
 		level_label = UiKit.shadow(UiKit.label("", UiKit.PALE, LEVEL_FONT, UiKit.BOLD_FONT))
 		level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		level_label.position = Vector2(0.0, ICON + 2.0)
-		level_label.size = Vector2(WIDTH, ROW_H - ICON - 2.0)
+		if compact:
+			level_label.position = Vector2(side + 5.0, 0.0)
+			level_label.size = Vector2(WIDTH - side - 7.0, EXTRA_H)
+			level_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		else:
+			level_label.position = Vector2(0.0, ICON + 2.0)
+			level_label.size = Vector2(WIDTH, ROW_H - ICON - 2.0)
 		add_child(level_label)
+		dot = Control.new()
+		dot.name = "ReadyDot"
+		dot.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		dot.draw.connect(_draw_dot)
+		add_child(dot)
 		return self
 
+	## The state every frame (Hud, PT-26-4): the recharge of a Blessing that has a skill, read from the skills.
+	func tick(skills: Skills) -> void:
+		if boon == null or boon.skill == null or skills == null or boon.skill.kind == SkillDef.Kind.ORBIT:
+			return
+		var t := skills.timer(boon)
+		var wait := clampf(t.x / maxf(t.y, 0.01), 0.0, 1.0)
+		var charging := t.x > 0.05
+		var cd := snappedf(wait, 0.02) if charging else 0.0
+		var lit := not charging
+		var text := T.t(&"hud_build_wait", {"n": ceili(t.x)}) if charging else _level_text()
+		if cd == icon.cooldown and lit == ready_dot and text == level_label.text:
+			return
+		icon.cooldown = cd
+		ready_dot = lit
+		level_label.text = text
+		level_label.add_theme_color_override(&"font_color", UiKit.PALE if charging else BoonCard.rarity_color(rarity).lightened(0.1))
+		icon.queue_redraw()
+		dot.queue_redraw()
+
+	func _level_text() -> String:
+		return T.t(&"hud_build_level", {"n": lv}) if boon != null and boon.has_rarity() else ""
+
 	## b: the Blessing of the button (null: empty, its own mark in grey). glyph: that mark's BoonIcon id.
-	func show_entry(b: Boon, lv: int, rarity: Boon.Rarity, glyph: int) -> void:
+	func show_entry(b: Boon, lv_: int, rarity_: Boon.Rarity, glyph: int) -> void:
+		boon = b
+		lv = lv_
+		rarity = rarity_
+		ready_dot = false
+		icon.cooldown = 0.0
 		if b != null:
 			icon.boon = b
 			icon.icon = -1
-			icon.level = lv
+			icon.level = lv_
 			icon.max_level = b.max_level
-			level_label.text = T.t(&"hud_build_level", {"n": lv}) if b.has_rarity() else ""
-			level_label.add_theme_color_override(&"font_color", BoonCard.rarity_color(rarity).lightened(0.1))
+			level_label.text = _level_text()
+			level_label.add_theme_color_override(&"font_color", BoonCard.rarity_color(rarity_).lightened(0.1))
 		else:
 			icon.boon = null
 			icon.icon = glyph
@@ -64,6 +125,8 @@ class Entry extends Control:
 		icon.queue_redraw()
 
 var entries: Array[Entry] = []
+var _extras: VBoxContainer
+var _extra_count := 0
 var _foot: VBoxContainer
 var _alpha := 1.0
 var _held := 0
@@ -83,6 +146,11 @@ func setup() -> BuildColumn:
 		e.name = "button_%d" % i
 		entries.append(e)
 		box.add_child(e)
+	_extras = VBoxContainer.new()
+	_extras.name = "extras"
+	_extras.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_extras.add_theme_constant_override(&"separation", 0)
+	box.add_child(_extras)
 	_foot = VBoxContainer.new()
 	_foot.name = "foot"
 	_foot.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -94,12 +162,12 @@ func setup() -> BuildColumn:
 
 
 ## The column's height with this many rows under the buttons' six (an Elo's, the Psalm's).
-static func height_for(foot_rows: int, button_rows: int = BUTTONS.size()) -> float:
-	return PAD * 2.0 + ROW_H * button_rows + (FOOT_ICON + 2.0) * foot_rows + TAIL
+static func height_for(foot_rows: int, button_rows: int = BUTTONS.size(), extra_rows: int = 0) -> float:
+	return PAD * 2.0 + ROW_H * button_rows + EXTRA_H * extra_rows + (FOOT_ICON + 2.0) * foot_rows + TAIL
 
 
-func _fit(foot_rows: int, button_rows: int = BUTTONS.size()) -> void:
-	custom_minimum_size = Vector2(WIDTH, height_for(foot_rows, button_rows))
+func _fit(foot_rows: int, button_rows: int = BUTTONS.size(), extra_rows: int = 0) -> void:
+	custom_minimum_size = Vector2(WIDTH, height_for(foot_rows, button_rows, extra_rows))
 	size = custom_minimum_size
 	queue_redraw()
 
@@ -110,11 +178,14 @@ func show_build(boons: BoonState, ult_glyph: int = -1, psalm: PsalmDef = null) -
 	var by_button := {}
 	var held := 0
 	var elos: Array[Boon] = []
+	var extra: Array[Boon] = []
 	for b in boons.owned():
 		if b.is_duo():
 			elos.append(b)
-		elif b.slot != Boon.Slot.NONE:
+		elif b.slot != Boon.Slot.NONE and not by_button.has(b.button()):
 			by_button[b.button()] = b  # BC-2: the Investida's Blessings share the dash slot but belong to E
+		else:
+			extra.append(b)  # PT-26-4: a passive or a second one on the button: shown too, never dropped
 	for i in BUTTONS.size():
 		var slot: Boon.Slot = BUTTONS[i][0]
 		var b: Boon = by_button.get(BUTTONS[i][2])
@@ -125,6 +196,22 @@ func show_build(boons: BoonState, ult_glyph: int = -1, psalm: PsalmDef = null) -
 		# UI 15: the actions live in the bottom row only; here just the Blessings gained
 		entries[i].visible = b != null
 		held += 1 if b != null else 0
+	for c in _extras.get_children():
+		_extras.remove_child(c)
+		c.queue_free()
+	var shown_extra := extra.slice(0, MAX_EXTRAS)
+	for b in shown_extra:
+		var e := Entry.new().build(true)
+		e.show_entry(b, boons.level(b.id), boons.rarity(b.id), -1)
+		_extras.add_child(e)
+	if extra.size() > MAX_EXTRAS:
+		var more := UiKit.shadow(UiKit.label(T.t(&"hud_more", {"n": extra.size() - MAX_EXTRAS}), UiKit.PALE, LEVEL_FONT, UiKit.BOLD_FONT))
+		more.name = &"More"
+		more.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		more.custom_minimum_size = Vector2(WIDTH, EXTRA_H * 0.6)
+		_extras.add_child(more)
+	_extra_count = shown_extra.size() + (1 if extra.size() > MAX_EXTRAS else 0)
+	held += shown_extra.size()
 	for c in _foot.get_children():
 		_foot.remove_child(c)
 		c.queue_free()
@@ -146,7 +233,19 @@ func show_build(boons: BoonState, ult_glyph: int = -1, psalm: PsalmDef = null) -
 		_foot.add_child(holder)
 		rows += 1
 	_held = held
-	_fit(rows, held)
+	_fit(rows, held - shown_extra.size(), _extra_count)
+
+
+## The recharge of every Blessing, every frame (Hud): the sweep, the seconds left, the ready dot.
+func tick(skills: Skills) -> void:
+	if not visible:
+		return
+	for e in entries:
+		if e.visible:
+			e.tick(skills)
+	for c in _extras.get_children():
+		if c is Entry:
+			(c as Entry).tick(skills)
 
 
 ## Whether the column has anything to show (a Blessing, an Elo or the Psalm).
