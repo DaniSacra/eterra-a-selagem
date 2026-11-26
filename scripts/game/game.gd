@@ -1228,7 +1228,7 @@ func _take(b: Boon) -> void:
 		courage_poms -= 1
 		grow_random()
 	# (vfx_pass_spec.md 6 and 5.3: no column over him; the family's own form on the floor, a plain ring for an Elo)
-	if Fx.MARK_FORM.has(b.family):
+	if Fx.form_of(b.family) >= 0:
 		fx.family_mark(b.family, player.pos, 3.0, b.color(), 0.6)
 	else:
 		fx.ring(player.pos, 3.0, b.color(), 0.5)

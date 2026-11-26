@@ -216,9 +216,9 @@ func _beam(at: Vector2, color: Color, radius: float, height: float, time: float)
 ## The family's floor form (Fx.family_mark) for a gift that acts round a point; false for a family without one (the
 ## Elo shows its two in its blows), so the caller keeps the plain ring.
 func _mark(family: int, at: Vector2, radius: float, color: Color) -> bool:
-	if not Fx.MARK_FORM.has(family):
+	if Fx.form_of(family) < 0:
 		return false
-	game.fx.family_mark(family, at, radius, color, MARK_TIME[family])
+	game.fx.family_mark(family, at, radius, color, Fx.mark_time(family))
 	return true
 
 

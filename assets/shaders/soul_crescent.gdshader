@@ -61,6 +61,9 @@ void fragment() {
 	// the gnawed leading edge: the outside eaten by noise along the arc
 	float bite = (noise(vec2(UV.x * 26.0, TIME * 2.0)) * 0.7 + noise(vec2(UV.x * 60.0, 3.0)) * 0.3) * gnaw;
 	if (y > 1.0 - bite) discard;
+	// GP-3 (signature 5): the soul is corroded: holes eaten in the body (not in the middle line) that drift with the smoke
+	float rot = noise(vec2(UV.x * 14.0 + TIME * 0.6, y * 7.0 - TIME * 1.1));
+	if (rot > 0.8 && abs(across - 0.5) > 0.2) discard;
 	float line = (1.0 - smoothstep(0.0, 0.08, 1.0 - bite - y)) * smoothstep(0.0, 0.35, mid);
 	// the lilac core: only the middle third of the body's thickness
 	float thread = (1.0 - smoothstep(0.1, 0.17, abs(across - 0.5))) * smoothstep(0.15, 0.6, mid);
