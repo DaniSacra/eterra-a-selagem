@@ -45,7 +45,8 @@ const WINDOW_LOW_SILL := 0.9
 const WINDOW_EVERY := 3.4
 const WINDOW_CLEAR := Vector2(1.3, 0.9)  # how far from a door or a piece along the wall, and out from it
 const GLASS_GLOW := 1.5
-const WINDOW_TOP := 0.25  # a window's head keeps this share of its glow (the gradient's dark end)
+const WINDOW_TOP := 0.06  # round 6: a window's head is nearly dark (the gradient's dark end)
+const WINDOW_MID := 0.25  # and the middle still dim: the light pools at the sill
 const MULLION := 0.05
 const SHUTTER_WOOD := Color(0.26, 0.15, 0.09)
 
@@ -124,6 +125,8 @@ const VIGIL_FLAME := Vector3(-22.6, 0.0, -10.2)
 const VIGIL_RECT := Vector4(-28.0, -12.0, -25.2, -5.0)
 const VIGIL_BED_INSET := 0.3
 const VIGIL_RAIL_INSET := 0.22
+## Round 6: the bed's continuous low wall (thickness, height, coping height).
+const VIGIL_WALL := Vector3(0.3, 0.5, 0.08)
 const VIGIL_NICHE := Vector4(1.7, 0.55, 0.32, 0.6)  # span, spring, ring, how far the dark stands in
 const VIGIL_NICHE_U := -26.6
 const VIGIL_PLANT_EVERY := 0.95
@@ -134,7 +137,10 @@ const YARD_STEPS := 5
 const YARD_WALL := Vector2(0.5, 1.1)
 const YARD_FLOOR := Color(0.62, 0.56, 0.48)
 ## Round 3: the yards' stairs are cream stone with a lighter nosing on every step (not dark boards).
-const STEP_NOSING := Color(0.9, 0.82, 0.68)
+const STEP_NOSING := Color(0.58, 0.5, 0.4)  # round 6: was near white (read as bright bands)
+const STEP_TREAD := Color(0.4, 0.34, 0.29)
+const STEP_SHADOW := Color(0.07, 0.055, 0.05)  # the dark band under each nosing, on the riser
+const STEP_SHADOW_SHARE := 0.6
 const STEP_NOSING_H := 0.05
 
 # ---------- plants and lamps along the edges ----------
@@ -1051,11 +1057,19 @@ func _vigil_bed(stone: Material) -> void:
 	var inner := Vector4(r.x + VIGIL_BED_INSET, r.y + VIGIL_BED_INSET, r.z - VIGIL_BED_INSET, r.w - VIGIL_BED_INSET)
 	look.fm.block(_at((inner.x + inner.z) * 0.5, top, (inner.y + inner.w) * 0.5), Vector3(inner.z - inner.x, 0.1, inner.w - inner.y), 0.0, look._plain(GARDEN_SOIL, 1.0), false)
 	var q := Vector4(r.x + VIGIL_RAIL_INSET, r.y + VIGIL_RAIL_INSET, r.z - VIGIL_RAIL_INSET, r.w - VIGIL_RAIL_INSET)
-	var corners: Array[Vector2] = [Vector2(q.x, q.y), Vector2(q.z, q.y), Vector2(q.z, q.w), Vector2(q.x, q.w)]
-	for i in 4:
-		var a := corners[i]
-		var b := corners[(i + 1) % 4]
-		look.fm.balustrade(_at(a.x, top, a.y), _at(b.x, top, b.y), true, stone, RAIL_LOW)
+	# round 6: one continuous low wall with its coping all round and just two posts (the south corners), not a thicket of balusters
+	var wall_w := VIGIL_WALL.x
+	var wall_h := VIGIL_WALL.y
+	var cu := (q.x + q.z) * 0.5
+	var cv := (q.y + q.w) * 0.5
+	for sv: float in [q.y, q.w]:
+		look.fm.block(_at(cu, top, sv), Vector3(q.z - q.x, wall_h, wall_w), 0.0, stone, false)
+		look.fm.block(_at(cu, top + wall_h, sv), Vector3(q.z - q.x + 0.06, VIGIL_WALL.z, wall_w + 0.1), 0.0, stone, false)
+	for su: float in [q.x, q.z]:
+		look.fm.block(_at(su, top, cv), Vector3(wall_w, wall_h, q.w - q.y), 0.0, stone, false)
+		look.fm.block(_at(su, top + wall_h, cv), Vector3(wall_w + 0.1, VIGIL_WALL.z, q.w - q.y + 0.06), 0.0, stone, false)
+	for su: float in [q.x, q.z]:
+		look.fm.post(_at(su, top, q.y), 0.0, Masonry.POST.y * RAIL_LOW, stone)
 	var v := inner.y + 0.3
 	var row := 0
 	while v < inner.w - 0.2:
@@ -1109,6 +1123,8 @@ func _future_yards() -> void:
 	var floor_mat := look.m.stone(-YARD_DROP, look.stone_tint() * YARD_FLOOR)
 	var wall := look.ashlar()
 	var nosing := look._plain(STEP_NOSING, 0.8)
+	var treads := look._plain(STEP_TREAD, 0.9)
+	var shade := look._plain(STEP_SHADOW, 1.0)
 	for yi in FUTURE_YARDS.size():
 		var y := FUTURE_YARDS[yi]
 		var c := Vector2(y.x + y.z, y.y + y.w) * 0.5
@@ -1124,7 +1140,9 @@ func _future_yards() -> void:
 		for k in YARD_STEPS:
 			var top := -YARD_DROP / (YARD_STEPS + 1) * (k + 1)
 			var tread := Vector3(mouth.z * 2.0 + 1.0, top + YARD_DROP, 0.45)
-			look.fm.block(_at(mouth.x, -YARD_DROP, -17.35 - k * 0.45), tread, 0.0, look.facade_stone(), false)
+			look.fm.block(_at(mouth.x, -YARD_DROP, -17.35 - k * 0.45), tread, 0.0, treads, false)
+			var riser := YARD_DROP / (YARD_STEPS + 1)
+			look.fm.block(_at(mouth.x, top - riser * STEP_SHADOW_SHARE, -17.35 - k * 0.45 - 0.24), Vector3(tread.x, riser * STEP_SHADOW_SHARE, 0.03), 0.0, shade, false)
 			look.fm.block(_at(mouth.x, top - 0.01, -17.35 - k * 0.45 - 0.2), Vector3(tread.x + 0.06, STEP_NOSING_H, 0.1), 0.0, nosing, false)
 		_lamp(Vector2(mouth.x - mouth.z + 0.4, -15.9), true)
 		_lamp(Vector2(mouth.x + mouth.z - 0.4, -15.9), true)
@@ -1200,7 +1218,7 @@ func _lamp(p: Vector2, force := false) -> void:
 
 func _window_material() -> StandardMaterial3D:
 	if _window_mat == null:
-		_window_mat = HubLook.lit_opening(WINDOW_GLOW, GLASS_GLOW, WINDOW_TOP)
+		_window_mat = HubLook.lit_opening(WINDOW_GLOW, GLASS_GLOW, WINDOW_TOP, WINDOW_MID)
 	return _window_mat
 
 

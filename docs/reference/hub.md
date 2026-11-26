@@ -498,3 +498,11 @@ Só visual; colisão, `HubPlan` e pontos de uso intactos; nenhum shader novo.
   quina quebrada, giro de até 0,5 rad e inclinação `ROCK_TILT` 0,14.
 - Ajuste fino: `GATE_SHEET_DIM`, `RAIL_TRENCH`, `LANTERN_APART`, `ROCK_*`, `GLASS_*`. Risco sem ver: `_facing_court` pode tirar um
   balaústre que ainda era borda; a ponte sem o arco alto deixa o rosto sul dela mais baixo.
+
+## Refino do Santuário, rodada 6 (2026-11-26; environment-artist, SEM captura: às cegas, conferir na GPU)
+- Vitrais (`hub_stained.gdshader`, `HubFacades.STAINED`): cerca de 60% âmbar/mel (jewel_a e jewel_d), vinho e azul profundo dessaturados como acento, chumbo mais fino (`lead` 0.05), brilho 0.78.
+- Vão do Portão: `GATE_SHEET_DIM` 0.3 (folha) e `GATE_LIGHT_DIM` 0.4 (luzes que douram o chão); `hub_vista.gdshader` com céu baixo, brilho do sol e estrada mais escuros, para a vista violeta aparecer.
+- Portas e janelas: janelas (`WINDOW_TOP` 0.06, `WINDOW_MID` 0.25) e o arco do Aposento (`_warm_glass`) usam `HubLook.lit_opening` com interior escuro; portas abertas ganham faixa escura sob o lintel (`DOOR_HEAD`).
+- Escadas das Áreas Futuras: degrau em tom quente escuro (`STEP_TREAD`), friso mais escuro (`STEP_NOSING`) e faixa de sombra no espelho (`STEP_SHADOW`).
+- Canteiro da Vigília: mureta contínua com coroamento (`VIGIL_WALL`) e só 2 pilares (cantos sul), sem balaústres.
+- Não feito: árvore vermelha extra e glicínia nova no Aposento/Biblioteca (já há glicínia de `_wall_flowers` onde não há peça).
