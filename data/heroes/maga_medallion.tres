@@ -12,82 +12,82 @@ diameter = 72.0
 
 [sub_resource type="Resource" id="Resource_t4mjh"]
 script = ExtResource("1_iai08")
-id = &"faisca_persistente"
+id = &"afinidade"
 radius = 88.0
 diameter = 44.0
 
 [sub_resource type="Resource" id="Resource_ar47v"]
 script = ExtResource("1_iai08")
-id = &"orvalho_gelido"
+id = &"catalisador"
 angle = -14.3
 radius = 170.0
 diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_jmfgj"]
 script = ExtResource("1_iai08")
-id = &"reacao_amplificada"
+id = &"propagacao"
 angle = 14.3
 radius = 170.0
 diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_wfgim"]
 script = ExtResource("1_iai08")
-id = &"fissao_termica"
+id = &"trindade"
 radius = 240.0
 diameter = 76.0
 
 [sub_resource type="Resource" id="Resource_i05ou"]
 script = ExtResource("1_iai08")
-id = &"geada_demorada"
+id = &"permanencia"
 angle = 120.0
 radius = 88.0
 diameter = 44.0
 
 [sub_resource type="Resource" id="Resource_ftrow"]
 script = ExtResource("1_iai08")
-id = &"chao_ardente"
+id = &"expansao"
 angle = 105.7
 radius = 170.0
 diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_7utln"]
 script = ExtResource("1_iai08")
-id = &"suspensao_ampla"
+id = &"manifestacao"
 angle = 134.3
 radius = 170.0
 diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_u7pa0"]
 script = ExtResource("1_iai08")
-id = &"campo_elementar"
+id = &"confluencia"
 angle = 120.0
 radius = 240.0
 diameter = 76.0
 
 [sub_resource type="Resource" id="Resource_0gqi1"]
 script = ExtResource("1_iai08")
-id = &"eco_eletrico"
+id = &"fluxo_arcano"
 angle = 240.0
 radius = 88.0
 diameter = 44.0
 
 [sub_resource type="Resource" id="Resource_y0nvg"]
 script = ExtResource("1_iai08")
-id = &"fluxo_de_magia"
+id = &"agilidade_arcana"
 angle = 225.7
 radius = 170.0
 diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_a2ms4"]
 script = ExtResource("1_iai08")
-id = &"estilhaco_gemeo"
+id = &"reciprocidade"
 angle = 254.3
 radius = 170.0
 diameter = 56.0
 
 [sub_resource type="Resource" id="Resource_1t4hd"]
 script = ExtResource("1_iai08")
-id = &"tempestade_contida"
+id = &"transcendencia"
 angle = 240.0
 radius = 240.0
 diameter = 76.0

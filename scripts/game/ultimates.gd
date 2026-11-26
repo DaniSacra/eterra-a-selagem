@@ -87,7 +87,7 @@ var damage := 0.0
 var boss_uses := 0
 var boss_damage := 0.0
 ## Where the charge came from in this run (RESULT ultimate.charged: magick, damage, hurt; T5).
-var charged := {"magick": 0.0, "damage": 0.0, "hurt": 0.0}
+var charged := {"magick": 0.0, "damage": 0.0, "hurt": 0.0, "react": 0.0}
 var vortex: Vortex
 ## Where the Voragem will land (chosen on the press) and the band's warning while the gesture lasts.
 var _target := Vector2.ZERO
@@ -127,6 +127,10 @@ func step(dt: float) -> void:
 	v = charge.value
 	charge.feed_from(&"damage", _dealt(), def.damage_charge, rate)
 	charged.damage += charge.value - v
+	if game.arcane != null:
+		v = charge.value
+		charge.feed_from(&"react", game.arcane.react_charge, 1.0, rate)  # (GP-5 7: the Maga's reactions, capped a cast by Arcane)
+		charged.react += charge.value - v
 	p.ult_ready = charge.ready()
 	if _warn != null and _warn.visible:
 		GroundLook.put(_warn.material_override as ShaderMaterial, &"progress", p.ult_progress())
@@ -173,9 +177,11 @@ func _on_hurt(amount: float) -> void:
 
 
 func stats() -> Dictionary:
+	var from := {"magick": roundi(charged.magick), "damage": roundi(charged.damage), "hurt": roundi(charged.hurt)}
+	if game.arcane != null:
+		from["react"] = roundi(charged.react)  # (the Maga's, GP-5)
 	return {"id": String(def.id) if def else "", "uses": uses, "damage": int(damage), "charge": snappedf(charge.value, 0.1),
-		"boss_uses": boss_uses, "boss_damage": int(boss_damage),
-		"charged": {"magick": roundi(charged.magick), "damage": roundi(charged.damage), "hurt": roundi(charged.hurt)}}
+		"boss_uses": boss_uses, "boss_damage": int(boss_damage), "charged": from}
 
 
 ## Whether letting it go from here towards dir would reach WORTH_PACK enemies or a big one (an elite, a guardian,
@@ -530,7 +536,7 @@ func _converge_tick(v: Vortex) -> void:
 		# the Convergência does not cover the boss (CF-07): his damage share, no element, no reaction burst on him
 		if not _hit(e, v.plan.damage_per_tick() * share, Vector2.ZERO, 0.0, 0.0) and not boss:
 			for el in v.plan.elements_at(v.step_i):
-				game.arcane.apply_element(e, el)
+				game.arcane.apply_element(e, el, Arcane.ULT)
 	game.fx.ring(v.at, v.radius * 0.8, color, 0.25, 0.1, true)
 
 

@@ -201,7 +201,7 @@ var charge_t := 0.0
 var _charge_action := &""
 var _charge_tap := ComboNode.In.HEAVY
 var _charge_held := ComboNode.In.CHARGE
-## GP-1 (ButtonIntent): tap or hold on each blow button, by action. The Maga keeps the old press-plays-at-once flow (hero.arcane).
+## GP-1 (ButtonIntent): tap or hold on each blow button, by action (the Warrior's and, since GP-5, the Maga's).
 var intents: Dictionary[StringName, ButtonIntent] = {&"light_attack": ButtonIntent.new(), &"heavy_attack": ButtonIntent.new()}
 ## The blow each button plays as a tap and as a hold (ComboNode.In).
 const INTENT_MOVES := {&"light_attack": [ComboNode.In.LIGHT, ComboNode.In.CHARGE_LIGHT], &"heavy_attack": [ComboNode.In.HEAVY, ComboNode.In.CHARGE]}
@@ -217,6 +217,8 @@ var omega_discount := 0.0
 ## (negative: less) of its time; Investida Implacável: the Investida walks through bodies. HeroGifts sets them every step.
 var omega_cost_pct := 0.0
 var charge_time_pct := 0.0
+## GP-5: the Maga's kit (Game sets it): the Transcendência makes her next held spell free and quick; null for the Warrior.
+var arcane: Arcane
 var dash_pierce := false
 ## The Passo Etéreo ended this step: bodies of the crowd do not hold her where she came out (the dash goes through them).
 var _blinked := false
@@ -604,6 +606,9 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 		if _dodge_recharge >= hero.dodge_recharge:
 			_dodge_recharge = 0.0
 			dodge_charges += 1
+	if state != State.DEAD and state != State.REST:
+		# GP-5: the Magia comes back by itself, standing, walking, rolling or casting (not a hit: no KitFeed cap; the Supremo counts what is spent)
+		magick.gain((hero.magick_regen + (gifts.value(&"regen_add") if gifts != null else 0.0)) * dt)
 	var ran := false
 	match state:
 		State.DEAD, State.REST:
@@ -718,10 +723,7 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 	if Controls.pressed(&"ultimate"):
 		ult_refused.emit()
 	_ult_want = maxf(0.0, _ult_want - dt)
-	if hero.arcane == null:
-		_read_intents(dt, false)
-	else:
-		_read_legacy_attacks()
+	_read_intents(dt, false)
 	if charging:
 		charge_t += dt
 		if charge_t >= CHARGE_SOUND_AT and charge_t - dt < CHARGE_SOUND_AT:
@@ -729,40 +731,18 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 			charges_started += 1
 		if not Controls.held(_charge_action):
 			_end_charge()  # let go before the charge filled: nothing more comes
-			_intent_of(_charge_action).cancel(false)
+			intents[_charge_action].cancel(false)
 		elif charge_t >= _charge_time() - _charge_lead() and not runner.is_attacking():
 			# the held move starts its windup (and glint) inside the charge, so it lands when the charge fills (GF-08)
 			_end_charge()
 			charges_filled += 1
 			if charge_t < CHARGE_SOUND_AT:
 				charges_started += 1
-			_intent_of(_charge_action).fire()
+			intents[_charge_action].fire()
 			runner.press(_charge_held)
 			fx.hero_burst(&"light", Vector3(pos.x, 1.4, pos.y))
 			Audio.play(&"charged")
 	_read_cast(dt)
-
-
-## The Maga's buttons (and the Brado and the Investida of a tree that has them): a press plays the move at once, holding it on
-## charges its held version (the model of Hades II). The Warrior's are the ButtonIntents (_read_intents).
-func _read_legacy_attacks() -> void:
-	_press_attack(&"light_attack", ComboNode.In.LIGHT, ComboNode.In.CHARGE_LIGHT)
-	if _press_move(&"shout", ComboNode.In.SHOUT) or _press_move(&"rush", ComboNode.In.RUSH):
-		_end_charge()
-	if curse.active():
-		# the curse locks the special: a press does nothing, a charge already under way is dropped
-		if charging and _charge_action == CURSE_ACTION:
-			_end_charge()
-	else:
-		_press_special()
-
-
-func _intent_of(action: StringName) -> ButtonIntent:
-	return intents.get(action, _no_intent)
-
-
-## A throwaway for an action without an intent (the Maga's charges): its calls change nothing that matters.
-var _no_intent := ButtonIntent.new()
 
 
 ## GP-1: tap or hold on the left and right buttons. A tap plays its blow when the button is let go (or at the threshold, never
@@ -837,26 +817,7 @@ func _queue_buttons() -> void:
 		_dodge_want = DODGE_BUFFER
 	if Controls.pressed(&"ultimate"):
 		_ult_want = DODGE_BUFFER
-	if hero.arcane == null:
-		_read_intents(0.1, true)  # (presses are kept 0.25 s: a hold past the threshold is not a tap, but never charges here)
-		return
-	if Controls.pressed(&"light_attack"):
-		runner.press(ComboNode.In.LIGHT)
-	_press_move(&"shout", ComboNode.In.SHOUT)
-	_press_move(&"rush", ComboNode.In.RUSH)
-	if Controls.pressed(CURSE_ACTION) and not curse.active() and _special_paid():
-		runner.press(ComboNode.In.HEAVY)
-
-
-## Q, the Brado de Guerra, and E, the Investida: moves of their own on a button each. A press while one recharges does
-## nothing (it keeps the blow already waiting). True when it was given to the runner.
-func _press_move(action: StringName, input: ComboNode.In) -> bool:
-	if not Controls.pressed(action) or ComboTree.find(tree.neutral, input) == null:
-		return false
-	if runner.cooldown_left(_move_id(input)) > 0.0:
-		return false
-	runner.press(input)
-	return true
+	_read_intents(0.1, true)  # (presses are kept 0.25 s: a hold past the threshold is not a tap, but never charges here)
 
 
 func _move_id(input: ComboNode.In) -> StringName:
@@ -888,40 +849,6 @@ func move_secs(input: ComboNode.In) -> float:
 func move_wait(input: ComboNode.In) -> float:
 	var node := ComboTree.find(tree.neutral, input)
 	return clampf(runner.cooldown_left(node.id) / node.cooldown, 0.0, 1.0) if node != null and node.cooldown > 0.0 else 0.0
-
-
-## The right button (2026-11-21): a tap throws the sword's wave for its Magia (no hold: a hero whose tree still has an
-## Omega special charges it as before). Without the Magia nothing is thrown and the Magia bar says why (magick_refused).
-func _press_special() -> void:
-	if not Controls.pressed(CURSE_ACTION):
-		return
-	if not _special_paid():
-		magick_refused.emit()
-		return
-	_press_attack(CURSE_ACTION, ComboNode.In.HEAVY, ComboNode.In.CHARGE)
-
-
-## True when the special's tap is paid for (it costs nothing, or the Magia is there).
-func _special_paid() -> bool:
-	var node := ComboTree.find(tree.neutral, ComboNode.In.HEAVY)
-	return node == null or node.magick_cost <= 0.0 or magick.can_pay(cost_of(node, omega_discount))
-
-
-## A press of an attack button plays the move at once (as in Hades II). Holding the button on charges its Omega
-## version when there is Magia for it; the Omega fires by itself when the charge fills.
-func _press_attack(action: StringName, tap: ComboNode.In, held: ComboNode.In) -> void:
-	if not Controls.pressed(action):
-		return
-	runner.press(tap)
-	if charging and _charge_action == action:
-		charge_t = 0.0  # pressed again: it was let go in between, the charge starts over
-	elif not charging and _affordable(held):
-		charging = true
-		charge_t = 0.0
-		_charge_action = action
-		_charge_tap = tap
-		_charge_held = held
-		_charge_discount = omega_discount
 
 
 ## GP-1: the dodge (and the ultimate) take every button back to rest: nothing is pending, nothing is spent.
@@ -962,6 +889,8 @@ static func omega_cost(base: float, discount: float, more: float = 0.0) -> float
 
 ## What the move costs now: omega_cost with Força Titânica's share when it is a Golpe Carregado (tag omega).
 func cost_of(node: ComboNode, discount: float) -> float:
+	if _transcends(node):
+		return 0.0
 	return omega_cost(node.magick_cost, discount, omega_cost_pct if node.has_tag(&"omega") else 0.0)
 
 
@@ -979,7 +908,14 @@ func charge_progress() -> float:
 
 func _charge_time() -> float:
 	var node := ComboTree.find(tree.neutral, _charge_held)
+	if _transcends(node):
+		return Feel.live().hold_threshold  # Transcendência: only the hold's threshold
 	return (node.charge_time if node != null else tree.charge_time) * maxf(0.1, 1.0 + charge_time_pct)
+
+
+## The Transcendência is ready and this is a held spell of hers (tag omega): it costs nothing and charges in the threshold.
+func _transcends(node: ComboNode) -> bool:
+	return arcane != null and node != null and node.has_tag(&"omega") and arcane.transcend_ready()
 
 
 ## Seconds the held move takes from its start to its landing (windup and glint), played inside the charge.
@@ -1175,9 +1111,12 @@ func _on_move_started(node: ComboNode) -> void:
 ## The blow lands (GP-1: the Magia is spent now, never when the windup began, so a dodge that cuts the windup costs nothing). Without
 ## the Magia for it (two presses queued) it is refused: no strike, nothing spent.
 func _on_move_hit(node: ComboNode) -> void:
+	var free := _transcends(node)
 	if node.magick_cost > 0.0 and not magick.spend(cost_of(node, _charge_discount if node.has_tag(&"omega") else 0.0)):
 		_refuse()
 		return
+	if free:
+		arcane.take_transcend()  # the free spell strikes: the benefit is spent here, never on a cancel
 	_follow_through(node)
 	_step_in(node)
 	_body_layer(node)

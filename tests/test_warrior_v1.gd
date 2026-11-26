@@ -162,7 +162,6 @@ func test_the_controls_have_no_q_and_e_blows() -> void:
 	assert_eq(Controls.DEFAULT_KEYS[&"interact"], [KEY_E])
 	assert_false(Controls.DEFAULT_KEYS.values().any(func(keys: Array) -> bool: return keys.has(KEY_Q)) and not Controls.DEFAULT_KEYS.has(&"shout"))
 	assert_eq(Controls.DEFAULT_KEYS[&"ultimate"], [KEY_SHIFT])
-	assert_true(Controls.MAGA_ONLY.has(&"shout"), "kept for the Maga's tree only")
 	assert_eq(Controls.keys_for(&"interact", {}), [KEY_E])
 	var held := {"light_attack": {"type": "key", "code": KEY_E}}
 	assert_eq(Controls.keys_for(&"interact", held), [KEY_F], "a player who put the attack on E: interact goes to the spare F")
@@ -671,8 +670,8 @@ func _save_with(opened: Array, equipped: Array) -> Dictionary:
 
 
 func test_the_save_is_version_17() -> void:
-	assert_eq(SaveData.VERSION, 17)
-	assert_eq(SaveData.defaults().version, 17)
+	assert_eq(SaveData.VERSION, 18)
+	assert_eq(SaveData.defaults().version, 18)
 
 
 func test_the_migration_gives_the_memoria_back_and_frees_the_vaga() -> void:
@@ -704,7 +703,7 @@ func test_a_loaded_old_save_runs_the_step_once_and_the_old_redesign_still_clears
 		"interact": {"type": "key", "code": KEY_G}, "dodge": {"type": "key", "code": KEY_SPACE}}
 	d.materials = {"memory": 2}
 	var out := SaveData.merged(d)
-	assert_eq(out.version, 17)
+	assert_eq(out.version, SaveData.VERSION)
 	var bindings: Dictionary = out.options.bindings
 	assert_false(bindings.has("shout"))
 	assert_false(bindings.has("pad:rush"))

@@ -1,5 +1,5 @@
 extends GutTest
-## The elemental Maga (redesign 2026-11-24, 04_PLANO C): her 12 provisional Gifts, the kit in the combo tree, the three elements
+## The elemental Maga (redesign 2026-11-24, 04_PLANO C; GP-5 buttons and Gifts, test_maga_v1): her 12 Gifts, the kit in the combo tree, the three elements
 ## and their reactions in play (Arcane over ElementBook), the Convergência and the clearing of every state. The pure rules are
 ## test_element_book and test_converge.
 
@@ -59,7 +59,7 @@ func _shot(tags: Array[StringName], damage := 8.0) -> Projectiles.Shot:
 
 const SPARK: Array[StringName] = [&"light", &"bolt", &"arcane", &"fire"]
 const COMBUST: Array[StringName] = [&"omega", &"light", &"bolt", &"arcane", &"fire"]
-const SHARD: Array[StringName] = [&"heavy", &"bolt", &"arcane", &"ice"]
+const SHARD: Array[StringName] = [&"shout", &"cast", &"bolt", &"arcane", &"ice"]
 
 
 # ---------- the data ----------
@@ -83,21 +83,18 @@ func test_twelve_gifts_in_three_branches_with_needs_and_player_text() -> void:
 	assert_eq([by[B.ELEMENTALISMO], by[B.CONJURACAO], by[B.FEITICARIA]], [4, 4, 4])
 
 
-func test_the_tree_has_the_six_moves_of_the_kit() -> void:
+func test_the_tree_has_the_four_moves_of_the_kit() -> void:
 	var tree := (load(HeroDef.maga().combos) as ComboTree)
 	var N := ComboNode.In
 	var spark := ComboTree.find(tree.neutral, N.LIGHT)
-	var combust := ComboTree.find(tree.neutral, N.CHARGE_LIGHT)
+	var arc := ComboTree.find(tree.neutral, N.CHARGE_LIGHT)
 	var shard := ComboTree.find(tree.neutral, N.HEAVY)
 	var frost := ComboTree.find(tree.neutral, N.CHARGE)
-	var arc := ComboTree.find(tree.neutral, N.SHOUT)
-	var dome := ComboTree.find(tree.neutral, N.RUSH)
+	assert_eq(tree.neutral.size(), 4, "no Combustão, no Suspensão, no Q or E move")
 	assert_true(spark.has_tag(&"fire") and spark.next.is_empty(), "the Centelha has no chain")
-	assert_eq([combust.magick_cost, combust.charge_time], [15.0, 0.6])
-	assert_eq([shard.cooldown, shard.wave_stops], [4.0, false])
+	assert_eq([arc.magick_cost, arc.charge_time, arc.effect], [10.0, 0.6, ComboNode.Effect.ARC])
+	assert_eq([shard.magick_cost, shard.cooldown, shard.wave_stops], [5.0, 0.0, false])
 	assert_eq([frost.magick_cost, frost.effect], [20.0, ComboNode.Effect.FROST])
-	assert_eq([arc.cooldown, arc.effect], [8.0, ComboNode.Effect.ARC])
-	assert_eq(dome.effect, ComboNode.Effect.DOME)
 	assert_eq(tree.dodge_window, 0.0)
 
 
@@ -106,7 +103,7 @@ func test_one_ultimate_the_convergence_at_mastery_2() -> void:
 	assert_eq(hero.ultimates.size(), 1)
 	var u := hero.ultimates[0]
 	assert_eq([u.id, u.kind, u.mastery_level, u.weapon], [&"converge", UltDef.Kind.CONVERGE, 2, &"bastao"])
-	assert_eq(u.charge, 75.0)
+	assert_eq(u.charge, 60.0, "the reactions fill it too (GP-5)")
 	assert_eq(hero.arcane.converge_plan().count(), 9)
 
 
@@ -176,7 +173,7 @@ func test_fire_then_ice_makes_the_thermal_shock_once_and_clears_both() -> void:
 	game.arcane.apply_element(e, ElementBook.FIRE)
 	var hp := e.hp
 	game.arcane.apply_element(e, ElementBook.ICE)
-	assert_lt(e.hp, hp - 15.0, "20 of Choque Térmico")
+	assert_lt(e.hp, hp - 30.0, "35 of Choque Térmico")
 	assert_eq(game.arcane.tally.thermal, 1)
 	assert_false(game.arcane.book.has_fire(e))
 	assert_false(game.arcane.book.has_ice(e))
@@ -191,7 +188,7 @@ func test_overload_hurts_the_neighbours_without_putting_a_state_on_them() -> voi
 	game.arcane.apply_element(e, ElementBook.FIRE)
 	var hp := n.hp
 	game.arcane.apply_element(e, ElementBook.VOLT)
-	assert_lt(n.hp, hp, "15 in the area")
+	assert_lt(n.hp, hp, "25 in the area")
 	assert_false(game.arcane.book.has_fire(n))
 	assert_false(game.arcane.book.has_volt(n), "a reaction applies no state")
 	assert_eq(game.arcane.tally.overload, 1)
@@ -210,7 +207,7 @@ func test_the_arc_hits_up_to_three_and_marks_them_volt() -> void:
 	var near: Array[Enemy] = []
 	for i in 5:
 		near.append(_dummy(Vector2(3 + i * 1.5, 0)))
-	var node := ComboTree.find(game.player.tree.neutral, ComboNode.In.SHOUT)
+	var node := ComboTree.find(game.player.tree.neutral, ComboNode.In.CHARGE_LIGHT)
 	game.arcane.cast(node, game.player.pos, Vector2.RIGHT)
 	var hit := 0
 	for e in near:
@@ -256,7 +253,8 @@ func test_no_seal_or_resonance_is_left_in_her_kit() -> void:
 func test_the_dome_still_slows_and_holds_what_comes_in() -> void:
 	_start()
 	var e := _dummy(Vector2(1.5, 0))
-	var node := ComboTree.find(game.player.tree.neutral, ComboNode.In.RUSH)
+	var node := ComboNode.new()  # (the Suspensão left her tree in GP-5; its code waits for a Gift)
+	node.effect = ComboNode.Effect.DOME
 	game.arcane.cast(node, game.player.pos, Vector2.RIGHT)
 	assert_not_null(game.arcane.dome)
 	_step(3)

@@ -765,11 +765,11 @@ func _on_struck(node: ComboNode, _o: Vector2, _d: Vector2) -> void:
 			lesson.feed(&"finisher")
 		SkillDef.Trigger.SPECIAL:
 			lesson.feed(&"special")
+		SkillDef.Trigger.OMEGA:
+			if node.input == ComboNode.In.CHARGE:
+				lesson.feed(&"special")  # the Maga's Geada (an Omega of the right button; the Warrior's Lança is the SPECIAL trigger)
 		SkillDef.Trigger.SHOUT:
-			lesson.feed(&"shout")  # the Maga's Arco
-			lesson.feed(&"power")  # the Warrior's Corte Circular
-		SkillDef.Trigger.RUSH:
-			lesson.feed(&"rush")
+			lesson.feed(&"power")  # the Warrior's Corte Circular, the Maga's Estilhaço
 		-1:
 			if node.input == ComboNode.In.LIGHT:
 				lesson.feed(&"light")

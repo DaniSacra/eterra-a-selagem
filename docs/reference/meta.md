@@ -63,13 +63,36 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   `TECH`/`ULT` e as Bênçãos por família do E e do Shift; os 3 Dons do Brado.
 
 ### Guerreiro V1 (GP-1, 2026-11-26; spec `docs/design/heroes/warrior_v1_2026-11-26.md`; testes `tests/test_warrior_v1.gd`, `tests/test_button_intent.gd`)
-- Botões: esquerdo toque = Combo (3 golpes), segurar = **Golpe Esmagador** (`smash`, 75, 12 Magia); direito toque = **Corte Circular** (`sweep`, 35, 8 Magia), segurar = **Lança da Emeth** (`lance`, o golpe carregado de antes, 150, 20 Magia); Shift = Supremo; Q sem ação; Brado e Investida não são mais botões; interagir em E (A no controle). Maga mantém Q e C (`Controls.MAGA_ONLY`).
+- Botões: esquerdo toque = Combo (3 golpes), segurar = **Golpe Esmagador** (`smash`, 75, 12 Magia); direito toque = **Corte Circular** (`sweep`, 35, 8 Magia), segurar = **Lança da Emeth** (`lance`, o golpe carregado de antes, 150, 20 Magia); Shift = Supremo; Q sem ação; Brado e Investida não são mais botões; interagir em E (A no controle). A Maga também não tem Q nem E de golpe desde o GP-5 (`Controls.MAGA_ONLY` saiu; as ações `shout` e `rush` ficam no mapa só porque o HUD ainda lê os rótulos).
 - `ButtonIntent` (`core/button_intent.gd`): toque ou segurar, limiar `Feel.hold_threshold` 0,20 s, sem disparo duplo; esquiva cancela a carga sem custo; sem Magia a recusa é visível (`Player.refusals`, sinal `magick_refused`). A Magia sai no `move_hit` (`Player._on_move_hit`), não no início do golpe.
 - `BattleRhythm` (`core/battle_rhythm.gd`, parâmetros `rhythm_*` no `HeroDef`): o último golpe do Combo arma 3 s; o próximo Esmagador, Corte ou Lança consome (Quebra extra, atordoamento, dano e alcance do especial). Criado em `HeroGifts`; limpo ao entrar na sala, no Supremo e na morte. `share()` e `armed()` são o que a UI lê.
 - Magia máxima 30; sem reembolso de recarga (`cd_refund_*` 0); `Combat.dodge_through(from, to)` (sinal `Player.dodge_ended`) dá a Investida Implacável pela esquiva (atordoa comuns, Quebra nos demais).
 - Dons: Voz do Leão saiu, **Alcance Marcial** entrou (`reach_pct` 0,25 e `push_pct` 0,3 na tag `cast`); Força Titânica é dado (custo x2, dano x3, `magick_max` +10); Ruptura dá `armor_pct` 0,5 ao Esmagador.
 - Bênçãos: slot CAST = Poder (Corte Circular), SPECIAL = Lança (tags `lance`, `heavy`); `circulo_mare` = `cel_speed`; Pastor e Onda Gêmea na Lança. Encantos `reserve` (Eco do Passo) não entram no sorteio.
 - Save versão 17 (`SaveData.migrate_removed_dons`, idempotente): devolve a Memória dos Dons removidos e limpa as teclas guardadas.
+
+### Maga V1 (GP-5, 2026-11-26; spec `docs/design/heroes/maga_v1_2026-11-26.md`; testes `tests/test_maga_v1.gd`; vale sobre a M2 abaixo, que ficou história)
+- **Botões pelo `ButtonIntent`** (o caminho `_read_legacy_attacks` e `Controls.MAGA_ONLY` saíram): esquerdo toque = **Centelha** (8, grátis, não gera Magia), segurar = **Arco
+  Voltaico** (`arc`, 12 em até 3, 10 Magia, carga 0,6 s, tags `omega light arcane volt`, fonte `omega_attack`); direito toque = **Estilhaço** (`shard`, 6, atravessa, 5 Magia, tags
+  `shout cast bolt arcane ice`, vira o Poder/CAST), segurar = **Geada** (`frost`, 20 Magia). Sem recarga em nenhum, Q sem ação, E interage. Combustão e Suspensão saíram da árvore
+  (o código de `Arcane._combust` e do domo fica, sem nó). `charge_move_*` 0,5 e `charge_turn_light` 90 (ela anda e gira carregando).
+- **Magia**: 50, `HeroDef.magick_regen` 2/s (mais `regen_add` do Fluxo Arcano), somada em `Player.step` fora de `KitFeed` (não conta para a carga do Supremo; morta não regenera).
+  `magick_on_finisher`, `magick_on_break`, `cd_floor` e a passiva `finisher` da Maga zeraram. Morte comum +1 e elite +40 e a barra cheia na sala ficam.
+- **Origem de uma aplicação** (`Arcane.apply_element(e, el, source)`: `DIRECT`, `AREA`, `SPREAD`, `ULT`) e **conjuração** (`_cj`, por projétil, Arco, Geada ou brasa): só golpe
+  direto deixa resíduo (`ElementBook.apply(..., source)`) e propaga; só direto e propagado deixam brasa (máx. 3); a Convergência (`ULT`) não alimenta nada. Reação padrão
+  35/25/0,8 s (`ElementBook` default). Catalisador entra na Quebra da Cristalização por `horde.poise_extra` (vale no chefe e no comum).
+- **Carga do Supremo**: `UltDef.charge` 60; cada reação efetiva dá 5 (`ArcaneKit.react_charge`), no máximo 10 por conjuração, área uma vez por conjuração, nada enquanto a Convergência
+  roda (`Arcane.react_charge`, lido por `Ultimates.step` como a fonte `react`; `RESULT ult.charged.react`).
+- **12 Dons** (`data/talents/maga/`, mesmas posições dos antigos): Afinidade, Catalisador, Propagação, Trindade; Permanência, Expansão, Manifestação, Confluência; Fluxo Arcano,
+  Agilidade Arcana, Reciprocidade, Transcendência. Estatísticas: `element_time_pct`, `react_pct`, `spread_range`, `trinity`/`trinity_time`, `area_time_pct`, `area_size_pct`,
+  `ember_floor`, `confluence`/`confluence_gap`, `regen_add`, `charge_time_pct` (sem tag: `Player` lê sem tag), `reaction_magick`, `transcend_at`. Transcendência: `Arcane.transcend_ready`,
+  `take_transcend` (gasta no `move_hit`, nunca no cancelamento; `Player.cost_of` e `_charge_time` perguntam). Expansão custa 2 Vagas e 2 de Memória (a regra do `_talent`, travada por
+  `test_lote_d`; a tabela da spec dizia 3 de Memória). Medalhão e ids da migração: `make_data.gd` `MEDALLION_MAGA`.
+- **Save 18** (`SaveData.GP5_REMOVED_DONS`, 29 de Memória no total): devolve a Memória dos 12 Dons provisórios, tira os ids de `opened`, `unlocked` e `equipped`; idempotente.
+- **Antessala e dicas**: `AnteLesson` com a mesma ordem do Guerreiro e chaves `_maga` (`lesson_attack_maga`, `lesson_power_maga`, `lesson_special_maga`; a Geada fecha o degrau `special` pelo gatilho
+  OMEGA em `Rooms._on_struck`); `FirstTips` ganhou `maga_v1` (uma vez por save, mesmo antigo) e `regen`, e `key_of` para `tip_hold_maga`. O robô (`Bot._arcane_step`) segura o esquerdo para o Arco
+  (2 ou mais), o direito para a Geada (3 ou mais juntos) e toca o Estilhaço com 25 de Magia ou mais.
+- BG-3 (`Rect2` negativo): não reproduziu no `--smoke` da Maga (90 s e Morvath, sem tela) no HEAD; o conserto de `fx.gd` do commit `2fc2e33e` já o cobre. `Hud._update_pointers` não foi tocado.
 
 ## A Maga, M2 (2026-11-23; plano em `docs/design/heroes/maga_m2.md`, kit em `maga.md`; testes em `tests/test_maga_m2.gd`)
 - **Maestria própria**: `data/heroes/maga_mastery.tres` (cópia dos números do Guerreiro, `make_data.gd` `_mastery`; nível 0, sem retroativo). A Maga só tem

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_j1jhk"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_mvaf8"]
+
+[sub_resource type="Resource" id="Resource_m77ga"]
+script = ExtResource("1_j1jhk")
+stat = &"react_pct"
+base = 0.3
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_mvaf8")
+id = &"catalisador"
+name_key = &"talent_catalisador"
+desc_key = &"talent_catalisador_desc"
+branch = 3
+tier = 1
+cost = 2
+unlock_level = 5
+memory_cost = 1
+needs = &"afinidade"
+mods = Array[ExtResource("1_j1jhk")]([SubResource("Resource_m77ga")])

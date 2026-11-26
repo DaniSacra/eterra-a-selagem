@@ -36,7 +36,7 @@ func test_a_finisher_alone_makes_the_clicks_and_a_gesture_out_of_turn_still_coun
 	assert_eq(l.current(), &"power", "the line asks the first one not done")
 
 
-func test_the_warrior_has_no_brado_or_investida_step_and_the_maga_keeps_hers() -> void:
+func test_no_hero_has_a_brado_or_investida_step_and_the_maga_is_told_with_her_own_words() -> void:
 	var l := AnteLesson.new()
 	assert_false(l.steps.has(&"shout"))
 	assert_false(l.steps.has(&"rush"))
@@ -44,8 +44,8 @@ func test_the_warrior_has_no_brado_or_investida_step_and_the_maga_keeps_hers() -
 		l.feed(e)
 	assert_true(l.blessing_due())
 	var m := AnteLesson.new(true)
-	assert_true(m.steps.has(&"shout") and m.steps.has(&"rush"))
-	assert_false(m.steps.has(&"power"))
+	assert_false(m.steps.has(&"shout") or m.steps.has(&"rush"), "GP-5: nothing on Q or E for her either")
+	assert_eq(m.steps, AnteLesson.ORDER)
 
 
 func test_the_robot_skips_every_tip_but_the_stream_and_the_blessing() -> void:

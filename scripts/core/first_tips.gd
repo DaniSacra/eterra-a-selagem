@@ -8,7 +8,9 @@ extends RefCounted
 ##   FirstTips.pick(Save.data, ctx) -> the tip due now (&"" none); ctx: {fighting, fight_t, armored, boons, elos, tutorial}
 ##   FirstTips.mark(Save.data, id)
 
-const IDS: Array[StringName] = [&"armor", &"fight", &"hold", &"elo"]
+const IDS: Array[StringName] = [&"armor", &"fight", &"hold", &"elo", &"maga_v1", &"regen"]
+## The tips the Maga reads in her own words (tip_<id>_maga), GP-5.
+const OF_THE_MAGA: Array[StringName] = [&"hold"]
 ## A save with this many descents or more has no tips (it knows the game).
 const FIRST_RUNS := 2
 ## Seconds of fighting in the room before the first tip, and before the Omega's one.
@@ -45,10 +47,20 @@ static func open(data: Dictionary, id: StringName) -> bool:
 	return int(data.get("runs", 0)) < FIRST_RUNS and not shown(data).has(String(id))
 
 
-## The tip due now, or &"". One at a time; the Omega's waits for the first to have been seen.
+## The text key of a tip for this hero (the Maga's own words for hold).
+static func key_of(id: StringName, maga: bool) -> StringName:
+	return StringName("tip_%s_maga" % id) if maga and OF_THE_MAGA.has(id) else StringName("tip_%s" % id)
+
+
+## The tip due now, or &"". One at a time; the Omega's waits for the first to have been seen. GP-5, the Maga (ctx.maga): the notice that her
+## buttons changed, once per save of any age; and the Magia coming back by itself, at the first fight with her bar empty (ctx.magick_empty).
 static func pick(data: Dictionary, ctx: Dictionary) -> StringName:
 	var fighting: bool = ctx.get("fighting", false)
 	var t: float = ctx.get("fight_t", 0.0)
+	if bool(ctx.get("maga", false)) and fighting and t >= FIGHT_AFTER and not shown(data).has("maga_v1"):
+		return &"maga_v1"
+	if bool(ctx.get("maga", false)) and fighting and bool(ctx.get("magick_empty", false)) and open(data, &"regen"):
+		return &"regen"
 	if fighting and bool(ctx.get("armored", false)) and open(data, &"armor"):
 		return &"armor"
 	# SW-O2: in the guided descent the objective line and the room's own tips teach hitting: no "fight" tip there

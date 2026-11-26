@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_11kvn"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_emox2"]
+
+[sub_resource type="Resource" id="Resource_s7gpn"]
+script = ExtResource("1_11kvn")
+stat = &"area_time_pct"
+base = 0.3
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_emox2")
+id = &"permanencia"
+name_key = &"talent_permanencia"
+desc_key = &"talent_permanencia_desc"
+branch = 4
+cost = 2
+unlock_level = 2
+memory_cost = 1
+mods = Array[ExtResource("1_11kvn")]([SubResource("Resource_s7gpn")])

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_xig4d"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_2wqf6"]
+
+[sub_resource type="Resource" id="Resource_wkgs2"]
+script = ExtResource("1_xig4d")
+stat = &"element_time_pct"
+base = 0.5
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_2wqf6")
+id = &"afinidade"
+name_key = &"talent_afinidade"
+desc_key = &"talent_afinidade_desc"
+branch = 3
+cost = 2
+mods = Array[ExtResource("1_xig4d")]([SubResource("Resource_wkgs2")])

@@ -7,17 +7,20 @@ extends Resource
 
 @export_group("Centelha")
 ## Damage of the bolt, how far it flies, hits on one target within `window` seconds that put Queimadura on it, Magia a hit
-## (KitFeed.take caps it by HeroDef.gain_cap).
+## (KitFeed.take caps it by HeroDef.gain_cap). GP-5: the Centelha gives no Magia (0).
 @export var spark_damage := 8.0
 @export var spark_range := 11.0
 @export var spark_hits := 3
 @export var spark_window := 4.0
-@export var shot_magick := 1.0
+@export var shot_magick := 0.0
 
 @export_group("Combustão")
+## GP-5: out of the tree, kept (no node) for a Gift to come.
 @export var combust_damage := 70.0
 @export var combust_radius := 2.0
 @export var combust_knockback := 4.0
+## Radius of the floor Manifestação leaves burning (the Chão Ardente's old number, now the kit's own).
+@export var ember_radius := 2.0
 
 @export_group("Estilhaço")
 @export var shard_damage := 6.0
@@ -53,6 +56,11 @@ extends Resource
 @export var crystal_boss_poise := 25.0
 ## Seconds an enemy hit by Frio is frozen when the third hit lands (Frio completo).
 @export var freeze_time := 0.8
+
+@export_group("Supremo e Dons")
+## Charge of the Convergência a reaction gives, and the most one cast may give (GP-5 7; never while the Convergência runs).
+@export var react_charge := 5.0
+@export var react_charge_cap := 10.0
 
 @export_group("Convergência Elemental")
 @export var converge_radius := 5.0

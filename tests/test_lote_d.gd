@@ -94,7 +94,7 @@ func test_combat_for_those_who_read_late() -> void:
 	assert_eq(Feel.live().bang_lead, 0.45)
 	assert_eq((load("res://data/enemies/knight.tres") as EnemyDef).recharge_windup, 0.55)
 	assert_eq(HeroDef.warrior().ultimate(&"cleave").charge, 75.0)
-	assert_eq(HeroDef.maga().ultimate(&"converge").charge, 75.0)
+	assert_eq(HeroDef.maga().ultimate(&"converge").charge, 60.0, "GP-5: the reactions fill it too")
 	var maga := HeroDef.maga()
 	assert_eq(_find(maga, &"spark").glint, 0.0)
 	assert_eq(_find(HeroDef.warrior(), &"smash").hit_stop_ms, 90.0)

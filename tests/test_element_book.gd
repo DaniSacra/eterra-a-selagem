@@ -30,10 +30,10 @@ func test_six_pair_orders() -> void:
 
 
 func test_reaction_values() -> void:
-	assert_eq(_pair(F, I)[0].damage, 20.0)
+	assert_eq(_pair(F, I)[0].damage, 35.0)
 	b.clear_all()
 	var o := _pair(F, V)[0]
-	assert_eq(o.damage, 15.0)
+	assert_eq(o.damage, 25.0)
 	assert_eq(o.radius, 1.8)
 	b.clear_all()
 	assert_eq(_pair(I, V)[0].freeze, 0.8)
@@ -141,7 +141,7 @@ func test_reaction_applies_no_state() -> void:
 
 func test_react_pct_boosts() -> void:
 	b.react_pct = 0.5
-	assert_eq(_pair(F, I)[0].damage, 30.0)
+	assert_eq(_pair(F, I)[0].damage, 52.5)
 
 
 func test_death_and_room_clear() -> void:
