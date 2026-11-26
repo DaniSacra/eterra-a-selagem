@@ -39,11 +39,22 @@ func _init(g: NavGrid) -> void:
 ## BUDGET cells of it (all of it with budget <= 0). dt: seconds since the last call.
 func aim(goal: Vector2, dt: float, budget := BUDGET) -> void:
 	_since += dt
-	var c := grid.nearest_free(goal)
+	var c := goal_cell(goal)
 	if c >= 0 and c != _goal and _building < 0 and _since >= REFRESH:
 		_start(c)
 	if _building >= 0:
 		_grow(budget)
+
+
+## The cell a way to `goal` ends at: its nearest free cell, or, when that cell is a pocket cut off from the room's
+## floor (the paladin squeezed between the trunk and a root: no walker could ever reach it), the nearest cell of the floor.
+func goal_cell(goal: Vector2) -> int:
+	var c := grid.nearest_free(goal)
+	if c >= 0 and grid.island[c] != grid.main_island():
+		var m := grid.nearest_main(goal)
+		if m >= 0:
+			return m
+	return c
 
 
 ## True once a field toward the goal has been finished.

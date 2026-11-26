@@ -482,6 +482,7 @@ func _build_world() -> void:
 	player.hero = hero
 	player.arena = arena
 	player.horde = horde
+	player.ground = ground
 	player.fx = fx
 	player.pos = Vector2(0, 8)
 	add_child(player)

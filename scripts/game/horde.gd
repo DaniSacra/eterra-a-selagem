@@ -89,6 +89,9 @@ const VIEW_EDGE := 0.05
 ## stuck; it should never happen).
 const STUCK_TIME := 3.0
 const STUCK_MOVE := 0.5
+## A walker stuck this many seconds more is put back on the floor (soft-lock of 2026-11-26: two raised skeletons born in a pocket
+## between the Jardim's trunk and a root never reached the paladin and the room never closed).
+const STUCK_RESCUE := 6.0
 ## E1c (AUDIT.md P1): the drawing follows the body. Its real speed is smoothed over VEL_SMOOTH seconds; under
 ## WALK_FROM m/s it stands (idle), from WALK_START it walks (between, it keeps what it showed: no flicker), at the pace
 ## of that real speed. When where it walks is more than FACE_SPLIT degrees from where it looks, the body turns to
@@ -283,7 +286,7 @@ func spawn(d: EnemyDef, at: Vector2, rising: bool = true, with_mod: ModDef = nul
 	var e := Enemy.new()
 	e.def = d
 	e.mod = with_mod
-	e.pos = at
+	e.pos = on_floor(at)
 	var scaled := not d.elite and d.behavior != EnemyDef.Behavior.BOSS
 	e.max_hp = d.hp * (hp_scale if scaled else 1.0) * vow_hp
 	e.hp = e.max_hp
@@ -2210,6 +2213,26 @@ func _watch_stuck(e: Enemy, dt: float) -> void:
 	if e.anchor_t >= STUCK_TIME and not e.stuck:
 		e.stuck = true
 		stuck_by[String(e.def.id)] = int(stuck_by.get(String(e.def.id), 0)) + 1
+	if e.anchor_t >= STUCK_TIME + STUCK_RESCUE:
+		e.pos = on_floor(e.pos)
+		if arena != null and arena.nav != null and e.pos.distance_squared_to(e.anchor) <= STUCK_MOVE * STUCK_MOVE:
+			# still no way (not in a pocket): the nearest floor to the paladin, the only certain place
+			var c := arena.nav.nearest_main(target)
+			if c >= 0:
+				e.pos = arena.nav.center(c)
+		e.anchor = e.pos
+		e.anchor_t = 0.0
+
+
+## `p`, or the nearest spot of the room's floor when `p` is in a pocket no walker leaves (a root against the trunk).
+func on_floor(p: Vector2) -> Vector2:
+	if arena == null or arena.nav == null:
+		return p
+	var c := arena.nav.nearest_free(p)
+	if c < 0 or arena.nav.island[c] == arena.nav.main_island():
+		return p
+	var m := arena.nav.nearest_main(p)
+	return arena.nav.center(m) if m >= 0 else p
 
 
 ## How many got stuck this run.

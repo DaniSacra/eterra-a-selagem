@@ -87,7 +87,6 @@ layout_id = &"knight_hall"
 waves = Array[PackedStringArray]([PackedStringArray("knight")])
 reward = 1
 guardian = &"knight"
-hp_scale = 0.7
 hazards = true
 hazard_progress = 0.36
 cap = 1

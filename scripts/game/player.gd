@@ -245,6 +245,10 @@ var _dodge_want := 0.0
 ## The dash attack's lunge (ComboNode.lunge; no other blow moves him). Its speed fades this fast (1/s): its distance
 ## is speed / LUNGE_DECAY, mostly covered in 0.25 s.
 var _lunge := Vector2.ZERO
+## The combo's short step (StepRules: its own, gentler fade). Never the Investida's lunge.
+var _step := Vector2.ZERO
+## Where the room's floor traps are armed or warming (Ground.room_rects), for the step to stay out of.
+var ground: Ground
 const LUNGE_DECAY := 9.0
 var _push := Vector2.ZERO
 var _shield_t := 0.0
@@ -640,10 +644,10 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 			sp *= charge_move_scale()
 			if runner.planted():
 				# windup, blow and recovery: he stands still (E1c), only the dash attack's lunge carries him
-				pos += move * sp * runner.move_scale(Feel.live()) * dt + _lunge * dt
+				pos += move * sp * runner.move_scale(Feel.live()) * dt + (_lunge + _step) * dt
 			else:
 				# free again (no move, the chain window, or past a special's walk_after): he walks and runs, no sliding
-				pos += move * sp * dt + _lunge * dt
+				pos += move * sp * dt + (_lunge + _step) * dt
 				if move.length() > 0.1:
 					if charging and _charge_action == &"light_attack":
 						# C19-4: the attack's Omega charging, his body all but locked (charge_turn_light degrees a second)
@@ -655,6 +659,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 		runner.step(dt)
 	_step_move_sound(dt)
 	_lunge *= maxf(0.0, 1.0 - LUNGE_DECAY * dt)
+	_step = StepRules.fade(_step, dt)
 	# swept from where he stood: a dash or a push never comes out across a hole of the floor (cycle C12)
 	var wanted := pos
 	pos = arena.sweep(start, pos, RADIUS)
@@ -976,6 +981,7 @@ func _start_ult() -> void:
 	_state_t = 0.0
 	_ult_want = 0.0
 	_lunge = Vector2.ZERO
+	_step = Vector2.ZERO
 	runner.reset(false)
 	runner.locked = true
 	facing = _strike_dir()
@@ -1052,6 +1058,8 @@ func _on_move_started(node: ComboNode) -> void:
 	elif node.sound != &"":
 		Audio.play(node.sound)
 	_lunge = facing * node.lunge * LUNGE_DECAY
+	if node.input != ComboNode.In.LIGHT:
+		_step = Vector2.ZERO  # the special's and the Brado's wind-up starts from a standstill: no slide left of the last blow
 	_piercing = dash_pierce and node.lunge > 0.0  # Investida Implacável: the bodies of the crowd do not stop this lunge
 	# (Ímpeto plays every blow faster: runner.speed)
 	_play(node.anim, node.anim_speed * runner.speed, node.anim_from)
@@ -1068,8 +1076,11 @@ func _on_move_started(node: ComboNode) -> void:
 ## PT-25-4 and PT-25-11: the short step the blow takes as it lands (ComboNode.step). The walk's own rules stop it at
 ## bodies (stop_walker) and walls (sweep); the Investida's lunge, which starts on the press, is never touched.
 func _step_in(node: ComboNode) -> void:
-	if node.step > 0.0:
-		_lunge += facing * node.step * LUNGE_DECAY  # (adds: the last blow's tail is still fading when the next lands)
+	if node.step <= 0.0:
+		return
+	var traps: Array[Rect2] = ground.room_rects() if ground != null else []
+	if not StepRules.into_trap(pos, facing, node.step, traps, RADIUS):
+		_step += facing * StepRules.speed(node.step)  # (adds: the last blow's tail is still fading when the next lands)
 
 
 func _follow_through(node: ComboNode) -> void:
