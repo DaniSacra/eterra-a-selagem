@@ -51,6 +51,9 @@ var ult_open := false
 ## never offered. Empty (tests, old callers): no filter.
 var hero_tags: Dictionary = {}
 var _cache: Dictionary = {}
+## stat with tags: [stat, tags] -> total, cleared with _cache (QA 2026-11-26: a blow's ~15 tagged stat calls per enemy walked
+## the whole catalog each; 300 enemies struck at once cost 60 ms).
+var _tag_cache: Dictionary = {}
 
 
 func _init(boons: Array[Boon] = []) -> void:
@@ -312,6 +315,7 @@ func take(b: Boon, at: Boon.Rarity = Boon.Rarity.COMMON, at_level: int = 0) -> i
 	levels[b.id] = lv
 	rarities[b.id] = maxi(rarity(b.id), at) if b.has_rarity() else Boon.Rarity.COMMON
 	_cache.clear()
+	_tag_cache.clear()
 	return levels[b.id]
 
 
@@ -333,12 +337,14 @@ func still_free(b: Boon) -> bool:
 func equip_talents(defs: Array[TalentDef]) -> void:
 	talents = defs
 	_cache.clear()
+	_tag_cache.clear()
 
 
 ## Carries the Forja's ranks for the descent (Game._equip_forge).
 func equip_forge(ranks: Array[ForgeRank]) -> void:
 	forge = ranks
 	_cache.clear()
+	_tag_cache.clear()
 
 
 ## Takes an Encanto for this descent (Fatia 2): its numbers count in stat from now on. False when already taken.
@@ -347,6 +353,7 @@ func take_enchant(e: EnchantDef) -> bool:
 		return false
 	enchants.append(e)
 	_cache.clear()
+	_tag_cache.clear()
 	return true
 
 
@@ -354,6 +361,7 @@ func take_enchant(e: EnchantDef) -> bool:
 func grant(mods: Array[BoonMod]) -> void:
 	granted.append_array(mods)
 	_cache.clear()
+	_tag_cache.clear()
 
 
 ## Sum of a stat over every owned gift and equipped Gift. With tags, only modifiers that are untagged or match one of
@@ -362,6 +370,9 @@ func stat(stat_name: StringName, tags: Array[StringName] = []) -> float:
 	var use_cache := tags.is_empty()
 	if use_cache and _cache.has(stat_name):
 		return _cache[stat_name]
+	var key: Array = [stat_name, tags]
+	if not use_cache and _tag_cache.has(key):
+		return _tag_cache[key]
 	var total := 0.0
 	for m in granted:
 		if m.stat == stat_name and (m.tag == &"" or tags.has(m.tag)):
@@ -387,6 +398,8 @@ func stat(stat_name: StringName, tags: Array[StringName] = []) -> float:
 				total += m.at(lv, rarity_mult(b.id))
 	if use_cache:
 		_cache[stat_name] = total
+	else:
+		_tag_cache[[stat_name, tags.duplicate()]] = total
 	return total
 
 
