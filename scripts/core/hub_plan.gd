@@ -9,9 +9,12 @@ extends RefCounted
 ##   var layout := HubPlan.layout()          # Arena.build(layout); the doors of the closed stations: layout(yaw, closed)
 ##   HubPlan.STATIONS                        # ids
 ##
-## Levels (deviation from the package, reported): the floor is flat (y 0). The package's terraces at 1.2 m and the two
-## future rooms at -1.2 m do not exist in the simulation (FloorShape is a plane, the hero's y never changes); the
-## terraces read as such by their buildings, the basins and the cliffs round them, and no stairs stand in the way.
+## Levels (refine round 2, 2026-11-26): the simulation stays on the plane (FloorShape, colliders), but the hub has a height
+## field over it: the upper terrace (the galleries, the Forja, the Aposento and the Biblioteca, every floor point north of
+## TIER_V) stands TIER_H over the lower one, joined by two flights of stairs (STAIR_A on the Forja's way, STAIR_B on the
+## main axis) that rise toward +v. `ramp_at` is the smooth field (what HubLevels lifts the drawn meshes by),
+## `height_at` the stepped one (the hero's feet: the treads). TIER_H 0 makes the hub flat again (everything off).
+## The two future rooms at -1.2 m stay visual (their sunken yards).
 
 ## The stations.
 const PORTAL := &"portal"
@@ -55,9 +58,26 @@ const OUTLINE: Array[Vector2] = [
 ]
 const WATER_1: Array[Vector2] = [Vector2(4.7, 17.0), Vector2(6.0, 15.96), Vector2(6.0, 15.24), Vector2(9.15, 16.81), Vector2(9.58, 17.0)]
 const WATER_2: Array[Vector2] = [Vector2(-11.73, 14.0), Vector2(-13.0, 14.0), Vector2(-13.0, 6.53), Vector2(-14.76, 3.0), Vector2(-13.0, 3.0), Vector2(-13.0, 5.0), Vector2(0.0, 5.0), Vector2(0.0, -3.5), Vector2(0.2, -3.5), Vector2(1.5, 0.41), Vector2(1.5, 12.0), Vector2(2.0, 12.0), Vector2(2.0, 14.04), Vector2(-1.46, 16.8)]
-const WATER_3: Array[Vector2] = [Vector2(6.5, 8.99), Vector2(8.47, 8.0), Vector2(9.0, 8.0), Vector2(9.0, 12.26), Vector2(6.5, 11.01)]
+## (round 2: the Mercador's pool ends at v 10, short of the main axis' stairs that start at STAIR_B's v 10.4)
+const WATER_3: Array[Vector2] = [Vector2(6.5, 8.99), Vector2(8.47, 8.0), Vector2(9.0, 8.0), Vector2(9.0, 10.0), Vector2(6.5, 10.0)]
 ## The cut of the future rooms: the floor south of v -17 (their doors stand at the corridors' mouths, DOORS).
 const FUTURE_CUT: Array[Vector4] = [Vector4(-21.0, -26.0, -8.0, -17.0), Vector4(-1.0, -26.0, 12.0, -17.0)]
+
+## The levels. TIER_H: how much the upper terrace stands over the lower; TIER_V: the line (v) from which every floor point
+## is on it, except the garden's own basin (GARDEN_SHRINK in from its edge: the soil stays low, the gallery's edge
+## over it is the retaining wall). The flights: rects (u0, v0, u1, v1) that rise from 0 at v0 to TIER_H at v1 in
+## STAIR_STEPS treads; their sides are floor edges (the outline, the basins) except STAIR_B's east one, where STAIR_CUT
+## is a slit hole (the Mercador's plaza stands beside it at the lower level; HubLevels draws a parapet over the slit).
+const TIER_H := 1.2
+const TIER_V := 14.06
+const STAIR_A := Vector4(-17.0, 10.0, -13.0, 14.06)
+const STAIR_B := Vector4(1.5, 10.4, 12.4, 14.06)
+const STAIRS: Array[Vector4] = [STAIR_A, STAIR_B]
+const STAIR_STEPS := 6
+const STAIR_CUT: Array[Vector2] = [Vector2(12.4, 10.4), Vector2(13.0, 10.4), Vector2(13.0, 14.06), Vector2(12.4, 14.06)]
+const GARDEN_SHRINK := 0.15
+const STAIR_EPS := 0.01
+## The basin that keeps the lower level (WATER_2, the Videira's garden) is index 1 of water().
 
 ## Where the hero appears (the Ponto de Vigília, a corner of the west) and the camera's point: the far camera looks
 ## at CAM_TARGET and goes as far as CAM_REACH from it (71 m of floor: wherever he walks); the near camera follows him
@@ -137,8 +157,14 @@ const SHELF_HALF := Vector2(2.0, 0.45)
 const VINE_ARCH := Vector2(-7.0, -2.6)
 const VINE_ARCH_HALF := Vector2(1.5, 0.5)
 const VINE_BED := Vector4(-6.5, 1.5, 4.5, 2.0)
-const HERO_STAND := Vector2(-1.0, 21.1)
-const HERO_STAND_HALF := Vector2(1.5, 0.55)
+## Round 2: the stand stands on a plinth (HERO_PLINTH high) against the Aposento's face, and the flight of steps with the
+## red carpet (HERO_STEPS, solid: a monument's stair, the way into the chapel is its door) climbs to it from the gallery.
+const HERO_STAND := Vector2(-1.0, 21.6)
+const HERO_STAND_HALF := Vector2(1.5, 0.4)
+const HERO_STEPS := Vector2(-1.0, 20.6)
+const HERO_STEPS_HALF := Vector2(1.5, 0.6)
+const HERO_PLINTH := 0.8
+const HERO_STEP_COUNT := 5
 const ALCHEMIST_BENCH := Vector4(-19.4, 4.2, 0.55, 1.1)
 const BED_HEIGHT := 0.55
 ## Focus: a station comes into focus 2.2 m from its use point and leaves it at 2.8; the one in focus only gives way to
@@ -170,6 +196,48 @@ static func water() -> Array[PackedVector2Array]:
 	return out
 
 
+static var _garden: Array[PackedVector2Array] = []
+
+
+## Whether a point (local u, v) is inside the garden's basin, in from its edge (made once).
+static func _in_garden(p: Vector2) -> bool:
+	if _garden.is_empty():
+		_garden = Geometry2D.offset_polygon(PackedVector2Array(WATER_2), -GARDEN_SHRINK)
+	for g in _garden:
+		if Geometry2D.is_point_in_polygon(p, g):
+			return true
+	return false
+
+
+## The smooth height field (local u, v): 0 on the lower terrace, TIER_H on the upper, rising linearly along v on a
+## flight. What the drawn pieces are lifted by (HubLevels).
+static func ramp_at(p: Vector2) -> float:
+	if TIER_H <= 0.0:
+		return 0.0
+	for z in STAIRS:
+		if p.x >= z.x - STAIR_EPS and p.x <= z.z + STAIR_EPS and p.y >= z.y and p.y <= z.w:
+			return TIER_H * (p.y - z.y) / (z.w - z.y)
+	if p.y >= TIER_V and not _in_garden(p):
+		return TIER_H
+	return 0.0
+
+
+## The stepped field: on a flight the tread under the point (the hero's feet), else ramp_at.
+static func height_at(p: Vector2) -> float:
+	if TIER_H <= 0.0:
+		return 0.0
+	for z in STAIRS:
+		if p.x >= z.x - STAIR_EPS and p.x <= z.z + STAIR_EPS and p.y >= z.y and p.y <= z.w:
+			var k := minf(floorf((p.y - z.y) / (z.w - z.y) * STAIR_STEPS) + 1.0, float(STAIR_STEPS))
+			return TIER_H * k / STAIR_STEPS
+	return ramp_at(p)
+
+
+## Ground height at a world point (x, z), for a camera's yaw.
+static func ground(world: Vector2, yaw_deg: float = Feel.live().cam_yaw) -> float:
+	return height_at(to_local(world, yaw_deg))
+
+
 ## A door's rectangle in the world's frame is the layout's; this is its local box.
 static func door_rect(id: StringName) -> Rect2:
 	var d: Vector4 = DOORS[id]
@@ -195,6 +263,7 @@ static func frame_for(id: StringName, from: Vector2, distance: float, pitch_deg:
 	if not SHOW.has(id):
 		return from
 	var s: Vector3 = SHOW[id]
+	s.z += ramp_at(Vector2(s.x, s.y))
 	var at := to_world(Vector2(s.x, s.y), yaw_deg)
 	var up := to_world(Vector2(0.0, 1.0), yaw_deg)
 	var right := to_world(Vector2(1.0, 0.0), yaw_deg)
@@ -254,7 +323,7 @@ static func use_point(id: StringName, yaw_deg: float = Feel.live().cam_yaw) -> V
 static func anchor(id: StringName, yaw_deg: float = Feel.live().cam_yaw) -> Vector3:
 	var a: Vector3 = ANCHOR[id]
 	var p := to_world(Vector2(a.x, a.y), yaw_deg)
-	return Vector3(p.x, a.z, p.y)
+	return Vector3(p.x, a.z + ramp_at(Vector2(a.x, a.y)), p.y)
 
 
 ## The hub's room: its floor, what stands on it (HubLook draws each piece on its footprint; every one is drawn,
@@ -279,6 +348,11 @@ static func layout(yaw_deg: float = Feel.live().cam_yaw, closed: Array[StringNam
 		for p in poly:
 			q.append(w.call(p))
 		holes.append(q)
+	if TIER_H > 0.0:
+		var slit := PackedVector2Array()
+		for p in STAIR_CUT:
+			slit.append(w.call(p))
+		holes.append(slit)
 	l.floor = FloorShape.poly(walk, holes)
 	l.half = l.floor.extent()
 	l.hero_spawn = w.call(ARRIVAL)
@@ -299,6 +373,7 @@ static func layout(yaw_deg: float = Feel.live().cam_yaw, closed: Array[StringNam
 		box.call(SHELF, SHELF_HALF, &"hub_shelf", 4.6),
 		box.call(VINE_ARCH, VINE_ARCH_HALF, &"hub_vine", 3.2),
 		box.call(HERO_STAND, HERO_STAND_HALF, &"hub_heroes", 2.6),
+		box.call(HERO_STEPS, HERO_STEPS_HALF, &"hub_heroes_steps", HERO_PLINTH),
 		box.call(Vector2(VINE_BED.x, VINE_BED.y), Vector2(VINE_BED.z, VINE_BED.w), &"hub_bed", BED_HEIGHT),
 		box.call(Vector2(ALCHEMIST_BENCH.x, ALCHEMIST_BENCH.y), Vector2(ALCHEMIST_BENCH.z, ALCHEMIST_BENCH.w), &"hub_alchemist", 2.2),
 	]

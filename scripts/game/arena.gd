@@ -493,6 +493,12 @@ static func push_out_of_box(pos: Vector2, radius: float, b: Rect2) -> Vector2:
 
 
 ## True when a body of radius `margin` stands wholly inside the room's floor (FloorShape; walk not counted).
+## The height of the floor at a point of the plane: the hub's terraces and stairs (HubPlan.height_at), 0 in every other
+## room (the simulation stays on the plane; only the paladin's feet follow this).
+func ground_at(p: Vector2) -> float:
+	return HubPlan.ground(p) if id == &"hub" else 0.0
+
+
 func inside(pos: Vector2, margin: float = 0.0) -> bool:
 	return shape().contains(pos, margin)
 

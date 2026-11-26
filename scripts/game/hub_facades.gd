@@ -35,7 +35,7 @@ const BANNER := Vector2(0.95, 2.6)  # width, length
 const BANNER_TOP := 4.1
 ## The red carpet from the Aposento's arch toward the south (u of its middle, width, v from, v to): it runs under the
 ## standards and stops short of the basin's lip (v 17).
-const CARPET_RUN := Vector4(-1.0, 1.9, 20.4, 17.5)
+const CARPET_RUN := Vector4(-1.0, 1.9, 20.0, 17.5)  # round 2: from the foot of the steps (the carpet climbs them in HubLook._hero_steps)
 ## The Alquimista's glasshouse against its south wall (u0, u1, v0, v1), the eaves' height and the ridge's.
 const GLASSHOUSE := Vector4(-27.6, -22.6, 0.6, 3.0)
 const GLASSHOUSE_EAVES := 2.4

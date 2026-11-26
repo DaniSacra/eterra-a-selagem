@@ -44,7 +44,7 @@ func test_the_floor_is_the_packages_outline_less_the_basins_and_the_future_rooms
 			area -= hole[i].cross(hole[(i + 1) % hole.size()]) * 0.5
 	assert_gt(area, 1000.0, "a monastery, not a room: more than 1000 m2 of floor (%.0f)" % area)
 	assert_lt(area, 2600.0)
-	assert_eq(l.floor.holes.size(), 3, "three basins")
+	assert_eq(l.floor.holes.size(), 3 + (1 if HubPlan.TIER_H > 0.0 else 0), "three basins and the slit beside the main axis' stairs")
 	for p: Vector2 in [Vector2(-14, -20), Vector2(5, -20), Vector2(-24, -7), Vector2(-7, 0), Vector2(30, -6)]:
 		assert_eq(l.floor.covers(_w(p)), p.y > -17.0, "the floor ends at the future rooms' doors: %s" % p)
 	for p: Vector2 in [Vector2(-5, 10), Vector2(0.5, 3)]:
