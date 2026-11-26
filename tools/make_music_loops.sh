@@ -9,6 +9,7 @@
 #   "The Descent"       -> audio/music/catacombs_2.ogg (rooms, the fight)
 #   "Clash Defiant"     -> audio/music/morvath_1..4.ogg (Morvath, one section of the same piece per phase)
 #   "Thatched Villagers"-> audio/music/thatched_villagers.ogg (the Santuario, 44 bars of 93.75 bpm)
+#   "Achaidh Cheide"    -> audio/music/achaidh_cheide.ogg (the Santuario since 2026-11-26: 120 s, 4 s of crossfade into the head)
 #   "Heroic Age"        -> audio/music/heroic_age.ogg  (the rooms, walk and fight alike, 48 bars of 130 bpm)
 #   "Ossuary 5 - Rest"  -> audio/music/room_won.ogg    (the transition: 16 s of it, faded in and out, over the room won)
 # A loop of a piece with a tempo is a whole number of bars (bpm from incompetech's catalog, 4/4), so the music after
@@ -50,6 +51,11 @@ mus2() {
 	LEN=$(echo "${HUB_BARS:-44} * $BAR" | bc -l)
 	loop "$SRC/Thatched Villagers.mp3" 0 "$LEN" "$(echo "2 * $BAR" | bc -l)" "$WORK/thatched_villagers.wav"
 	encode "$WORK/thatched_villagers.wav" -22 "$OUT/thatched_villagers.ogg"
+
+	# PT-25-2 (2026-11-26, the PO's pick): "Achaidh Cheide", no tempo to count on, so the first 120 s with 4 s of the rest fading
+	# into the head
+	loop "$SRC/Achaidh Cheide.mp3" 0 120 4 "$WORK/achaidh_cheide.wav"
+	encode "$WORK/achaidh_cheide.wav" -22 "$OUT/achaidh_cheide.ogg"
 
 	# the rooms' second piece: "Heroic Age" (130 bpm), 48 bars, played for the walk and the fight alike
 	BAR=$(echo "4 * 60 / 130" | bc -l)

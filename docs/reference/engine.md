@@ -147,6 +147,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   `--nosave` não gravam. Formato em `core/run_log.gd` (`RunLog`), sinal `Game.run_logged(outcome, entry)`.
   Resumo em Markdown (por herói/save, mortes, Memória e Prata, teclas): `python3 -I tools/runs_report.py [runs.jsonl] --since=2026-11-23T18:00` (padrão: o arquivo do Windows; `--source=all|human`, `--min-time=30`, `--out=arq.md`; amostra em `tests/fixtures/runs_sample.jsonl`).
 - `--smoke` avança a simulação a 1/60 s por quadro (`Game.SMOKE_DT`), com ou sem `--fixed-fps`: mesma semente, mesmo RESULT também com o robô (`--smoke-realtime` volta ao tempo real). Conferir com `tools/determinism.sh [rodadas] [segundos] [opções]`.
+- BG-4: `--hub --smoke=N` roda o Santuário sem tela (`Boot.route` manda para o hub; `Hub._smoke`): com `--bot` o robô anda pelos pontos de uso das estações abertas, sem interagir, e imprime `RESULT hub secs= stations= walked= at= focus=`. `--hero-at=<estação>` funciona.
   Ciclo C12c (GP-02, `RunLog.VERSION` 2, para separar injusto de não reagiu): `source` (`human` ou `bot`), `boons_at_boss`,
   `shop` (`gold` ao entrar, `bought`, `spent`), `fountain_used` e `hurt_ctx` (até 60 golpes levados: `by`, `t`, `room`, `dmg`,
   `warn_s` = segundos de aviso antes do golpe, -1 sem aviso conhecido; `dash_ready`; `offscreen` = quem bateu fora dos 5 a
@@ -201,7 +202,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   `MusicCatalog.DEFAULT`, `MusicCatalog.resolve`). Os decks do `MusicMix` são as peças; `Music.play(&"title"|&"catacombs"|
   &"morvath")` e `Music.boss_phase` tocam a peça escolhida (`Music.piece_for`; o registro de som guarda o lugar e o
   `tools/mix_replay.gd` resolve igual), a vitória passa à caminhada da masmorra escolhida (`Music.choose` religa).
-  **MUS-2 (o PO, 2026-11-25: "o jogo só tem uma música")**: o Santuário toca "Thatched Villagers" (`thatched_villagers`, laço de 44
+  **2026-11-26: o Santuário toca "Achaidh Cheide" (`achaidh_cheide`, escolha do Daniel; laço de 120 s; `SaveData.move_hub_default` move uma vez, pela chave `music_hub_moved`, quem ainda estava em Thatched Villagers).** **MUS-2 (o PO, 2026-11-25: "o jogo só tem uma música")**: o Santuário toca "Thatched Villagers" (`thatched_villagers`, laço de 44
   compassos a 93,75 bpm, 113 s; o título segue na Marcha das Lâminas). As salas **alternam** (`MusicCatalog.ALTERNATE`, o padrão da escolha
   das salas, peça virtual sem arquivo): salas 1 a 5 a Marcha das Lâminas, 6 a 10 "Heroic Age" (`heroic_age`, 1 camada `whole`: serve a
   caminhada e a luta, 48 compassos a 130 bpm), 11 a 13 a Marcha de novo (`rotation_piece(depth)`, `ROTATION_SPAN` 5; `Rooms` põe

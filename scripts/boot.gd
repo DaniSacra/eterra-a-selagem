@@ -79,6 +79,8 @@ func _ready() -> void:
 ## Where the command line sends the game past the title ("": the title): a run for the test switches (--bot,
 ## --smoke, --start, --stress, --play, and --shot without --title), past the hub too; the hub for --hub.
 static func route() -> String:
+	if Dev.has("hub") and Dev.has("smoke"):
+		return HUB  # BG-4: --hub --smoke=N plays the Santuário without a screen
 	for key: String in ["bot", "smoke", "start", "stress", "play"]:
 		if Dev.has(key):
 			return GAME

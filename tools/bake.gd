@@ -541,6 +541,8 @@ const MODELS := {
 			# Idle_Shield_Break: the shield lowered)
 			"charge": [&"ual", "Sprint", 12, true, BRUTE_RUSH],
 			"recover": [&"ual2", "Idle_Shield_Break", 10, false, {"guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
+			# QW-2: the Capitao calling its dead stood in the walk pose; as the knight's call, the arm raised (Cheer)
+			"summon": [&"kaykit", "Cheer", 12, false, {"from": 0.0, "to": 0.84, "lift": 0.2, "time": 1.0}],
 		},
 	},
 	# 6. the priest of the dead: dark purple hood and robes, no weapon

@@ -21,10 +21,10 @@ func after_each() -> void:
 
 
 func test_the_hub_has_its_own_piece_and_its_files_are_there() -> void:
-	assert_eq(MusicCatalog.DEFAULT[MusicCatalog.HUB], &"thatched_villagers")
-	assert_eq(Music.piece_for(MusicCatalog.HUB), &"thatched_villagers")
+	assert_eq(MusicCatalog.DEFAULT[MusicCatalog.HUB], &"achaidh_cheide")
+	assert_eq(Music.piece_for(MusicCatalog.HUB), &"achaidh_cheide")
 	assert_eq(Music.piece_for(MusicCatalog.TITLE), &"blade_march", "the title keeps its piece")
-	for id: StringName in [&"thatched_villagers", &"heroic_age", &"room_won"]:
+	for id: StringName in [&"achaidh_cheide", &"thatched_villagers", &"heroic_age", &"room_won"]:
 		assert_true(ResourceLoader.exists(MusicCatalog.file_of(id, 0)), String(id))
 		assert_true(Music.catalog().has(id), "%s is in the mix's catalog" % id)
 	assert_false(Music.catalog().has(MusicCatalog.ALTERNATE), "the stand-in has no files")
@@ -106,7 +106,7 @@ func test_the_transition_without_a_bed_plays_nothing() -> void:
 
 func test_old_saves_move_the_old_default_once() -> void:
 	var old := SaveData.merged({"version": 14, "options": {"music_hub": "blade_march", "music_dungeon": "blade_march"}})
-	assert_eq(old.options.music_hub, "thatched_villagers")
+	assert_eq(old.options.music_hub, "achaidh_cheide")
 	assert_eq(old.options.music_dungeon, "alternate")
 	var picked := SaveData.merged({"version": 14, "options": {"music_hub": "tempting_secrets", "music_dungeon": "deep_drums"}})
 	assert_eq(picked.options.music_hub, "tempting_secrets", "a piece picked by hand stays")
@@ -118,10 +118,21 @@ func test_old_saves_move_the_old_default_once() -> void:
 ## PT-25-2: the shared options (profile.json) have no version, so the Santuário stayed on blade_march on old computers.
 func test_the_profile_moves_the_old_default_once() -> void:
 	var old := SaveSlots.options_of({"music_hub": "blade_march", "music_dungeon": "blade_march", "music_title": "blade_march"})
-	assert_eq(old.music_hub, "thatched_villagers")
+	assert_eq(old.music_hub, "achaidh_cheide")
 	assert_eq(old.music_dungeon, "alternate")
 	assert_eq(old.music_title, "blade_march", "the title keeps its piece")
 	assert_true(old.music_moved)
 	var later := SaveSlots.options_of({"music_hub": "blade_march", "music_moved": true})
 	assert_eq(later.music_hub, "blade_march", "picked by hand after the move, it stays")
-	assert_true(SaveSlots.options_of(null).music_hub == "thatched_villagers")
+	assert_true(SaveSlots.options_of(null).music_hub == "achaidh_cheide")
+
+
+## 2026-11-26: the Santuário moves from Thatched Villagers to the PO's Achaidh Cheide once; a later pick stays.
+func test_the_hub_moves_to_achaidh_cheide_once() -> void:
+	var old := SaveSlots.options_of({"music_hub": "thatched_villagers", "music_moved": true})
+	assert_eq(old.music_hub, "achaidh_cheide")
+	assert_true(old.music_hub_moved)
+	var later := SaveSlots.options_of({"music_hub": "thatched_villagers", "music_moved": true, "music_hub_moved": true})
+	assert_eq(later.music_hub, "thatched_villagers", "picked by hand after the move, it stays")
+	var picked := SaveSlots.options_of({"music_hub": "heroic_age", "music_moved": true})
+	assert_eq(picked.music_hub, "heroic_age")
