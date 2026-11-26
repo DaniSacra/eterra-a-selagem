@@ -858,3 +858,32 @@ Mortes antes de Morvath: 1 antes, 2 depois (as duas pelo Cavaleiro). Dano levado
 Morvath (`--start=boss --boons=25 --seed=5`, 120 s): antes 99 s e 40 de vida, 7 foices, 6 ceifas, 1 rajada; depois 103 s e 40 de vida, 5 foices, 5 ceifas, 2 rajadas, 4 lâminas e 3 chamados. Intervalo médio entre ataques 0,31 s antes e 0,15 s depois.
 
 Velocidade do Cavaleiro: com 6,0 m/s o herói (6,75) ainda se afasta. Teste com 4,5 m/s nas sementes 2, 3 e 6: a 2 passou da sala 5 (chegou em Morvath), a 3 e a 6 continuaram morrendo no Cavaleiro (55 e 36 de dano). A velocidade não é o que pesa; é a espera zero com dano 12. Se o Daniel achar demais, alavancas por ordem: `gap_max` 0,15 para 0,5, `attack_damage` 12 para 10, velocidade 5,0. Ficou 6,0 como pedido.
+
+## Revisão 2026-11-26 (balance-designer, antes da entrega; HEAD `f2aa94d5`, robô 0,25, `smoke.sh 900 --seed=N --bot-reaction=0.25 --ultimate=cleave`, sementes 1 a 12, partida inteira)
+
+Régua do robô, não de gente. Nada implementado; dono de todos os itens: gameplay-engineer. Meta vigente (B.3 e "Meta nova do Daniel"): começo duro, guardião de novato perde mais do que vence, Morvath quase nunca na primeira descida, crianças com Coragem automática.
+
+### Medido
+- **Resultado**: 3 vitórias em 12 (sementes 4, 5, 12; 25%), 8 mortes em Morvath (fases 2: 3, fase 3: 2, fase 4: 3), 1 morte antes (semente 11, sala 9 Fendas: 66 de dano em 55 s, `mage` 36,5 e `mage_elite` 30). Chegou em Morvath 11 de 12, com 6 a 9 Bênçãos (média 7,3) e 31 a 65 de vida.
+- **Dano até Morvath** (salas 1 a 13): 34 a 89, média 55; salas 1 a 4 quase sempre 0 a 10 por sala (tempo de 78 a 150 s nas quatro). Morvath: 44 a 91 de dano, 138 a 249 s de luta.
+- **Cavaleiro, sala 5 (`hp_scale` 0,7)**: luta 14,1 a 23,9 s, mediana 16,4 s (7 sementes); dano ao herói 0 em 6 de 7, 6 na semente 10. `breaks.special` presente, avisos iniciados 4 a 6, cortados 1 a 2, punidos 2 a 5. **Cavaleiro, sala 10 (vida cheia 500)**: 16,6 a 35,1 s, mediana 24,9 s; dano 0 em 4, 6 (mago) e 10 (placa de espinho) nas outras. Ancião (salas 5 e 10): 18 a 65 s, mediana 50 s, dano 3 a 15.
+- Leitura: a quebra de guarda funciona (550/0,5) e o Cavaleiro caiu abaixo da meta de 30 a 40 s e de 12 a 36 de dano em todas as sementes. É a primeira parede da descida e hoje não é parede.
+
+### Recomendação fechada, Cavaleiro (respeita "preciso conseguir quebrar a guarda")
+Manter `KNIGHT_ARMOR` 550 e `KNIGHT_ARMOR_SOFT` 0,5 (a quebra é do Daniel e não se toca). Compensar só na vida, que não mexe na guarda:
+1. `_first_room(5, &"knight", ...)` em `tools/make_data.gd` (~linha 3118): `hp_scale` 0,7 para **1,0**.
+2. `_enemy(&"knight")` (~linha 432): `hp` 500 para **650**.
+Previsão (linear no tempo de luta do robô: 16,4 s a 0,7 x 500 = 350 de vida; 23 a 25 s a 500; 650 dá 30 a 32 s no robô, 35 s na sala 10): luta 30 a 36 s. Dano ao herói sobe de 0 a 6 para algo entre 6 e 20 pela maior exposição; **se medir abaixo de 12**, segunda alavanca: `attack_damage` 12 para 15 (golpe de carga, ainda abaixo do 18 antigo que matava novatos). Não mexer em `gap_max`, velocidade nem espera (o SW-REA já mostrou que a espera zero com dano 12 é o que pesa). Medir: `--start=miniboss` mais as 12 sementes, critério luta 30 a 40 s mediana e dano 12 a 36 mediano. Efeito colateral: o Cavaleiro de elite nas salas 8 a 12 também fica 30% mais duro; conferir a sala 10 (alvo até 40 s).
+Para criança: a Coragem automática já cobre; não baixar o Cavaleiro por causa delas.
+
+### Lista priorizada
+- **P0**: nenhum. Sem travamento (`stuck` 0 nas 12), nada de sala que quebre a partida.
+- **P1-A Cavaleiro**: acima (hp 650, `hp_scale` 1,0).
+- **P1-B Fendas (sala 9) com magos**: semente 11 morreu com 66 de dano de `mage` + `mage_elite` em uma sala; os dois mais letais por sala da amostra são magos (28 a 36). Proposta: `make_data.gd`, `mage_elite` `attack_damage` -20% (~linha dos magos de elite) ou tirar o segundo mago da onda da Fendas; dono room-designer decide qual. Medir: sala 9 em 12 sementes, dano médio abaixo de 25 e máximo abaixo de 45.
+- **P1-C Salas 1 a 4 sem risco**: 0 a 10 de dano por sala, 78 a 150 s para as quatro. A direção do PO pede muito difícil de completar e se acirra aos poucos; hoje 25% do robô vence e a metade inicial não cobra nada. Antessala (Bênção) mais Cripta A em Ouro tira poder cedo e deve ter ajudado; manter. Proposta: não mexer no número antes do teste dos Daniel (ele achou fácil, as crianças difícil; a régua do robô concorda com o Daniel). Se ele repetir "fácil": `dano dos inimigos` das salas 2 a 4 +25% pelo `budget`/escala da sala (`_first_room`, `hp_scale` só no guardião).
+- **P2 Ancião**: mediana 50 s, dano 3 a 15 (queixa de dano baixa); só observar, já é a sala mais longa.
+- **P2 Placa de espinho no Cavaleiro (semente 9, 10)**: legítimo (dano de perigo 10); sem mudança.
+- **Quickwin**: o `RESULT` já separa `hurt_by` por sala, mas falta tempo de luta do guardião e `win` explícito (hoje se deduz de `boss_hp` -1 e `hp` maior que 0): acrescentar `won` (bool) e `guardian_fight` ao RESULT (QW-3 da revisão do combate).
+
+### Depois do teste do Daniel
+Pedir o `runs.jsonl`: sala de morte, tempo no Cavaleiro e se quebrou a guarda (`breaks.special` do robô é só proxy). Remedir as 12 sementes com os mesmos comandos após aplicar P1-A e P1-B e comparar com a tabela acima (3 vitórias, 8 em Morvath, 1 nas Fendas).
