@@ -6,8 +6,8 @@
 [sub_resource type="Resource" id="Resource_oh7fh"]
 script = ExtResource("1_jv54h")
 stat = &"cel_echo_marked_pct"
-base = 0.15
-per_level = PackedFloat32Array(0.05, 0.05)
+base = 0.2
+per_level = PackedFloat32Array(0.08, 0.08)
 
 [resource]
 script = ExtResource("2_6ffeg")

@@ -6,8 +6,8 @@
 [sub_resource type="Resource" id="Resource_vxuw3"]
 script = ExtResource("1_mcplb")
 stat = &"cel_stunned_dmg_pct"
-base = 0.2
-per_level = PackedFloat32Array(0.1, 0.1)
+base = 0.3
+per_level = PackedFloat32Array(0.12, 0.12)
 
 [resource]
 script = ExtResource("2_2v6hr")

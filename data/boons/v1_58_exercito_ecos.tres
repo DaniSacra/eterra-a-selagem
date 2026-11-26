@@ -6,7 +6,7 @@
 [sub_resource type="Resource" id="Resource_laxed"]
 script = ExtResource("1_8uw45")
 stat = &"cel_echo"
-base = 0.25
+base = 0.4
 per_level = PackedFloat32Array()
 by_rarity = false
 

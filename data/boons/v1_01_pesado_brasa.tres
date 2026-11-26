@@ -6,8 +6,8 @@
 [sub_resource type="Resource" id="Resource_m0gn6"]
 script = ExtResource("1_qaqbj")
 stat = &"cel_burn_dps"
-base = 6.0
-per_level = PackedFloat32Array(3, 3)
+base = 5.0
+per_level = PackedFloat32Array(2.5, 2.5)
 
 [resource]
 script = ExtResource("2_6gybw")

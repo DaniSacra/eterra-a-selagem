@@ -887,3 +887,67 @@ Para criança: a Coragem automática já cobre; não baixar o Cavaleiro por caus
 
 ### Depois do teste do Daniel
 Pedir o `runs.jsonl`: sala de morte, tempo no Cavaleiro e se quebrou a guarda (`breaks.special` do robô é só proxy). Remedir as 12 sementes com os mesmos comandos após aplicar P1-A e P1-B e comparar com a tabela acima (3 vitórias, 8 em Morvath, 1 nas Fendas).
+
+## Bênçãos V1 (2026-11-26)
+
+Medido por balance-designer sobre o HEAD `269b87ba` (V1 do CSV, sem ajuste) e de novo depois dos números abaixo. Robô 0,25, `--ultimate=cleave`, sementes 1 a 12, só números em `tools/make_data.gd` (grupo `boons`). Régua do robô, não de gente.
+
+### Como medi
+- **Descida inteira** (`smoke.sh 900 --seed=N --bot-reaction=0.25 --ultimate=cleave`): "natural" (sorteio livre de anjos) e um anjo forçado por vez (`--angels=sarael|nivael|lumael|shomael|velael|galael|qeshael`, as cartas vêm pelo sorteio normal daquele anjo). Métrica: vida média que sobra no Morvath (`boss_hp`, menor = melhor), vitórias, fase máxima.
+- **Teto no Morvath** (`--start=boss --hero-hp=500 --boon-ids=<as 9 do anjo>`): herói não morre, mede o tempo de luta (`boss.time`) e o dano sofrido (`sum(boss.hurt_by)`). Sem Bênção: 309 s (mediana), dano sofrido 229.
+- **Linha de base antes da V1**: o commit anterior (`2fe2b3c1^`, cópia isolada) com as mesmas 12 sementes.
+
+### Achados
+1. **A V1 do CSV é bem mais fraca que a antiga** (P0 de ritmo): natural, vida que sobra no Morvath **1444 (antes da V1) para 3588 (V1 do CSV)** de 5146; fase máxima mediana 3 para 2. Vitórias 0 em 12 nos dois (o robô estava em 3 de 12 em `f2aa94d5`; mudou outra coisa no meio). Causa: some a pilha automática (Ômegas, Supremos antigos, chama viva etc.) e a maior parte dos poderes novos é utilidade (estado) sem dano.
+2. **Sarael domina** (P1): sozinho, 3 das 3 vitórias da amostra de anjos e 1346 de vida que sobra no Morvath (o melhor); no teto, tempo de luta **213 s contra 309 sem Bênção (-31%)**; Queimadura (16 a 17%) mais Combustão (6%) são 23% de todo o dano. Os outros seis anjos ficam entre -16% e +8%.
+3. **Galael é o fraco** (P1): 4287 de vida que sobra (pior), no teto 334 s (+8%, pior que sem Bênção). Isolando por poder (12 sementes, teto): Golpe, Peso, Poder e Vendaval sozinhos = 308 a 318 s (nada); **Passos Leves (carga extra de esquiva) sozinho = 402 s e 337 de dano sofrido** (contra 309 e 229). Leitura: o robô gasta a carga extra no Investida e se expõe. É artefato provável do robô; **não mexi** (é +1 carga fixa, não número), mas pedir ao Daniel que sinta. Cadência + Turbilhão + Fluxo (com o Golpe) = 281 s: o conjunto de ritmo funciona, a velocidade pura não vira dano.
+4. **Qeshael, Nivael, Shomael, Velael ficam colados no zero** no teto (-5% a -9%): são estados e proteção. Shomael corta o dano sofrido por segundo em 16% (0,634 contra 0,752) e Velael em 7%: valem pelo que protegem, não pelo dano. Nivael não aparece no teto (o Morvath não congela nem é estilhaçado, o ganho está nos inimigos comuns; não mensurável no teto).
+5. **Lumael é o segundo** (-16%, crítico): saudável, deixei os números do crítico como estavam.
+6. **Sem quebra**: nenhuma interação fora do controle. Eco não gera eco (tally `echo` 1), Combustão não soma DPS de queimadura, `luz_crescente`, `fortuna` e `esplendor` ficam abaixo do teto de 60% e 250%. Eco de golpe primário não existe (só Peso, Brado e Exército), então `eco_crescente`/`sombra_revelada` só valem com um desses.
+7. Brado (`shout`) fica em 1% do dano no teto do Morvath: nenhum Brado de anjo muda isso (são estados).
+
+### Mudanças (números comuns; subem por raridade como já faziam)
+| Poder | Antes | Depois | Por quê |
+|---|---|---|---|
+| Golpe em Brasa (`cel_burn_dps`) | 4 +2 por nível | **3,5 +1,5** | Sarael domina |
+| Peso em Brasa | 6 +3 | **5 +2,5** | idem |
+| Combustão (`cel_combust_dmg`) | 12 +6 | **9 +4,5** | idem (6% do dano) |
+| Peso do Inverno (Supremo de Nivael) | 40/60/85 | **55/80/115** | Nivael sem dano |
+| Estilhaçamento | +25% +10 | **+40% +15** | idem |
+| Julgamento da Luz (Supremo de Lumael) | 15/22/32 | **24/36/50** | raios de 15 sumiam |
+| Poder Inabalável (Shomael) | 10/15/21 | **14/21/30** | |
+| Abalo Celestial (Supremo de Shomael) | 30/45/66 | **45/66/96** | |
+| Força Inabalável | +20% +10 | **+30% +12** | |
+| Vulnerabilidade | +10% +5 | **+15% +7** | Velael |
+| Névoa Profunda (`weak_pct`) | +5 pp | **+8 pp** | Velael |
+| Peso dos Ventos (rajada) | 8/12/17 | **14/21/30** | Galael |
+| Turbilhão | 12 +6 | **18 +9** | Galael |
+| Golpe dos Ventos (velocidade) | +10% +3 | **+12% +4** | Galael |
+| Vendaval (velocidade 5 s) | +20% | **+30%** | Galael (teto do total, 50%, mantido) |
+| Peso da Penumbra (eco) | 30% | **40%** | Qeshael |
+| Poder da Penumbra (eco) | 25% | **35%** | Qeshael |
+| Exército de Ecos | 25% | **40%** | Qeshael |
+| Eco Crescente | +20% +10 | **+30% +15** | Qeshael |
+| Sombra Revelada | +15% +5 | **+20% +8** | Qeshael |
+
+O `BALANCEAMENTO.csv` (Daniel) fica como estava; estes números o substituem em jogo. Os testes `test_blessings_v1_*` foram atualizados para os novos valores (nada afrouxado).
+
+### Depois (mesmas sementes e comandos)
+| Medida | Antes da V1 | V1 do CSV | V1 ajustada |
+|---|---|---|---|
+| Natural, vida que sobra no Morvath (média) | 1444 | 3588 | **1989** |
+| Natural, vitórias em 12 | 0 | 0 | 1 |
+| Teto, Sarael (tempo de luta, média; sem Bênção 306) | n/d | 215 | **225** |
+| Teto, Lumael | n/d | 265 | 266 |
+| Teto, Velael | n/d | 279 | 275 |
+| Teto, Shomael | n/d | 292 | 286 |
+| Teto, Nivael | n/d | 291 | 295 |
+| Teto, Qeshael | n/d | 292 | **274** |
+| Teto, Galael (9 poderes; só o conjunto de ritmo, Golpe + Cadência + Turbilhão + Fluxo) | n/d | 334 (281) | 312 (273) |
+
+Leitura: o ajuste leva o natural a meio caminho do antigo (1989 contra 1444); a meta é ficar na casa de 1500 a 2000 com 1 a 3 vitórias em 12 no robô. Sarael continua na frente (225 s) mas a vantagem caiu de 31% para 27%.
+
+### Pendências
+- Passos Leves (Galael): pedir a sensação ao Daniel antes de mexer (ver achado 3).
+- Nivael e Velael valem sobre inimigos comuns; falta uma medida de dano sofrido por sala com anjo forçado (o ruído de 12 sementes é maior que o efeito).
+- Depois do teste do Daniel: o `runs.jsonl` (`angels` por sala, `chose`) diz que anjos as pessoas pegam e onde morrem; recomparar com estas tabelas.
