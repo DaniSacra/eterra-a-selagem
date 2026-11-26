@@ -159,31 +159,37 @@ const SCROLL := Color(0.64, 0.57, 0.44)
 # ---------- air and light ----------
 ## SV-R: the air under the far ridges (HubScenery draws them) and the cliffs of the drop: pale blue haze, warm grey stone
 ## (palette 04-paleta-e-iluminacao.md: water and distant mist #527F8C, shaded stone #8F8775), never a dark panel.
-const MIST := Color(0.075, 0.085, 0.17)
+const MIST := Color(0.07, 0.075, 0.14)
 ## Round 3: the void is night-blue indigo, nearly black right under the platform and going lighter and violet with the
 ## distance (the horizon's haze): the abyss planes' rim colour and the distances (m from the room's middle) it takes over.
-const MIST_RIM := Color(0.2, 0.16, 0.32)
-const MIST_RIM_RANGE := Vector2(46.0, 150.0)
+## Round 4: night blue, little saturated (#141a33 to #2a2848), the haze toward the horizon a grey-blue and lighter.
+const MIST_RIM := Color(0.17, 0.17, 0.3)
+const MIST_RIM_RANGE := Vector2(24.0, 110.0)
 const CLIFF := {&"stone_color": Color(0.3, 0.28, 0.25), &"edge_color": Color(0.5, 0.46, 0.4), &"mist_color": MIST,
 	&"glow_color": Color(0.5, 0.6, 0.7)}
 ## Hub refine round 1: the platform is the top of a mountain at dusk. The cliffs are warm layered rock (hub_cliff.gdshader)
 ## going into the lilac mist of the abyss planes (their opaque floor is about this share of MIST).
 const CLIFF_SHADER := preload("res://assets/shaders/hub_cliff.gdshader")
-const CLIFF_ROCK_A := Color(0.46, 0.37, 0.32)
-const CLIFF_ROCK_B := Color(0.27, 0.24, 0.3)
-const CLIFF_MOSS := Color(0.2, 0.32, 0.15)
+## Round 4: warm grey stone and moss, no pink, darker than the paving.
+const CLIFF_ROCK_A := Color(0.4, 0.36, 0.31)
+const CLIFF_ROCK_B := Color(0.23, 0.22, 0.24)
+const CLIFF_MOSS := Color(0.17, 0.3, 0.12)
 const CLIFF_MIST_SHARE := 0.55
 const CLIFF_FADE := Vector2(1.0, 15.0)
 ## Round 2: the face's cool shadow (violet, the rock away from the light) and how much it darkens going down.
-const CLIFF_SHADE := Color(0.2, 0.17, 0.36)
+const CLIFF_SHADE := Color(0.17, 0.17, 0.3)
 const CLIFF_DEEP_DARK := 0.65
 ## The hub's air (spec 4.1: lighter and warmer than any room, the cold in the sky and the vista) and its stylized look.
 const DUSK_GOLD := Color(1.0, 0.76, 0.56)
 ## Round 2: the air is dusk, not noon: a cold violet ambient and a dark indigo fog; the warm lights are what shine.
-const DUSK_FOG := Color(0.17, 0.12, 0.3)
+## Round 4: the fog (the colour of everything below the floor) is night blue, not violet. The height fog under the floor
+## (WorldAir FOG_HEIGHT_DENSITY 0.6: opaque a few metres down, so the void was this one flat colour and the planes' gradient
+## and the crowns below never showed) is thinned here to HUB_FOG_HEIGHT.
+const DUSK_FOG := Color(0.1, 0.105, 0.16)
+const HUB_FOG_HEIGHT := 0.05
 const DUSK_AMBIENT := Color(0.6, 0.58, 0.82)
 const AIR := {
-	&"sky": Color(0.3, 0.24, 0.42), &"fog": DUSK_FOG, &"fog_depth": Vector2(110.0, 240.0),
+	&"sky": Color(0.3, 0.24, 0.42), &"fog": DUSK_FOG, &"fog_depth": Vector2(110.0, 240.0), &"fog_height_density": HUB_FOG_HEIGHT,
 	&"ambient": DUSK_AMBIENT, &"ambient_gain": 1.0, &"moon": DUSK_GOLD, &"moon_energy": 1.1,
 	&"moon_shadow": true,
 }
@@ -205,7 +211,7 @@ const STYLE := {
 	&"joint_cold": Color(0.92, 0.89, 0.9), &"slab_paint": Vector2(0.82, 1.18), &"slab_hue": 6.0, &"olive_share": 0.03,
 	&"edge_value": 1.0, &"pool_saturation": 0.8, &"metal": true,
 	&"fire": {&"candle_range": 3.5, &"candle_gain": 1.2, &"bowl_range": 4.2, &"bowl_gain": 0.95},
-	&"air": {&"sky": Color(0.3, 0.24, 0.42), &"fog": DUSK_FOG, &"ambient": DUSK_AMBIENT,
+	&"air": {&"sky": Color(0.3, 0.24, 0.42), &"fog": DUSK_FOG, &"fog_height_density": HUB_FOG_HEIGHT, &"ambient": DUSK_AMBIENT,
 		&"ambient_gain": STY_AMBIENT_GAIN, &"moon": DUSK_GOLD, &"moon_energy": STY_MOON, &"moon_shadow": true},
 	&"shadow_glow": STY_SHADOW_GLOW, &"vignette": STY_VIGNETTE,
 }

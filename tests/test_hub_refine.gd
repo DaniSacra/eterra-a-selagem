@@ -17,10 +17,10 @@ func _on_floor(p: Vector2) -> bool:
 	return true
 
 
-func test_the_pointed_panel_has_the_portals_height_and_width() -> void:
-	var mesh := HubFacades.ogive_mesh(HubBlockout.GATE_W, HubBlockout.GATE_SPRING, HubLook._portal_arc(), [], 10)
+func test_the_pointed_panel_has_the_gates_height_and_width() -> void:
+	var mesh := HubFacades.ogive_mesh(HubBlockout.GATE_W, HubBlockout.GATE_SPRING, HubBlockout.gate_arc(), [], 10)
 	var box := mesh.get_aabb()
-	assert_almost_eq(box.size.y, HubLook.PORTAL_H, 0.05, "apex at the portal's height")
+	assert_almost_eq(box.size.y, HubBlockout.gate_apex(), 0.05, "apex at the gate's height (the portal's proportions)")
 	assert_almost_eq(box.size.x, HubBlockout.GATE_W, 0.01, "as wide as the opening")
 
 
@@ -76,3 +76,37 @@ func test_the_hub_builds_with_its_rock_lanterns_and_lights() -> void:
 			cliffs += 1
 	assert_gt(cliffs, 0, "the cliffs are the mountain's rock")
 	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
+
+
+func test_the_pointed_panel_faces_the_camera() -> void:
+	# Godot draws the clockwise side: seen from +z (the camera, south) the first triangle must wind clockwise, or the leaf of
+	# a door is culled and the doorway shows black (round 4)
+	var arrays := HubFacades.ogive_mesh(2.0, 1.0, 0.8).surface_get_arrays(0)
+	var v: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var cross := (v[1] - v[0]).cross(v[2] - v[0])
+	assert_lt(cross.z, 0.0, "clockwise from +z")
+
+
+func test_the_gate_facade_stands_on_its_footprint_clear_of_the_use_point() -> void:
+	var g := HubPlan.GATE
+	var wall := HubBlockout.GATE_WALL_U
+	assert_gte(wall.x, g.x + 0.4, "the wall keeps off the west edge where the hero stands")
+	assert_lte(wall.y, g.z, "and ends at the footprint's east edge")
+	assert_gte(HubBlockout.GATE_FRONT, g.y, "its face is inside the footprint's south edge")
+	assert_lte(HubBlockout.GATE_FRONT + HubBlockout.GATE_DEPTH, g.w, "and its back inside the north one")
+	assert_lt(HubBlockout.GATE_TOP, HubPlan.GATE_HEIGHT, "lower than the solid box (the camera sees past it)")
+
+
+func test_no_fall_hangs_in_a_trench_or_pit_of_the_floor() -> void:
+	var s := HubScenery.new(null)
+	# the 1.5 m trench between the Dons' court (south edge v -9) and the bridge deck (v -10.5) is not open void
+	assert_false(s._open_void(Vector2(15.0, -9.05), Vector2(0.0, -1.0)), "a trench is not a place for a fall")
+	# the bridge's south face and the Portão's cliff are
+	assert_true(s._open_void(Vector2(16.4, -15.7), Vector2(0.0, -1.0)), "under the bridge the drop is open")
+	var drawn := 0
+	for e in s._edge_points(1.5, 0.05, 0.0, false, true):
+		var normal: Vector2 = e[1]
+		if normal.y <= -0.95 and e[0].y >= -16.0 and s._open_void(e[0], normal):
+			drawn += 1
+	gut.p("south edge points open to the void: %d" % drawn)
+	assert_gt(drawn, 3, "enough open edge for the extra falls")
