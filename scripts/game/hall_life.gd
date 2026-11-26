@@ -31,6 +31,8 @@ const FIELD := Rect2(-12.5, -11.5, 25.0, 23.0)
 const SLABS: Array[Vector4] = [Vector4(7.6, 4.6, 24.0, 4.0), Vector4(-6.5, 9.0, -12.0, -3.0), Vector4(10.6, -5.8, 70.0, 3.5)]
 const SLAB_SIZE := Vector3(1.3, 0.12, 1.1)
 const SLAB_SINK := 0.075
+## Art review 2026-11-26 (7): the loose slabs read as sheets of paper; the stone darkened (a tint of the floor's stone) to the floor's tone.
+const SLAB_TINT := Color(0.62, 0.6, 0.6)
 ## The rubble: heaps (x, z), pieces in each, how far they spread and their size (m, under the knee).
 const HEAPS: Array[Vector2] = [Vector2(7.6, 4.6), Vector2(-5.5, 8.8), Vector2(3.5, 10.0), Vector2(-2.0, -8.5)]
 const HEAP_PIECES := 5
@@ -106,11 +108,11 @@ static func _crack(r: RandomNumberGenerator) -> PackedVector2Array:
 ## One slab broken or half sunk: a thick tile a touch under the floor's top, tilted (so one edge dips), with a chip off it.
 static func _slab(sty: Masonry, s: Vector4) -> void:
 	var yaw := deg_to_rad(s.z)
-	var mi := sty.box(Vector3(s.x, SLAB_SIZE.y * 0.5 - SLAB_SINK, s.y), SLAB_SIZE, yaw, null, false)
+	var mi := sty.box(Vector3(s.x, SLAB_SIZE.y * 0.5 - SLAB_SINK, s.y), SLAB_SIZE, yaw, sty.stone(-SLAB_SINK, SLAB_TINT), false)
 	mi.rotate_object_local(Vector3.RIGHT, deg_to_rad(s.w))
 	mi.rotate_object_local(Vector3.FORWARD, deg_to_rad(s.w * 0.6))
 	var chip := Vector3(SLAB_SIZE.x * 0.4, SLAB_SIZE.y * 0.8, SLAB_SIZE.z * 0.35)
-	sty.box(Vector3(s.x + 0.7, chip.y * 0.5 - 0.04, s.y - 0.5), chip, yaw + 0.7, null, false)
+	sty.box(Vector3(s.x + 0.7, chip.y * 0.5 - 0.04, s.y - 0.5), chip, yaw + 0.7, sty.stone(-0.04, SLAB_TINT), false)
 
 
 ## A heap of small fallen pieces, each askew.

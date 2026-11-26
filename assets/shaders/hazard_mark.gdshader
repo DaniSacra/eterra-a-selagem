@@ -65,7 +65,7 @@ void fragment() {
 	if (tiles > 1.5 && joint > 0.0) {
 		// the cross joint between the tiles (the slab's own joint at half the border's strength), sunk with the slab
 		vec2 inner = abs(p);
-		float cross_w = mix(joint, joint_sunk, sink) * 0.6;
+		float cross_w = mix(joint, joint_sunk, sink) * 1.6;
 		float on_cross = 1.0 - smoothstep(cross_w * 0.45, cross_w * 0.5, min(inner.x, inner.y));
 		mul *= mix(1.0, mix(joint_mul, joint_mul * 0.6, sink), on_cross);
 		vec2 q = vec2(half_size.x * 0.5);

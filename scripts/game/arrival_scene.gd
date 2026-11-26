@@ -41,7 +41,17 @@ const COMET_SIDE := 7.0
 const COMET_END := 0.9
 const COMET_EASE := 1.4
 const HEAD_SIZE := 1.0
-const HEAD_LIGHT := 1.6
+const HEAD_LIGHT := 0.9
+## Art review 2026-11-26 (8): the head is a small white-hot core (m, light) inside a faint gold halo (HEAD_SIZE, HEAD_LIGHT),
+## never one even disc; loose sparks leave the tail: how many, how far behind the head (fall share), how far they drift
+## to the side and down (m), their size (m) and light.
+const CORE_SIZE := 0.3
+const CORE_LIGHT := 1.5
+const SPARKS := 8
+const SPARK_BACK := Vector2(0.05, 0.4)
+const SPARK_DRIFT := 0.55
+const SPARK_SIZE := 0.12
+const SPARK_LIGHT := 0.8
 const TAIL_COUNT := 14
 const TAIL_STEP := 0.045
 const TAIL_SIZE := 1.1
@@ -83,6 +93,8 @@ const MOTES_LIGHT := 1.2
 const MOTES_END := 1.3
 const MOTES_SPREAD := 0.25
 ## The crystals' own light: a brighter peak, paler edges and a lit deep face, so they are not flat green.
+## Art review 2026-11-26 (9): the crystals took the flat emerald; they are the light of Elun, amber and gold, upright.
+const CRYSTAL_COLOR := Color(1.0, 0.7, 0.28)
 const CRYSTAL_GAIN := 1.2
 const CRYSTAL_DEEP := 0.28
 const CRYSTAL_EDGE := 1.0
@@ -95,7 +107,7 @@ const CRYSTAL_LIGHT := Vector3(0.9, 4.5, 1.2)
 ## CRYSTAL_RING and are as thick as CRYSTAL_THICK), and how far along the way to the room's middle it is looked for (m).
 const CLEAR_RADIUS := 3.2
 const CLEAR_STEP := 0.5
-const MOTES_COLOR := Color(0.3, 1.0, 0.55)
+const MOTES_COLOR := Color(1.0, 0.78, 0.38)
 ## The hero's forming: a little above his height so the band leaves the head; the painting's light share of the shader.
 const FORM_OVER := 0.3
 const FORM_CAP_SHARE := 0.9
@@ -138,6 +150,8 @@ var _gave_control := false
 var _captioned := false
 var _landed := false
 var _head: MeshInstance3D
+var _core: MeshInstance3D
+var _sparks: Array[MeshInstance3D] = []
 var _tail: Array[MeshInstance3D] = []
 var _comet_from := Vector3.ZERO
 var _shock: MeshInstance3D
@@ -336,6 +350,9 @@ func _build_comet() -> void:
 		right = right.normalized() if right.length() > 0.01 else Vector3.RIGHT
 	_comet_from = Vector3(at.x, COMET_END + COMET_UP, at.y) - right * COMET_SIDE
 	_head = _glow_quad(HEAD_SIZE)
+	_core = _glow_quad(CORE_SIZE)
+	for i in SPARKS:
+		_sparks.append(_glow_quad(SPARK_SIZE))
 	for i in TAIL_COUNT:
 		var k := float(i + 1) / float(TAIL_COUNT)
 		_tail.append(_glow_quad(lerpf(TAIL_SIZE, TAIL_SIZE * 0.25, k)))
@@ -375,7 +392,12 @@ func _dress_comet(s: Dictionary) -> void:
 	_head.visible = on
 	if on:
 		_head.position = _comet_at(p)
-		_tone(_head, HEAD_LIGHT * minf(p * 6.0, 1.0))
+		var fade := minf(p * 6.0, 1.0)
+		_tone(_head, HEAD_LIGHT * fade)
+		_core.position = _head.position
+		(_core.mesh.material as StandardMaterial3D).albedo_color = Color(Color(1.0, 0.96, 0.82) * (CORE_LIGHT * fade), 1.0)
+	_core.visible = on
+	_dress_sparks(p, on)
 	for i in _tail.size():
 		var q := p - float(i + 1) * TAIL_STEP
 		var mi := _tail[i]
@@ -383,6 +405,22 @@ func _dress_comet(s: Dictionary) -> void:
 		if mi.visible:
 			mi.position = _comet_at(q)
 			_tone(mi, TAIL_LIGHT * (1.0 - float(i) / float(_tail.size())))
+
+
+## The sparks loosed from the tail: each one stays on the path a fixed way behind the head and drifts off to the side and
+## down by a fixed amount, fading as it goes (the same on every play).
+func _dress_sparks(p: float, on: bool) -> void:
+	for i in _sparks.size():
+		var mi := _sparks[i]
+		var k := float(i) / float(_sparks.size())
+		var q := p - lerpf(SPARK_BACK.x, SPARK_BACK.y, fmod(k * 3.7 + 0.13, 1.0))
+		mi.visible = on and q > 0.0
+		if not mi.visible:
+			continue
+		var along := (p - q) / SPARK_BACK.y
+		var side := Vector3(sin(float(i) * 2.4), -absf(cos(float(i) * 1.7)) - 0.3, cos(float(i) * 2.4)) * SPARK_DRIFT * along
+		mi.position = _comet_at(q) + side
+		_tone(mi, SPARK_LIGHT * (1.0 - along))
 
 
 ## The landing: the flash, the ring over the floor, the dust, the shake (once), then the light round the hero until he walks.
@@ -474,7 +512,7 @@ func _build_crystals() -> void:
 	prism.radial_segments = 4
 	prism.rings = 1
 	prism.cap_top = false
-	_crystal_peak = ScreenTone.linear_peak(Combat.EMETH.lerp(Color.WHITE, 0.25), CRYSTAL_SCREEN)
+	_crystal_peak = ScreenTone.linear_peak(CRYSTAL_COLOR.lerp(Color.WHITE, 0.25), CRYSTAL_SCREEN)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 11
 	for i in CRYSTALS:
@@ -487,7 +525,7 @@ func _build_crystals() -> void:
 		mi.mesh = prism
 		var mat := ShaderMaterial.new()
 		mat.shader = SPIKE_SHADER
-		mat.set_shader_parameter(&"color", Combat.EMETH)
+		mat.set_shader_parameter(&"color", CRYSTAL_COLOR)
 		mat.set_shader_parameter(&"shatter", 0.99)  # (never breaks: life stays 0)
 		mat.set_shader_parameter(&"life", 0.0)
 		mat.set_shader_parameter(&"deep", CRYSTAL_DEEP)
@@ -520,7 +558,7 @@ func _build_crystals() -> void:
 func _dress_crystals(rise: float, glow: float) -> void:
 	if _crystal_light == null:
 		_crystal_light = OmniLight3D.new()
-		_crystal_light.light_color = Combat.EMETH
+		_crystal_light.light_color = CRYSTAL_COLOR
 		_crystal_light.omni_range = CRYSTAL_LIGHT.y
 		_crystal_light.light_specular = 0.0
 		_crystal_light.shadow_enabled = false
@@ -546,7 +584,7 @@ func _dress_crystals(rise: float, glow: float) -> void:
 		var halo := _halos[i]
 		halo.visible = glow > 0.0
 		halo.position = foot + up * tall * 0.6
-		(halo.mesh.material as StandardMaterial3D).albedo_color = Color(Combat.EMETH * (CRYSTAL_HALO_ALPHA * glow), 1.0)
+		(halo.mesh.material as StandardMaterial3D).albedo_color = Color(CRYSTAL_COLOR * (CRYSTAL_HALO_ALPHA * glow), 1.0)
 
 
 # ---------- the hero ----------
@@ -656,12 +694,15 @@ func _end() -> void:
 		m.queue_free()
 	_motes.clear()
 	_ring.queue_free()
-	for n: Node in [_head, _pool, _shock, _dust]:
+	for n: Node in [_head, _core, _pool, _shock, _dust]:
 		if n != null:
 			n.queue_free()
 	for mi in _tail:
 		mi.queue_free()
 	_tail.clear()
+	for mi in _sparks:
+		mi.queue_free()
+	_sparks.clear()
 	if _layer != null:
 		_layer.queue_free()
 		_layer = null

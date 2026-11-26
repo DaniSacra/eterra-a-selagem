@@ -437,3 +437,16 @@ A cena da primeira descida: só o que já existe (preto, uma estrela, a luz de E
 - "Mais Vida": `Rooms._reward_color` e `RewardShaft.TONE` em vermelho-coração apagado (matiz 6 a 8). Pendente (dono de `reward_gem.gd`): `ENAMEL_HEART` ainda é 345.
 - Redemoinho de Fogo (`Skills._step_orbit`): corpo laranja, miolo âmbar, brilho aditivo e cauda de três brasas.
 - Raio-x dos avisos: global `warn_pos` (`project.godot`), posto por `Ground._publish_warning` (o aviso mais perto do herói) e lido em `see_through.gdshaderinc` como terceiro "quem" ao lado de `hero_pos` e `boss_pos`.
+
+## Revisão de arte 2026-11-26: efeitos e peças (technical-artist)
+- **Cometa** (`arrival_scene.gd`): cabeça = halo dourado fraco (`HEAD_SIZE` 1,0, `HEAD_LIGHT` 0,9) com núcleo branco quente
+  pequeno (`CORE_SIZE` 0,3), cauda `TAIL_STEP` 0,045 e `SPARKS` 8 faíscas soltas (`_dress_sparks`, deslocamento fixo, sem
+  sorteio). Cristais e fagulhas da chegada em âmbar/dourado (`CRYSTAL_COLOR`, `MOTES_COLOR`), não mais esmeralda; o formato
+  continua de pé (1,2 a 2,0 m), só a cor mudou. Sem sol: o halo é pequeno e o núcleo é o foco.
+- **Água** (`shallow_water.gdshader`): as pintas laranja eram o brilho das cristas (`glint`); agora fraco e dourado pálido,
+  com manchas de musgo/limo escuro (`moss_color`, `moss`) e reflexo azul-cinza #536F7A com teto (`reflect_color`, `reflect_amount`
+  0,42, `min` no emissivo), brilho dourado vem do `sheen`. Uniforms `foam` (0 = nenhuma) e `foam_color`: linha de espuma
+  quebrada junto às margens, ligada só no `GapFloor` (0,75) para as ilhas de esquiva.
+- **Laje 2x2** (`HazardPiece.plate` + `hazard_mark.gdshader`): junta em cruz 1,6x a espessura da junta (cerca de 10 cm),
+  chevron com traço 0,11 e braço 0,4, cor `chev_mul` mais escura (0,5, 0,4, 0,26).
+- **Lajes soltas do Salão** (`hall_life.gd`): `SLAB_TINT` 0,62 sobre a pedra do piso (laje e lasca).

@@ -30,5 +30,7 @@ func _add(r: Rect2) -> void:
 		line.append(c - half + half * 2.0 * (float(k) / 8.0))
 		widths.append(width)
 	var mat := Canal.water(SHEEN_AT, true, ArenaRoom.compat())
+	# art review 2026-11-26 (4): a broken foam line on each bank on top of the stone kerb and the dark deep water
+	mat.set_shader_parameter(&"foam", 0.75)
 	Canal.dress(self, line, widths, mat)
 	_water.append(mat)
