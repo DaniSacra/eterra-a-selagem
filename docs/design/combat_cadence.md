@@ -1028,3 +1028,33 @@ e as pernas continuam presas (`move_hold`); no instante do impacto o corpo dá u
 Soma do combo: 1,4 m (medido no teste: 1,4 m com 0,15 de folga). O passo largo do final é para alcançar quem os golpes 1 e 2 empurraram
 (0,1 m cada, `COMBO_PUSH`). Não toca na Investida (`lunge`, da pressão do botão), nem no especial, nem nas Ômegas. A julgar
 no jogo: se parecer deslize, baixar `STEP` ou encurtar o decaimento (`Player.LUNGE_DECAY`).
+
+
+## Revisão 2026-11-26 (combat-feel-director, antes da entrega; leitura de código e dados mais 2 partidas do robô, `--start=miniboss`, sementes 5 e 6, `--runlog`)
+
+Sem capturas nesta revisão: tudo abaixo é **medido no código/dados** (arquivo citado) ou **hipótese** (marcada). Dono de todos os itens: gameplay-engineer. Nada foi implementado.
+
+**Resultado do passinho (PT-25-4/11).** Conferido: `Player._step_in` soma `facing * step * LUNGE_DECAY (9)` no impacto e o decaimento por quadro a 60 fps devolve quase exatamente `step` metros (soma geométrica de `v0*dt/(1-(1-9dt))`). O passo respeita corpos (`stop_walker`), paredes (`arena.sweep`) e buracos (`keep_out_of_gaps`); a esquiva zera `_lunge` (linha 978); a Investida sobrescreve (linha 1054). Sem bug de lógica encontrado. Soma do combo de 3: 1,4 m (5 golpes: 2,0 m).
+
+**Cavaleiro com armadura 550 e `armor_soft` 0,5.** Duas partidas do robô: luta de 21 s (sementes 5 e 6), `breaks.special` 1, o Cavaleiro bate 1 vez (12) na semente 5 e 0 na 6; `idle` do Cavaleiro: média 0,13 s, máximo 0,65, 7% da luta parado; avisos iniciados 13 e 15, cortados 2 e 2. A quebra da guarda agora existe; o risco é o contrário, ficar fácil (ver P1-1).
+
+### P0
+Nenhum encontrado. Nenhum comando involuntário, teleporte ou estado preso nas duas partidas (`stuck` 0, `died_stuck` falso).
+
+### P1
+- **P1-1 Cavaleiro cai depressa demais com o robô.** Causa: hipótese forte (número medido). Número atual: ~21 s de luta focada, com `hp_scale` 0,7 na Casa do Cavaleiro (`make_data.gd` linha ~3078) e `hurt_by` 0 a 12 em 90 s. Proposta: manter 550/0,5 (o Daniel precisa quebrar a guarda) e compensar na vida: tirar o `hp_scale` 0,7 da Casa ou subir `hp` 500 para ~650, para a luta ficar entre 30 e 40 s do robô. Critério: 12 sementes, duração 30 a 40 s e dano ao herói de 12 a 36. Decisão de dificuldade é do Game Director (a memória diz "ainda fácil demais").
+- **P1-2 Passo do final em 7,2 m/s inicial.** Causa: hipótese (precisa de captura quadro a quadro). `STEP[2]` 0,8 m com `LUNGE_DECAY` 9 sai a 7,2 m/s no primeiro quadro, acima da corrida (6,75), com as pernas "presas" (`move_hold` 30 f): pode ler como patinada, a mesma queixa do Daniel de E1c ("eu fico patinando"). Proposta: `LUNGE_DECAY` próprio do passo, 6 (pico 4,8 m/s, 0,8 m em ~0,4 s, cabe no `move_hold` de 0,5 s), ou manter 9 e baixar `STEP` do final para 0,6. Critério: captura 60 fps do E3 sem deslize visível, ou Daniel aprova. Pedir ao Game Director uma captura do combo 1-2-3 em Perto (`--bot`, sem opção extra) se for medir.
+- **P1-3 Passo rouba o recuo do alvo no final.** Causa: dado. E3 empurra 2,3 m e passa 0,8 m; E1 e E2 empurram 0,1 e passam 0,3 (o herói fecha 0,2 por golpe, até encostar no corpo e parar). Em grupo o passo para no corpo e só o primeiro inimigo é "empurrado", o resto fica. Proposta: nenhuma mudança agora; reavaliar na captura do P1-2. Hipótese, sem número novo.
+
+### P2
+- **P2-1 Residual do passo atravessa o cancelamento.** Causa: leitura de código. Especial/Brado cortam o golpe desde o instante 0 e só a esquiva zera `_lunge`; o passo restante (até ~0,1 m) escorrega durante a preparação do especial. Proposta: zerar `_lunge` em `_on_move_started` quando `node.lunge == 0` e o golpe não é do combo (ou aceitar). Critério: especial logo depois do E1 sem deslizar.
+- **P2-2 O passo pode levar o herói a perigos de chão.** Hipótese: placas de espinho e runas não bloqueiam (`sweep` só trata paredes e buracos), então 2,0 m de combo (5 golpes) empurram o herói para dentro de uma placa na mira. Proposta: o passo ignora o golpe se o ponto final cair em perigo armado (`plate_floor`), ou aceitar como regra de leitura. Dano de perigo é 10.
+- **P2-3 Documentação e comentários velhos.** `tools/make_data.gd` linhas ~109 a 112 ainda dizem "struck standing still (no lunge)" e a linha ~430 ainda diz "Armor 1220"; a seção 14 deste documento diz armadura 1400 e a frase de abertura do documento ("golpe parado") só está corrigida na seção 15. `gameplay.md` linha 779 está certa (550 e 0,5).
+
+### Quickwins
+- **QW-1** Corrigir os comentários do P2-3 (sem mudar número, regenerar não é preciso).
+- **QW-2** Teste de `_step_in`: o de 1,4 m já existe; falta um teste para cut4/thrust4 (2,0 m) e para parada no corpo.
+- **QW-3** Adicionar ao relatório do `--runlog` o tempo de luta do guardião (hoje só se deduz de `rooms[].time`).
+
+### Chefes e inimigos (cadência do Daniel: ataque e recuperação mais rápidos)
+Não auditados a fundo nesta passada (sem captura): os números da seção 14 estão no código (Cavaleiro espera 0 a 0,15, Morvath 0 a 0,3) e o robô os confirma (`idle` médio 0,13 s). Pendente para a próxima revisão, com captura do Game Director de Morvath na fase 2 e do esqueleto grande: aviso no chão contra golpe real, e recuperação da ceifa dupla (1,1 s).
