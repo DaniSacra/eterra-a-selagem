@@ -19,6 +19,7 @@ var free := PackedByteArray()
 ## Which island of free cells each cell belongs to (-1: blocked).
 var island := PackedInt32Array()
 var islands := 0
+var _main := -1
 
 
 ## The grid over `bounds` for this floor (and the extra rectangles of floor, each `walk_margin` in from its sides),
@@ -68,8 +69,18 @@ func walkable(p: Vector2) -> bool:
 
 ## The free cell nearest to p within `rings` cells around it (-1: none).
 func nearest_free(p: Vector2, rings := 4) -> int:
+	return _nearest(p, rings, -1)
+
+
+## Like nearest_free but only a cell of the biggest island (the room's floor, never a pocket a root or the trunk
+## shuts off): where a way to a goal in a pocket must end so every body has one.
+func nearest_main(p: Vector2, rings := 24) -> int:
+	return _nearest(p, rings, main_island())
+
+
+func _nearest(p: Vector2, rings: int, only_island: int) -> int:
 	var i := cell_at(p)
-	if i >= 0 and free[i] == 1:
+	if i >= 0 and free[i] == 1 and (only_island < 0 or island[i] == only_island):
 		return i
 	var cx := floori((p.x - origin.x) / cell)
 	var cy := floori((p.y - origin.y) / cell)
@@ -81,7 +92,7 @@ func nearest_free(p: Vector2, rings := 4) -> int:
 				if maxi(absi(dx), absi(dy)) != r:
 					continue
 				var j := index_of(cx + dx, cy + dy)
-				if j >= 0 and free[j] == 1:
+				if j >= 0 and free[j] == 1 and (only_island < 0 or island[j] == only_island):
 					var d := center(j).distance_squared_to(p)
 					if d < best_d:
 						best_d = d
@@ -126,6 +137,11 @@ func clear_line(a: Vector2, b: Vector2) -> bool:
 			y += sy
 			ty += tdy
 	return true
+
+
+## The island with the most free cells (-1: none).
+func main_island() -> int:
+	return _main
 
 
 ## How many free cells each island has (index: island).
@@ -260,3 +276,10 @@ func _find_islands() -> void:
 					queue[tail] = j
 					tail += 1
 		islands += 1
+	var sizes := island_sizes()
+	var most := 0
+	_main = -1
+	for k in sizes.size():
+		if sizes[k] > most:
+			most = sizes[k]
+			_main = k

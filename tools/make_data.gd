@@ -109,7 +109,7 @@ const STEP := [0.3, 0.3, 0.8]
 func _tree(fifth: bool) -> ComboTree:
 	# attack: three swings, the third a turn of the blade all around. E1c (Daniel's E1 test: "tem que atacar parado",
 	# "o primeiro ataque é muito rápido", "diferença de tempo entre os 3"; his Hades II video of 2026-11-16): every
-	# blow is struck standing still (no lunge), windup (+ the finisher's glint), the frame it lands, then the clip's
+	# blow is struck almost standing still (a short step, StepRules, not a lunge), windup (+ the finisher's glint), the frame it lands, then the clip's
 	# return (ComboNode.follow_speed). Numbers of Hades II's staff (docs/design/hades2_feel_study.md, "O que aplicar"),
 	# seconds after the press / after the blow: windup, attack lock (recovery: the next blow of the combo starts there),
 	# legs held (move_hold, only the dodge cuts it): cut1 0.08 / 8 frames / 11 frames (press to walking 0.26 s),
@@ -371,7 +371,7 @@ func _enemies() -> void:
 		"recoil": 400.0 / U, "cover_hug": 250.0 / U, "max_attackers": 3, "keep_away": 0.8,
 		"rating": 12.0, "role": &"control", "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY,
 		"recover_time": ENEMY_RECOVER.mage[0], "poise": POISE},
-		{"armor": 155.0, "hp": 80.0, "attack_windup": 1.0, "poise": POISE, "poise_mult": ELITE_POISE_MULT, "poise_stun": ELITE_POISE_STUN, "poise_vuln": ELITE_POISE_VULN, "poise_growth": POISE_GROWTH, "attack_range": 1300.0 / U, "shot_ticks": 7, "attack_cooldown": 0.8 + 1.0, "rating": 24.0})
+		{"armor": 155.0, "hp": 80.0, "attack_damage": 4.8, "attack_windup": 1.0, "poise": POISE, "poise_mult": ELITE_POISE_MULT, "poise_stun": ELITE_POISE_STUN, "poise_vuln": ELITE_POISE_VULN, "poise_growth": POISE_GROWTH, "attack_range": 1300.0 / U, "shot_ticks": 7, "attack_cooldown": 0.8 + 1.0, "rating": 24.0})
 	# the crossbowman (Hades: the Screamer's life and rating; it has no shot there, a cone held on itself): a fast
 	# orange bolt along a line marked on the floor (the aim locks there) from 12 m, Daniel's request of 2026-11-16;
 	# from Hades, after each attack it runs 8.75 m from him for 1.5 to 1.75 s, and at most 2 wind up at once; 3.6 m/s
@@ -427,10 +427,10 @@ func _enemies() -> void:
 	# every 2.4 s (was 3.2) and hits 18 (was 16)
 	# 2026-11-23 (Daniel: "ataca mais rapido", the Butcher's run, the shield): a quick, scary Cavaleiro. Charge wind-up 0.6 s
 	# (was 1.0), the line follows him until 0.15 s before it leaves, lunge 24 m/s for 0.6 s (14.4 m); the close blow 0.5 s (was
-	# 0.8). Armor 1220 barely feels the light blows (armor_soft), the strong ones take it whole. A priority list with a
+	# 0.8). Armor 550 (KNIGHT_ARMOR, armor_soft 0.5) barely feels the light blows (armor_soft), the strong ones take it whole. A priority list with a
 	# cooldown a move (AttackList): the shield throw from the start, the charges in rows of 1, 2 and 3 as his toughness falls.
-	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 500.0, "speed": 417.0 / U, "damage": 10.0, "radius": 1.1,
-		"heavy": true, "elite": true, "armor": KNIGHT_ARMOR, "armor_stagger": 2.5, "attack_damage": 12.0, "attack_range": 12.0, "attack_cooldown": 1.8,
+	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 650.0, "speed": 417.0 / U, "damage": 10.0, "radius": 1.1,
+		"heavy": true, "elite": true, "armor": KNIGHT_ARMOR, "armor_stagger": 2.5, "attack_damage": 15.0, "attack_range": 12.0, "attack_cooldown": 1.8,
 		"attack_windup": 0.65, "lunge_speed": 24.0, "lunge_time": 0.3, "close_damage": 8.0, "close_range": 3.2, "close_windup": 0.5,
 		"exact_windup": true,
 		"charges": 1, "recharge_windup": 0.55, "aim_lock": 0.15, "raise_count": 3, "raise_max": 4, "raise_life": KNIGHT_PHASES[1], "raise_cooldown": 30.0, "raise_first": 10.0, "escort": [&"mage", &"mage"] as Array[StringName],
@@ -3115,7 +3115,7 @@ func _first() -> void:
 		_first_room(4, &"crypt_b", K.COMBAT, &"crypt", {"reward": R.BOON, "cap": 5, "hazards": true, "hazard_progress": 0.2,
 			"waves": _wave_lists([["skeleton", "archer", "bone_rat", "bone_rat", "bone_rat"], ["guard", "skeleton", "archer"]]),
 			"tip": &"first_tip_armor", "objective": &"obj_win"}),
-		_first_room(5, &"knight", K.MINIBOSS, &"knight_hall", {"reward": R.BOON, "guardian": &"knight", "hp_scale": 0.7,
+		_first_room(5, &"knight", K.MINIBOSS, &"knight_hall", {"reward": R.BOON, "guardian": &"knight", "hp_scale": 1.0,
 			"hazards": true, "hazard_progress": HOUSE_FROM + 0.06, "cap": 1,
 			"waves": _wave_lists([["knight"]]),
 			"tip": &"first_tip_knight", "objective": &"obj_guardian"}),

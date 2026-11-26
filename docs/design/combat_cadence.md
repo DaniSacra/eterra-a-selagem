@@ -997,7 +997,7 @@ Pedido do Daniel: "ainda acho os bosses meio lentos, tanto no ataque quanto na r
 
 O Ancião e os atiradores (besteiro, lanceiro) ficam como estão. Os avisos finais do Escudo e do Esqueleto grande saem de 0,875 no `make_data` (o `_quick` multiplica por 0,8 e dá 0,70) em vez de `exact_windup`, para o golpe de perto do Escudo seguir o `_quick`. Nos chefes e guardiões o sorteio some, mas `gap_max` fica acima de 0 (0,15 no Cavaleiro, 0,3 em Morvath): `gap_max` 0 devolve o jogo ao `AFTER_RECOVER`.
 
-**Cavaleiro, "Butcher sem pulo"**: vida 500 e armadura 1400, 6,0 m/s (o herói anda 6,75), investida com aviso 0,65, arranque 24 m/s por 0,3 s (7,2 m), dano 12, uma por vez, alcance 12, cooldown 1,8; arremesso de escudo com anel (cooldown 10, primeiro 5, sem distância máxima; aviso da queda 0,85 s, voo 1,1, anel 7,5 m/s, 22 m, dano 12 e 6); golpe de perto 8; guarda por tempo no papel do giro louco (a cada 10 s, aviso 0,85, 3,2 s, anda a 50%, golpe a cada 0,53 s a até 4 m, dano 8); `raise_max` 4. Mantidos: investida rápida, onda que só a esquiva atravessa, golpe forte tira o escudo, `wall_stun`, barra de atordoamento x1,25.
+**Cavaleiro, "Butcher sem pulo"**: vida 650 (era 500; 2026-11-26) e armadura 550 com `armor_soft` 0,5 (o 1400 de antes foi trocado pela quebra de guarda), 6,0 m/s (o herói anda 6,75), investida com aviso 0,65, arranque 24 m/s por 0,3 s (7,2 m), dano 15 (era 12), uma por vez, alcance 12, cooldown 1,8; arremesso de escudo com anel (cooldown 10, primeiro 5, sem distância máxima; aviso da queda 0,85 s, voo 1,1, anel 7,5 m/s, 22 m, dano 12 e 6); golpe de perto 8; guarda por tempo no papel do giro louco (a cada 10 s, aviso 0,85, 3,2 s, anda a 50%, golpe a cada 0,53 s a até 4 m, dano 8); `raise_max` 4. Mantidos: investida rápida, onda que só a esquiva atravessa, golpe forte tira o escudo, `wall_stun`, barra de atordoamento x1,25.
 
 **Fases por vida** (`KnightPhase`, `EnemyDef.roar_marks`, `guard_up_life`, `raise_life`, `KnightMove.from_life`; porcentagem da resistência total, vida mais armadura):
 
@@ -1058,3 +1058,13 @@ Nenhum encontrado. Nenhum comando involuntário, teleporte ou estado preso nas d
 
 ### Chefes e inimigos (cadência do Daniel: ataque e recuperação mais rápidos)
 Não auditados a fundo nesta passada (sem captura): os números da seção 14 estão no código (Cavaleiro espera 0 a 0,15, Morvath 0 a 0,3) e o robô os confirma (`idle` médio 0,13 s). Pendente para a próxima revisão, com captura do Game Director de Morvath na fase 2 e do esqueleto grande: aviso no chão contra golpe real, e recuperação da ceifa dupla (1,1 s).
+
+
+## 16. Revisão 2026-11-26, o que foi feito (gameplay-engineer)
+- **Passo do golpe**: `StepRules.DECAY` 6 (era o `LUNGE_DECAY` 9 da Investida); o passo vive em `Player._step`, separado de `_lunge`. Mesmos metros, pico menor:
+  o final (0,8 m) sai a 4,8 m/s (a corrida é 6,75). Preparação do especial, do Brado e da Investida (qualquer golpe que não é `LIGHT`) zera o resto do passo.
+  O passo não é dado se terminaria dentro de uma armadilha de chão armada ou aquecendo (`Ground.room_rects`, margem do raio do herói) em que ele ainda não está.
+  Para em corpo e parede como antes (`stop_walker`, `sweep`). Testes: `tests/test_step_rules.gd` (inclui `cut4`, `thrust4` e a parada contra corpo).
+- **Cavaleiro**: vida 650, `hp_scale` 1,0 na sala 5, `attack_damage` 15; armadura 550 e `armor_soft` 0,5 intactas. Robô (reação 0,25, `--start=miniboss`, `--boons=5`,
+  6 sementes com Cavaleiro): luta 20,8 a 33,2 s, mediana 28,5 s (antes 14 a 24 s, mediana 16,4); dano ao herói 0 em 4 de 6, 5 e 5 nas outras
+  (o robô esquiva quase tudo; o critério de 12 a 36 só o teste de gente confirma).

@@ -93,7 +93,7 @@ func test_the_guardian_is_alone_in_room_five_the_shop_in_seven_and_morvath_in_ei
 	assert_eq(k.waves.size(), 1, "one wave")
 	assert_eq(k.waves[0].size(), 1, "the Knight, no escort")
 	assert_eq(k.guardian, &"knight")
-	assert_lt(k.hp_scale, 1.0, "with 0.7 of his life")
+	assert_eq(k.hp_scale, 1.0, "full life (2026-11-26: 650 of his own, the guard stays 550 and 0.5)")
 	assert_eq(_room(&"shop").kind, RunMap.Kind.SHOP)
 	assert_eq(_room(&"shop").layer, 7)
 	assert_eq(_room(&"morvath").kind, RunMap.Kind.BOSS)

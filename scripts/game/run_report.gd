@@ -28,7 +28,8 @@ static func result(g: Game) -> Dictionary:
 		"talents_opened": g.talents_opened, "enchants": g.boons.enchants.map(func(e: EnchantDef) -> String: return String(e.id)),
 		"tools": g.tools_found.map(func(t: StringName) -> String: return String(t)),
 		"oficios": g.oficios.report() if g.oficios != null else {},
-		"angels": g.encounters.meetings.duplicate(true) if g.encounters else []}
+		"angels": g.encounters.meetings.duplicate(true) if g.encounters else [],
+		"won": g.mode == Game.Mode.ENDING, "guardian_fight": guardian_fight(g)}
 	if rooms != null and rooms.first_def != null:
 		# the guided first descent only (SW-O4): the Antessala's and the first Blessing's seconds
 		out.merge(rooms.first_report())
@@ -36,6 +37,16 @@ static func result(g: Game) -> Dictionary:
 		# the Maga only: the Warrior's RESULT stays as it was
 		out["hero"] = String(g.hero.id)
 		out["arcane"] = g.arcane.stats().merged({"dodges": g.dodges})
+	return out
+
+
+## Seconds each guardian room (the Cavaleiro's, the Ancião's) lasted, by layout; two visits to one add up.
+static func guardian_fight(g: Game) -> Dictionary:
+	var out := {}
+	for r: Dictionary in g.room_tally.rooms(g.time):
+		var id := String(r.get("layout", ""))
+		if id == "knight_hall" or id == "elder_hall":
+			out[id] = snappedf(float(out.get(id, 0.0)) + float(r.get("time", 0.0)), 0.1)
 	return out
 
 
