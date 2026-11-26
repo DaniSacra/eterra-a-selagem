@@ -45,7 +45,7 @@ diameter = 44.0
 
 [sub_resource type="Resource" id="Resource_iele5"]
 script = ExtResource("1_bkdpb")
-id = &"voz_do_leao"
+id = &"alcance_marcial"
 angle = 105.7
 radius = 170.0
 diameter = 56.0

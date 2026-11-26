@@ -131,46 +131,30 @@ func _tree(fifth: bool) -> ComboTree:
 		{"damage": 15.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.08, "recovery": 8.0 / 60.0,
 		"move_hold": 11.0 / 60.0, "magick_per_hit": 0.5, "step": STEP[0],
 		"chain_window": 0.4, "hit_stop_ms": 35.0, "shake": 0.9, "move_scale": 0.0}, [cut2])
-	# special (Daniel, 2026-11-21): the sword's burst, a bolt of light thrown ahead (strikes only with its bolt): 35
-	# damage, 6 m, through the crowd, 12 Magia (magick_cost: a press without it throws nothing), 0.5 s between throws. A tap
-	# only: the Omega special (held) left the Warrior's tree. Hades II's Special1: the attack is free again 18 frames
-	# after the dart; the dart flies at 62.5 m/s (Projectiles.SPARK_SPEED). The legs stay held 0.71 s after the dart
-	# (D-44 (3); Daniel liked it in Hades II), only the dodge cuts it. E1c (Daniel: "trava para andar e eu fico
-	# patinando"): while held he plays the throw and holds its pose, never the run.
-	var bolt := _move(&"bolt", H, &"Cast", [&"heavy", &"wave"],
-		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.1, "recovery": 18.0 / 60.0, "chain_window": 0.2,
-		"cooldown": 0.5, "move_hold": SPECIAL_HOLD, "sound": &"dart", "magick_cost": 12.0,
-		"hit_stop_ms": 25.0, "shake": 0.3, "move_scale": 0.0, "effect": ComboNode.Effect.WAVE, "effect_power": 55.0, "effect_radius": 6.0,
-		"effect_size": 1.4, "wave_bolt": true}, [], &"move_wave")
-	# Omega attack (attack held 0.8 s, 20 Magia): a long line of light to the front and to the back. Its windup and
-	# glint play inside the charge, so it lands when the charge fills (GF-08, Player._charge_lead). Hades II's Swing5:
-	# 0.78 s after it without walking or striking.
-	var lance := _move(&"lance", CL, &"Sword_Attack", [&"light", &"thrust", &"finisher", &"omega"],
+	# GP-1 (docs/design/heroes/warrior_v1_2026-11-26.md 2): the blows on the two buttons. Left: a tap is the combo above, held
+	# 0.6 s the Golpe Esmagador (75, 12 Magia, 2.6 m close, breaks a common's poise at once). Right: a tap is the Corte Circular
+	# (35, 8 Magia, 360 degrees, pushes everyone), held 0.8 s the Lança da Emeth. The Magia is spent when the blow lands
+	# (Player), never when it is begun.
+	# Esmagador (CHARGE_LIGHT): its windup and glint play inside the charge (GF-08), so it lands when the charge fills.
+	var smash := _move(&"smash", CL, &"Slash_A", [&"light", &"omega", &"smash"],
+		{"magick_cost": 12.0, "charge_time": 0.6, "damage": 75.0, "reach": 2.6, "width": 120.0, "knockback": 12.0, "windup": 0.22,
+		"glint": FINISHER_GLINT, "recovery": 0.5, "move_hold": 0.5, "step": 0.4, "chain_window": 0.4, "hit_stop_ms": 90.0, "shake": 1.8,
+		"move_scale": 0.0, "sound": &"blade_heavy", "layers": LAYER_TURN}, [], &"move_smash")
+	# Corte Circular (HEAVY, a tap): the Poder. Tags shout and cast: the Blessings of the Poder slot count on it, the Quebra reads the
+	# `shout` weight. It is no Brado: no buff, no Effect.SHOUT. Legs held 0.35 s after it lands.
+	var sweep := _move(&"sweep", H, &"Slash_C", [&"shout", &"cast", &"sweep"],
+		{"magick_cost": 8.0, "damage": 35.0, "shape": ComboNode.Shape.CIRCLE, "reach": 3.4, "knockback": 14.0, "windup": 0.18,
+		"recovery": 0.30, "move_hold": 0.35, "chain_window": 0.4, "hit_stop_ms": 80.0, "shake": 1.6, "move_scale": 0.0,
+		"sound": &"blade_spin", "sound_at": 0.18 - SWISH_PEAK, "layers": LAYER_SPIN}, [], &"move_sweep")
+	# Lança da Emeth (CHARGE, held 0.8 s, 20 Magia): a long line of light to the front and to the back (the Omega attack of before,
+	# kept whole; only its button and its tags changed: the Especial slot, `lance`). Its windup and glint play inside the charge
+	# (GF-08, Player._charge_lead). Hades II's Swing5: 0.78 s after it without walking or striking.
+	var lance := _move(&"lance", C, &"Sword_Attack", [&"heavy", &"omega", &"thrust", &"lance"],
 		{"magick_cost": 20.0, "charge_time": 0.8, "damage": 150.0, "shape": ComboNode.Shape.LINE, "reach": 1080.0 / U, "width": 1.8,
 		"both_ways": true, "knockback": 18.0, "windup": 0.06, "recovery": 0.78, "move_hold": 0.78, "chain_window": 0.4, "hit_stop_ms": 50.0, "shake": 2.0,
 		"move_scale": 0.0, "sound": &"thrust", "sound_at": 0.06 - THRUST_PEAK, "layers": LAYER_STEP}, [], &"move_lance")
-	# E, the Investida (Daniel, 2026-11-21; it was the Corte Veloz out of the dodge): a thrust of 35 along 4 m that carries
-	# the body (lunge 4 m), its own button, recharge 5 s, 2 Magia for each enemy it reaches (magick_per_hit) and still a
-	# finisher of the passive (tag dash).
-	var dash_cut := _move(&"dash_cut", RU, &"Slash_A", [&"light", &"dash"],
-		{"damage": 60.0, "shape": ComboNode.Shape.LINE, "reach": 4.0, "width": 1.6, "knockback": 10.0, "lunge": 4.0, "windup": 0.06,
-		"recovery": 14.0 / 60.0, "chain_window": 0.4, "cooldown": 5.0, "magick_per_hit": 2.0, "hit_stop_ms": 25.0, "shake": 0.9, "move_scale": 0.0}, [], &"move_dash_cut")
-	# Q, the Brado de Guerra (docs/design/heroes/guerreiro.md 3.4 A; Daniel, 2026-11-21, moved from E to Q): a cry all around,
-	# 4 m, 15 damage, everyone pushed 1.5 m (knockback 10.5 at the horde's decay of 7: 1.5 m), stunned by no one. For 5 s
-	# (effect_time): blows 15% faster (buff_speed), 15% less damage taken (buff_guard) and one charge of Ímpeto
-	# (effect_power, only with the Dom). Recharge 12 s; windup 0.25 s, recovery 0.25 s (its legs held as long), planted as
-	# every blow; only the dodge cuts it. The 0.10 s of impact is the hit stop (hit_stop_ms 80, the tree's ceiling:
-	# test_combo). Tags: the Blessings of the Brado slot (cast) count on it. The sound is the special's Omega surge.
-	var shout := _move(&"shout", SH, &"Cast", [&"shout", &"cast"],
-		{"damage": 35.0, "shape": ComboNode.Shape.CIRCLE, "reach": 4.0, "knockback": 10.5, "windup": 0.25, "recovery": 0.25,
-		"move_hold": 0.25, "chain_window": 0.4, "cooldown": 12.0, "hit_stop_ms": 80.0, "shake": 1.4,
-		"move_scale": 0.0, "sound": &"wave_omega", "effect": ComboNode.Effect.SHOUT, "effect_power": 1.0, "effect_time": 5.0,
-		"buff_speed": 0.15, "buff_guard": 0.15, "buff_ward": 1}, [], &"move_shout")
-	# (the Cast clip peaks at 0.10 s: played slowly from its start so the arms are out when the cry lands at 0.25 s)
-	shout.anim_from = 0.0
-	shout.anim_speed = float(PEAK[&"Cast"]) / shout.windup
 	var tree := ComboTree.new()
-	tree.neutral = [cut1, bolt, lance, shout, dash_cut]
+	tree.neutral = [cut1, smash, sweep, lance]
 	# (no blow out of the dodge since 2026-11-21: the dodge is only a dodge)
 	tree.dodge_window = 0.0
 	return tree
@@ -311,7 +295,7 @@ const ELITE_POISE_VULN := 0.25
 const GUARDIAN_POISE_MULT := 0.3
 const GUARDIAN_POISE_STUN := 3.5
 const POISE_GROWTH := 1.25
-const POISE_WEIGHTS := {"attack": 0.15, "special": 0.6, "dash": 0.5, "omega_attack": 0.7, "omega_special": 0.7,
+const POISE_WEIGHTS := {"attack": 0.15, "special": 0.6, "dash": 0.5, "omega_attack": 1.0, "omega_special": 0.7,
 	"cast_omega": 0.7, "shout": 0.6, "ultimate": 1.0, "crystal": 0.25}
 
 
@@ -989,7 +973,8 @@ func _v1_boons() -> void:
 	_v(&"golpe_mare", F.MARE, 21, S.ATTACK, [_vm(&"cel_speed", 0.12, 0.04)], null, ["wind"])
 	_v(&"pesado_mare", F.MARE, 21, S.SPECIAL, [], _vs(K.FAN, {"trigger": T.SPECIAL, "damage": [14, 21, 30], "count": [1], "radius": [10.0],
 		"gap": [1.0]}), ["wind"])
-	_v(&"circulo_mare", F.MARE, 21, S.CAST, [_vm(&"cel_cd_cut", 0.1, 0.03)], null, ["wind"])
+	# GP-1: the Corte Circular has no recharge to cut; the Wind makes it faster (preparation and recovery), as the Attack's
+	_v(&"circulo_mare", F.MARE, 21, S.CAST, [_vm(&"cel_speed", 0.12, 0.04)], null, ["wind"])
 	_v(&"passos_leves", F.MARE, 21, S.DASH, [_vm(&"dodge_charges", 1)], null, ["wind"])
 	_v(&"vendaval", F.MARE, 21, S.ULT, [_vm(&"cel_haste_speed", 0.3), _vm(&"cel_haste_move", 0.1), _vm(&"cel_haste_time", 5.0)], null, ["wind"])
 	_v(&"cadencia", F.MARE, 21, S.NONE, [_vm(&"cel_cadence", 0.03)], null, ["cadence"], ["fam:mare"])
@@ -2367,12 +2352,15 @@ func _talents() -> void:
 	_talent(4, &"forca_concentrada", B.IMPETO, T.ENTRY, 2, 2, {"mods": [_fixed(&"damage_pct", 0.4, [], &"omega")] as Array[BoonMod]})
 	_talent(5, &"determinacao", B.IMPETO, T.MIDDLE, 2, 6, {"needs": &"forca_concentrada", "mods": [_fixed(&"attack_magick_pct", 1.0)] as Array[BoonMod]})
 	_talent(6, &"concentracao", B.IMPETO, T.MIDDLE, 3, 11, {"needs": &"forca_concentrada", "mods": [_fixed(&"charge_time_pct", -0.3)] as Array[BoonMod]})
-	_talent(7, &"forca_titanica", B.IMPETO, T.APEX, 4, 17, {"needs": &"forca_concentrada", "mods": [_fixed(&"omega_cost_pct", 1.5), _fixed(&"final_pct", 1.6, [], &"omega")] as Array[BoonMod]})
+	# GP-1 (D-14): the held blows cost twice and hit three times as hard; the Magia maximum rises by 10 (30 to 40) with it alone
+	_talent(7, &"forca_titanica", B.IMPETO, T.APEX, 4, 17, {"needs": &"forca_concentrada", "mods": [_fixed(&"omega_cost_pct", 1.0), _fixed(&"final_pct", 2.0, [], &"omega"),
+		_fixed(&"magick_max", 10.0)] as Array[BoonMod]})
 	# Domínio: the finisher breaks armor 50% faster; the Brado is wider, stronger and interrupts (the old Voz Larga's numbers);
 	# the stun of a blow lasts 50% longer; the Investida goes through and stuns whoever it hits for 2 s (B.4), armor takes 50% more
-	_talent(8, &"ruptura", B.DOMINIO, T.ENTRY, 2, 3, {"mods": [_fixed(&"armor_pct", 0.5, [], &"finisher")] as Array[BoonMod]})
-	_talent(9, &"voz_do_leao", B.DOMINIO, T.MIDDLE, 3, 8, {"needs": &"ruptura", "mods": [_fixed(&"reach_pct", 0.35, [], &"shout"),
-		_fixed(&"damage_pct", 0.5, [], &"shout"), _fixed(&"push_pct", 0.3, [], &"shout"), _fixed(&"stun_pct", 0.5, [], &"shout")] as Array[BoonMod]})
+	_talent(8, &"ruptura", B.DOMINIO, T.ENTRY, 2, 3, {"mods": [_fixed(&"armor_pct", 0.5, [], &"finisher"), _fixed(&"armor_pct", 0.5, [], &"smash")] as Array[BoonMod]})
+	# GP-1 (D-12): Alcance Marcial takes the Voz do Leão's place: the Corte Circular reaches 25% farther and pushes 30% more
+	_talent(9, &"alcance_marcial", B.DOMINIO, T.MIDDLE, 3, 8, {"needs": &"ruptura", "mods": [_fixed(&"reach_pct", 0.25, [], &"cast"),
+		_fixed(&"push_pct", 0.3, [], &"cast")] as Array[BoonMod]})
 	_talent(10, &"imposicao", B.DOMINIO, T.MIDDLE, 3, 13, {"needs": &"ruptura", "mods": [_fixed(&"stun_pct", 0.5)] as Array[BoonMod]})
 	_talent(11, &"investida_implacavel", B.DOMINIO, T.APEX, 4, 18, {"needs": &"imposicao", "mods": [_fixed(&"dash_pierce", 1.0, [], &"dash"),
 		_fixed(&"dash_stun", 2.0, [], &"dash"), _fixed(&"armor_pct", 0.5, [], &"dash")] as Array[BoonMod]})
@@ -2400,21 +2388,25 @@ func _hero() -> void:
 	h.combos = "res://data/combos/paladin.tres"
 	var numbers := {
 		"max_hp": 40.0, "hurt_time": 0.18, "hurt_invuln": 0.7, "dodge_charges": 1, "dodge_recharge": 0.8,
-		"magick_max": 50.0, "circle": false,
+		"magick_max": 30.0, "circle": false,
 		"cast_charge": 0.25, "cast_slow": 0.6, "cast_cooldown": 6.0, "cast_attack_lock": 8.0 / 60.0, "cast_omega_time": 0.6,
 		"cast_omega_cost": 20.0, "cast_radius": 5.4, "cast_time": 3.0, "cast_burst": 150.0,
 		"magick_on_finisher": 2.0,
 		# C1c (kit_c1c.md 1): the buttons feed each other
-		"magick_on_break": 3.0, "cd_refund_hit": 0.3, "cd_refund_break": 1.5, "cd_floor": 8.0, "gain_cap": 3.0, "gain_window": 1.0,
+		"magick_on_break": 3.0, "cd_refund_hit": 0.0, "cd_refund_break": 0.0, "cd_floor": 0.0, "gain_cap": 3.0, "gain_window": 1.0,
 		"wave_refund_cap": 8.0,
+		# GP-1 (warrior_v1 6): the Ritmo de Batalha, prototype numbers (balance-designer measures)
+		"rhythm_time": 3.0, "rhythm_smash_poise": 0.5, "rhythm_power_stun": 1.0, "rhythm_power_poise": 0.3, "rhythm_special_dmg": 0.5,
+		"rhythm_special_reach": 0.3,
 		# C19-4 (Q-12): Hades II's Swing5 charge walks at 3% with the body all but locked; the special's 60% is an
 		# inference (WeaponStaffBoltInstantStop; its Omega stage has no speed of its own)
-		"charge_move_light": 0.03, "charge_turn_light": 0.0, "charge_move_heavy": 0.6,
+		"charge_move_light": 0.03, "charge_turn_light": 0.0, "charge_move_heavy": 0.03,
 	}
 	for k: String in numbers:
 		h.set(k, numbers[k])
 	# the passive's finishers (warrior_spec.md 3.1): the spin, the Corte Veloz that lands, the Omegas; never the ultimate
-	h.passive_tags = [&"finisher", &"dash", &"omega"] as Array[StringName]
+	# GP-1 (D-4): the Combo's finisher only; the Lança and the Esmagador pay, they do not refund
+	h.passive_tags = [&"finisher"] as Array[StringName]
 	h.passive_never = [&"ultimate"] as Array[StringName]
 	var ults: Array[UltDef] = []
 	var files := DirAccess.get_files_at(ULT_DIR)
@@ -2597,7 +2589,7 @@ func _psalms() -> void:
 	_psalm(0, &"sentinela", &"watch", S.CAST, E.SENTINEL, [
 		["circulo_brasa", "circulo_geada", "circulo_radiante", "circulo_firme"],
 		["escudo", "passos", "firmeza", "golpe_firme", "pesado_firme"],
-		["bastiao", "rastro", "passo_frio", G + "voz_do_leao", G + "imposicao", G + "forca_concentrada"]],
+		["bastiao", "rastro", "passo_frio", G + "alcance_marcial", G + "imposicao", G + "forca_concentrada"]],
 		{"damage": 30.0})
 	# sheltering: the dodge leaves a shelter of 2.6 m for 3 s where it ends (two at most) that undoes enemy shots
 	_psalm(1, &"abrigo", &"shelter", S.DASH, E.SHELTER, [
@@ -2610,7 +2602,7 @@ func _psalms() -> void:
 		["toque_geada", "pesado_brasa", "pesado_radiante", "pesado_firme"],
 		["consolo", "onda_maior", "flagelo", "golpe_radiante", "circulo_radiante", "passo_radiante"],
 		["aurora", "chama_viva", G + "forca_concentrada", G + "determinacao", G + "forca_titanica"]],
-		{"count": 3, "spread": 14.0})
+		{"count": 3, "spread": 14.0, "damage": 55.0, "radius": 6.0})
 	# firmness: the spin plants a stone of light: 30 within 4 m, the common ones stunned 1 s, then 3 s slowing there
 	_psalm(3, &"rocha", &"rock", S.ATTACK, E.STONE, [
 		["golpe_brasa", "golpe_geada", "golpe_radiante", "golpe_firme"],
@@ -3512,7 +3504,9 @@ const ENCHANT_DIR := "res://data/enchants/"
 
 
 ## The Encantos learned at the Forja (Inscrever, Fatia 3); the first three come learned.
-const INSCRIBED: Array[StringName] = [&"corte_sismico", &"onda_gemea", &"eco_do_passo"]
+const INSCRIBED: Array[StringName] = [&"corte_sismico", &"onda_gemea"]
+## GP-1 (D-13): the Encantos that read the Investida, which left the Warrior: they stay in the catalog, never offered.
+const RESERVE_ENCHANTS: Array[StringName] = [&"retorno_do_corte", &"eco_do_passo"]
 
 
 func _enchant(n: int, id: StringName, slot: Boon.Slot, mods: Array[BoonMod], excludes: Array[StringName] = []) -> void:
@@ -3524,6 +3518,7 @@ func _enchant(n: int, id: StringName, slot: Boon.Slot, mods: Array[BoonMod], exc
 	e.mods = mods
 	e.excludes = excludes
 	e.learned = not INSCRIBED.has(id)
+	e.reserve = RESERVE_ENCHANTS.has(id)
 	_save(e, ENCHANT_DIR + "%02d_%s.tres" % [n, id])
 
 
@@ -3597,7 +3592,7 @@ const MEDALLION_SIDE := 14.3
 const MEDALLION_APEX := [240.0, 76.0]
 const MEDALLION_WARRIOR := [
 	[&"disciplina", &"cadencia", &"maestria_marcial", &"apogeu"],
-	[&"ruptura", &"voz_do_leao", &"imposicao", &"investida_implacavel"],
+	[&"ruptura", &"alcance_marcial", &"imposicao", &"investida_implacavel"],
 	[&"forca_concentrada", &"determinacao", &"concentracao", &"forca_titanica"],
 ]
 const MEDALLION_MAGA := [

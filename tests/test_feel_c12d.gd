@@ -140,7 +140,9 @@ func test_hold_for_lets_nothing_start_for_its_frames() -> void:
 	assert_eq(first, 8, "the 8 frames of Hades II after the circle")
 
 
-func test_the_special_has_its_own_cooldown_and_frees_the_attack_first() -> void:
+func test_the_corte_circular_frees_the_attack_after_its_own_time() -> void:
+	# GP-1: the right button's tap (the old rajada's place) has no recharge; the attack comes after its windup and recovery
+	var sweep := ComboTree.find((load("res://data/combos/paladin.tres") as ComboTree).neutral, H)
 	var r := _runner()
 	r.press(H)
 	r.step(0.0)
@@ -150,8 +152,10 @@ func test_the_special_has_its_own_cooldown_and_frees_the_attack_first() -> void:
 		r.step(F)
 		if started.size() > 1 and attack_at < 0:
 			attack_at = i
+	assert_eq(started[0], &"sweep")
 	assert_eq(started[1], &"cut1")
-	assert_between(attack_at, 23, 26, "the attack 18 frames after the dart (dart on frame 6 or 7)")
+	var want := roundi((sweep.windup + sweep.recovery) * 60.0)
+	assert_between(attack_at, want - 3, want + 3, "the attack after the windup and the recovery (frame %d)" % want)
 	r = _runner()
 	r.press(H)
 	r.step(0.0)
@@ -161,13 +165,9 @@ func test_the_special_has_its_own_cooldown_and_frees_the_attack_first() -> void:
 		r.step(F)
 		if started.size() > 1 and again < 0:
 			again = i
-		if again >= 0 and i >= again + 8:
-			break
-	assert_between(again, 35, 39, "the second dart 0.5 s after the first (0.7 s before 2026-11-21)")
+	assert_between(again, want - 3, want + 3, "a second Corte as soon as the first's own time is over: no recharge")
 	r.reset(false)
-	assert_gt(r.cooldown_left(&"bolt"), 0.0, "a blow taken keeps the cooldown")
-	r.reset()
-	assert_eq(r.cooldown_left(&"bolt"), 0.0)
+	assert_eq(r.cooldown_left(&"sweep"), 0.0)
 
 
 # ---------- the paladin in a real room (GF-02, GF-03, GF-07, GF-08, GF-09, D-44) ----------
@@ -229,10 +229,11 @@ func test_an_attack_in_the_roll_or_the_stagger_is_kept() -> void:
 	p.hurt(1.0, p.pos + Vector2.LEFT)
 	_frame(p)
 	_frame(p, [&"heavy_attack"])
+	_frame(p)
 	assert_true(started.is_empty(), "nothing while staggered")
-	for i in 12:
+	for i in 14:
 		_frame(p)
-	assert_eq(started, [&"bolt"] as Array[StringName], "the special comes out when the stagger ends")
+	assert_eq(started, [&"sweep"] as Array[StringName], "the Corte comes out when the stagger ends")
 
 
 func test_the_special_holds_the_legs_without_skating() -> void:
@@ -243,7 +244,9 @@ func test_the_special_holds_the_legs_without_skating() -> void:
 	var z := p.pos.y
 	var bolt := ComboTree.find(p.tree.neutral, ComboNode.In.HEAVY)
 	_frame(p, [&"heavy_attack"])
-	assert_almost_eq(p.pos.y, z, 0.001, "planted on the press frame (GF-09)")
+	_frame(p)  # (GP-1: a tap plays on its release; he walked the click frame)
+	z = p.pos.y
+	assert_true(p.runner.planted(), "planted on the release frame (GF-09)")
 	var free_at := -1
 	for i in 70:
 		_frame(p)
@@ -253,10 +256,11 @@ func test_the_special_holds_the_legs_without_skating() -> void:
 		elif free_at < 0 and p.pos.y > z + 0.01:
 			free_at = i + 1
 	var want := roundi((bolt.windup + bolt.move_hold) * 60.0)
-	assert_between(free_at, want - 1, want + 1, "walks again 0.71 s after the dart (frame %d)" % free_at)
+	assert_between(free_at, want - 3, want + 1, "walks again when the Corte's legs are free (frame %d)" % free_at)
 	p = _room()
 	_frame(p, [&"heavy_attack"])
-	for i in 20:
+	_frame(p)
+	for i in 10:
 		_frame(p)
 	assert_true(p.runner.planted())
 	_frame(p, [&"dodge"])
@@ -264,15 +268,15 @@ func test_the_special_holds_the_legs_without_skating() -> void:
 	assert_eq(p.state, Player.State.DODGE)
 
 
-func test_the_omega_lands_when_its_charge_fills() -> void:
+func test_the_lance_lands_when_its_charge_fills() -> void:
 	var p := _room()
-	var lance := ComboTree.find(p.tree.neutral, ComboNode.In.CHARGE_LIGHT)
+	var lance := ComboTree.find(p.tree.neutral, ComboNode.In.CHARGE)
 	var at := -1
 	for i in 70:
-		_frame(p, [], [&"light_attack"])
+		_frame(p, [], [&"heavy_attack"])
 		if hits.has(&"lance") and at < 0:
 			at = i
-	assert_between(at, int(lance.charge_time * 60.0) - 1, int(lance.charge_time * 60.0) + 1, "it lands as the charge fills (0.8 s)")
+	assert_between(at, int(lance.charge_time * 60.0) - 2, int(lance.charge_time * 60.0) + 2, "it lands as the charge fills (0.8 s)")
 
 
 func test_turning_faces_at_once_and_the_body_follows_at_1340_degrees() -> void:

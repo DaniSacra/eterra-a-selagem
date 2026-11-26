@@ -27,3 +27,4 @@ desc_key = &"enchant_retorno_do_corte_desc"
 slot = 4
 mods = Array[ExtResource("1_yc3c1")]([SubResource("Resource_jqalp"), SubResource("Resource_03qhk")])
 excludes = Array[StringName]([&"passo_encadeado", &"fio_do_passo"])
+reserve = true

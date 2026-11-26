@@ -28,7 +28,7 @@ const IDS: Array[StringName] = [&"quarto_corte", &"passo_encadeado", &"golpe_sem
 	&"ainda_de_pe",
 	# the Warrior's twelve (redesign 2026-11-24)
 	&"disciplina", &"cadencia", &"maestria_marcial", &"apogeu", &"forca_concentrada", &"determinacao", &"concentracao",
-	&"forca_titanica", &"ruptura", &"voz_do_leao", &"imposicao", &"investida_implacavel"]
+	&"forca_titanica", &"ruptura", &"alcance_marcial", &"imposicao", &"investida_implacavel"]
 
 
 ## The Gifts added after the 19 draw an existing Gift's symbol (no new art): each a different one.
@@ -158,7 +158,7 @@ static func draw(ci: CanvasItem, id: StringName, c: Vector2, r: float, col: Colo
 				c + Vector2(-0.22, 0.2) * r]), col)
 			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(0.1, -0.85) * r, c + Vector2(0.62, 0.0) * r, c + Vector2(0.02, 0.95) * r,
 				c + Vector2(0.14, 0.1) * r]), col)
-		&"voz_do_leao":
+		&"alcance_marcial":
 			ci.draw_colored_polygon(_gem(c + Vector2(-0.7, 0.0) * r, r * 0.38), col)
 			for k in 3:
 				ci.draw_arc(c + Vector2(-0.55, 0.0) * r, r * (0.55 + 0.3 * k), -PI * 0.3, PI * 0.3, 10, col, th * 0.8, true)

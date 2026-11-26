@@ -790,6 +790,11 @@ nele, 0 vence; evoluído (4 Dons, Forja 2, conta 6) 12 chegam, 1 morre nele, 5 v
 - **Lote 8, ajuste**: `posture` 1300 e `posture_vuln` 0,3 (a luta de Morvath durava 2:00 a 2:20 para o evoluído; o plano pede 2:40 a 3:00 e ainda não chegou, ver `combat_cadence.md` 10). Teste de carga do Cavaleiro (`test_enemy_windup`) ignora o escudo erguido por tempo.
 - **Pendências conhecidas (não do C1d)**: `test_c1b_rooms` (vida do grande), `test_rooms` (armadura dos elites), `test_waves` (comum cai em uma cadeia) e `test_bench_ui` (Compêndio) falham desde antes, por números do C1b e do Compêndio; o `--smoke=300 --seed=5` do novato morre no Ancião (sala 7) como antes do C1d.
 
+## Guerreiro V1, os golpes (GP-1, 2026-11-26; detalhe em `meta.md` e `docs/design/heroes/warrior_v1_2026-11-26.md`)
+- A árvore do Guerreiro tem quatro golpes de entrada (`tree.neutral`): `cut1` (cadeia de 3), `smash` (CHARGE_LIGHT), `sweep` (HEAVY, toque) e `lance` (CHARGE). Rajada, Investida e Brado saíram. A Quebra do golpe pesado vem de `POISE_WEIGHTS.omega_attack` 1,0.
+- Bot: toques e segurar (`S`, `O`, `T` em `Bot.COMBOS`); sem corte da maldição de Morvath (o especial não é mais onda): risco de equilíbrio. Maga segue o fluxo antigo (`Player._read_legacy_attacks`).
+- RESULT ganhou `rhythm`, `magick_refused` e `dash_crossed`.
+
 ## Cavaleiro, 2026-11-23 (Daniel: "ataca mais rápido", a investida difícil de desviar, o escudo; testes em `tests/test_knight_throw.gd`)
 Princípios do estudo `docs/design/sworn_gawain.md` (lista de prioridade, cooldown por habilidade, anel que só a esquiva atravessa), sem nada copiado.
 - **Mais rápido e mais assustador** (`knight` em `make_data`, marcado `exact_windup`): investida com aviso 0,6 s (era 1,0), `aim_lock` 0,15 s (a linha segue o herói até 0,15 s antes de sair), arranque 24 m/s por 0,6 s (14,4 m; era 18 por 0,7), segunda e terceira investidas com 0,45 s, golpe de perto 0,5 s (era 0,8), golpe atrás do escudo 0,6 s. Dano 14 na investida e no golpe de perto, 10 atrás do escudo.

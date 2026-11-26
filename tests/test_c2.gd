@@ -113,30 +113,18 @@ func test_cooldown_cut_by_tag_and_capped() -> void:
 
 
 func test_the_runner_arms_a_shorter_cooldown() -> void:
-	var tree := load(HeroDef.warrior().combos) as ComboTree
+	# (GP-1: no move of the Warrior has a recharge; the Corte Circular is given the Brado's 12 s to test the rule)
+	var tree := (load(HeroDef.warrior().combos) as ComboTree).duplicate(true)
+	var sweep := ComboTree.find(tree.neutral, ComboNode.In.HEAVY)
+	sweep.cooldown = 12.0
 	var r := ComboRunner.new(tree)
 	r.cooldown_cut = 0.25
-	var shout: ComboNode
-	for n in tree.all_nodes():
-		if n.id == &"shout":
-			shout = n
-	assert_eq(shout.cooldown, 12.0)
-	r.press(shout.input)
+	r.press(sweep.input)
 	for i in 120:
 		r.step(1.0 / 60.0)
-		if r.cooldown_left(&"shout") > 0.0:
+		if r.cooldown_left(&"sweep") > 0.0:
 			break
-	assert_between(r.cooldown_left(&"shout"), 8.5, 9.0, "12 s becomes 9")
-
-
-func test_shout_ward_adds_blows_absorbed() -> void:
-	_run([_mod(&"shout_ward", 1.0, &"shout")] as Array[BoonMod])
-	var node: ComboNode
-	for n in game.player.tree.all_nodes():
-		if n.id == &"shout":
-			node = n
-	game.combat.strike(node, game.player.pos, Vector2.RIGHT)
-	assert_eq(game.player.gifts.ward, node.buff_ward + 1)
+	assert_between(r.cooldown_left(&"sweep"), 8.5, 9.0, "12 s becomes 9")
 
 
 func test_room_one_is_a_single_part_and_the_fight_has_it() -> void:

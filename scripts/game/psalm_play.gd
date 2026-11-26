@@ -7,6 +7,8 @@ extends RefCounted
 
 ## The tags of a Psalm's own hits (DealtBy reads them as psalm).
 const TAGS: Array[StringName] = [&"psalm"]
+## Meters across the Pastor's extra waves (the Onda de Luz's, before GP-1).
+const FLOCK_WIDTH := 1.4
 
 var game: Game
 var rules: Psalms
@@ -73,12 +75,16 @@ func _on_cast(_at: Vector2, _omega: bool) -> void:
 ## Rocha's stone comes with the spin.
 func _on_struck(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	var flock := rules.holding(PsalmDef.Effect.FLOCK)
-	if flock != null and node.effect == ComboNode.Effect.WAVE and node.has_tag(&"heavy") and rules.lights > 0:
+	if flock != null and node.has_tag(&"heavy") and rules.lights > 0:
+		# GP-1: the flock leaves with the Lança (the Especial); each light is one more wave of the psalm's own numbers
 		var tags: Array[StringName] = node.tags.duplicate()
 		tags.append_array(TAGS)
 		var color := game.combat.color_of(node.tags)
 		for d in Psalms.fan(dir, rules.release(), flock.spread):
-			game.combat.throw_wave(node, origin, d, color, tags).counted = true
+			var shot := game.projectiles.fire_wave(Projectiles.Kind.SPARK, origin + d * 0.8, d, flock.damage, flock.radius, FLOCK_WIDTH, color, tags)
+			shot.stop_ms = Combat.shot_stop_ms(node)
+			shot.through = game.boons.stat(&"wave_through", tags) > 0.0
+			shot.counted = true
 	var stone := rules.holding(PsalmDef.Effect.STONE)
 	if stone != null and node.has_tag(&"spin") and rules.plant(stone):
 		_stone(stone, origin)

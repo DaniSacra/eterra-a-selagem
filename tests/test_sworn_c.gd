@@ -73,7 +73,7 @@ func test_a_dodge_in_the_spin_windup_drops_it_and_it_never_lands() -> void:
 
 
 func test_the_other_moves_are_cut_by_the_dodge_too() -> void:
-	for input in [H, SH, RU]:
+	for input in [H]:  # (GP-1: the Brado and the Investida left the tree)
 		setup_each()
 		runner.press(input)
 		runner.step(0.0)
@@ -86,35 +86,37 @@ func test_the_special_cuts_a_windup_and_the_blow_never_lands() -> void:
 	runner.step(0.0)
 	runner.press(H)
 	runner.step(1.0 / 120.0)
-	assert_eq(started, [&"cut1", &"bolt"] as Array[StringName])
+	assert_eq(started, [&"cut1", &"sweep"] as Array[StringName])
 	_run(0.5)
 	assert_false(hits.has(&"cut1"), "the cut windup never lands")
-	assert_true(hits.has(&"bolt"))
+	assert_true(hits.has(&"sweep"))
 
 
-func test_the_brado_and_the_investida_cut_a_recovery_early() -> void:
-	for input in [SH, RU]:
-		setup_each()
-		_to_blow(2)
-		_run(runner.node.lead() + 0.01)
-		assert_eq(runner.phase, ComboRunner.Phase.RECOVERY, "blow 2 landed")
-		runner.press(input)
-		runner.step(1.0 / 120.0)
-		assert_eq(started.size(), 3)
-		assert_eq(started[2], &"shout" if input == SH else &"dash_cut")
-		assert_eq(runner.phase, ComboRunner.Phase.WINDUP)
+func test_the_corte_circular_cuts_a_recovery_early() -> void:
+	_to_blow(2)
+	_run(runner.node.lead() + 0.01)
+	assert_eq(runner.phase, ComboRunner.Phase.RECOVERY, "blow 2 landed")
+	runner.press(H)
+	runner.step(1.0 / 120.0)
+	assert_eq(started.size(), 3)
+	assert_eq(started[2], &"sweep")
+	assert_eq(runner.phase, ComboRunner.Phase.WINDUP)
 
 
 func test_a_special_on_cooldown_does_not_cut_the_blow() -> void:
-	runner.press(SH)
+	# (GP-1: nothing of the Warrior recharges; the Corte Circular is given 5 s here to test the rule)
+	tree = tree.duplicate(true)
+	ComboTree.find(tree.neutral, H).cooldown = 5.0
+	runner = ComboRunner.new(tree)
+	runner.press(H)
 	runner.step(0.0)
 	_run(runner.node.duration() + 0.05)
 	runner.press(L)
 	runner.step(0.0)
 	assert_eq(runner.node.id, &"cut1")
-	runner.press(SH)
+	runner.press(H)
 	runner.step(0.01)
-	assert_eq(runner.node.id, &"cut1", "the Brado recharges: the blow goes on")
+	assert_eq(runner.node.id, &"cut1", "the Corte recharges: the blow goes on")
 	assert_eq(runner.phase, ComboRunner.Phase.WINDUP)
 
 
@@ -127,7 +129,7 @@ func test_a_special_waits_for_its_window_when_the_blow_sets_one() -> void:
 	runner.step(0.02)
 	assert_eq(runner.node.id, &"cut1", "before its window")
 	_run(0.1)
-	assert_true(started.has(&"bolt"), "from its window on the special cuts it")
+	assert_true(started.has(&"sweep"), "from its window on the special cuts it")
 	cut1.cancel_special_from = 0.0
 
 
@@ -185,8 +187,8 @@ func test_the_pause_of_a_blow_depends_on_what_it_reached() -> void:
 	assert_gt(Combat.PAUSE_ONE_FINISHER_MS, Combat.PAUSE_ONE_MS)
 	assert_gt(Combat.PAUSE_ONE_MS, Combat.PAUSE_TWO_MS)
 	assert_gt(Combat.PAUSE_TWO_MS, Combat.PAUSE_CROWD_MS)
-	assert_eq(Combat.pause_ms(ComboTree.find(tree.neutral, SH), 1), 0.0, "the Brado keeps its own")
-	assert_eq(Combat.pause_ms(ComboTree.find(tree.neutral, RU), 1), 0.0, "the Investida keeps its own")
+	assert_eq(Combat.pause_ms(ComboTree.find(tree.neutral, H), 1), 0.0, "the Corte Circular keeps its own")
+	assert_eq(Combat.pause_ms(ComboTree.find(tree.neutral, ComboNode.In.CHARGE_LIGHT), 1), 0.0, "the Esmagador keeps its own")
 
 
 # ---------- C6 ----------
@@ -207,4 +209,4 @@ func test_a_move_never_cuts_itself() -> void:
 	runner.step(0.0)
 	runner.press(H)
 	runner.step(0.02)
-	assert_eq(started, [&"bolt"] as Array[StringName], "a second press in the windup does not start it again")
+	assert_eq(started, [&"sweep"] as Array[StringName], "a second press in the windup does not start it again")

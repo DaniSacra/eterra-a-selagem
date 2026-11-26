@@ -81,9 +81,24 @@ func color() -> Color:
 
 
 ## The button a slot's Blessings belong to (BO-2: one slot a button, so this is the source of what a Blessing changes).
-const SLOT_BUTTON: Array[StringName] = [&"", &"light_attack", &"heavy_attack", &"shout", &"dodge", &"rush", &"ultimate"]
-## The button of a move tag, for a Blessing whose slot says nothing (an Elo): light, heavy, cast, dash (the Investida).
-const TAG_BUTTON := {&"light": &"light_attack", &"heavy": &"heavy_attack", &"cast": &"shout", &"dash": &"rush"}
+## GP-1: the Poder (CAST) is the right button's tap, the Especial (SPECIAL) its hold, the Ataque the left button's (tap and hold); the
+## RUSH slot has no button left (nothing offers it).
+const SLOT_BUTTON: Array[StringName] = [&"", &"light_attack", &"heavy_attack", &"heavy_attack", &"dodge", &"dodge", &"ultimate"]
+## The button of a move tag, for a Blessing whose slot says nothing (an Elo): light, heavy, cast (the Corte Circular), dash (the dodge).
+const TAG_BUTTON := {&"light": &"light_attack", &"heavy": &"heavy_attack", &"cast": &"heavy_attack", &"dash": &"dodge"}
+
+
+## GP-1: how a slot's button is worked, for the card's legend: the Ataque by tap or hold, the Poder by tap, the Especial by hold
+## (&"" for the slots that are not a blow). The text keys are tap_hint, hold_hint and tap_hold_hint: the card shows T.t(gesture_key(slot)).
+static func gesture_key(s: Slot) -> StringName:
+	match s:
+		Slot.ATTACK:
+			return &"tap_hold_hint"
+		Slot.CAST:
+			return &"tap_hint"
+		Slot.SPECIAL:
+			return &"hold_hint"
+	return &""
 
 
 ## BC-2, BO-2: the action (button) whose moves this Blessing changes: its slot's button; a Blessing with no slot (an Elo)

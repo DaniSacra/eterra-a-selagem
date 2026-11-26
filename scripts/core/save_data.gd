@@ -20,7 +20,7 @@ extends RefCounted
 ## bought of the old tree comes back as the material it paid (Prata or Memória, exact, LEGACY_PREPARO), the old block is left.
 ## 16 (SW-O4, the guided first descent): first (0 pending, 1 played, 2 skipped; FirstDescent). An older file with descents
 ## played has it done; one with none is still to play it.
-const VERSION := 16
+const VERSION := 17
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
@@ -187,6 +187,11 @@ static func merged(loaded: Variant) -> Dictionary:
 		# a file older than version 11 never had the guides: with the milestones' openings marked, what is due counts as shown
 		if version < 11:
 			HubGuide.mark_shown(out, HubGuide.pending(out).map(func(d: HubGuideDef) -> StringName: return d.id))
+	# files before version 17 (GP-1): the Warrior's Voz do Leão is gone (its Memória comes back and the Vaga is free) and the Brado and
+	# Investida buttons too (a key saved for them must not hold E, which is interact now)
+	if version < 17:
+		migrate_removed_dons(out, GP1_REMOVED_DONS, ["warrior"])
+		drop_removed_bindings(out.options)
 	out["first"] = clampi(int(out.first), 0, 2)
 	# version 8 (Ofícios): nothing to move, an older file opens with the empty block (defaults)
 	out.version = VERSION
@@ -236,16 +241,28 @@ const LEGACY_DONS := {
 ## id in opened and gives back 0. Everything else (Mastery, forge, firsts, materials, vine, codex) is left alone.
 ## `only`: the heroes to migrate (empty: all of LEGACY_DONS). Returns the Memória given back, {hero: amount}.
 static func migrate_redesign(out: Dictionary, only: Array = []) -> Dictionary:
+	return migrate_removed_dons(out, LEGACY_DONS, only, true)
+
+
+## GP-1 (version 17): the Dons the Warrior's V1 took out, hero: {id: Memória it cost} (frozen).
+const GP1_REMOVED_DONS := {"warrior": {"voz_do_leao": 3}}
+## The keys the Brado and the Investida had in the saved bindings (the keyboard's own name, the gamepad's "pad:" one).
+const REMOVED_BINDINGS: Array[String] = ["shout", "rush", "pad:shout", "pad:rush"]
+
+
+## Gives back the Memória of each Gift of `table` a hero had opened and takes the ids out of opened, unlocked and equipped (the Vagas
+## are free); `clear_ultimate`: the chosen ultimate goes too (the redesign of 2026-11-24 only; GP-1 leaves it). Idempotent.
+static func migrate_removed_dons(out: Dictionary, table: Dictionary, only: Array = [], clear_ultimate := false) -> Dictionary:
 	var given := {}
 	if not out.get("heroes") is Dictionary:
 		return given
-	for hero_id: String in LEGACY_DONS:
+	for hero_id: String in table:
 		if not only.is_empty() and not only.has(hero_id):
 			continue
 		var block: Variant = (out.heroes as Dictionary).get(hero_id)
 		if not block is Dictionary:
 			continue
-		var legacy: Dictionary = LEGACY_DONS[hero_id]
+		var legacy: Dictionary = table[hero_id]
 		var refund := 0
 		var seen := []
 		for id: Variant in (block.get("opened", []) as Array):
@@ -259,8 +276,22 @@ static func migrate_redesign(out: Dictionary, only: Array = []) -> Dictionary:
 			if block.get(key) is Array:
 				block[key] = (block[key] as Array).filter(func(v: Variant) -> bool: return not (v is String and legacy.has(v)))
 		block["equipped"] = (block.get("equipped", []) as Array).filter(func(v: Variant) -> bool: return not (v is String and legacy.has(v)))
-		block["ultimate"] = ""
+		if clear_ultimate:
+			block["ultimate"] = ""
 	return given
+
+
+## Erases the saved keys and buttons of the actions that no longer exist (REMOVED_BINDINGS), so none holds the key of interact.
+## Everything else the player remapped stays. Returns how many entries went.
+static func drop_removed_bindings(options: Variant) -> int:
+	if not options is Dictionary or not (options as Dictionary).get("bindings") is Dictionary:
+		return 0
+	var bindings: Dictionary = (options as Dictionary).bindings
+	var gone := 0
+	for key in REMOVED_BINDINGS:
+		if bindings.erase(key):
+			gone += 1
+	return gone
 
 
 ## Opens for free every Gift the Warrior's block has revealed by its Mastery (the version 6 migration; a test or a

@@ -33,7 +33,7 @@ func test_the_tree_is_three_branches_of_four() -> void:
 
 func test_the_first_gifts_and_the_unlock_order() -> void:
 	var first := {&"disciplina": [1, 2], &"forca_concentrada": [2, 2], &"ruptura": [3, 2], &"cadencia": [4, 2],
-		&"determinacao": [6, 2], &"voz_do_leao": [8, 3], &"maestria_marcial": [9, 3]}
+		&"determinacao": [6, 2], &"alcance_marcial": [8, 3], &"maestria_marcial": [9, 3]}
 	for id: StringName in first:
 		var t := book.find(id)
 		assert_eq(t.unlock_level, first[id][0], "%s unlocks at %d" % [id, first[id][0]])
@@ -68,8 +68,8 @@ func test_a_requirement_counts_only_when_equipped() -> void:
 	assert_eq(_check([&"cadencia"]), Talents.Problem.NEEDS)
 	assert_eq(_check([&"disciplina", &"cadencia"]), Talents.Problem.OK)
 	assert_eq(book.check([&"cadencia"], TOP, 99).id, &"cadencia", "names the Gift")
-	assert_eq(_check([&"voz_do_leao"]), Talents.Problem.NEEDS)
-	assert_eq(_check([&"voz_do_leao", &"ruptura"]), Talents.Problem.OK, "order does not matter")
+	assert_eq(_check([&"alcance_marcial"]), Talents.Problem.NEEDS)
+	assert_eq(_check([&"alcance_marcial", &"ruptura"]), Talents.Problem.OK, "order does not matter")
 
 
 func test_an_apex_needs_the_gift_the_package_names() -> void:
@@ -98,11 +98,11 @@ func test_a_saved_loadout_is_cleaned() -> void:
 func test_number_gifts_add_up_with_the_blessings() -> void:
 	var state := BoonState.new(BoonState.load_catalog())
 	var light: Array[StringName] = [&"light"]
-	var shout: Array[StringName] = [&"shout"]
+	var shout: Array[StringName] = [&"cast"]
 	assert_eq(state.stat(&"reach_pct", shout), 0.0)
-	state.equip_talents(book.defs([&"ruptura", &"voz_do_leao"]))
-	assert_almost_eq(state.stat(&"reach_pct", shout), 0.35, 0.0001, "Voz do Leão: the Brado reaches 35% more")
-	assert_eq(state.stat(&"reach_pct", light), 0.0, "only the Brado")
+	state.equip_talents(book.defs([&"ruptura", &"alcance_marcial"]))
+	assert_almost_eq(state.stat(&"reach_pct", shout), 0.25, 0.0001, "Alcance Marcial: the Corte Circular reaches 25% more")
+	assert_eq(state.stat(&"reach_pct", light), 0.0, "only the Poder")
 	# another source of the same number adds up (V1: no Blessing carries reach; the Forja, an Encanto or a granted bonus do)
 	var more := BoonMod.new()
 	more.stat = &"reach_pct"
@@ -110,6 +110,6 @@ func test_number_gifts_add_up_with_the_blessings() -> void:
 	more.base = 0.1
 	state.grant([more])
 	assert_almost_eq(state.stat(&"reach_pct", light), 0.1, 0.0001, "Gift and another source in one sum")
-	assert_almost_eq(state.stat(&"reach_pct", shout), 0.35, 0.0001, "the other tag is untouched")
+	assert_almost_eq(state.stat(&"reach_pct", shout), 0.25, 0.0001, "the other tag is untouched")
 	state.equip_talents([])
 	assert_eq(state.stat(&"reach_pct", shout), 0.0, "the cache follows what is equipped")

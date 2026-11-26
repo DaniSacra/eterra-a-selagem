@@ -62,6 +62,15 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   inimigos a 4 m; `--bot-no-shout`), `Bot.rush_worth` (entrar a 4,5 a 8 m, ou para Magia quando a rajada não tem; `--bot-no-rush`), rajada só com Magia. Faltam: slots
   `TECH`/`ULT` e as Bênçãos por família do E e do Shift; os 3 Dons do Brado.
 
+### Guerreiro V1 (GP-1, 2026-11-26; spec `docs/design/heroes/warrior_v1_2026-11-26.md`; testes `tests/test_warrior_v1.gd`, `tests/test_button_intent.gd`)
+- Botões: esquerdo toque = Combo (3 golpes), segurar = **Golpe Esmagador** (`smash`, 75, 12 Magia); direito toque = **Corte Circular** (`sweep`, 35, 8 Magia), segurar = **Lança da Emeth** (`lance`, o golpe carregado de antes, 150, 20 Magia); Shift = Supremo; Q sem ação; Brado e Investida não são mais botões; interagir em E (A no controle). Maga mantém Q e C (`Controls.MAGA_ONLY`).
+- `ButtonIntent` (`core/button_intent.gd`): toque ou segurar, limiar `Feel.hold_threshold` 0,20 s, sem disparo duplo; esquiva cancela a carga sem custo; sem Magia a recusa é visível (`Player.refusals`, sinal `magick_refused`). A Magia sai no `move_hit` (`Player._on_move_hit`), não no início do golpe.
+- `BattleRhythm` (`core/battle_rhythm.gd`, parâmetros `rhythm_*` no `HeroDef`): o último golpe do Combo arma 3 s; o próximo Esmagador, Corte ou Lança consome (Quebra extra, atordoamento, dano e alcance do especial). Criado em `HeroGifts`; limpo ao entrar na sala, no Supremo e na morte. `share()` e `armed()` são o que a UI lê.
+- Magia máxima 30; sem reembolso de recarga (`cd_refund_*` 0); `Combat.dodge_through(from, to)` (sinal `Player.dodge_ended`) dá a Investida Implacável pela esquiva (atordoa comuns, Quebra nos demais).
+- Dons: Voz do Leão saiu, **Alcance Marcial** entrou (`reach_pct` 0,25 e `push_pct` 0,3 na tag `cast`); Força Titânica é dado (custo x2, dano x3, `magick_max` +10); Ruptura dá `armor_pct` 0,5 ao Esmagador.
+- Bênçãos: slot CAST = Poder (Corte Circular), SPECIAL = Lança (tags `lance`, `heavy`); `circulo_mare` = `cel_speed`; Pastor e Onda Gêmea na Lança. Encantos `reserve` (Eco do Passo) não entram no sorteio.
+- Save versão 17 (`SaveData.migrate_removed_dons`, idempotente): devolve a Memória dos Dons removidos e limpa as teclas guardadas.
+
 ## A Maga, M2 (2026-11-23; plano em `docs/design/heroes/maga_m2.md`, kit em `maga.md`; testes em `tests/test_maga_m2.gd`)
 - **Maestria própria**: `data/heroes/maga_mastery.tres` (cópia dos números do Guerreiro, `make_data.gd` `_mastery`; nível 0, sem retroativo). A Maga só tem
   Tempestade e Suspensão Absoluta pelo nível (2 e 6); o robô e `--talents` jogam a Tempestade (`Game._equip_talents`).

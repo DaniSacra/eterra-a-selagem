@@ -3,14 +3,14 @@ extends GutTest
 ## branches, the branch tables that survive an unknown branch, the medallion's twelve nodes drawn by hand.
 
 const WARRIOR_12: Array[StringName] = [&"disciplina", &"cadencia", &"maestria_marcial", &"apogeu", &"forca_concentrada",
-	&"determinacao", &"concentracao", &"forca_titanica", &"ruptura", &"voz_do_leao", &"imposicao", &"investida_implacavel"]
+	&"determinacao", &"concentracao", &"forca_titanica", &"ruptura", &"alcance_marcial", &"imposicao", &"investida_implacavel"]
 const NEW_BRANCHES: Array[StringName] = [&"COMBO", &"IMPETO", &"DOMINIO", &"ELEMENTALISMO", &"CONJURACAO", &"FEITICARIA"]
 ## The proposed places [id, angle, radius, diameter] (what make_data.gd's MEDALLION_WARRIOR gets).
 const PLACES := [
 	[&"crown", 0, 254, 72],
 	[&"disciplina", 40, 254, 48], [&"cadencia", 60, 254, 48], [&"maestria_marcial", 60, 308, 48], [&"apogeu", 80, 254, 72],
 	[&"forca_concentrada", 160, 254, 48], [&"determinacao", 180, 254, 48], [&"concentracao", 180, 308, 48], [&"forca_titanica", 200, 254, 72],
-	[&"ruptura", 280, 254, 48], [&"voz_do_leao", 300, 254, 48], [&"imposicao", 300, 308, 48], [&"investida_implacavel", 320, 254, 72]]
+	[&"ruptura", 280, 254, 48], [&"alcance_marcial", 300, 254, 48], [&"imposicao", 300, 308, 48], [&"investida_implacavel", 320, 254, 72]]
 
 
 func test_every_new_branch_has_a_colour_a_glyph_and_an_ink() -> void:

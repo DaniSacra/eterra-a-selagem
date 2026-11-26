@@ -99,8 +99,8 @@ func test_a_psalm_needs_one_held_thing_of_each_group() -> void:
 	assert_false(Psalms.met(p, Psalms.held_of(_held([]), [])), "nothing held")
 	assert_false(Psalms.met(p, Psalms.held_of(_held(["circulo_brasa", "escudo"]), [])), "two of three")
 	assert_true(Psalms.met(p, Psalms.held_of(_held(["circulo_brasa", "escudo", "bastiao"]), [])), "a Blessing, a Blessing, an Elo")
-	assert_true(Psalms.met(p, Psalms.held_of(_held(["circulo_geada", "passos"]), [&"voz_do_leao"])), "a Gift equipped counts")
-	assert_false(Psalms.met(p, Psalms.held_of(_held(["circulo_geada", "passos", "voz_do_leao"]), [])),
+	assert_true(Psalms.met(p, Psalms.held_of(_held(["circulo_geada", "passos"]), [&"alcance_marcial"])), "a Gift equipped counts")
+	assert_false(Psalms.met(p, Psalms.held_of(_held(["circulo_geada", "passos", "alcance_marcial"]), [])),
 		"a Gift is only a Gift equipped (never a Blessing of the same name)")
 
 
@@ -318,16 +318,16 @@ func _waves() -> int:
 	return game.projectiles.shots.filter(func(s: Projectiles.Shot) -> bool: return not Projectiles.hostile(s)).size()
 
 
-func test_pastor_kills_gather_lights_the_special_throws_as_more_waves() -> void:
+func test_pastor_kills_gather_lights_the_lance_throws_them_as_waves() -> void:
 	_run(&"pastor")
 	var psalm := game.psalms.find(&"pastor")
 	for k in 5:
 		var e := _enemy(&"skeleton", Vector2(-6.0, k * 1.5))
 		game.horde.damage(e, 9999.0, Vector2.LEFT, 0.0)
 	assert_eq(game.psalms.lights, psalm.count, "five kills, three lights at most")
-	var bolt := _move(&"bolt")
+	var bolt := _move(&"lance")
 	game.player.struck.emit(bolt, game.player.pos, Vector2.RIGHT)
-	assert_eq(_waves(), 1 + psalm.count, "the special's wave and one more for each light")
+	assert_eq(_waves(), psalm.count, "the Lança throws no wave: one for each light")
 	assert_eq(game.psalms.lights, 0, "the lights went with them")
 	var dirs: Array = game.projectiles.shots.map(func(s: Projectiles.Shot) -> float: return rad_to_deg(s.vel.angle()))
 	dirs.sort()
@@ -338,7 +338,7 @@ func test_pastor_kills_gather_lights_the_special_throws_as_more_waves() -> void:
 		game.projectiles._release(s)
 	game.projectiles.shots.clear()
 	game.player.struck.emit(bolt, game.player.pos, Vector2.RIGHT)
-	assert_eq(_waves(), 1, "no light: the special of before")
+	assert_eq(_waves(), 0, "no light: the Lança throws nothing extra")
 	assert_eq(Psalms.fan(Vector2.RIGHT, 0, 14.0).size(), 0)
 
 

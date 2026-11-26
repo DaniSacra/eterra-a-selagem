@@ -7,7 +7,7 @@ const L := ComboNode.In.LIGHT
 const SPIN: Array[StringName] = [&"light", &"spin", &"finisher"]
 const CUT: Array[StringName] = [&"light"]
 const DASH: Array[StringName] = [&"light", &"dash"]
-const LANCE: Array[StringName] = [&"light", &"thrust", &"finisher", &"omega"]
+const LANCE: Array[StringName] = [&"heavy", &"omega", &"thrust", &"lance"]
 const BOLT: Array[StringName] = [&"heavy", &"wave"]
 
 var game: Game
@@ -52,8 +52,8 @@ func _spin() -> ComboNode:
 func test_the_passive_gives_two_of_magia_for_each_finisher_that_lands() -> void:
 	var s := _state()
 	assert_eq(s.passive_magick(SPIN, 1), 2.0, "the spin")
-	assert_eq(s.passive_magick(DASH, 1), 2.0, "the Corte Veloz that lands")
-	assert_eq(s.passive_magick(LANCE, 1), 2.0, "the attack's Omega")
+	assert_eq(s.passive_magick(DASH, 1), 0.0, "GP-1 (D-4): the Investida left; a `dash` blow refunds nothing")
+	assert_eq(s.passive_magick(LANCE, 1), 0.0, "GP-1 (D-4): the Lança pays, it does not refund")
 	assert_eq(s.passive_magick(BOLT, 1), 0.0, "the rajada is no finisher (2026-11-21: the special's Omega left)")
 	assert_eq(s.passive_magick(SPIN, 0), 0.0, "a finisher in the air gives nothing")
 	assert_eq(s.passive_magick(CUT, 3), 0.0, "a plain cut is no finisher")
@@ -85,17 +85,16 @@ func test_the_passive_counts_once_a_blow_and_never_past_the_maximum() -> void:
 	assert_eq(p.magick.value, 10.5, "a plain cut gives only its 0.5 a hit (C1c), no passive")
 
 
-func test_the_rajada_gives_no_magia_and_its_wave_counts_once() -> void:
+func test_the_lance_and_the_smash_give_no_magia() -> void:
 	_run()
 	var p := game.player
 	for k in 3:
 		_enemy(&"skeleton", Vector2(3.0 + k * 1.2, 0))
 	p.magick.value = 10.0
-	game.combat.strike(_node(p.tree, &"bolt"), p.pos, Vector2.RIGHT)
-	for i in 30:
-		game.projectiles.step(1.0 / 60.0)
-	assert_eq(p.magick.value, 10.0, "the wave struck three and gave nothing: no finisher")
-
+	game.combat.strike(_node(p.tree, &"lance"), p.pos, Vector2.RIGHT)
+	assert_eq(p.magick.value, 10.0, "the Lança struck three and gave nothing: no finisher (D-4)")
+	game.combat.strike(_node(p.tree, &"smash"), p.pos, Vector2.RIGHT)
+	assert_eq(p.magick.value, 10.0, "nor the Esmagador")
 
 func test_no_passive_turns_it_off_for_comparisons() -> void:
 	var s := _state()
@@ -119,7 +118,7 @@ func test_with_no_gift_every_rule_answers_the_game_of_before() -> void:
 
 const LEVELS := {&"disciplina": [1, 2], &"cadencia": [4, 2], &"maestria_marcial": [9, 3], &"apogeu": [16, 4],
 	&"forca_concentrada": [2, 2], &"determinacao": [6, 2], &"concentracao": [11, 3], &"forca_titanica": [17, 4],
-	&"ruptura": [3, 2], &"voz_do_leao": [8, 3], &"imposicao": [13, 3], &"investida_implacavel": [18, 4]}
+	&"ruptura": [3, 2], &"alcance_marcial": [8, 3], &"imposicao": [13, 3], &"investida_implacavel": [18, 4]}
 
 
 func test_the_catalog_is_three_branches_of_four() -> void:
@@ -238,8 +237,8 @@ func test_cadencia_in_the_game_counts_the_blows_that_land_and_starts_over_at_the
 	var state := game.hero_gifts.state
 	game.hero_gifts._on_move_hit(_node(game.player.tree, &"cut1"))
 	game.hero_gifts._on_move_hit(_node(game.player.tree, &"cut2"))
-	game.hero_gifts._on_move_hit(_node(game.player.tree, &"dash_cut"))
-	assert_eq(state.chain_n, 2, "the Investida is no blow of the sequence")
+	game.hero_gifts._on_move_hit(_node(game.player.tree, &"lance"))
+	assert_eq(state.chain_n, 2, "the Lança is no blow of the sequence")
 	game.hero_gifts.step(0.0)
 	game.player.runner.speed = state.attack_speed(CUT)
 	assert_almost_eq(game.player.runner.speed, 1.16, 0.0001)
@@ -303,11 +302,11 @@ func test_what_is_no_blow_of_the_sequence_never_enters_the_books() -> void:
 	var e := _enemy(&"skeleton", Vector2(1.5, 0))
 	e.hp = 5000.0
 	var id := e.get_instance_id()
-	for node_id: StringName in [&"dash_cut", &"lance", &"bolt"]:
+	for node_id: StringName in [&"smash", &"lance", &"sweep"]:
 		game.combat.strike(_node(game.player.tree, node_id), game.player.pos, Vector2.RIGHT)
 	for i in 30:
 		game.projectiles.step(1.0 / 60.0)
-	assert_eq(game.combat.apogee.total(id), 0.0, "Investida, Golpe Carregado, the special's wave")
+	assert_eq(game.combat.apogee.total(id), 0.0, "the Esmagador, the Lança, the Corte Circular")
 	game.combat.hit_enemy(e, 10.0, [&"echo", &"light"] as Array[StringName], Vector2.RIGHT, 0.0, false)
 	game.combat.hit_enemy(e, 10.0, [&"ember", &"chama"] as Array[StringName], Vector2.ZERO, 0.0, false)
 	assert_eq(game.combat.apogee.total(id), 0.0, "an echo or a burn")
@@ -346,8 +345,8 @@ func test_the_golpe_carregado_damage_is_the_sum_then_forca_titanica_triples_it()
 	var base: float = losses[0]
 	assert_eq(base, 150.0)
 	assert_eq(losses[10], 210.0, "Força Concentrada: +40%")
-	assert_eq(losses[11], 390.0, "Força Titânica: x2,6")
-	assert_eq(losses[21], 546.0, "x2,6 final after Força Concentrada's +40%")
+	assert_eq(losses[11], 450.0, "Força Titânica: x3")
+	assert_eq(losses[21], 630.0, "x3 final after Força Concentrada's +40%")
 
 
 func test_forca_titanica_raises_the_cost_and_never_leaves_negative_magia() -> void:
@@ -355,20 +354,21 @@ func test_forca_titanica_raises_the_cost_and_never_leaves_negative_magia() -> vo
 	game.hero_gifts.step(0.0)
 	var p := game.player
 	var lance := _node(p.tree, &"lance")
-	assert_eq(p.cost_of(lance, 0.0), 50.0, "x2,5 (Lote R8)")
-	assert_eq(p.cost_of(_node(p.tree, &"bolt"), 0.0), 12.0, "the special is no Golpe Carregado")
+	assert_eq(p.magick.max_value, 40.0, "the Gift raises the bar by 10")
+	assert_eq(p.cost_of(lance, 0.0), 40.0, "x2: the whole bar")
+	assert_eq(p.cost_of(_node(p.tree, &"smash"), 0.0), 24.0)
+	assert_eq(p.cost_of(_node(p.tree, &"sweep"), 0.0), 8.0, "the Corte Circular is no Golpe Carregado")
 	assert_eq(Player.omega_cost(20.0, 1.2, 1.0), 0.0, "never under zero")
+	p.magick.value = 30.0
+	assert_false(p._affordable(ComboNode.In.CHARGE), "30 does not pay 40: no charge starts, the button is refused")
+	assert_false(p.magick.spend(40.0))
+	assert_eq(p.magick.value, 30.0, "nothing was taken")
 	p.magick.value = 40.0
-	assert_false(p._affordable(ComboNode.In.CHARGE_LIGHT), "40 does not pay 50: no charge starts, the normal blow comes out")
-	assert_false(p.magick.spend(50.0))
-	assert_eq(p.magick.value, 40.0, "nothing was taken")
-	p.magick.value = 50.0
-	assert_true(p._affordable(ComboNode.In.CHARGE_LIGHT))
+	assert_true(p._affordable(ComboNode.In.CHARGE))
 	_run()
 	game.hero_gifts.step(0.0)
 	game.player.magick.value = 30.0
-	assert_true(game.player._affordable(ComboNode.In.CHARGE_LIGHT), "without the Gift 30 pays 20")
-
+	assert_true(game.player._affordable(ComboNode.In.CHARGE), "without the Gift 30 pays 20")
 
 func test_a_charge_cancelled_costs_nothing() -> void:
 	_run([&"forca_titanica"])
@@ -386,13 +386,14 @@ func test_concentracao_charges_thirty_percent_faster_at_the_same_cost() -> void:
 	game.hero_gifts.step(0.0)
 	var p := game.player
 	p._charge_held = ComboNode.In.CHARGE_LIGHT
-	assert_almost_eq(p._charge_time(), 0.56, 0.0001)
+	assert_almost_eq(p._charge_time(), 0.42, 0.0001, "the Esmagador: 0.6 x 0.7")
+	p._charge_held = ComboNode.In.CHARGE
+	assert_almost_eq(p._charge_time(), 0.56, 0.0001, "the Lança: 0.8 x 0.7")
 	assert_eq(p.cost_of(_node(p.tree, &"lance"), 0.0), 20.0)
 	_run()
 	game.hero_gifts.step(0.0)
 	game.player._charge_held = ComboNode.In.CHARGE_LIGHT
-	assert_almost_eq(game.player._charge_time(), 0.8, 0.0001)
-
+	assert_almost_eq(game.player._charge_time(), 0.6, 0.0001)
 
 func test_determinacao_doubles_the_magia_of_the_attack() -> void:
 	for ids: Array in [[], [&"determinacao"]]:
@@ -424,15 +425,13 @@ func test_ruptura_breaks_armor_faster_with_the_finisher() -> void:
 	assert_eq(s.value(&"armor_pct", CUT), 0.0)
 
 
-func test_voz_do_leao_widens_and_strengthens_the_brado() -> void:
-	var s := _state([&"voz_do_leao"])
-	var shout: Array[StringName] = [&"shout", &"cast"]
-	assert_eq(s.value(&"reach_pct", shout), 0.35)
-	assert_eq(s.value(&"damage_pct", shout), 0.5)
-	assert_eq(s.value(&"push_pct", shout), 0.3)
-	assert_eq(s.value(&"stun_pct", shout), 0.5)
+func test_alcance_marcial_widens_and_pushes_the_corte_circular() -> void:
+	var s := _state([&"alcance_marcial"])
+	var sweep: Array[StringName] = [&"shout", &"cast", &"sweep"]
+	assert_eq(s.value(&"reach_pct", sweep), 0.25)
+	assert_eq(s.value(&"push_pct", sweep), 0.3)
+	assert_eq(s.value(&"damage_pct", sweep), 0.0, "no damage: reach and push only")
 	assert_eq(s.value(&"reach_pct", CUT), 0.0)
-
 
 func test_imposicao_lengthens_the_quebra_stun() -> void:
 	var stuns := []
@@ -456,7 +455,7 @@ func test_the_stun_rule_has_one_exception_the_investida_that_goes_through() -> v
 	assert_false(StunRule.dash_stuns(true, 0.0), "no stun without the Gift")
 
 
-func test_investida_implacavel_stuns_everyone_it_goes_through_two_seconds() -> void:
+func test_investida_implacavel_stuns_everyone_the_roll_goes_through_two_seconds() -> void:
 	_run([&"investida_implacavel"])
 	game.hero_gifts.step(0.0)
 	assert_true(game.player.dash_pierce)
@@ -465,36 +464,33 @@ func test_investida_implacavel_stuns_everyone_it_goes_through_two_seconds() -> v
 		var e := _enemy(&"skeleton", Vector2(1.5 + k * 1.0, 0))
 		e.hp = 5000.0
 		crowd.append(e)
-	game.combat.strike(_node(game.player.tree, &"dash_cut"), game.player.pos, Vector2.RIGHT)
+	game.combat.dodge_through(game.player.pos, Vector2(4.8, 0))
 	for e in crowd:
 		assert_almost_eq(e.stun_t, 2.0, 0.001, "2 s each")
 	game.combat.strike(_node(game.player.tree, &"cut1"), game.player.pos, Vector2.RIGHT)
 	assert_almost_eq(crowd[0].stun_t, 2.0, 0.001, "a plain blow adds none: it is one stun a passage")
 
-
-func test_without_the_gift_the_investida_stuns_no_one() -> void:
+func test_without_the_gift_the_roll_stuns_no_one() -> void:
 	_run()
 	var e := _enemy(&"skeleton", Vector2(1.5, 0))
 	e.hp = 5000.0
-	game.combat.strike(_node(game.player.tree, &"dash_cut"), game.player.pos, Vector2.RIGHT)
+	game.combat.dodge_through(game.player.pos, Vector2(4.8, 0))
 	assert_lt(e.stun_t, 2.0, "no 2 s stun")
 	game.hero_gifts.step(0.0)
 	assert_false(game.player.dash_pierce)
 
-
-func test_the_investida_takes_the_quebra_of_a_blow_from_a_boss_and_stuns_him_never() -> void:
+func test_the_roll_takes_the_quebra_of_the_dodge_from_a_boss_and_stuns_him_never() -> void:
 	_run([&"investida_implacavel"])
 	var e := _enemy(&"skeleton", Vector2(1.5, 0))
 	e.def = e.def.duplicate()
 	e.def.behavior = EnemyDef.Behavior.BOSS
 	var seen: Array[StringName] = []
 	game.horde.boss_blow.connect(func(_t: Enemy, src: StringName) -> void: seen.append(src))
-	game.combat._dash_through(e, [&"light", &"dash"] as Array[StringName])
-	assert_eq(seen, [&"attack"] as Array[StringName], "the Quebra of a combo's blow, no new number")
+	game.combat.dodge_through(game.player.pos, Vector2(4.8, 0))
+	assert_eq(seen, [&"dash"] as Array[StringName], "the Quebra of the dodge (weight 0.5)")
 	assert_eq(e.stun_t, 0.0)
 
-
-func test_the_armored_take_more_from_the_investida_and_are_not_stunned() -> void:
+func test_the_armored_take_more_from_the_roll_and_are_not_stunned() -> void:
 	var s := _state([&"investida_implacavel"])
 	assert_eq(s.value(&"armor_pct", DASH), 0.5, "x1.5 of armor damage")
 	assert_eq(s.value(&"armor_pct", SPIN), 0.0)
@@ -502,7 +498,7 @@ func test_the_armored_take_more_from_the_investida_and_are_not_stunned() -> void
 	var e := _enemy(&"skeleton", Vector2(1.5, 0))
 	e.def = e.def.duplicate()
 	e.def.elite = true
-	game.combat._dash_through(e, [&"light", &"dash"] as Array[StringName])
+	game.combat.dodge_through(game.player.pos, Vector2(4.8, 0))
 	assert_eq(e.stun_t, 0.0)
 
 
@@ -510,7 +506,6 @@ func test_the_armored_take_more_from_the_investida_and_are_not_stunned() -> void
 ## Stats some code reads while StunRule is NONE (an inert stat would make a Gift that does nothing).
 const LIVE_STATS: Array[StringName] = [&"dodge_window_add", &"cadence_pct", &"apogee_pct", &"damage_pct", &"attack_magick_pct",
 	&"charge_time_pct", &"omega_cost_pct", &"final_pct", &"armor_pct", &"reach_pct", &"push_pct", &"stun_pct", &"dash_pierce", &"dash_stun"]
-
 
 func test_every_gift_changes_some_number_with_the_stun_rule_none() -> void:
 	StunRule.live = StunRule.Mode.NONE
@@ -532,26 +527,6 @@ func test_every_gift_changes_some_number_with_the_stun_rule_none() -> void:
 	assert_true(StunRule.shout_stuns(true, 0.5))
 	assert_false(StunRule.shout_stuns(false, 0.5))
 	assert_false(StunRule.shout_stuns(true, 0.0))
-
-
-func test_voz_do_leao_interrupts_the_common_for_one_second_with_the_stun_rule_none() -> void:
-	StunRule.live = StunRule.Mode.NONE
-	var stuns := []
-	for ids: Array in [[], [&"voz_do_leao"]]:
-		var typed: Array[StringName] = []
-		typed.assign(ids)
-		_run(typed)
-		var e := _enemy(&"skeleton", Vector2(1.5, 0))
-		e.hp = 5000.0
-		var elite := _enemy(&"skeleton", Vector2(-1.5, 0))
-		elite.hp = 5000.0
-		elite.def = elite.def.duplicate()
-		elite.def.elite = true
-		game.combat.strike(_node(game.player.tree, &"shout"), game.player.pos, Vector2.RIGHT)
-		stuns.append([e.stun_t, elite.stun_t])
-	assert_eq(stuns[0][0], 0.0, "no Gift, no stun")
-	assert_almost_eq(stuns[1][0], 1.0, 0.001)
-	assert_eq(stuns[1][1], 0.0, "an elite is never stunned by it")
 
 
 func test_the_twelve_gifts_cost_28_to_32_memory() -> void:
@@ -612,15 +587,3 @@ func test_apogeu_lands_with_a_long_hit_stop_a_shake_and_a_sound() -> void:
 	assert_gte(game.fx.hits.left() * 1000.0, 65.0, "Apogeu: 65 ms or more")
 	assert_gt(game.fx.hits.left(), plain)
 	assert_false(game.combat._apogee_landed, "spent")
-
-
-func test_the_investida_gives_one_frame_of_hit_stop_a_body_three_at_most() -> void:
-	_run([&"investida_implacavel"])
-	game.hero_gifts.step(0.0)
-	for k in 5:
-		var e := _enemy(&"skeleton", Vector2(1.5 + k * 0.7, 0))
-		e.hp = 5000.0
-	game.fx.hits.clear()
-	game.combat._dash_stops = 0
-	game.combat.strike(_node(game.player.tree, &"dash_cut"), game.player.pos, Vector2.RIGHT)
-	assert_eq(game.combat._dash_stops, Combat.DASH_STOPS_MAX, "three frames at most")

@@ -105,6 +105,8 @@ func step(dt: float) -> void:
 ## special the heavy one, the Brado the shout, the Omega its tag, the attack's last blow the finisher); -1 for a
 ## blow that is no button's end (the first cuts of the combo).
 static func trigger_of(node: ComboNode) -> int:
+	if node.has_tag(&"lance"):
+		return SkillDef.Trigger.SPECIAL  # GP-1: the Lança of the Especial slot (an Omega by its tag, but the special's button)
 	if node.has_tag(&"omega"):
 		return SkillDef.Trigger.OMEGA
 	if node.has_tag(&"dash"):

@@ -190,14 +190,14 @@ func test_three_encantos_learned_and_their_rules() -> void:
 		assert_ne(T.t(e.desc_key), String(e.desc_key))
 		assert_false(T.t(e.desc_key).contains("—"))
 	var pool := Enchants.learned(all)
-	assert_eq(pool.size(), 3, "the first three learned from the start")
+	assert_eq(pool.size(), 2, "GP-1: the first three learned, one (Eco do Passo, the Investida's) in reserve")
 	var triple := all.filter(func(e: EnchantDef) -> bool: return e.id == &"lamina_triplice")[0] as EnchantDef
 	var none: Array[EnchantDef] = []
 	assert_false(Enchants.allowed(triple, none, [&"corte_crescente"] as Array[StringName]), "never with its Gift")
 	var taken: Array[EnchantDef] = [triple]
 	var rng := RandomNumberGenerator.new()
 	var offers := Enchants.offers(pool, taken, [] as Array[StringName], rng)
-	assert_eq(offers.size(), 2)
+	assert_eq(offers.size(), 1, "the pool of two without the one taken")
 	assert_false(offers.has(triple), "never one taken")
 
 
@@ -205,7 +205,7 @@ func test_an_enchants_door_opens_the_choice_and_counts_two_at_most() -> void:
 	_run()
 	game.rooms._give(R.ENCHANT)
 	assert_eq(game.mode, Game.Mode.CHOICE)
-	assert_eq(game.enchant_options.size(), 3)
+	assert_eq(game.enchant_options.size(), 2)
 	var first := game.enchant_options[0]
 	game.take_enchant(first)
 	assert_eq(game.boons.enchants, [first] as Array[EnchantDef])

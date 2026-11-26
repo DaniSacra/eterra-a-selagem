@@ -49,15 +49,21 @@ func _frame(p: Player, taps: Array = [], held: Array = []) -> void:
 	pad.released.clear()
 
 
+## GP-1: a tap plays on its release (ButtonIntent), so the press frame is followed by a frame with the button up.
+func _tap(p: Player, action: StringName) -> void:
+	_frame(p, [action])
+	_frame(p)
+
+
 func test_the_basic_attack_only_steps_as_it_lands_with_the_direction_held() -> void:
 	# PT-25-4: the windup is struck standing still and the direction held never walks him; the blow's own step
 	# (ComboNode.step, along the aim) is all that carries him until the legs are free
 	var p := _room()
 	pad.move = Vector2.RIGHT
-	var at := p.pos
 	var hit := [false]  # (a lambda keeps no copy of a bool)
 	p.runner.move_hit.connect(func(_n: ComboNode) -> void: hit[0] = true)
-	_frame(p, [&"light_attack"])
+	_tap(p, &"light_attack")
+	var at := p.pos  # (a tap plays on its release: he walked the frame or two of the click)
 	var frames := 0
 	while p.runner.planted() and frames < 60:
 		if not hit[0]:
@@ -75,12 +81,12 @@ func test_the_basic_attack_only_steps_as_it_lands_with_the_direction_held() -> v
 func test_the_whole_combo_steps_forward_a_little_each_blow() -> void:
 	var p := _room()
 	pad.move = Vector2.RIGHT
-	var at := p.pos
 	var ids: Array[StringName] = []
 	p.runner.move_started.connect(func(n: ComboNode) -> void: ids.append(n.id))
-	_frame(p, [&"light_attack"])
+	_tap(p, &"light_attack")
+	var at := p.pos
 	for i in 80:
-		_frame(p, [&"light_attack"] if not ids.has(&"cut3") else [])
+		_frame(p, [&"light_attack"] if i % 2 == 0 and not ids.has(&"cut3") else [])
 		if ids.size() == 3 and not p.runner.is_attacking():
 			break
 	assert_eq(ids, [&"cut1", &"cut2", &"cut3"] as Array[StringName])
@@ -98,12 +104,16 @@ func test_after_the_special_and_its_omega_the_legs_come_back() -> void:
 		pad.move = Vector2.RIGHT
 		var at := p.pos
 		var walked := -1
+		var planted := false
 		for i in 120:
 			if held:
-				_frame(p, [], [&"heavy_attack"] if i < 45 else [])
+				_frame(p, [], [&"heavy_attack"] if i < 55 else [])
 			else:
 				_frame(p, [&"heavy_attack"] if i == 0 else [])
-			if p.pos.x > at.x + 0.01 and walked < 0:
+			planted = planted or p.runner.planted()
+			if not planted:
+				at = p.pos  # (a tap plays on its release: he walks the frame or two of the click)
+			elif p.pos.x > at.x + 0.01 and walked < 0:
 				walked = i
 		assert_between(walked, 1, 119, "walks again after the %s" % ("Omega special" if held else "special"))
 		assert_eq(p.runner.stage(), S.IDLE, "nothing left held")
@@ -202,7 +212,7 @@ func test_mashing_the_attack_starts_no_blow_outside_its_window() -> void:
 func test_the_return_clip_plays_when_he_stands() -> void:
 	var p := _room()
 	pad.move = Vector2.ZERO
-	_frame(p, [&"light_attack"])
+	_tap(p, &"light_attack")
 	var anim := p.get(&"_anim") as AnimationPlayer
 	var played: Array[StringName] = []
 	for i in 90:
@@ -225,10 +235,10 @@ func test_the_spin_sounds_on_its_blade() -> void:
 	p.runner.move_started.connect(func(n: ComboNode) -> void: start_ms[n.id] = frame[0] * 1000.0 / 60.0)
 	p.runner.move_hit.connect(func(n: ComboNode) -> void: hit_ms[n.id] = frame[0] * 1000.0 / 60.0)
 	Audio.listen(true, func() -> int: return roundi(frame[0] * 1000.0 / 60.0))
-	_frame(p, [&"light_attack"])
+	_tap(p, &"light_attack")
 	for i in 80:
 		frame[0] += 1
-		_frame(p, [&"light_attack"] if not start_ms.has(&"cut3") else [])
+		_frame(p, [&"light_attack"] if i % 2 == 0 and not start_ms.has(&"cut3") else [])
 	var at := {}
 	for h: Array in Audio.heard:
 		if not at.has(h[0]):
@@ -238,7 +248,7 @@ func test_the_spin_sounds_on_its_blade() -> void:
 	assert_true(at.has(&"blade_spin"), "its swish played")
 	assert_almost_eq(at[&"blade_spin"] + 60.0, float(hit_ms[&"cut3"]), 2000.0 / 60.0, "the swish peaks on the blade (2 frames)")
 	assert_almost_eq(float(at.get(&"spin_gather", -1.0)), float(start_ms[&"cut3"]), 17.0, "the press only gathers")
-	assert_almost_eq(float(at.get(&"blade", -1.0)), 0.0, 1.0, "cut1 sounds as it starts")
+	assert_almost_eq(float(at.get(&"blade", -1.0)), float(start_ms[&"cut1"]), 17.0, "cut1 sounds as it starts")
 	assert_almost_eq(float(at.get(&"blade_heavy", -1.0)), float(start_ms[&"cut2"]), 17.0, "cut2 too")
 
 
@@ -247,10 +257,10 @@ func test_a_dodge_that_cuts_the_spin_drops_its_swish() -> void:
 	var spun := [false]
 	p.runner.move_started.connect(func(n: ComboNode) -> void: spun[0] = spun[0] or n.id == &"cut3")
 	Audio.listen(true)
-	_frame(p, [&"light_attack"])
+	_tap(p, &"light_attack")
 	var i := 0
 	while not spun[0] and i < 80:
-		_frame(p, [&"light_attack"])
+		_frame(p, [&"light_attack"] if i % 2 == 0 else [])
 		i += 1
 	_frame(p)
 	_frame(p, [&"dodge"])

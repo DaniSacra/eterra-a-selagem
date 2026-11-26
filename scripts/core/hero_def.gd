@@ -76,6 +76,19 @@ static var _maga: HeroDef
 @export var passive_tags: Array[StringName] = [&"finisher", &"dash", &"omega"]
 @export var passive_never: Array[StringName] = [&"ultimate"]
 
+@export_group("Ritmo")
+## Ritmo de Batalha (GP-1, warrior_v1 6; BattleRhythm): a finisher that lands arms it for rhythm_time seconds; the next strong blow that
+## spends Magia (the Esmagador, the Corte Circular, the Lança) takes its bonus and the state is gone. All prototype numbers.
+## rhythm_time 0 turns it off (the Maga's).
+@export var rhythm_time := 0.0
+## The Esmagador's extra Quebra weight, the Corte Circular's stun (seconds, commons only) and extra Quebra weight, the Lança's extra
+## damage share and extra reach share.
+@export var rhythm_smash_poise := 0.0
+@export var rhythm_power_stun := 0.0
+@export var rhythm_power_poise := 0.0
+@export var rhythm_special_dmg := 0.0
+@export var rhythm_special_reach := 0.0
+
 @export_group("Arcane kit")
 ## The Maga's kit (null: not this hero's): see ArcaneKit and Arcane.
 @export var arcane: ArcaneKit

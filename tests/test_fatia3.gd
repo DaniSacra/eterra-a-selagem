@@ -56,7 +56,7 @@ func test_inscribe_behind_the_third_tool_learns_an_encanto() -> void:
 	var forge := Forge.new(Forge.load_catalog())
 	var catalog := Enchants.load_catalog()
 	var d := SaveData.defaults()
-	assert_eq(Enchants.learned(catalog, d).size(), 3, "the three of the Fatia 2")
+	assert_eq(Enchants.learned(catalog, d).size(), 2, "GP-1: the three of the Fatia 2 less the Retorno do Corte, in reserve")
 	var cut := forge.find(&"corte_sismico")
 	assert_eq(cut.track, Forge.INSCRIBE)
 	assert_eq(T.t(cut.name_key), "Corte Sísmico", "it reads as the Encanto")
@@ -66,7 +66,7 @@ func test_inscribe_behind_the_third_tool_learns_an_encanto() -> void:
 	assert_true(forge.buy(d, &"corte_sismico"))
 	assert_eq(MaterialPurse.amount(d, MaterialPurse.SILVER), 30)
 	var pool := Enchants.learned(catalog, d)
-	assert_eq(pool.size(), 4)
+	assert_eq(pool.size(), 3)
 	assert_true(pool.any(func(e: EnchantDef) -> bool: return e.id == &"corte_sismico"))
 	assert_false(forge.ranks_for(d).has(cut), "no numbers of its own in the descent")
 
@@ -76,6 +76,9 @@ func test_encantos_four_to_six_and_their_rules() -> void:
 	assert_eq(all.size(), 6)
 	var none: Array[EnchantDef] = []
 	for e in all.slice(3):
+		if e.reserve:
+			assert_true(e.id == &"eco_do_passo", "only the Eco do Passo (the Investida's) is in reserve here")
+			continue
 		assert_false(e.learned, "%s waits to be inscribed" % e.id)
 		assert_false(T.t(e.desc_key).contains("—"))
 	var twin := all[4]
@@ -103,11 +106,11 @@ func test_onda_gemea_throws_two_at_the_sides() -> void:
 	var before := game.projectiles.shots.size()
 	game.combat.strike(heavy, Vector2.ZERO, Vector2.RIGHT)
 	var plain := game.projectiles.shots.size() - before
-	assert_eq(plain, 1, "the special's own wave")
+	assert_eq(plain, 0, "GP-1: the Lança throws no wave of its own")
 	before = game.projectiles.shots.size()
 	game.boons.take_enchant(load("res://data/enchants/04_onda_gemea.tres"))
 	game.combat.strike(heavy, Vector2.ZERO, Vector2.RIGHT)
-	assert_eq(game.projectiles.shots.size() - before, 3, "the special's own and two more at the sides")
+	assert_eq(game.projectiles.shots.size() - before, 2, "two waves at the sides of the Lança")
 
 
 func _first(tag: StringName) -> ComboNode:

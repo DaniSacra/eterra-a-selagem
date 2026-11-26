@@ -26,5 +26,5 @@ name_key = &"enchant_eco_do_passo"
 desc_key = &"enchant_eco_do_passo_desc"
 slot = 4
 mods = Array[ExtResource("1_7ja8y")]([SubResource("Resource_r5hkb"), SubResource("Resource_vbbkh")])
-learned = false
 excludes = Array[StringName]([&"retorno_do_corte"])
+reserve = true

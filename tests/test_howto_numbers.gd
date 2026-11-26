@@ -20,22 +20,19 @@ func _says(key: StringName, number: String) -> void:
 	assert_string_contains(T.t(key), number, String(key))
 
 
-func test_the_special() -> void:
-	var n := _node(&"bolt")
-	assert_not_null(n)
-	_says(&"howto_heavy_attack_desc", "%d de dano" % int(n.effect_power))
-	_says(&"howto_heavy_attack_desc", "%d de Magia" % int(n.magick_cost))
-	_says(&"hero_skill_special", "%d de Magia" % int(n.magick_cost))
-	_says(&"title_controls", "%d de Magia" % int(n.magick_cost))
+func test_the_right_button() -> void:
+	var lance := _node(&"lance")
+	var sweep := _node(&"sweep")
+	assert_not_null(lance)
+	assert_not_null(sweep)
+	_says(&"howto_heavy_attack_desc", "%d de dano" % int(lance.damage))
+	_says(&"howto_heavy_attack_desc", "%d de dano" % int(sweep.damage))
+	_says(&"howto_heavy_attack_desc", "%d de Magia" % int(lance.magick_cost))
+	_says(&"howto_heavy_attack_desc", "%d de Magia" % int(sweep.magick_cost))
+	_says(&"hero_skill_special", "%d de Magia" % int(lance.magick_cost))
 
 
-func test_the_rush_and_the_shout() -> void:
-	var r := _node(&"dash_cut")
-	_says(&"howto_rush_desc", "estocada de %d" % int(r.damage))
-	_says(&"howto_rush_desc", "devolve %d de Magia" % int(r.magick_per_hit))
-	_says(&"howto_rush_desc", "%d segundos" % int(r.cooldown))
-	var s := _node(&"shout")
-	_says(&"howto_shout_desc", "fere %d" % int(s.damage))
-	_says(&"howto_shout_desc", "%d%% mais rápidos" % roundi(s.buff_speed * 100.0))
-	_says(&"howto_shout_desc", "%d%% menos dano" % roundi(s.buff_guard * 100.0))
-	_says(&"howto_shout_desc", "%d segundos" % int(s.cooldown))
+func test_the_left_button() -> void:
+	var smash := _node(&"smash")
+	_says(&"howto_light_attack_desc", "%d de dano" % int(smash.damage))
+	_says(&"howto_light_attack_desc", "%d de Magia" % int(smash.magick_cost))

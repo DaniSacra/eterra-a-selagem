@@ -169,8 +169,3 @@ func test_impact_pitch_goes_down_from_blow_1_to_the_finisher() -> void:
 	assert_eq(Combat.hit_pitch(c1), 1.0)
 	assert_lt(Combat.hit_pitch(c2), Combat.hit_pitch(c1))
 	assert_lt(Combat.hit_pitch(c3), Combat.hit_pitch(c2))
-
-
-func test_dash_stop_is_35_ms_for_at_most_three_bodies() -> void:
-	assert_eq(Combat.DASH_STOP_MS, 35.0)
-	assert_eq(Combat.DASH_STOPS_MAX, 3)
