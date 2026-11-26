@@ -30,8 +30,6 @@ func test_one_case_per_key() -> void:
 		&"obj_guardian": {"kind": &"miniboss", "fighting": true},
 		&"obj_shop": {"kind": &"shop", "doors_open": 1},
 		&"obj_morvath": {"kind": &"boss", "fighting": true},
-		&"obj_hub_tree": {"place": &"hub", "hub_new_station": true},
-		&"obj_hub_portal": {"place": &"hub"},
 		&"lesson_attack": {"kind": &"ante", "lesson": &"lesson_attack"},
 		&"lesson_special": {"kind": &"ante", "lesson": &"lesson_special"},
 		&"lesson_dodge": {"kind": &"ante", "lesson": &"lesson_dodge"},
@@ -75,8 +73,8 @@ func test_the_guardian_and_morvath_name_their_rooms() -> void:
 	assert_eq(Objective.pick({"kind": &"boss"}), &"obj_morvath")
 
 
-func test_the_hub_says_portal_when_nothing_new_waits() -> void:
-	assert_eq(Objective.pick({"place": &"hub", "hub_new_station": false}), &"obj_hub_portal")
+func test_the_hub_has_no_line() -> void:
+	assert_eq(Objective.pick({"place": &"hub"}), &"", "QW-5: the Santuário shows no objective")
 
 
 # ---------- enabled ----------
@@ -210,3 +208,28 @@ func test_morvath_is_asked_before_the_fight_and_in_it_never_after_the_victory() 
 	assert_eq(Objective.pick({"kind": &"boss", "fighting": true}), &"obj_morvath", "in it")
 	assert_eq(Objective.pick({"kind": &"boss", "reward_waiting": true}), &"obj_take", "the reward waits")
 	assert_eq(Objective.pick({"kind": &"boss", "doors_open": 1}), &"obj_find_way", "a door is open")
+
+
+# ---------- QW-6: the line's layout ----------
+
+func test_a_long_tip_wraps_inside_the_line_width() -> void:
+	var line := ObjectiveLine.new()
+	add_child_autofree(line)
+	line.set_key(&"lesson_special")
+	await wait_frames(2)
+	var label := line.get_child(0) as RichTextLabel
+	assert_lte(label.size.x, ObjectiveLine.text_width() + 0.5, "never wider than the line")
+	assert_lte(label.position.x + label.size.x, ObjectiveLine.WIDTH + 0.5)
+	assert_gt(label.get_content_height(), label.get_theme_font_size(&"normal_font_size") * 1.5, "the 87 letters take two lines or more")
+	# the clock stands at the middle of the 1280 px canvas; the line (22 px margin) ends well before it
+	assert_lt(22.0 + ObjectiveLine.WIDTH, 1280.0 * 0.5 - 100.0, "clear of the clock at 1280 x 720")
+
+
+func test_no_objective_text_is_longer_than_three_lines() -> void:
+	var line := ObjectiveLine.new()
+	add_child_autofree(line)
+	for key: StringName in Objective.KEYS:
+		line.set_key(key)
+		await wait_frames(1)
+		var label := line.get_child(0) as RichTextLabel
+		assert_lte(label.get_content_height(), 3 * 24, "%s fits three lines" % key)

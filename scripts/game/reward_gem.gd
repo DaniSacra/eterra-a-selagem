@@ -128,7 +128,7 @@ static func make(parent: Node3D, reward: RunMap.Reward, kind: RunMap.Kind, color
 		var di := door_of(parent)
 		if di >= 0:
 			lift = (parent.get_parent() as Rooms).game.arena.door_anchor(di).y
-			s = DOOR_SCALE
+			s = DOOR_SCALE * (TRIAL_DOOR_K if _in_trial(parent) else 1.0)
 	# the reliquary turned to the camera: its body behind the spot, the step on it
 	var frame := Node3D.new()
 	frame.rotation.y = deg_to_rad(Feel.live().cam_yaw)
@@ -193,6 +193,9 @@ static func make(parent: Node3D, reward: RunMap.Reward, kind: RunMap.Kind, color
 const DOOR_SCALE := 0.9  # Daniel 2026-11-25: "ainda muito enormes" (was 1.4)
 ## The share of its size a door's halo keeps (HALO * DOOR_SCALE * this stays under the 4.2 m of the closest doors).
 const DOOR_HALO := 0.85
+## BG-2: the Provação's chamber has its doors close together (4.2 m): their discs stand this much smaller so the
+## two medallions and their rings do not touch.
+const TRIAL_DOOR_K := 0.78
 const DOOR_ROD := 0.04
 const DOOR_ARCH_TOP := 4.9
 const DOOR_ARCH_BACK := 0.5
@@ -295,6 +298,11 @@ static func _iron() -> StandardMaterial3D:
 		_iron_mat.metallic = 0.6
 		_iron_mat.roughness = 0.6
 	return _iron_mat
+
+
+static func _in_trial(parent: Node3D) -> bool:
+	var rooms := parent.get_parent() as Rooms
+	return rooms != null and rooms.room != null and rooms.room.kind == RunMap.Kind.TRIAL
 
 
 ## True when `parent` stands where a door's sign floats (Arena.door_label of one of the room's exits).

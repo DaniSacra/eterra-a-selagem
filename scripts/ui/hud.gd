@@ -397,7 +397,7 @@ func _build_top() -> void:
 	top_left.add_child(ahead)
 	objective = ObjectiveLine.new()
 	add_child(objective)
-	_place(objective, Control.PRESET_TOP_LEFT, Vector2(MARGIN, OBJ_TOP), Vector2(380, ObjectiveLine.HEIGHT))
+	_place(objective, Control.PRESET_TOP_LEFT, Vector2(MARGIN, OBJ_TOP), Vector2(ObjectiveLine.WIDTH, ObjectiveLine.HEIGHT))
 	_clock = _label("0:00", UiKit.PALE, FONT_CLOCK, UiKit.number_font(), Control.PRESET_CENTER_TOP, Vector2.ZERO)
 	_clock.name = "clock"
 	_clock.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

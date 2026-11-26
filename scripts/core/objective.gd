@@ -3,17 +3,18 @@ extends RefCounted
 ## SW-O2: the one-line objective at the top left ("Explore a área", "Vença a sala"), pure. `pick` reads a context the
 ## HUD builds and answers the key of the line to show (&"" none); `enabled` says whether the line is on in this save;
 ## `text` fills the keys with the real bindings. No node, no save writes: the HUD and the hub only display it.
-##   Objective.pick({place: &"run", kind: &"ante", near_plates: true}) -> &"obj_dodge"
+##   Objective.pick({kind: &"ante", near_plates: true}) -> &"obj_dodge"
+## The Santuário has no line (QW-5, Daniel 2026-11-26): only the rooms of a descent speak.
 ## ctx (every key optional):
-##   place: &"run" or &"hub"; kind: the room's kind as a lowercase name (&"ante", &"combat", &"miniboss", &"shop",
+##   kind: the room's kind as a lowercase name (&"ante", &"combat", &"miniboss", &"shop",
 ##   &"boss"...); fighting; reward_waiting; doors_open (how many); first_choice (two doors for the first time);
 ##   screen: &"" none, &"boon" the Blessing's screen, &"other" any other; near_plates; near_breakable; crossed_plates;
-##   broke_one; lesson (PT-25-8: the Antessala's tip now, AnteLesson.key; it comes before the rest there); hub_new_station (the Árvore waits to be visited).
+##   broke_one; lesson (PT-25-8: the Antessala's tip now, AnteLesson.key; it comes before the rest there).
 
 ## A save with this many descents or fewer still has the line when the option is on (the tutorial and two more: D-O3 b).
 const OBJ_RUNS := 3
 const KEYS: Array[StringName] = [&"obj_explore", &"obj_dodge", &"obj_break", &"obj_find_way", &"obj_win", &"obj_take",
-		&"obj_bless", &"lesson_attack", &"lesson_special", &"lesson_dodge", &"lesson_shout", &"lesson_rush", &"obj_door", &"obj_guardian", &"obj_shop", &"obj_morvath", &"obj_hub_tree", &"obj_hub_portal"]
+		&"obj_bless", &"lesson_attack", &"lesson_special", &"lesson_dodge", &"lesson_shout", &"lesson_rush", &"obj_door", &"obj_guardian", &"obj_shop", &"obj_morvath"]
 ## Metres from the plates and from a breakable at which the Antessala speaks of them (FirstDescentDef obj_*_near).
 const DODGE_NEAR := 6.0
 const BREAK_NEAR := 5.0
@@ -22,10 +23,6 @@ const BREAK_NEAR := 5.0
 ## The line due now, or &"".
 static func pick(ctx: Dictionary) -> StringName:
 	var screen: StringName = ctx.get("screen", &"")
-	if ctx.get("place", &"run") == &"hub":
-		if screen != &"":
-			return &""
-		return &"obj_hub_tree" if bool(ctx.get("hub_new_station", false)) else &"obj_hub_portal"
 	if screen == &"boon":
 		return &"obj_bless"
 	if screen != &"":

@@ -13,6 +13,9 @@ const TEXT_PX := 18
 const DIAMOND := 5.0
 const TEXT_LEFT := 20.0
 const HEIGHT := 28.0
+## QW-6: the line never runs wider than WIDTH (canvas px, so at 1280 x 720 it stays well left of the clock): a long tip
+## wraps at the word under the first line, the thread under the last one.
+const WIDTH := 420.0
 const PULSE := 0.6
 
 var key := &""
@@ -27,12 +30,21 @@ var _tween: Tween
 func _ready() -> void:
 	name = "ObjectiveLine"
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	custom_minimum_size = Vector2(380.0, HEIGHT)
-	_label = UiKit.keyed_line(UiKit.PALE, TEXT_PX)
+	custom_minimum_size = Vector2(WIDTH, HEIGHT)
+	_label = UiKit.keyed_line(UiKit.PALE, TEXT_PX, true)
+	_label.fit_content = true
+	_label.scroll_active = false
+	_label.custom_minimum_size = Vector2(text_width(), 0.0)
+	_label.size = Vector2(text_width(), HEIGHT)
 	_label.position = Vector2(TEXT_LEFT, 0.0)
 	_label.modulate.a = 0.0
 	add_child(_label)
 	modulate.a = 0.0
+
+
+## The width the words wrap at.
+static func text_width() -> float:
+	return WIDTH - TEXT_LEFT
 
 
 ## Shows the line of this key (&"": none). The same key only refreshes its words (a rebound key reads right).
@@ -66,7 +78,7 @@ func _swap(words: String) -> void:
 	_rule = 0.0
 	_rule_alpha = 0.0
 	if words != "":
-		_label.reset_size()
+		_label.size = Vector2(text_width(), 0.0)
 	queue_redraw()
 
 
@@ -94,6 +106,6 @@ func _draw() -> void:
 	draw_colored_polygon(PackedVector2Array([c + Vector2(0, -d), c + Vector2(d, 0), c + Vector2(0, d), c + Vector2(-d, 0)]),
 			gold)
 	if _rule_alpha > 0.0:
-		var w := _label.size.x * _rule
-		var y := HEIGHT - 1.0
+		var w := minf(_label.get_content_width() as float, text_width()) * _rule
+		var y := maxf(HEIGHT, _label.get_content_height() as float) - 1.0
 		draw_line(Vector2(TEXT_LEFT, y), Vector2(TEXT_LEFT + w, y), Color(UiKit.OLD_GOLD.lightened(0.15), _rule_alpha), 1.5, true)

@@ -626,7 +626,8 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 	var place := T.t(game.arena.name_key) if room.kind != RunMap.Kind.BOSS and game.arena.name_key != &"" else ""
 	# the room's name once: the Provação and the Altar are named alike by their kind and by their arena (the Antessala has
 	# no word of its own: the arrival's line and the objective speak there)
-	if notice != place and room.kind != RunMap.Kind.ANTE:
+	# BG-2: nor the Provação and the Altar, whose spot's sign says their name right there
+	if notice != place and not room.kind in [RunMap.Kind.ANTE, RunMap.Kind.TRIAL, RunMap.Kind.ALTAR]:
 		game.hud.show_notice(notice, 2.0)
 	if place != "":
 		# the arena's name for 2 s (decision D-33)

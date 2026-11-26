@@ -119,9 +119,8 @@ de texto. A 2 é a mais segura em lore e pode virar a inscrição gravada no ane
 | `obj_guardian` | Vença o guardião | sala do guardião |
 | `obj_shop` | Compre o que quiser e siga | loja |
 | `obj_morvath` | Enfrente Morvath | sala de Morvath |
-| `obj_hub_tree` | Visite a Árvore de Dons | Santuário, depois da descida-tutorial, até abrir a tela |
-| `obj_hub_portal` | Volte às catacumbas pelo Portal | Santuário, quando nada novo espera |
 
+- O Santuário não tem linha de objetivo (QW-5, decisão do Daniel de 2026-11-26): só as salas da descida.
 - Na descida-tutorial a linha está sempre ligada. Nas descidas normais: recomendo ligada nas **2 descidas seguintes** e depois desligada,
   com opção "Mostrar objetivo" em Configurações (D-O3).
 
@@ -134,9 +133,7 @@ de texto. A 2 é a mais segura em lore e pode virar a inscrição gravada no ane
   `Game.mode`, a tela aberta (`Game._screen`).
 
 ### O que é novo
-- Código puro: `Objective` (`scripts/core/objective.gd`): `pick(ctx: Dictionary) -> StringName`, com `ctx` = `{place: &"run"|&"hub",
-  kind, fighting, reward_waiting, doors_open, first_choice, screen, near_plates, near_breakable, crossed_plates, broke_one,
-  hub_new_station}`. Sem nó, sem save. `enabled(data, tutorial: bool) -> bool` (tutorial, ou `runs <= OBJ_RUNS` (3) e a opção ligada).
+- Código puro: `Objective` (`scripts/core/objective.gd`): `pick(ctx: Dictionary) -> StringName`, com `ctx` = `{kind, fighting, reward_waiting, doors_open, first_choice, screen, near_plates, near_breakable, crossed_plates, broke_one}`. Sem nó, sem save. `enabled(data, tutorial: bool) -> bool` (tutorial, ou `runs <= OBJ_RUNS` (3) e a opção ligada).
 - Código de tela: `ObjectiveLine` (`scripts/ui/objective_line.gd`): `set_key(key)` faz a troca animada; `Hud` monta o `ctx` a cada 0,2 s.
 - Dado: a ordem e as distâncias (`obj_dodge_near` 6 m, `obj_break_near` 5 m) em `FirstDescentDef` (parte `first`).
 - Texto: as 13 chaves `obj_*` em `data/text_pt.tres`; `opt_objective` para a opção.

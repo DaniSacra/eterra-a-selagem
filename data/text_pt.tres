@@ -1430,8 +1430,6 @@ entries = {
 "obj_guardian": "Vença o guardião",
 "obj_shop": "Compre o que quiser e siga",
 "obj_morvath": "Enfrente Morvath",
-"obj_hub_tree": "Visite a Árvore de Dons",
-"obj_hub_portal": "Volte às catacumbas pelo Portal",
 "opt_objective": "Mostrar objetivo",
 "opt_objective_tip": "Uma linha no canto da tela diz o que fazer agora. Nas primeiras descidas ela sempre aparece.",
 "arrival_line": "Pela luz de Elun. Morvath ergueu os mortos, e eu desço para selá-lo.",

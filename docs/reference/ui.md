@@ -512,7 +512,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 ## A Videira e a escolha de herói, telas (V2 e PT-9, 2026-11-23; testes em `tests/test_videira_v2.gd`, `tests/test_hero_station.gd`)
 - **`VineScreen`** (3d, `scripts/ui/vine_screen.gd`, `host.open(VineScreen.new(), [Save.data])`): **mapa de constelações (SW-M1, 2026-11-25)**.
   Céu escuro (`SkyGround` + `StarField`, estrelas que piscam, nuvens de cor) com uma figura por ramo, montada com os nós que existem:
-  Vida = o Leão, Provisão = o Cálice, Perseverança = a Espada (nomes a aprovar; selo e videira ficam para ramos futuros). Dados em `VineLayout`
+  Vida = o Leão, Provisão = o Cálice, Perseverança = a Espada (nomes aprovados; selo e videira ficam para ramos futuros). Dados em `VineLayout`
   (`CENTER`, `NODES`, `ROOT`, `OUTLINE`, `TINT`: coordenadas do mundo em px do palco; um ramo com um nó a mais pede uma linha, não código).
   `VineSky` desenha (cada nó é uma estrela por estado: acesa, anel pulsando, anel apagado, ponto escuro; linhas de luz da raiz ao nó; traços
   fracos que fecham a figura; anel e brilho ao regar). `SkyCamera` (pura) faz o zoom suave: abre no céu inteiro (zoom 1), escolher uma figura
@@ -678,7 +678,7 @@ livro (o livro não passa de 1,9 alturas de largura, `BookDesk.side_room`, ou se
   Esc volta aos cartões). `FirstTips.mark_skipped(data)`: `first` 0 vira 2, 1 fica 1.
 - **Quinto losango** (SW-O5): `Hud.ult_open()` pergunta a `Milestones.ult_open(Save.data)` (aberto sem o arquivo e sem save); fechado, o
   losango do Golpe Supremo e a carga fina não aparecem (antes aparecia trancado com "Maestria N").
-- Todos os textos novos estão marcados a aprovar pelo Daniel (relatório da fase).
+- Os textos novos da fase foram aprovados pelo Daniel como estão (2026-11-26).
 
 ## Regar segurando e Espólios (PT-25-3 e PT-25-6, 2026-11-25; testes em `tests/test_spoils_hold.gd`)
 - **`HoldPress`** (`scripts/ui/hold_press.gd`): componente comum de "segure para confirmar" sobre um `Button`, em cima do
@@ -756,3 +756,11 @@ livro (o livro não passa de 1,9 alturas de largura, `BookDesk.side_room`, ou se
   em `VineSky`; rótulo de raiz crescida com filete verde `#94A76A` (`VineTag.VINE_GREEN`); "Raízes crescidas no céu todo: n de m"
   (a contagem é do total das três figuras); a barra diz "Segure para regar".
 - Texto "Clique esquerdo/direito" só nas chaves `mouse_1`/`mouse_2`; em todo o resto o ícone do mouse (`MouseGlyph`).
+
+## Lote 1 de 2026-11-26 (BG-2, QW-5, QW-6)
+- **Linha de objetivo** (`ObjectiveLine`): largura máxima `WIDTH` 420 px do canvas (em 1280 x 720 termina bem antes do relógio); dica longa quebra
+  na palavra (até 3 linhas) e o filete dourado vai sob a última linha. Teste em `tests/test_objective.gd`.
+- **Santuário sem linha** (decisão do Daniel): as chaves `obj_hub_tree`/`obj_hub_portal` e o ramo `place: hub` de `Objective.pick` foram apagados;
+  `pick` com `place: hub` devolve `&""`. A linha só existe nas salas da descida.
+- **Provação** (BG-2): o aviso "Provação"/"Altar" do HUD não aparece mais (a placa do ponto já diz o nome); os medalhões das duas portas da câmara
+  ficam 22% menores (`RewardGem.TRIAL_DOOR_K`) para não se encostarem. A bolinha escura era o `DoorSeal` do anjo duplo, já com glifo desde `3da7495c`.
