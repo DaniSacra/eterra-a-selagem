@@ -336,20 +336,26 @@ group = 2
 [sub_resource type="Resource" id="Resource_maxa6"]
 script = ExtResource("2_kin83")
 at = Vector2(2.8, -12.3)
-zone = Rect2(0.79999995, -12.9, 4, 1.1999998)
-mouth = Rect2(0.79999995, -12.9, 4, 2.3999996)
+zone = Rect2(1.3, -12.9, 3.0000002, 1.1999998)
+mouth = Rect2(1.3, -12.9, 3.0000002, 2.3999996)
+medal_up = 2.5
+sign_up = 0.8
 
 [sub_resource type="Resource" id="Resource_k887a"]
 script = ExtResource("2_kin83")
 at = Vector2(7, -12.3)
-zone = Rect2(5, -12.9, 4, 1.1999998)
-mouth = Rect2(5, -12.9, 4, 2.3999996)
+zone = Rect2(5.5, -12.9, 3, 1.1999998)
+mouth = Rect2(5.5, -12.9, 3, 2.3999996)
+medal_up = 2.5
+sign_up = 0.8
 
 [sub_resource type="Resource" id="Resource_51h6f"]
 script = ExtResource("2_kin83")
-at = Vector2(-2, -12.3)
-zone = Rect2(-4, -12.9, 4, 1.1999998)
-mouth = Rect2(-4, -12.9, 4, 2.3999996)
+at = Vector2(-3, -12.3)
+zone = Rect2(-4.5, -12.9, 3, 1.1999998)
+mouth = Rect2(-4.5, -12.9, 3, 2.3999996)
+medal_up = 2.5
+sign_up = 0.8
 
 [sub_resource type="Resource" id="Resource_3pvnp"]
 script = ExtResource("3_8ur2y")
@@ -522,7 +528,7 @@ piece = &"oil_urn"
 
 [sub_resource type="Resource" id="Resource_uibvc"]
 script = ExtResource("4_wmys5")
-center = Vector2(3.4, -11)
+center = Vector2(4.9, -11)
 radius = 0.45
 blocks_move = false
 blocks_shots = false
@@ -531,7 +537,7 @@ height = 1.2
 
 [sub_resource type="Resource" id="Resource_0ylts"]
 script = ExtResource("4_wmys5")
-center = Vector2(8.6, -11)
+center = Vector2(9.7, -11)
 radius = 0.45
 blocks_move = false
 blocks_shots = false
@@ -586,20 +592,26 @@ group = 2
 [sub_resource type="Resource" id="Resource_u37gx"]
 script = ExtResource("2_kin83")
 at = Vector2(2.8, -12.3)
-zone = Rect2(0.79999995, -12.9, 4, 1.1999998)
-mouth = Rect2(0.79999995, -12.9, 4, 2.3999996)
+zone = Rect2(1.3, -12.9, 3.0000002, 1.1999998)
+mouth = Rect2(1.3, -12.9, 3.0000002, 2.3999996)
+medal_up = 2.5
+sign_up = 0.8
 
 [sub_resource type="Resource" id="Resource_ynxxf"]
 script = ExtResource("2_kin83")
 at = Vector2(7, -12.3)
-zone = Rect2(5, -12.9, 4, 1.1999998)
-mouth = Rect2(5, -12.9, 4, 2.3999996)
+zone = Rect2(5.5, -12.9, 3, 1.1999998)
+mouth = Rect2(5.5, -12.9, 3, 2.3999996)
+medal_up = 2.5
+sign_up = 0.8
 
 [sub_resource type="Resource" id="Resource_4agcp"]
 script = ExtResource("2_kin83")
-at = Vector2(-2, -12.3)
-zone = Rect2(-4, -12.9, 4, 1.1999998)
-mouth = Rect2(-4, -12.9, 4, 2.3999996)
+at = Vector2(-3, -12.3)
+zone = Rect2(-4.5, -12.9, 3, 1.1999998)
+mouth = Rect2(-4.5, -12.9, 3, 2.3999996)
+medal_up = 2.5
+sign_up = 0.8
 
 [sub_resource type="Resource" id="Resource_eqnfm"]
 script = ExtResource("7_gcpwj")
@@ -747,7 +759,7 @@ height = 1.2
 
 [sub_resource type="Resource" id="Resource_t738q"]
 script = ExtResource("4_wmys5")
-center = Vector2(2.2, -11)
+center = Vector2(4.9, -11)
 radius = 0.45
 blocks_move = false
 blocks_shots = false
@@ -756,7 +768,7 @@ height = 1.2
 
 [sub_resource type="Resource" id="Resource_mpgig"]
 script = ExtResource("4_wmys5")
-center = Vector2(7.8, -11)
+center = Vector2(9.7, -11)
 radius = 0.45
 blocks_move = false
 blocks_shots = false

@@ -1208,10 +1208,14 @@ func _guardian_doors(h: float) -> Array:
 
 
 ## The doors of the north wall (z = `north`) at each x of `xs`.
-func _doors(north: float, xs: Array) -> Array[ArenaExit]:
+func _doors(north: float, xs: Array, width := 4.0, medal := Vector2(-1.0, -1.0)) -> Array[ArenaExit]:
 	var list: Array[ArenaExit] = []
 	for x: float in xs:
-		list.append(ArenaExit.at_edge(Vector2(x, north), Vector2(0, 1)))
+		var e := ArenaExit.at_edge(Vector2(x, north), Vector2(0, 1), width)
+		if medal.x >= 0.0:
+			e.medal_up = medal.x
+			e.sign_up = medal.y
+		list.append(e)
 	return list
 
 
@@ -1490,6 +1494,12 @@ func _urn(p: Vector2) -> ArenaObstacle:
 
 ## Where the Cripta A's two urns stand (at the foot of the east and north walls, far from the way in) and their channels
 ## (west along the middle row's north side, east along the north wall under the door's mouth).
+## SL-02 (PT-25-10): the Cripta's doors are big and closed (CryptLook): a 3 m mouth each, 4.2 m apart so masonry stands
+## between them; the medallion hangs in the doorway (its height, the height where its text starts).
+const CRYPT_DOOR := 3.0
+## The third door (in use only with three ways), moved from -2.0 to -3.0 so the oil urn at (-1.6, -10) leaves its mouth open.
+const CRYPT_THIRD := -3.0
+const CRYPT_MEDAL := Vector2(2.5, 0.8)
 const CRYPT_URNS := [Vector2(11.2, -1.6), Vector2(-1.6, -10.0)]
 const CRYPT_OIL := [Vector4(10.2, -2.6, 4.2, -2.6), Vector4(-0.6, -9.0, 5.4, -9.0)]
 
@@ -1503,8 +1513,9 @@ func _crypt() -> RoomLayout:
 	l.max_ranged = 2
 	l.banned_roles = [&"area"]
 	l.guardian = false
-	var bowls: Array[ArenaObstacle] = [_bowl(3.4, -11.0), _bowl(8.6, -11.0)]
-	var bowls_b: Array[ArenaObstacle] = [_bowl(2.2, -11.0), _bowl(7.8, -11.0)]
+	# SL-02: the fire bowls in the north wall stand between the two doors and past the east one (the doors are 3 m wide now)
+	var bowls: Array[ArenaObstacle] = [_bowl(4.9, -11.0), _bowl(9.7, -11.0)]
+	var bowls_b: Array[ArenaObstacle] = [_bowl(4.9, -11.0), _bowl(9.7, -11.0)]
 	var a: Array[ArenaObstacle] = [
 		_sarcophagus(0.5, 0.0, 4.0, 2.0, 1.5),
 		_column(-6.0, -5.6, 5.2, 0.65), _column(7.0, -5.6, 5.2, 0.65), _column(-5.5, 5.6, 5.2, 0.65),
@@ -1528,9 +1539,10 @@ func _crypt() -> RoomLayout:
 	]
 	b.append_array(bowls_b)
 	l.variants = [_variant(b)]
-	_gate(l, Vector2(-1.0, 8.6), -10.5, [2.8, 7.0, -2.0])
+	_gate(l, Vector2(-1.0, 8.6), -10.5, [2.8, 7.0, CRYPT_THIRD])
+	l.exits = _doors(-10.5, [2.8, 7.0, CRYPT_THIRD], CRYPT_DOOR, CRYPT_MEDAL)
 	# B: the dividing wall stands from the north wall at x 0.5, so two doors west of it and one east
-	l.variants[0].exits = _doors(-10.5, [2.8, 7.0, -2.0])
+	l.variants[0].exits = _doors(-10.5, [2.8, 7.0, CRYPT_THIRD], CRYPT_DOOR, CRYPT_MEDAL)
 	l.spawns = [_rect(2, 7, -9.5, -7.5), _rect(8.5, 11.2, -4, -0.5), _rect(6.5, 11, 7, 9.5), _rect(-10, -7.5, -10, -8)]
 	# the whole crypt fits the screen: the camera keeps to one point, as in the Seal Chamber
 	l.cam_target = Vector2(1.0, 1.5)

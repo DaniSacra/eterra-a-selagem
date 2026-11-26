@@ -26,6 +26,14 @@ uniform vec2 sheen_at = vec2(-2.0, 0.0);
 uniform float sheen_radius = 12.0;
 uniform float sheen = 0.1;
 uniform float roughness = 0.14;
+// SL-01b, the sunken channel: the shadow the kerbs cast on the water (how dark, how far in from the bank, a share of
+// the half width) and the cold light the surface returns, as streaks stretched along the view's depth like the
+// reflections of upright things (their colour, how strongly, the camera's yaw in degrees)
+uniform float rim_shadow = 0.5;
+uniform float rim_width = 0.3;
+uniform vec3 reflect_color : source_color = vec3(0.45, 0.6, 0.72);
+uniform float reflect_amount = 0.3;
+uniform float view_yaw = 35.0;
 
 varying vec3 world;
 
@@ -60,10 +68,16 @@ void fragment() {
 	vec3 n = normalize(vec3(-gx * ripple_bend * 12.0, 1.0, -gz * ripple_bend * 12.0));
 	NORMAL = normalize((VIEW_MATRIX * vec4(n, 0.0)).xyz);
 	ALBEDO = mix(shallow, deep, smoothstep(0.0, 0.6, across));
+	ALBEDO *= 1.0 - rim_shadow * (1.0 - smoothstep(0.0, rim_width, across));
+	float yaw = radians(view_yaw);
+	vec2 right = vec2(cos(yaw), -sin(yaw));
+	vec2 depth = vec2(-sin(yaw), -cos(yaw));
+	vec2 sp = vec2(dot(world.xz, right), dot(world.xz, depth));
+	float streak = smoothstep(0.55, 0.95, noise(vec2(sp.x * 2.4, sp.y * 0.28 + TIME * 0.03) + h * 0.6));
 	ROUGHNESS = roughness;
 	SPECULAR = 0.35;
 	// a faint glint on the crests, strongest where the surface leans (it never glows on its own)
 	float lit = 1.0 - smoothstep(0.0, sheen_radius, distance(world.xz, sheen_at));
-	EMISSION = glint_color * (glint * smoothstep(0.62, 0.9, h) * 0.25 + sheen * lit * (0.4 + 0.6 * h) * smoothstep(0.0, 0.5, across));
+	EMISSION = reflect_color * reflect_amount * streak * smoothstep(0.0, rim_width * 1.5, across) + glint_color * (glint * smoothstep(0.62, 0.9, h) * 0.25 + sheen * lit * (0.4 + 0.6 * h) * smoothstep(0.0, 0.5, across));
 	ALPHA = alpha * edge;
 }

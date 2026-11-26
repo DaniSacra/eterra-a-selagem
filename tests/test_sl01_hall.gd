@@ -22,8 +22,8 @@ func test_the_two_doors_stand_where_the_plan_puts_them() -> void:
 		assert_true(a.exit_zones[i].has_point(a.exits[i]), "door %d: its spot is in its zone" % i)
 		assert_eq(a.exit_inward[i], Vector2(0, 1), "door %d looks south into the hall" % i)
 	assert_almost_eq(CatacombHall.DOOR_X[1] - CatacombHall.DOOR_X[0], 4.2, 0.001, "centres 4.2 m apart")
-	assert_almost_eq(CatacombHall.DOOR_X[1] - CatacombHall.DOOR_X[0] - CatacombHall.DOOR_CLEAR.x, 1.8, 0.001, "1.8 m of wall between the openings")
-	assert_almost_eq(1.8 - 2.0 * CatacombHall.DOOR_FRAME, 1.1, 0.001, "1.1 m of bare masonry between the frames")
+	assert_almost_eq(CatacombHall.DOOR_X[1] - CatacombHall.DOOR_X[0] - CatacombHall.DOOR_CLEAR.x, 1.2, 0.001, "PT-25-10: big doors, 1.2 m of wall between the openings")
+	assert_gte(1.2 - 2.0 * CatacombHall.DOOR_FRAME, 0.55, "and bare masonry between the frames")
 	assert_false(a.exit_zones[0].intersects(a.exit_zones[1]), "the two zones never overlap: one place, one choice")
 
 
@@ -54,15 +54,16 @@ func test_the_old_east_stairs_are_gone() -> void:
 	assert_lt(out.x, 15.0, "kept inside at the old east stairs")
 
 
-func test_the_signs_float_two_metres_in_front_of_each_door_on_their_own_anchor() -> void:
+func test_the_signs_hang_in_the_doorway_on_their_own_anchor() -> void:
 	var a := _hall()
-	assert_false(a.exit_rod, "no rod: the medallions float free in front of their closed doors")
+	assert_false(a.exit_rod, "no rod: the medallions hang free in their closed doors")
 	var p := a.door_anchor(0)
 	var q := a.door_anchor(1)
 	assert_almost_eq(p.x, CatacombHall.DOOR_X[0], 0.01)
 	assert_almost_eq(q.x, CatacombHall.DOOR_X[1], 0.01)
-	assert_almost_eq(p.z, -CatacombHall.HALF.y + 2.0, 0.01, "2 m in front of the door's edge")
-	assert_almost_eq(q.z, -CatacombHall.HALF.y + 2.0, 0.01)
+	assert_almost_eq(p.z, -CatacombHall.HALF.y + CatacombHall.DOOR_SIGN.x, 0.01, "in the doorway (PT-25-10)")
+	assert_almost_eq(q.z, -CatacombHall.HALF.y + CatacombHall.DOOR_SIGN.x, 0.01)
+	assert_between(p.y, 1.5, CatacombHall.DOOR_CLEAR.y - 1.5, "the disc fits inside the door's height")
 	assert_gt(Vector2(p.x, p.z).distance_to(Vector2(q.x, q.z)), 4.0, "never over one another")
 	assert_eq(a.door_at_anchor(Vector2(p.x, p.z)), 0)
 	assert_eq(a.door_at_anchor(Vector2(q.x, q.z)), 1)
@@ -134,7 +135,7 @@ func test_the_hall_door_arch_is_pointed_and_as_tall_as_the_plan() -> void:
 	var top := 0.0
 	for p in o:
 		top = maxf(top, p.y)
-	assert_almost_eq(top, CatacombHall.DOOR_CLEAR.y, 0.001, "the apex is the plan's 3.6 m")
+	assert_almost_eq(top, CatacombHall.DOOR_CLEAR.y, 0.001, "the apex is the door's height")
 	assert_almost_eq(o[0].x, -CatacombHall.DOOR_CLEAR.x * 0.5, 0.001)
 	assert_almost_eq(o[o.size() - 1].x, CatacombHall.DOOR_CLEAR.x * 0.5, 0.001)
 

@@ -603,6 +603,8 @@ func door_sign_y(i: int) -> float:
 func open_exit(i: int) -> void:
 	if hall_look != null:
 		hall_look.open_door_leaves(i)
+	elif look != null:
+		look.open_door_leaves(i)
 
 
 ## The door whose medallion hangs at (x, z) of the room, or -1.

@@ -252,13 +252,13 @@ func _lit(a: Arena) -> Vector2i:
 
 func test_rs_c1_lights() -> void:
 	# before RS-C1: 18 lit (6 shadowed) in the classic crypt A, 17 (6) in B; 18 (1) in the stylized A and B
-	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(16, 6), "crypt A classic: as before (PT-6: the north wall has three doors, two sconces less)")
-	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(15, 6), "crypt B classic: as before (PT-6)")
+	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(17, 6), "crypt A classic: as before (PT-6: the north wall has three doors, two sconces less; SL-02: the fountain's cold accent +1)")
+	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(16, 6), "crypt B classic: as before (PT-6)")
 	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
 	# R-1 (Sworn P1 review): every other candle group of A out, two of them with a light
-	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(15, 1), "crypt A stylized (PT-6, two lights less): the C1V warm key, the crown's light in, the west step's and two groups' out")
+	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(16, 1), "crypt A stylized (PT-6, two lights less): the C1V warm key, the crown's light in, the west step's and two groups' out")
 	# cycle 2026-11-20 item 4: B adds the cold wash on the ossuary's niches (no shadow)
-	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(17, 1), "crypt B stylized (PT-6, two lights less): the C1V warm key, the lantern, the ossuary's wash and the entry's warm light in, two bowls and the statue's candles out")
+	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(18, 1), "crypt B stylized (PT-6, two lights less): the C1V warm key, the lantern, the ossuary's wash and the entry's warm light in, two bowls and the statue's candles out")
 
 
 func test_rs_c1_pieces_only_in_the_stylized_look() -> void:
