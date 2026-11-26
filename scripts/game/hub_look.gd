@@ -158,7 +158,7 @@ const SCROLL := Color(0.64, 0.57, 0.44)
 # ---------- air and light ----------
 ## SV-R: the air under the far ridges (HubScenery draws them) and the cliffs of the drop: pale blue haze, warm grey stone
 ## (palette 04-paleta-e-iluminacao.md: water and distant mist #527F8C, shaded stone #8F8775), never a dark panel.
-const MIST := Color(0.2, 0.18, 0.3)  # PM-2: lilac dusk void, not flat navy (was 0.07, 0.075, 0.14)
+const MIST := Color(0.36, 0.31, 0.47)  # PM-2: lilac dusk void, not flat navy (was 0.07, 0.075, 0.14)
 ## Round 3: the void is night-blue indigo, nearly black right under the platform and going lighter and violet with the
 ## distance (the horizon's haze): the abyss planes' rim colour and the distances (m from the room's middle) it takes over.
 ## Round 4: night blue, little saturated (#141a33 to #2a2848), the haze toward the horizon a grey-blue and lighter.
