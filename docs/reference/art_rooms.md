@@ -717,3 +717,12 @@ Primeira sala do grande ajuste de layout. Vale para toda sala que reusa o `hall`
   mureta sul agora começa no fim do patamar (`LANDING.y`).
 - O herói nasce na borda esquerda da tela: a chegada é no patamar (x -11,6, z 18,1) e a câmera é limitada pelos limites da
   sala; é posição/câmera (gameplay), só anotado.
+
+## QW-3 e QW-4 (2026-11-26 noite; sem captura)
+- Aviso da pedra que cai: no ramo `drop` do `ground.gdshaderinc` o preenchimento ganhou gradiente (mais claro perto da borda),
+  mancha de ruído e uma rachadura; a borda e o ritmo do aviso ficam iguais.
+- Torres da ponte: `abyss_ruins.gdshader` ganhou `paint` (mancha de pedra) e `paint_foot` (escurece para o pé); a ponte liga com
+  `RUIN_PAINT` 0,45 e `RUIN_PAINT_FOOT` 0,5. Os outros cartões ficam em 0 (iguais).
+- Runas: `STY_REST.paint_quiet_value` 0,36 para 0,3 (a pedra calma, o "xadrez" claro, menos clara). Sem captura: conferir.
+- Água e musgo (`shallow_water.gdshader`, `Canal.water`): `glint` 0,05, `sheen` 0,035, `reflect_amount` 0,15, `roughness` 0,6
+  (valores de compat também abaixados), para o vermelho e os avisos lerem por cima.

@@ -22,7 +22,7 @@ uniform float ripple_bend = 0.55;
 // (art review 2026-11-26: the crest glints read as embers, so they are now a pale cold gold and weaker; the gold comes
 // mostly from the sheen of the lights, spread wide)
 uniform vec3 glint_color : source_color = vec3(0.85, 0.72, 0.5);
-uniform float glint = 0.08;
+uniform float glint = 0.05;
 // the moss and dark silt under the water that replace the orange flecks: its colour, how much of the surface it covers
 uniform vec3 moss_color : source_color = vec3(0.2, 0.27, 0.13);
 uniform float moss = 0.22;
@@ -30,8 +30,8 @@ uniform float moss = 0.22;
 // surface returns it (the water mirrors the gold where the light hits and stays blue-grey in the shade)
 uniform vec2 sheen_at = vec2(-2.0, 0.0);
 uniform float sheen_radius = 12.0;
-uniform float sheen = 0.07;
-uniform float roughness = 0.4;
+uniform float sheen = 0.035;
+uniform float roughness = 0.6;
 // SL-01b, the sunken channel: the shadow the kerbs cast on the water (how dark, how far in from the bank, a share of
 // the half width) and the cold light the surface returns, as streaks stretched along the view's depth like the
 // reflections of upright things (their colour, how strongly, the camera's yaw in degrees)
@@ -39,7 +39,7 @@ uniform float rim_shadow = 0.5;
 uniform float rim_width = 0.3;
 // the reflected blue-grey (#536F7A, never brighter: the review caught a flat electric blue at some yaws)
 uniform vec3 reflect_color : source_color = vec3(0.33, 0.44, 0.48);
-uniform float reflect_amount = 0.26;
+uniform float reflect_amount = 0.15;
 uniform float view_yaw = 35.0;
 
 // the dodge islands' stream (GapFloor): a broken pale foam line along each bank, so it reads "not for walking, jump it"

@@ -38,9 +38,9 @@ static func water(sheen_at: Vector2, deep := false, compat := false) -> ShaderMa
 		mat.set_shader_parameter(&"deep", Color(0.02, 0.05, 0.08))
 		mat.set_shader_parameter(&"shallow", Color(0.07, 0.13, 0.17))
 	if compat:
-		mat.set_shader_parameter(&"glint", 0.25)
-		mat.set_shader_parameter(&"sheen", 0.15)
-		mat.set_shader_parameter(&"reflect_amount", 0.12)
+		mat.set_shader_parameter(&"glint", 0.18)
+		mat.set_shader_parameter(&"sheen", 0.09)
+		mat.set_shader_parameter(&"reflect_amount", 0.08)
 	return mat
 
 

@@ -324,7 +324,11 @@ void fragment() {
 			float pulse = 0.85 + 0.15 * sin(TIME * (6.0 + 10.0 * progress));
 			float rise = clamp(progress * 1.5 - depth * 0.8 + 0.1, 0.0, 1.0);
 			float body = rise * rise * (3.0 - 2.0 * rise) * mix(fill_early, fill_max, progress) * 1.3;
-			a = rim * (0.45 + 0.55 * progress) * pulse + body;
+			// painted, not flat: the fill is brighter toward the rim and mottled with a few cracks (QW-3); the rim stays whole
+			float paint = mix(0.68, 1.0, 1.0 - depth) * (0.8 + 0.2 * noise(p * 2.3));
+			float crackd = abs(p.y - 0.5 * p.x + 0.2 * sin(p.x * 3.7)) ;
+			paint *= 1.0 - 0.3 * (1.0 - smoothstep(0.03, 0.09, crackd));
+			a = rim * (0.45 + 0.55 * progress) * pulse + body * paint;
 		} else if (style == 3) {
 			float along_m = along * length_m;
 			float cell = tile_m > 0.0 ? tile_m : length_m;
