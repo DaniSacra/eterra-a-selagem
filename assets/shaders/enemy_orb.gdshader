@@ -13,6 +13,13 @@ uniform float rim = 0.21;
 uniform float core_share = 0.6;
 uniform float hot = 0.1;
 uniform float core_tone = 0.5;
+// GP-3 (signature 5): the dead's magic has a dirty edge: the outside of the ball is eaten by noise (up to `dirt` of the
+// radius, moving with the time) and the hue only lives in the rim, the heart is the deep shade (core_tone).
+uniform float dirt = 0.14;
+
+float hash3(vec3 p) {
+	return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453);
+}
 
 varying vec3 local;
 
@@ -24,6 +31,9 @@ void fragment() {
 	float f = clamp(dot(NORMAL, VIEW), 0.0, 1.0);
 	// the distance from the middle of the ball as the eye sees it (0 middle, 1 edge)
 	float r = sqrt(max(1.0 - f * f, 0.0));
+	// torn rim: a ragged cut of the silhouette, never inside the heart (the shot's size and hit are the same)
+	float torn = hash3(floor(local * 7.0 + vec3(TIME * 3.0))) * 0.6 + hash3(floor(local * 15.0 - vec3(TIME * 5.0))) * 0.4;
+	if (r > 1.0 - dirt * torn * 2.0 && needle < 0.5) discard;
 	float ring = smoothstep(core_share - 0.12, core_share + 0.1, r);
 	float band = 1.0 - smoothstep(0.0, 0.12, abs(r - core_share - 0.08));
 	// the heart is the hue's own deep shade (sweep 2026-11-25: no black core), the rim and the band brighter
