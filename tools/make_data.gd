@@ -1106,7 +1106,7 @@ func _stage() -> void:
 	st.fountain_depth_min = 6
 	st.fountain_depth_max = 11
 	st.fountain_more_chance = 0.0
-	st.fountains_per_path = 2  # PM-4: the fountain before the first guardian and the rest after him (300 maps: 4 on every way before)
+	st.fountains_per_path = 3  # PM-4: 4 on every way before (160% heal); 3 keeps one before the second guardian (kids found it hard)
 	st.boss = &"morvath"
 	# The descent's graph (DM-1; RunMap): always two doors a room, a pomegranate behind a door from room 3 (Q-25 a)
 	st.pom_from_depth = 3

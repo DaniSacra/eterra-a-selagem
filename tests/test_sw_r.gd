@@ -124,13 +124,13 @@ func test_the_anchors_are_always_in_place() -> void:
 			assert_eq(r.kind, RunMap.Kind.MINIBOSS, "guardian in room 10")
 		for r in m.layer(13):
 			assert_eq(r.kind, RunMap.Kind.SHOP, "the shop in a fixed place")
-		# PM-4: only the fountain before the first guardian (room 4) and the rest after him (6); none later
+		# PM-4: the rest after the first guardian (6) always; at most three fountains on any way (one before the second guardian)
 		for d in [6]:
 			var springs := m.layer(d).filter(func(r: RunMap.Room) -> bool: return r.kind == RunMap.Kind.FOUNTAIN)
 			assert_eq(springs.size(), 1, "run %d: the rest after the guardian, room %d" % [run, d])
 			rest += springs.size()
 			assert_eq(m.layer(d).size(), 2, "the two doors stay together")
-		assert_lte(_most_fountains(m), 2, "run %d: at most two fountains on any way" % run)
+		assert_lte(_most_fountains(m), 3, "run %d: at most three fountains on any way" % run)
 		var fights2 := m.layer(2).filter(func(r: RunMap.Room) -> bool: return r.kind == RunMap.Kind.COMBAT)
 		assert_eq(fights2[0].reward, R.BOON, "room 2: a Blessing")
 		assert_eq(m.layer(1)[0].reward, R.BOON, "room 1: a Blessing")
