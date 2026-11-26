@@ -159,7 +159,11 @@ const SCROLL := Color(0.64, 0.57, 0.44)
 # ---------- air and light ----------
 ## SV-R: the air under the far ridges (HubScenery draws them) and the cliffs of the drop: pale blue haze, warm grey stone
 ## (palette 04-paleta-e-iluminacao.md: water and distant mist #527F8C, shaded stone #8F8775), never a dark panel.
-const MIST := Color(0.15, 0.1, 0.27)
+const MIST := Color(0.075, 0.085, 0.17)
+## Round 3: the void is night-blue indigo, nearly black right under the platform and going lighter and violet with the
+## distance (the horizon's haze): the abyss planes' rim colour and the distances (m from the room's middle) it takes over.
+const MIST_RIM := Color(0.2, 0.16, 0.32)
+const MIST_RIM_RANGE := Vector2(46.0, 150.0)
 const CLIFF := {&"stone_color": Color(0.3, 0.28, 0.25), &"edge_color": Color(0.5, 0.46, 0.4), &"mist_color": MIST,
 	&"glow_color": Color(0.5, 0.6, 0.7)}
 ## Hub refine round 1: the platform is the top of a mountain at dusk. The cliffs are warm layered rock (hub_cliff.gdshader)
@@ -191,11 +195,14 @@ const CLASSIC_FLOOR := {
 }
 ## C1V N3 (docs/art/identidade_c1v.md 2.1, the hall's recipe, only in the stylized look): the shadow band's tint, the room's own hue
 ## (docs/art/plano_pintado_a_mao.md 5); the vignette is the hall's, the hub's softer.
-const STY_SHADOW_GLOW := Color(0.2, 0.22, 0.58)
+const STY_SHADOW_GLOW := Color(0.2, 0.19, 0.4)
 const STY_VIGNETTE := Vector3(0.5, 0.45, 1.3)
+## Round 3: the paving is warm cream-rose (the art's), not grey-brown; the dark is kept for the rim and the void.
+const STY_STONE := Color(0.66, 0.58, 0.5)
+const STY_FLOOR_STONE := Color(0.8, 0.66, 0.56)
 const STYLE := {
-	&"stone": Color(0.56, 0.5, 0.48), &"floor_stone": Color(0.5, 0.46, 0.43), &"shadow": Color(0.62, 0.66, 0.92),
-	&"joint_cold": Color(0.86, 0.93, 0.98), &"slab_paint": Vector2(0.82, 1.18), &"slab_hue": 6.0, &"olive_share": 0.03,
+	&"stone": STY_STONE, &"floor_stone": STY_FLOOR_STONE, &"shadow": Color(0.7, 0.66, 0.88),
+	&"joint_cold": Color(0.92, 0.89, 0.9), &"slab_paint": Vector2(0.82, 1.18), &"slab_hue": 6.0, &"olive_share": 0.03,
 	&"edge_value": 1.0, &"pool_saturation": 0.8, &"metal": true,
 	&"fire": {&"candle_range": 3.5, &"candle_gain": 1.2, &"bowl_range": 4.2, &"bowl_gain": 0.95},
 	&"air": {&"sky": Color(0.3, 0.24, 0.42), &"fog": DUSK_FOG, &"ambient": DUSK_AMBIENT,
@@ -212,7 +219,7 @@ const STYLE := {
 ## glow reads the more for it on arriving, and a pale green pool at the foot of its flight (the top of the screen on
 ## arriving, where the camera holds the portal itself out of the frame) points the way. Each pool: station, aim (u, height, v), from (u, height, v), energy, cone
 ## (degrees), reach, colour.
-const STY_AMBIENT_GAIN := 0.62
+const STY_AMBIENT_GAIN := 0.72
 const STY_MOON := 0.85
 const STY_KEY_SHARE := 0.8
 const STY_FORGE_GAIN := 1.5
@@ -236,7 +243,7 @@ const STY_POOLS: Array[Array] = [
 ## turned, its own calm radius came out past the cliffs) and leaves each station's pool alone (STY_KEEP: full to, none
 ## from, m round each pool's aim).
 ## P2-B3 (ART_REVIEW.md 4.5): the rim between the stations to 0.70 of the square or under (it measured 0.75 to 0.82).
-const STY_RIM_FLOOR := {&"calm_radius": 60.0, &"edge_value": 0.32, &"edge_span": Vector2(1.1, 1.9)}
+const STY_RIM_FLOOR := {&"calm_radius": 40.0, &"edge_value": 0.32, &"edge_span": Vector2(1.1, 1.9)}
 const STY_KEEP := Vector2(2.5, 4.0)
 const KEEP_MAX := 6
 ## The browser's renderer: the stylized air's share there (its painted stone lights lighter).
@@ -244,8 +251,8 @@ const STY_COMPAT_AMBIENT := 0.3
 const STY_COMPAT_MOON := 0.3
 const STY_COMPAT_KEY := 0.5
 ## A soft fill over the square (no shadow), so the floor reads as the lightest of the game (spec 4.2).
-const KEY := Color(1.0, 0.97, 0.92)
-const KEY_ENERGY := 0.4
+const KEY := Color(1.0, 0.9, 0.78)
+const KEY_ENERGY := 0.5
 const LION_SHADER := preload("res://assets/shaders/altar_lion.gdshader")
 const PAGE_SHADER := preload("res://assets/shaders/hub_page.gdshader")
 const CANOPY_SHADER := preload("res://assets/shaders/canopy.gdshader")
@@ -355,6 +362,19 @@ func piece(o: ArenaObstacle) -> void:
 	if String(o.piece).begins_with("hub_"):
 		return
 	super.piece(o)
+
+
+## Round 3: the abyss planes (ArenaRoom._abyss) take the indigo-to-violet gradient with the distance (abyss_fog rim_*).
+func _abyss() -> void:
+	var from := get_child_count()
+	super()
+	for n in added_since(from):
+		var sm: ShaderMaterial = null
+		if n is GeometryInstance3D:
+			sm = (n as GeometryInstance3D).material_override as ShaderMaterial
+		if sm != null and sm.shader.resource_path.ends_with("abyss_fog.gdshader"):
+			sm.set_shader_parameter(&"rim_color", MIST_RIM)
+			sm.set_shader_parameter(&"rim_range", MIST_RIM_RANGE)
 
 
 func _light() -> void:
@@ -665,7 +685,10 @@ func _slab(along_u: bool, face: float, back: float, s0: float, s1: float, y0: fl
 
 ## Every crown of one kind in one MultiMesh (the canopy's cards, canopy.gdshader; they open round the hero): the
 ## cypresses in dark olive, the beds' shrubs in copper (wide: the crown's width at its widest).
-func add_crowns(spots: Array[Vector3], talls: Array[float], leaf_a: Color, leaf_b: Color, width: float, label: String, round_crown := false) -> void:
+## Round 3: `hanging` turns the crown over (widest at the top, a tassel to a point at the foot: the foot is the lowest point,
+## wisteria and grapes), `card_scale` shrinks the cards (a grape cluster is made of small ones).
+func add_crowns(spots: Array[Vector3], talls: Array[float], leaf_a: Color, leaf_b: Color, width: float, label: String, round_crown := false,
+		hanging := false, card_scale := 1.0) -> void:
 	if spots.is_empty():
 		return
 	var r := RandomNumberGenerator.new()
@@ -677,13 +700,15 @@ func add_crowns(spots: Array[Vector3], talls: Array[float], leaf_a: Color, leaf_
 		var n := maxi(3, roundi(tall * CYPRESS_CARDS * maxf(1.0, width / CYPRESS_WIDE.x)))
 		for k in n:
 			var t := (k + r.randf()) / n
+			if hanging:
+				t = 1.0 - t  # t runs from the tip: the same shape upside down
 			# widest a share of the way up, to a point at the top
 			var wide := width * 0.5 * (sqrt(t / CYPRESS_WIDE.y) if t < CYPRESS_WIDE.y else (1.0 - t) / (1.0 - CYPRESS_WIDE.y) * 0.9 + 0.1)
 			if round_crown:
 				wide = width * 0.5 * pow(sin(PI * clampf(t, 0.04, 0.96)), 0.7)
 			var a := r.randf() * TAU
-			var p := at(foot.x, foot.y + t * tall, foot.z) + Vector3(cos(a), 0.0, sin(a)) * wide * r.randf_range(0.3, 0.8)
-			var size := lerpf(CYPRESS_CARD.y, CYPRESS_CARD.x, t) * r.randf_range(0.8, 1.1)
+			var p := at(foot.x, foot.y + (1.0 - t if hanging else t) * tall, foot.z) + Vector3(cos(a), 0.0, sin(a)) * wide * r.randf_range(0.3, 0.8)
+			var size := lerpf(CYPRESS_CARD.y, CYPRESS_CARD.x, t) * r.randf_range(0.8, 1.1) * card_scale
 			# the frame is already turned by the camera's yaw: face its south
 			var basis := Basis(Vector3.BACK, r.randf_range(-0.3, 0.3)) * Basis.from_scale(Vector3(size * 0.75, size, 1.0))
 			xf.append(Transform3D(basis, p))

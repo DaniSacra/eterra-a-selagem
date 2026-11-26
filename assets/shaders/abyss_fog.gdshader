@@ -14,6 +14,11 @@ uniform float floor_layer = 0.0;
 // show (art review 2026-11-21 item 1; 0: off, the classic look).
 uniform float edge_fade = 0.0;
 
+// Round 3 (hub): the colour the plane goes to with the distance from the room's middle (m, from rim_range.x to .y), the
+// horizon's haze over a dark depth; rim_range.y 0 is off (every other room).
+uniform vec3 rim_color : source_color = vec3(0.0);
+uniform vec2 rim_range = vec2(0.0, 0.0);
+
 varying vec3 world;
 
 float hash1(vec2 p) {
@@ -43,12 +48,16 @@ void vertex() {
 }
 
 void fragment() {
+	vec3 tint = color;
+	if (rim_range.y > 0.0) {
+		tint = mix(color, rim_color * (color.r + color.g + color.b) / max(0.01, 0.34), smoothstep(rim_range.x, rim_range.y, length(world.xz)));
+	}
 	vec2 p = world.xz * scale;
 	float t = TIME;
 	float m = fbm(p + drift * t * scale * 4.0);
 	m = mix(m, fbm(p * 1.9 - drift.yx * t * scale * 6.0), 0.4);
 	if (floor_layer > 0.5) {
-		ALBEDO = color * (0.25 + 0.9 * m * m);
+		ALBEDO = tint * (0.25 + 0.9 * m * m);
 		ALPHA = 1.0;
 	} else {
 		vec2 ed = min(UV, 1.0 - UV);
@@ -56,7 +65,7 @@ void fragment() {
 		if (edge_fade > 0.0) {
 			a *= smoothstep(0.0, edge_fade, ed.x) * smoothstep(0.0, edge_fade, ed.y);
 		}
-		ALBEDO = color * (0.8 + 0.6 * m);
+		ALBEDO = tint * (0.8 + 0.6 * m);
 		ALPHA = a;
 	}
 }

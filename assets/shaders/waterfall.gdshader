@@ -11,6 +11,8 @@ uniform float speed = 1.6;
 uniform float streaks = 7.0;
 // the share of the height at the foot where it turns to foam
 uniform float foam = 0.18;
+// Round 3 (hub): the share of the height at the foot where the fall thins to nothing (a fall that vanishes into the mist); 0: off.
+uniform float vanish = 0.0;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -34,5 +36,5 @@ void fragment() {
 	float at_foot = smoothstep(1.0 - foam, 1.0, UV.y);
 	float froth = at_foot * smoothstep(0.35, 0.75, noise(vec2(UV.x * 9.0, TIME * 2.0 + UV.y * 5.0)));
 	ALBEDO = mix(color, foam_color, clamp(froth + at_foot * 0.4, 0.0, 1.0));
-	ALPHA = clamp(alpha * inside * (0.35 + 0.65 * body) + froth * 0.5 * inside, 0.0, 0.85) * smoothstep(0.0, 0.04, UV.y);
+	ALPHA = clamp(alpha * inside * (0.35 + 0.65 * body) + froth * 0.5 * inside, 0.0, 0.85) * smoothstep(0.0, 0.04, UV.y) * (vanish > 0.0 ? 1.0 - smoothstep(1.0 - vanish, 1.0, UV.y) : 1.0);
 }
