@@ -1340,6 +1340,7 @@ func _detail() -> void:
 	leaves.mesh = st.commit()
 	var mat := StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true  # (the colours are sRGB: read as linear they washed to pale yellow confetti)
 	mat.roughness = 0.95
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	leaves.material_override = mat
