@@ -9,7 +9,7 @@
 - PT-25-6: Espólios na `EndScreen` (salas vencidas, ouro, "Liberado nesta descida", botão Continuar). PT-25-7: chegada como cometa. PT-25-8/9: Antessala ensina um gesto por vez, riacho só com esquiva (`GapRule`, `RoomLayout.gaps`), Bênção de Sarael antes da sala 1 (Cripta A virou Ouro).
 - Textos a aprovar: `lesson_*`, `obj_dodge`, `killer_gap`, `angel_few`, `end_rooms`, `end_unlocked_head`, `end_open_*`, `end_menu` ("Continuar"), `vine_water`.
 - Pendências: arte final do riacho (environment-artist, E4); inimigos ainda atravessam o riacho andando (decidir na E4); dicas longas na linha de objetivo em 720p a conferir; `lesson_special` muda se a E6 trocar o botão direito.
-Estado: tudo commitado e enviado, exe atual `e2a59f82` (E1 a E3) nas duas pastas. O Daniel pediu "só backlog": nada começa sem ele mandar.
+Estado: tudo commitado e enviado, exe atual `929e18bd` (E1 a E5 + PT-26 + revisão de todos os agentes) nas duas pastas. O Daniel pediu "só backlog": nada começa sem ele mandar.
 Cada entrega é um lote fechado com exe no fim, capturas na GPU e push. O detalhe de cada item está nas seções abaixo (PT-25, SL, SV-R).
 
 | # | Entrega | Itens | Donos | Depende de |
@@ -24,6 +24,13 @@ Cada entrega é um lote fechado com exe no fim, capturas na GPU e push. O detalh
 | Sobras | linha de objetivo no Santuário (vira parte da E5), xadrez das Runas (E7), modelos do Cavaleiro e do Ancião (Meshy, autorização) | | | |
 
 Decisões do Daniel em aberto: textos a aprovar (chegada, objetivo, dicas, O Leão / O Cálice / A Espada, fim curto, os da E2), D-O8 (cânone), regra de troca de Bênção no mesmo botão, (a) ou (b) da E6, música nova do Santuário, Meshy.
+
+## Rodada 2026-11-26 madrugada FEITA (exe `929e18bd`; o Daniel testa)
+- PT-26-1 a 6 feitos: ícone de mouse (`MouseGlyph`), anjo sozinho direto às cartas, aviso "Substitui", HUD com todas as Bênçãos (nome, recarga) e nomes sob os losangos, Videira segurando o mouse na estrela, Forja explicada (folha de 3 frases na 1ª visita).
+- E4: Salão com canal largo até a mureta (`Canal`), portas grandes com medalhão no vão, Cripta SL-02 (portas norte, fonte quebrada), ilhas só por esquiva (Santuário, Fendas), inimigos não atravessam riacho, lajes 2x2.
+- E5: Santuário da Vigília novo (`HubPlan` reescrito, `HubBlockout`, `HubScenery`), piso plano (patamares só visuais).
+- Revisões (docs/qa/qa_2026-11-26.md, docs/art/ART_REVIEW_2026-11-26.md, balance.md e combat_cadence.md "Revisão 2026-11-26") e correções: soft-lock do Jardim (bolsão do NavGrid), Cavaleiro 650 de vida e dano 15 (guarda 550 continua quebrável; robô ~28 s), mago de elite -20%, passo mais suave (`StepRules`), cometa com núcleo, cristais âmbar, água sem pintas, placa atrás da barra.
+- Aberto: Portão do Santuário ainda pouco legível de lado e céu do hub a conferir; custo do passo com 300 inimigos (pico ~50 ms no `--stress`, laço do player/horde); E6 espera (a)/(b); E7 espera pacotes; textos novos a aprovar.
 
 ## PT-26, teste do Daniel no exe e2a59f82 (2026-11-25, madrugada) — FAZER AGORA, com a E4, a E5 e uma revisão de todos os agentes
 - **PT-26-1:** todo "Clique esquerdo" / "Clique direito" (dicas, HUD, telas, legendas de botões) vira um desenho de mouse mostrando qual botão; procurar em todos os lugares e fazer a arte.
