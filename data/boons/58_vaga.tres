@@ -21,4 +21,7 @@ script = ExtResource("2_r1yht")
 id = &"vaga"
 family = 6
 icon = 21
+reserve = true
 skill = SubResource("Resource_ckmbg")
+grants = PackedStringArray()
+needs_all = PackedStringArray()

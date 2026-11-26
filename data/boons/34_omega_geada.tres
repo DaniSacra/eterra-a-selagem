@@ -17,3 +17,5 @@ family = 1
 icon = 5
 reserve = true
 mods = Array[ExtResource("1_87yjt")]([SubResource("Resource_nx624")])
+grants = PackedStringArray()
+needs_all = PackedStringArray()

@@ -109,32 +109,6 @@ func test_an_exchange_wears_the_tab_and_names_the_trade() -> void:
 	assert_null(cards[1].find_child("UpgradeTab", true, false))
 
 
-## The run's own draw reaches the card (Game._open_choice gives BoonChoice.offers_of its cards): a trade drawn by the
-## rules shows the tab, one rarity above the Blessing it replaces, at that Blessing's level; taking the card keeps both.
-func test_a_trade_drawn_by_the_rules_reaches_the_card() -> void:
-	state.take(state.find(&"golpe_brasa"), Boon.Rarity.RARE)
-	state.take(state.find(&"golpe_brasa"))
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 3
-	var card := state.trade_card(state.find(&"golpe_geada"), rng, [0.0, 0.0, 0.0] as Array[float])
-	assert_true(card.trade)
-	var plain := BoonState.Card.new(state.find(&"brasas"), Boon.Rarity.EPIC)
-	var cards: Array[BoonState.Card] = [card, plain]
-	var offers := BoonChoice.offers_of(cards)
-	assert_eq(offers[&"golpe_geada"], {"rarity": Boon.Rarity.EPIC, "upgrade": true})
-	assert_eq(offers[&"brasas"], {"rarity": Boon.Rarity.EPIC, "upgrade": false})
-	var shown := _open([&"golpe_geada", &"brasas"], offers).cards()
-	assert_true(shown[0].upgrade)
-	assert_eq(shown[0].rarity, Boon.Rarity.EPIC)
-	assert_eq((shown[0].find_child("Level", true, false) as Label).text, T.t(&"choice_level", {"n": 2, "max": shown[0].boon.max_level}))
-	assert_false(shown[1].upgrade)
-	assert_eq(shown[1].rarity, Boon.Rarity.EPIC)
-	state.take_card(card)
-	assert_eq(state.level(&"golpe_geada"), 2)
-	assert_eq(state.rarity(&"golpe_geada"), Boon.Rarity.EPIC)
-	assert_eq(state.level(&"golpe_brasa"), 0)
-
-
 func test_an_exchange_can_come_apart_from_the_rarities() -> void:
 	state.take(state.find(&"golpe_brasa"))
 	var cards := _open([&"golpe_geada"], {&"golpe_geada": Boon.Rarity.RARE}, {&"golpe_geada": true}).cards()

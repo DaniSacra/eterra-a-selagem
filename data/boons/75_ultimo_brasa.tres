@@ -21,4 +21,7 @@ script = ExtResource("2_3p8k7")
 id = &"ultimo_brasa"
 family = 0
 slot = 6
+reserve = true
 skill = SubResource("Resource_1m07c")
+grants = PackedStringArray()
+needs_all = PackedStringArray()

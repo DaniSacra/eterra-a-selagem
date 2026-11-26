@@ -38,6 +38,9 @@ enum Trigger { AUTO, FINISHER, OMEGA, SPECIAL, SHOUT, RUSH, DODGE, ULT }
 ## Seconds the hit freezes, stuns, or the ground lasts; damage per second of a burn. Depends on the kind of status.
 @export var status: StringName = &""
 @export var status_power: PackedFloat32Array = PackedFloat32Array([0.0])
+## Blessings V1: seconds before the same skill puts its status on the same enemy again (the flakes of Flocos Errantes:
+## one stack a target a second). 0: every touch.
+@export var status_gap := 0.0
 
 
 static func at(values: PackedFloat32Array, level: int) -> float:

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_bjjj4"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_p3om1"]
+
+[sub_resource type="Resource" id="Resource_qo785"]
+script = ExtResource("1_bjjj4")
+stat = &"cel_echo"
+base = 0.25
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_p3om1")
+id = &"circulo_marca"
+family = 7
+icon = 22
+max_level = 1
+slot = 3
+mods = Array[ExtResource("1_bjjj4")]([SubResource("Resource_qo785")])
+grants = PackedStringArray("echo")
+needs_all = PackedStringArray()

@@ -21,4 +21,7 @@ script = ExtResource("2_dqmep")
 id = &"nevoa"
 family = 5
 icon = 20
+reserve = true
 skill = SubResource("Resource_uvr38")
+grants = PackedStringArray()
+needs_all = PackedStringArray()

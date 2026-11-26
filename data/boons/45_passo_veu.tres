@@ -16,4 +16,7 @@ id = &"passo_veu"
 family = 5
 icon = 20
 slot = 5
+reserve = true
 mods = Array[ExtResource("1_tniex")]([SubResource("Resource_o0rhf")])
+grants = PackedStringArray()
+needs_all = PackedStringArray()

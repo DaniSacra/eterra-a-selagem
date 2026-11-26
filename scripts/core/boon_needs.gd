@@ -29,11 +29,24 @@ static func lines(b: Boon, catalog: Array[Boon] = [], ult_open := false) -> Pack
 			if names.size() > SHOWN:
 				shown.append(T.t(&"need_others"))
 			out.append(T.t(&"need_set", {"names": T.t(&"need_or").join(shown)}))
+	if not b.needs_all.is_empty():
+		var asks := PackedStringArray()
+		for cap in b.needs_all:
+			asks.append(cap_name(cap))
+		out.append(T.t(&"need_set", {"names": T.t(&"need_and").join(asks)}))
 	if b.needs_tag != &"" and TAG_KEYS.has(b.needs_tag):
 		out.append(T.t(TAG_KEYS[b.needs_tag]))
 	if b.slot == Boon.Slot.ULT and not ult_open:
 		out.append(T.t(&"need_ult"))
 	return out
+
+
+## V1: how a requirement of Boon.needs_all reads: a Blessing by its name, a capability or an angel by its own word.
+static func cap_name(cap: String) -> String:
+	var key := "need_cap_" + cap.replace(":", "_")
+	if T.table != null and T.table.entries.has(key):
+		return T.t(key)
+	return T.t("boon_" + cap)
 
 
 static func _find(catalog: Array[Boon], id: StringName) -> Boon:

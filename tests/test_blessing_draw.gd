@@ -68,4 +68,4 @@ func test_the_duo_waits_for_three_blessings() -> void:
 	assert_eq(_elos_in(2000, state.owned().size()), 0, "never with two")
 	state.take(state.find(&"escudo"))
 	assert_eq(state.owned().size(), 3)
-	assert_gt(_elos_in(2000, state.owned().size()), 0, "it can come with three")
+	assert_eq(_elos_in(2000, state.owned().size()), 0, "V1: an Elo is out of the angel draw, with three as with two")

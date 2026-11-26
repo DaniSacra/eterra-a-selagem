@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_nux36"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_o0nrx"]
+
+[sub_resource type="Resource" id="Resource_4wudp"]
+script = ExtResource("1_nux36")
+stat = &"cel_weak_time_pct"
+base = 0.25
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_o0nrx")
+id = &"veu_persistente"
+family = 5
+icon = 20
+max_level = 1
+mods = Array[ExtResource("1_nux36")]([SubResource("Resource_4wudp")])
+grants = PackedStringArray()
+needs_all = PackedStringArray("weak")

@@ -269,6 +269,7 @@ func _ready() -> void:
 	combat.projectiles = projectiles
 	combat.boons = boons
 	combat.hero = hero
+	combat.celestial.game = self
 	director = WaveDirector.new(load(WAVES), _rng)
 	skills = Skills.new()
 	skills.game = self
@@ -314,7 +315,9 @@ func _ready() -> void:
 		var which := Skills.trigger_of(node)
 		if which >= 0:
 			skills.trigger(which as SkillDef.Trigger))
-	player.ult_landed.connect(func(_dir: Vector2) -> void: skills.trigger(SkillDef.Trigger.ULT))
+	player.ult_landed.connect(func(_dir: Vector2) -> void:
+		skills.trigger(SkillDef.Trigger.ULT)
+		combat.celestial.on_ult())
 	player.struck.connect(func(node: ComboNode, _o: Vector2, _d: Vector2) -> void:
 		if node.has_tag(Combat.OMEGA_TAG):
 			omegas += 1)
@@ -1122,7 +1125,10 @@ func _open_choice(cards: Array = []) -> void:
 		cards = _draw_cards()
 	offer_cards.clear()
 	for c: Variant in cards:
-		offer_cards.append(c if c is BoonState.Card else boons.cards_for([c])[0])
+		var card: BoonState.Card = c if c is BoonState.Card else boons.cards_for([c])[0]
+		if card.boon != null and not card.grow and card.psalm == null and not boons.still_free(card.boon):
+			continue  # Blessings V1: revalidated as the screen opens (its slot was filled, or what it asks is gone)
+		offer_cards.append(card)
 	_offer_rarity = BoonChoice.offers_of(offer_cards)
 	var offers: Array[Boon] = []
 	var psalm_card: BoonState.Card = null
@@ -1195,7 +1201,9 @@ func _take(b: Boon) -> void:
 		if c.boon == b:
 			card = c
 	if card != null:
-		boons.take_card(card)
+		if boons.take_card(card) <= 0:
+			offer_cards.clear()  # (V1: not valid any more when taken: nothing is replaced, nothing is given)
+			return
 	else:
 		boons.take(b, BoonChoice.offer_of(_offer_rarity.get(b.id)).rarity)
 	_deny_others(b)
@@ -1205,6 +1213,7 @@ func _take(b: Boon) -> void:
 		elos_formed[b.id] = true
 	player.dodge_max = hero.dodge_charges + int(boons.stat(&"dodge_charges"))
 	player.speed_bonus = boons.stat(&"move_speed_pct")
+	combat.celestial.refresh_move()
 	var shield := boons.stat(&"shield_cooldown")
 	if shield > 0.0 and player.shield_cooldown <= 0.0:
 		player.shield_ready = true
@@ -1248,13 +1257,14 @@ func _use(key: StringName) -> void:
 
 func _on_dodged(dir: Vector2) -> void:
 	skills.trigger(SkillDef.Trigger.DODGE)
+	combat.celestial.on_dodge()
 	dodges += 1
 	_use(&"space")
 	room_tally.dodge()
 	var dps := boons.stat(&"dodge_ember_dps")
 	if dps > 0.0 and arcane == null:  # (the Maga's Passo lays its own at both ends: Arcane._on_dodged)
 		for k in 3:
-			ground.add_zone(Ground.Kind.EMBER, player.pos + dir * (k * 2.0), 1.4, 2.5, dps, Combat.EMBER_TAGS)
+			ground.add_zone(Ground.Kind.EMBER, player.pos + dir * (k * 2.0), 1.4, Combat.TRAIL_TIME, dps, Combat.EMBER_CEL_TAGS)
 
 
 func _on_shield_broke() -> void:
@@ -1437,6 +1447,7 @@ func _on_armor_broken(e: Enemy) -> void:
 
 
 func _on_killed(e: Enemy) -> void:
+	combat.celestial.on_killed(e)
 	kills += 1
 	if e.def.behavior != EnemyDef.Behavior.BOSS:
 		defeated[e.def.id] = int(defeated.get(e.def.id, 0)) + 1

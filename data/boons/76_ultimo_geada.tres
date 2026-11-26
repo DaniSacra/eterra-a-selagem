@@ -23,4 +23,7 @@ id = &"ultimo_geada"
 family = 1
 icon = 5
 slot = 6
+reserve = true
 skill = SubResource("Resource_jii48")
+grants = PackedStringArray()
+needs_all = PackedStringArray()

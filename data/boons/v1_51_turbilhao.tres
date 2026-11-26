@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_ec2j5"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_k2ppc"]
+
+[sub_resource type="Resource" id="Resource_xfgyw"]
+script = ExtResource("1_ec2j5")
+stat = &"cel_whirl_dmg"
+base = 12.0
+per_level = PackedFloat32Array(6, 6)
+
+[resource]
+script = ExtResource("2_k2ppc")
+id = &"turbilhao"
+family = 6
+icon = 21
+mods = Array[ExtResource("1_ec2j5")]([SubResource("Resource_xfgyw")])
+grants = PackedStringArray()
+needs_all = PackedStringArray("cadencia")

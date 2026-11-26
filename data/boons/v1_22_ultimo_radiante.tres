@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_e6xdg"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_a624o"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_qfjqe"]
+
+[sub_resource type="Resource" id="Resource_m3q3q"]
+script = ExtResource("3_qfjqe")
+trigger = 7
+duration = PackedFloat32Array(0)
+gap = PackedFloat32Array(0)
+cooldown = PackedFloat32Array(4)
+damage = PackedFloat32Array(15, 22, 32)
+count = PackedFloat32Array(3)
+radius = PackedFloat32Array(1.5)
+status = &"crit"
+status_power = PackedFloat32Array(0.15)
+
+[resource]
+script = ExtResource("2_a624o")
+id = &"ultimo_radiante"
+icon = 8
+slot = 6
+skill = SubResource("Resource_m3q3q")
+grants = PackedStringArray("crit")
+needs_all = PackedStringArray()

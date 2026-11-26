@@ -103,9 +103,13 @@ func test_number_gifts_add_up_with_the_blessings() -> void:
 	state.equip_talents(book.defs([&"ruptura", &"voz_do_leao"]))
 	assert_almost_eq(state.stat(&"reach_pct", shout), 0.35, 0.0001, "Voz do Leão: the Brado reaches 35% more")
 	assert_eq(state.stat(&"reach_pct", light), 0.0, "only the Brado")
-	# a Blessing on the same number adds up (golpe_firme: reach of light moves)
-	var firme := state.find(&"golpe_firme")
-	state.take(firme, Boon.Rarity.EPIC)
-	assert_almost_eq(state.stat(&"reach_pct", light), firme.mods[0].value(1), 0.0001, "Gift and Blessing in one sum")
+	# another source of the same number adds up (V1: no Blessing carries reach; the Forja, an Encanto or a granted bonus do)
+	var more := BoonMod.new()
+	more.stat = &"reach_pct"
+	more.tag = &"light"
+	more.base = 0.1
+	state.grant([more])
+	assert_almost_eq(state.stat(&"reach_pct", light), 0.1, 0.0001, "Gift and another source in one sum")
+	assert_almost_eq(state.stat(&"reach_pct", shout), 0.35, 0.0001, "the other tag is untouched")
 	state.equip_talents([])
 	assert_eq(state.stat(&"reach_pct", shout), 0.0, "the cache follows what is equipped")

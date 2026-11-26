@@ -22,4 +22,7 @@ per_level = PackedFloat32Array(0.05, 0.05)
 script = ExtResource("2_l170m")
 id = &"onda_clara"
 icon = 7
+reserve = true
 mods = Array[ExtResource("1_t20pd")]([SubResource("Resource_muvdd"), SubResource("Resource_tc6op")])
+grants = PackedStringArray()
+needs_all = PackedStringArray()

@@ -65,6 +65,10 @@ const RUMBLE_FINISHER := Vector3(0.4, 0.45, 0.12)
 const RUMBLE_OMEGA := Vector3(0.6, 0.8, 0.18)
 const MARK_TAGS: Array[StringName] = [&"mark", &"cross"]
 const EMBER_TAGS: Array[StringName] = [&"ember", &"chama"]
+## A Blessing's fire on the floor (V1): burns by the Blessing layer's rules (Celestial.zone_burn).
+## Seconds the fire a dodge leaves lasts (Passo em Brasa: 2 s, V1; it was 2.5).
+const TRAIL_TIME := 2.0
+const EMBER_CEL_TAGS: Array[StringName] = [&"ember", &"chama", &"cel"]
 const HOLY_TAGS: Array[StringName] = [&"skill", &"vigilia"]
 ## The circle of light (cast): what gifts see (its size, how long it holds and the burst of the held version are the
 ## hero's: HeroDef.cast_radius, cast_time, cast_burst).
@@ -197,11 +201,17 @@ var _frame_cd := 0.0
 var _look := RandomNumberGenerator.new()
 
 
+## Blessings V1: the layer of the Blessings over the hero's actions (Celestial).
+var celestial: Celestial
+
+
 func _init() -> void:
 	Dev.seed_rng(_look, 7)
+	celestial = Celestial.new(self)
 
 
 func step(dt: float) -> void:
+	celestial.step(dt)
 	_return_t = maxf(0.0, _return_t - dt)
 	_step_echoes(dt)
 	_slow_cd = maxf(0.0, _slow_cd - dt)
@@ -271,6 +281,7 @@ func _echo(node: ComboNode, origin: Vector2, dir: Vector2, share: float) -> void
 func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	_swing += 1
 	kill_blow = _swing
+	celestial.on_action(node)
 	_dash_stops = 0
 	_apogee_landed = false
 	var tags := node.tags
@@ -716,6 +727,9 @@ func on_zone_hit(e: Enemy, z: Ground.Zone) -> void:
 		Ground.Kind.MARK:
 			hit_enemy(e, z.power * Ground.TICK, MARK_TAGS, Vector2.ZERO, 0.0, false)
 		Ground.Kind.EMBER:
+			if z.tags.has(Celestial.CEL_TAG):
+				celestial.zone_burn(e, z.power)  # V1: a Blessing's fire burns (its DPS is the burn's), no blow of its own
+				return
 			hit_enemy(e, z.power * Ground.TICK, EMBER_TAGS, Vector2.ZERO, 0.0, false)
 			_burn(e, z.power)
 		Ground.Kind.HOLY:
@@ -754,17 +768,30 @@ func on_zone_hit(e: Enemy, z: Ground.Zone) -> void:
 
 
 ## A gift's skill hits an enemy: damage plus the skill's own status (burn, freeze, stun, slow).
-func skill_hit(e: Enemy, damage: float, tags: Array[StringName], away: Vector2, knockback: float, status: StringName, power: float) -> bool:
+func skill_hit(e: Enemy, damage: float, tags: Array[StringName], away: Vector2, knockback: float, status: StringName, power: float, gap := 0.0) -> bool:
+	if status == &"crit":
+		# Julgamento da Luz (V1): the ray's own chance, the Blessing's crit multiplier
+		damage *= celestial.skill_crit(power)
+		status = &""
+	if damage <= 0.0:
+		# a Blessing that only puts a status (the ice of Poder Glacial, a veil): no blow, no number
+		if e.alive and not e.invulnerable:
+			_apply_status(e, status, power, tags, gap)
+		return false
 	var died := hit_enemy(e, damage, tags, away, knockback, false)
 	if not died:
-		_apply_status(e, status, power, tags)
+		_apply_status(e, status, power, tags, gap)
 	return died
 
 
-func _apply_status(e: Enemy, status: StringName, power: float, tags: Array[StringName] = []) -> void:
+func _apply_status(e: Enemy, status: StringName, power: float, tags: Array[StringName] = [], gap := 0.0) -> void:
 	if power <= 0.0 or not e.alive or e.invulnerable:
 		return
 	match status:
+		&"cold":
+			celestial.apply_cold(e, roundi(power), 0, tags[2] if tags.size() > 2 else &"", gap)
+		&"impact":
+			celestial.apply_impact(e, roundi(power), 0)
 		&"burn":
 			_burn(e, power)
 		&"freeze":
@@ -829,6 +856,9 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	dmg *= 1.0 + boons.stat(&"final_pct", tags)  # Força Titânica: x3 at the very end of the Golpe Carregado's damage_pct
 	dmg = DamageCalc.marked(dmg, MARK_CRIT + boons.stat(&"crit_pct", tags), e.mark_t > 0.0)
 	dmg = DamageCalc.shoved(dmg, boons.stat(&"shove_pct"), e.shove_t > 0.0)
+	var direct := celestial.active() and CelRules.is_direct(tags)
+	if direct:
+		dmg *= celestial.direct_mult(e, tags)  # V1: the target's state (weakened, stunned, frozen) and the Blessing crit
 	var push_pct := boons.stat(&"push_pct", tags)
 	dmg *= 1.0 + _resisted(e, push_pct, boons.stat(&"freeze_time", tags))
 	if e.armor > 0.0:
@@ -892,6 +922,8 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 		horde.dealing = source if source != &"" else DealtBy.source(tags)
 		died = horde.damage(e, maxf(1.0, roundf(detonation)), away, 0.0, FIRE, true)
 		horde.dealing = &""
+	if direct:
+		celestial.after_hit(e, tags, dmg, died)  # V1: the statuses and the echo of the action's Blessings
 	if died:
 		return true
 	var burn := boons.stat(&"burn_dps", tags)
@@ -982,11 +1014,15 @@ func _freeze(e: Enemy, time: float, tags: Array[StringName] = []) -> void:
 ## Fraqueza (the Veu): for `time` seconds the enemy deals WEAK_CUT less, plus the Blessings' weak_pct (DamageCalc.weakened).
 ## The guardians' and Morvath's own attacks are their scripts' (the boss keeps his damage); the common crowd and the
 ## elites obey.
+func weaken(e: Enemy, time: float) -> void:
+	_weaken(e, time)
+
+
 func _weaken(e: Enemy, time: float) -> void:
 	if time <= 0.0 or not e.alive or e.invulnerable:
 		return
 	e.weak_t = maxf(e.weak_t, time)
-	horde.weak_cut = WEAK_CUT + boons.stat(&"weak_pct")
+	horde.weak_cut = CelRules.weak_cut(WEAK_CUT, boons.stat(&"weak_pct"))
 	fx.burst(&"dust", Vector3(e.pos.x, 1.0, e.pos.y))
 
 
@@ -998,12 +1034,18 @@ func _mark(e: Enemy, time: float) -> void:
 
 
 func _burn(e: Enemy, dps: float) -> void:
+	burn_for(e, dps, BURN_TIME)
+
+
+## Queimadura: a new application renews the time (never shortens it) and keeps the greater DPS while it burns (V1: DPS never
+## adds up; a fire that went out starts over at its own).
+func burn_for(e: Enemy, dps: float, time: float) -> void:
 	if e.invulnerable:
 		return  # nothing takes hold through a ward (it would glow through it: crowd.gdshader's burn)
 	if e.frozen_t > 0.0:
 		_steam(e)
-	e.burn_t = BURN_TIME
-	e.burn_dps = maxf(e.burn_dps, dps)
+	e.burn_dps = maxf(e.burn_dps, dps) if e.burn_t > 0.0 else dps
+	e.burn_t = maxf(e.burn_t, time)
 
 
 ## Flame meeting frost: a cloud of steam that blinds whoever stands in it.

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_if2gr"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_v8k5w"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_5asu1"]
+
+[sub_resource type="Resource" id="Resource_1mxwu"]
+script = ExtResource("3_5asu1")
+trigger = 7
+duration = PackedFloat32Array(0)
+gap = PackedFloat32Array(0)
+cooldown = PackedFloat32Array(4)
+damage = PackedFloat32Array(20, 30, 42)
+count = PackedFloat32Array(8)
+radius = PackedFloat32Array(2.2)
+status = &"burn"
+status_power = PackedFloat32Array(4)
+
+[resource]
+script = ExtResource("2_v8k5w")
+id = &"chuva_brasas"
+family = 0
+slot = 6
+skill = SubResource("Resource_1mxwu")
+grants = PackedStringArray("burn")
+needs_all = PackedStringArray()

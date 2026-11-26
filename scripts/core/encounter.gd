@@ -75,31 +75,27 @@ static func belongs(state: BoonState, b: Boon, family: Boon.Family) -> bool:
 	return false
 
 
-## BO-2: how many cards an angel must be able to put on the table to be met (six Blessings a family, one held for each
-## button: the second meeting still shows three).
+## Blessings V1: the most cards an angel puts on the table, and the fewest it must have to be met (docs/design/bencaos_v1,
+## 02_REGRAS: up to three valid options; one or two are shown as they are; none, the angel leaves before the door).
 const CARDS := 3
+const MIN_CARDS := 1
 ## SW-B2: the weight of an angel the hand already holds a Blessing of, against 1 of a new one (SWORN's fairies, 3 to 1).
 const HELD_WEIGHT := 3.0
 
 
-## How many cards the angel could offer the hand: a Blessing not held and offerable (fresh, a trade or an Elo that can be
-## formed now), and, to fill the hand, a Blessing of its family held that can still grow (one level more).
+## How many cards the angel could offer the hand (V1): a Blessing of its family not held and offerable now (its slot
+## free, what it asks held). A Blessing already held never comes back as a card, nor is a slot's holder replaced.
 static func supply(state: BoonState, angel: AngelDef) -> int:
 	var n := 0
 	for b in state.catalog:
-		if not belongs(state, b, angel.family):
-			continue
-		if state.level(b.id) <= 0:
-			if state.offerable(b):
-				n += 1
-		elif state.can_offer(b) and not b.reserve:
+		if state.level(b.id) <= 0 and belongs(state, b, angel.family) and state.offerable(b):
 			n += 1
 	return n
 
 
-## True when the angel has CARDS cards for the hand (supply).
+## True when the angel has at least MIN_CARDS cards for the hand (supply).
 static func eligible(state: BoonState, angel: AngelDef) -> bool:
-	return supply(state, angel) >= CARDS
+	return supply(state, angel) >= MIN_CARDS
 
 
 ## The angels met: SIZE different ones drawn among the eligible (all shuffled on rng, the first eligible kept), the
@@ -142,24 +138,13 @@ static func holds(state: BoonState, angel: AngelDef) -> bool:
 	return false
 
 
-## The angel's cards: BoonState.draw over its family only, with the stage's chances; short of n, the rest are one level
-## more of a Blessing of the family already held (BO-2: three cards always, as eligible promises).
+## The angel's cards: BoonState.draw over its family only, with the stage's chances: up to n, fewer when the family has
+## fewer valid ones (V1: no filler, no replacement).
 static func cards(state: BoonState, angel: AngelDef, rng: RandomNumberGenerator, n: int = 3,
 		chances: Array[float] = Boon.RARITY_CHANCE, elo_chance: float = Boon.ELO_CHANCE,
 		trade_chance: float = Boon.TRADE_CHANCE) -> Array[BoonState.Card]:
-	var out := state.draw(rng, n, chances, elo_chance, trade_chance,
+	return state.draw(rng, n, chances, elo_chance, trade_chance,
 		func(b: Boon) -> bool: return belongs(state, b, angel.family))
-	if out.size() < n:
-		var held: Array[Boon] = []
-		for b in state.owned():
-			if belongs(state, b, angel.family) and state.can_offer(b) and not b.reserve:
-				held.append(b)
-		while out.size() < n and not held.is_empty():
-			var b: Boon = held.pop_at(rng.randi() % held.size())
-			var c := BoonState.Card.new(b, state.rarity(b.id), state.level(b.id) + 1)
-			c.grow = true
-			out.append(c)
-	return out
 
 
 ## The angel whose family the hand holds most (Blessings held of it, an Elo counting for both of its families); the

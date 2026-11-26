@@ -24,3 +24,5 @@ family = 0
 icon = 2
 reserve = true
 mods = Array[ExtResource("1_note3")]([SubResource("Resource_we1oa"), SubResource("Resource_05mqd")])
+grants = PackedStringArray()
+needs_all = PackedStringArray()

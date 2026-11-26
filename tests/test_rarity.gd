@@ -55,46 +55,9 @@ func test_four_rarities_with_their_multipliers_and_names() -> void:
 	assert_lt(gold.s, 0.6, "old gold, never bright yellow")
 
 
-## E3-01: a card for an action already taken (10% a card) trades it for another one rarity higher at its level; an
-## epic traded becomes legendary, a legendary stays legendary.
-func test_a_trade_comes_one_rarity_higher_at_the_same_level() -> void:
-	var state := BoonState.new(BoonState.load_catalog())
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 3
-	var old := state.find(&"golpe_brasa")
-	state.take(old, Boon.Rarity.EPIC)
-	state.take(old)
-	var card := state.trade_card(state.find(&"golpe_radiante"), rng, [0.0, 0.0, 0.0] as Array[float])
-	assert_true(card.trade)
-	assert_eq(card.replaces, old)
-	assert_eq(card.rarity, Boon.Rarity.LEGENDARY)
-	assert_eq(card.level, 2, "the level of the one it replaces")
-	state.take_card(card)
-	assert_eq(state.level(&"golpe_brasa"), 0, "the old one is gone")
-	assert_eq(state.level(&"golpe_radiante"), 2)
-	assert_eq(state.rarity(&"golpe_radiante"), Boon.Rarity.LEGENDARY)
-	var again := state.trade_card(state.find(&"golpe_geada"), rng, [0.0, 0.0, 0.0] as Array[float])
-	assert_eq(again.rarity, Boon.Rarity.LEGENDARY, "never past legendary")
+## (V1, 2026-11-26: nothing is replaced, so there are no trade cards; the odds above are all that is left of E3-01 here, and
+## test_blessings_v1_draw holds that a held slot is out of the draw.)
 
-
-func test_trades_come_about_one_card_in_ten() -> void:
-	var catalog := BoonState.load_catalog()
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 8
-	var trades := 0
-	var cards := 0
-	for run in 2000:
-		var state := BoonState.new(catalog)
-		state.take(state.find(&"golpe_brasa"))
-		for c in state.draw(rng, 3, Boon.RARITY_CHANCE, 0.0, 0.1):
-			cards += 1
-			if c.trade:
-				trades += 1
-				assert_eq(c.replaces.id, &"golpe_brasa")
-				assert_gte(c.rarity, Boon.Rarity.RARE, "a common traded comes rare at least")
-			else:
-				assert_null(c.replaces, "with fresh gifts left a card never replaces without the trade")
-	assert_almost_eq(float(trades) / cards, 0.1, 0.01)
 
 
 ## SW-B2: the curve against the SWORN's (79.5 / 14 / 4.5 / 1.5 / 0.5): common and rare close, the top three together

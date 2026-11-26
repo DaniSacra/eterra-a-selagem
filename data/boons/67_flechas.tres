@@ -20,4 +20,7 @@ script = ExtResource("2_6h67g")
 id = &"flechas"
 family = 7
 icon = 22
+reserve = true
 skill = SubResource("Resource_ii3du")
+grants = PackedStringArray()
+needs_all = PackedStringArray()

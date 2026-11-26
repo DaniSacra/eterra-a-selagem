@@ -707,9 +707,11 @@ const NEEDS_TAG := {&"golpe_geada": &"spin", &"final_radiante": &"finisher", &"f
 
 
 func _boon(n: int, id: StringName, family: Boon.Family, icon: int, mods: Array[BoonMod], skill: SkillDef = null, slot: Boon.Slot = Boon.Slot.NONE) -> void:
+	if V1_IDS.has(id):
+		return  # Blessings V1: this id is defined again below (_v1_boons), in its own file
 	var b := Boon.new()
 	b.id = id
-	b.reserve = RESERVE.has(id)
+	b.reserve = true  # Blessings V1 (2026-11-26): the old catalog leaves the draw whole (never deleted: saves and the Compêndio know it)
 	b.needs_tag = NEEDS_TAG.get(id, &"")
 	b.slot = slot
 	b.family = family
@@ -724,6 +726,7 @@ func _boon(n: int, id: StringName, family: Boon.Family, icon: int, mods: Array[B
 func _elo(n: int, id: StringName, icon: int, mods: Array[BoonMod], sets: Array) -> void:
 	var b := Boon.new()
 	b.id = id
+	b.reserve = true  # Blessings V1: no Elo in the draw this version
 	b.family = Boon.Family.DUO
 	b.icon = icon
 	b.mods = mods
@@ -734,6 +737,7 @@ func _elo(n: int, id: StringName, icon: int, mods: Array[BoonMod], sets: Array) 
 
 
 func _boons() -> void:
+	_v1_n = 0
 	for f in DirAccess.get_files_at("res://data/boons"):
 		DirAccess.remove_absolute("res://data/boons/" + f)
 	var F := Boon.Family
@@ -853,6 +857,156 @@ func _boons() -> void:
 	_elo(72, &"correnteza", 16, [_mod(&"push_pct", 0.5, [], &"dash")], [mare, vigilia])
 	_elo(73, &"mira_clara", 13, [_mod(&"mark_time", 3.0, [], &"luz")], [luz_hits, marca])
 	_elo(74, &"olho_firme", 15, [_mod(&"crit_pct", 0.2, [], &"heavy")], [marca, vigilia])
+	_v1_boons()
+
+
+# ---------- Blessings V1 (docs/design/bencaos_v1, 2026-11-26): seven angels, 63 powers ----------
+
+## The 63 ids of the active catalog (35 principals: five a family, one a button of the hero but E; 28 complements). The old
+## ids kept here are the ones whose action and meaning stay (docs/design/bencaos_v1/IMPLEMENTACAO.md has the whole table).
+const V1_IDS: Array[StringName] = [
+	&"golpe_brasa", &"pesado_brasa", &"circulo_brasa", &"passo_brasa", &"chuva_brasas", &"combustao", &"chama_contagiosa", &"brasa_persistente", &"fogo_crescente",
+	&"golpe_geada", &"toque_geada", &"circulo_geada", &"floco_errante", &"peso_inverno", &"estilhaco", &"inverno_prolongado", &"geada_profunda", &"cristais_errantes",
+	&"golpe_radiante", &"pesado_radiante", &"circulo_radiante", &"clarao", &"ultimo_radiante", &"luz_crescente", &"prosperidade", &"fortuna_celestial", &"esplendor",
+	&"golpe_firme", &"pesado_firme", &"circulo_firme", &"passo_firme", &"ultimo_firme", &"ruptura", &"forca_inabalavel", &"peso_vigilia", &"amparo",
+	&"golpe_veu", &"pesado_veu", &"circulo_veu", &"fios_cinza", &"crepusculo", &"vulnerabilidade", &"essencia_restauradora", &"veu_persistente", &"entardecer",
+	&"golpe_mare", &"pesado_mare", &"circulo_mare", &"passos_leves", &"vendaval", &"cadencia", &"turbilhao", &"brisa_favoravel", &"fluxo_continuo",
+	&"golpe_marca", &"pesado_marca", &"circulo_marca", &"olhar_rapido", &"exercito_ecos", &"eco_crescente", &"marca_persistente", &"sombra_revelada", &"ressonancia"]
+
+var _v1_n := 0
+
+
+## A number of a V1 Blessing: base a common card, gain more at each level after the first (0: none), scale: the rarity
+## multiplies it (only direct extra damage, DPS and the relative damage bonuses; durations, counts, radii, chances stay).
+func _vm(stat: StringName, base: float, gain := 0.0, scale := false) -> BoonMod:
+	var m := BoonMod.new()
+	m.stat = stat
+	m.base = base
+	m.per_level = PackedFloat32Array([gain, gain]) if gain > 0.0 else PackedFloat32Array()
+	m.by_rarity = scale
+	return m
+
+
+## A skill with the numbers of the spec as they are (no FLAT: the document's values are the ones to play).
+func _vs(kind: SkillDef.Kind, props: Dictionary) -> SkillDef:
+	var s := SkillDef.new()
+	s.kind = kind
+	for k: String in props:
+		var v: Variant = props[k]
+		s.set(k, PackedFloat32Array(v) if v is Array else v)
+	return s
+
+
+func _v(id: StringName, family: Boon.Family, icon: int, slot: Boon.Slot, mods: Array[BoonMod], skill: SkillDef = null,
+		grants: Array[String] = [], needs: Array[String] = []) -> void:
+	assert(V1_IDS.has(id), "not in V1_IDS: %s" % id)
+	var b := Boon.new()
+	b.id = id
+	b.family = family
+	b.icon = icon
+	b.slot = slot
+	b.mods = mods
+	b.skill = skill
+	b.grants = PackedStringArray(grants)
+	b.needs_all = PackedStringArray(needs)
+	var grows := false
+	for m in mods:
+		grows = grows or not m.per_level.is_empty()
+	if skill != null and skill.damage.size() > 1:
+		grows = true
+	b.max_level = 3 if grows else 1
+	_save(b, "res://data/boons/v1_%02d_%s.tres" % [_v1_n, id])
+	_v1_n += 1
+
+
+func _v1_boons() -> void:
+	var F := Boon.Family
+	var K := SkillDef.Kind
+	var S := Boon.Slot
+	var T := SkillDef.Trigger
+	# Sarael (Chama): Queimadura and Combustão
+	_v(&"golpe_brasa", F.CHAMA, 2, S.ATTACK, [_vm(&"cel_burn_dps", 4, 2, true)], null, ["burn"])
+	_v(&"pesado_brasa", F.CHAMA, 0, S.SPECIAL, [_vm(&"cel_burn_dps", 6, 3, true)], null, ["burn"])
+	_v(&"circulo_brasa", F.CHAMA, 1, S.CAST, [], _vs(K.CONSECRATE, {"trigger": T.SHOUT, "damage": [6, 9, 12], "radius": [2.5], "duration": [3.0],
+		"gap": [4.0], "status": &"burn", "status_power": [3.0]}), ["burn"])
+	_v(&"passo_brasa", F.CHAMA, 16, S.DASH, [_vm(&"dodge_ember_dps", 6, 3, true)], null, ["burn"])
+	_v(&"chuva_brasas", F.CHAMA, 0, S.ULT, [], _vs(K.STRIKES, {"trigger": T.ULT, "damage": [20, 30, 42], "count": [8], "radius": [2.2],
+		"status": &"burn", "status_power": [4.0]}), ["burn"])
+	_v(&"combustao", F.CHAMA, 14, S.NONE, [_vm(&"cel_combust_dmg", 12, 6, true)], null, [], ["burn"])
+	_v(&"chama_contagiosa", F.CHAMA, 14, S.NONE, [_vm(&"cel_spread_pct", 0.5)], null, [], ["burn"])
+	_v(&"brasa_persistente", F.CHAMA, 2, S.NONE, [_vm(&"cel_burn_time_pct", 0.3, 0.1)], null, [], ["burn"])
+	_v(&"fogo_crescente", F.CHAMA, 2, S.NONE, [_vm(&"cel_burn_dps_pct", 0.2, 0.1, true)], null, [], ["burn"])
+	# Nivael (Geada): Frio and estilhaçamento
+	_v(&"golpe_geada", F.GEADA, 3, S.ATTACK, [_vm(&"cel_cold", 1)], null, ["cold"])
+	_v(&"toque_geada", F.GEADA, 3, S.SPECIAL, [_vm(&"cel_cold", 2)], null, ["cold"])
+	_v(&"circulo_geada", F.GEADA, 4, S.CAST, [], _vs(K.NOVA, {"trigger": T.SHOUT, "damage": [0.0], "radius": [3.0], "gap": [4.0],
+		"status": &"cold", "status_power": [2.0]}), ["cold"])
+	_v(&"floco_errante", F.GEADA, 4, S.DASH, [], _vs(K.ORBIT, {"trigger": T.DODGE, "damage": [0.0], "count": [2], "cooldown": [0.5],
+		"radius": [2.6], "duration": [3.0], "gap": [0.0], "status": &"cold", "status_power": [1.0], "status_gap": 1.0}), ["cold"])
+	_v(&"peso_inverno", F.GEADA, 5, S.ULT, [], _vs(K.METEOR, {"trigger": T.ULT, "damage": [40, 60, 85], "radius": [4.0],
+		"status": &"cold", "status_power": [3.0]}), ["cold"])
+	_v(&"estilhaco", F.GEADA, 4, S.NONE, [_vm(&"cel_shatter_pct", 0.25, 0.1, true)], null, [], ["cold"])
+	_v(&"inverno_prolongado", F.GEADA, 17, S.NONE, [_vm(&"cel_cold_time_pct", 0.25)], null, [], ["cold"])
+	_v(&"geada_profunda", F.GEADA, 12, S.NONE, [_vm(&"cel_slow_add", 0.05)], null, [], ["cold"])
+	_v(&"cristais_errantes", F.GEADA, 12, S.NONE, [_vm(&"cel_crystal", 1)], null, [], ["estilhaco"])
+	# Lumael (Luz): chance crítica
+	_v(&"golpe_radiante", F.LUZ, 8, S.ATTACK, [_vm(&"cel_crit", 0.1, 0.03)], null, ["crit"])
+	_v(&"pesado_radiante", F.LUZ, 7, S.SPECIAL, [_vm(&"cel_crit", 0.1, 0.03), _vm(&"cel_crit_mult", 0.25)], null, ["crit"])
+	_v(&"circulo_radiante", F.LUZ, 6, S.CAST, [_vm(&"cel_crit", 0.15, 0.03)], null, ["crit"])
+	_v(&"clarao", F.LUZ, 10, S.DASH, [_vm(&"cel_crit", 0.15, 0.03)], null, ["crit"])
+	_v(&"ultimo_radiante", F.LUZ, 8, S.ULT, [], _vs(K.STRIKES, {"trigger": T.ULT, "damage": [15, 22, 32], "count": [3], "radius": [1.5],
+		"status": &"crit", "status_power": [0.15]}), ["crit"])
+	_v(&"luz_crescente", F.LUZ, 6, S.NONE, [_vm(&"cel_crit_stack", 0.05)], null, [], ["crit"])
+	_v(&"prosperidade", F.LUZ, 13, S.NONE, [_vm(&"gold_pct", 0.1)], null, [], ["fam:luz"])
+	_v(&"fortuna_celestial", F.LUZ, 8, S.NONE, [_vm(&"cel_crit_global", 0.05)], null, [], ["crit"])
+	_v(&"esplendor", F.LUZ, 8, S.NONE, [_vm(&"cel_crit_mult_global", 0.2)], null, [], ["crit"])
+	# Shomael (Vigília): Impacto e ruptura
+	_v(&"golpe_firme", F.VIGILIA, 11, S.ATTACK, [_vm(&"cel_impact", 1)], null, ["impact"])
+	_v(&"pesado_firme", F.VIGILIA, 15, S.SPECIAL, [_vm(&"cel_impact", 2)], null, ["impact"])
+	_v(&"circulo_firme", F.VIGILIA, 9, S.CAST, [], _vs(K.NOVA, {"trigger": T.SHOUT, "damage": [10, 15, 21], "radius": [3.0], "gap": [4.0],
+		"status": &"impact", "status_power": [2.0]}), ["impact"])
+	_v(&"passo_firme", F.VIGILIA, 10, S.DASH, [_vm(&"cel_guard_time", 1.2)], null, [], [])
+	_v(&"ultimo_firme", F.VIGILIA, 11, S.ULT, [], _vs(K.NOVA, {"trigger": T.ULT, "damage": [30, 45, 66], "radius": [6.0],
+		"status": &"impact", "status_power": [3.0]}), ["impact"])
+	_v(&"ruptura", F.VIGILIA, 15, S.NONE, [_vm(&"cel_impact_need", -1)], null, [], ["impact"])
+	_v(&"forca_inabalavel", F.VIGILIA, 11, S.NONE, [_vm(&"cel_stunned_dmg_pct", 0.2, 0.1, true)], null, [], ["impact"])
+	_v(&"peso_vigilia", F.VIGILIA, 9, S.NONE, [_vm(&"cel_impact_time_pct", 0.3)], null, [], ["impact"])
+	_v(&"amparo", F.VIGILIA, 9, S.NONE, [_vm(&"cel_guard_time_pct", 0.25)], null, [], ["passo_firme"])
+	# Velael (Véu): Fraqueza
+	_v(&"golpe_veu", F.VEU, 20, S.ATTACK, [_vm(&"cel_weak", 2, 1)], null, ["weak"])
+	_v(&"pesado_veu", F.VEU, 20, S.SPECIAL, [_vm(&"cel_weak", 3, 1)], null, ["weak"])
+	_v(&"circulo_veu", F.VEU, 20, S.CAST, [], _vs(K.NOVA, {"trigger": T.SHOUT, "damage": [0.0], "radius": [3.0], "gap": [0.0],
+		"status": &"weak", "status_power": [4.0, 5.5, 7.0]}), ["weak"])
+	_v(&"fios_cinza", F.VEU, 20, S.DASH, [], _vs(K.NOVA, {"trigger": T.DODGE, "damage": [0.0], "radius": [2.0], "gap": [3.0],
+		"status": &"weak", "status_power": [2.0, 3.0, 4.0]}), ["weak"])
+	_v(&"crepusculo", F.VEU, 20, S.ULT, [], _vs(K.NOVA, {"trigger": T.ULT, "damage": [0.0], "radius": [7.0],
+		"status": &"weak", "status_power": [5.0, 6.5, 8.0]}), ["weak"])
+	_v(&"vulnerabilidade", F.VEU, 20, S.NONE, [_vm(&"cel_weak_dmg_pct", 0.1, 0.05, true)], null, [], ["weak"])
+	_v(&"essencia_restauradora", F.VEU, 20, S.NONE, [_vm(&"cel_weak_mana", 1)], null, [], ["weak"])
+	_v(&"veu_persistente", F.VEU, 20, S.NONE, [_vm(&"cel_weak_time_pct", 0.25)], null, [], ["weak"])
+	_v(&"entardecer", F.VEU, 20, S.NONE, [_vm(&"weak_pct", 0.05)], null, [], ["weak"])
+	# Galael (Vento, id Mare): velocidade e cadência
+	_v(&"golpe_mare", F.MARE, 21, S.ATTACK, [_vm(&"cel_speed", 0.1, 0.03)], null, ["wind"])
+	_v(&"pesado_mare", F.MARE, 21, S.SPECIAL, [], _vs(K.FAN, {"trigger": T.SPECIAL, "damage": [8, 12, 17], "count": [1], "radius": [10.0],
+		"gap": [1.0]}), ["wind"])
+	_v(&"circulo_mare", F.MARE, 21, S.CAST, [_vm(&"cel_cd_cut", 0.1, 0.03)], null, ["wind"])
+	_v(&"passos_leves", F.MARE, 21, S.DASH, [_vm(&"dodge_charges", 1)], null, ["wind"])
+	_v(&"vendaval", F.MARE, 21, S.ULT, [_vm(&"cel_haste_speed", 0.2), _vm(&"cel_haste_move", 0.1), _vm(&"cel_haste_time", 5.0)], null, ["wind"])
+	_v(&"cadencia", F.MARE, 21, S.NONE, [_vm(&"cel_cadence", 0.03)], null, ["cadence"], ["fam:mare"])
+	_v(&"turbilhao", F.MARE, 21, S.NONE, [_vm(&"cel_whirl_dmg", 12, 6, true)], null, [], ["cadencia"])
+	_v(&"brisa_favoravel", F.MARE, 21, S.NONE, [_vm(&"move_speed_pct", 0.05)], null, [], ["fam:mare"])
+	_v(&"fluxo_continuo", F.MARE, 21, S.NONE, [_vm(&"cel_cadence_time_pct", 0.3)], null, [], ["cadencia"])
+	# Qeshael (Penumbra, id Marca): Marca e ecos
+	_v(&"golpe_marca", F.MARCA, 22, S.ATTACK, [_vm(&"cel_mark", 3, 1)], null, ["mark"])
+	_v(&"pesado_marca", F.MARCA, 22, S.SPECIAL, [_vm(&"cel_echo", 0.3)], null, ["echo"], ["mark"])
+	_v(&"circulo_marca", F.MARCA, 22, S.CAST, [_vm(&"cel_echo", 0.25)], null, ["echo"])
+	_v(&"olhar_rapido", F.MARCA, 22, S.DASH, [_vm(&"cel_mark", 3, 1), _vm(&"cel_radius", 3.0)], null, ["mark"])
+	_v(&"exercito_ecos", F.MARCA, 22, S.ULT, [_vm(&"cel_echo", 0.25), _vm(&"cel_echo_time", 5.0)], null, ["echo"])
+	_v(&"eco_crescente", F.MARCA, 22, S.NONE, [_vm(&"cel_echo_pct", 0.2, 0.1, true)], null, [], ["echo"])
+	_v(&"marca_persistente", F.MARCA, 22, S.NONE, [_vm(&"cel_mark_time_pct", 0.3)], null, [], ["mark"])
+	_v(&"sombra_revelada", F.MARCA, 22, S.NONE, [_vm(&"cel_echo_marked_pct", 0.15, 0.05, true)], null, [], ["mark", "echo"])
+	_v(&"ressonancia", F.MARCA, 22, S.NONE, [_vm(&"cel_echo_cd_cut", 0.1)], null, [], ["echo"])
+	assert(_v1_n == 63, "the V1 catalog has 63 powers, made %d" % _v1_n)
 
 
 # ---------- waves ----------

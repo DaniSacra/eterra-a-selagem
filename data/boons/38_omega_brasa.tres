@@ -17,3 +17,5 @@ family = 0
 icon = 2
 reserve = true
 mods = Array[ExtResource("1_sqn65")]([SubResource("Resource_mddr8")])
+grants = PackedStringArray()
+needs_all = PackedStringArray()

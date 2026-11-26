@@ -21,4 +21,7 @@ script = ExtResource("2_ri1qt")
 id = &"espuma"
 family = 6
 icon = 21
+reserve = true
 skill = SubResource("Resource_gprjc")
+grants = PackedStringArray()
+needs_all = PackedStringArray()

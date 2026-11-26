@@ -23,4 +23,7 @@ id = &"passos"
 family = 3
 icon = 10
 slot = 4
+reserve = true
 mods = Array[ExtResource("1_1s8q0")]([SubResource("Resource_vah24"), SubResource("Resource_ycoye")])
+grants = PackedStringArray()
+needs_all = PackedStringArray()

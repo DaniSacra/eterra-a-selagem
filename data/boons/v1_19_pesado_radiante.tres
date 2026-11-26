@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_pxqqo"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_573ft"]
+
+[sub_resource type="Resource" id="Resource_0njm4"]
+script = ExtResource("1_pxqqo")
+stat = &"cel_crit"
+base = 0.1
+per_level = PackedFloat32Array(0.03, 0.03)
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_67l5d"]
+script = ExtResource("1_pxqqo")
+stat = &"cel_crit_mult"
+base = 0.25
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_573ft")
+id = &"pesado_radiante"
+icon = 7
+slot = 2
+mods = Array[ExtResource("1_pxqqo")]([SubResource("Resource_0njm4"), SubResource("Resource_67l5d")])
+grants = PackedStringArray("crit")
+needs_all = PackedStringArray()

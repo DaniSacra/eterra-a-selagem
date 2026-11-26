@@ -643,6 +643,8 @@ static func describe(b: Boon, level: int, mult: float = 1.0, marked := false) ->
 		args["duration"] = UiKit.format_number(b.skill.get_duration(level))
 		args["gap"] = UiKit.format_number(b.skill.get_gap(level))
 		args["status"] = UiKit.format_number(b.skill.get_status_power(level))
+		args["status_pct"] = "%d%%" % roundi(b.skill.get_status_power(level) * 100.0)  # (a chance: Julgamento da Luz)
+	args.merge(CelRules.text_args())
 	if marked:
 		for k: String in args:
 			args[k] = UiKit.strong(str(args[k]))
@@ -663,8 +665,9 @@ static func key_in_text(action: StringName, marked := false) -> String:
 
 
 ## The stats whose value is a time, a damage each second, or a count added: how a fact reads its value.
-const SECONDS: Array[StringName] = [&"freeze_time", &"steam_time", &"shield_cooldown", &"weak_time", &"mark_time"]
-const PER_SECOND: Array[StringName] = [&"burn_dps", &"dodge_ember_dps", &"cast_dps"]
+const SECONDS: Array[StringName] = [&"freeze_time", &"steam_time", &"shield_cooldown", &"weak_time", &"mark_time", &"cel_echo_time",
+	&"cel_guard_time", &"cel_haste_time", &"cel_mark", &"cel_weak"]
+const PER_SECOND: Array[StringName] = [&"burn_dps", &"dodge_ember_dps", &"cast_dps", &"cel_burn_dps"]
 const ADDED: Array[StringName] = [&"max_hp", &"dodge_charges"]
 
 
@@ -693,7 +696,7 @@ static func facts(b: Boon, level: int, mult: float = 1.0) -> Array:
 ## A modifier's value as a fact reads it: "+25%", "0,4 s", "3 por s", "+10".
 static func fact_value(stat: StringName, v: float) -> String:
 	var n := BoonMod.format(stat, v)
-	if String(stat).ends_with("_pct") or stat in ADDED:
+	if String(stat).ends_with("_pct") or stat in ADDED or stat in BoonMod.PERCENT:
 		return "+" + n
 	if stat in SECONDS:
 		return T.t(&"fact_seconds", {"n": n})

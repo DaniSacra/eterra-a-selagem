@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_sv672"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_6najw"]
+
+[sub_resource type="Resource" id="Resource_ganta"]
+script = ExtResource("1_sv672")
+stat = &"cel_crit"
+base = 0.1
+per_level = PackedFloat32Array(0.03, 0.03)
+by_rarity = false
+
+[resource]
+script = ExtResource("2_6najw")
+id = &"golpe_radiante"
+icon = 8
+slot = 1
+mods = Array[ExtResource("1_sv672")]([SubResource("Resource_ganta")])
+grants = PackedStringArray("crit")
+needs_all = PackedStringArray()
