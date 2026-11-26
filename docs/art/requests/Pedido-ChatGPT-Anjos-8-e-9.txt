@@ -1,0 +1,95 @@
+PEDIDO DE ARTE: DOIS ANJOS NOVOS (8 e 9) PARA "CRÔNICAS DE ETERRA: A SELAGEM"
+Data: 2026-11-26. Mesmo processo dos 7 anjos de 2026-11-21.
+
+Anexos (na pasta junto deste pedido):
+- ref_anjo_1_chama.png, ref_anjo_5_veu.png, ref_anjo_6_mare.png: três dos sete retratos já aprovados. Os novos
+  precisam parecer da MESMA série (mesmo pintor, mesma luz, mesmo enquadramento).
+- ref_icone_*.png: ícones de Bênção já aprovados, para o estilo dos ícones novos.
+
+------------------------------------------------------------------
+1. O QUE OS ANJOS SÃO NESTE MUNDO (regras que valem para os dois)
+------------------------------------------------------------------
+- Eterra é uma alegoria cristã: Yah é Deus e Elun é Jesus. A luz vem de Elun; os anjos (Malahym) são mensageiros
+  que levam ao herói uma parte dessa luz. Nunca são a fonte, nunca são adorados, falam pouco.
+- Tom de aventura, não de terror. Nada de caveira, sangue, pus, inseto, corpo doente ou máscara de médico da peste.
+- Nada de cruz, de auréola com raios (lê como sol) nem de símbolo religioso de fora. Se houver auréola, só um aro fino
+  de ouro velho atrás da cabeça, sem raios.
+- Nenhum violeta (é a cor exclusiva do vilão, Morvath) e nenhum verde-esmeralda vivo (é a espada do herói).
+- Asas claras, de penas, como nos sete (fechadas ou meio abertas atrás dos ombros).
+- Anjo não tem sexo, mas queremos equilibrar a série, que hoje está mais masculina: os DOIS novos têm presença
+  feminina (traços, cabelo e postura femininos, sem sensualizar; roupas longas como as dos outros).
+
+------------------------------------------------------------------
+2. FORMATO (igual aos sete)
+------------------------------------------------------------------
+- Retrato vertical 1024 x 1536, da cintura para cima, figura ocupando o lado esquerdo e o centro.
+- Pintura digital com pincelada visível, luz quente de velas, fundo de catacumba com arcos de pedra e velas,
+  escuro e desfocado.
+- Uma mão estendida para a frente e para baixo, oferecendo (como os outros), ou segurando o elemento dela.
+- Um broche/medalhão redondo no peito com o símbolo do anjo (abaixo), em ouro velho.
+- Sem texto, sem moldura, sem logotipo.
+
+------------------------------------------------------------------
+3. ANJO 8: ZERAEL, A PESTE
+------------------------------------------------------------------
+Papel no jogo: veneno que se acumula no inimigo em camadas; quando enche, estoura em volta ("saturação"); a doença
+pula de um inimigo derrotado para o próximo. É a luz que faz o mal apodrecer por dentro, não uma doença do mundo.
+Temperamento: paciente, enigmática, fala devagar e baixo, quase sorri.
+Visual:
+- Pele clara ou morena, rosto sereno e meio na sombra, olhos semicerrados.
+- Cabelo longo e liso, preso de lado, com folhas secas e ramos finos entrelaçados.
+- Manto em amarelo-enxofre apagado e verde-líquen pálido, forro carvão; bordas que se desfazem em fiapos, como
+  folha seca (não rasgado nem sujo).
+- Na mão estendida, uma névoa fina amarelo-esverdeada que sobe em fios, com pequenas sementes luminosas.
+- Símbolo do broche: uma ampola em losango com uma gota dentro.
+Cores-chave: enxofre #C9B458, líquen #9FAE7A, carvão #2E2B26, ouro velho #B08A4A.
+
+------------------------------------------------------------------
+4. ANJO 9: O ANJO DO TROVÃO (nome ainda a definir; não escrever nome na arte)
+------------------------------------------------------------------
+Papel no jogo: carrega o inimigo de eletricidade; quando a carga enche, descarrega e o raio salta para os vizinhos.
+Temperamento: vibrante, impetuosa, ri com o estrondo, a mais rápida de todos.
+Visual:
+- Postura em movimento, como quem acabou de pousar; queixo erguido, olhar direto e alegre.
+- Cabelo curto e branco-prateado, eriçado pelo vento da tempestade.
+- Armadura leve de couro e placas finas cinza-ardósia sobre túnica clara; manto curto cinza-tempestade que estala
+  na ponta.
+- Na mão estendida, um relâmpago pequeno e quebrado em zigue-zague, amarelo-pálido, com faíscas.
+- Símbolo do broche: um raio de três segmentos atravessando uma nuvem estilizada.
+Cores-chave: ardósia #4E5866, cinza-tempestade #7D8590, amarelo-relâmpago #F1E08A, ouro velho #B08A4A.
+(Sem azul-violeta e sem índigo: ficam perto do violeta do vilão.)
+
+------------------------------------------------------------------
+5. ÍCONES DAS BÊNÇÃOS (18 ícones, 9 por anjo)
+------------------------------------------------------------------
+Mesmo estilo dos anexos ref_icone_*: ícone quadrado 512 x 512, objeto ou gesto simples no centro, fundo escuro
+liso, contorno de tinta, cor da família. Um ícone por linha abaixo.
+
+Zerael (Peste), cor enxofre e líquen:
+ 1. Golpe Pestilento: lâmina com fiapos de névoa amarela.
+ 2. Peso da Peste: três gotas empilhadas caindo.
+ 3. Poder da Peste: círculo de névoa no chão com sementes.
+ 4. Passo Pestilento: pegada que deixa rastro de névoa.
+ 5. Epidemia Celestial: chuva de sementes luminosas.
+ 6. Saturação: ampola transbordando e estourando.
+ 7. Peste Persistente: folha seca que não cai do ramo.
+ 8. Deterioração: pedra rachando com fiapos amarelos.
+ 9. Contágio: duas gotas ligadas por um fio.
+
+Anjo do Trovão, cor ardósia e amarelo-relâmpago:
+ 1. Golpe Voltaico: lâmina com faíscas.
+ 2. Peso do Trovão: três cargas (pontos) presas num raio.
+ 3. Poder da Tormenta: círculo de nuvem com raios curtos no chão.
+ 4. Passo Voltaico: pegada com faísca.
+ 5. Tempestade Celestial: nuvem com três raios descendo.
+ 6. Descarga: raio estourando de um ponto.
+ 7. Condução: raio pulando entre dois pontos.
+ 8. Sobrecarga: orbe cheio de raios contidos.
+ 9. Ressonância Elétrica: três anéis concêntricos com faíscas.
+
+------------------------------------------------------------------
+6. O QUE DEVOLVER
+------------------------------------------------------------------
+- anjo_8_peste.png e anjo_9_trovao.png (1024 x 1536).
+- Os 18 ícones (512 x 512) com o nome do arquivo igual ao nome da Bênção, sem acento (ex.: golpe_pestilento.png).
+- Se quiser, uma variação de cada retrato.
