@@ -54,17 +54,20 @@ vale a regra do Daniel (sempre commit e push). As seções abaixo ficam como his
 | GP-6 | Modelos Meshy (Cavaleiro, Ancião, armadura do Guerreiro), retrato do herói no HUD | autorização de créditos | technical-artist |
 | GP-7 | Salas maiores e acabamento por arena (lista (C) da rodada 2026-11-25), heróis novos (Ladina, Paladino) | depois | room-designer, hero-designer |
 
-### 6. Decisões do Daniel (recomendação do Game Director entre parênteses)
-- **C-1 Controles:** PK-2 (sem Q e E, toque e segurar) ou PK-3 (mantém Q Brado e E Investida, E6 em (a)/(b))? (**PK-2**: o Corte Circular já é a opção (b), tira o Brado fraco e tem menos botões para as crianças.)
-- **C-2 Interação** no E (PK-2) em vez do F de hoje. (Seguir o PK-2 se o C-1 for PK-2.)
-- **C-3 Maga:** PK-2 retoma, PK-3 diz não mexer. (Depois do Guerreiro e das Bênçãos V2.)
-- **C-4 Um Supremo por arma** no Guerreiro (Corte do Juízo). (Sim, já decidido em 2026-11-24; ver DT-2.)
-- **C-5 Cânone:** anjos novos Zerael e Baraqel. Baraqel (Baraqiel) é um dos Vigilantes caídos do livro de Enoque. (Trocar o nome ou confirmar.) "Punho de Elun" não aparece no jogo (D-64).
-- **C-6 Testar o exe `abcc4c89`** antes de mexer nos controles.
-- Seguem de antes: textos a aprovar (Antessala, Espólios, objetivo, "De outro anjo: {f}"), música nova do Santuário (3 candidatas em Downloads), D-O8, Meshy, estados com guarda (PM-5).
+### 6. Decisões do Daniel: RESPONDIDAS em 2026-11-26 noite ("concordo com todas")
+1. Controles do PK-2 (esquerdo toque Combo / segurar Golpe Esmagador; direito toque Corte Circular / segurar Lança da Emeth; Shift Supremo; Espaço esquiva; Brado e Investida saem; a E6 fecha no Corte Circular).
+2. Interagir no E (o F sai). 3. Guerreiro 40 de vida e 30 de Magia sem regeneração; no jogo continua "Magia".
+4. Força Titânica sobe a Magia máxima para 40 só com esse Dom. 5. Dons removidos devolvem a Memória e liberam as Vagas.
+6. Só o Corte do Juízo; Voragem guardada. 7. Maga depois do Guerreiro e das Bênçãos V2, com o kit do PK-2.
+8. 5 botões de Bênção por anjo: Ataque (toque e segurar), Poder, Especial, Esquiva, Supremo (9 x 9).
+9. Zerael (Peste) aceito. 10. **Baraqel não serve** (anjo caído em Enoque): o Daniel escolhe outro nome; até lá "Anjo do Trovão".
+11. Estados só com golpe que causa dano. 12. Sorteio 3:1 e mão completada por outros anjos, como hoje.
+13. Textos pendentes aprovados como estão. 14. Música do Santuário: **Achaidh Cheide**. 15. D-O8: só o Guerreiro na chegada, sem números na fala.
+16. Linha de objetivo no Santuário: apagar. 17. Meshy: nada por enquanto. 18. Salas 03 a 14 com os pacotes, uma por vez.
+19 a 21. Ordem abaixo. Depois (2026-11-26 noite): "pode fazer tudo, sem me perguntar nada, no fim de tudo me avisa para eu testar": toda a ordem aprovada em sequência, um exe por etapa, o Daniel testa só no fim.
 
-### Ordem recomendada
-1. BG-1 a BG-4, DT-1 a DT-3 e QW-1 a QW-7 num lote só, junto com a PM-1 (não dependem de decisão). Exe.
+### Ordem aprovada
+1. **Lote 1 (começado 2026-11-26 noite):** BG-1 a BG-4, DT-1 a DT-3 e QW-1 a QW-7 num lote só, junto com a PM-1 (não dependem de decisão). Exe.
 2. PM-2 a PM-4. Exe.
 3. GP-1 (depois do C-1 e do teste do C-6), GP-2, GP-3, GP-5, nessa ordem, um exe por projeto. GP-4 quando chegarem pacotes.
 
