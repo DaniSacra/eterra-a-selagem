@@ -1,5 +1,30 @@
 # Backlog de A Selagem
 
+## PACOTES 2026-11-26 (3 zips do ChatGPT, LER PRIMEIRO) — esperando o Daniel decidir os conflitos
+Textos em `docs/design/packs_2026-11-26/` (`herois_v1`, `p0_bencaos_v2`, `vfx`); imagens do VFX só locais em `docs/art/ref/vfx_2026-11-26/`.
+Os três mandam "não fazer push"; vale a regra do Daniel (sempre commit e push).
+
+| # | Pacote | O que pede | Tamanho | Conflita com |
+|---|---|---|---|---|
+| PK-1 | **VFX direção artística** (`vfx`) | Fase A auditoria do HEAD com capturas (antecipação, contato, dissipação); Fase B P0 de leitura (RewardShaft ligado, `contact` sem cruz branca, traço branco vertical, `glint` sobre o herói, lascas acima da cabeça, flash de Morvath); Fase C 6 assinaturas "tinta em movimento" (Emeth/combo, especial e Corte do Juízo, Maga 3 elementos, 7 famílias com forma própria e não só cor, mortos e Morvath, coleta); só VFX, nada de gameplay, sala ou câmera | grande, mas fatiável | nada; só o especial (EF-02) espera a decisão dos controles |
+| PK-2 | **Heróis V1 redesign** (`herois_v1`) | Controles novos: esquerdo toque = Combo, esquerdo segurar = Golpe Esmagador (75, 12 Mana), direito toque = Corte Circular 360° (35, 8), direito segurar = Lança da Emeth (o golpe carregado de hoje), Shift Supremo, Espaço esquiva, E só interação; **Q e E deixam de ser combate (Brado e Investida saem)**. Guerreiro 40 HP / 30 Mana, sem regen, passiva Ritmo de Batalha; 12 Dons novos (Combo, Ímpeto, Domínio). Maga volta: 30 HP / 50 Mana, regen 2/s, Centelha/Arco/Estilhaço/Geada, 3 reações, 12 Dons. Um Supremo por arma | muito grande | PK-3 (controles), E6, decisão 2026-11-21 (Brado no E, interagir no F), Maga estacionada, D-64 (pacote chama de "Punho de Elun") |
+| PK-3 | **P0 Guerreiro + Bênçãos V2** (`p0_bencaos_v2`) | Regras V2 (tipos de dano, condições, reações com orçamento e sem recursão, medidor de frio/impacto em chefes); catálogo 9 anjos x 9 = 81 (novos: **Zerael, Peste** e **Baraqel, Trovão**); 12 arquétipos de teste; Guerreiro: E6 em protótipo (A giro / B afastar, recomenda B), Brado reavaliado, **preserva Q Brado e E Investida** | muito grande | PK-2 (controles e slots de Bênção), cânone (nomes de anjos novos) |
+
+Conflitos que só o Daniel resolve (recomendações do Game Director entre parênteses):
+- **C-1 Controles:** PK-2 (sem Q/E, toque e segurar) ou PK-3 (Q Brado, E Investida, E6 A/B)? (**PK-2**: resolve a E6 sozinho, porque o Corte Circular é o giro com afastamento; tira o Brado de 1% do dano; menos botões ajuda as crianças. Os slots das Bênçãos V2 viram Ataque, Ataque Potente, Poder, Especial, Esquiva, Supremo.)
+- **C-2 Interação:** PK-2 põe no E; hoje é F (2026-11-21). (Manter no F se o E deixar de ser combate? Tanto faz; seguir PK-2, E.)
+- **C-3 Maga:** PK-2 retoma a Maga; PK-3 diz não mexer. (Primeiro o Guerreiro e as Bênçãos V2; a Maga em lote próprio depois.)
+- **C-4 Supremos:** hoje o Guerreiro tem dois (`00_cleave`, `01_vortex`); os pacotes pedem um só, Corte do Juízo. (Seguir: Voragem fica guardada.)
+- **C-5 Cânone:** Zerael e Baraqel são nomes novos de anjo; Baraqel (Baraqiel) é um dos Vigilantes caídos no livro de Enoque. (Confirmar com o Daniel ou trocar o nome.) "Punho de Elun" não aparece no jogo (D-64).
+- **C-6 Ordem:** o Daniel ainda não testou o exe `abcc4c89`. (Testar antes de mexer nos controles.)
+
+Ordem proposta, cada uma com exe:
+1. **L1 VFX P0** (PK-1 fases A e B + assinatura 1 combo/contato + 6 coleta): independe das decisões; technical-artist, art-director revisa.
+2. **L2 Guerreiro V1** (PK-2 Guerreiro + controles + HUD + Antessala + migração de save dos Dons), depois da C-1.
+3. **L3 Bênçãos V2, parte 1** (PK-3 regras V2 + remapeamento de slots + Zerael e Baraqel, depois da C-5) e balanceamento com 12 sementes.
+4. **L4 VFX famílias** (PK-1 assinatura 4, as 9 famílias) e especial/Supremo (assinaturas 2 e 5).
+5. **L5 Maga V1** (PK-2 Maga + assinatura 3).
+
 ## ENTREGAS (2026-11-25 noite, LER PRIMEIRO na conversa nova)
 
 **E1 a E3 FEITAS (2026-11-25 noite, um exe só; o Daniel testa).** Capturas em `docs/gallery/e1-e3_2026-11-25/`.

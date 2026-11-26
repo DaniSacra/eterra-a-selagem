@@ -1,0 +1,10 @@
+{
+  "repo": "DaniSacra/eterra-a-selagem",
+  "branch": "arpg-3d",
+  "head_observed": "b2d234ef1a395608232c1296a404d5d76f294966",
+  "date": "2026-11-26",
+  "authorship": "ChatGPT, arte conceitual + brief técnico, sem execução Godot",
+  "scope": "VFX-only",
+  "separate_scope": "Room redesign managed elsewhere",
+  "visuals_are": "references, not exportable sprites/hitboxes"
+}
