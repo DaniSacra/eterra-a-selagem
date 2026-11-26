@@ -82,6 +82,12 @@ const COST_GEM := 0.46
 const COST_AT := 0.62
 const COST_FONT := 12
 const COST_COLOR := Color("2a8fb8")
+## GP-1: the red of a refused press, the charge ring and the Ritmo's arc.
+const REFUSE_TIME := 0.5
+const REFUSE_COLOR := Color(0.95, 0.3, 0.26)
+const CHARGE_RING := Color(0.45, 0.8, 1.0)
+const RHYTHM_COLOR := Color(1.0, 0.82, 0.36)
+const RHYTHM_GAP := 4.0
 
 var action: StringName
 var slot: Boon.Slot
@@ -104,6 +110,36 @@ var cost := 0:
 		if v != cost:
 			cost = v
 			queue_redraw()
+## GP-1: a button with two gestures (the Warrior's left and right). tap_cost and hold_cost are the Magia of the touch and of the
+## hold (the touch gem sits on the diamond's upper left, the hold gem, ringed, on the upper right; 0 draws none and a button
+## whose touch is free shows only the hold's); each dims on its own when the Magia lacks (tap_starved, hold_starved).
+## hold_text is the hold's name beside label_text ("Ataque · Esmagador").
+var tap_cost := 0
+var hold_cost := 0
+var tap_starved := false
+var hold_starved := false
+var hold_text := "":
+	set(v):
+		if v != hold_text:
+			hold_text = v
+			_fit_width()
+			queue_redraw()
+## 0..1: how much of the held blow is charged (a ring that fills round the frame; 0 hides it) and the Ritmo's share still to
+## run (a thin gold arc outside the frame; 0 hides it).
+var charge := 0.0:
+	set(v):
+		v = snappedf(clampf(v, 0.0, 1.0), 0.01)
+		if v != charge:
+			charge = v
+			queue_redraw()
+var rhythm := 0.0:
+	set(v):
+		v = snappedf(clampf(v, 0.0, 1.0), 0.02)
+		if v != rhythm:
+			rhythm = v
+			queue_redraw()
+## Seconds a refused press (no Magia) keeps the diamond's frame red.
+var _refused := 0.0
 ## 0..1: someone stands behind the diamond (its body turns translucent).
 var veil := 0.0:
 	set(v):
@@ -167,6 +203,7 @@ var label_text := "":
 	set(v):
 		if v != label_text:
 			label_text = v
+			_fit_width()
 			queue_redraw()
 ## PT-26: whole seconds left of a long recharge (Q, E), written over the diamond; 0: none.
 var secs_left := 0
@@ -181,10 +218,28 @@ func setup(action_name: StringName, action_slot: Boon.Slot, side_px: float = DIA
 	slot = action_slot
 	side = side_px
 	key_drop = drop
-	custom_minimum_size = Vector2(side + 12.0, height_for(side, key_drop))
+	_fit_width()
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_process(false)
 	return self
+
+
+## The slot is as wide as its diamond, or as its name when "Ataque · Esmagador" is wider.
+func _fit_width() -> void:
+	var w := UiKit.BOLD_FONT.get_string_size(full_name(), HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT).x + 6.0
+	custom_minimum_size = Vector2(maxf(side + 12.0, w), height_for(side, key_drop))
+
+
+## The name under the key: the touch's, then the hold's when the button has both.
+func full_name() -> String:
+	return label_text if hold_text == "" else "%s · %s" % [label_text, hold_text]
+
+
+## A press without the Magia for it: the frame goes red for a moment.
+func refuse() -> void:
+	_refused = REFUSE_TIME
+	set_process(true)
+	queue_redraw()
 
 
 ## The slot's height: the diamond, the key or mouse hanging under its point, and the name under them.
@@ -234,9 +289,10 @@ func busy() -> bool:
 func _process(delta: float) -> void:
 	_flash = maxf(0.0, _flash - delta / READY_FLASH)
 	_release = maxf(0.0, _release - delta / RELEASE)
+	_refused = maxf(0.0, _refused - delta)
 	_pulse_t = fmod(_pulse_t + delta * (URGENT_SPEED if urgent else 1.0), PULSE_PERIOD)
 	_ready_pulse = maxf(0.0, _ready_pulse - delta / READY_PULSE)
-	if _flash == 0.0 and _release == 0.0 and not pulse:
+	if _flash == 0.0 and _release == 0.0 and _refused == 0.0 and not pulse:
 		set_process(false)
 	queue_redraw()
 
@@ -308,9 +364,28 @@ func _draw() -> void:
 		draw_colored_polygon(_diamond(p, LIGHT + 1.5), UiKit.INK)
 		draw_colored_polygon(_diamond(p, LIGHT), light_color if i < lights else CHARGE_SPENT)
 	if cost > 0:
-		_draw_cost(c + Vector2(r * COST_AT, -r * COST_AT), r * COST_GEM)
+		_draw_cost(c + Vector2(r * COST_AT, -r * COST_AT), r * COST_GEM, cost, starved)
+	if hold_cost > 0:
+		var at := c + Vector2(r * COST_AT, -r * COST_AT)
+		_draw_cost(at, r * COST_GEM, hold_cost, hold_starved)
+		# the hold's gem wears a ring (a touch has none)
+		draw_arc(at, r * COST_GEM + 3.0, 0.0, TAU, 16, Color(COST_COLOR.lightened(0.3), 0.4 if hold_starved else 0.9), 1.5, true)
+	if tap_cost > 0:
+		_draw_cost(c + Vector2(-r * COST_AT, -r * COST_AT), r * COST_GEM, tap_cost, tap_starved)
+	if rhythm > 0.0:
+		var arc := _sweep(c, r + 2.0 + RHYTHM_GAP, rhythm)
+		if arc.size() > 1:
+			draw_polyline(arc, Color(UiKit.INK, 0.8), 4.0, true)
+			draw_polyline(arc, RHYTHM_COLOR, 2.0, true)
+	if charge > 0.0:
+		var ring := _sweep(c, r - UiKit.FRAME * 0.5, charge)
+		if ring.size() > 1:
+			draw_polyline(ring, Color(UiKit.INK, 0.85), UiKit.FRAME + 3.0, true)
+			draw_polyline(ring, READY_COLOR if charge >= 1.0 else CHARGE_RING, UiKit.FRAME + 1.0, true)
+	if _refused > 0.0:
+		draw_polyline(_closed(_diamond(c, r + 1.0)), Color(REFUSE_COLOR, minf(1.0, _refused / REFUSE_TIME * 1.4)), 3.0, true)
 	_draw_key(Vector2(c.x, side + key_drop))
-	if label_text != "":
+	if full_name() != "":
 		_draw_name(Vector2(c.x, side + key_drop + maxf(KEY_H, MOUSE_H) * 0.5 + NAME_H - 3.0))
 	if caption != "":
 		_draw_caption(Vector2(c.x, c.y - r - CAPTION_RISE))
@@ -319,11 +394,12 @@ func _draw() -> void:
 ## The action's short name centred under the key, in the HUD's shadow; dimmer while it recharges.
 func _draw_name(at: Vector2) -> void:
 	var font := UiKit.BOLD_FONT
-	var w := font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT).x
+	var text := full_name()
+	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT).x
 	var base := Vector2(at.x - w * 0.5, at.y)
 	var col := Color(UiKit.PALE, 0.62 if busy() or sealed else 0.95)
-	draw_string(font, base + Vector2(0, UiKit.SHADOW_DROP), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT, Color(UiKit.INK, 0.9))
-	draw_string(font, base, label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT, col)
+	draw_string(font, base + Vector2(0, UiKit.SHADOW_DROP), text, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT, Color(UiKit.INK, 0.9))
+	draw_string(font, base, text, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT, col)
 
 
 ## The seconds a recharge has left, in lining figures with an ink outline, over the middle of the diamond.
@@ -338,12 +414,11 @@ func _draw_secs(c: Vector2) -> void:
 
 
 ## The Magia cost: a small gem of Magia's blue with the number in lining figures, ink round both.
-func _draw_cost(at: Vector2, half: float) -> void:
-	var dim := starved
+func _draw_cost(at: Vector2, half: float, amount: int, dim: bool) -> void:
 	draw_colored_polygon(_diamond(at, half + 1.5), UiKit.INK)
 	draw_colored_polygon(_diamond(at, half), COST_COLOR.darkened(0.55) if dim else COST_COLOR.darkened(0.2))
 	var font := UiKit.number_font()
-	var text := str(cost)
+	var text := str(amount)
 	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, COST_FONT).x
 	var base := Vector2(at.x - w * 0.5, at.y + (font.get_ascent(COST_FONT) - font.get_descent(COST_FONT)) * 0.5).round()
 	draw_string(font, base, text, HORIZONTAL_ALIGNMENT_LEFT, -1, COST_FONT, UiKit.PALE if not dim else Color(UiKit.PALE, 0.6))

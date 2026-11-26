@@ -17,16 +17,14 @@ const ROWS: Array[Dictionary] = [
 	{"id": "aim", "actions": []},
 	{"id": "light_attack", "actions": [&"light_attack"]},
 	{"id": "heavy_attack", "actions": [&"heavy_attack"]},
-	{"id": "shout", "actions": [&"shout"]},
-	{"id": "rush", "actions": [&"rush"]},
 	{"id": "ultimate", "actions": [&"ultimate"]},
 	{"id": "dodge", "actions": [&"dodge"]},
 	{"id": "interact", "actions": [&"interact"]},
 	{"id": "pause", "actions": [&"pause"]},
 ]
 ## Controls actions that are not for the player (the live tuning panel of debug builds; the circle of light, which has
-## no key since it left the Warrior's kit).
-const HIDDEN: Array[StringName] = [&"feel_panel", &"cast"]
+## no key since it left the Warrior's kit; GP-1: the Brado and the Investida are the Maga's alone).
+const HIDDEN: Array[StringName] = [&"feel_panel", &"cast", &"shout", &"rush"]
 
 ## The tabs: what a descent is (three steps) and the controls.
 enum Tab { DESCENT, CONTROLS }

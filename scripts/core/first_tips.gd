@@ -2,13 +2,14 @@ class_name FirstTips
 extends RefCounted
 ## GP-9 and 10B-2: the four short tips of the first descents, pure. Hitting and dodging, holding for the Omega, the
 ## yellow bar (armor) and the pale one (Poise), the pair of Blessings that forms an Elo. Each one shows once per save
-## (`data.hub.tips` keeps the ids shown) and only while the save is new (fewer than FIRST_RUNS descents). The HUD's
+## (`data.hub.tips` keeps the ids shown) and only while the save is new (fewer than FIRST_RUNS descents; `controls_v1`, GP-1, is the
+## opposite: once, for a save that already descended). The HUD's
 ## TipToast shows them; nothing here touches the run, so the robot, a smoke run or --nosave see none
 ## (--tips forces them for captures, not written).
 ##   FirstTips.pick(Save.data, ctx) -> the tip due now (&"" none); ctx: {fighting, fight_t, armored, boons, elos, tutorial}
 ##   FirstTips.mark(Save.data, id)
 
-const IDS: Array[StringName] = [&"armor", &"fight", &"hold", &"elo"]
+const IDS: Array[StringName] = [&"armor", &"fight", &"hold", &"elo", &"rhythm", &"controls_v1"]
 ## A save with this many descents or more has no tips (it knows the game).
 const FIRST_RUNS := 2
 ## Seconds of fighting in the room before the first tip, and before the Omega's one.
@@ -57,22 +58,15 @@ static func pick(data: Dictionary, ctx: Dictionary) -> StringName:
 		return &"fight"
 	if fighting and t >= HOLD_AFTER and (tutorial or not open(data, &"fight")) and open(data, &"hold"):
 		return &"hold"
+	# GP-1: the first time the Ritmo de Batalha is armed, told once to a new save
+	if fighting and bool(ctx.get("rhythm", false)) and open(data, &"rhythm"):
+		return &"rhythm"
+	# GP-1: a save that already descended learns once, in any calm moment, that the buttons changed (a new save has the Antessala)
+	if not fighting and int(data.get("runs", 0)) >= 1 and not shown(data).has("controls_v1"):
+		return &"controls_v1"
 	if not fighting and int(ctx.get("boons", 0)) >= 2 and int(ctx.get("elos", 0)) == 0 and open(data, &"elo"):
 		return &"elo"
 	return &""
-
-
-## UI 11 (Lote B): the "Q: Brado" word over the Q diamond. At most SHOUT_PER_ROOM times in a room and only in the save's
-## first SHOUT_RUNS descents; the robot, a smoke run and --nosave never see it (enabled()).
-const SHOUT_PER_ROOM := 2
-const SHOUT_RUNS := 3
-## Seconds the word stays.
-const SHOUT_TIME := 1.0
-
-
-## Whether the Brado's word may show now: worth it, told fewer than SHOUT_PER_ROOM times in this room, save still new.
-static func shout_due(data: Dictionary, told_in_room: int, worth: bool) -> bool:
-	return worth and told_in_room < SHOUT_PER_ROOM and int(data.get("runs", 0)) < SHOUT_RUNS
 
 
 ## SW-O4 (D-O2 b): a player who already knows the game skips the guided descent: `first` 0 (pending) becomes 2 (skipped,

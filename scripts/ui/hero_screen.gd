@@ -46,9 +46,6 @@ const NAME_SIZE := 30
 const CAP_SIZE := 38
 const FOLIO_SIZE := 14
 const FOLIO_ROOM := 10.0
-## The Como Jogar row that names each action (howto_<id>).
-const SKILL_ROW := {Boon.Slot.ATTACK: "light_attack", Boon.Slot.SPECIAL: "heavy_attack", Boon.Slot.CAST: "shout",
-	Boon.Slot.DASH: "dodge"}
 ## The action the Maga's marks on the HUD (Hud.MAGA_GLYPHS) stand for, by slot.
 const MAGA_ACTION := {Boon.Slot.ATTACK: &"light_attack", Boon.Slot.SPECIAL: &"heavy_attack", Boon.Slot.CAST: &"shout"}
 ## The hero painted on the hero page (art pack board 04, made by AI, cut by hand; docs/steam-ia.md), its edges feathered
@@ -543,17 +540,21 @@ func _hero_right() -> Control:
 ## The five actions, the ultimate the descent plays and the passive, with the HUD's marks.
 func _skills(grid: GridContainer) -> void:
 	var maga := GiftArt.is_maga(loadout.hero)
-	for slot: Boon.Slot in [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.DASH]:
+	# GP-1: the Warrior's order is Ataque, Poder (the right touch), Especial (the right hold), Esquiva; the Maga's keeps her own
+	var order: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.CAST, Boon.Slot.SPECIAL, Boon.Slot.DASH]
+	if maga:
+		order = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.DASH]
+	for slot: Boon.Slot in order:
 		var key := String(Boon.Slot.keys()[slot]).to_lower()
-		var mark: Control = ActionSlot.mark(slot, MARK)
+		var mark: Control = ActionSlot.mark(slot, MARK) if maga else ActionSlot.glyph_mark(BoonIcon.ACTION_GLYPH + slot, MARK)
 		if maga and MAGA_ACTION.has(slot):
 			mark = ActionSlot.glyph_mark(int(Hud.MAGA_GLYPHS[MAGA_ACTION[slot]]), MARK)
-		var title := T.t(_hk("hero_skill_name_" + key)) if maga else T.t("howto_" + String(SKILL_ROW[slot]))
+		var title := T.t(_hk("hero_skill_name_" + key)) if maga else T.t("slot_" + key)
 		_skill(grid, mark, title, T.t(_hk("hero_skill_" + key)))
-		if slot == Boon.Slot.CAST:
+		if slot == Boon.Slot.CAST and maga:
 			# the Investida (E) has no Blessing slot: its row follows the Brado's (the Maga's Suspensão)
-			var rush: int = int(Hud.MAGA_GLYPHS[&"rush"]) if maga else BoonIcon.RUSH_GLYPH
-			_skill(grid, ActionSlot.glyph_mark(rush, MARK), T.t(&"hero_skill_name_rush_maga" if maga else &"howto_rush"),
+			var rush: int = int(Hud.MAGA_GLYPHS[&"rush"])
+			_skill(grid, ActionSlot.glyph_mark(rush, MARK), T.t(&"hero_skill_name_rush_maga"),
 				T.t(_hk("hero_skill_rush")))
 	if not Milestones.ult_open(_data):
 		pass  # (sweep 2026-11-25, P1-4: the Golpe Supremo is not announced before its milestone opens)

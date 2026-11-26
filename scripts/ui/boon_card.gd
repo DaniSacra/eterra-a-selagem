@@ -1099,6 +1099,12 @@ func _meta(b: Boon, level: int) -> HBoxContainer:
 		# BC-1: the real key of that button, on a plaque (changes with the pad and a remapped key)
 		row_.add_child(key_plaque(b.button()))
 		row_.move_child(row_.get_child(-1), 1 if b.slot != Boon.Slot.NONE else 0)
+	if Boon.gesture_key(b.slot) != &"":
+		# GP-1: how that button is worked (touch, hold or both), beside its mark or plaque
+		var how := UiKit.label(T.t(Boon.gesture_key(b.slot)), UiKit.DIM.lightened(0.2), 14, UiKit.BOLD_FONT)
+		how.name = &"Gesture"
+		row_.add_child(how)
+		row_.move_child(how, (2 if listed and b.button() != &"" else 1) if b.slot != Boon.Slot.NONE else 0)
 	return row_
 
 

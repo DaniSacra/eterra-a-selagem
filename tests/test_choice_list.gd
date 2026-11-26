@@ -49,13 +49,11 @@ func test_the_column_puts_both_dodge_blessings_on_space() -> void:
 	add_child_autofree(col)
 	st.take(st.find(&"passo_radiante"), Boon.Rarity.COMMON)
 	col.show_build(st)
-	assert_null(col.entries[3].icon.boon, "GP-1: no button E")
-	assert_eq(col.entries[5].icon.boon, st.find(&"passo_radiante"), "Space")
+	assert_eq(col.entries[3].icon.boon, st.find(&"passo_radiante"), "Space")
 	var st2 := _state()
 	st2.take(st2.find(&"passo_brasa"), Boon.Rarity.COMMON)
 	col.show_build(st2)
-	assert_null(col.entries[3].icon.boon)
-	assert_eq(col.entries[5].icon.boon, st2.find(&"passo_brasa"), "Space")
+	assert_eq(col.entries[3].icon.boon, st2.find(&"passo_brasa"), "Space")
 
 
 # ---------- BC-1 ----------
