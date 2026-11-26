@@ -32,11 +32,28 @@ arco da Videira, estandarte dos heróis, banca do Alquimista), reposicionadas.
   das estações (`STY_POOLS`) seguem as peças; a cascata distante (`CASCADE`) ficou onde estava, atrás de tudo.
 - **Capturas** (só o Game Director): `--hub --look=stylized --cam=near` com `--hub-open=all` (tudo aberto) ou sem (portas
   fechadas), `--hero-at=<estação>` (portal, vendor, tree, smith, book, vine, heroes) e `--hub-use=<estação>`.
-- **Pendente para o environment-artist**: acabamento dos prédios (janelas, telhados, adereços), água nas três bacias,
-  cascatas laterais, ponte com guarda-corpo (o caminho já é piso sólido), jardins, árvores, postes e luz, pérgola da Videira,
-  rampas e degraus visuais, interiores e fachada dos quartos futuros atrás das portas, paleta calcário `#D3C5A7` e luz
-  `#F4DBAB`, marcos de leão e peixe discretos, o posto do Ponto de Vigília (hoje só uma massa baixa), e retirar do
-  `HubLook` as constantes mortas da praça (`FACADE_*`, `ARCADES`, `LIONS`, `MEDALLION*`, `BASIN*`, `WAY_*` etc.).
+- **Acabamento (environment-artist, 2026-11-25; `scripts/game/hub_scenery.gd`, `HubScenery`, chamado no fim do `HubLook.dress`)**:
+  só visual, nada colide (o piso é plano). Telhados de quatro águas de terracota (`PAINT_OWN` mantém a cor no look
+  estilizado), beirais com fascia, pilastras nos cantos, janelas na face sul (moldura de calcário, cabeça em ponta, vidro
+  quente emissivo `#F4DBAB`, caixilho, venezianas alternadas; pulam portas e peças) com flores e glicínia pendurada no beiral.
+  Água nas três bacias (`shallow_water.gdshader` via `Canal.water`, azul `#527F8C`, a -0,5 m) com borda de pedra baixa e um
+  peixe dourado pequeno na borda mais longa. Ponte: o caminho sul (v -15,5 a -10,5) com guarda-corpos (`RAILS`), três
+  arcos ogivais sob a face sul, pilares, cornija e duas cascatas (`waterfall.gdshader`, `FALLS`) mais uma na ponta do
+  Portão. Pérgola da Videira (colunas, vigas e caibros, glicínia, folhagem). Posto do Ponto de Vigília: bacia de pedra
+  com fogo aceso (a única luz nova), estandarte e o leão no muro. Quartos futuros: pátio rebaixado (-1,2 m) com escada e
+  lanternas atrás de cada porta. Portão: leão sobre o arco, dois estandartes, lanternas, capa de pedra. Arbustos, canteiros
+  de flores, ciprestes e lanternas ao longo das bordas do piso (`_edge_points`: longe das rotas, estações, portas e
+  chegada); árvores redondas em prateleiras de rocha só nas bordas norte e laterais (as do sul esconderiam o piso). Fundo:
+  três camadas de montanha (`hub_ridge.gdshader`, cartões ao norte em `RIDGES`) e névoa clara sob o piso; saíram a
+  cascata cinza antiga (`CASCADE`) e os cartões de ruínas do `backdrop` (as barras cinzas).
+- **Mais claro que as salas**: `AIR`, `STYLE`, `STY_AMBIENT_GAIN` 1,1, `STY_MOON` 0,9, `STY_KEY_SHARE` 0,8, pedra calcário
+  `(0.68, 0.62, 0.52)`, céu e névoa azul claro, `CLIFF`/`MIST` claros. **Valores às cegas (sem captura)**: se estourar ou
+  ficar chapado, mexer nessas constantes primeiro.
+- `HubLook`: removidas as constantes mortas da praça (111: `FACADE_*`, `ARCADES`, `LIONS`, `MEDALLION*`, `BASIN*`, `WAY_*`,
+  `WALL_*`, `ORDER*`, `STAIRS_*`, `RAIL_*` etc.), `_far`, `_cascade`, `VISTA`; `_crowns` virou `add_crowns(..., round_crown)`
+  (copas redondas para as árvores).
+- **Pendente**: conferir em captura (claridade, janelas, bacias, quedas, árvores); interiores das casas; rampas de verdade
+  (pedem altura no piso); lanternas só emissivas (sem luz própria, por orçamento).
 
 ## Hub (HUB-01; HUB-B1 fundação, plano em `docs/design/hub_spec.md`, espaço em `hub_spec_art.md`, auditoria em `hub_audit.md`)
 - Fluxo: título, Iniciar, **hub** (`scenes/hub.tscn`, `Hub`, `scripts/game/hub.gd`), Portal (interagir e "Descer às

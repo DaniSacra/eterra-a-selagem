@@ -22,188 +22,43 @@ extends ArenaRoom
 const FRAME_YAW := &"frame_yaw"
 
 # ---------- the frame and the walls ----------
-## The side walls (u = +-WALL_FACE to +-WALL_BACK), from v WALL_FROM to the facade, WALL_HEIGHT tall; their south end
-## steps down (RUIN_END: v from, height) so no clean section faces the camera.
-const WALL_FACE := 26.0
-const WALL_BACK := 27.5
-const WALL_FROM := -10.8
-const WALL_HEIGHT := 6.5
-const WALL_RUIN: Array[Vector2] = [Vector2(-10.8, 1.6), Vector2(-10.4, 3.4)]
-const WALL_RUIN_TO := -10.0
-## Pilasters on the side walls between the stations (v), how far they stand out, their width.
-const PILASTERS: Array[float] = [-12.5, -3.4, 5.0, 14.6]
-const PILASTER := Vector2(0.2, 0.7)
 ## A band of the wall's arched holes is cut in steps this tall above the springing (hidden by the arch rings).
 const BAND := 0.3
-## The facade: its front face, the front layer's back (the inner layer behind it to FACADE_BACK), from u -FACADE_HALF
-## to FACADE_HALF, FACADE_TOP tall, its cornice.
-const FACADE_V := 17.5
-const FACADE_MID := 18.35
-const FACADE_BACK := 19.2
-const FACADE_HALF := 27.5
-const FACADE_TOP := 11.0
-const CORNICE := Vector2(0.3, 0.2)
 
 # ---------- the portal ----------
-## The stairs to the portal (spec 3.1): from v STAIRS_FROM, 8 m wide, six steps of 0.2 by 0.5; the terrace they climb to
-## at y TERRACE_Y (u within TERRACE_HALF from v TERRACE_FROM to the facade; beside the stairs it comes forward to the
-## floor's north edge), a thread of old gold along the landing's front.
-const STAIRS_WIDTH := 10.0
-const STAIRS_STEPS := 6
-const STAIRS_RISE := 0.2
-const STAIRS_RUN := 0.5
-const TERRACE_Y := 1.2
-const TERRACE_FROM := 15.0
-const LANDING_FILET := 0.06
 ## The opening of the portal (its sheet): width, height over the landing, the springing of its pointed head; the sheet's
 ## plane (v) and the dark behind it.
 const PORTAL_W := 3.6
 const PORTAL_H := 5.0
 const PORTAL_SPRING := 2.2
-const SHEET_V := 18.75
-const PORTAL_DARK := Color(0.02, 0.05, 0.035)
-## The orders round it (spec 3.1: three, recessed): the innermost span, the step of span from one to the next, their
-## middles' v (innermost first), the ring (width, depth), their pointed arcs (a share of the span), their stone a little
-## lighter; the inner ring round the sheet itself (width, depth, v) and its stone darker.
-const ORDERS := 3
-const ORDER_SPAN := 4.8
-const ORDER_STEP := 0.7
-const ORDER_V: Array[float] = [18.2, 17.9, 17.6]
-const ORDER_RING := Vector2(0.45, 0.6)
-const ORDER_ARC := 0.65
 const ORDER_TINT := Color(1.12, 1.12, 1.12)
-const INNER_RING := Vector3(0.32, 0.3, 18.45)
 const INNER_TINT := Color(0.62, 0.62, 0.62)
 ## The keystone with the seal's lion in old gold (never a star; spec 3.1): its side and depth.
 const KEYSTONE := Vector2(0.9, 0.35)
-## The seated lions on the terrace's wings beside the stairs (the Meshy lion_seated, 2026-11-21; it was a stele with the
-## lion in relief): u, v; plinth (width, height, depth); the lion's height (it sits on a base of its own and looks
-## along +Z, the square; the east one is the west one mirrored) and how far it turns to the stairs (radians), its
-## stone tint over the carved stone of the rooms. HUB-D (H-P1-3): large, at the front of the wings, where the camera sees them.
-const LIONS: Array[Vector2] = [Vector2(-7.0, 13.4), Vector2(7.0, 13.4)]
-const LION_PLINTH := Vector3(1.9, 0.6, 2.8)
-const LION_MODEL := "res://assets/models/meshy/lion_seated/lion_seated.glb"
-const LION_HEIGHT := 2.5
-const LION_TURN := 0.3
-const LION_TINT := Color(1.0, 0.9, 0.78)
-## The braziers at the stairs' foot on the terrace (u, v) and their light.
-const BRAZIERS: Array[Vector2] = [Vector2(-7.0, 15.9), Vector2(7.0, 15.9)]
-const BRAZIER_LIGHT := 2.6
-## The planters along the terrace's front beside the stairs (from, to u; depth, height) with pale flowers on them.
-const PLANTERS: Array[Vector2] = []
-const PLANTER := Vector2(0.75, 0.42)
-## The arcades each side of the portal (spec 3.6): their middles (u, mirrored), span, sill, springing over it, ring.
-const ARCADES: Array[float] = [7.4, 9.6, 11.8, 14.0]
-const ARCADE := Vector4(1.6, 1.2, 2.4, 0.3)
-const ARCADE_ARC := 0.7
-## The blind niches in the facade's corners (u mirrored; span, springing, ring): the Árvore's to the east.
-const NICHES: Array[float] = [18.4, 22.6]
-const NICHE := Vector3(2.2, 3.0, 0.3)
-const NICHE_DARK := Color(0.42, 0.42, 0.44)
-## The hooded figures before the niches (and in the side walls' niches): their height, how far out of the wall.
-const STATUE_HEIGHT := 2.9
-const STATUE_OUT := 0.75
-## The side walls' statue niches (v; span, sill, springing over it) and the ledge between the floor's edge and the
-## walls' faces (its top), with urns and candles along it at these v (both sides).
-const SIDE_NICHE := Vector4(1.0, 2.4, 0.15, 3.3)
-const LEDGE_TOP := 0.35
-const LEDGE_WARES: Array[float] = [-8.4, 8.6, 14.6]
-## The ground in the corners north of the floor, a step over it (top), out of the walkable.
-const CORNER_TOP := 0.15
-## The banners on the piers between the arcades (u mirrored, top, size).
-const BANNERS: Array[float] = [5.3, 16.1]
-const BANNER := Vector3(9.8, 1.1, 2.8)
 
 # ---------- the square ----------
-## The lion's medallion on the floor (spec 3.7): middle (u, v), the lion's side, its gold; two rings of old gold (outer
-## and inner radius of each), how high over the slabs; the thread of gold on the axis (width; it stops at the fountain).
-const MEDALLION := Vector2(0.0, -4.6)
-const MEDALLION_LION := 4.4
 const MEDALLION_GOLD := Color(0.36, 0.27, 0.13)
-## The lion inlaid in the floor a step darker (it lies in the full light of the square).
-const INLAY_GOLD := Color(0.27, 0.2, 0.1)
-const MEDALLION_RINGS: Array[Vector2] = [Vector2(2.95, 3.1), Vector2(2.5, 2.58)]
 const DECAL_Y := 0.02
-const AXIS_FILET := 0.07
-## The fountain of the lion (spec 3.7; decoration): the basin's blocks (how many, middle radius, height, thickness), the
-## water's top and radius, the stele on its north rim (width, height, depth) with the lion's head in relief (side, how
-## high) and the thread of water from its mouth (width), the moss round it.
-const BASIN_BLOCKS := 20
-## HUB-D (H-P1-5): a basin of 5.6 m and a stele of 2.8, the centre of the square, not a well.
-const BASIN := Vector3(2.8, 0.7, 0.4)
-const WATER_Y := 0.56
-const WATER_R := 2.6
-## The fountain's ripples (dark_water.gdshader): bands per metre, their sharpness, their light.
-const WATER_RINGS := Vector3(0.6, 2.5, 0.05)
-## P2-A9, only in the stylized look (with WATER_MATTE): the ripples brighter, the surface nearly matte (roughness,
-## specular); it mirrored the sky's low cubemap, blotchy clouds that read as veins of marble.
-## The classic surface (roughness, specular), the shader's own.
-const WATER_GLOSS := Vector2(0.1, 0.4)
-## The ripples themselves had become the marble (broad swells of light, WATER_RINGS' sharpness): in the stylized look
-## they are faint thin lines (sharpness, light) over a body with a little light of its own (dark_water's body_light).
-const STY_WATER_RINGS := Vector2(8.0, 0.035)
-const STY_WATER_BODY := 1.4
-const STY_WATER_GLOSS := Vector2(0.85, 0.03)
-const FOUNTAIN_STELE := Vector3(1.5, 2.8, 0.5)
-const FOUNTAIN_LION := Vector2(1.1, 1.9)
-const SPOUT := 0.2
-const FOUNTAIN_MOSS := Vector2(3.1, 4.4)
 const FLOWER_OCHRE := Color(0.66, 0.58, 0.42)
 const FLOWER_EARTH := Color(0.45, 0.32, 0.28)
-## The great urns' plinth height.
-const URN_PLINTH := 0.45
-## The square's paving (HUB-D; the hub is 50 m across and the bare floor read as one vast empty slab: the paving tells
-## its ways): cut slabs a hair over the floor (their top PAVE_TOP, a little lighter, PAVE_TINT), laid along the frame,
-## nothing collides. A ring round the fountain (inner, outer radius, rings), one round the medallion (its slabs never
-## inside the fountain's ring), and a way of larger slabs (across, along) from the fountain's ring toward each side
-## station, WAY_WIDTH wide, stopping WAY_SHORT before its use point, with a kerb of darker stone (WAY_KERB wide, KERB_TINT)
-## each side and worn paler slabs down its middle; the axis to the portal paved the same.
-const FOUNTAIN_PAVING := Vector3(3.3, 5.6, 2.0)
-const MEDALLION_PAVING := Vector3(3.25, 4.25, 1.0)
-const PAVE_SLAB := 1.1
-const PAVE_TOP := 0.025
-const PAVE_TINT := Color(1.06, 1.04, 1.0)
-const KERB_TINT := Color(0.7, 0.68, 0.66)
-const WAY_KERB := 0.24
-const WAY_WIDTH := 2.6
-const WAY_SLAB := Vector2(1.3, 0.95)
-const WAY_SHORT := 1.15
-## PT-4: a way has no painted line. The slabs in its middle third are worn paler (WORN_TINT) and sit a hair higher
-## (WORN_RISE), the way a walked path reads; the kerb and the dark joints frame it.
-const WORN_TINT := Color(1.2, 1.17, 1.1)
-const WORN_RISE := 0.006
-const WORN_SHARE := 0.2
-## The cypresses (HubPlan.CYPRESSES): the planter's height and coping, the tree's foot over it and its width at its
-## widest (a share of the way up), the leaves' cards (size, how many a metre of height), their dark olive.
-const PLANTER_HEIGHT := 0.7
-const CYPRESS_FOOT := 0.4
 const CYPRESS_WIDE := Vector2(1.25, 0.3)
 const CYPRESS_CARD := Vector2(0.9, 1.4)
 const CYPRESS_CARDS := 9.0
 ## Leaves on a crown's card (canopy.gdshader).
 const CROWN_LEAVES := 7.0
-const CYPRESS_A := Color(0.11, 0.13, 0.09)
-const CYPRESS_B := Color(0.24, 0.27, 0.17)
-## The raised beds' shrubs (HUB-D, H-P0-3: beds of pale flowers read as coffins): copper and rust leaves, a crown this
+const CYPRESS_A := Color(0.2, 0.26, 0.14)
+const CYPRESS_B := Color(0.36, 0.44, 0.24)
+## The raised beds' shrubs (HUB-D, H-P0-3: beds of pale flowers read as coffins): green leaves, a crown this
 ## tall and wide every SHRUB_EVERY metres along the bed.
-const SHRUB_A := Color(0.26, 0.13, 0.06)
-const SHRUB_B := Color(0.5, 0.3, 0.14)
+const SHRUB_A := Color(0.26, 0.34, 0.16)
+const SHRUB_B := Color(0.5, 0.6, 0.3)
 ## Art review 2026-11-21 item 5 (stylized look): the shrubs' leaves muted (the vivid orange is the hazard's colour,
 ## saturation under 0.45), bigger and less ragged so the cards stop reading as blocky noise.
-const STY_SHRUB_A := Color(0.22, 0.17, 0.1)
-const STY_SHRUB_B := Color(0.46, 0.32, 0.16)
 const STY_CROWN_LEAVES := 5.0
 const STY_CROWN_RAGGED := 0.12
 const SHRUB_TALL := Vector2(1.0, 1.7)
 const SHRUB_WIDE := 1.5
 const SHRUB_EVERY := 1.4
-## The yards' low walls (coping), the braziers on stands at the arrival (their light), the goods' crates.
-const YARD_COPING := 0.1
-const STAND_FIRE := Vector2(2.4, 5.5)
-## HV-C (5): the Retorno's braziers at 0.9 m, a share of the kit's (about 1.4 m).
-const RETURN_FIRE := 0.65
-## P2-B2: the arrival braziers' flames in the stylized look, a share of their height and size (their light unchanged).
-const STY_STAND_FLAME := 0.67
 
 # ---------- the stations ----------
 ## Vendedor (spec 3.2; HUB-D): the awning's back and front heights, how far it reaches south and north of the
@@ -298,37 +153,17 @@ const BOOK_COVERS: Array[Color] = [Color(0.08, 0.17, 0.18), Color(0.3, 0.16, 0.1
 const SCROLL := Color(0.64, 0.57, 0.44)
 
 # ---------- the front ----------
-## The low balustrade along the south and the cut corners (spec 3.6: nothing over 0.9 m within 2 m of the south edge):
-## how far out, its curb (height, depth), balusters (radius, spacing), the rail (bottom, top); the arrival stairs' gap
-## (half width) and the flight down (steps of rise and run), the grille at their foot; the lamp posts (height, arm).
-const RAIL_OUT := 0.3
-const RAIL_CURB := Vector2(0.24, 0.42)
-const RAIL_BALUSTER := Vector2(0.07, 0.36)
-const RAIL_TOP := Vector2(0.58, 0.7)
-## HV-A: the Retorno's stairs, 7 x 2.5 m, down from the south edge at HubPlan.ARRIVAL_STAIRS, between low walls
-## (ARRIVAL_CHEEK: thickness, height over the floor); the seal on the floor at HubPlan.ARRIVAL, the worn lion at
-## SEAL_LION m in the inlay's gold dimmed to SEAL_GOLD (placeholder until HV-C).
-const ARRIVAL_STEPS := 7
-const ARRIVAL_RISE := 0.2
-const ARRIVAL_RUN := 0.36
-const ARRIVAL_CHEEK := Vector2(0.35, 0.65)
-const SEAL_LION := 2.2
-const SEAL_GOLD := 0.8
-const LAMP_POST := Vector2(2.9, 0.55)
-const LAMP_LIGHT := Vector2(1.3, 3.0)
 
 # ---------- air and light ----------
-## The far vista through the arcades (spec 3.6): the ruins' mist, stone and edge, the cascade left of the portal (u, v,
-## width, height), the mist under the courtyard.
-const VISTA := [Color(0.12, 0.13, 0.16), Color(0.05, 0.055, 0.065), Color(0.16, 0.17, 0.2)]
-const CASCADE := Vector4(-14.0, 45.0, 4.4, 34.0)
-const MIST := Color(0.1, 0.12, 0.17)
-const CLIFF := {&"stone_color": Color(0.045, 0.045, 0.05), &"edge_color": Color(0.11, 0.11, 0.12), &"mist_color": Color(0.1, 0.12, 0.17),
-	&"glow_color": Color(0.2, 0.22, 0.28)}
+## SV-R: the air under the far ridges (HubScenery draws them) and the cliffs of the drop: pale blue haze, warm grey stone
+## (palette 04-paleta-e-iluminacao.md: water and distant mist #527F8C, shaded stone #8F8775), never a dark panel.
+const MIST := Color(0.5, 0.6, 0.66)
+const CLIFF := {&"stone_color": Color(0.3, 0.28, 0.25), &"edge_color": Color(0.5, 0.46, 0.4), &"mist_color": Color(0.5, 0.6, 0.66),
+	&"glow_color": Color(0.5, 0.6, 0.7)}
 ## The hub's air (spec 4.1: lighter and warmer than any room, the cold in the sky and the vista) and its stylized look.
 const AIR := {
-	&"sky": Color(0.06, 0.08, 0.13), &"fog": Color(0.14, 0.13, 0.13), &"fog_depth": Vector2(60.0, 140.0),
-	&"ambient": Color(0.76, 0.76, 0.75), &"ambient_gain": 1.2, &"moon": Color(1.0, 0.96, 0.9), &"moon_energy": 0.8,
+	&"sky": Color(0.46, 0.58, 0.66), &"fog": Color(0.55, 0.58, 0.58), &"fog_depth": Vector2(90.0, 220.0),
+	&"ambient": Color(0.86, 0.84, 0.78), &"ambient_gain": 1.4, &"moon": Color(0.96, 0.86, 0.67), &"moon_energy": 1.1,
 	&"moon_shadow": true,
 }
 ## The classic look's floor (F7): the warm limestone of the stylized one, so the square is not the hall's rose slab.
@@ -342,12 +177,12 @@ const CLASSIC_FLOOR := {
 const STY_SHADOW_GLOW := Color(0.15, 0.40, 0.55)
 const STY_VIGNETTE := Vector3(0.5, 0.45, 1.3)
 const STYLE := {
-	&"stone": Color(0.4, 0.375, 0.345), &"floor_stone": Color(0.375, 0.355, 0.325), &"shadow": Color(0.8, 0.9, 0.96),
+	&"stone": Color(0.68, 0.62, 0.52), &"floor_stone": Color(0.62, 0.57, 0.48), &"shadow": Color(0.78, 0.86, 0.92),
 	&"joint_cold": Color(0.86, 0.93, 0.98), &"slab_paint": Vector2(0.82, 1.18), &"slab_hue": 6.0, &"olive_share": 0.03,
 	&"edge_value": 1.0, &"pool_saturation": 0.8, &"metal": true,
 	&"fire": {&"candle_range": 3.5, &"candle_gain": 1.2, &"bowl_range": 4.2, &"bowl_gain": 0.95},
-	&"air": {&"sky": Color(0.06, 0.08, 0.13), &"fog": Color(0.14, 0.13, 0.13), &"ambient": Color(0.76, 0.76, 0.75),
-		&"ambient_gain": STY_AMBIENT_GAIN, &"moon": Color(1.0, 0.96, 0.9), &"moon_energy": STY_MOON, &"moon_shadow": true},
+	&"air": {&"sky": Color(0.46, 0.58, 0.66), &"fog": Color(0.55, 0.58, 0.58), &"ambient": Color(0.86, 0.84, 0.78),
+		&"ambient_gain": STY_AMBIENT_GAIN, &"moon": Color(0.96, 0.86, 0.67), &"moon_energy": STY_MOON, &"moon_shadow": true},
 	&"shadow_glow": STY_SHADOW_GLOW, &"vignette": STY_VIGNETTE,
 }
 ## ENV-HB6 and BH-07 (docs/design/ciclo_visual_2026-11-20.md item 2; benchmark_hades2_style.md 4.1; rooms_progression.md
@@ -360,9 +195,9 @@ const STYLE := {
 ## glow reads the more for it on arriving, and a pale green pool at the foot of its flight (the top of the screen on
 ## arriving, where the camera holds the portal itself out of the frame) points the way. Each pool: station, aim (u, height, v), from (u, height, v), energy, cone
 ## (degrees), reach, colour.
-const STY_AMBIENT_GAIN := 0.8
-const STY_MOON := 0.45
-const STY_KEY_SHARE := 0.45
+const STY_AMBIENT_GAIN := 1.1
+const STY_MOON := 0.9
+const STY_KEY_SHARE := 0.8
 const STY_FORGE_GAIN := 1.5
 const STY_POOLS: Array[Array] = [
 	# SV-R: each pool moved with its station's pieces (the anvil, the lectern, the counter, the dais, the arch, the stand)
@@ -396,15 +231,10 @@ const KEY := Color(1.0, 0.97, 0.92)
 const KEY_ENERGY := 0.75
 const LION_SHADER := preload("res://assets/shaders/altar_lion.gdshader")
 const PAGE_SHADER := preload("res://assets/shaders/hub_page.gdshader")
-const WATER_SHADER := preload("res://assets/shaders/dark_water.gdshader")
-## The fountain in the stylized look: the same water without the sky mirrored in it (P2-A9, the cycle of 2026-11-20).
-const WATER_MATTE := preload("res://assets/shaders/dark_water_matte.gdshader")
 const CANOPY_SHADER := preload("res://assets/shaders/canopy.gdshader")
 const DECAL_SHADER := preload("res://assets/shaders/floor_decal.gdshader")
 ## Facing directions in the frame (x, z): toward the camera (south), east, west.
 const SOUTH := Vector2(0, 1)
-const EAST := Vector2(1, 0)
-const WEST := Vector2(-1, 0)
 
 ## The node turned by the camera's yaw that holds the hub's own pieces (frame coordinates: x = u, z = -v), its kit and
 ## stone.
@@ -419,7 +249,6 @@ var hero_station: HeroStation
 var station_lights := {}
 var _lion_mats := {}
 var _plain_mats := {}
-var _far: Array[Node] = []
 var _cypress_spots: Array[Vector3] = []
 var _cypress_tall: Array[float] = []
 var _shrub_spots: Array[Vector3] = []
@@ -518,15 +347,12 @@ func dress() -> void:
 				_vine_arch(c, o)
 			&"hub_heroes":
 				_hero_stand(c, o)
-	_crowns(_cypress_spots, _cypress_tall, CYPRESS_A, CYPRESS_B, CYPRESS_WIDE.x, "Cypresses")
-	_crowns(_shrub_spots, _shrub_tall, SHRUB_A, SHRUB_B, SHRUB_WIDE, "Shrubs")
+	add_crowns(_cypress_spots, _cypress_tall, CYPRESS_A, CYPRESS_B, CYPRESS_WIDE.x, "Cypresses")
+	add_crowns(_shrub_spots, _shrub_tall, SHRUB_A, SHRUB_B, SHRUB_WIDE, "Shrubs")
 	_forge()
 	_people()
 	_focus_rims()
-	var from := get_child_count()
-	backdrop(VISTA[0], VISTA[1], VISTA[2])
-	_far = added_since(from)
-	_cascade()
+	HubScenery.new(self).build(layout)
 	# the frame's wood keeps its own colour in the stylized look (paint_look knows only the room's)
 	for w: Material in fm._wood.values():
 		w.set_meta(ArenaKit.PAINT_OWN, {&"paint_keep": 1.0})
@@ -792,7 +618,7 @@ func _slab(along_u: bool, face: float, back: float, s0: float, s1: float, y0: fl
 
 ## Every crown of one kind in one MultiMesh (the canopy's cards, canopy.gdshader; they open round the hero): the
 ## cypresses in dark olive, the beds' shrubs in copper (wide: the crown's width at its widest).
-func _crowns(spots: Array[Vector3], talls: Array[float], leaf_a: Color, leaf_b: Color, width: float, label: String) -> void:
+func add_crowns(spots: Array[Vector3], talls: Array[float], leaf_a: Color, leaf_b: Color, width: float, label: String, round_crown := false) -> void:
 	if spots.is_empty():
 		return
 	var r := RandomNumberGenerator.new()
@@ -806,6 +632,8 @@ func _crowns(spots: Array[Vector3], talls: Array[float], leaf_a: Color, leaf_b: 
 			var t := (k + r.randf()) / n
 			# widest a share of the way up, to a point at the top
 			var wide := width * 0.5 * (sqrt(t / CYPRESS_WIDE.y) if t < CYPRESS_WIDE.y else (1.0 - t) / (1.0 - CYPRESS_WIDE.y) * 0.9 + 0.1)
+			if round_crown:
+				wide = width * 0.5 * pow(sin(PI * clampf(t, 0.04, 0.96)), 0.7)
 			var a := r.randf() * TAU
 			var p := at(foot.x, foot.y + t * tall, foot.z) + Vector3(cos(a), 0.0, sin(a)) * wide * r.randf_range(0.3, 0.8)
 			var size := lerpf(CYPRESS_CARD.y, CYPRESS_CARD.x, t) * r.randf_range(0.8, 1.1)
@@ -829,9 +657,6 @@ func _crowns(spots: Array[Vector3], talls: Array[float], leaf_a: Color, leaf_b: 
 	mat.set_shader_parameter(&"leaves", CROWN_LEAVES)
 	mat.set_shader_parameter(&"fill", 0.8)
 	var sty := {&"shader_parameter/leaves": STY_CROWN_LEAVES, &"shader_parameter/ragged": STY_CROWN_RAGGED}
-	if leaf_a == SHRUB_A:
-		sty[&"shader_parameter/leaf_a"] = STY_SHRUB_A
-		sty[&"shader_parameter/leaf_b"] = STY_SHRUB_B
 	VisualProfile.vary(mat, sty)
 	var mi := MultiMeshInstance3D.new()
 	mi.name = label
@@ -1042,14 +867,6 @@ func _lion(p: Vector3, basis: Basis, side: float, color: Color, parent: Node3D =
 
 # ---------- the square and the front ----------
 
-## HV-C, the Pátio do Retorno (hv_santuario_vigilia_art.md 5): a ring of worn slabs round the seal (SEAL_PAVING),
-## faults running across the lion (SEAL_FAULTS: dark joints, no glow, no runes), the paved way from it to the medallion's
-## ring; on the east low wall of the stairs a low lamp (RETURN_LAMP: post height, energy, reach; amber, no shadow), so
-## the Retorno's pool stays under the stations'. The two braziers at the stairs' head are the arrival's (smaller).
-const SEAL_PAVING := Vector3(1.15, 1.75, 1.0)
-const SEAL_FAULTS: Array[Vector4] = [Vector4(-0.9, -0.3, 0.7, 0.5), Vector4(-0.2, 0.9, 0.3, -0.8), Vector4(0.4, -0.2, 1.0, -0.6)]
-const RETURN_LAMP := Vector3(0.75, 0.8, 3.5)
-const RETURN_LAMP_COLOR := Color(0.74, 0.63, 0.48)
 ## A box of a plain material (gold threads, iron bars) not merged with the stone.
 func _bar(p: Vector3, size: Vector3, mat: Material, basis := Basis()) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
@@ -1505,23 +1322,6 @@ func _shelf(c: Vector2, o: ArenaObstacle) -> void:
 	for sd: float in [-1.0, 1.0]:
 		var rail := fm.box(at(c.x + o.half.x * 0.45 + sd * 0.22, o.height * 0.42, c.y - o.half.y - 0.45), Vector3(0.06, o.height * 0.86, 0.06), 0.0, wood, false)
 		rail.basis = Basis(Vector3.RIGHT, -0.2)
-
-
-## The cascade far left of the portal behind the arcades (spec 3.6): a fall of dark water, ivory-blue streaks.
-func _cascade() -> void:
-	var mi := MeshInstance3D.new()
-	var q := QuadMesh.new()
-	q.size = Vector2(CASCADE.z, CASCADE.w)
-	mi.mesh = q
-	var mat := ShaderMaterial.new()
-	mat.shader = WATER_SHADER
-	mat.set_shader_parameter(&"form", 1)
-	mat.set_shader_parameter(&"size", q.size)
-	mat.set_shader_parameter(&"peak", 0.6)
-	mi.material_override = mat
-	mi.position = at(CASCADE.x, CASCADE.w * 0.5 - 18.0, CASCADE.y)
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	frame.add_child(mi)
 
 
 # ---------- the people (HUB-D, technical-artist) ----------
