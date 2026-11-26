@@ -2,7 +2,7 @@
 
 Autor: balance-designer, 2026-11-26. Só documento: nada foi implementado nem medido. Base: HEAD `9083e79c`, pacote `docs/design/packs_2026-11-26/p0_bencaos_v2/` (01, 02, 03, 05; o 04 está superado), `bencaos_v1/IMPLEMENTACAO.md`, `balance.md` ("Bênçãos V1") e a seção 8 de `heroes/warrior_v1_2026-11-26.md` (slots novos). Os números são **ponto de partida para medir**, não calibrados; o robô compara versões, não dá taxa de vitória de gente.
 
-Decisões do Daniel que valem aqui (não reabertas): 9 anjos x 9 (5 principais + 4 complementares) = 81; Zerael (Peste) aceito; o anjo do Trovão **não** é Baraqel (id técnico `thunder`, nome no jogo "Saarael (Trovão)" até ele escolher); estado só com golpe que causa dano; sorteio 3:1 e mão completada por outros anjos como hoje; a Maga não muda.
+Decisões do Daniel que valem aqui (não reabertas): 9 anjos x 9 (5 principais + 4 complementares) = 81; Zerael (Peste) aceito; o anjo do Trovão **não** é Baraqel (id técnico `thunder`, nome no jogo "Saarael", escolhido pelo Daniel); estado só com golpe que causa dano; sorteio 3:1 e mão completada por outros anjos como hoje; a Maga não muda.
 
 ## 0. Resumo e cortes (KISS)
 
