@@ -13,6 +13,10 @@ uniform float streaks = 7.0;
 uniform float foam = 0.18;
 // Round 3 (hub): the share of the height at the foot where the fall thins to nothing (a fall that vanishes into the mist); 0: off.
 uniform float vanish = 0.0;
+// Round 4 (hub): how much the streaks are clear gaps (0: the old body, 1: bare stripes of water between see-through ones) and the
+// share of the height at the spout where a band of foam sits (0: none), so a fall is never a flat white plate.
+uniform float gap = 0.0;
+uniform float lip = 0.0;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -35,6 +39,8 @@ void fragment() {
 	float body = smoothstep(0.3, 0.8, s * 0.6 + s2 * 0.4);
 	float at_foot = smoothstep(1.0 - foam, 1.0, UV.y);
 	float froth = at_foot * smoothstep(0.35, 0.75, noise(vec2(UV.x * 9.0, TIME * 2.0 + UV.y * 5.0)));
-	ALBEDO = mix(color, foam_color, clamp(froth + at_foot * 0.4, 0.0, 1.0));
-	ALPHA = clamp(alpha * inside * (0.35 + 0.65 * body) + froth * 0.5 * inside, 0.0, 0.85) * smoothstep(0.0, 0.04, UV.y) * (vanish > 0.0 ? 1.0 - smoothstep(1.0 - vanish, 1.0, UV.y) : 1.0);
+	float lip_foam = lip > 0.0 ? (1.0 - smoothstep(0.0, lip, UV.y)) * (0.5 + 0.5 * noise(vec2(UV.x * 7.0, TIME * 1.5))) : 0.0;
+	ALBEDO = mix(color, foam_color, clamp(froth + at_foot * 0.4 + lip_foam, 0.0, 1.0));
+	float stripes = mix(0.35 + 0.65 * body, body, gap);
+	ALPHA = clamp(alpha * inside * stripes + froth * 0.5 * inside + lip_foam * 0.6 * inside, 0.0, 0.85) * (lip > 0.0 ? 1.0 : smoothstep(0.0, 0.04, UV.y)) * (vanish > 0.0 ? 1.0 - smoothstep(1.0 - vanish, 1.0, UV.y) : 1.0);
 }

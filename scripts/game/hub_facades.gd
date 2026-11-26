@@ -15,7 +15,10 @@ const BANNER_GOLD := Color(0.74, 0.56, 0.22)
 const OLD_GOLD := Color(0.72, 0.55, 0.24)
 const GLASS_FRAME := Color(0.78, 0.66, 0.4)
 const AMBER := Color(1.0, 0.72, 0.38)
-const STAINED: Array[Color] = [Color(0.8, 0.14, 0.16), Color(0.98, 0.72, 0.22), Color(0.16, 0.58, 0.64), Color(0.5, 0.22, 0.7), Color(0.95, 0.5, 0.2)]
+## Round 4: the stained glass is a lattice of small lozenges in four muted jewel tones (amber, wine, deep blue, moss-green)
+## in dark lead (hub_stained.gdshader), not wedges of pure colour.
+const STAINED: Array[Color] = [Color(0.78, 0.5, 0.16), Color(0.46, 0.1, 0.17), Color(0.1, 0.18, 0.42), Color(0.2, 0.33, 0.18)]
+const STAINED_SHADER := preload("res://assets/shaders/hub_stained.gdshader")
 const CARPET := Color(0.46, 0.08, 0.12)
 const VISTA_SHADER := preload("res://assets/shaders/hub_vista.gdshader")
 
@@ -39,8 +42,13 @@ const GLASSHOUSE_RIDGE := 3.4
 const GLASS_PANE := Color(0.72, 0.9, 0.88)
 const GLASS_ALPHA := 0.26
 const POST_EVERY := 1.25
-## The lions at the Portao's feet: how far each stands from the way's middle (v), how far west of the pillars (u), size.
-const LION_OFFSET := Vector3(4.4, -0.2, 1.0)
+## The lions at the Portao's feet (round 4, on its terrace in front of the facade): how far each stands from the arch's middle
+## (u), how far south of its face (v), their size. The banners hang on the wall each side of the ring (their width and length,
+## the height of the rod), the medallion over the keystone (its height and side).
+const LION_OFFSET := Vector3(1.5, 1.5, 0.85)
+const GATE_BANNER := Vector3(0.5, 2.3, 4.4)
+const GATE_MEDAL := Vector2(4.95, 0.62)
+const GATE_STEP := Vector3(1.0, 0.16, 0.5)
 const PLINTH := Vector3(1.35, 0.7, 1.35)
 ## Door lanterns: how far each stands from the door's edge, its height, its size.
 const DOOR_LAMP := Vector3(0.55, 2.0, 0.26)
@@ -50,7 +58,7 @@ var look: HubLook
 var scenery: HubScenery
 var _glass_mat: StandardMaterial3D
 var _pane_mat: StandardMaterial3D
-var _stained_mat: StandardMaterial3D
+var _stained_mat: ShaderMaterial
 var _lantern_xf: Array[Transform3D] = []
 var _rng := RandomNumberGenerator.new()
 
@@ -115,7 +123,8 @@ static func ogive_mesh(span: float, spring: float, radius: float, colors: Array[
 		var q := ring[(i + 1) % ring.size()]
 		if not colors.is_empty():
 			st.set_color(colors[i % colors.size()])
-		for pt: Vector2 in [c0, p, q]:
+		# Godot's front face is clockwise seen from the front: c0, q, p (the other order is culled from the +z side)
+		for pt: Vector2 in [c0, q, p]:
 			st.set_uv(Vector2(pt.x / span + 0.5, 1.0 - pt.y / apex))
 			st.add_vertex(Vector3(pt.x, pt.y, 0.0))
 	return st.commit()
@@ -133,22 +142,20 @@ func _warm_glass() -> StandardMaterial3D:
 	return _glass_mat
 
 
-## Stained glass: the wedges' own colours, unlit.
-func _stained_glass() -> StandardMaterial3D:
+## Stained glass: leaded lozenges of jewel tones, lit from behind (hub_stained.gdshader).
+func _stained_glass() -> ShaderMaterial:
 	if _stained_mat == null:
-		_stained_mat = StandardMaterial3D.new()
-		_stained_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		_stained_mat.vertex_color_use_as_albedo = true
-		_stained_mat.vertex_color_is_srgb = true
-		_stained_mat.albedo_color = Color(0.85, 0.85, 0.85)
-		_stained_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		_stained_mat = ShaderMaterial.new()
+		_stained_mat.shader = STAINED_SHADER
+		for i in STAINED.size():
+			_stained_mat.set_shader_parameter(StringName("jewel_" + "abcd"[i]), STAINED[i])
 	return _stained_mat
 
 
 ## A panel of glass standing on the wall's face `v` (a little in front of it), its foot at y0.
-func _panel(u: float, y0: float, v: float, span: float, spring: float, mat: Material, colors: Array[Color] = []) -> void:
+func _panel(u: float, y0: float, v: float, span: float, spring: float, mat: Material) -> void:
 	var mi := MeshInstance3D.new()
-	mi.mesh = ogive_mesh(span, spring, 0.8, colors)
+	mi.mesh = ogive_mesh(span, spring, 0.8)
 	mi.material_override = mat
 	mi.position = _at(u, y0, v - 0.04)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -164,10 +171,7 @@ func _arched_window(spec: Vector4, v: float, stained: bool, sill := GLASS_SILL) 
 	var spring := spec.z
 	var ring := spec.w
 	var foot := _at(u, sill, v)
-	var colors: Array[Color] = []
-	if stained:
-		colors.assign(STAINED)
-	_panel(u, sill, v, span, spring, _stained_glass() if stained else _warm_glass(), colors)
+	_panel(u, sill, v, span, spring, _stained_glass() if stained else _warm_glass())
 	for s: float in [-1.0, 1.0]:
 		look.fm.block(_at(u + s * (span * 0.5 + ring * 0.5), sill, v - 0.04), Vector3(ring, spring, GLASS_DEEP), 0.0, stone, false)
 	look.fm.block(_at(u, sill - 0.14, v - 0.08), Vector3(span + ring * 2.0 + 0.3, 0.14, GLASS_DEEP + 0.14), 0.0, stone, false)
@@ -379,25 +383,36 @@ func _lantern_instances() -> void:
 
 # ---------- the Portao da Aventura ----------
 
-## The stone lions on their plinths at the arch's feet (they sit facing the camera) and the violet view in the opening.
+## The Portao's face (HubBlockout builds the wall, the arch and the sheet): two wine banners with the lion on the wall each
+## side of the ring, the gold lion over the keystone, a pair of low steps to the sill, the two stone lions seated on their
+## plinths at the foot of the facade (facing the camera) and the violet view in the opening.
 func gate() -> void:
-	var face := HubPlan.GATE_FACE_U
-	var mid := HubPlan.GATE_MID_V
-	var fu := face - HubScenery.GATE_FRAME.x
+	var t := HubBlockout.GATE_TERRACE
+	var wall := HubBlockout.GATE_WALL_U
+	var cu := (wall.x + wall.y) * 0.5
+	var front := HubBlockout.GATE_FRONT
+	var half := HubBlockout.GATE_W * 0.5 + HubBlockout.GATE_RING
+	var side := (half + (wall.y - wall.x) * 0.5) * 0.5
 	for s: float in [-1.0, 1.0]:
-		_lion_statue(Vector3(fu + LION_OFFSET.y, 0.0, mid + s * LION_OFFSET.x), LION_OFFSET.z)
-	_vista(face, mid)
+		banner(cu + s * side, GATE_BANNER.z, front, GATE_BANNER.x, GATE_BANNER.y)
+		_lion_statue(Vector3(cu + s * LION_OFFSET.x, t, front - LION_OFFSET.y), LION_OFFSET.z)
+	look._lion(_at(cu, GATE_MEDAL.x, front - 0.03), Basis(), GATE_MEDAL.y, HubLook.MEDALLION_GOLD)
+	for k in 2:
+		look.fm.block(_at(cu, t, front - 0.5 - 0.3 * k), Vector3(HubBlockout.GATE_W + 0.9 + 0.5 * k, GATE_STEP.y * (2 - k), GATE_STEP.z - 0.1 * k), 0.0, look.facade_stone(), false)
+	_vista(cu, front, t)
 
 
-## A seated lion from stone boxes (plinth, haunches, chest, forelegs, mane, head, tail), its face to the camera (south).
+## A seated lion from stone boxes (plinth, haunches, chest, forelegs, mane, head, tail), its face to the camera (south), its
+## plinth standing at foot (u, height, v).
 func _lion_statue(foot: Vector3, scale_: float) -> void:
 	var stone: Material = look.facade_stone()
 	var fm := look.fm
 	var u := foot.x
 	var v := foot.z
-	fm.block(_at(u, 0.0, v), Vector3(PLINTH.x, PLINTH.y, PLINTH.z) * scale_, 0.0, stone, false)
-	fm.block(_at(u, PLINTH.y * scale_, v), Vector3(PLINTH.x + 0.18, 0.14, PLINTH.z + 0.18) * scale_, 0.0, stone, false)
-	var y0 := (PLINTH.y + 0.14) * scale_
+	var base := foot.y
+	fm.block(_at(u, base, v), Vector3(PLINTH.x, PLINTH.y, PLINTH.z) * scale_, 0.0, stone, false)
+	fm.block(_at(u, base + PLINTH.y * scale_, v), Vector3(PLINTH.x + 0.18, 0.14, PLINTH.z + 0.18) * scale_, 0.0, stone, false)
+	var y0 := base + (PLINTH.y + 0.14) * scale_
 	var k := scale_
 	# the haunches behind, the chest up in front
 	fm.block(_at(u, y0, v + 0.22 * k), Vector3(0.86, 0.78, 0.85) * k, 0.0, stone, false)
@@ -414,18 +429,16 @@ func _lion_statue(foot: Vector3, scale_: float) -> void:
 	fm.block(_at(u + 0.45 * k, y0, v + 0.3 * k), Vector3(0.1, 0.1, 0.5) * k, 0.0, stone, false)
 
 
-## The view through the opening: the vista card (hub_vista.gdshader) just behind the sheet of light, cut to the arch.
-func _vista(face: float, mid: float) -> void:
-	var span := HubBlockout.GATE_W
-	var spring := HubBlockout.GATE_SPRING
+## The view through the opening: the vista card (hub_vista.gdshader) just in front of the wall and behind the sheet of light,
+## cut to the arch.
+func _vista(cu: float, front: float, base: float) -> void:
 	var mi := MeshInstance3D.new()
 	mi.name = "GateVista"
-	mi.mesh = ogive_mesh(span, spring, HubLook._portal_arc(), [], 10)
+	mi.mesh = ogive_mesh(HubBlockout.GATE_W, HubBlockout.GATE_SPRING, HubBlockout.gate_arc(), [], 10)
 	var mat := ShaderMaterial.new()
 	mat.shader = VISTA_SHADER
 	mi.material_override = mat
-	mi.position = _at(face + 4.025, 0.0, mid)
-	mi.basis = Basis(Vector3.UP, -PI * 0.5)
+	mi.position = _at(cu, base, front - 0.04)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	look.frame.add_child(mi)
 

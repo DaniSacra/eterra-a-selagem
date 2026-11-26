@@ -441,3 +441,38 @@ nova (as poças são malha aditiva). **Shaders editados** (nenhum arquivo de sha
   fica no nível do piso junto à rocha e o cacho tem `HANG_TALL` 2 a 3,8 m (`HANG_WIDTH`).
 - Ajuste fino: `SQUARE_POOLS` e `LANTERN_POOL` (poças), `STY_FLOOR_STONE`, `MIST*`, `PERGOLA_*`, `ROCK_STEP_*`. Pontos de risco sem ver: a poça
   da lanterna da borda sai pela metade (o resto fica sobre o vazio e é cortado); o telhado da pérgola pode esconder a fonte na câmera Perto.
+
+## Refino do Santuário, rodada 4 (2026-11-26; environment-artist, SEM captura: às cegas, conferir na GPU)
+Pedido: Portão virado para a câmera, vitrais góticos, cachoeiras finas, arcos pretos, faixa clara, vazio azul-noite, rochas cinza.
+Só visual; colisão (`HubPlan.GATE` continua a caixa sólida de 6 m), `HubPlan` e pontos de uso intactos. **Shader novo**:
+`assets/shaders/hub_stained.gdshader` (vitral). Editados: `waterfall.gdshader` (uniforms `gap`, `lip`).
+- **1 Portão** (`HubBlockout._gate`, `HubFacades.gate`): a abertura olhava para o oeste (de lado para a câmera). Agora o bloco é um
+  terraço baixo (`GATE_TERRACE` 0,55 m, a mesma pegada) e sobre ele a FACHADA para o sul: parede (`GATE_WALL_U` u 37,6 a 42, face em
+  `GATE_FRONT` v -9, espessura `GATE_DEPTH`, crista `GATE_TOP` 5,7 < 6), arco ogival de aduelas (`GATE_W` 2,4, `GATE_SPRING` 1,5,
+  `GATE_RING`), cornija, folha de luz dourada (`portal_glow` de yaw 0, mesmas luzes e `station_lights`), vista violeta no vão
+  (`hub_vista`), dois estandartes vinho com o leão na parede ao lado do anel (`GATE_BANNER`), leão dourado sobre a chave
+  (`GATE_MEDAL`), dois degraus até a soleira e dois leões de pedra sentados no terraço de frente (`LION_OFFSET`). A parede fica
+  fora do ponto de uso (u 37, a borda oeste). Saíram a moldura solta de pilares e a coluna de luz de 16 m (`_gate_dressing`,
+  `_light_column`: o cartão translúcido alto era um dos "planos soltos"). `HubBlockout.gate_apex()`/`gate_arc()` dão a curva.
+- **2 Vitrais** (`hub_stained.gdshader`, `HubFacades._stained_glass`): losangos pequenos em quatro tons joia dessaturados
+  (`STAINED`: âmbar, vinho, azul profundo, verde-musgo) com chumbo escuro, mainel e travessa, mais escuro na borda e aceso por trás;
+  `ogive_mesh` sem cores de vértice no vitral.
+- **3 Cachoeiras**: fita estreita (`FALL_NARROW` 0,55 da largura), azul pálido (`FALL_COLOR`), listras com vãos transparentes
+  (`FALL_GAP`), faixa de espuma na boca (`FALL_LIP`), somem na névoa (`FALL_VANISH` 0,55), alfa `FALL_ALPHA`. Só onde o vazio à frente
+  está aberto (`_open_void`: 3, 6, 9 e 12 m para fora, e 2 m de cada lado, sem piso, bacia nem pátio): a "placa branca no buraco" era
+  uma queda extra na borda sul do pátio dos Dons, num vão de 1,5 m entre ele e a ponte. Teste em `test_hub_refine.gd`.
+- **4 Arcos pretos**: a folha de `HubFacades.ogive_mesh` tinha o enrolamento (winding) voltado para trás (o Godot desenha o lado
+  horário), era cortada e o vão mostrava o preto de trás. Corrigido (vale também para o nicho da Vigília, que ganha o fundo escuro).
+  Arcos das Áreas Futuras mais baixos (`ARCH_SPRING` 0,8, `ARCH_ARC` 0,52: de 4,1 m para 3 m) e madeira mais clara (`DOOR_WOOD`).
+- **5 Faixa clara**: eram as lajotas aditivas do caminho (`_path_glow`, `PathTiles`, rodada 3), duas fileiras translúcidas por cima das
+  lajes. Removidas (o caminho segue gasto por `_pave_way`). Além disso `HubGlow` não estica mais vértices fora do piso para dentro (isso
+  gerava triângulos longos e inclinados): descarta o triângulo que tem vértice fora do piso.
+- **6 Vazio**: a causa do roxo chapado e das copas fantasmas era a névoa de altura do mundo (`WorldAir.FOG_HEIGHT_DENSITY` 0,6, cor
+  `DUSK_FOG`): opaca poucos metros abaixo do piso, o que está lá embaixo (planos do abismo com `rim_color`, copas) virava só a cor da
+  névoa. No hub `HubLook.HUB_FOG_HEIGHT` 0,05 (chave nova `fog_height_density` em `RoomMood.air_values`; outras salas não pedem) e
+  `DUSK_FOG` azul-noite pouco saturado (0,1/0,105/0,16); `MIST` (0,07/0,075/0,14), `MIST_RIM` cinza-azulado mais claro (0,17/0,17/0,3)
+  de 24 a 110 m; céu, mar, serras e `DEEP_A/B` (copas fundas, mais escuras que o plano) em azul-noite.
+- **7 Rochas**: `CLIFF_ROCK_A/B` cinza-quente (0,4/0,36/0,31 e 0,23/0,22/0,24), `CLIFF_MOSS` mais verde, `CLIFF_SHADE` sem rosa.
+- Ajuste fino se algo sair errado: `HUB_FOG_HEIGHT` (mais alto = mais névoa embaixo), `GATE_*`/`LION_OFFSET`/`GATE_BANNER`, `FALL_*`,
+  `hub_stained` (`cells`, `lead`, `brightness`). Risco sem ver: a fachada do Portão (5,7 m) pode tapar o que está atrás dela; o shader do
+  vitral ainda não foi visto; a névoa mais fina pode deixar os planos do abismo visíveis demais.

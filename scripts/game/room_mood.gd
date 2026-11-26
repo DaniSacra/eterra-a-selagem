@@ -211,6 +211,8 @@ static func air_values(want: Dictionary) -> Dictionary:
 	for k: StringName in names:
 		if want.has(k):
 			d[names[k]] = want[k]
+	if want.has(&"fog_height_density"):  # the hub thins the height fog under its floor (HubLook.HUB_FOG_HEIGHT)
+		d[&"fog_height_density"] = float(want[&"fog_height_density"])
 	if want.has(&"fog_depth"):
 		var fd: Vector2 = want[&"fog_depth"]
 		d[&"fog_depth_begin"] = fd.x

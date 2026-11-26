@@ -11,17 +11,23 @@ const PLINTH := Vector2(0.18, 0.35)  # how far it stands out, how high
 const CORNICE := Vector2(0.3, 0.28)
 const ROOF_LIP := 0.1
 const JAMB := Vector3(0.3, 0.3, 0.45)  # width, height over the door, depth
-const GATE_RING := 0.45
-const GATE_SPRING := 2.2
-const GATE_W := 3.6
-const GATE_H := 5.0
-## The walls beside the gate stand low so the block does not fill the screen; only the arch's head (this much wider
-## than the opening on each side) rises to HubPlan.GATE_HEIGHT.
+## Round 4: the Portao faces the camera. A low terrace fills the footprint (the layout's solid box is unchanged; only what is
+## drawn on it is lower) and on it stands the facade: a wall with a pointed arch of voussoirs (GATE_W wide, springing at
+## GATE_SPRING, its ring GATE_RING) over a sheet of light and the violet view, a cornice and a lion over the keystone; the
+## banners and the lions are HubFacades'. GATE_FRONT is the facade's south face (v), GATE_DEPTH its thickness, GATE_WALL_U
+## its extent in u (clear of the hero's use point at the west edge), GATE_TOP its crest.
+const GATE_RING := 0.38
+const GATE_W := 2.4
+const GATE_SPRING := 1.5
+const GATE_TERRACE := 0.55
+const GATE_FRONT := -9.0
+const GATE_DEPTH := 1.4
+const GATE_WALL_U := Vector2(37.6, 42.0)
+const GATE_TOP := 5.7
+const GATE_CORNICE := 0.3
 const GATE_LIGHT_TINT := Color(1.0, 0.76, 0.34)
-const GATE_WALL_H := 3.2
-const GATE_HEAD_SIDE := 1.4
 const GATE_DARK := Color(0.02, 0.05, 0.035)
-const DOOR_WOOD := Color(0.2, 0.12, 0.07)
+const DOOR_WOOD := Color(0.36, 0.21, 0.11)
 const DOOR_IRON := Color(0.09, 0.09, 0.1)
 ## Hub refine round 1: an open door shows the warm light of the room inside (the art's doors are lit), and the future
 ## rooms' doors carry a gold padlock (the art's Area Futura).
@@ -29,11 +35,12 @@ const DOOR_GLOW := Color(1.0, 0.56, 0.22)
 const DOOR_GLOW_ENERGY := 0.95
 ## Round 2: the doorway is dark inside with the warm light coming up from the foot (HubLook.lit_opening), the open
 ## Videira's door is no door at all (its pergola shows through), and the future rooms' doors are stone arches with a
-## wooden leaf (a pointed panel) set into the wall.
+## wooden leaf (a pointed panel) set into the wall. Round 4: the leaf's winding faced away from the camera (culled: the doorway
+## showed the black behind it), now fixed in HubFacades.ogive_mesh.
 const DOOR_TOP := 0.06
-const ARCH_SPRING := 1.6
+const ARCH_SPRING := 0.8  # round 4: lower, so the arches in front of the camera do not hide the court
 const ARCH_RING := 0.38
-const ARCH_ARC := 0.62
+const ARCH_ARC := 0.52
 const LOCK_GOLD := Color(0.72, 0.55, 0.22)
 const LOCK_SIZE := Vector3(0.44, 0.38, 0.1)
 var _glow: StandardMaterial3D
@@ -74,40 +81,43 @@ func _building(r: Vector4, h: float) -> void:
 	look.fm.block(HubLook.at(c.x, h, c.y), Vector3(size.x + CORNICE.x * 2.0 - ROOF_LIP * 2.0, 0.12, size.y + CORNICE.x * 2.0 - ROOF_LIP * 2.0), 0.0, look.stone(), false)
 
 
-## The Portão da Aventura: a mass with the opening on its west face (the road comes from the west), the pointed ring of
-## voussoirs over the sheet of light, the dark behind, the sheet and its light (the station's light).
+## The opening's apex above its foot (the portal's own proportions, scaled to GATE_W).
+static func gate_apex() -> float:
+	return GATE_SPRING + (HubLook.PORTAL_H - HubLook.PORTAL_SPRING) * GATE_W / HubLook.PORTAL_W
+
+
+## The sheet's pointed head: the radius as a share of the width (the same curve as ogive_mesh and voussoir_arch take).
+static func gate_arc() -> float:
+	var rise := gate_apex() - GATE_SPRING
+	return (rise * rise + GATE_W * GATE_W * 0.25) / GATE_W / GATE_W
+
+
+## The Portão da Aventura, facing the camera: the terrace over the footprint, the facade wall on it, the ring of voussoirs
+## round the opening, the cornice, and the sheet of light and its lights (the station's light).
 func _gate() -> void:
 	var g := HubPlan.GATE
-	var face := HubPlan.GATE_FACE_U
-	var mid := HubPlan.GATE_MID_V
 	var mat: Material = look.facade_stone()
-	var half := GATE_W * 0.5
-	# the wall south and north of the opening, the lintel over it, the stone behind
-	var head := half + GATE_HEAD_SIDE
-	_slab(face, g.z, g.y, mid - head, 0.0, GATE_WALL_H, mat)
-	_slab(face, g.z, mid + head, g.w, 0.0, GATE_WALL_H, mat)
-	_slab(face, g.z, mid - head, mid - half, 0.0, HubPlan.GATE_HEIGHT, mat)
-	_slab(face, g.z, mid + half, mid + head, 0.0, HubPlan.GATE_HEIGHT, mat)
-	_slab(face, g.z, mid - half, mid + half, GATE_H, HubPlan.GATE_HEIGHT, mat)
+	var t := GATE_TERRACE
+	var cu := (GATE_WALL_U.x + GATE_WALL_U.y) * 0.5
+	var wall_w := GATE_WALL_U.y - GATE_WALL_U.x
+	var vc := GATE_FRONT + GATE_DEPTH * 0.5
+	look.fm.block(HubLook.at((g.x + g.z) * 0.5, 0.0, (g.y + g.w) * 0.5), Vector3(g.z - g.x, t, g.w - g.y), 0.0, look.stone(), false)
+	look.fm.block(HubLook.at((g.x + g.z) * 0.5, t - 0.14, (g.y + g.w) * 0.5), Vector3(g.z - g.x + 0.24, 0.14, g.w - g.y + 0.24), 0.0, mat, false)
+	look.fm.block(HubLook.at(cu, t, vc), Vector3(wall_w, GATE_TOP - t, GATE_DEPTH), 0.0, mat, false)
+	look.fm.block(HubLook.at(cu, GATE_TOP - GATE_CORNICE, vc), Vector3(wall_w + 0.5, GATE_CORNICE, GATE_DEPTH + 0.4), 0.0, mat, false)
+	look.fm.block(HubLook.at(cu, GATE_TOP, vc), Vector3(wall_w + 0.2, 0.14, GATE_DEPTH + 0.1), 0.0, look.stone(), false)
 	var inner := look.m.stone(0.0, look.stone_tint() * HubLook.INNER_TINT)
-	var facing := Vector2(-1.0, 0.0)
+	var half := GATE_W * 0.5
+	var foot := HubLook.at(cu, t, GATE_FRONT - 0.1)
 	for sd: float in [-1.0, 1.0]:
-		look.fm.block(HubLook.at(face - 0.1, 0.0, mid + sd * (half + GATE_RING * 0.5)), Vector3(0.45, GATE_SPRING, GATE_RING), 0.0, inner, false)
-	look.fm.voussoir_arch(HubLook.at(face - 0.1, 0.0, mid), facing, GATE_W, GATE_SPRING, GATE_RING, 0.45, inner, HubLook._portal_arc())
-	look.fm.block(HubLook.at(g.x + 4.2, 0.0, mid), Vector3(0.3, GATE_H + 0.3, GATE_W + 0.6), 0.0, look._plain(GATE_DARK, 1.0), false)
-	look.fm.block(HubLook.at(face, -0.02, mid), Vector3(4.4, 0.04, GATE_W + 0.2), 0.0, inner, false)
-	var r := HubLook._portal_arc() * GATE_W
-	look.fk.portal_glow(HubLook.at(g.x + 4.0, GATE_H * 0.5, mid), -PI * 0.5, Vector2(GATE_W, GATE_H), Vector3(GATE_SPRING, GATE_W, r))
+		look.fm.block(HubLook.at(cu + sd * (half + GATE_RING * 0.5), t, GATE_FRONT - 0.1), Vector3(GATE_RING, GATE_SPRING, 0.35), 0.0, inner, false)
+	look.fm.voussoir_arch(foot, Vector2(0.0, 1.0), GATE_W, GATE_SPRING, GATE_RING, 0.35, inner, gate_arc())
+	look.fm.block(HubLook.at(cu, t, GATE_FRONT - 0.3), Vector3(GATE_W + 0.9, 0.1, 0.6), 0.0, mat, false)
+	var apex := gate_apex()
+	look.fk.portal_glow(HubLook.at(cu, t + apex * 0.5, GATE_FRONT - 0.07), 0.0, Vector2(GATE_W, apex), Vector3(GATE_SPRING, GATE_W, gate_arc() * GATE_W))
 	look.fk.light_portal(look.fk.portals.size() - 1, true, GATE_LIGHT_TINT)  # Elun's warm gold, never the catacombs' green
 	var lights: Array = look.fk.portals[look.fk.portals.size() - 1]
 	look.station_lights[HubPlan.PORTAL] = lights[1]
-
-
-## A wall block across u (face to back) between v s0 and s1, y0 to y1.
-func _slab(face: float, back: float, s0: float, s1: float, y0: float, y1: float, mat: Material) -> void:
-	if s1 - s0 < 0.02:
-		return
-	look.fm.block(HubLook.at((face + back) * 0.5, y0, (s0 + s1) * 0.5), Vector3(absf(back - face), y1 - y0, s1 - s0), 0.0, mat, false)
 
 
 ## A door on its footprint (HubPlan.DOORS): closed, a leaf of dark wood with iron straps between stone jambs; open,

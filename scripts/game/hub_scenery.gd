@@ -71,8 +71,17 @@ const FALLS: Array[Vector4] = [Vector4(16.4, -15.7, 2.6, 15.0), Vector4(22.0, -1
 	Vector4(35.5, -12.2, 2.6, 17.0)]
 const FALL_TURN := 0.0
 ## Round 3: the falls are white-blue and thin out to nothing in the mist before the foot (FALL_VANISH: the share of the drop).
-const FALL_COLOR := Color(0.82, 0.93, 1.0)
-const FALL_VANISH := 0.4
+const FALL_COLOR := Color(0.5, 0.72, 0.84)
+const FALL_VANISH := 0.55
+## Round 4: the falls are narrow ribbons of pale blue water (FALL_NARROW times the width they had), with see-through gaps between
+## the stripes (FALL_GAP), a band of foam at the lip (FALL_LIP, the share of the drop), never a white plate; and only where
+## the drop below is open void (FALL_OPEN: how far out, how far to each side, in metres), never a pit or trench in the floor.
+const FALL_FOAM := Color(0.8, 0.9, 0.96)
+const FALL_ALPHA := 0.6
+const FALL_GAP := 0.85
+const FALL_LIP := 0.06
+const FALL_NARROW := 0.55
+const FALL_OPEN := Vector2(12.0, 2.0)
 const EXTRA_FALLS := 3
 const EXTRA_FALL_APART := 9.0
 const EXTRA_FALL_WIDTH := Vector2(1.5, 2.2)
@@ -103,11 +112,6 @@ const GRAPE_HANG := Vector2(0.55, 1.0)
 const FOUNTAIN_DEEP := Color(0.34, 0.62, 0.7)
 const FOUNTAIN_SHALLOW := Color(0.62, 0.9, 0.94)
 const FOUNTAIN_SPARKLE := 0.4
-
-# ---------- the gate's frame and light ----------
-const GATE_FRAME := Vector3(2.4, 2.6, 6.2)  # how far west of the face, half the way's width, pillar height
-const GATE_LIGHT := Vector2(5.0, 16.0)
-const GATE_LIGHT_COLOR := Color(1.0, 0.78, 0.38)
 
 # ---------- the Ponto de Vigília and the future rooms ----------
 const VIGIL_FLAME := Vector3(-22.6, 0.0, -10.2)
@@ -220,18 +224,15 @@ const DEEP_EVERY := 2.4
 const DEEP_OUT := Vector2(1.5, 9.0)
 const DEEP_DEPTH := Vector2(7.0, 22.0)
 const DEEP_TALL := Vector2(3.0, 6.0)
-const DEEP_A := Color(0.07, 0.09, 0.16)
-const DEEP_B := Color(0.2, 0.21, 0.34)
+const DEEP_A := Color(0.03, 0.04, 0.08)
+const DEEP_B := Color(0.09, 0.1, 0.17)
 const LEDGE := Vector3(3.2, 1.0, 1.8)  # along the edge, tall, out of the face
 const LEDGE_DEPTH := Vector2(1.8, 13.0)
 ## The main way's glow (Vigilia, Videira, Dons, Aposento, Portao): width, how far apart the samples.
 const PATH_WIDTH := 1.5
 const PATH_STEP := 0.6
-## Round 3: no lit pebbles; a continuous line of slightly lighter paving stones (two rows of PATH_TILE m squares with PATH_TILE_GAP
-## between them, each its own light) along the main way.
-const PATH_TILE := 0.62
-const PATH_TILE_GAP := 0.07
-const PATH_TILE_COLOR := Color(0.1, 0.075, 0.045)
+## Round 4: the translucent tiles laid along the way read as a pale band across the floor and are gone (the way is paved
+## in HubLook._pave_way); the polylines stay as the way's description.
 const PATH_MAIN: Array[Vector2] = [Vector2(-23.0, -7.0), Vector2(-14.0, -7.0), Vector2(-7.0, -6.0), Vector2(2.0, -6.0),
 	Vector2(4.0, 0.0), Vector2(4.0, 12.0), Vector2(1.0, 17.5)]
 const PATH_GATE: Array[Vector2] = [Vector2(2.0, -6.0), Vector2(5.0, -13.0), Vector2(25.0, -13.0), Vector2(32.0, -6.0), Vector2(36.0, -6.0)]
@@ -245,19 +246,19 @@ const RIDGE_SHADER := preload("res://assets/shaders/hub_ridge.gdshader")
 ## Each ridge card: distance north of the plan's middle v, width, height, bottom y, colour near the crest, colour at its
 ## top, ridge base share and amplitude, the seed.
 const RIDGES: Array[Dictionary] = [
-	{&"v": 160.0, &"w": 700.0, &"h": 170.0, &"y": -60.0, &"low": Color(0.3, 0.22, 0.4), &"top": Color(0.62, 0.4, 0.46), &"base": 0.6, &"amp": 0.3, &"seed": 3.0},
-	{&"v": 110.0, &"w": 520.0, &"h": 140.0, &"y": -60.0, &"low": Color(0.18, 0.14, 0.3), &"top": Color(0.38, 0.27, 0.4), &"base": 0.62, &"amp": 0.3, &"seed": 11.0},
-	{&"v": 70.0, &"w": 360.0, &"h": 120.0, &"y": -60.0, &"low": Color(0.14, 0.2, 0.2), &"top": Color(0.3, 0.34, 0.3), &"base": 0.6, &"amp": 0.3, &"seed": 21.0},
+	{&"v": 160.0, &"w": 700.0, &"h": 170.0, &"y": -60.0, &"low": Color(0.22, 0.2, 0.34), &"top": Color(0.5, 0.4, 0.48), &"base": 0.6, &"amp": 0.3, &"seed": 3.0},
+	{&"v": 110.0, &"w": 520.0, &"h": 140.0, &"y": -60.0, &"low": Color(0.14, 0.14, 0.26), &"top": Color(0.3, 0.26, 0.38), &"base": 0.62, &"amp": 0.3, &"seed": 11.0},
+	{&"v": 70.0, &"w": 360.0, &"h": 120.0, &"y": -60.0, &"low": Color(0.1, 0.14, 0.18), &"top": Color(0.22, 0.26, 0.28), &"base": 0.6, &"amp": 0.3, &"seed": 21.0},
 ]
 const RIDGE_U := 14.0
 ## The sky (a standing card behind the ridges) and the sea of cloud under the floor (a flat plane), as gradients.
 const SKY_SHADER := preload("res://assets/shaders/hub_sky.gdshader")
-const SKY_TOP := Color(0.14, 0.11, 0.3)
-const SKY_HORIZON := Color(0.7, 0.42, 0.4)
+const SKY_TOP := Color(0.08, 0.09, 0.2)
+const SKY_HORIZON := Color(0.5, 0.38, 0.42)
 const SEA_Y := -30.0
 const SEA_SIZE := 900.0
-const SEA_FAR := Color(0.36, 0.22, 0.34)
-const SEA_NEAR := Color(0.12, 0.09, 0.22)
+const SEA_FAR := Color(0.3, 0.25, 0.36)
+const SEA_NEAR := Color(0.07, 0.08, 0.16)
 const SEA_CLOUD := 0.7
 const SEA_CLOUD_SCALE := 0.07  # waves of cloud the near camera can tell apart (a view is only tens of metres wide)
 const SKY_CARD := Vector4(260.0, 900.0, 320.0, -60.0)  # v, width, height, bottom y
@@ -272,7 +273,7 @@ var _flower_spots: Array[Vector3] = []
 var _flower_tall: Array[float] = []
 var _wisteria_spots: Array[Vector3] = []
 var _wisteria_tall: Array[float] = []
-var _falls_all: Array[Vector4] = FALLS.duplicate()  # the plan's falls and the extra ones (the cliffs leave them bare)
+var _falls_all: Array[Vector4] = []  # the plan's falls and the extra ones (the cliffs leave them bare)
 var _ivy_spots: Array[Vector3] = []
 var _ivy_tall: Array[float] = []
 var _roof_spots: Array[Vector3] = []
@@ -320,7 +321,6 @@ func build(layout: RoomLayout) -> void:
 	_fountain()
 	_vigil_post()
 	_future_yards()
-	_gate_dressing()
 	facades.gate()
 	_balustrades()
 	_edges()
@@ -328,7 +328,6 @@ func build(layout: RoomLayout) -> void:
 	_cliffs()
 	_red_tree()
 	_wall_flowers()
-	_path_glow()
 	_build_lanterns()
 	look.add_crowns(_leaf_spots, _leaf_tall, LEAF_DARK, LEAF_LIGHT, 1.5, "Shrubs", false)
 	look.add_crowns(_flower_spots, _flower_tall, WISTERIA_A, WISTERIA_B, 1.3, "Flowers", false)
@@ -876,7 +875,9 @@ func _bridge() -> void:
 		look.fm.block(_at(u, ARCH_FOOT, face), Vector3(0.9, -ARCH_FOOT - 0.4, 0.5), 0.0, look.ashlar(), false)
 	look.fm.block(_at((BRIDGE_U.x + BRIDGE_U.y) * 0.5, -0.5, face), Vector3(BRIDGE_U.y - BRIDGE_U.x, 0.3, 0.4), 0.0, look.stone(), false)
 	for f in FALLS:
-		_fall(f)
+		if _open_void(Vector2(f.x, f.y), Vector2(0.0, -1.0)):
+			_fall(f)
+			_falls_all.append(f)
 	for f in _extra_falls():
 		_fall(f)
 		_falls_all.append(f)
@@ -894,7 +895,7 @@ func _extra_falls() -> Array[Vector4]:
 			break
 		var p: Vector2 = e[0]
 		var normal: Vector2 = e[1]
-		if normal.y > -0.95 or _under_bridge(p) or _near_mass(p) or p.y < -16.0:
+		if normal.y > -0.95 or _under_bridge(p) or _near_mass(p) or p.y < -16.0 or not _open_void(p, normal):
 			continue
 		var clear := true
 		for t in taken:
@@ -905,19 +906,46 @@ func _extra_falls() -> Array[Vector4]:
 	return out
 
 
+## True when the drop in front of p (toward `normal`) is open void for FALL_OPEN.x metres, also FALL_OPEN.y to each side: no
+## floor, basin or yard in the way (a fall in a trench between two courts, or in a pit of the floor, reads as a hole).
+func _open_void(p: Vector2, normal: Vector2) -> bool:
+	var along := Vector2(-normal.y, normal.x)
+	for d: float in [3.0, 6.0, 9.0, FALL_OPEN.x]:
+		for side: float in [-1.0, 0.0, 1.0]:
+			if _in_plan(p + normal * d + along * side * FALL_OPEN.y):
+				return false
+	return true
+
+
+## True when the point is on the plan: the floor, a basin, a sunken yard of the future rooms.
+func _in_plan(p: Vector2) -> bool:
+	for poly in HubPlan.floor_polys():
+		if Geometry2D.is_point_in_polygon(p, poly):
+			return true
+	for w in HubPlan.water():
+		if Geometry2D.is_point_in_polygon(p, w):
+			return true
+	for r in HubPlan.FUTURE_CUT:
+		if Rect2(r.x, r.y, r.z - r.x, r.w - r.y).has_point(p):
+			return true
+	return false
+
+
 ## A fall hanging from just under the lip down `drop`, foam at its foot, a haze where it lands.
 func _fall(f: Vector4) -> void:
 	var mi := MeshInstance3D.new()
 	var q := QuadMesh.new()
-	q.size = Vector2(f.z, f.w)
+	q.size = Vector2(f.z * FALL_NARROW, f.w)
 	mi.mesh = q
 	var mat := ShaderMaterial.new()
 	mat.shader = FALL_SHADER
 	mat.set_shader_parameter(&"color", FALL_COLOR)
-	mat.set_shader_parameter(&"foam_color", FALL_COLOR)
-	mat.set_shader_parameter(&"alpha", 0.9)
+	mat.set_shader_parameter(&"foam_color", FALL_FOAM)
+	mat.set_shader_parameter(&"alpha", FALL_ALPHA)
 	mat.set_shader_parameter(&"vanish", FALL_VANISH)
-	mat.set_shader_parameter(&"streaks", 6.0)
+	mat.set_shader_parameter(&"gap", FALL_GAP)
+	mat.set_shader_parameter(&"lip", FALL_LIP)
+	mat.set_shader_parameter(&"streaks", 5.0)
 	mi.material_override = mat
 	mi.position = _at(f.x, -0.4 - f.w * 0.5, f.y)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -1076,64 +1104,6 @@ func _future_yards() -> void:
 			look.fm.block(_at(mouth.x, top - 0.01, -17.35 - k * 0.45 - 0.2), Vector3(tread.x + 0.06, STEP_NOSING_H, 0.1), 0.0, nosing, false)
 		_lamp(Vector2(mouth.x - mouth.z + 0.4, -15.9))
 		_lamp(Vector2(mouth.x + mouth.z - 0.4, -15.9))
-
-
-# ---------- the gate ----------
-
-## The gate, readable from the camera (it opens to the west, edge-on to it): a freestanding frame of two tall pillars and a
-## lintel across the way in front of the opening, lion statues' plinths at their feet, the lion over the arch, two
-## standards, lanterns, a stone cap, and a column of the portal's light rising over it (a card facing the camera).
-func _gate_dressing() -> void:
-	var g := HubPlan.GATE
-	var face := HubPlan.GATE_FACE_U
-	var mid := HubPlan.GATE_MID_V
-	var stone: Material = look.facade_stone()
-	var fu := face - GATE_FRAME.x
-	for s: float in [-1.0, 1.0]:
-		var v := mid + s * GATE_FRAME.y
-		look.fm.block(_at(fu, 0.0, v), Vector3(1.3, 0.5, 1.3), 0.0, stone, false)
-		look.fm.block(_at(fu, 0.5, v), Vector3(0.95, GATE_FRAME.z - 0.5, 0.95), 0.0, stone, false)
-		look.fm.block(_at(fu, GATE_FRAME.z, v), Vector3(1.2, 0.3, 1.2), 0.0, stone, false)
-		facades.banner(fu - 0.48, GATE_FRAME.z - 0.6, v, 0.9, 2.4, -PI * 0.5)
-		look._lion(_at(fu - 0.49, 1.3, v), Basis(Vector3.UP, -PI * 0.5), 0.6, HubLook.MEDALLION_GOLD)
-		_lamp(Vector2(fu - 1.2, v))
-	look.fm.block(_at(fu, GATE_FRAME.z + 0.3, mid), Vector3(1.1, 0.7, GATE_FRAME.y * 2.0 + 1.4), 0.0, stone, false)
-	look.fm.block(_at(fu, GATE_FRAME.z + 1.0, mid), Vector3(0.8, 0.4, GATE_FRAME.y * 2.0 + 0.4), 0.0, stone, false)
-	look._lion(_at(fu - 0.41, GATE_FRAME.z + 0.65, mid), Basis(Vector3.UP, -PI * 0.5), 0.8, HubLook.MEDALLION_GOLD)
-	look.fm.block(_at((g.x + g.z) * 0.5, HubBlockout.GATE_WALL_H, (g.y + g.w) * 0.5), Vector3(g.z - g.x + 0.5, 0.35, g.w - g.y + 0.5), 0.0, stone, false)
-	var head := HubBlockout.GATE_W * 0.5 + HubBlockout.GATE_HEAD_SIDE
-	look.fm.block(_at((g.x + g.z) * 0.5, HubPlan.GATE_HEIGHT, mid), Vector3(g.z - g.x + 0.5, 0.35, head * 2.0 + 0.5), 0.0, stone, false)
-	_light_column(Vector3(face + 0.5, 0.0, mid))
-
-
-## A soft column of Elun's warm gold light standing over the gate: a vertical card facing south, fading upward.
-func _light_column(p: Vector3) -> void:
-	var grad := Gradient.new()
-	grad.colors = PackedColorArray([Color(1, 1, 1, 0.0), Color(1, 1, 1, 0.4), Color(1, 1, 1, 0.0)])
-	grad.offsets = PackedFloat32Array([0.0, 0.3, 1.0])
-	var tex := GradientTexture2D.new()
-	tex.gradient = grad
-	tex.fill_from = Vector2(0.0, 1.0)
-	tex.fill_to = Vector2(0.0, 0.0)
-	tex.width = 4
-	tex.height = 128
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = GATE_LIGHT_COLOR
-	mat.albedo_texture = tex
-	mat.no_depth_test = false
-	var mi := MeshInstance3D.new()
-	mi.name = "GateLight"
-	var q := QuadMesh.new()
-	q.size = Vector2(GATE_LIGHT.x, GATE_LIGHT.y)
-	mi.mesh = q
-	mi.material_override = mat
-	mi.position = p + Vector3(0, GATE_LIGHT.y * 0.5, 0)
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	look.frame.add_child(mi)
 
 
 # ---------- plants and lamps ----------
@@ -1378,60 +1348,6 @@ func _red_tree() -> void:
 	look.fm.block(_at(c.x, -TREE_SHELF.y - 0.3, c.y), Vector3(TREE_SHELF.x * 1.5, TREE_SHELF.y + 0.3, TREE_SHELF.x * 1.2), 0.4, look.stone(), false)
 	look._bar(_at(c.x, RED_TREE.z * 0.5 - 0.3, c.y), Vector3(0.38, RED_TREE.z, 0.38), look._plain(Color(0.24, 0.16, 0.12), 0.9))
 	look.add_crowns([Vector3(c.x, RED_TREE.z - 0.8, c.y)] as Array[Vector3], [RED_TREE.y] as Array[float], RED_LEAF_A, RED_LEAF_B, RED_TREE.x, "RedTree", true)
-
-
-## A faint gold glow laid along the main way (Vigilia to Videira to Dons to the Aposento, and on to the Portao), only
-## where both of its sides are floor: the art's path of light.
-func _path_glow() -> void:
-	# round 3: no pebbles; two rows of paving stones a little lighter than the rest, laid along the main way without a break
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.vertex_color_use_as_albedo = true
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var half := PATH_TILE * 0.5 - PATH_TILE_GAP * 0.5
-	for line: Array[Vector2] in [PATH_MAIN, PATH_GATE]:
-		var pts := _resample(line, PATH_TILE)
-		for i in pts.size() - 1:
-			var a := pts[i]
-			var dir := (pts[i + 1] - a).normalized()
-			var side := Vector2(-dir.y, dir.x)
-			for row in 2:
-				var c := a + dir * PATH_TILE * 0.5 + side * PATH_TILE * (row - 0.5)
-				var hx := dir * half
-				var hz := side * half
-				var corners: Array[Vector2] = [c - hx - hz, c + hx - hz, c + hx + hz, c - hx + hz]
-				var ok := true
-				for q in corners:
-					ok = ok and _on_floor(q)
-				if not ok:
-					continue
-				var k := _rng.randf_range(0.45, 1.0)
-				st.set_color(Color(PATH_TILE_COLOR.r * k, PATH_TILE_COLOR.g * k, PATH_TILE_COLOR.b * k, 1.0))
-				for idx: int in [0, 1, 2, 0, 2, 3]:
-					st.add_vertex(_at(corners[idx].x, 0.03, corners[idx].y))
-	var mi := MeshInstance3D.new()
-	mi.name = "PathTiles"
-	mi.mesh = st.commit()
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	look.frame.add_child(mi)
-
-
-## The polyline's points every `step` m.
-func _resample(line: Array[Vector2], step: float) -> Array[Vector2]:
-	var out: Array[Vector2] = []
-	for i in line.size() - 1:
-		var a := line[i]
-		var b := line[i + 1]
-		var n := maxi(1, ceili(a.distance_to(b) / step))
-		for k in n:
-			out.append(a.lerp(b, float(k) / n))
-	out.append(line[line.size() - 1])
-	return out
 
 
 # ---------- the far ridges ----------
