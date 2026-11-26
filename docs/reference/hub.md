@@ -2,6 +2,42 @@
 
 Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que a tarefa pede (grep pelo nome da classe ou do item).
 
+## SV-R, o Santuário da Vigília refeito (2026-11-25, `docs/art/ref/hub01_2026-11-25/eterra_hub/`; testes em `tests/test_hub_sv.gd`)
+**Vale este bloco onde ele contradiz os de baixo**: a praça de 50 x 32,5 m, a fonte, a escada do Retorno, a fachada com o
+portal ao norte, o terraço, as muralhas laterais, as lajes pavimentadas e as peças decorativas (postes, bancos, urnas, ciprestes,
+canteiros) **não existem mais**. Ficam as peças das estações (balcão e toldo, bigorna e forja, dais da Árvore, atril e estante,
+arco da Videira, estandarte dos heróis, banca do Alquimista), reposicionadas.
+- **Planta** (`HubPlan`): contorno do JSON (`OUTLINE`, 71 x 54 m, em u/v; u para a direita da tela, v para cima) menos três
+  bacias de água (`WATER_1..3`, buracos do `FloorShape`, ninguém anda) e menos os dois quartos futuros (`FUTURE_CUT`, o piso
+  acaba em v -17). `floor_polys()`, `water()` e `layout(yaw, closed)`. Eixo: Ponto de Vigília (chegada, -24,-7, canto
+  oeste) -> Videira (use -7,-5, 17 m, 2,5 s) -> eixo -> Portão (use 32,-6, 8,8 s) com ramais para Dons (10,-3), Mercador
+  (12,6), Aposento (-1,19), Biblioteca (19,19) pela galeria alta e Forja (u -17,6, v 16,2) pela passagem do Alquimista.
+- **Altura**: o piso é plano (y 0). O `FloorShape` é um plano e o herói não muda de altura, então os patamares de 1,2 m e os
+  quartos futuros de -1,2 m do pacote **não existem na simulação** (desvio registrado, sem escadas falsas). Rampas e degraus
+  ficam para o acabamento (decal ou degrau fora do caminho, nunca bloqueando) e pedem altura no piso para valer.
+- **Prédios** (`HubPlan.BUILDINGS`): massas sólidas nas pegadas do JSON (aparadas: Vigília, Alquimista, Dons, Biblioteca,
+  Mercador). `GATE`: massa do Portão com a abertura na face oeste (u 37), arco de aduelas, escuro e folha de luz
+  (`station_lights[PORTAL]`). O desenho de ambos é do `HubBlockout` (`scripts/game/hub_blockout.gd`): só massa, plinto,
+  cornija, portas e o portão com a pedra que o `HubLook` já tem; o acabamento é do environment-artist.
+- **Portas** (`HubPlan.DOORS`, `HubPlan.layout(yaw, closed)`): cada estação do `HubGate.GATED`, o Alquimista (flag
+  `HubGate.FLAGS`) e os dois quartos futuros têm porta física na face do prédio (ou na boca do corredor, os futuros).
+  Fechada: obstáculo sólido no layout + folha de madeira; aberta: umbral. Quem decide é `Hub.closed_doors()` (lê o
+  `HubGate`, inclusive saves antigos e `--hub-open=all`) e a lista fica fixa na visita (o `HubGate` já fixa uma abertura por
+  visita). Nenhuma porta fecha rota (teste). A ordem dos `Milestones` não mudou.
+- **Câmera**: `CAM_TARGET` (-6,-3), `CAM_REACH` 48, `NEAR_SOUTH` -40 (o Perto segue o herói, sem piso sul a esconder). O
+  olhar de chegada (`ARRIVAL_LOOK`) mostra o Ponto de Vigília e a Videira. Testes de enquadramento por estação em
+  `test_hub_d` seguem valendo (herói e estação na tela, 16:9, 4:3, 21:9, Perto e Longe). O "portal inteiro de qualquer
+  lugar" e o "borda sul sob 0,85" morreram com a praça.
+- **Ajustes do look**: `STY_RIM_FLOOR.calm_radius` 60 (o escurecimento do anel de borda estava calibrado para 25 m); as poças de luz
+  das estações (`STY_POOLS`) seguem as peças; a cascata distante (`CASCADE`) ficou onde estava, atrás de tudo.
+- **Capturas** (só o Game Director): `--hub --look=stylized --cam=near` com `--hub-open=all` (tudo aberto) ou sem (portas
+  fechadas), `--hero-at=<estação>` (portal, vendor, tree, smith, book, vine, heroes) e `--hub-use=<estação>`.
+- **Pendente para o environment-artist**: acabamento dos prédios (janelas, telhados, adereços), água nas três bacias,
+  cascatas laterais, ponte com guarda-corpo (o caminho já é piso sólido), jardins, árvores, postes e luz, pérgola da Videira,
+  rampas e degraus visuais, interiores e fachada dos quartos futuros atrás das portas, paleta calcário `#D3C5A7` e luz
+  `#F4DBAB`, marcos de leão e peixe discretos, o posto do Ponto de Vigília (hoje só uma massa baixa), e retirar do
+  `HubLook` as constantes mortas da praça (`FACADE_*`, `ARCADES`, `LIONS`, `MEDALLION*`, `BASIN*`, `WAY_*` etc.).
+
 ## Hub (HUB-01; HUB-B1 fundação, plano em `docs/design/hub_spec.md`, espaço em `hub_spec_art.md`, auditoria em `hub_audit.md`)
 - Fluxo: título, Iniciar, **hub** (`scenes/hub.tscn`, `Hub`, `scripts/game/hub.gd`), Portal (interagir e "Descer às
   catacumbas?" Descer/Ficar, `HubPanel`; Juramentos antes depois da primeira vitória, como era o Iniciar), partida. Tela de

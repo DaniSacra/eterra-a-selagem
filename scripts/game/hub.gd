@@ -68,7 +68,7 @@ func _ready() -> void:
 	air = WorldAir.build(self)
 	arena = Arena.new()
 	add_child(arena)
-	arena.build(HubPlan.layout())
+	arena.build(HubPlan.layout(Feel.live().cam_yaw, closed_doors()))
 	player = Player.new()
 	player.arena = arena
 	player.peaceful = true
@@ -403,6 +403,18 @@ func evolve() -> void:
 		if arena.look.has_method(&"set_closed"):
 			for id in HubGate.GATED:
 				arena.look.call(&"set_closed", id, not is_open(id))
+
+
+## The doors that stand shut this visit (SV-R): the future rooms', the Alquimista's while HubGate.FLAGS says so, and the
+## stations HubGate has not opened. The layout makes each a solid door, HubBlockout draws it.
+func closed_doors() -> Array[StringName]:
+	var out: Array[StringName] = [HubPlan.FUTURE_A, HubPlan.FUTURE_B]
+	if not HubGate.FLAGS.get(HubPlan.ALCHEMIST_ID, false):
+		out.append(HubPlan.ALCHEMIST_ID)
+	for id in HubGate.GATED:
+		if not is_open(id):
+			out.append(id)
+	return out
 
 
 ## Whether a station stands open (HubGate; --hub-open=all opens every one, for captures and the robot).

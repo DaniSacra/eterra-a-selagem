@@ -51,64 +51,6 @@ func test_at_the_portal_its_head_is_in_the_screen() -> void:
 		assert_gt(h.y, CamFrame.SAFE + 0.1, "he is not glued to the top any more (%.0f m: %.3f)" % [distance, h.y])
 
 
-## Art review H-P0-1: with the far camera, from the arrival and from every station, the portal's sill a fifth to
-## three tenths down the screen and its whole arch in it. HV-B: from the Retorno's seal that is the arrival look's
-## frame (HubPlan.ARRIVAL_DISTANCE, ARRIVAL_SAFE), the one both cameras show as he comes up.
-func test_far_the_portal_shows_whole_from_everywhere() -> void:
-	var f := Feel.live()
-	var sill := HubPlan.to_world(Vector2(0.0, HubLook.SHEET_V))
-	var head: Vector3 = HubPlan.PORTAL_TOP
-	var spots := {&"arrival": HubPlan.to_world(HubPlan.ARRIVAL)}
-	for id in HubPlan.STATIONS:
-		spots[id] = HubPlan.use_point(id)
-	for aspect in ASPECTS:
-		for key: StringName in spots:
-			var id: StringName = key if key != &"arrival" else &""
-			var d := f.cam_distance
-			var at := _settled(id, spots[key], d, aspect)
-			if key == &"arrival":
-				d = HubPlan.ARRIVAL_DISTANCE
-				var l := HubPlan.layout()
-				at = CamFrame.hold(l.cam_target, l.cam_target, l.cam_reach, spots[key], d, f.cam_pitch, f.cam_yaw, f.cam_fov, aspect, true, Vector2.ZERO, HubPlan.ARRIVAL_SAFE)
-			var y := CamFrame.screen_of(sill, HubLook.TERRACE_Y, at, d, f.cam_pitch, f.cam_yaw, f.cam_fov, aspect).y
-			var top := CamFrame.screen_of(HubPlan.to_world(Vector2(head.x, head.y)), head.z, at, d, f.cam_pitch, f.cam_yaw, f.cam_fov, aspect).y
-			var tag := "%s, aspect %.2f" % [key, aspect]
-			assert_between(y, 0.15, 0.30, tag + ": the sill %.3f" % y)
-			assert_gt(top, 0.0, tag + ": the arch's top %.3f" % top)
-
-
-## Art review H-P0-2: with the near camera, at the arrival and at every station, the floor's south edge never above
-## 0.85 of the screen (the tower's wall under it out of the frame).
-func test_near_the_south_edge_stays_low() -> void:
-	var f := Feel.live()
-	var d := f.cam_distance_near
-	var spots: Array[Vector2] = [HubPlan.ARRIVAL]
-	for id in HubPlan.STATIONS:
-		spots.append(HubPlan.USE[id])
-	for aspect in ASPECTS:
-		for spot in spots:
-			var hero := HubPlan.to_world(spot)
-			var slack := CamFrame.slack(d, f.cam_distance, f.cam_pitch, f.cam_fov, aspect)
-			var l := HubPlan.layout()
-			var at := CamFrame.hold(l.cam_target, HubPlan.near_want(hero), l.cam_reach, hero, d, f.cam_pitch, f.cam_yaw, f.cam_fov, aspect, true, slack)
-			var edge := HubPlan.to_world(Vector2(spot.x, HubPlan.SOUTH))
-			var y := CamFrame.screen_of(edge, 0.0, at, d, f.cam_pitch, f.cam_yaw, f.cam_fov, aspect).y
-			assert_gt(y, 0.85, "at %s, aspect %.2f: the south edge %.3f" % [spot, aspect, y])
-
-
-## LR-07 (room-designer): no two stations of the hub more than 4 s apart walking (straight; HV-B: the arrival is no
-## station, the walk measured round the pieces is in test_hub_rev02).
-func test_no_two_stations_more_than_four_seconds_apart() -> void:
-	var speed := Feel.live().speed
-	for ia in HubPlan.STATIONS.size():
-		for ib in HubPlan.STATIONS.size():
-			var a: Vector2 = HubPlan.USE[HubPlan.STATIONS[ia]]
-			var b: Vector2 = HubPlan.USE[HubPlan.STATIONS[ib]]
-			var core := HubPlan.CORE.has(HubPlan.STATIONS[ia]) and HubPlan.CORE.has(HubPlan.STATIONS[ib])
-			# V2 and PT-9: the Videira and the heroes' stand are out in the lobes, a little farther (HubPlan.EXTRA_WALK)
-			assert_lt(a.distance_to(b) / speed, 4.05 if core else HubPlan.EXTRA_WALK, "%s to %s: %.1f s" % [a, b, a.distance_to(b) / speed])
-
-
 func test_frame_for_leaves_a_shown_station_alone() -> void:
 	var f := Feel.live()
 	var from := HubPlan.to_world(Vector2(0, 0))
@@ -118,30 +60,6 @@ func test_frame_for_leaves_a_shown_station_alone() -> void:
 	var shelf: Vector3 = HubPlan.SHOW[HubPlan.BOOK]
 	var over := HubPlan.to_world(Vector2(shelf.x - 6.0, shelf.y))
 	assert_eq(HubPlan.frame_for(HubPlan.BOOK, over, f.cam_distance, f.cam_pitch, f.cam_yaw, f.cam_fov, 16.0 / 9.0), over)
-
-
-func test_the_square_s_new_pieces_stand_off_every_way() -> void:
-	var l := HubPlan.layout()
-	var ways: Array = []
-	var fountain := Vector2(HubPlan.FOUNTAIN.x, HubPlan.FOUNTAIN.y)
-	for id in HubPlan.STATIONS:
-		var to: Vector2 = HubPlan.USE[id]
-		ways.append([HubPlan.ARRIVAL, to])
-		ways.append([fountain if to.y > fountain.y else HubLook.MEDALLION, to])
-	for o in l.obstacles:
-		if not o.piece in [&"hub_cypress", &"hub_urn", &"hub_bed", &"hub_fire", &"hub_bench"]:
-			continue
-		var c := HubPlan.to_local(o.center)
-		var r := o.radius if o.shape == ArenaObstacle.Shape.CIRCLE else o.half.length()
-		assert_true(l.floor.contains(o.center, r), "%s %s on the floor" % [o.piece, c])
-		for w: Array in ways:
-			var a: Vector2 = w[0]
-			var b: Vector2 = w[1]
-			var near := Geometry2D.get_closest_point_to_segment(c, a, b)
-			# the fountain's way starts out of its basin
-			if w[0] == fountain and near.distance_to(fountain) < 3.0:
-				continue
-			assert_gt(near.distance_to(c), r + Player.RADIUS + 0.5, "%s %s off the way %s to %s" % [o.piece, c, a, b])
 
 
 func test_focus_brightens_the_station_and_eases_back() -> void:

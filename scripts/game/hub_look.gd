@@ -48,13 +48,11 @@ const CORNICE := Vector2(0.3, 0.2)
 ## The stairs to the portal (spec 3.1): from v STAIRS_FROM, 8 m wide, six steps of 0.2 by 0.5; the terrace they climb to
 ## at y TERRACE_Y (u within TERRACE_HALF from v TERRACE_FROM to the facade; beside the stairs it comes forward to the
 ## floor's north edge), a thread of old gold along the landing's front.
-const STAIRS_FROM := HubPlan.NORTH
 const STAIRS_WIDTH := 10.0
 const STAIRS_STEPS := 6
 const STAIRS_RISE := 0.2
 const STAIRS_RUN := 0.5
 const TERRACE_Y := 1.2
-const TERRACE_HALF := HubPlan.LOBE.x
 const TERRACE_FROM := 15.0
 const LANDING_FILET := 0.06
 ## The opening of the portal (its sheet): width, height over the landing, the springing of its pointed head; the sheet's
@@ -367,25 +365,26 @@ const STY_MOON := 0.45
 const STY_KEY_SHARE := 0.45
 const STY_FORGE_GAIN := 1.5
 const STY_POOLS: Array[Array] = [
-	# HV-A: each pool moved with its station's pieces (the anvil, the lectern, the counter, the dais)
-	[HubPlan.SMITH, Vector3(-13.6, 0.6, -5.6), Vector3(-10.8, 7.5, -8.8), 9.0, 30.0, 12.0, Color(1.0, 0.7, 0.42)],
-	[HubPlan.BOOK, Vector3(12.0, 1.2, -5.9), Vector3(11.0, 6.2, -7.9), 10.0, 18.0, 9.0, Color(1.0, 0.86, 0.62)],
-	[HubPlan.BOOK, Vector3(11.4, 0.0, -5.3), Vector3(10.2, 8.0, -9.1), 11.0, 28.0, 12.0, Color(1.0, 0.82, 0.58)],
-	[HubPlan.VENDOR, Vector3(-10.6, 0.8, 6.8), Vector3(-9.2, 8.0, 2.6), 9.0, 28.0, 12.0, Color(1.0, 0.8, 0.55)],
-	[HubPlan.TREE, Vector3(11.9, 1.0, 8.5), Vector3(10.1, 9.0, 4.1), 5.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
+	# SV-R: each pool moved with its station's pieces (the anvil, the lectern, the counter, the dais, the arch, the stand)
+	[HubPlan.SMITH, Vector3(-21.2, 0.6, 17.7), Vector3(-18.4, 7.5, 14.5), 9.0, 30.0, 12.0, Color(1.0, 0.7, 0.42)],
+	[HubPlan.BOOK, Vector3(21.1, 1.2, 19.4), Vector3(20.1, 6.2, 17.4), 10.0, 18.0, 9.0, Color(1.0, 0.86, 0.62)],
+	[HubPlan.BOOK, Vector3(20.5, 0.0, 20.0), Vector3(19.3, 8.0, 16.2), 11.0, 28.0, 12.0, Color(1.0, 0.82, 0.58)],
+	[HubPlan.VENDOR, Vector3(11.5, 0.8, 7.8), Vector3(12.9, 8.0, 3.6), 9.0, 28.0, 12.0, Color(1.0, 0.8, 0.55)],
+	[HubPlan.TREE, Vector3(14.6, 1.0, -4.2), Vector3(12.8, 9.0, -8.6), 5.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
 	# V2 and PT-9: the Videira's vase and the heroes' standards
-	[HubPlan.VINE, Vector3(19.0, 1.0, 9.9), Vector3(17.2, 9.0, 5.4), 5.0, 28.0, 13.0, Color(0.9, 1.0, 0.62)],
-	[HubPlan.HEROES, Vector3(-17.5, 1.4, 9.5), Vector3(-19.3, 9.0, 5.1), 5.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
-	[HubPlan.PORTAL, Vector3(0.0, 0.0, 10.4), Vector3(0.0, 8.0, 5.5), 14.0, 38.0, 13.0, Color(0.36, 1.0, 0.58)],
+	[HubPlan.VINE, Vector3(-7.0, 1.0, -2.7), Vector3(-8.8, 9.0, -7.2), 5.0, 28.0, 13.0, Color(0.9, 1.0, 0.62)],
+	[HubPlan.HEROES, Vector3(-1.0, 1.4, 21.1), Vector3(-2.8, 9.0, 16.7), 5.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
+	[HubPlan.PORTAL, Vector3(34.5, 0.0, -6.0), Vector3(26.5, 8.0, -6.0), 14.0, 38.0, 13.0, Color(0.36, 1.0, 0.58)],
 ]
 ## P1-A2 of the cycle's art review: the portal's pool (the last row) green and wide enough to read at the top of the
 ## screen on arriving with the near camera. P2-A7: the floor's outer ring (past the stations, from the fountain at the
+## SV-R: the plan is 71 m wide, so the ring of darkening starts past the whole floor (calm_radius 60 of the world middle) until the environment-artist paints the rim.
 ## world's middle: edge_span times the floor's calm radius) a step darker, so the frame is no lighter than the square.
 ## The darkening starts past STY_RIM_FLOOR's calm radius times edge_span (from the fountain; the hub's floor box is
 ## turned, its own calm radius came out past the cliffs) and leaves each station's pool alone (STY_KEEP: full to, none
 ## from, m round each pool's aim).
 ## P2-B3 (ART_REVIEW.md 4.5): the rim between the stations to 0.70 of the square or under (it measured 0.75 to 0.82).
-const STY_RIM_FLOOR := {&"calm_radius": 8.0, &"edge_value": 0.32, &"edge_span": Vector2(1.1, 1.9)}
+const STY_RIM_FLOOR := {&"calm_radius": 60.0, &"edge_value": 0.32, &"edge_span": Vector2(1.1, 1.9)}
 const STY_KEEP := Vector2(2.5, 4.0)
 const KEEP_MAX := 6
 ## The browser's renderer: the stylized air's share there (its painted stone lights lighter).
@@ -414,6 +413,7 @@ var fk: ArenaKit
 var fm: Masonry
 ## Each station's own light (HUB-B3 lifts the one in focus).
 ## V2 and PT-9: the Videira's planting and the heroes' standards (null before dress; Hub.evolve gives them the save).
+var blockout: HubBlockout
 var vine_station: VineStation
 var hero_station: HeroStation
 var station_lights := {}
@@ -468,11 +468,9 @@ func cliff_look() -> Dictionary:
 	return CLIFF
 
 
-## Every edge a plain cliff under the floor (walls, terrace and balustrade are dressed in the frame), but the north
-## ones: the stairs' foot and the lobes along the terrace and the facade stand on ground.
+## Every edge of the floor, the basins' too, a plain cliff under it (SV-R: the buildings and doors are dressed in the
+## frame by HubBlockout, the water and the garden are the environment-artist's).
 func edge(a: Vector2, b: Vector2, out: Vector2, _kind: Edge, faces: SurfaceTool) -> void:
-	if minf(HubPlan.to_local(a).y, HubPlan.to_local(b).y) > HubPlan.NORTH - 0.05:
-		return
 	cliff(a, b, out, faces)
 
 
@@ -497,17 +495,11 @@ func dress() -> void:
 	RenderingServer.global_shader_parameter_set(FRAME_YAW, Feel.live().cam_yaw)
 	fk = ArenaKit.new(frame, 2207)
 	fm = fk.masonry
-	_walls()
-	_facade()
-	_portal()
-	_terrace()
-	_front()
-	_square()
+	blockout = HubBlockout.new(self)
+	blockout.build(layout)
 	for o in layout.obstacles:
 		var c := HubPlan.to_local(o.center)
 		match o.piece:
-			&"hub_fountain":
-				_fountain(c)
 			&"hub_counter":
 				_vendor(c, o)
 			&"hub_anvil":
@@ -516,28 +508,10 @@ func dress() -> void:
 				_tree(c, o)
 			&"hub_lectern":
 				_book(c, o)
-			&"hub_lamp":
-				_lamp_post(c, o)
-			&"hub_bench":
-				_bench(c, o)
 			&"hub_bed":
 				_bed(c, o)
-			&"hub_urn":
-				_great_urn(c, o)
-			&"hub_cypress":
-				_cypress(c, o)
 			&"hub_shelf":
 				_shelf(c, o)
-			&"hub_yard":
-				_yard()
-			&"hub_desk":
-				_desk(c, o)
-			&"hub_yard_wall":
-				_yard_wall(c, o)
-			&"hub_goods":
-				_goods(c, o)
-			&"hub_fire":
-				_stand_fire(c)
 			&"hub_alchemist":
 				_alchemist(c, o)
 			&"hub_vine":
@@ -816,78 +790,6 @@ func _slab(along_u: bool, face: float, back: float, s0: float, s1: float, y0: fl
 		fm.block(at((face + back) * 0.5, y0, (s0 + s1) * 0.5), Vector3(d, y1 - y0, s1 - s0), 0.0, mat, false)
 
 
-## The side walls with the stations' recesses (the furnace west, the shelf east), pilasters, cornice and the sill
-## between the floor's edge and their face; their south ends broken down in steps.
-func _walls() -> void:
-	var mat := ashlar()
-	for side: float in [-1.0, 1.0]:
-		var face := side * WALL_FACE
-		var back := side * WALL_BACK
-		var holes: Array[Vector4] = []
-		var arcs: Array[float] = []
-		holes.append(SIDE_NICHE)
-		arcs.append(ARCADE_ARC)
-		var nv := SIDE_NICHE.x
-		_slab(false, side * (WALL_BACK - 0.3), back, nv - SIDE_NICHE.y * 0.5, nv + SIDE_NICHE.y * 0.5, -0.6, SIDE_NICHE.w + 2.0, m.stone(0.0, NICHE_DARK))
-		fm.voussoir_arch(at(face - side * 0.1, SIDE_NICHE.z, nv), EAST * -side, SIDE_NICHE.y - 0.2, SIDE_NICHE.w, NICHE.z, 0.5, mat, ARCADE_ARC)
-		fk.statue(Vector2(side * (WALL_FACE + 0.75), -nv), -side * PI * 0.5, STATUE_HEIGHT, SIDE_NICHE.z, ArenaKit.STATUE_VALUE, false)
-		_wall(false, face, back, WALL_RUIN_TO, FACADE_V + 0.1, WALL_HEIGHT, holes, arcs, mat)
-		_slab(false, face - side * CORNICE.y, back, WALL_RUIN_TO, FACADE_V, WALL_HEIGHT - CORNICE.x, WALL_HEIGHT, mat)
-		var from := WALL_RUIN[0].x
-		for k in WALL_RUIN.size():
-			var to := WALL_RUIN[k + 1].x if k + 1 < WALL_RUIN.size() else WALL_RUIN_TO
-			_slab(false, face, back, from, to, -0.6, WALL_RUIN[k].y, mat)
-			from = to
-		_ledge(side)
-		for v in PILASTERS:
-			_slab(false, face - side * PILASTER.x, face, v - PILASTER.y * 0.5, v + PILASTER.y * 0.5, 0.0, WALL_HEIGHT - CORNICE.x, mat)
-
-
-## The ledge between the floor's edge and a side wall (side -1 west, 1 east), a step up, with urns, a crate and candles
-## along it (out of the walkable: the edges populated, never a bare corridor).
-func _ledge(side: float) -> void:
-	var u0 := side * HubPlan.HALF_U
-	_slab(false, u0, side * WALL_FACE, WALL_FROM, HubPlan.LOBE.y, -0.6, LEDGE_TOP, stone())
-	var r := RandomNumberGenerator.new()
-	r.seed = 77 + int(side)
-	var mid := side * (HubPlan.HALF_U + WALL_FACE) * 0.5
-	for v in LEDGE_WARES:
-		for k in 3:
-			var p := Vector2(mid + side * r.randf_range(-0.2, 0.25), v + r.randf_range(-0.5, 0.5))
-			if k == 0:
-				fm.urn(at(p.x, LEDGE_TOP, p.y), r.randf_range(0.5, 0.75), m.carved(0.0, GLAZES[r.randi() % GLAZES.size()] * 1.6), r.randf() < 0.5)
-			elif k == 1 and r.randf() < 0.5:
-				fm.crate(at(p.x, LEDGE_TOP, p.y), Vector3(0.5, 0.42, 0.55), r.randf_range(-0.3, 0.3))
-			else:
-				fm.candle(at(p.x, LEDGE_TOP, p.y), r.randf_range(0.14, 0.26), 0.05)
-
-
-## A great urn on a square plinth in the square (its footprint), a copper shrub growing out of it (HUB-D: tall and
-## lidded they read as black spikes), candles at its foot.
-func _great_urn(c: Vector2, o: ArenaObstacle) -> void:
-	var side := o.radius * 1.9
-	fm.block(at(c.x, 0.0, c.y), Vector3(side, URN_PLINTH, side), 0.0, stone())
-	var tall := o.height - URN_PLINTH
-	fm.urn(at(c.x, URN_PLINTH, c.y), tall, m.carved(0.0, GLAZES[int(absf(c.x) + absf(c.y)) % 2] * 1.5), false)
-	_shrub_spots.append(Vector3(c.x, o.height - 0.15, c.y))
-	_shrub_tall.append(SHRUB_TALL.x)
-	for k in 2:
-		fm.candle(at(c.x + side * (0.32 if k == 0 else -0.3), URN_PLINTH, c.y - side * 0.34), 0.16 + 0.08 * k, 0.045)
-
-
-## A cypress in a stone planter on its footprint (HubPlan.CYPRESSES): the planter with its coping and dark earth, a
-## short trunk and the crown (cards of dark olive leaves facing the camera on a spindle, widest low; drawn all at once
-## in _cypress_crowns).
-func _cypress(c: Vector2, o: ArenaObstacle) -> void:
-	var side := o.half.x * 2.0
-	fm.block(at(c.x, 0.0, c.y), Vector3(side, PLANTER_HEIGHT - 0.08, side), 0.0, stone())
-	fm.block(at(c.x, PLANTER_HEIGHT - 0.08, c.y), Vector3(side + 0.14, 0.08, side + 0.14), 0.0, stone(), false)
-	fm.block(at(c.x, PLANTER_HEIGHT - 0.06, c.y), Vector3(side - 0.24, 0.07, side - 0.24), 0.0, _plain(Color(0.09, 0.07, 0.05), 1.0), false)
-	fm.shaft(at(c.x, PLANTER_HEIGHT, c.y), 0.1, CYPRESS_FOOT + 0.4, m._wood_mat(0.0, 0.6))
-	_cypress_spots.append(Vector3(c.x, PLANTER_HEIGHT + CYPRESS_FOOT, c.y))
-	_cypress_tall.append(o.height - PLANTER_HEIGHT - CYPRESS_FOOT)
-
-
 ## Every crown of one kind in one MultiMesh (the canopy's cards, canopy.gdshader; they open round the hero): the
 ## cypresses in dark olive, the beds' shrubs in copper (wide: the crown's width at its widest).
 func _crowns(spots: Array[Vector3], talls: Array[float], leaf_a: Color, leaf_b: Color, width: float, label: String) -> void:
@@ -937,12 +839,6 @@ func _crowns(spots: Array[Vector3], talls: Array[float], leaf_a: Color, leaf_b: 
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	frame.add_child(mi)
-
-
-## The stone benches round the fountain and the flower beds by the arrival, on their footprints (HubPlan).
-func _bench(c: Vector2, o: ArenaObstacle) -> void:
-	var yaw := deg_to_rad(Feel.live().cam_yaw) + (PI * 0.5 if c.x < 0.0 else -PI * 0.5)
-	tomb.bench(o.center, Vector2(o.half.y, o.half.x), yaw, stone())
 
 
 ## V2: the Videira's arch of stone on its footprint (two pillars, a lintel with its corner blocks, a low plinth between
@@ -997,16 +893,6 @@ func _bed(c: Vector2, o: ArenaObstacle) -> void:
 		var p := c + (Vector2(t * length, 0.0) if long else Vector2(0.0, t * length))
 		_shrub_spots.append(Vector3(p.x, h, p.y))
 		_shrub_tall.append(r.randf_range(SHRUB_TALL.x, SHRUB_TALL.y))
-
-
-## A yard's low wall on its footprint (HUB-D: the Forjador's and the Livro's places closed to the south): blocks of
-## ashlar, a coping, a candle or two on it.
-func _yard_wall(c: Vector2, o: ArenaObstacle) -> void:
-	var w := o.half.x * 2.0
-	fm.block(at(c.x, 0.0, c.y), Vector3(w, o.height - YARD_COPING, o.half.y * 2.0), 0.0, ashlar())
-	fm.block(at(c.x, o.height - YARD_COPING, c.y), Vector3(w + 0.1, YARD_COPING, o.half.y * 2.0 + 0.12), 0.0, stone(), false)
-	for k in 2:
-		fm.candle(at(c.x + (k - 0.5) * w * 0.6, o.height, c.y), 0.16 + 0.06 * k, 0.05)
 
 
 ## HV-C, the Alquimista's space (hv_santuario_vigilia_art.md 4; reserved, Q-OF7, no figure, no use): on the footprint
@@ -1123,144 +1009,10 @@ func _glow_mat(c: Color) -> StandardMaterial3D:
 	return _plain_mats[key]
 
 
-## The Vendedor's goods on their footprint (HUB-D): crates stacked, sacks, jars in the wares' glazes.
-func _goods(c: Vector2, o: ArenaObstacle) -> void:
-	var r := RandomNumberGenerator.new()
-	r.seed = int(absf(c.x) * 31.0 + absf(c.y) * 3.0)
-	var nu := maxi(1, roundi(o.half.x * 2.0 / 0.95))
-	var nv := maxi(1, roundi(o.half.y * 2.0 / 0.95))
-	for k in nu * nv:
-		var cell := Vector2((k % nu + 0.5) / nu - 0.5, (k / nu + 0.5) / nv - 0.5)
-		var p := c + Vector2(cell.x * o.half.x * 2.0, cell.y * o.half.y * 2.0) + Vector2(r.randf_range(-0.1, 0.1), r.randf_range(-0.1, 0.1))
-		match (k + r.randi() % 2) % 3:
-			0:
-				var sz := Vector3(r.randf_range(0.6, 0.9), r.randf_range(0.5, 0.75), r.randf_range(0.6, 0.85))
-				fm.crate(at(p.x, 0.0, p.y), sz, r.randf_range(-0.3, 0.3))
-				if r.randf() < 0.6:
-					fm.crate(at(p.x + 0.05, sz.y, p.y), sz * 0.8, r.randf_range(-0.4, 0.4))
-			1:
-				fm.urn(at(p.x, 0.0, p.y), r.randf_range(0.6, 0.95), m.carved(0.0, GLAZES[r.randi() % GLAZES.size()] * 1.6), r.randf() < 0.5)
-			2:
-				fm.box(at(p.x, 0.0, p.y), Vector3(0.55, 0.5, 0.4), r.randf() * TAU, _plain(Color(0.42, 0.36, 0.26), 1.0))
-
-
-## A brazier on a stand by the arrival (HUB-D, H-P1-7: warm light in the square), without a shadow.
-func _stand_fire(c: Vector2) -> void:
-	var from := fk.root.get_child_count()
-	var l := fk.brazier(Vector2(c.x, -c.y), 0.0, false, STAND_FIRE.x)
-	# HV-C (5): the Retorno's two braziers are the smaller ones, RETURN_FIRE of the kit's height round their foot
-	var foot := Vector3(c.x, 0.0, -c.y)
-	for i in range(from, fk.root.get_child_count()):
-		var n := fk.root.get_child(i) as Node3D
-		if n != null and n != l:
-			n.transform = Transform3D(Basis.from_scale(Vector3.ONE * RETURN_FIRE), foot) * Transform3D(Basis(), -foot) * n.transform
-	l.position = foot + (l.position - foot) * RETURN_FIRE
-	l.omni_range = STAND_FIRE.y
-	l.shadow_enabled = false
-	# P2-B2 (ART_REVIEW.md 4.5): in the stylized look the flames a third lower (their tongues' life and size), the
-	# light as it was; they were the strongest fire of the frame on arriving, in the band nearest the camera
-	for i in range(from, fk.root.get_child_count()):
-		var p := fk.root.get_child(i) as CPUParticles3D
-		if p != null:
-			VisualProfile.vary(p, {&"lifetime": p.lifetime * STY_STAND_FLAME,
-				&"scale_amount_min": p.scale_amount_min * STY_STAND_FLAME, &"scale_amount_max": p.scale_amount_max * STY_STAND_FLAME})
-
-
-## The Livro's writing desk on its footprint (HUB-D): a table of dark wood, rolls and a closed book on it, an inkwell,
-## a candle, a stool.
-func _desk(c: Vector2, o: ArenaObstacle) -> void:
-	var wood := m._wood_mat(0.0, 0.75)
-	var top := o.height
-	fm.block(at(c.x, top - 0.08, c.y), Vector3(o.half.x * 2.0, 0.08, o.half.y * 2.0), 0.0, wood, false)
-	for su: float in [-1.0, 1.0]:
-		for sv: float in [-1.0, 1.0]:
-			fm.block(at(c.x + su * (o.half.x - 0.1), 0.0, c.y + sv * (o.half.y - 0.1)), Vector3(0.1, top - 0.08, 0.1), 0.0, wood, false)
-	for k in 3:
-		var roll := fm.shaft(at(c.x - o.half.x * 0.5 + k * 0.22, top + 0.06, c.y), 0.06, 0.55, _plain(SCROLL, 0.9))
-		roll.basis = Basis(Vector3.RIGHT, PI * 0.5)
-		roll.position = at(c.x - o.half.x * 0.5 + k * 0.22, top + 0.06, c.y + 0.27)
-	fm.box(at(c.x + o.half.x * 0.35, top + 0.05, c.y), Vector3(0.36, 0.1, 0.48), 0.2, _plain(BOOK_COVERS[1], 0.8), false)
-	fm.box(at(c.x + o.half.x * 0.7, top + 0.05, c.y - 0.15), Vector3(0.1, 0.1, 0.1), 0.0, tomb.iron(), false)
-	fm.candle(at(c.x + o.half.x * 0.75, top, c.y + 0.2), 0.2, 0.045)
-	fm.shaft(at(c.x, 0.0, c.y - o.half.y - 0.45), 0.2, 0.5, wood)
-
-
-## The facade (spec 3.6): two layers (the front one with the portal's wide embrasure, the inner one with the sheet's
-## opening), the arcades open to the vista, the blind niches in the corners with their dark backs, the cornice, the
-## arches' rings, the banners on the piers.
-func _facade() -> void:
-	var mat := ashlar()
-	var outer := ORDER_SPAN + ORDER_STEP * (ORDERS - 1) + ORDER_RING.x
-	var front: Array[Vector4] = [Vector4(0.0, outer, TERRACE_Y, TERRACE_Y + PORTAL_SPRING)]
-	var front_arcs: Array[float] = [ORDER_ARC]
-	var inner: Array[Vector4] = [Vector4(0.0, PORTAL_W, TERRACE_Y, TERRACE_Y + PORTAL_SPRING)]
-	var inner_arcs: Array[float] = [_portal_arc()]
-	for sd: float in [-1.0, 1.0]:
-		for c in ARCADES:
-			var h := Vector4(sd * c, ARCADE.x + 0.2, ARCADE.y, ARCADE.y + ARCADE.z)
-			front.append(h)
-			front_arcs.append(ARCADE_ARC)
-			inner.append(h)
-			inner_arcs.append(ARCADE_ARC)
-		for u in NICHES:
-			front.append(Vector4(sd * u, NICHE.x + 0.2, CORNER_TOP, CORNER_TOP + NICHE.y))
-			front_arcs.append(ARCADE_ARC)
-	_wall(true, FACADE_V, FACADE_MID, -FACADE_HALF, FACADE_HALF, FACADE_TOP, front, front_arcs, mat)
-	_wall(true, FACADE_MID, FACADE_BACK, -FACADE_HALF, FACADE_HALF, FACADE_TOP, inner, inner_arcs, mat)
-	_slab(true, FACADE_V - CORNICE.y, FACADE_MID, -FACADE_HALF, FACADE_HALF, FACADE_TOP - CORNICE.x, FACADE_TOP, mat)
-	var dark := m.stone(0.0, NICHE_DARK)
-	for sd: float in [-1.0, 1.0]:
-		for c in ARCADES:
-			fm.voussoir_arch(at(sd * c, ARCADE.y, FACADE_V - 0.1), SOUTH, ARCADE.x, ARCADE.z, ARCADE.w, 0.5, mat, ARCADE_ARC)
-			fm.block(at(sd * c, ARCADE.y - 0.12, FACADE_V - 0.15), Vector3(ARCADE.x + 0.5, 0.12, 0.5), 0.0, mat, false)
-		# the blind niches: dark backs, arches, the lion on each keystone, a hooded figure before each
-		for u in NICHES:
-			var n := at(sd * u, CORNER_TOP, FACADE_MID - 0.04)
-			fm.block(n, Vector3(NICHE.x + 0.2, NICHE.y + 1.8, 0.08), 0.0, dark, false)
-			var apex := fm.voussoir_arch(at(sd * u, CORNER_TOP, FACADE_V - 0.1), SOUTH, NICHE.x, NICHE.y, NICHE.z, 0.5, mat, ARCADE_ARC)
-			_keystone(at(sd * u, CORNER_TOP + apex - NICHE.z * 0.6, FACADE_V - 0.38), 0.6)
-			if u == NICHES[0]:
-				fk.statue(Vector2(sd * u, -(FACADE_V - STATUE_OUT)), 0.0, STATUE_HEIGHT, CORNER_TOP, ArenaKit.STATUE_VALUE, false)
-			else:
-				# HUB-D (H-P1-4: eight hooded figures alike): the outer niches hold a tall urn on a plinth, candles
-				fm.block(at(sd * u, CORNER_TOP, FACADE_V - 0.4), Vector3(1.1, 0.5, 0.7), 0.0, stone())
-				fm.urn(at(sd * u, CORNER_TOP + 0.5, FACADE_V - 0.4), 1.5, m.carved(0.0, GLAZES[0] * 1.5), true)
-				for k in 2:
-					fm.candle(at(sd * u + (k - 0.5) * 0.8, CORNER_TOP + 0.5, FACADE_V - 0.65), 0.18 + 0.06 * k, 0.05)
-		for u in BANNERS:
-			fk.banner(at(sd * u, BANNER.x, FACADE_V - 0.08), 0.0, Vector2(BANNER.y, BANNER.z), 1, ArenaKit.Emblem.LION)
-
-
 ## The radius of the sheet's pointed head as a share of its width (its apex at PORTAL_H, springing at PORTAL_SPRING).
 static func _portal_arc() -> float:
 	var rise := PORTAL_H - PORTAL_SPRING
 	return (rise * rise + PORTAL_W * PORTAL_W * 0.25) / PORTAL_W / PORTAL_W
-
-
-## The portal (spec 3.1): the orders of voussoirs on their jambs, the inner ring round the sheet, the dark behind, the
-## sheet of light and its lights, the keystone with the lion.
-func _portal() -> void:
-	var y := TERRACE_Y
-	var order := m.ashlar(y, stone_tint() * ORDER_TINT)
-	var top := 0.0
-	for k in ORDERS:
-		var span := ORDER_SPAN + ORDER_STEP * k
-		var v: float = ORDER_V[k]
-		for sd: float in [-1.0, 1.0]:
-			fm.block(at(sd * (span + ORDER_RING.x) * 0.5, y, v), Vector3(ORDER_RING.x, PORTAL_SPRING, ORDER_RING.y), 0.0, order, false)
-		top = fm.voussoir_arch(at(0.0, y, v), SOUTH, span, PORTAL_SPRING, ORDER_RING.x, ORDER_RING.y, order, ORDER_ARC)
-	var inner_mat := m.stone(y, stone_tint() * INNER_TINT)
-	for sd: float in [-1.0, 1.0]:
-		fm.block(at(sd * (PORTAL_W + INNER_RING.x) * 0.5, y, INNER_RING.z), Vector3(INNER_RING.x, PORTAL_SPRING, INNER_RING.y), 0.0, inner_mat, false)
-	fm.voussoir_arch(at(0.0, y, INNER_RING.z), SOUTH, PORTAL_W, PORTAL_SPRING, INNER_RING.x, INNER_RING.y, inner_mat, _portal_arc())
-	var dark := _plain(PORTAL_DARK, 1.0)
-	fm.block(at(0.0, y - 0.1, SHEET_V + 0.3), Vector3(PORTAL_W + 0.6, PORTAL_H + 0.3, 0.3), 0.0, dark, false)
-	fm.block(at(0.0, y - 0.02, (SHEET_V + FACADE_MID) * 0.5), Vector3(PORTAL_W + 0.2, 0.04, SHEET_V - FACADE_MID + 0.4), 0.0, inner_mat, false)
-	var r := _portal_arc() * PORTAL_W
-	fk.portal_glow(at(0.0, y + PORTAL_H * 0.5, SHEET_V), 0.0, Vector2(PORTAL_W, PORTAL_H), Vector3(PORTAL_SPRING, PORTAL_W, r))
-	var lights: Array = fk.portals[fk.portals.size() - 1]
-	station_lights[HubPlan.PORTAL] = lights[1]
-	_keystone(at(0.0, y + top - ORDER_RING.x * 0.7, ORDER_V[ORDERS - 1] - ORDER_RING.y * 0.5 - 0.02), KEYSTONE.x)
 
 
 ## A keystone with the seal's lion in old gold on its face (its middle at p, facing south, side `side`).
@@ -1288,102 +1040,7 @@ func _lion(p: Vector3, basis: Basis, side: float, color: Color, parent: Node3D =
 	return mi
 
 
-## The terrace and the stairs (spec 3.1): the landing over the stairs, coming forward beside them to the floor's edge,
-## the thread of gold on the landing's front, the lion stelae, the braziers and the planters; the corners north of the
-## floor a step over it.
-func _terrace() -> void:
-	var mat := stone()
-	fm.stairs(at(0.0, 0.0, STAIRS_FROM), Vector2(0, -1), STAIRS_WIDTH, STAIRS_STEPS, STAIRS_RISE, STAIRS_RUN, mat)
-	var half := STAIRS_WIDTH * 0.5
-	fm.block(at(0.0, -0.6, (TERRACE_FROM + FACADE_V) * 0.5 + 0.05), Vector3(TERRACE_HALF * 2.0, TERRACE_Y + 0.6, FACADE_V - TERRACE_FROM + 0.1), 0.0, mat, false)
-	for sd: float in [-1.0, 1.0]:
-		var mid := sd * (half + TERRACE_HALF) * 0.5
-		fm.block(at(mid, -0.6, (STAIRS_FROM + TERRACE_FROM) * 0.5), Vector3(TERRACE_HALF - half, TERRACE_Y + 0.6, TERRACE_FROM - STAIRS_FROM), 0.0, ashlar(), false)
-		# north of the lobes, a step up, to the facade
-		var cu := sd * (TERRACE_HALF + WALL_FACE) * 0.5
-		fm.block(at(cu, -0.6, (HubPlan.LOBE.y + FACADE_V) * 0.5), Vector3(WALL_FACE - TERRACE_HALF, CORNER_TOP + 0.6, FACADE_V - HubPlan.LOBE.y), 0.0, mat, false)
-		# the terrace's coping along its front and the planter on it
-		fm.block(at(mid, TERRACE_Y, STAIRS_FROM + 0.12), Vector3(TERRACE_HALF - half, 0.08, 0.3), 0.0, mat, false)
-	_bar(at(0.0, TERRACE_Y + 0.004, TERRACE_FROM + LANDING_FILET), Vector3(STAIRS_WIDTH, 0.008, LANDING_FILET), tomb.gold())
-	for p: Vector2 in PLANTERS:
-		_planter(p)
-	for l: Vector2 in LIONS:
-		_lion_stele(l)
-	var lights: Array[OmniLight3D] = []
-	for b: Vector2 in BRAZIERS:
-		lights.append(fk.brazier(Vector2(b.x, -b.y), TERRACE_Y, false, BRAZIER_LIGHT))
-	# the braziers burn no shadow (spec 4.3); stylized, they light diffuse (paint_diffuse): their hard-edged pool fell on
-	# the facade as round spotlights (art re-review E-2)
-	for l in lights:
-		l.shadow_enabled = false
-		VisualProfile.vary(l, {&"light_specular": 0.0})
-
-
-## A planter along the terrace's front from p.x to p.y in u: a low box of stone, dark earth and pale flowers.
-func _planter(p: Vector2) -> void:
-	var v := STAIRS_FROM + 0.3 + PLANTER.x * 0.5
-	fm.block(at((p.x + p.y) * 0.5, TERRACE_Y, v), Vector3(p.y - p.x, PLANTER.y, PLANTER.x), 0.0, stone(), false)
-	fm.block(at((p.x + p.y) * 0.5, TERRACE_Y + PLANTER.y, v), Vector3(p.y - p.x - 0.16, 0.02, PLANTER.x - 0.16), 0.0, _plain(Color(0.09, 0.07, 0.05), 1.0), false)
-	_decal(at((p.x + p.y) * 0.5, TERRACE_Y + PLANTER.y + 0.03, v), Vector2(p.y - p.x - 0.2, PLANTER.x - 0.2), {
-		&"kind": 3, &"leaf_dark": FLOWER_EARTH, &"leaf_light": FLOWER_OCHRE, &"litter_cell": 0.11,
-		&"litter_size": Vector2(0.06, 0.1), &"litter_cover": 0.55})
-
-
-## A seated lion on the terrace (the Meshy model of 2026-11-21): the plinth, the lion on it looking at the square and
-## turned a little to the stairs, the east one mirrored; candles on the plinth. Nothing collides (the terrace is a view).
-func _lion_stele(p: Vector2) -> void:
-	var mat := stone()
-	var y := TERRACE_Y
-	fm.block(at(p.x, y, p.y), Vector3(LION_PLINTH.x, LION_PLINTH.y, LION_PLINTH.z), 0.0, mat)
-	y += LION_PLINTH.y
-	var mesh := fm.meshy_stone(LION_MODEL)
-	if mesh != null:
-		var mi := MeshInstance3D.new()
-		mi.mesh = mesh
-		mi.material_override = fm.carved(y, LION_TINT)
-		var side := -signf(p.x)
-		mi.transform = Transform3D(Basis(Vector3.UP, side * LION_TURN) * Basis.from_scale(Vector3(-side, 1.0, 1.0) * LION_HEIGHT), at(p.x, y, p.y))
-		fm._add(mi)
-	for k in 3:
-		fm.candle(at(p.x - 0.45 + k * 0.42, TERRACE_Y + LION_PLINTH.y, p.y - LION_PLINTH.z * 0.5 + 0.12), 0.14 + 0.06 * (k % 2), 0.05)
-
-
 # ---------- the square and the front ----------
-
-## The low balustrade along the south and the cut corners (the arrival's gap open), the arrival stairs down to a closed
-## grille.
-func _front() -> void:
-	var pts := HubPlan.FLOOR
-	var mat := see(stone())
-	for i in pts.size():
-		var a: Vector2 = pts[i]
-		var b: Vector2 = pts[(i + 1) % pts.size()]
-		if minf(a.y, b.y) > HubPlan.SOUTH + HubPlan.CUT.y - 0.5:
-			continue
-		# the Retorno's stairs' head (HV-A): open
-		if is_equal_approx(a.y, HubPlan.SOUTH) and is_equal_approx(b.y, HubPlan.SOUTH) \
-				and minf(a.x, b.x) >= HubPlan.ARRIVAL_STAIRS.x - 0.01 and maxf(a.x, b.x) <= HubPlan.ARRIVAL_STAIRS.y + 0.01:
-			continue
-		var along := (b - a).normalized()
-		var out := Vector2(along.y, -along.x)
-		if Geometry2D.is_point_in_polygon((a + b) * 0.5 + out * 0.1, PackedVector2Array(pts)):
-			out = -out
-		_rail(a + out * RAIL_OUT, b + out * RAIL_OUT, mat)
-	# the Retorno's stairs (HV-A, Q-HV2 a): from the open head on the south edge down into the mist, between low walls
-	# (H-P2-3: no grille); the seal he comes up onto
-	var top := HubPlan.SOUTH
-	var su := (HubPlan.ARRIVAL_STAIRS.x + HubPlan.ARRIVAL_STAIRS.y) * 0.5
-	var width := HubPlan.ARRIVAL_STAIRS.y - HubPlan.ARRIVAL_STAIRS.x
-	var depth := ARRIVAL_STEPS * ARRIVAL_RUN
-	var drop := ARRIVAL_STEPS * ARRIVAL_RISE
-	fm.stairs(at(su, -drop, top - depth), Vector2(0, -1), width, ARRIVAL_STEPS, ARRIVAL_RISE, ARRIVAL_RUN, stone())
-	for sd: float in [-1.0, 1.0]:
-		var cu := su + sd * (width + ARRIVAL_CHEEK.x) * 0.5
-		fm.block(at(cu, -drop - 0.6, top - depth * 0.5), Vector3(ARRIVAL_CHEEK.x, drop + 0.6 + ARRIVAL_CHEEK.y, depth), 0.0, mat, false)
-	var gold := Color(INLAY_GOLD.r * SEAL_GOLD, INLAY_GOLD.g * SEAL_GOLD, INLAY_GOLD.b * SEAL_GOLD)
-	_lion(at(HubPlan.ARRIVAL.x, DECAL_Y + 0.002, HubPlan.ARRIVAL.y), Basis(Vector3.RIGHT, -PI * 0.5), SEAL_LION, gold)
-	_retorno(su + (width + ARRIVAL_CHEEK.x) * 0.5, top - depth * 0.15)
-
 
 ## HV-C, the Pátio do Retorno (hv_santuario_vigilia_art.md 5): a ring of worn slabs round the seal (SEAL_PAVING),
 ## faults running across the lion (SEAL_FAULTS: dark joints, no glow, no runes), the paved way from it to the medallion's
@@ -1393,178 +1050,6 @@ const SEAL_PAVING := Vector3(1.15, 1.75, 1.0)
 const SEAL_FAULTS: Array[Vector4] = [Vector4(-0.9, -0.3, 0.7, 0.5), Vector4(-0.2, 0.9, 0.3, -0.8), Vector4(0.4, -0.2, 1.0, -0.6)]
 const RETURN_LAMP := Vector3(0.75, 0.8, 3.5)
 const RETURN_LAMP_COLOR := Color(0.74, 0.63, 0.48)
-func _retorno(cheek_u: float, cheek_v: float) -> void:
-	var pave := m.stone(0.0, stone_tint() * PAVE_TINT)
-	var kerb := m.stone(0.0, stone_tint() * KERB_TINT)
-	var joint := _plain(Color(0.07, 0.065, 0.06), 1.0)
-	_pave_ring(HubPlan.ARRIVAL, SEAL_PAVING, pave, joint)
-	for f in SEAL_FAULTS:
-		var a := HubPlan.ARRIVAL + Vector2(f.x, f.y)
-		var b := HubPlan.ARRIVAL + Vector2(f.z, f.w)
-		var mid := (a + b) * 0.5
-		var d := b - a
-		_bar(at(mid.x, DECAL_Y + 0.004, mid.y), Vector3(d.length(), 0.004, 0.035), joint, Basis(Vector3.UP, d.angle()))
-	var dir := (MEDALLION - HubPlan.ARRIVAL).normalized()
-	_pave_way(HubPlan.ARRIVAL + dir * SEAL_PAVING.y, MEDALLION - dir * MEDALLION_PAVING.y, pave, kerb, joint, _worn_stone())
-	# the lamp on the low wall's head, a short iron post with the lantern hanging from its arm
-	var ir := tomb.iron()
-	var foot := at(cheek_u, ARRIVAL_CHEEK.y, cheek_v)
-	_bar(foot + Vector3(0, RETURN_LAMP.x * 0.5, 0), Vector3(0.05, RETURN_LAMP.x, 0.05), ir)
-	_bar(foot + Vector3(-0.15, RETURN_LAMP.x, 0), Vector3(0.3, 0.04, 0.04), ir)
-	var l := hanging_lantern(frame.transform * (foot + Vector3(-0.28, RETURN_LAMP.x, 0)), ARRIVAL_CHEEK.y + RETURN_LAMP.x - 0.25,
-		LANTERN_SIZE * 0.8, Vector2(RETURN_LAMP.y, RETURN_LAMP.z))
-	l.light_color = RETURN_LAMP_COLOR
-	l.shadow_enabled = false
-
-
-## A low balustrade from a to b (frame u, v): curb, balusters, rail (spec 3.6: under 0.9 m).
-func _rail(a: Vector2, b: Vector2, mat: Material) -> void:
-	var length := a.distance_to(b)
-	if length < 0.3:
-		return
-	var d := b - a
-	var yaw := atan2(-(-d.y), d.x)
-	var mid := (a + b) * 0.5
-	fm.box(at(mid.x, RAIL_CURB.x * 0.5, mid.y), Vector3(length, RAIL_CURB.x, RAIL_CURB.y), yaw, mat, false)
-	fm.box(at(mid.x, (RAIL_TOP.x + RAIL_TOP.y) * 0.5, mid.y), Vector3(length, RAIL_TOP.y - RAIL_TOP.x, RAIL_CURB.y - 0.06), yaw, mat, false)
-	var n := maxi(1, int(length / RAIL_BALUSTER.y))
-	for k in n:
-		var p := a.lerp(b, (k + 0.5) / n)
-		fm.shaft(at(p.x, RAIL_CURB.x, p.y), RAIL_BALUSTER.x, RAIL_TOP.x - RAIL_CURB.x, mat)
-
-
-## A lamp post on the front (its footprint in the layout): a shaft and an arm out to the south with a lantern hanging
-## from it, off the floor.
-func _lamp_post(c: Vector2, o: ArenaObstacle) -> void:
-	var mat := stone()
-	fm.block(at(c.x, 0.0, c.y), Vector3(o.radius * 2.0, 0.35, o.radius * 2.0), 0.0, mat)
-	fm.shaft(at(c.x, 0.35, c.y), o.radius * 0.45, LAMP_POST.x - 0.35, mat)
-	var ir := tomb.iron()
-	_bar(at(c.x, LAMP_POST.x, c.y - LAMP_POST.y * 0.5), Vector3(0.06, 0.06, LAMP_POST.y), ir)
-	var from := world(c.x, LAMP_POST.x, c.y - LAMP_POST.y)
-	var l := hanging_lantern(from, LAMP_POST.x - 0.3, LANTERN_SIZE, LAMP_LIGHT)
-	l.shadow_enabled = false
-
-
-## The square (spec 3.7): the lion's medallion in old gold with its two rings, the thread of gold on the axis, the use
-## points' slabs.
-func _square() -> void:
-	var g := tomb.gold()
-	var mc := at(MEDALLION.x, DECAL_Y, MEDALLION.y)
-	_lion(mc + Vector3(0, 0.002, 0), Basis(Vector3.RIGHT, -PI * 0.5), MEDALLION_LION, INLAY_GOLD)
-	for ring in MEDALLION_RINGS:
-		_ring(mc, ring.x, ring.y, g)
-	# the paving (HUB-D): the fountain's ring, the medallion's (clear of the fountain's), the ways to the stations
-	var pave := m.stone(0.0, stone_tint() * PAVE_TINT)
-	var kerb := m.stone(0.0, stone_tint() * KERB_TINT)
-	var joint := _plain(Color(0.07, 0.065, 0.06), 1.0)
-	var worn := _worn_stone()
-	var fountain := Vector2(HubPlan.FOUNTAIN.x, HubPlan.FOUNTAIN.y)
-	_pave_ring(fountain, FOUNTAIN_PAVING, pave, joint)
-	_pave_ring(MEDALLION, MEDALLION_PAVING, pave, joint, func(p: Vector2) -> bool:
-		return p.distance_to(fountain) < FOUNTAIN_PAVING.y + PAVE_SLAB * 0.6)
-	# the ways (HUB-D): the upper stations' from the fountain's ring, the lower ones' from the medallion's, each to the
-	# edge of its use slab; the axis from the medallion's ring to the fountain's and on to the portal's slab
-	for id in [HubPlan.VENDOR, HubPlan.TREE, HubPlan.SMITH, HubPlan.BOOK]:
-		var to: Vector2 = HubPlan.USE[id]
-		var from := fountain if to.y > fountain.y else MEDALLION
-		var ring := FOUNTAIN_PAVING.y if to.y > fountain.y else MEDALLION_PAVING.y
-		var dir := (to - from).normalized()
-		_pave_way(from + dir * ring, to - dir * WAY_SHORT, pave, kerb, joint, worn)
-	var portal: Vector2 = HubPlan.USE[HubPlan.PORTAL]
-	_pave_way(fountain + Vector2(0, FOUNTAIN_PAVING.y), portal - Vector2(0, WAY_SHORT), pave, kerb, joint, worn)
-	_pave_way(MEDALLION + Vector2(0, MEDALLION_PAVING.y), fountain - Vector2(0, FOUNTAIN_PAVING.y), pave, kerb, joint, worn)
-	# PT-4 (Daniel, 2026-11-23): no lozenges cut at the stations' use spots either; the worn way ends at the station
-
-
-## A ring of cut slabs round c (frame u, v): ring.z rings from ring.x to ring.y, each slab about PAVE_SLAB along it,
-## every other ring turned half a slab, on a dark bed that shows in the joints; a slab whose middle `skip` refuses is
-## left out (the bed too, under it).
-func _pave_ring(c: Vector2, ring: Vector3, mat: Material, joint: Material, skip := Callable()) -> void:
-	var rings := maxi(1, int(ring.z))
-	var step := (ring.y - ring.x) / rings
-	for k in rings:
-		var r := ring.x + step * (k + 0.5)
-		var n := maxi(8, roundi(TAU * r / PAVE_SLAB))
-		for i in n:
-			var a := TAU * (i + 0.5 * (k % 2)) / n
-			var p := c + Vector2(cos(a), sin(a)) * r
-			if skip.is_valid() and skip.call(p):
-				continue
-			var yaw := a + PI * 0.5
-			fm.box(at(p.x, PAVE_TOP - 0.06, p.y), Vector3(TAU * r / n - 0.07, 0.12, step - 0.07), yaw, mat, false)
-			fm.box(at(p.x, PAVE_TOP - 0.035, p.y), Vector3(TAU * r / n + 0.02, 0.06, step + 0.02), yaw, joint, false)
-
-
-## A paved way from a to b (frame u, v): WAY_WIDTH wide, rows of WAY_SLAB slabs across it in a running bond, a kerb of
-## darker stone each side, a dark bed in the joints, the thread of old gold down its middle.
-func _pave_way(a: Vector2, b: Vector2, mat: Material, kerb: Material, joint: Material, worn: Material) -> void:
-	var d := b - a
-	var length := d.length()
-	if length < WAY_SLAB.y:
-		return
-	var dir := d / length
-	var side := Vector2(-dir.y, dir.x)
-	var yaw := atan2(dir.y, dir.x)
-	var inner := WAY_WIDTH - WAY_KERB * 2.0
-	var across := maxi(1, roundi(inner / WAY_SLAB.x))
-	var w := inner / across
-	var rows := maxi(1, roundi(length / WAY_SLAB.y))
-	var l := length / rows
-	var mid := (a + b) * 0.5
-	fm.box(at(mid.x, PAVE_TOP - 0.035, mid.y), Vector3(length, 0.06, WAY_WIDTH), yaw, joint, false)
-	for r in rows:
-		# running bond: every other row starts with a half slab
-		var cuts: Array[float] = [-inner * 0.5]
-		var x := -inner * 0.5 + (w * 0.5 if r % 2 == 1 else 0.0)
-		while x + w < inner * 0.5 - 0.01:
-			x += w
-			cuts.append(x)
-		if r % 2 == 1:
-			cuts.insert(1, -inner * 0.5 + w * 0.5)
-		cuts.append(inner * 0.5)
-		var along := a + dir * (l * (r + 0.5))
-		for k in cuts.size() - 1:
-			var cw := cuts[k + 1] - cuts[k]
-			if cw < 0.1:
-				continue
-			var p := along + side * ((cuts[k] + cuts[k + 1]) * 0.5)
-			var centre := absf(cuts[k] + cuts[k + 1]) * 0.5 < inner * WORN_SHARE
-			var rise := WORN_RISE if centre else 0.0
-			fm.box(at(p.x, PAVE_TOP - 0.06 + rise, p.y), Vector3(l - 0.07, 0.12, cw - 0.07), yaw, worn if centre else mat, false)
-	var segs := maxi(1, roundi(length / 1.6))
-	for sd: float in [-1.0, 1.0]:
-		for k in segs:
-			var p := a + dir * (length * (k + 0.5) / segs) + side * sd * (WAY_WIDTH - WAY_KERB) * 0.5
-			fm.box(at(p.x, PAVE_TOP - 0.05, p.y), Vector3(length / segs - 0.05, 0.13, WAY_KERB - 0.04), yaw, kerb, false)
-
-
-## The paler stone of a way's walked middle.
-func _worn_stone() -> Material:
-	return m.stone(0.0, stone_tint() * PAVE_TINT * WORN_TINT)
-
-
-## A flat ring of old gold on the floor round c (radii r0 to r1).
-func _ring(c: Vector3, r0: float, r1: float, mat: Material) -> void:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	st.set_normal(Vector3.UP)
-	var n := 64
-	for k in n:
-		var a0 := TAU * k / n
-		var a1 := TAU * (k + 1) / n
-		var p := [Vector3(cos(a0) * r0, 0, sin(a0) * r0), Vector3(cos(a0) * r1, 0, sin(a0) * r1),
-			Vector3(cos(a1) * r1, 0, sin(a1) * r1), Vector3(cos(a1) * r0, 0, sin(a1) * r0)]
-		for i: int in [0, 2, 1, 0, 3, 2]:
-			st.add_vertex(p[i])
-	var mi := MeshInstance3D.new()
-	mi.mesh = st.commit()
-	mi.material_override = mat
-	mi.position = c
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	frame.add_child(mi)
-
-
 ## A box of a plain material (gold threads, iron bars) not merged with the stone.
 func _bar(p: Vector3, size: Vector3, mat: Material, basis := Basis()) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
@@ -1604,83 +1089,6 @@ func _plain(c: Color, rough: float) -> StandardMaterial3D:
 		s.roughness = rough
 		_plain_mats[key] = s
 	return _plain_mats[key]
-
-
-## The fountain of the lion (spec 3.7; decoration, no spring: that is the sign of the rooms' healing fountain): the
-## basin's blocks, dark water, the stele on its north rim with the lion's head in relief and the thread of water from
-## its mouth, moss with pale flowers round it, candles on the rim.
-func _fountain(c: Vector2) -> void:
-	var mat := stone()
-	var seg := TAU * BASIN.x / BASIN_BLOCKS
-	for k in BASIN_BLOCKS:
-		var a := TAU * (k + 0.5) / BASIN_BLOCKS
-		var p := c + Vector2(cos(a), sin(a)) * BASIN.x
-		fm.box(at(p.x, BASIN.y * 0.5, p.y), Vector3(seg * 1.03, BASIN.y, BASIN.z), a + PI * 0.5, mat)
-	fm.block(at(c.x, -0.2, c.y), Vector3(BASIN.x * 1.6, 0.2 + WATER_Y - 0.12, BASIN.x * 1.6), 0.0, m.stone(0.0, Color(0.5, 0.5, 0.5)), false)
-	# the water: a disc, UV over its square
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	st.set_normal(Vector3.UP)
-	var n := 32
-	for k in n:
-		for q: Vector2 in [Vector2.ZERO, Vector2(cos(TAU * (k + 1) / n), sin(TAU * (k + 1) / n)), Vector2(cos(TAU * k / n), sin(TAU * k / n))]:
-			st.set_uv(q * 0.5 + Vector2(0.5, 0.5))
-			st.add_vertex(Vector3(q.x, 0.0, q.y) * WATER_R)
-	var water := MeshInstance3D.new()
-	water.mesh = st.commit()
-	var wm := ShaderMaterial.new()
-	wm.shader = WATER_SHADER
-	wm.set_shader_parameter(&"form", 0)
-	wm.set_shader_parameter(&"size", Vector2.ONE * WATER_R * 2.0)
-	wm.set_shader_parameter(&"fade", 0.05)
-	wm.set_shader_parameter(&"foam_at", Vector2(0.5, 0.2))
-	wm.set_shader_parameter(&"foam_reach", 0.5)
-	# P2-A9 of the cycle's art review: broad soft swells, not white veins (it read as marble)
-	wm.set_shader_parameter(&"rings", WATER_RINGS.x)
-	wm.set_shader_parameter(&"ring_sharp", WATER_RINGS.y)
-	wm.set_shader_parameter(&"ring_light", WATER_RINGS.z)
-	water.material_override = wm
-	wm.set_shader_parameter(&"gloss_roughness", WATER_GLOSS.x)
-	wm.set_shader_parameter(&"gloss_specular", WATER_GLOSS.y)
-	wm.set_shader_parameter(&"body_light", 0.0)
-	VisualProfile.vary(wm, {&"shader": WATER_MATTE, &"shader_parameter/ring_sharp": STY_WATER_RINGS.x,
-		&"shader_parameter/ring_light": STY_WATER_RINGS.y, &"shader_parameter/body_light": STY_WATER_BODY,
-		&"shader_parameter/gloss_roughness": STY_WATER_GLOSS.x, &"shader_parameter/gloss_specular": STY_WATER_GLOSS.y})
-	water.position = at(c.x, WATER_Y, c.y)
-	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	frame.add_child(water)
-	# the stele on the north rim and the lion's head on its face
-	var sv := c.y + BASIN.x
-	fm.block(at(c.x, 0.0, sv), FOUNTAIN_STELE, 0.0, mat)
-	fm.point(at(c.x, FOUNTAIN_STELE.y, sv), FOUNTAIN_STELE.x, 0.32, 0.0, 0.0, mat)
-	_lion(at(c.x, FOUNTAIN_LION.y, sv - FOUNTAIN_STELE.z * 0.5 - 0.006), Basis(), FOUNTAIN_LION.x, MEDALLION_GOLD)
-	var spout := MeshInstance3D.new()
-	var q := QuadMesh.new()
-	var from := at(c.x, FOUNTAIN_LION.y - FOUNTAIN_LION.x * 0.3, sv - FOUNTAIN_STELE.z * 0.5)
-	var to := at(c.x, WATER_Y, sv - 0.75)
-	q.size = Vector2(SPOUT, from.distance_to(to))
-	spout.mesh = q
-	var fall := ShaderMaterial.new()
-	fall.shader = WATER_SHADER
-	fall.set_shader_parameter(&"form", 1)
-	fall.set_shader_parameter(&"size", q.size)
-	fall.set_shader_parameter(&"foot", 0.1)
-	fall.set_shader_parameter(&"streaks", 1.0)
-	spout.material_override = fall
-	var down := (to - from).normalized()
-	spout.transform = Transform3D(Basis(Vector3.RIGHT, -down, Vector3.RIGHT.cross(-down)), (from + to) * 0.5)
-	spout.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	frame.add_child(spout)
-	_decal(at(c.x, DECAL_Y, c.y), Vector2.ONE * (FOUNTAIN_MOSS.y + 0.9) * 2.0, {&"kind": 1, &"ring": FOUNTAIN_MOSS,
-		&"ragged": 0.4, &"north_reach": 0.3, &"flower_pale": FLOWER_OCHRE, &"flower_lilac": FLOWER_EARTH})
-	var r := BASIN.x
-	for k in 6:
-		var a := [0.9, 1.2, 1.95, 2.25, 0.55, 2.6][k] as float
-		var p := c + Vector2(cos(a), sin(a)) * r
-		if k % 3 == 2:
-			fm.candle_out(at(p.x, BASIN.y, p.y), 0.1, 0.05)
-		else:
-			fm.candle(at(p.x, BASIN.y, p.y), 0.14 + 0.05 * (k % 2), 0.05)
 
 
 # ---------- the stations ----------
@@ -1889,69 +1297,6 @@ func _forge() -> void:
 	frame.add_child(l)
 	station_lights[HubPlan.SMITH] = l
 	_forge_light = l
-
-
-## The Forjador's yard west of the forge (HubPlan.YARD; drawn at its rack, hub_yard, the other parts only collide): the
-## rack of blades point up and the lion's shield facing the camera, a stone trough of dark water, a heap of coal, a
-## grindstone.
-func _yard() -> void:
-	var c := Vector2(HubPlan.YARD.x, HubPlan.YARD.y)
-	var o := ArenaObstacle.new()
-	o.half = Vector2(HubPlan.YARD.z, HubPlan.YARD.w)
-	var wood := m._wood_mat(0.0, 0.8)
-	var ir := tomb.iron()
-	# the rack along u at the back of the footprint
-	var rv := c.y + o.half.y - 0.3
-	var r0 := c.x - o.half.x + 0.3
-	var r1 := c.x + o.half.x * 0.2
-	for uu: float in [r0, r1]:
-		fm.block(at(uu, 0.0, rv), Vector3(0.12, 1.9, 0.12), 0.0, wood, false)
-	for h: float in [0.4, 1.5]:
-		fm.block(at((r0 + r1) * 0.5, h, rv + 0.02), Vector3(r1 - r0, 0.08, 0.1), 0.0, wood, false)
-	for k in 4:
-		_blade(at(lerpf(r0, r1, (k + 1.0) / 6.0), 0.48, rv - 0.12), ir, wood)
-	var shield := MeshInstance3D.new()
-	var disc := CylinderMesh.new()
-	disc.top_radius = 0.48
-	disc.bottom_radius = 0.5
-	disc.height = 0.07
-	disc.radial_segments = 22
-	shield.mesh = disc
-	shield.material_override = _plain(Color(0.2, 0.16, 0.12), 0.8)
-	var su := lerpf(r0, r1, 0.86)
-	shield.transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5), at(su, 1.2, rv - 0.14))
-	frame.add_child(shield)
-	_lion(at(su, 1.2, rv - 0.19), Basis(), 0.74, MEDALLION_GOLD)
-	# the trough before the rack, the coal heap by the forge, the grindstone
-	var tu := c.x - o.half.x * 0.35
-	var tv := c.y - o.half.y + 0.55
-	fm.block(at(tu, 0.0, tv), Vector3(1.8, 0.6, 0.7), 0.0, stone())
-	_bar(at(tu, 0.56, tv), Vector3(1.55, 0.02, 0.48), _plain(Color(0.03, 0.05, 0.06), 0.15))
-	var coal := _plain(Color(0.05, 0.045, 0.04), 1.0)
-	var rr := RandomNumberGenerator.new()
-	rr.seed = 913
-	for k in 7:
-		var p := Vector2(c.x + o.half.x - 0.7 + rr.randf_range(-0.5, 0.5), c.y + rr.randf_range(-0.6, 0.5))
-		fm.box(at(p.x, 0.0, p.y), Vector3(rr.randf_range(0.3, 0.55), rr.randf_range(0.15, 0.4), rr.randf_range(0.3, 0.5)), rr.randf() * TAU, coal, false)
-	var grind := MeshInstance3D.new()
-	var wheel := CylinderMesh.new()
-	wheel.top_radius = 0.42
-	wheel.bottom_radius = 0.42
-	wheel.height = 0.14
-	grind.mesh = wheel
-	grind.material_override = m.stone(0.0, Color(0.6, 0.58, 0.55))
-	grind.transform = Transform3D(Basis(Vector3.FORWARD, PI * 0.5), at(c.x + o.half.x * 0.2, 0.62, tv))
-	frame.add_child(grind)
-	fm.block(at(c.x + o.half.x * 0.2, 0.0, tv), Vector3(0.5, 0.25, 0.3), 0.0, wood, false)
-
-
-## A blade standing point up (the Câmara's raised sword, never a cross): the grip and pommel at `foot`, the guard short
-## and thin, the blade long and tapering.
-func _blade(foot: Vector3, iron: Material, wood: Material) -> void:
-	fm.box(foot + Vector3(0, 0.0, 0), Vector3(0.06, 0.06, 0.06), 0.0, iron, false)
-	fm.box(foot + Vector3(0, 0.1, 0), Vector3(0.035, 0.16, 0.035), 0.0, wood, false)
-	fm.box(foot + Vector3(0, 0.19, 0), Vector3(0.04, 0.035, 0.22), 0.0, iron, false)
-	fm.point(foot + Vector3(0, 0.2, 0), 0.07, 0.95, 0.0, 0.0, iron).scale = Vector3(0.35, 1.0, 1.0)
 
 
 ## The anvil (spec 3.3) on its footprint (HUB-D: 1.5 times the old one): a stump of wood, the iron body and face, the
