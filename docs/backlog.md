@@ -25,6 +25,11 @@ Cada entrega é um lote fechado com exe no fim, capturas na GPU e push. O detalh
 
 Decisões do Daniel em aberto: textos a aprovar (chegada, objetivo, dicas, O Leão / O Cálice / A Espada, fim curto, os da E2), D-O8 (cânone), regra de troca de Bênção no mesmo botão, (a) ou (b) da E6, música nova do Santuário, Meshy.
 
+## Rodada 2026-11-26 dia FEITA (exe `bfe20c8a`; o Daniel olha ao voltar)
+- Bênçãos V1 (`docs/design/bencaos_v1/`, relatório em `IMPLEMENTACAO.md`): 7 anjos x 9 poderes (35 principais, 28 complementares), sem troca (botão ocupado sai do sorteio), E sem Bênção, Duos/Encantos fora do sorteio, camada `Celestial` (Queimadura, Frio, Impacto, Fraqueza, Penumbra, Eco, crítico de Lumael), HUD separa principais e complementares. Números do CSV, ainda sem equilíbrio medido.
+- Hub refeito em 6 rodadas comparando com `01-arte-aprovada.jpg` (galeria `docs/gallery/hub_refine_2026-11-26/`, r0 a r7): crepúsculo, abismo azul-noite com penhascos, cachoeiras e copas, fachadas creme com telha, estandartes e vãos acesos, Portão em arco com leões e vista, Videira com parreira e fonte, vitrais âmbar, estufa, lanternas âmbar, menos muretas.
+- Aberto no hub: escadas e patamares reais (piso plano pela planta), flores ainda em cartões pontilhados, mais uma árvore vermelha, glicínia nos beirais; Aposento sem escadaria.
+
 ## Rodada 2026-11-26 madrugada FEITA (exe `929e18bd`; o Daniel testa)
 - PT-26-1 a 6 feitos: ícone de mouse (`MouseGlyph`), anjo sozinho direto às cartas, aviso "Substitui", HUD com todas as Bênçãos (nome, recarga) e nomes sob os losangos, Videira segurando o mouse na estrela, Forja explicada (folha de 3 frases na 1ª visita).
 - E4: Salão com canal largo até a mureta (`Canal`), portas grandes com medalhão no vão, Cripta SL-02 (portas norte, fonte quebrada), ilhas só por esquiva (Santuário, Fendas), inimigos não atravessam riacho, lajes 2x2.
