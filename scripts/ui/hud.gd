@@ -66,6 +66,9 @@ const ROW_GAP := 6
 ## The keys hang under the diamonds' point (ActionSlot.key_drop): the little mouse is 22 px tall.
 const ROW_KEY_DROP := 7.0
 const ROW_CAPTION := 20.0
+## The ink plate under the row: its height (px at 720 lines, 150 at 1080) and its darkest opacity at the bottom edge.
+const FLOOR_VEIL_H := 100.0
+const FLOOR_VEIL_ALPHA := 0.55
 ## The bars beside the medallion (Magia over life, the ultimate's charge thin under them): the gap from the medallion,
 ## the thin bar's size and the gap between two frames (they share one line of ink).
 const BARS_GAP := 12.0
@@ -595,6 +598,7 @@ func _build_actions() -> void:
 	var width := row.get_combined_minimum_size().x
 	_place(row, Control.PRESET_CENTER_BOTTOM, Vector2(0.0, -MARGIN), Vector2(width, height))
 	row.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_build_floor_veil(row)
 	# U-4: no dark box behind the diamonds (only the move's name keeps its small veil, see _build_combo)
 	_row_band = HudVeil.new()
 	add_child(_row_band)
@@ -616,6 +620,36 @@ func _build_actions() -> void:
 	_passives.offset_right = 0.0
 	_passives.offset_bottom = -MARGIN - PASSIVE_LIFT
 	_passives.offset_top = -MARGIN - PASSIVE_LIFT - PASSIVE_ICON - 6.0
+
+
+## A plate of ink fading upward behind the row (UI review 2026-11-26, P1): a brazier at the south edge of the scene no
+## longer shows through the diamonds. Dark from the bottom edge to FLOOR_VEIL_ALPHA, clear at its top, FLOOR_VEIL_H px
+## at 1080 lines, across the middle of the screen; under everything else of the HUD.
+func _build_floor_veil(row: Control) -> void:
+	var g := Gradient.new()
+	g.offsets = PackedFloat32Array([0.0, 1.0])
+	g.colors = PackedColorArray([Color(UiKit.INK, 0.0), Color(UiKit.INK, FLOOR_VEIL_ALPHA)])
+	var tex := GradientTexture2D.new()
+	tex.gradient = g
+	tex.fill_from = Vector2(0.0, 0.0)
+	tex.fill_to = Vector2(0.0, 1.0)
+	tex.width = 4
+	tex.height = 64
+	var v := TextureRect.new()
+	v.name = &"FloorVeil"
+	v.texture = tex
+	v.stretch_mode = TextureRect.STRETCH_SCALE
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(v)
+	move_child(v, row.get_index())
+	v.anchor_left = 0.25
+	v.anchor_right = 0.75
+	v.anchor_top = 1.0
+	v.anchor_bottom = 1.0
+	v.offset_left = 0.0
+	v.offset_right = 0.0
+	v.offset_bottom = 0.0
+	v.offset_top = -FLOOR_VEIL_H
 
 
 ## The hit count and the move's name, right of the row's last diamond (benchmark_hades2_ui.md P0-3, UI-HB5): small,
@@ -1075,7 +1109,9 @@ func _update_ult(p: Player) -> void:
 	_ult_slot.sealed = ult == null
 	_ult_slot.pulse = full
 	_ult_slot.urgent = ult_urgent(full, p.hp / p.max_hp)
-	_ult_slot.caption = ult_caption(ult != null, full, game.ults.ratio(), first, _ult_hint_t > 0.0)
+	# sealed: the Maestria it asks for takes the place of the name under the diamond, nothing floats over it
+	_ult_slot.caption = ult_caption(ult != null, full, game.ults.ratio(), first, _ult_hint_t > 0.0) if ult != null else ""
+	_ult_slot.label_text = T.t(&"hud_slot_ultimate") if ult != null else ult_caption(false, false, 0.0, first, false)
 	_ult_slot.caption_color = UiKit.PALE if _ult_hint_t > 0.0 else UiKit.DIM
 
 

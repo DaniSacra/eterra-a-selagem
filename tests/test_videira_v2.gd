@@ -163,7 +163,7 @@ func test_the_panel_reads_what_it_does_what_it_costs_and_what_you_have() -> void
 	assert_string_contains((s.find_child("values", true, false) as RichTextLabel).text, "+5", "now and next")
 	assert_eq((s.find_child("cost", true, false) as MaterialCount).amount, 5)
 	assert_eq((s.find_child("have", true, false) as Label).text, T.t(&"vine_have", {"n": 30}))
-	assert_true(s.water_button.text.contains("Regar") and s.water_button.text.contains("5"), "the price on the button")
+	assert_true(s.water_button.text.contains("regar") and s.water_button.text.contains("5"), "the price on the button")
 	s._show(&"viajante")
 	assert_eq((s.find_child("state", true, false) as Label).text, T.t(&"vine_short_n", {"n": 1, "m": "Memória"}))
 	assert_eq((s.find_child("have", true, false) as Label).text, T.t(&"vine_have", {"n": 2}))

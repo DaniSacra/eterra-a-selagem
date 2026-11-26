@@ -273,11 +273,11 @@ func _open_intro() -> void:
 	var head := UiKit.label(T.t(&"forge_how_title"), UiKit.GOLD, 28, UiKit.TITLE_FONT)
 	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(head)
-	for k in [&"forge_how_1", &"forge_how_2", &"forge_how_3", &"forge_how_4"]:
+	for k in [&"forge_how_1", &"forge_how_2", &"forge_how_3"]:
 		var l := UiKit.label(T.t(k), UiKit.PALE, 19)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		col.add_child(l)
-	var go := UiKit.label(T.t(&"forge_how_go"), UiKit.DIM, 16)
+	var go := UiKit.label(T.t(&"forge_how_go", {"key": UiKit.action_label(&"ui_accept")}), UiKit.GOLD, 18)
 	go.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(go)
 
