@@ -230,6 +230,10 @@ var _ult_want := 0.0
 var sprinting := false
 ## At peace (the hub, HUB-B1; _step_peace): he only walks and runs.
 var peaceful := false
+## The height of the floor under him (the hub's terraces and stairs: Arena.ground_at; 0 in every other room), eased at
+## GROUND_EASE a second so a tread is a quick step, not a pop.
+var _ground := 0.0
+const GROUND_EASE := 28.0
 var cast_cooldown := 0.0
 ## A circle of light is standing (no second one until it ends).
 var cast_active := false
@@ -1202,7 +1206,8 @@ func place(at: Vector2) -> void:
 
 
 func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
-	position = Vector3(pos.x, 0, pos.y)
+	_ground = lerpf(_ground, arena.ground_at(pos) if arena != null else 0.0, 1.0 - exp(-GROUND_EASE * dt))
+	position = Vector3(pos.x, _ground, pos.y)
 	var want := atan2(facing.x, facing.y)
 	if runner.is_attacking():
 		_model.rotation.y = lerp_angle(_model.rotation.y, want, minf(1.0, dt * TURN_SWING))

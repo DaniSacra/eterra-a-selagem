@@ -262,6 +262,20 @@ const KEY_ENERGY := 0.5
 const LION_SHADER := preload("res://assets/shaders/altar_lion.gdshader")
 const PAGE_SHADER := preload("res://assets/shaders/hub_page.gdshader")
 const CANOPY_SHADER := preload("res://assets/shaders/canopy.gdshader")
+## Round 2: the flower clumps and hanging wisteria are clean shapes on a few cards (hub_flower.gdshader), not the canopy's
+## speckled leaf cut-outs. A clump: BLOOM_CARDS cards a spot, spread BLOOM_SPREAD of the width, each BLOOM_TALL over the
+## spot's height and BLOOM_WIDE of the width; a tassel: one card (TASSEL_WIDE of the width given), top at the spot's top.
+const FLOWER_SHADER := preload("res://assets/shaders/hub_flower.gdshader")
+const BLOOM_CARDS := 3
+const BLOOM_SPREAD := 0.34
+const BLOOM_TALL := 1.15
+const BLOOM_WIDE := 0.82
+const BLOOM_LEAN := 0.22
+const BLOOM_BLOSSOMS := 7.0
+const TASSEL_WIDE := 1.25
+const TASSEL_BLOSSOMS := 11.0
+const BLOOM_LEAF_A := Color(0.13, 0.2, 0.1)
+const BLOOM_LEAF_B := Color(0.28, 0.4, 0.19)
 const DECAL_SHADER := preload("res://assets/shaders/floor_decal.gdshader")
 ## Facing directions in the frame (x, z): toward the camera (south), east, west.
 const SOUTH := Vector2(0, 1)
@@ -364,6 +378,15 @@ func edge(a: Vector2, b: Vector2, out: Vector2, _kind: Edge, faces: SurfaceTool)
 
 
 ## The hub's pieces (hub_*) are drawn in dress() on their footprints, in the frame.
+## Round 2: the levels (HubLevels) are the last of the build: the finished room lifted by the plan's height field, then the
+## treads of its flights drawn on it.
+func build_steps(a: Arena, l: RoomLayout, exit_count: int, seed_: int) -> Array[Callable]:
+	var steps := super(a, l, exit_count, seed_)
+	steps.append(_timed.bind(&"levels", func() -> Array[Callable]: return HubLevels.raise_steps(self)))
+	steps.append(_timed.bind(&"treads", func() -> void: HubLevels.stairs(self)))
+	return steps
+
+
 func piece(o: ArenaObstacle) -> void:
 	if String(o.piece).begins_with("hub_"):
 		return
@@ -420,6 +443,8 @@ func dress() -> void:
 				_vine_arch(c, o)
 			&"hub_heroes":
 				_hero_stand(c, o)
+			&"hub_heroes_steps":
+				_hero_steps(c, o)
 	add_crowns(_cypress_spots, _cypress_tall, CYPRESS_A, CYPRESS_B, CYPRESS_WIDE.x, "Cypresses")
 	add_crowns(_shrub_spots, _shrub_tall, SHRUB_A, SHRUB_B, SHRUB_WIDE, "Shrubs")
 	_forge()
@@ -744,6 +769,57 @@ func add_crowns(spots: Array[Vector3], talls: Array[float], leaf_a: Color, leaf_
 	frame.add_child(mi)
 
 
+## Round 2: flowers and wisteria as whole clumps (or tassels, `hanging`) on single cards drawn by hub_flower.gdshader: the
+## spots as add_crowns has them (foot = the lowest point), one MultiMesh and one material a layer.
+func add_blooms(spots: Array[Vector3], talls: Array[float], petal_a: Color, petal_b: Color, width: float, label: String,
+		hanging := false) -> void:
+	if spots.is_empty():
+		return
+	var r := RandomNumberGenerator.new()
+	r.seed = 7331 + label.length()
+	var xf: Array[Transform3D] = []
+	var seeds: Array[float] = []
+	for i in spots.size():
+		var foot := spots[i]
+		var tall := talls[i]
+		if hanging:
+			var basis := Basis(Vector3.UP, r.randf_range(-0.2, 0.2)) * Basis.from_scale(Vector3(width * TASSEL_WIDE, tall, 1.0))
+			xf.append(Transform3D(basis, at(foot.x, foot.y + tall * 0.5, foot.z)))
+			seeds.append(r.randf())
+			continue
+		for k in BLOOM_CARDS:
+			var side := float(k) - (BLOOM_CARDS - 1) * 0.5
+			var off := Vector3(side * width * BLOOM_SPREAD + r.randf_range(-0.06, 0.06), 0.0, r.randf_range(-0.08, 0.08) + 0.04 * k)
+			var h := tall * BLOOM_TALL * r.randf_range(0.85, 1.1)
+			var basis := Basis(Vector3.UP, r.randf_range(-BLOOM_LEAN, BLOOM_LEAN)) * Basis.from_scale(Vector3(width * BLOOM_WIDE * r.randf_range(0.9, 1.1), h, 1.0))
+			xf.append(Transform3D(basis, at(foot.x, foot.y + h * 0.5, foot.z) + off))
+			seeds.append(r.randf())
+	var q := QuadMesh.new()
+	q.size = Vector2.ONE
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_custom_data = true
+	mm.mesh = q
+	mm.instance_count = xf.size()
+	for i in xf.size():
+		mm.set_instance_transform(i, xf[i])
+		mm.set_instance_custom_data(i, Color(seeds[i], 0, 0, 0))
+	var mat := ShaderMaterial.new()
+	mat.shader = FLOWER_SHADER
+	mat.set_shader_parameter(&"petal_a", petal_a)
+	mat.set_shader_parameter(&"petal_b", petal_b)
+	mat.set_shader_parameter(&"leaf_a", BLOOM_LEAF_A)
+	mat.set_shader_parameter(&"leaf_b", BLOOM_LEAF_B)
+	mat.set_shader_parameter(&"hang", 1.0 if hanging else 0.0)
+	mat.set_shader_parameter(&"blossoms", TASSEL_BLOSSOMS if hanging else BLOOM_BLOSSOMS)
+	var mi := MultiMeshInstance3D.new()
+	mi.name = label
+	mi.multimesh = mm
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	frame.add_child(mi)
+
+
 ## V2: the Videira's arch of stone on its footprint (two pillars, a lintel with its corner blocks, a low plinth between
 ## them) and the vase with its young vine in the middle (VineStation; `grow_vine` shows what the save has bought).
 func _vine_arch(c: Vector2, o: ArenaObstacle) -> void:
@@ -766,8 +842,37 @@ func grow_vine(growth: Dictionary) -> void:
 
 ## PT-9: the heroes' stand on its footprint (a low plinth of stone) with the two standards (HeroStation).
 func _hero_stand(c: Vector2, o: ArenaObstacle) -> void:
-	fm.block(at(c.x, 0.0, c.y), Vector3(o.half.x * 2.0, 0.3, o.half.y * 2.0), 0.0, stone())
-	hero_station = HeroStation.make(frame, at(c.x, 0.0, c.y))
+	# round 2: on a plinth against the chapel's face, the steps in front of it (_hero_steps)
+	fm.block(at(c.x, 0.0, c.y), Vector3(o.half.x * 2.0, HubPlan.HERO_PLINTH, o.half.y * 2.0), 0.0, stone())
+	fm.block(at(c.x, HubPlan.HERO_PLINTH, c.y), Vector3(o.half.x * 2.0 + 0.12, 0.1, o.half.y * 2.0 + 0.1), 0.0, facade_stone(), false)
+	hero_station = HeroStation.make(frame, at(c.x, HubPlan.HERO_PLINTH + 0.1, c.y))
+
+
+## The Aposento's stair (the art's: a flight with a red carpet down to the gallery): HERO_STEP_COUNT cream treads rising
+## north to the plinth's height, the carpet over them with gold edges, a stone cheek on each side. Solid on its footprint.
+func _hero_steps(c: Vector2, o: ArenaObstacle) -> void:
+	var n := HubPlan.HERO_STEP_COUNT
+	var rise := HubPlan.HERO_PLINTH / n
+	var run := o.half.y * 2.0 / n
+	var v0 := c.y - o.half.y
+	var wide := o.half.x * 2.0
+	var cloth := _plain(HubFacades.CARPET, 1.0)
+	var gold := _plain(HubFacades.BANNER_GOLD, 0.6)
+	var carpet := HubFacades.CARPET_RUN.y
+	for k in n:
+		var top := rise * (k + 1)
+		var vc := v0 + run * (k + 0.5)
+		fm.block(at(c.x, 0.0, vc), Vector3(wide, top, run), 0.0, facade_stone(), false)
+		_bar(at(c.x, top + 0.012, vc), Vector3(carpet, 0.024, run), cloth)
+		_bar(at(c.x, top - rise * 0.5, v0 + run * k - 0.012), Vector3(carpet, rise, 0.024), cloth)
+		for s: float in [-1.0, 1.0]:
+			_bar(at(c.x + s * (carpet * 0.5 - 0.05), top + 0.02, vc), Vector3(0.07, 0.018, run), gold)
+	# the cheeks: a low wall each side, coped, rising with the flight
+	for s: float in [-1.0, 1.0]:
+		var x := c.x + s * (o.half.x - 0.14)
+		for k in n:
+			var top := rise * (k + 1) + 0.3
+			fm.block(at(x, 0.0, v0 + run * (k + 0.5)), Vector3(0.28, top, run), 0.0, facade_stone(), false)
 
 
 ## The standards as the save has it (the picked hero's whole, the locked Maga grey).

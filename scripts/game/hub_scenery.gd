@@ -233,6 +233,10 @@ const IVY_EVERY := 2.6
 const IVY_TALL := Vector2(2.0, 5.5)
 const IVY_A := Color(0.14, 0.24, 0.1)
 const IVY_B := Color(0.34, 0.46, 0.2)
+const WALL_WISTERIA_EVERY := Vector2(1.7, 2.7)  # round 2: denser than 2.4 to 3.6
+const CASCADE_ON: Array[StringName] = [&"book", &"heroes", &"smith", &"tree", &"vendor"]
+const CASCADE_COUNT := 3
+const CASCADE_TALL := Vector2(2.2, 3.4)
 const HANG_WIDTH := 0.95  # a wisteria tassel's width at the top
 const HANG_TALL := Vector2(2.0, 3.8)  # a cliff tassel, from the lip down
 ## Round 2: the dark crowns far down: every so often along the edge, this far out and this deep, this tall.
@@ -256,6 +260,9 @@ const PATH_GATE: Array[Vector2] = [Vector2(2.0, -6.0), Vector2(5.0, -13.0), Vect
 const RED_TREE_AT := Vector2(-30.4, 21.5)
 const RED_TREE := Vector3(5.2, 5.0, 3.2)  # crown width, crown tall, trunk tall
 const RED_TREE_CLEAR := 7.0
+## Round 2: one more crimson tree (the art's second, behind the Alquimista on the west cliff): its place (u, v) and its size
+## as a share of RED_TREE.
+const RED_TREE_2 := Vector3(-31.6, 6.5, 0.85)
 
 # ---------- the far ridges ----------
 const RIDGE_SHADER := preload("res://assets/shaders/hub_ridge.gdshader")
@@ -347,9 +354,10 @@ func build(layout: RoomLayout) -> void:
 	_wall_flowers()
 	_build_lanterns()
 	look.add_crowns(_leaf_spots, _leaf_tall, LEAF_DARK, LEAF_LIGHT, 1.5, "Shrubs", false)
-	look.add_crowns(_flower_spots, _flower_tall, WISTERIA_A, WISTERIA_B, 1.3, "Flowers", false)
-	look.add_crowns(_magenta_spots, _magenta_tall, MAGENTA_A, MAGENTA_B, 1.3, "Magentas", false)
-	look.add_crowns(_wisteria_spots, _wisteria_tall, WISTERIA_A, WISTERIA_B, HANG_WIDTH, "Wisteria", false, true)
+	# round 2: clean clumps and tassels (hub_flower.gdshader), not the canopy's speckled cards
+	look.add_blooms(_flower_spots, _flower_tall, WISTERIA_A, WISTERIA_B, 1.3, "Flowers")
+	look.add_blooms(_magenta_spots, _magenta_tall, MAGENTA_A, MAGENTA_B, 1.3, "Magentas")
+	look.add_blooms(_wisteria_spots, _wisteria_tall, WISTERIA_A, WISTERIA_B, HANG_WIDTH, "Wisteria", true)
 	look.add_crowns(_ivy_spots, _ivy_tall, IVY_A, IVY_B, 0.8, "Ivy", false, true, 0.7)
 	look.add_crowns(_roof_spots, _roof_tall, LEAF_DARK, LEAF_LIGHT, PERGOLA_LEAF.x, "PergolaRoof", true)
 	look.add_crowns(_grape_spots, _grape_tall, GRAPE_A, GRAPE_B, 0.42, "Grapes", false, true, 0.4)
@@ -573,10 +581,32 @@ func _wall_flowers() -> void:
 		while u < r.z - 0.5:
 			var p := Vector2(u, r.y - 0.4)
 			if not _near_piece(Rect2(p.x - 0.6, p.y - 0.6, 1.2, 1.2)):
-				var tall := _rng.randf_range(1.0, 1.6)
+				var tall := _rng.randf_range(1.2, 2.0)
 				_wisteria_spots.append(Vector3(p.x, h - tall, p.y))
 				_wisteria_tall.append(tall)
-			u += _rng.randf_range(2.4, 3.6)
+			u += _rng.randf_range(WALL_WISTERIA_EVERY.x, WALL_WISTERIA_EVERY.y)
+	_cascades()
+
+
+## Round 2 (the art's big purple curtains at the roofs' corners: the Biblioteca's east end, the Aposento's two sides, the
+## Forja's east end, the Capela's and the Mercador's corners): CASCADE_COUNT long tassels at each of a roof's two south
+## corners, staggered across and in depth so they read as one thick curtain, clear of doors, arches and the stations.
+func _cascades() -> void:
+	for b in HubPlan.BUILDINGS:
+		if not CASCADE_ON.has(b[&"id"]):
+			continue
+		var r: Vector4 = b[&"rect"]
+		var h: float = b[&"h"]
+		for side: float in [-1.0, 1.0]:
+			var edge := r.x + 0.45 if side < 0.0 else r.z - 0.45
+			if _near_piece(Rect2(edge - 0.9, r.y - 1.0, 1.8, 1.4)):
+				continue
+			for k in CASCADE_COUNT:
+				var tall := _rng.randf_range(CASCADE_TALL.x, CASCADE_TALL.y)
+				var u := edge - side * (0.3 + 0.62 * k) + _rng.randf_range(-0.1, 0.1)
+				var v := r.y - 0.4 - 0.09 * k
+				_wisteria_spots.append(Vector3(u, h - tall, v))
+				_wisteria_tall.append(tall)
 
 
 # ---------- water ----------
@@ -1186,7 +1216,7 @@ func _trees() -> void:
 			free = free and not Rect2(br.x - 1.0, br.y - 1.0, br.z - br.x + 2.0, br.w - br.y + 2.0).has_point(c)
 		if not free:
 			continue
-		if c.distance_to(RED_TREE_AT) < RED_TREE_CLEAR:
+		if c.distance_to(RED_TREE_AT) < RED_TREE_CLEAR or c.distance_to(Vector2(RED_TREE_2.x, RED_TREE_2.y)) < RED_TREE_CLEAR:
 			continue
 		look.fm.block(_at(c.x, -TREE_SHELF.y - 0.3, c.y), Vector3(TREE_SHELF.x, TREE_SHELF.y + 0.3, TREE_SHELF.x * 0.8), _rng.randf() * PI, rock, false)
 		shelves += 1
@@ -1423,10 +1453,15 @@ func _under_bridge(p: Vector2) -> bool:
 
 ## The art's red tree in the north-west corner: a shelf of rock beyond the lip, a trunk and a broad crown of crimson leaves.
 func _red_tree() -> void:
-	var c := RED_TREE_AT
+	_red_tree_at(RED_TREE_AT, 1.0, "RedTree")
+	_red_tree_at(Vector2(RED_TREE_2.x, RED_TREE_2.y), RED_TREE_2.z, "RedTree2")
+
+
+func _red_tree_at(c: Vector2, size: float, label: String) -> void:
+	var trunk := RED_TREE.z * size
 	look.fm.block(_at(c.x, -TREE_SHELF.y - 0.3, c.y), Vector3(TREE_SHELF.x * 1.5, TREE_SHELF.y + 0.3, TREE_SHELF.x * 1.2), 0.4, look.stone(), false)
-	look._bar(_at(c.x, RED_TREE.z * 0.5 - 0.3, c.y), Vector3(0.38, RED_TREE.z, 0.38), look._plain(Color(0.24, 0.16, 0.12), 0.9))
-	look.add_crowns([Vector3(c.x, RED_TREE.z - 0.8, c.y)] as Array[Vector3], [RED_TREE.y] as Array[float], RED_LEAF_A, RED_LEAF_B, RED_TREE.x, "RedTree", true)
+	look._bar(_at(c.x, trunk * 0.5 - 0.3, c.y), Vector3(0.38 * size, trunk, 0.38 * size), look._plain(Color(0.24, 0.16, 0.12), 0.9))
+	look.add_crowns([Vector3(c.x, trunk - 0.8, c.y)] as Array[Vector3], [RED_TREE.y * size] as Array[float], RED_LEAF_A, RED_LEAF_B, RED_TREE.x * size, label, true)
 
 
 # ---------- the far ridges ----------

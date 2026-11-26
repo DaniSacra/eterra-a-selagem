@@ -160,7 +160,7 @@ func _process(delta: float) -> void:
 		_show_focus()
 	if is_instance_valid(station_sign):
 		station_sign.visible = free
-		station_sign.hero_at = Vector3(player.pos.x, 0.0, player.pos.y)
+		station_sign.hero_at = Vector3(player.pos.x, player.position.y, player.pos.y)
 	if free:
 		if Controls.pressed(&"pause"):
 			open_menu()
@@ -206,6 +206,7 @@ func lean() -> Vector2:
 		# the middle of its height in the middle of the screen: a point h over the floor shows where the floor point
 		# h / tan(pitch) farther up the screen does (the floor point under the tree's crown left the crown at the top)
 		var s: Vector3 = HubPlan.SHOW[guide.current.station]
+		s.z += HubPlan.ramp_at(Vector2(s.x, s.y))
 		var up := Feel.screen_to_floor(Vector2.UP, CamRig.yaw())
 		var pitch := deg_to_rad(Dev.num("cam-pitch", Feel.live().cam_pitch))
 		return HubPlan.to_world(Vector2(s.x, s.y)) + up * (s.z * 0.5) / maxf(tan(pitch), 0.2)
@@ -242,9 +243,11 @@ func _show_focus() -> void:
 	station_sign = StationSign.make(id, T.t("hub_" + id), T.t(station_line(id)))
 	# HV-D (hv_santuario_vigilia_art.md 6.3): no sign floating over the station; it hangs at the foot of the thing used
 	# (the anchor brought down to the floor), as the rewards' and the doors' in a run (StationSign.under)
-	station_sign.position = HubPlan.anchor(id) * Vector3(1.0, 0.0, 1.0)
+	# (round 2: at the foot of the thing used, on the level it stands on)
+	var foot := HubPlan.anchor(id)
+	station_sign.position = Vector3(foot.x, HubPlan.ramp_at(Vector2(HubPlan.ANCHOR[id].x, HubPlan.ANCHOR[id].y)), foot.z)
 	station_sign.under = true
-	station_sign.hero_at = Vector3(player.pos.x, 0.0, player.pos.y)
+	station_sign.hero_at = Vector3(player.pos.x, player.position.y, player.pos.y)
 	station_sign.pressed.connect(func() -> void:
 		if focus.current == id:
 			use(id))

@@ -506,3 +506,40 @@ Só visual; colisão, `HubPlan` e pontos de uso intactos; nenhum shader novo.
 - Escadas das Áreas Futuras: degrau em tom quente escuro (`STEP_TREAD`), friso mais escuro (`STEP_NOSING`) e faixa de sombra no espelho (`STEP_SHADOW`).
 - Canteiro da Vigília: mureta contínua com coroamento (`VIGIL_WALL`) e só 2 pilares (cantos sul), sem balaústres.
 - Não feito: árvore vermelha extra e glicínia nova no Aposento/Biblioteca (já há glicínia de `_wall_flowers` onde não há peça).
+
+## Rodada 2 (2026-11-26; environment-artist, SEM captura: às cegas, conferir na GPU; testes em `tests/test_hub_levels.gd`)
+Pedido: níveis e escadas de verdade, escada do Aposento, flores limpas, mais uma árvore vermelha, glicínias nos beirais. A simulação segue
+no plano (colisão, `FloorShape`, `NavGrid`); só os pés do herói e o desenho seguem um campo de altura.
+- **Níveis** (`HubPlan`, `HubLevels`, classe nova `scripts/game/hub_levels.gd`): terraço alto (`TIER_H` 1,2) = todo o piso com v >= `TIER_V`
+  (14,06): galerias, Forja, Aposento, Biblioteca (menos a bacia do jardim, que fica baixa: a borda da galeria sobre ela é o muro de
+  arrimo). Dois lances de escada sobem para +v em `STAIR_STEPS` 6 degraus: `STAIR_A` (u -17..-13, v 10..14,06: o caminho da Forja, as
+  duas laterais são borda do piso: contorno e bacia) e `STAIR_B` (u 1,5..12,4, v 10,4..14,06: o eixo principal, até o Aposento e a
+  Biblioteca; a lateral leste é a fenda `STAIR_CUT` na planta, um buraco de 0,6 m entre o lance e a praça do Mercador, coberto por um
+  parapeito de pedra). A piscina do Mercador (`WATER_3`) acaba em v 10 para não invadir o lance. `HubPlan.TIER_H = 0` desliga tudo (hub plano).
+  - `HubPlan.ramp_at(p)` é o campo liso (o que levanta o desenho), `height_at(p)` o em degraus (os pés), `ground(world)`; contínuo em todo o piso
+    (teste varre o piso a cada 0,25 m: nenhum salto maior que um degrau). `Arena.ground_at(p)` (só `hub` devolve algo) e `Player._ground`
+    (suavizado, `GROUND_EASE` 28) põem `position.y` do herói; câmera e colisão seguem no plano. Placas de estação e luz-guia usam
+    `HubPlan.anchor/ramp_at` (altura da estação); `hero_at.y` é o `position.y` do herói.
+  - **Como o cenário sobe**: tudo é construído plano, como antes; o último passo do build (`HubLook.build_steps`, depois de `merge` e de
+    `stylize`) roda `HubLevels.raise_steps(look)`: soma `ramp_at` aos vértices de cada `ArrayMesh` próprio (pedra fundida, piso, falésias,
+    balaústres, poças), às instâncias de cada `MultiMesh`, à origem de luzes, partículas, `HubNpc` e de meshes primitivos ou compartilhados
+    (barras, estátuas). Sem auditar peça por peça; ignora meshes chamados `Garden` (`KEEP_NAMES`, o solo do jardim). Passos de 60 mil vértices.
+    Depois `HubLevels.stairs(look)` desenha os degraus (altura absoluta): bloco por degrau, friso e faixa de sombra no espelho (as constantes
+    `HubScenery.STEP_*`), e o parapeito escalonado sobre a fenda.
+  - **Aposento** (item 2): degraus de pedra creme com tapete vermelho e filetes dourados (`HubLook._hero_steps`, peça `hub_heroes_steps`,
+    obstáculo sólido `HERO_STEPS` v 20..21,2, 5 degraus até `HERO_PLINTH` 0,8) e o estandarte sobre o plinto (`HERO_STAND` v 21,2..22, plinto + friso, `HeroStation` a
+    `HERO_PLINTH` + 0,1). O tapete do chão (`HubFacades.CARPET_RUN`) começa no pé dos degraus (v 20). É uma escada de monumento (sólida), a porta
+    do Aposento continua o vão ao lado; o ponto de uso (-1, 19) fica a 1 m do primeiro degrau.
+- **Flores** (item 3): `hub_flower.gdshader` (novo) desenha o tufo inteiro num cartão: lâminas verdes pontudas e 7 flores em disco com miolo
+  claro e borda escura, bordas cortadas limpas (sem ruído nem tracejado; sem `see_through`, sem sombra). `HubLook.add_blooms` (3 cartões por
+  ponto, `BLOOM_*`) substitui `add_crowns` para "Flowers", "Magentas" e "Wisteria"; os discos ficam redondos pelo `squash` (altura sobre largura do cartão).
+- **Árvore vermelha** (item 4): `RED_TREE_2` (u -31,6, v 6,5, 85% do tamanho) atrás do Alquimista, na falésia oeste; `_red_tree_at` desenha as duas.
+- **Glicínia** (item 5): cachos do beiral mais densos e longos (`WALL_WISTERIA_EVERY`, 1,2 a 2 m) e cortinas nos dois cantos da frente
+  dos telhados da Biblioteca, do Aposento, da Forja, da Capela e do Mercador (`_cascades`, `CASCADE_*`: 3 cachos de 2,2 a 3,4 m escalonados),
+  fora de portas, arcos e estações; cachos agora são o tassel de `hub_flower` (flores em fila que afinam e balançam).
+- Testes: `test_hub_levels.gd` (campo, degraus, sem salto, `Arena.ground_at`, hub construído levantado, degraus desenhados); `test_hub_sv`
+  (4 buracos: 3 bacias e a fenda) e `test_hub_ui` (a placa livra o herói na altura dele) ajustados. Shader novo: `hub_flower` (conjunto de aquecimento refeito).
+- Ajuste fino: `HubPlan.TIER_H/TIER_V/STAIR_*`, `HubLevels` (`TREAD_THICK`, `PARAPET_*`), `HubLook.BLOOM_*/TASSEL_*`, `HubScenery.CASCADE_*`, `RED_TREE_2`.
+  Riscos sem ver: a fatia de piso entre o parapeito e a praça do Mercador; balaústres/falésias nas laterais dos lances seguem a rampa lisa
+  e os degraus em bloco ficam por cima (pode aparecer o chão liso entre eles); o solo do jardim (`Garden`) na borda sul fica 0,84 m abaixo da
+  galeria (muro de arrimo = a falésia); coisas criadas depois do build (nada conhecido) ficariam sem a altura.

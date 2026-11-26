@@ -145,8 +145,9 @@ func test_the_sign_on_screen_is_clear_of_the_hero_at_every_station() -> void:
 		await _at(id)
 		await _frames(12)
 		var p := hub.player.pos
-		var head := cam.unproject_position(Vector3(p.x, StationSign.HERO_HEIGHT, p.y))
-		var feet := cam.unproject_position(Vector3(p.x, 0, p.y))
+		var ground := hub.player.position.y  # (round 2: the upper terrace's stations stand on it)
+		var head := cam.unproject_position(Vector3(p.x, ground + StationSign.HERO_HEIGHT, p.y))
+		var feet := cam.unproject_position(Vector3(p.x, ground, p.y))
 		var half := (feet.y - head.y) * StationSign.HERO_HALF
 		var hero := Rect2(head.x - half, head.y, half * 2.0, feet.y - head.y)
 		var plate := hub.station_sign.plate
