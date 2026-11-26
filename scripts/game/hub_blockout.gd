@@ -26,18 +26,23 @@ const GATE_WALL_U := Vector2(37.6, 42.0)
 const GATE_TOP := 5.7
 const GATE_CORNICE := 0.3
 const GATE_LIGHT_TINT := Color(1.0, 0.76, 0.34)
+## Round 5: the sheet (additive) and its lights at this share of the open portal's, so the violet view (mountains, road) shows
+## through the opening and the gold stays on the rim.
+const GATE_SHEET_DIM := 0.6
 const GATE_DARK := Color(0.02, 0.05, 0.035)
 const DOOR_WOOD := Color(0.36, 0.21, 0.11)
 const DOOR_IRON := Color(0.09, 0.09, 0.1)
 ## Hub refine round 1: an open door shows the warm light of the room inside (the art's doors are lit), and the future
 ## rooms' doors carry a gold padlock (the art's Area Futura).
 const DOOR_GLOW := Color(1.0, 0.56, 0.22)
-const DOOR_GLOW_ENERGY := 0.95
+const DOOR_GLOW_ENERGY := 0.8
 ## Round 2: the doorway is dark inside with the warm light coming up from the foot (HubLook.lit_opening), the open
 ## Videira's door is no door at all (its pergola shows through), and the future rooms' doors are stone arches with a
 ## wooden leaf (a pointed panel) set into the wall. Round 4: the leaf's winding faced away from the camera (culled: the doorway
 ## showed the black behind it), now fixed in HubFacades.ogive_mesh.
-const DOOR_TOP := 0.06
+const DOOR_TOP := 0.03
+const DOOR_MID := 0.22  # round 5: the gradient's middle (see HubLook.lit_opening)
+const DOOR_REVEAL := 0.14  # the dark reveal strips each side of an open doorway (width)
 const ARCH_SPRING := 0.8  # round 4: lower, so the arches in front of the camera do not hide the court
 const ARCH_RING := 0.38
 const ARCH_ARC := 0.52
@@ -117,6 +122,10 @@ func _gate() -> void:
 	look.fk.portal_glow(HubLook.at(cu, t + apex * 0.5, GATE_FRONT - 0.07), 0.0, Vector2(GATE_W, apex), Vector3(GATE_SPRING, GATE_W, gate_arc() * GATE_W))
 	look.fk.light_portal(look.fk.portals.size() - 1, true, GATE_LIGHT_TINT)  # Elun's warm gold, never the catacombs' green
 	var lights: Array = look.fk.portals[look.fk.portals.size() - 1]
+	var sheet := lights[0] as ShaderMaterial
+	sheet.set_shader_parameter(&"power", float(sheet.get_shader_parameter(&"power")) * GATE_SHEET_DIM)
+	for k in range(1, lights.size()):
+		(lights[k] as OmniLight3D).light_energy *= GATE_SHEET_DIM
 	look.station_lights[HubPlan.PORTAL] = lights[1]
 
 
@@ -153,11 +162,18 @@ func _door(id: StringName, closed: bool) -> void:
 	else:
 		var gap := Vector3(long_half * 2.0, h, 0.04) if across_u else Vector3(0.04, h, long_half * 2.0)
 		look._bar(HubLook.at(c.x, h * 0.5, c.y), gap, _door_glow())
+		var reveal := look._plain(DOOR_IRON, 0.9)
+		for sd: float in [-1.0, 1.0]:
+			var rp := c + along * sd * (long_half - DOOR_REVEAL * 0.5)
+			var rs := Vector3(DOOR_REVEAL, h, 0.12) if across_u else Vector3(0.12, h, DOOR_REVEAL)
+			look._bar(HubLook.at(rp.x, h * 0.5, rp.y), rs, reveal)
+		var sill := Vector3(long_half * 2.0, 0.08, 0.5) if across_u else Vector3(0.5, 0.08, long_half * 2.0)
+		look.fm.block(HubLook.at(c.x, 0.0, c.y), sill, 0.0, stone, false)
 
 
 func _door_glow() -> StandardMaterial3D:
 	if _glow == null:
-		_glow = HubLook.lit_opening(DOOR_GLOW, DOOR_GLOW_ENERGY, DOOR_TOP)
+		_glow = HubLook.lit_opening(DOOR_GLOW, DOOR_GLOW_ENERGY, DOOR_TOP, DOOR_MID)
 	return _glow
 
 

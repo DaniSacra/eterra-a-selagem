@@ -906,10 +906,13 @@ func _alchemist(c: Vector2, o: ArenaObstacle) -> void:
 ## An unshaded flame-like material of colour c (a lamp's small flame; under the glow).
 ## Round 2: warm light from below, not a flat yellow pane: the emission runs from `top` (a dim ember at the head of the
 ## opening) to the full colour at the foot (a vertical gradient on a box's side faces, UV y 0 at the top).
-static func lit_opening(color: Color, energy: float, top := 0.12) -> StandardMaterial3D:
+static func lit_opening(color: Color, energy: float, top := 0.12, mid := 0.0) -> StandardMaterial3D:
 	var grad := Gradient.new()
 	grad.colors = PackedColorArray([Color(top, top * 0.6, top * 0.4), Color(1, 1, 1)])
 	grad.offsets = PackedFloat32Array([0.0, 1.0])
+	if mid > 0.0:
+		# round 5: a dark interior over the upper half, the light pooling toward the foot (the door is not a flat plate)
+		grad.add_point(0.5, Color(mid, mid * 0.7, mid * 0.5))
 	var tex := GradientTexture2D.new()
 	tex.gradient = grad
 	tex.fill_from = Vector2(0.5, 0.0)

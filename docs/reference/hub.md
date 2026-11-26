@@ -476,3 +476,25 @@ Só visual; colisão (`HubPlan.GATE` continua a caixa sólida de 6 m), `HubPlan`
 - Ajuste fino se algo sair errado: `HUB_FOG_HEIGHT` (mais alto = mais névoa embaixo), `GATE_*`/`LION_OFFSET`/`GATE_BANNER`, `FALL_*`,
   `hub_stained` (`cells`, `lead`, `brightness`). Risco sem ver: a fachada do Portão (5,7 m) pode tapar o que está atrás dela; o shader do
   vitral ainda não foi visto; a névoa mais fina pode deixar os planos do abismo visíveis demais.
+
+## Refino do Santuário, rodada 5 (2026-11-26; environment-artist, SEM captura: às cegas, conferir na GPU)
+Só visual; colisão, `HubPlan` e pontos de uso intactos; nenhum shader novo.
+- **1 Arcos pretos do primeiro plano de `r4_tree`**: eram os arcos da PONTE do caminho sul (`HubScenery._bridge`), não os das Áreas
+  Futuras. A linha de arranque estava em +2,2 m (acima do piso) e eles subiam até ~4,5 m na frente da câmera, com um painel preto
+  (`GATE_DARK`) no vão. Agora `ARCH_SPRING` -4,1 (o anel todo abaixo da cornija, ápice ~ -0,7 m) e o vão é uma ogiva (`ogive_mesh`)
+  de pedra escura (`ARCH_BACK` 0,38 do tom interno), nunca preto chapado. As portas das Áreas Futuras já tinham folha de madeira.
+- **2 Estufa** (`HubFacades._glasshouse`): vidro verde-âmbar escuro (`GLASS_PANE`, `GLASS_ALPHA` 0,34, `GLASS_EMIT*` baixo), caixilhos
+  de ferro escuro mais grossos (`GLASSHOUSE_IRON`, `FRAME_THICK`), telhado em duas águas (`inset` 0) com caibros em cada poste, painel
+  âmbar aceso atrás das plantas (`lit_opening`) e luz interna menor (`GLASSHOUSE_GLOW`).
+- **3 Portão**: folha e luzes a 60% (`HubBlockout.GATE_SHEET_DIM`), para a vista violeta aparecer; a borda dourada fica.
+- **4 Portas abertas**: `lit_opening` ganhou o parâmetro `mid` (gradiente de três pontos: interior escuro na metade de cima, luz
+  junto ao chão); `DOOR_TOP` 0,03, `DOOR_MID` 0,22, energia 0,8, mais faixas escuras de batente (`DOOR_REVEAL`) e soleira de pedra.
+- **5 Glicínia de quina**: tufos/cortinas pendurados na borda (`_cliffs`) não nascem a menos de `HANG_CLEAR` (4 m) da chegada, de
+  pontos de uso e de portas (`_near_avoid`).
+- **6 Muretas e lanternas**: balaústre só onde a borda dá para o vazio (`_facing_court`: com piso de novo a 2,5 ou 4,5 m para fora,
+  é vala entre pátios e fica só o lado sul); lanterna de poste ou de lampião no máximo a cada `LANTERN_APART` (6 m,
+  `_lantern_free`; os lampiões das Áreas Futuras são exceção); canteiros a cada 13 m (era 9).
+- **7 Rochas**: `_rock_size` (um terço alto e estreito, o resto com os três tamanhos variados), chanfro `ROCK_CHAMFER` 0,28 com
+  quina quebrada, giro de até 0,5 rad e inclinação `ROCK_TILT` 0,14.
+- Ajuste fino: `GATE_SHEET_DIM`, `RAIL_TRENCH`, `LANTERN_APART`, `ROCK_*`, `GLASS_*`. Risco sem ver: `_facing_court` pode tirar um
+  balaústre que ainda era borda; a ponte sem o arco alto deixa o rosto sul dela mais baixo.
