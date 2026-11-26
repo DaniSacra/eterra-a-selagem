@@ -492,6 +492,8 @@ func _build_world() -> void:
 	player.fx = fx
 	player.pos = Vector2(0, 8)
 	add_child(player)
+	if Dev.has("no-hero"):
+		player.visible = false  # scenery-only captures (GP-8 base for the painted rooms); the simulation is untouched
 	camera = Camera3D.new()
 	add_child(camera)
 	camera.make_current()
