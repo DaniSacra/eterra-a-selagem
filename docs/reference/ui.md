@@ -695,3 +695,21 @@ livro (o livro não passa de 1,9 alturas de largura, `BookDesk.side_room`, ou se
   `milestones_before` (`Milestones.reached`) ao começar e `RunSpoils.opened(antes, depois)` (puro) dá os novos ao abrir o fim.
   O botão do Santuário agora diz "Continuar" (`end_menu`) e continua sendo o primeiro (vitória) ou o segundo caminho (derrota);
   na primeira descida (`home_only`) é o único. Materiais, Bênçãos e Maestria já vinham antes.
+
+## PT-26 (2026-11-25, teste do exe e2a59f82): Videira, anjo, aviso de substituir, Forja
+- **Videira compra como os Dons** (`VineScreen`, `HoldPress`): cada estrela tem seu `HoldPress` (anel sobre a própria estrela); segurar o
+  botão esquerdo (também sobre a etiqueta, `HoldPress.forward`), o botão de aceitar ou o do controle numa estrela que pode crescer
+  (`_can_hold`: figura aberta e estado AVAILABLE) enche o anel e compra (`_water_hold` -> `confirm`). Do céu inteiro, ou numa raiz que
+  não pode crescer, o toque abre a figura ou mostra o motivo (o `gate` do `HoldPress` deixa o toque passar). O botão Regar do painel segue
+  funcionando do mesmo modo. Testes em `tests/test_spoils_hold.gd`.
+- **Anjo sozinho** (`EncounterScreen._meet`): com 1 anjo não há tela de entrada; vai direto às cartas (`_take`), que mantêm a arte do
+  anjo (`BoonChoice.by_angel`). Com 2, a tela de sempre. `--encounter=sarael` (um id) também vai direto às cartas; para ver a tela do
+  par, `--encounter=sarael,nivael`.
+- **"Substitui: <Bênção>"** (`BoonCard._replace_warning`, nó `ReplaceWarning`, chave `choice_replaces`): numa carta que ocupa a mesma
+  ação de uma Bênção já tida (`BoonState.replaced_by`, a regra de slot), aviso em cor de alerta acima do "Sai / Entra". Troca de raridade
+  (carta de upgrade) mantém só a aba "Sobe uma raridade".
+- **Forja mais clara** (`ForgeScreen`, `ForgePlate`): linha fixa sob o título (`forge_how_line`; na Oficina, `forge_workshop_lead`), cabeçalhos
+  nas três colunas da placa (Este ponto, O que muda, Custo), "Vale a partir da próxima descida, em todas as seguintes" sob o preço de
+  qualquer ação da Emeth, dica do martelo com "Voltar não gasta". Na primeira visita de cada save abre a folha "Como a Forja funciona"
+  (`intro`, 4 frases; confirmar, voltar ou clique fecham; guarda `forge` em `data.hub.tips`, `FirstTips`); nunca sem save, com o robô ou nos
+  testes. Para capturar a folha: `--forge-intro` (não grava). Sem mecânica nova.

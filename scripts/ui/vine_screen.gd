@@ -7,8 +7,8 @@ extends Control
 ## panel on the right is the node's tip (NodeTip, SW-M2): its name and text, "agora -> depois" with the real numbers, the price
 ## with the icon of its material and "você tem N", "Abra o anterior primeiro" when something comes before it, and the Regar
 ## button. No question: Regar is the confirmation. The rules stay in Vine (state, buy) and the save in Save.
-## Keys, gamepad and mouse walk the same stars (VineLayout.neighbor): up grows, left and right change figure; accept on a star
-## that can grow moves the focus to Regar, accept there waters it. The 1280 x 720 stage scales evenly to the window.
+## Keys, gamepad and mouse walk the same stars (VineLayout.neighbor): up grows, left and right change figure; holding the press
+## (left mouse, accept key or pad) on a star that can grow fills its ring and waters it, as the Dons do. The 1280 x 720 stage scales evenly to the window.
 ##   var s := VineScreen.new()
 ##   host.open(s, [Save.data]); s.bought.connect(func(id: StringName) -> void: ...)
 
@@ -36,6 +36,8 @@ var vine: Vine
 var buds: Dictionary = {}
 var tags: Dictionary = {}
 var water_button: Button
+## The hold of each star (PT-26-5): the ring fills on the star itself.
+var holds: Dictionary = {}
 ## The hold that confirms Regar (PT-25-3): hold accept or the mouse on the button until the ring is full.
 var hold: HoldPress
 var bar: ActionBar
@@ -91,6 +93,7 @@ func open(data: Dictionary = {}) -> void:
 		_stage.add_child(_tag(n))
 	for n in vine.catalog:
 		_stage.add_child(_bud(n))
+		(holds[n.id] as HoldPress).forward(tags[n.id])
 	_build_panel()
 	_foot()
 	bar = ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_water"), ActionBar.press_focus.bind(self)),
@@ -184,7 +187,22 @@ func _bud(n: VineNode) -> Button:
 	b.mouse_entered.connect(b.grab_focus)
 	b.pressed.connect(_choose.bind(n.id))
 	buds[n.id] = b
+	# PT-26-5: like the Dons, holding the press (left mouse, accept key or pad) on a star that can grow waters it
+	var h := HoldPress.attach(b)
+	h.gate = _can_hold.bind(n.id)
+	h.completed.connect(_water_hold.bind(n.id))
+	holds[n.id] = h
 	return b
+
+
+## True when a press on this star starts the hold: closed on a figure and the root can grow now.
+func _can_hold(id: StringName) -> bool:
+	return zoomed != &"" and vine.state(_data, id) == Vine.State.AVAILABLE
+
+
+func _water_hold(id: StringName) -> void:
+	pending = id
+	confirm()
 
 
 ## The name of a figure under it in the whole sky; closed on it, at the top of the stage.

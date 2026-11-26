@@ -247,3 +247,34 @@ func test_the_text_of_the_bench_is_portuguese_without_dash() -> void:
 		var t := String(T.table.entries.get(k, ""))
 		assert_ne(t, "", k)
 		assert_false(t.contains("—") or t.contains("–"), k)
+
+
+# ---------- PT-26-6: the Forja says how it works ----------
+
+func test_the_bench_always_says_what_it_is_for_and_the_plate_names_its_columns() -> void:
+	var f := _screen(_data(30))
+	assert_eq((f._stage.get_node("how_line") as Label).text, T.t(&"forge_how_line"))
+	for h in ["what", "change", "cost"]:
+		assert_not_null(f.plate.find_child("head_%s" % h, true, false), "column %s" % h)
+	var when := f.plate.get_node("when") as Label
+	assert_true(when.visible, "something that can be forged says when it counts")
+	assert_eq(f.intro, null, "no sheet in a run without a save")
+
+
+func test_the_first_visit_sheet_closes_once_and_is_remembered() -> void:
+	var d := _data(30)
+	assert_true(not FirstTips.shown(d).has("forge"))
+	Dev.put("forge-intro", "1")
+	var f := _screen(d)
+	assert_not_null(f.intro, "the sheet is open")
+	f._close_intro()
+	Dev.drop("forge-intro")
+	assert_null(f.intro)
+	assert_false(FirstTips.shown(d).has("forge"), "the capture flag does not write the save")
+	f = _screen(d)
+	f._open_intro()
+	f._close_intro()
+	assert_true(FirstTips.shown(d).has("forge"))
+	Save.enabled = true
+	assert_false(ForgeScreen.intro_due(d), "seen once, never again")
+	Save.enabled = false

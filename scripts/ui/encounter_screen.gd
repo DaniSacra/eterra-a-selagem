@@ -7,8 +7,8 @@ extends Control
 ## temperament, its family and how many of its Blessings the hero carries (the one fact the choice turns on), with
 ## "Ouvir {name}" and the real key. Left and right (keys, stick, or the mouse over a side) change the focus; Enter, A or
 ## a click take it and its cards open on the choice screen (BoonChoice.by_angel). There, B or Esc goes back to the pair
-## (the same two, the same cards: Encounters.cards_of has its own dice). One angel only (the door that showed one): the
-## same stage with it alone, then a press goes on to the options (BC-4). The robot and --autopick never open it.
+## (the same two, the same cards: Encounters.cards_of has its own dice). One angel only (the door that showed one): no
+## screen at all, straight to its cards (PT-26-2). The robot and --autopick never open it.
 ## It replaces the provisional AngelChoice: attach listens to the run's meetings (Encounters.opened).
 ##   EncounterScreen.attach(game)          # once, when the run is ready (Hud does it)
 ##   --encounter=sarael,nivael             # dev: opens this meeting at once (one id: the lone angel)
@@ -48,22 +48,31 @@ static func attach(game: Game) -> void:
 
 
 static func _meet(pair: Array, game: Game, focus_at := 0) -> void:
-	var s := EncounterScreen.new()
-	game.open_screen(s)
 	var typed: Array[AngelDef] = []
 	typed.assign(pair)
+	# PT-26-2: a lone angel has nothing to choose: straight to its cards (its painted portrait stays over them)
+	if typed.size() == 1:
+		_take(game, typed, typed[0])
+		return
+	var s := EncounterScreen.new()
+	game.open_screen(s)
 	s.open(typed, game.boons, focus_at)
 	s.chosen.connect(func(a: AngelDef) -> void:
 		game.close_screen()
-		# Esc on the cards: back to the pair, the same two, the focus on the one just seen (a lone angel has no pair)
-		game.choice_back = Callable() if typed.size() < 2 else func() -> void:
-			game.close_screen()
-			game.encounters.angels_now.assign(typed)
-			_meet(typed, game, typed.find(a))
-		game.encounters.choose(a)
-		var choice := _choice_of(game)
-		if choice != null:
-			choice.by_angel(a, game.choice_back))
+		_take(game, typed, a))
+
+
+## The angel taken: its cards open on the choice screen. Esc there goes back to the pair, the same two with the focus on
+## the one just seen (a lone angel has no pair).
+static func _take(game: Game, typed: Array[AngelDef], a: AngelDef) -> void:
+	game.choice_back = Callable() if typed.size() < 2 else func() -> void:
+		game.close_screen()
+		game.encounters.angels_now.assign(typed)
+		_meet(typed, game, typed.find(a))
+	game.encounters.choose(a)
+	var choice := _choice_of(game)
+	if choice != null:
+		choice.by_angel(a, game.choice_back)
 
 
 ## The choice screen the run has open now (null: none, as for the rest card taken at once).

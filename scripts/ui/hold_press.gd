@@ -15,6 +15,8 @@ const WIDTH := 5.0
 
 var gauge: HoldGauge
 var button: Button
+## Optional: a press only starts a hold while this returns true; otherwise it passes through as an ordinary press.
+var gate := Callable()
 
 
 static func attach(b: Button, time: float = TIME, drain: float = DRAIN) -> HoldPress:
@@ -55,8 +57,15 @@ static func is_press(event: InputEvent) -> bool:
 	return event.is_action(&"ui_accept") or (event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT)
 
 
+## Lets another control (a clay tag beside a star) start and end this hold with its own presses.
+func forward(from: Control) -> void:
+	from.gui_input.connect(_on_gui_input)
+
+
 func _on_gui_input(event: InputEvent) -> void:
 	if not is_press(event) or event.is_echo():
+		return
+	if event.is_pressed() and gate.is_valid() and not bool(gate.call()):
 		return
 	button.accept_event()
 	if event.is_pressed():
