@@ -31,6 +31,7 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   4 e 4.1). **No jogo desde 2026-11-21 (AN-1)**: `assets/ui/angels/angel_1..4.jpg` (512 x 768, reduzidos com o ffmpeg dos
   anjos 1 Sarael, 2 Nivael, 3 Lumael e 4 Shomael; recorte do busto no código, `AngelArt`), na tela do Encontro à esquerda das
   cartas. Os anjos 5 a 7 (Velael, Galael, Qeshael) entram com as Bênçãos no AN-2: `assets/ui/angels/angel_5..7.jpg`, mesmo processo.
+- **Retratos dos anjos 8 e 9 (2026-11-26)**: Zerael (Peste) e Saarael (Trovão), `docs/art/angels_src/angel_8..9.png` (1024 x 1536), gerados por IA pelo Daniel no ChatGPT a partir de `docs/art/requests/Pedido-ChatGPT-Anjos-8-e-9.txt`; no jogo como `assets/ui/angels/angel_8..9.jpg` (512 x 768, ffmpeg), entram com as Bênçãos V2.
 - **Retrato do Guerreiro no Livro de Ahk (vai no jogo, 2026-11-18, etapa 2)**: `assets/ui/hero/warrior_page.png`
   (330 x 400), o Guerreiro pintado em aguada sobre pergaminho, recortado com o ffmpeg da página esquerda da prancha
   "Livro de Akh" (`docs/art/ref/direcao_2026-11-17/pranchas/04-livro-akh.png`, só local), feita por IA pelo diretor de
