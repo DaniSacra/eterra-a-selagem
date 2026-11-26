@@ -308,13 +308,20 @@ func test_two_thousand_meetings_offer_no_invalid_card() -> void:
 			meetings += 1
 			var cards := Encounter.cards(state, a, Encounter.cards_dice(i, 1, 3, a.id), 3, stage.rarity_chance,
 				stage.elo_chance, stage.trade_chance)
-			assert_eq(cards.size(), mini(3, Encounter.supply(state, a)), "an eligible angel has up to three cards (V1: as many as it has)")
+			var own := mini(3, Encounter.supply(state, a))
+			var any := 0
+			for b in state.catalog:
+				if state.level(b.id) <= 0 and state.offerable(b):
+					any += 1
+			assert_eq(cards.size(), mini(3, any), "three cards while the catalog has them; a short family is filled from others (2026-11-26)")
 			assert_gt(cards.size(), 0)
 			var ids := {}
+			var mine := 0
 			for c in cards:
 				assert_false(ids.has(c.boon.id), "no card twice")
 				ids[c.boon.id] = true
-				assert_true(Encounter.belongs(state, c.boon, a.family), "%s is %s's" % [c.boon.id, a.id])
+				if Encounter.belongs(state, c.boon, a.family):
+					mine += 1
 				assert_true(state.can_offer(c.boon), "%s can be offered" % c.boon.id)
 				assert_false(c.boon.reserve, "%s is in the reserve" % c.boon.id)
 				if c.grow:
@@ -324,6 +331,7 @@ func test_two_thousand_meetings_offer_no_invalid_card() -> void:
 				if not c.grow and not c.trade and not c.boon.is_duo() and c.replaces == null:
 					rarities[c.rarity] += 1
 					fresh += 1
+			assert_eq(mine, own, "the angel's own cards come first, as many as its family has")
 	var odds := BoonState.rarity_odds(stage.rarity_chance)
 	for r in 3:
 		assert_almost_eq(float(rarities[r]) / fresh, odds[r], 0.02, "rarity %d at the E3 odds" % r)

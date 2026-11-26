@@ -82,7 +82,7 @@ func test_fraqueza_cuts_what_the_enemy_deals() -> void:
 	assert_almost_eq(game.horde._out(e), game.horde.damage_scale * (1.0 - Combat.WEAK_CUT), 0.001)
 	_take(game, &"entardecer")
 	game.combat.hit_enemy(e, 1.0, tags, Vector2.RIGHT, 0.0)
-	assert_almost_eq(game.horde.weak_cut, Combat.WEAK_CUT + 0.05, 0.001, "Névoa Profunda (entardecer) deepens it")
+	assert_almost_eq(game.horde.weak_cut, Combat.WEAK_CUT + 0.08, 0.001, "Névoa Profunda (entardecer) deepens it")
 	e.weak_t = 0.0
 	assert_eq(game.horde._out(e), game.horde.damage_scale, "it wears off")
 

@@ -146,10 +146,13 @@ func test_up_to_three_cards_at_every_meeting_as_many_as_there_are() -> void:
 		if not Encounter.eligible(state, sarael):
 			break
 		var cards := Encounter.cards(state, sarael, rng, 3, Boon.RARITY_CHANCE, 0.0, 0.0)
-		assert_eq(cards.size(), mini(3, Encounter.supply(state, sarael)), "meeting %d" % meeting)
+		assert_eq(cards.size(), mini(3, _offerable(state)), "meeting %d" % meeting)
+		var own := 0
 		for c in cards:
-			assert_true(Encounter.belongs(state, c.boon, sarael.family))
+			if Encounter.belongs(state, c.boon, sarael.family):
+				own += 1
 			assert_false(c.boon.reserve)
+		assert_eq(own, mini(3, Encounter.supply(state, sarael)), "Sarael's own cards first, a short family filled from others")
 		# takes the first card each time: the hand grows, a taken button leaves the draw
 		state.take_card(cards[0])
 	assert_gt(state.owned().size(), 2)
@@ -166,7 +169,7 @@ func test_a_pair_of_angels_has_as_many_cards_as_each_has_and_none_without_any() 
 			var pair := book.pair(s, Encounter.dice(run, room, room))
 			for a in pair:
 				var cards := Encounter.cards(s, a, rng, 3)
-				assert_eq(cards.size(), mini(3, Encounter.supply(s, a)), "%s in room %d" % [a.id, room])
+				assert_eq(cards.size(), mini(3, _offerable(s)), "%s in room %d: three while the catalog has them" % [a.id, room])
 				assert_gt(cards.size(), 0, "an angel without a card does not come")
 			if not pair.is_empty():
 				s.take_card(Encounter.cards(s, pair[0], rng, 3)[0])
@@ -246,3 +249,12 @@ func test_the_ultimate_blessing_waits_for_nobody_in_range_without_spending_its_g
 	_spawn_near()
 	game.skills.trigger(SkillDef.Trigger.ULT)
 	assert_gt(game.skills._pending.size(), 0, "brasas fall on the ones near")
+
+
+## every Blessing that could still be offered, of any angel (a short family is filled from these, 2026-11-26)
+func _offerable(s: BoonState) -> int:
+	var n := 0
+	for b in s.catalog:
+		if s.level(b.id) <= 0 and s.offerable(b):
+			n += 1
+	return n
