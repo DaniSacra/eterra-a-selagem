@@ -23,6 +23,11 @@ extends Control
 const DIAMOND := 54.0
 const KEY_H := 17.0
 const KEY_FONT := 14
+## PT-26-4: the mouse icon under a diamond (px tall: the left and right buttons read apart) and the action's short
+## name under the key (always there: what each diamond is).
+const MOUSE_H := 30.0
+const NAME_FONT := 13
+const NAME_H := 15.0
 ## How long the frame shines after the recharge ends.
 const READY_FLASH := 0.25
 const IVORY := Color(1.0, 0.97, 0.88)
@@ -157,6 +162,12 @@ var urgent := false
 var _pulse_t := 0.0
 ## 1 -> 0 over READY_PULSE seconds after it fills.
 var _ready_pulse := 0.0
+## PT-26-4: the short name under the key ("" none).
+var label_text := "":
+	set(v):
+		if v != label_text:
+			label_text = v
+			queue_redraw()
 ## PT-26: whole seconds left of a long recharge (Q, E), written over the diamond; 0: none.
 var secs_left := 0
 var _key := ""
@@ -170,10 +181,15 @@ func setup(action_name: StringName, action_slot: Boon.Slot, side_px: float = DIA
 	slot = action_slot
 	side = side_px
 	key_drop = drop
-	custom_minimum_size = Vector2(side + 12.0, side + KEY_H * 0.5 + key_drop)
+	custom_minimum_size = Vector2(side + 12.0, height_for(side, key_drop))
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_process(false)
 	return self
+
+
+## The slot's height: the diamond, the key or mouse hanging under its point, and the name under them.
+static func height_for(side_px: float, drop: float) -> float:
+	return side_px + maxf(KEY_H, MOUSE_H) * 0.5 + drop + NAME_H
 
 
 ## Called every frame by the HUD; redraws only when something changed.
@@ -293,8 +309,20 @@ func _draw() -> void:
 	if cost > 0:
 		_draw_cost(c + Vector2(r * COST_AT, -r * COST_AT), r * COST_GEM)
 	_draw_key(Vector2(c.x, side + key_drop))
+	if label_text != "":
+		_draw_name(Vector2(c.x, side + key_drop + maxf(KEY_H, MOUSE_H) * 0.5 + NAME_H - 3.0))
 	if caption != "":
 		_draw_caption(Vector2(c.x, c.y - r - CAPTION_RISE))
+
+
+## The action's short name centred under the key, in the HUD's shadow; dimmer while it recharges.
+func _draw_name(at: Vector2) -> void:
+	var font := UiKit.BOLD_FONT
+	var w := font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT).x
+	var base := Vector2(at.x - w * 0.5, at.y)
+	var col := Color(UiKit.PALE, 0.62 if busy() or sealed else 0.95)
+	draw_string(font, base + Vector2(0, UiKit.SHADOW_DROP), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT, Color(UiKit.INK, 0.9))
+	draw_string(font, base, label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT, col)
 
 
 ## The seconds a recharge has left, in lining figures with an ink outline, over the middle of the diamond.
@@ -385,7 +413,7 @@ static func key_plate(ci: CanvasItem, at: Vector2, text: String, font_size: int,
 
 ## A mouse seen from above with the bound button lit (MouseGlyph).
 func _draw_mouse(at: Vector2) -> void:
-	MouseGlyph.draw(self, at, _mouse)
+	MouseGlyph.draw(self, at + Vector2(0, (MOUSE_H - KEY_H) * 0.5 - 4.0), _mouse, MOUSE_H)
 
 
 ## The action's mark outside the HUD (stage 1A: the cards say the action with the HUD's own symbol): a small diamond

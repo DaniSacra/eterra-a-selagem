@@ -69,8 +69,8 @@ func test_the_bars_the_row_and_the_column_do_not_overlap_or_leave_the_screen() -
 				assert_false(a.intersects(b), "%s and %s apart at %s" % [names[i], names[j], size])
 		# the column leaves the middle three quarters of the width to the fight and stands on the right edge
 		var col: Rect2 = hud._column.get_global_rect()
-		assert_almost_eq(col.end.x, view.end.x, 1.0, "on the right edge")
-		assert_lte(col.size.x, view.size.x * 0.06, "no wider than 6%% of the width at %s" % size)
+		assert_almost_eq(col.end.x, view.end.x - BuildColumn.MARGIN, 1.0, "a safe margin from the right edge")
+		assert_lte(col.size.x, view.size.x * 0.14, "no wider than 14%% of the width at %s" % size)
 	get_window().size = Vector2i(1280, 720)
 
 
@@ -84,7 +84,8 @@ func test_the_column_shows_the_blessing_of_each_button_and_greys_the_empty_ones(
 	await wait_process_frames(2)
 	assert_not_null(col.entries[0].icon.boon, "the left button holds its Blessing")
 	assert_eq(col.entries[0].icon.level, 1)
-	assert_eq(col.entries[0].level_label.text, T.t(&"hud_build_level", {"n": 1}))
+	assert_eq(col.entries[0].level_label.text, "", "level 1 says nothing")
+	assert_eq(col.entries[0].name_label.text, T.t("boon_golpe_brasa"), "the row names the Blessing")
 	assert_null(col.entries[1].icon.boon, "the right button is empty")
 	assert_eq(col.entries[1].icon.icon, BoonIcon.ACTION_GLYPH + Boon.Slot.SPECIAL)
 	assert_eq(col.entries[2].icon.icon, BoonIcon.SHOUT_GLYPH, "Q shows the Brado's mark")

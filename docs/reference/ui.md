@@ -730,3 +730,14 @@ livro (o livro não passa de 1,9 alturas de largura, `BookDesk.side_room`, ou se
   pronta (ponto verde, `Entry.ready_dot`), passiva (sem ponto nem varredura, só o nível). `BuildColumn.tick(skills)` a cada quadro.
 - **Leitura do HUD**: legenda nas barras finas (`HudBar.caption`, "Supremo" na dourada, "Magia" na azul); segundos
   restantes sobre os losangos Q e E em recarga (`ActionSlot.secs_left`, `Player.move_secs`).
+- **PT-26-4, segunda volta (HUD legível)**: o Daniel achou o HUD difícil de entender. `BuildColumn` agora tem uma linha por
+  Bênção com o medalhão (32 px) à esquerda e o NOME à direita (`boon_<id>`), e embaixo o estado (segundos de recarga, ou
+  "Nv. N" só quando N maior que 1; "Nv. 1" em tudo era ruído). Largura 168, margem segura `BuildColumn.MARGIN` (14) da
+  borda direita (`Hud.EDGE_RIGHT` acompanha), no máximo `MAX_ROWS` (12) linhas, o resto vira "+N" (antes a última fileira
+  saía da tela). Escolha: nome sempre ao lado (e não painel no Tab) porque ler o que cada ícone é não pode custar uma
+  tecla na horda; o texto é pequeno (13) e fica no canto. Barra de ações: nome curto fixo sob cada losango
+  (`ActionSlot.label_text`, chaves `hud_slot_*`: Ataque, Especial, Brado, Investida, Supremo, Esquiva) e o mouse maior
+  (`ActionSlot.MOUSE_H` 30). Ícone de mouse redesenhado (`MouseGlyphArt`: 18x26, PNG a 3x, botão aceso em dourado forte
+  `LIT`, corpo escuro); nas cartas e na lista de Habilidades 1,25x. O nome do golpe que aparece acima da fileira
+  (`_move`) é o golpe executado, continua. Ouro: fica sem rótulo (a moeda diz); decisão do designer.
+  Capturas a olhar: `--bot --autopick --seed=5 --shot-at=9` em 1280x720 e 1920x1080, e com 8+ Bênçãos.

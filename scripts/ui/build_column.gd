@@ -1,27 +1,30 @@
 class_name BuildColumn
 extends Control
 ## H1 of the SWORN reference (2026-11-21): the run's build on the right edge, read at a glance. A dark banner standing
-## down the edge (a swallow tail at its foot) with one medallion per button, in the order of the row at the bottom:
-## left button, right button, Q, E, Shift, Space. The Blessing of that button's slot with its level in the colour of its
-## rarity; a button without one (Shift has none) shows its own mark in grey. Under
-## them, if any: the Elos formed and the Psalm taken. Pure display: Hud calls show() each time the build changes and
-## veil() while someone stands behind it. px at 720 lines; the window stretches the canvas.
+## down the edge (a swallow tail at its foot), one row per Blessing: its medallion on the left, its name on the right
+## and under the name its state (the recharge seconds, or the level when above 1). First the Blessing of each button in
+## the order of the row at the bottom (left button, right button, Q, E, Shift, Space), then the ones that own no
+## button (passives, a second on the same button). A button without a Blessing has no row (the bottom row says it).
+## Under them, if any: the Elos formed and the Psalm taken. Pure display: Hud calls show_build() each time the build
+## changes and veil() while someone stands behind it. px at 720 lines; the window stretches the canvas.
 ##   var col := BuildColumn.new().setup()
 ##   col.show_build(boons, ult_glyph, psalm)       # boons: BoonState
 
-const WIDTH := 58.0
-const ROW_H := 46.0
-const ICON := 30.0
-const FOOT_ICON := 26.0
+const WIDTH := 168.0
+const ROW_H := 38.0
+const ICON := 32.0
+const FOOT_ICON := 28.0
 const PAD := 6.0
 const TAIL := 10.0
+const NAME_FONT := 13
 const LEVEL_FONT := 12
-## PT-26-4: the Blessings that do not own a button's place (passives, a second one on the same button) in compact rows.
-const EXTRA_H := 32.0
-const EXTRA_ICON := 26.0
-const MAX_EXTRAS := 8
+## PT-26-4 (second round): the rows after the buttons' own use the same height; the column keeps room for MAX_ROWS
+## rows so it never leaves the screen (the rest becomes a "+N"). MARGIN: the gap to the screen's edge.
+const EXTRA_H := ROW_H
+const MAX_ROWS := 12
+const MARGIN := 14.0
 const READY := Color(0.55, 0.9, 0.6)
-const BACK := Color(0.035, 0.027, 0.04, 0.8)
+const BACK := Color(0.035, 0.027, 0.04, 0.82)
 const EMPTY := Color(0.42, 0.42, 0.46)
 ## The buttons in the row's order: the Blessing slot each holds (Boon.Slot.NONE: none can yet) and the mark of the
 ## button itself (a BoonIcon glyph id; -1: the bare action's, BoonIcon.ACTION_GLYPH + slot).
@@ -31,44 +34,41 @@ const BUTTONS: Array[Array] = [[Boon.Slot.ATTACK, -1, &"light_attack"], [Boon.Sl
 ## The index of Shift's entry (its mark is the ultimate's, set by show_build).
 const ULT_AT := 4
 
-## One entry: the medallion and, under it, the level (or nothing for an empty button).
+## One row: the medallion, the Blessing's name and, under it, the state.
 class Entry extends Control:
 	var icon: BoonIcon
+	var name_label: Label
 	var level_label: Label
-	## PT-26-4: the Blessing shown, and what its state says: recharging (a sweep over the medallion and the seconds
-	## left), ready (a small lit dot), or passive (no dot, no sweep: it works on its own).
+	## The Blessing shown, and what its state says: recharging (a sweep over the medallion and the seconds left),
+	## ready (a small lit dot) or passive (no dot, no sweep: it works on its own).
 	var boon: Boon
 	var lv := 0
 	var rarity := Boon.Rarity.COMMON
 	var ready_dot := false
-	## Extras are compact: the medallion on the left, the words on its right.
-	var compact := false
-
 	var dot: Control
 
 	func _draw_dot() -> void:
 		if ready_dot and icon != null and icon.boon != null:
-			var at := icon.position + Vector2(icon.size.x - 1.0, 4.0)
-			dot.draw_circle(at, 4.5, UiKit.INK)
-			dot.draw_circle(at, 3.0, BuildColumn.READY)
+			var at := icon.position + Vector2(icon.size.x - 2.0, 5.0)
+			dot.draw_circle(at, 5.0, UiKit.INK)
+			dot.draw_circle(at, 3.5, BuildColumn.READY)
 
-	func build(is_compact: bool = false) -> Entry:
-		compact = is_compact
-		var side := EXTRA_ICON if compact else ICON
-		custom_minimum_size = Vector2(WIDTH, EXTRA_H if compact else ROW_H)
+	func build() -> Entry:
+		custom_minimum_size = Vector2(WIDTH, ROW_H)
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
-		icon = BoonIcon.new().setup(null, side)
-		icon.position = Vector2(4.0, 2.0) if compact else Vector2((WIDTH - ICON) * 0.5, 2.0)
+		icon = BoonIcon.new().setup(null, ICON)
+		icon.position = Vector2(PAD, (ROW_H - ICON) * 0.5)
 		add_child(icon)
+		var x := PAD + ICON + 7.0
+		name_label = UiKit.shadow(UiKit.label("", UiKit.PALE, NAME_FONT, UiKit.BOLD_FONT))
+		name_label.position = Vector2(x, 2.0)
+		name_label.size = Vector2(WIDTH - x - 4.0, 18.0)
+		name_label.clip_text = true
+		name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		add_child(name_label)
 		level_label = UiKit.shadow(UiKit.label("", UiKit.PALE, LEVEL_FONT, UiKit.BOLD_FONT))
-		level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		if compact:
-			level_label.position = Vector2(side + 5.0, 0.0)
-			level_label.size = Vector2(WIDTH - side - 7.0, EXTRA_H)
-			level_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		else:
-			level_label.position = Vector2(0.0, ICON + 2.0)
-			level_label.size = Vector2(WIDTH, ROW_H - ICON - 2.0)
+		level_label.position = Vector2(x, 20.0)
+		level_label.size = Vector2(WIDTH - x - 4.0, 16.0)
 		add_child(level_label)
 		dot = Control.new()
 		dot.name = "ReadyDot"
@@ -78,7 +78,7 @@ class Entry extends Control:
 		add_child(dot)
 		return self
 
-	## The state every frame (Hud, PT-26-4): the recharge of a Blessing that has a skill, read from the skills.
+	## The state every frame (Hud): the recharge of a Blessing that has a skill, read from the skills.
 	func tick(skills: Skills) -> void:
 		if boon == null or boon.skill == null or skills == null or boon.skill.kind == SkillDef.Kind.ORBIT:
 			return
@@ -97,8 +97,9 @@ class Entry extends Control:
 		icon.queue_redraw()
 		dot.queue_redraw()
 
+	## Only a Blessing above level 1 says its level (a "Nv. 1" on every row was noise).
 	func _level_text() -> String:
-		return T.t(&"hud_build_level", {"n": lv}) if boon != null and boon.has_rarity() else ""
+		return T.t(&"hud_build_level", {"n": lv}) if boon != null and boon.has_rarity() and lv > 1 else ""
 
 	## b: the Blessing of the button (null: empty, its own mark in grey). glyph: that mark's BoonIcon id.
 	func show_entry(b: Boon, lv_: int, rarity_: Boon.Rarity, glyph: int) -> void:
@@ -112,6 +113,7 @@ class Entry extends Control:
 			icon.icon = -1
 			icon.level = lv_
 			icon.max_level = b.max_level
+			name_label.text = T.t("boon_" + String(b.id))
 			level_label.text = _level_text()
 			level_label.add_theme_color_override(&"font_color", BoonCard.rarity_color(rarity_).lightened(0.1))
 		else:
@@ -120,6 +122,7 @@ class Entry extends Control:
 			icon.tint = EMPTY
 			icon.level = 0
 			icon.max_level = 0
+			name_label.text = ""
 			level_label.text = ""
 		icon.modulate.a = 1.0 if b != null else 0.7
 		icon.queue_redraw()
@@ -199,18 +202,19 @@ func show_build(boons: BoonState, ult_glyph: int = -1, psalm: PsalmDef = null) -
 	for c in _extras.get_children():
 		_extras.remove_child(c)
 		c.queue_free()
-	var shown_extra := extra.slice(0, MAX_EXTRAS)
+	var room := maxi(MAX_ROWS - held - (1 if extra.size() > MAX_ROWS - held else 0), 0)
+	var shown_extra := extra.slice(0, room)
 	for b in shown_extra:
-		var e := Entry.new().build(true)
+		var e := Entry.new().build()
 		e.show_entry(b, boons.level(b.id), boons.rarity(b.id), -1)
 		_extras.add_child(e)
-	if extra.size() > MAX_EXTRAS:
-		var more := UiKit.shadow(UiKit.label(T.t(&"hud_more", {"n": extra.size() - MAX_EXTRAS}), UiKit.PALE, LEVEL_FONT, UiKit.BOLD_FONT))
+	if extra.size() > shown_extra.size():
+		var more := UiKit.shadow(UiKit.label(T.t(&"hud_more", {"n": extra.size() - shown_extra.size()}), UiKit.PALE, LEVEL_FONT, UiKit.BOLD_FONT))
 		more.name = &"More"
 		more.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		more.custom_minimum_size = Vector2(WIDTH, EXTRA_H * 0.6)
+		more.custom_minimum_size = Vector2(WIDTH, ROW_H * 0.6)
 		_extras.add_child(more)
-	_extra_count = shown_extra.size() + (1 if extra.size() > MAX_EXTRAS else 0)
+	_extra_count = shown_extra.size() + (1 if extra.size() > shown_extra.size() else 0)
 	held += shown_extra.size()
 	for c in _foot.get_children():
 		_foot.remove_child(c)
