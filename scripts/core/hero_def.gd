@@ -31,6 +31,8 @@ static var _maga: HeroDef
 @export_group("Magia")
 ## Full at the start of every room; spent by the held Omegas (the attack's and the special's costs are in the combo).
 @export var magick_max := 50.0
+## GP-5: Magia that comes back by itself every second, always (the Maga's 2; the Warrior's 0). The Dom Fluxo Arcano adds to it (stat regen_add).
+@export var magick_regen := 0.0
 
 ## C19-4 (Q-12, Hades II): walking while an Omega charges, times his speed. The attack's: 0.03 and the body turns at
 ## most charge_turn_light degrees a second (Swing5SelfSlowCharge 0.03, RotationMultiplier 1e-8); the special's: 0.6

@@ -20,7 +20,8 @@ extends RefCounted
 ## bought of the old tree comes back as the material it paid (Prata or Memória, exact, LEGACY_PREPARO), the old block is left.
 ## 16 (SW-O4, the guided first descent): first (0 pending, 1 played, 2 skipped; FirstDescent). An older file with descents
 ## played has it done; one with none is still to play it.
-const VERSION := 17
+## 18 (GP-5, the Maga's V1): her twelve provisional Dons of 2026-11-24 are gone; what she had opened gives its Memória back (GP5_REMOVED_DONS).
+const VERSION := 18
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
@@ -194,6 +195,9 @@ static func merged(loaded: Variant) -> Dictionary:
 	if version < 17:
 		migrate_removed_dons(out, GP1_REMOVED_DONS, ["warrior"])
 		drop_removed_bindings(out.options)
+	# files before version 18 (GP-5): the Maga's twelve provisional Dons are replaced; their Memória comes back and the Vagas are free
+	if version < 18:
+		migrate_removed_dons(out, GP5_REMOVED_DONS, ["maga"])
 	out["first"] = clampi(int(out.first), 0, 2)
 	# version 8 (Ofícios): nothing to move, an older file opens with the empty block (defaults)
 	out.version = VERSION
@@ -248,6 +252,10 @@ static func migrate_redesign(out: Dictionary, only: Array = []) -> Dictionary:
 
 ## GP-1 (version 17): the Dons the Warrior's V1 took out, hero: {id: Memória it cost} (frozen).
 const GP1_REMOVED_DONS := {"warrior": {"voz_do_leao": 3}}
+## GP-5 (version 18): the Maga's provisional Dons of 2026-11-24, {id: Memória it cost} (frozen; 29 in all); the new twelve take their places
+## (same order, same Maestria) under other ids, none of them in LEGACY_DONS.
+const GP5_REMOVED_DONS := {"maga": {"faisca_persistente": 0, "orvalho_gelido": 1, "reacao_amplificada": 3, "fissao_termica": 4, "geada_demorada": 1,
+	"chao_ardente": 3, "suspensao_ampla": 3, "campo_elementar": 4, "eco_eletrico": 1, "fluxo_de_magia": 2, "estilhaco_gemeo": 3, "tempestade_contida": 4}}
 ## The keys the Brado and the Investida had in the saved bindings (the keyboard's own name, the gamepad's "pad:" one).
 const REMOVED_BINDINGS: Array[String] = ["shout", "rush", "pad:shout", "pad:rush"]
 

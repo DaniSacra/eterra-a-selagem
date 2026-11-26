@@ -50,9 +50,9 @@ func _ready() -> void:
 
 
 ## The text of a tip, with the keys of the actions as they are bound now.
-static func text_of(id: StringName) -> String:
-	# (SW-O4: a tip of the guided descent is a whole text key, first_tip_*)
-	var key := id if String(id).begins_with("first_tip_") else StringName("tip_" + String(id))
+static func text_of(id: StringName, maga := false) -> String:
+	# (SW-O4: a tip of the guided descent is a whole text key, first_tip_*; GP-5: the Maga's own words for some)
+	var key := id if String(id).begins_with("first_tip_") else FirstTips.key_of(id, maga)
 	return T.t(key, {
 		"attack": UiKit.action_label(&"light_attack"), "special": UiKit.action_label(&"heavy_attack"),
 		"power": UiKit.action_label(&"heavy_attack"), "dodge": UiKit.action_label(&"dodge"), "interact": UiKit.action_label(&"interact")})
@@ -71,7 +71,7 @@ func _process(delta: float) -> void:
 	_quiet = maxf(0.0, _quiet - delta)
 	if showing != &"":
 		_t -= delta
-		_label.text = "[center]%s[/center]" % MouseGlyph.keyed(text_of(showing))
+		_label.text = "[center]%s[/center]" % MouseGlyph.keyed(text_of(showing, game.hero.arcane != null))
 		_box.modulate.a = clampf(minf(TIME - _t, _t) / FADE, 0.0, 1.0)
 		_box.visible = true
 		if _t <= 0.0:
@@ -100,13 +100,14 @@ func context(fighting: bool) -> Dictionary:
 				break
 	return {"fighting": fighting, "fight_t": _fight_t, "armored": armored,
 			"boons": game.boons.owned().size(), "elos": game.boons.new_elos({}).size(), "tutorial": Objective.tutorial(),
-			"rhythm": game.hero_gifts != null and game.hero_gifts.rhythm.armed()}
+			"rhythm": game.hero_gifts != null and game.hero_gifts.rhythm.armed(),
+			"maga": game.hero.arcane != null, "magick_empty": game.player.magick.value < 5.0}
 
 
 func show_tip(id: StringName) -> void:
 	showing = id
 	_t = TIME
-	_label.text = "[center]%s[/center]" % MouseGlyph.keyed(text_of(id))
+	_label.text = "[center]%s[/center]" % MouseGlyph.keyed(text_of(id, game.hero.arcane != null))
 	_box.reset_size()
 	FirstTips.mark(_data(), id)
 	if not Dev.has("tips"):

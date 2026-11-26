@@ -28,8 +28,8 @@ func test_the_defaults() -> void:
 	assert_eq(Controls.MENU_KEYS[&"menu_reroll"][1], KEY_R, "R is only the reroll now")
 	for action: StringName in [&"ultimate", &"interact", &"light_attack", &"heavy_attack", &"dodge"]:
 		assert_true(Controls.REMAPPABLE.has(action), "%s is remappable" % action)
-	for action: StringName in Controls.MAGA_ONLY:
-		assert_false(Controls.REMAPPABLE.has(action), "%s is the Maga's, never remapped" % action)
+	for action: StringName in [&"shout", &"rush"]:
+		assert_false(Controls.REMAPPABLE.has(action), "%s is no hero's button now (GP-5), never remapped" % action)
 		assert_false(Controls.PAD_REMAPPABLE.has(action))
 	# nothing shares a key by default (the mouse's buttons aside)
 	var seen := {}

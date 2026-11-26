@@ -6,9 +6,8 @@ extends Node
 signal device_changed(pad: bool)
 
 const ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"shout", &"rush", &"ultimate", &"interact", &"pause", &"feel_panel"]
-## GP-1: the Warrior has no Brado nor Investida button (Q and E fight for nothing: E interacts). `shout` and `rush` stay in the map
-## only for the Maga's tree (Q and C, never remappable, never in a Warrior's hint); nothing reads them without those moves.
-const MAGA_ONLY: Array[StringName] = [&"shout", &"rush"]
+## GP-1 and GP-5: no hero has a Brado nor an Investida button now (Q has no action; E interacts). `shout` and `rush` stay in the map
+## (Q and C, never remappable) only because the HUD, the how-to and the objective line still look their labels up; nothing in play reads them.
 ## Actions the player may rebind in Options.
 ## interact (HUB-B1): use the station in focus in the hub (E since GP-1, A on the gamepad); in a descent (C19, Q-13)
 ## take the reward, buy a shop's item, walk through a door. GP-1: the Brado (Q) and the Investida (E) left the Warrior's buttons;

@@ -2460,42 +2460,34 @@ const MAGA_TALENTS := "res://data/talents/maga/"
 const MAGA_AMBER := Color(1.0, 0.62, 0.18)
 
 
-## The Maga's tree (redesign 2026-11-24, 04_PLANO C.1): the attack is the Centelha (a fire bolt, no chain), held it is the
-## Combustão (a ball that bursts on the first enemy, 15 Magia); the special is the Estilhaço (an ice bolt through the crowd, 4 s),
-## held the Geada (an area at the cursor, 20 Magia); Q the Arco Voltaico, E the Suspensão Arcana. No blow here is struck by a
-## blade: damage 0 and the effect does it (as the Warrior's bolt). The elements are Arcane's (ElementBook).
+## The Maga's tree (GP-5, docs/design/heroes/maga_v1_2026-11-26.md 1): left tap the Centelha (a fire bolt, free), left hold the Arco Voltaico
+## (10 Magia); right tap the Estilhaço (an ice bolt through the crowd, 5 Magia), right hold the Geada (an area at the cursor, 20 Magia). No
+## button of Q or E and no recharge: the Magia (2 a second back) regulates her. No blow here is struck by a blade: damage 0 and the effect
+## does it (as the Warrior's bolt). The elements are Arcane's (ElementBook). The Combustão and the Suspensão Arcana left the tree.
+## Tags decide where the Blessings and the Skills read each one (DealtBy, CelRules.slot_of): the Arco is an omega of the attack, the
+## Estilhaço the Poder (shout, cast: no heavy), the Geada the Especial.
 func _maga_tree() -> ComboTree:
 	var shot := {"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "chain_window": 0.4, "hit_stop_ms": 0.0,
 		"shake": 0.2, "move_scale": 0.0, "sound": &"dart", "effect": ComboNode.Effect.WAVE, "effect_radius": 11.0, "wave_bolt": true,
 		"wave_speed": 30.0, "wave_stops": true, "wave_color": ElementLook.FIRE, "knockback": 2.0}
 	var spark := _move(&"spark", L, &"Cast", [&"light", &"bolt", &"arcane", &"fire"],
 		shot.merged({"effect_power": 8.0, "effect_size": 0.7, "windup": 0.10, "recovery": 0.15, "move_hold": 0.20}), [], &"move_spark")
-	# held: the Combustão (the bolt that bursts on the first enemy; tag omega: Força/Concentração of the Gifts do not reach the Maga, her cost is 15)
-	var combust := _move(&"combust", CL, &"Cast", [&"omega", &"light", &"bolt", &"arcane", &"fire"],
-		shot.merged({"effect_power": 35.0, "effect_size": 1.0, "windup": 0.14, "recovery": 0.25, "move_hold": 0.30, "magick_cost": 15.0,
-		"charge_time": 0.6, "shake": 0.5, "hit_stop_ms": 20.0, "wave_speed": 24.0}, true), [], &"move_combust")
-	# right button: the Estilhaço, 4 s between, through everyone on its way
-	var shard := _move(&"shard", H, &"Cast", [&"heavy", &"bolt", &"arcane", &"ice"],
-		shot.merged({"effect_power": 6.0, "effect_size": 0.8, "windup": 0.16, "recovery": 0.22, "move_hold": 0.30, "cooldown": 4.0,
+	# left held: the Arco Voltaico, to up to three, 10 Magia, 0.6 s of charge from the press
+	var arc := _move(&"arc", CL, &"Cast", [&"omega", &"light", &"arcane", &"volt"],
+		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.20, "recovery": 0.15, "move_hold": 0.25,
+		"chain_window": 0.4, "magick_cost": 10.0, "charge_time": 0.6, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0,
+		"sound": &"wave_omega", "effect": ComboNode.Effect.ARC}, [], &"move_arc")
+	# right tap: the Estilhaço through everyone on its way, 5 Magia, no recharge
+	var shard := _move(&"shard", H, &"Cast", [&"shout", &"cast", &"bolt", &"arcane", &"ice"],
+		shot.merged({"effect_power": 6.0, "effect_size": 0.8, "windup": 0.16, "recovery": 0.22, "move_hold": 0.30, "magick_cost": 5.0,
 		"wave_stops": false, "wave_color": ElementLook.COLD, "wave_speed": 26.0, "hit_stop_ms": 25.0}, true), [], &"move_shard")
-	# held: the Geada at the cursor, 20 Magia
+	# right held: the Geada at the cursor, 20 Magia
 	var frost := _move(&"frost", C, &"Cast", [&"omega", &"heavy", &"cast", &"arcane", &"ice"],
 		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.18, "recovery": 0.25, "move_hold": 0.35,
 		"chain_window": 0.2, "magick_cost": 20.0, "charge_time": 0.6, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0,
 		"sound": &"wave_omega", "effect": ComboNode.Effect.FROST}, [], &"move_frost")
-	# Q: the Arco Voltaico, recharge 8 s
-	var arc := _move(&"arc", SH, &"Cast", [&"shout", &"cast", &"arcane", &"volt"],
-		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.20, "recovery": 0.15, "move_hold": 0.25,
-		"chain_window": 0.4, "cooldown": 8.0, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "sound": &"wave_omega",
-		"effect": ComboNode.Effect.ARC}, [], &"move_arc")
-	# E: Suspensão Arcana, recharge 14 s
-	# (the tag dash is what the Blessings of the E read, and sets off the skills of the RUSH button: Boon.SLOT_TAG, Skills.trigger_of)
-	var dome := _move(&"dome", RU, &"Cast", [&"dash", &"arcane", &"dome"],
-		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.20, "recovery": 0.20, "move_hold": 0.20,
-		"chain_window": 0.4, "cooldown": 14.0, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "sound": &"wave_omega",
-		"effect": ComboNode.Effect.DOME}, [], &"move_dome")
 	var tree := ComboTree.new()
-	tree.neutral = [spark, combust, shard, frost, arc, dome]
+	tree.neutral = [spark, arc, shard, frost]
 	tree.dodge_window = 0.0
 	return tree
 
@@ -2510,10 +2502,10 @@ func _raw(stat: StringName, base: float, per_level: Array = [], tag: StringName 
 	return m
 
 
-## The Maga's 12 Gifts (redesign 2026-11-24, 04_PLANO C.4; PROVISIONAL, the Daniel has not approved them: docs/backlog.md):
-## Elementalismo (the reactions), Conjuração (the ground and the dome), Feitiçaria (the Arco and the Magia), each an entry, two
+## The Maga's 12 Gifts (GP-5, maga_v1_2026-11-26.md 8; they replace the provisional twelve of 2026-11-24, SaveData.GP5_REMOVED_DONS gives
+## their Memória back): Elementalismo (the reactions), Conjuração (the ground), Feitiçaria (the Magia and the held spells), each an entry, two
 ## middles and an apex; `needs` is the Gift that must be equipped. No Gift takes a button. Every number is a stat of its mods
-## (BoonState.stat, read by Arcane); no id repeats one of SaveData.LEGACY_DONS.
+## (BoonState.stat, read by Arcane, Player and GiftState); no id repeats one of SaveData.LEGACY_DONS. Prototype numbers (the balance measures).
 func _maga_talents() -> void:
 	_talent_dir = MAGA_TALENTS
 	DirAccess.make_dir_recursive_absolute(MAGA_TALENTS)
@@ -2521,24 +2513,24 @@ func _maga_talents() -> void:
 		DirAccess.remove_absolute(MAGA_TALENTS + f)
 	var B := TalentDef.Branch
 	var T := TalentDef.Tier
-	# Elementalismo: the Queimadura lasts 2 s more and hurts 25% more; the Frio freezes a hit sooner and slows 15% more; the Choque
-	# Térmico and the Sobrecarga hit 50% harder; both also reach 2 m around at half (no state, no chain)
-	_talent(0, &"faisca_persistente", B.ELEMENTALISMO, T.ENTRY, 2, 1, {"mods": [_raw(&"burn_time_add", 2.0), _raw(&"burn_dps_pct", 0.25)] as Array[BoonMod]})
-	_talent(1, &"orvalho_gelido", B.ELEMENTALISMO, T.MIDDLE, 2, 5, {"needs": &"faisca_persistente", "mods": [_raw(&"cold_freeze_at", -1.0), _raw(&"slow_pct", 0.15)] as Array[BoonMod]})
-	_talent(2, &"reacao_amplificada", B.ELEMENTALISMO, T.MIDDLE, 3, 10, {"needs": &"faisca_persistente", "mods": [_raw(&"react_pct", 0.5)] as Array[BoonMod]})
-	_talent(3, &"fissao_termica", B.ELEMENTALISMO, T.APEX, 4, 17, {"needs": &"reacao_amplificada", "mods": [_raw(&"react_splash", 0.5)] as Array[BoonMod]})
-	# Conjuração: the Geada 2 s longer and 0.5 m wider; the Combustão leaves the ground burning 3 s; the dome 0.6 m wider and 1 s
-	# longer; inside the dome her shots and areas hit 30% harder
-	_talent(4, &"geada_demorada", B.CONJURACAO, T.ENTRY, 2, 2, {"mods": [_raw(&"geada_time_add", 2.0), _raw(&"geada_radius_add", 0.5)] as Array[BoonMod]})
-	_talent(5, &"chao_ardente", B.CONJURACAO, T.MIDDLE, 3, 7, {"needs": &"geada_demorada", "mods": [_raw(&"ember_floor", 1.0)] as Array[BoonMod]})
-	_talent(6, &"suspensao_ampla", B.CONJURACAO, T.MIDDLE, 3, 12, {"needs": &"geada_demorada", "mods": [_raw(&"dome_size_pct", 0.23), _raw(&"dome_time", 1.0)] as Array[BoonMod]})
-	_talent(7, &"campo_elementar", B.CONJURACAO, T.APEX, 4, 18, {"needs": &"suspensao_ampla", "mods": [_raw(&"dome_shot_pct", 0.3)] as Array[BoonMod]})
-	# Feitiçaria: the Arco hits one more; +0.5 Magia a hit of the Centelha and the Estilhaço; the Estilhaço has two charges and
-	# comes back a quarter sooner; the Arco jumps two more and the Convergência charges 25% faster
-	_talent(8, &"eco_eletrico", B.FEITICARIA, T.ENTRY, 2, 3, {"mods": [_raw(&"arc_targets", 1.0)] as Array[BoonMod]})
-	_talent(9, &"fluxo_de_magia", B.FEITICARIA, T.MIDDLE, 2, 8, {"needs": &"eco_eletrico", "mods": [_raw(&"shot_magick_add", 0.5)] as Array[BoonMod]})
-	_talent(10, &"estilhaco_gemeo", B.FEITICARIA, T.MIDDLE, 3, 13, {"needs": &"eco_eletrico", "mods": [_raw(&"shard_charges", 1.0), _raw(&"cooldown_pct", -0.25, [], &"ice")] as Array[BoonMod]})
-	_talent(11, &"tempestade_contida", B.FEITICARIA, T.APEX, 4, 19, {"needs": &"eco_eletrico", "mods": [_raw(&"arc_targets", 2.0), _raw(&"ult_charge_pct", 0.25)] as Array[BoonMod]})
+	# Elementalismo: the states last 50% longer; the reactions hit 30% harder (and the Quebra of the Cristalização); an element a blow
+	# puts on spreads to the nearest within 3 m once a cast; a reaction leaves a 3 s residue and the third element makes the other two
+	_talent(0, &"afinidade", B.ELEMENTALISMO, T.ENTRY, 2, 1, {"mods": [_raw(&"element_time_pct", 0.5)] as Array[BoonMod]})
+	_talent(1, &"catalisador", B.ELEMENTALISMO, T.MIDDLE, 2, 5, {"needs": &"afinidade", "mods": [_raw(&"react_pct", 0.3)] as Array[BoonMod]})
+	_talent(2, &"propagacao", B.ELEMENTALISMO, T.MIDDLE, 3, 10, {"needs": &"afinidade", "mods": [_raw(&"spread_range", 3.0)] as Array[BoonMod]})
+	_talent(3, &"trindade", B.ELEMENTALISMO, T.APEX, 4, 17, {"needs": &"catalisador", "mods": [_raw(&"trinity", 1.0), _raw(&"trinity_time", 3.0)] as Array[BoonMod]})
+	# Conjuração: the Geada and the embers last 30% longer and are 25% wider; Choque Térmico and Sobrecarga leave embers; in the Geada and an
+	# ember at once a Choque Térmico every 2 s
+	_talent(4, &"permanencia", B.CONJURACAO, T.ENTRY, 2, 2, {"mods": [_raw(&"area_time_pct", 0.3)] as Array[BoonMod]})
+	_talent(5, &"expansao", B.CONJURACAO, T.MIDDLE, 2, 7, {"needs": &"permanencia", "mods": [_raw(&"area_size_pct", 0.25)] as Array[BoonMod]})
+	_talent(6, &"manifestacao", B.CONJURACAO, T.MIDDLE, 3, 12, {"needs": &"permanencia", "mods": [_raw(&"ember_floor", 1.0)] as Array[BoonMod]})
+	_talent(7, &"confluencia", B.CONJURACAO, T.APEX, 4, 18, {"needs": &"manifestacao", "mods": [_raw(&"confluence", 1.0), _raw(&"confluence_gap", 2.0)] as Array[BoonMod]})
+	# Feitiçaria: the Magia comes back 1 a second faster; the held spells charge 30% sooner; a cast that makes a reaction gives 2 Magia; three
+	# reactions make the next held spell free and quick
+	_talent(8, &"fluxo_arcano", B.FEITICARIA, T.ENTRY, 2, 3, {"mods": [_raw(&"regen_add", 1.0)] as Array[BoonMod]})
+	_talent(9, &"agilidade_arcana", B.FEITICARIA, T.MIDDLE, 2, 8, {"needs": &"fluxo_arcano", "mods": [_raw(&"charge_time_pct", -0.3)] as Array[BoonMod]})
+	_talent(10, &"reciprocidade", B.FEITICARIA, T.MIDDLE, 3, 13, {"needs": &"fluxo_arcano", "mods": [_raw(&"reaction_magick", 2.0)] as Array[BoonMod]})
+	_talent(11, &"transcendencia", B.FEITICARIA, T.APEX, 4, 19, {"needs": &"reciprocidade", "mods": [_raw(&"transcend_at", 3.0)] as Array[BoonMod]})
 	_talent_dir = TALENT_DIR
 
 
@@ -2549,13 +2541,13 @@ func _maga() -> void:
 	for f in DirAccess.get_files_at(MAGA_ULT.get_base_dir()):
 		DirAccess.remove_absolute(MAGA_ULT.get_base_dir() + "/" + f)
 	# the Convergência Elemental (04_PLANO C.3): 5 m at the cursor (up to 9) for 4.5 s, ice then fire then volt, a tick every
-	# 0.5 s, 90 of damage in all (ArcaneKit.converge_*); 75 charge (Magia spent, damage dealt, life lost), Mastery 2
+	# 0.5 s, 90 of damage in all (ArcaneKit.converge_*); 60 charge (Magia spent, damage dealt, life lost and, GP-5, her reactions), Mastery 2
 	var u := UltDef.new()
 	u.id = &"converge"
 	u.kind = UltDef.Kind.CONVERGE
 	u.name_key = &"ult_converge"
 	u.desc_key = &"ult_converge_desc"
-	var numbers := {"charge": 75.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 2, "gesture": 0.3, "weapon": &"bastao",
+	var numbers := {"charge": 60.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 2, "gesture": 0.3, "weapon": &"bastao",
 		"anim": &"Cast", "anim_peak": PEAK[&"Cast"], "knockback": 0.0, "ahead": 4.0, "aim_max": 9.0, "radius": 5.0, "radius_cap": 6.5,
 		"duration": 4.5, "tick": 0.5, "elite_share": 0.5, "guardian_share": 0.25}
 	for k: String in numbers:
@@ -2568,12 +2560,14 @@ func _maga() -> void:
 	h.name_key = &"hero_maga"
 	h.model = &"hero_explorer"
 	h.combos = MAGA_COMBOS
-	# life 30 as the others (maga.md 13); the Passo has 2 charges of 1 s
+	# life 30 as the others (maga.md 13); the Passo has 2 charges of 1 s; 50 of Magia that comes back 2 a second (GP-5); no Magia from a
+	# finisher or a Quebra, no recharge to refund; she walks (half speed) and turns (90 degrees a second) while a held spell charges
 	var body := {"max_hp": 30.0, "hurt_time": 0.18, "hurt_invuln": 0.7, "dodge_charges": 2, "dodge_recharge": 1.0, "magick_max": 50.0,
-		"circle": false, "magick_on_finisher": 1.0, "magick_on_break": 3.0, "cd_floor": 6.0, "gain_cap": 3.0, "gain_window": 1.0}
+		"magick_regen": 2.0, "circle": false, "magick_on_finisher": 0.0, "magick_on_break": 0.0, "cd_floor": 0.0, "gain_cap": 3.0, "gain_window": 1.0,
+		"charge_move_light": 0.5, "charge_move_heavy": 0.5, "charge_turn_light": 90.0}
 	for k: String in body:
 		h.set(k, body[k])
-	h.passive_tags = [&"finisher"] as Array[StringName]
+	h.passive_tags = [] as Array[StringName]
 	h.passive_never = [&"ultimate"] as Array[StringName]
 	h.arcane = kit
 	h.ultimates = [ResourceLoader.load(MAGA_ULT, "", ResourceLoader.CACHE_MODE_REPLACE)] as Array[UltDef]
@@ -3630,9 +3624,9 @@ const MEDALLION_WARRIOR := [
 	[&"forca_concentrada", &"determinacao", &"concentracao", &"forca_titanica"],
 ]
 const MEDALLION_MAGA := [
-	[&"faisca_persistente", &"orvalho_gelido", &"reacao_amplificada", &"fissao_termica"],
-	[&"geada_demorada", &"chao_ardente", &"suspensao_ampla", &"campo_elementar"],
-	[&"eco_eletrico", &"fluxo_de_magia", &"estilhaco_gemeo", &"tempestade_contida"],
+	[&"afinidade", &"catalisador", &"propagacao", &"trindade"],
+	[&"permanencia", &"expansao", &"manifestacao", &"confluencia"],
+	[&"fluxo_arcano", &"agilidade_arcana", &"reciprocidade", &"transcendencia"],
 ]
 
 

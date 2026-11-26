@@ -266,9 +266,7 @@ func step(dt: float, game: Game) -> void:
 	_kiting = fighting and kite_step(dt, p.distance_to(game.boss.e.pos) >= KITE_DISTANCE)
 	if not _kiting:
 		pad.release(&"dodge")
-	pad.release(&"rush")
 	pad.release(&"ultimate")
-	pad.release(&"shout")
 	# C19, Q-13: the reward, a shop's item and a door are used with interact, as a player presses it there
 	if game.rooms and game.rooms.usable() and not pad.held.has(&"interact"):
 		pad.press(&"interact")
@@ -428,17 +426,17 @@ func step(dt: float, game: Game) -> void:
 ## Convergência goes by `_ult_now`. The Passo is the danger code's.
 const ARC_NEAR := 5.5
 const ARC_FAR := 9.0
-## Enemies close enough for the Arco, the Geada and the Combustão to be worth their cost, and how long their button is held (s).
+## Enemies close enough for the Arco and the Geada to be worth their Magia, and how long their button is held (s: past the charge, the
+## blow lets itself go when it fills). GP-5: the Estilhaço is spent while the Magia is above ARC_SHARD_FROM, so the Arco and the Geada
+## stay in reach.
 const ARC_VOLT_PACK := 2
 const ARC_FROST_PACK := 3
-const ARC_COMBUST_PACK := 3
 const ARC_CHARGE_HOLD := 0.9
-const ARC_DOME_SHOT := 6.0
-const ARC_DOME_CROWD := 2.5
+const ARC_SHARD_FROM := 25.0
 
 
-## The Maga's loop: keep her distance, the Suspensão under shots or a crowd, the Arco on two or more, the Geada and the Combustão
-## (held) on a pack when there is Magia, the Estilhaço when it is ready, the Centelha otherwise (three of them set the target alight).
+## The Maga's loop (GP-5): keep her distance; the Arco (hold the left) on two or more, the Geada (hold the right) on a pack, the Estilhaço
+## (tap the right) down the line while the Magia is there, the Centelha (tap the left, free) otherwise (three of them set the target alight).
 func _arcane_step(game: Game, p: Vector2, target: Vector2, dt: float) -> void:
 	var a := game.arcane
 	var player := game.player
@@ -467,50 +465,32 @@ func _arcane_step(game: Game, p: Vector2, target: Vector2, dt: float) -> void:
 		return
 	if _wait > 0.0:
 		return
-	var runner := player.runner
-	var busy := runner.is_attacking()
-	# the Suspensão: a shot flying at it, or the crowd on top of it
-	if runner.cooldown_left(&"dome") <= 0.0 and not busy and a.dome == null:
-		var near: Array[Enemy] = []
-		game.horde.in_circle(p, ARC_DOME_CROWD, near)
-		var shot := false
-		for s in game.projectiles.shots:
-			if Projectiles.hostile(s) and not s.frozen and s.pos.distance_to(p) < ARC_DOME_SHOT and s.vel.dot(p - s.pos) > 0.0:
-				shot = true
-				break
-		if shot or near.size() >= 2:
-			pad.press(&"rush")
-			_wait = 0.3
-			return
-	# the Arco on two or more within its reach
-	if runner.cooldown_left(&"arc") <= 0.0 and not busy:
-		var close: Array[Enemy] = []
-		game.horde.in_circle(p, a.kit.arc_range, close)
-		if close.size() >= ARC_VOLT_PACK:
-			pad.press(&"shout")
-			_wait = 0.3
-			return
+	var busy := player.runner.is_attacking()
 	var in_range := dist <= a.kit.spark_range
 	var pack: Array[Enemy] = []
 	game.horde.in_circle(target, a.kit.frost_radius, pack)
-	var magick := player.magick
-	# the Geada on a pack (held), the Combustão on a pack (held)
-	if not busy and in_range and dist <= a.kit.frost_range and pack.size() >= ARC_FROST_PACK and magick.can_pay(20.0):
+	var frost_worth := in_range and dist <= a.kit.frost_range and pack.size() >= ARC_FROST_PACK
+	# the Geada on a pack (held on the right)
+	if not busy and frost_worth and can_hold(game, ComboNode.In.CHARGE):
 		pad.aim = dir
 		pad.press(&"heavy_attack")
 		_held = &"heavy_attack"
 		_hold = ARC_CHARGE_HOLD
 		_wait = 0.6
 		return
-	if not busy and in_range and pack.size() >= ARC_COMBUST_PACK and magick.can_pay(15.0):
-		pad.press(&"light_attack")
-		_held = &"light_attack"
-		_hold = ARC_CHARGE_HOLD
-		_wait = 0.6
-		return
-	# the Estilhaço when it is ready, the Centelha otherwise
+	# the Arco on two or more within its reach (held on the left)
+	if not busy and can_hold(game, ComboNode.In.CHARGE_LIGHT):
+		var close: Array[Enemy] = []
+		game.horde.in_circle(p, a.kit.arc_range, close)
+		if close.size() >= ARC_VOLT_PACK:
+			pad.press(&"light_attack")
+			_held = &"light_attack"
+			_hold = ARC_CHARGE_HOLD
+			_wait = 0.6
+			return
+	# the Estilhaço (a tap on the right) while the Magia is there, the Centelha (a tap on the left, free) otherwise
 	if in_range:
-		if runner.cooldown_left(&"shard") <= 0.0 and not busy:
+		if not busy and player.magick.value >= ARC_SHARD_FROM:
 			pad.press(&"heavy_attack")
 			_hold = 0.06
 			_held = &"heavy_attack"

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_ms5rn"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_gihdj"]
+
+[sub_resource type="Resource" id="Resource_7s633"]
+script = ExtResource("1_ms5rn")
+stat = &"area_size_pct"
+base = 0.25
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_gihdj")
+id = &"expansao"
+name_key = &"talent_expansao"
+desc_key = &"talent_expansao_desc"
+branch = 4
+tier = 1
+cost = 2
+unlock_level = 7
+memory_cost = 2
+needs = &"permanencia"
+mods = Array[ExtResource("1_ms5rn")]([SubResource("Resource_7s633")])

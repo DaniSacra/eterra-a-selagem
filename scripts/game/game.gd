@@ -382,6 +382,7 @@ func _ready() -> void:
 		add_child(arcane)
 		arcane.setup(self)
 		combat.arcane = arcane
+		player.arcane = arcane
 	_swear_juramentos()
 	_start_courage()
 	psalms = Psalms.new(Psalms.load_catalog())

@@ -13,25 +13,28 @@ extends RefCounted
 ## The steps in the order they are told, and the gesture each waits for. GP-1: the Warrior's are the attack, the Poder (the Corte
 ## Circular), the dodge, the Especial (the Lança) and the Blessing; the Esmagador is taught by the hold tip (tip_hold), not by a step.
 const ORDER: Array[StringName] = [&"attack", &"power", &"dodge", &"special", &"blessing"]
-## The Maga's (her tree still has the Brado and the Investida buttons).
-const ORDER_ARCANE: Array[StringName] = [&"attack", &"special", &"dodge", &"shout", &"rush", &"blessing"]
+## The steps whose tip is told another way for the Maga (GP-5: the same order; her keys end in _maga).
+const OF_THE_MAGA: Array[StringName] = [&"attack", &"power", &"special"]
 ## The text key of each step (Objective's line).
 const KEYS := {&"attack": &"lesson_attack", &"special": &"lesson_special", &"power": &"lesson_power", &"dodge": &"lesson_dodge",
-		&"shout": &"lesson_shout", &"rush": &"lesson_rush", &"blessing": &"obj_bless"}
+		&"blessing": &"obj_bless"}
 ## Clicks of the attack that make the step (the chain's three blows; the finisher alone counts as the third).
 const CLICKS := 3
 ## The events fed: &"light" (a blow of the attack's chain), &"finisher", &"special" (the Lança), &"power" (the Corte Circular),
-## &"crossed" (over the stream), &"shout", &"rush" (the Maga's), &"blessing" (the Blessing's choice opened).
-const EVENT_OF := {&"special": &"special", &"power": &"power", &"crossed": &"dodge", &"shout": &"shout", &"rush": &"rush", &"blessing": &"blessing"}
+## &"crossed" (over the stream), &"blessing" (the Blessing's choice opened). The Maga's Estilhaço is the power, her Geada the special.
+const EVENT_OF := {&"special": &"special", &"power": &"power", &"crossed": &"dodge", &"blessing": &"blessing"}
 
 var steps: Array[StringName] = []
+## The Maga's tips (the keys of OF_THE_MAGA end in _maga).
+var arcane := false
 var _done := {}
 var _clicks := 0
 
 
-## arcane: the Maga's steps (ORDER_ARCANE), else the Warrior's.
-func _init(arcane := false) -> void:
-	steps.assign(ORDER_ARCANE if arcane else ORDER)
+## is_arcane: the Maga's tips (the same steps as the Warrior's, told with her moves).
+func _init(is_arcane := false) -> void:
+	arcane = is_arcane
+	steps.assign(ORDER)
 
 
 ## One thing the paladin did (see the events above).
@@ -66,7 +69,9 @@ func current() -> StringName:
 ## The text key of the tip now (&"": none left).
 func key() -> StringName:
 	var s := current()
-	return KEYS[s] if s != &"" else &""
+	if s == &"":
+		return &""
+	return StringName("%s_maga" % KEYS[s]) if arcane and OF_THE_MAGA.has(s) else KEYS[s]
 
 
 ## Every step and the Blessing done: the door may open.
