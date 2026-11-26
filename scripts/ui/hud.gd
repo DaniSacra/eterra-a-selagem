@@ -83,6 +83,7 @@ func _layout_bars(thin: bool) -> void:
 	_place(_life, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + CHARGE.y + mag.y + 2.0 * BAR_GAP)), LIFE)
 	_magick.custom_minimum_size = mag
 	_magick.icon = HudBar.Mark.NONE if thin else HudBar.Mark.DROP
+	_magick.caption = T.t(&"hud_magick") if thin else ""
 	_place(_magick, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + CHARGE.y + BAR_GAP)), mag)
 	_magick.queue_redraw()
 
@@ -528,6 +529,7 @@ func _update_entrance(delta: float) -> void:
 func _build_life() -> void:
 	_charge = HudBar.new().setup(UiKit.OLD_GOLD.lightened(0.15), CHARGE, 1, false, UiKit.OLD_GOLD.darkened(0.45))
 	_charge.name = "charge"
+	_charge.caption = T.t(&"hud_bar_ult")
 	add_child(_charge)
 	_life = HudBar.new().setup(LIFE_COLOR, LIFE, LIFE_FONT, false, LIFE_BOTTOM)
 	add_child(_life)
@@ -761,7 +763,8 @@ func _process(delta: float) -> void:
 		_crest.set_hero(_crest_hero)
 	# a screen over the run (cards, pause, an event): the gifts' row and the greetings wait under it (BUG-107)
 	var over := game.mode != Game.Mode.PLAY
-	_passives.visible = not over
+	# PT-26-4: every Blessing lives in the build column now (state and recharge); the corner row stays hidden
+	_passives.visible = false
 	# the pause's panel stands on the left: the medallion and the bars go under it (UI review d2ff05d, P2-7)
 	var paused := game.mode == Game.Mode.PAUSE
 	for c: CanvasItem in [_crest, _life, _magick]:
@@ -956,12 +959,12 @@ func _update_slots(p: Player) -> void:
 		if s.action == &"shout":
 			# the Brado (Q): its recharge and the Blessing of its slot, hidden for a hero without it
 			s.visible = ComboTree.find(p.tree.neutral, ComboNode.In.SHOUT) != null
-			s.refresh(by_action.get(&"shout"), p.shout_wait())
+			s.refresh(by_action.get(&"shout"), p.shout_wait(), 0, 0, false, p.move_secs(ComboNode.In.SHOUT))
 			continue
 		if s.action == &"rush":
 			# the Investida (E): its recharge
 			s.visible = ComboTree.find(p.tree.neutral, ComboNode.In.RUSH) != null
-			s.refresh(by_action.get(&"rush"), p.rush_wait())
+			s.refresh(by_action.get(&"rush"), p.rush_wait(), 0, 0, false, p.move_secs(ComboNode.In.RUSH))
 			continue
 		var b: Boon = by_action.get(s.action)
 		var starved := not p.magick.can_pay(_omega(p, s.slot))
@@ -1021,6 +1024,7 @@ func _update_buff(p: Player) -> void:
 
 ## The build column reads the Blessings, the Elos and the Psalm again when one of them changed.
 func _update_column() -> void:
+	_column.tick(game.skills)
 	var psalm: PsalmDef = game.psalms.taken.back() if game.psalms != null and not game.psalms.taken.is_empty() else null
 	var kind := game.ults.def.kind if game.ults != null and game.ults.def != null else -1
 	var key := "%s|%s|%d" % [",".join(game.boons.owned().map(func(b: Boon) -> String: return "%s:%d:%d" % [b.id, game.boons.level(b.id), game.boons.rarity(b.id)])),

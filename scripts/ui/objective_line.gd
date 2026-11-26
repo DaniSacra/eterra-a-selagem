@@ -16,7 +16,7 @@ const HEIGHT := 28.0
 const PULSE := 0.6
 
 var key := &""
-var _label: Label
+var _label: RichTextLabel
 ## 0..1: how much of the thread under the words is drawn; its fade at the end.
 var _rule := 0.0
 var _rule_alpha := 0.0
@@ -28,7 +28,7 @@ func _ready() -> void:
 	name = "ObjectiveLine"
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	custom_minimum_size = Vector2(380.0, HEIGHT)
-	_label = UiKit.shadow(UiKit.label("", UiKit.PALE, TEXT_PX, UiKit.TEXT_FONT))
+	_label = UiKit.keyed_line(UiKit.PALE, TEXT_PX)
 	_label.position = Vector2(TEXT_LEFT, 0.0)
 	_label.modulate.a = 0.0
 	add_child(_label)
@@ -39,8 +39,8 @@ func _ready() -> void:
 func set_key(new_key: StringName) -> void:
 	var words := Objective.text(new_key)
 	if new_key == key:
-		if _label != null and words != "" and _label.text != words:
-			_label.text = words
+		if _label != null and words != "" and _label.text != MouseGlyph.keyed(words):
+			_label.text = MouseGlyph.keyed(words)
 			queue_redraw()
 		return
 	var had := key != &""
@@ -62,7 +62,7 @@ func set_key(new_key: StringName) -> void:
 
 
 func _swap(words: String) -> void:
-	_label.text = words
+	_label.text = MouseGlyph.keyed(words)
 	_rule = 0.0
 	_rule_alpha = 0.0
 	if words != "":

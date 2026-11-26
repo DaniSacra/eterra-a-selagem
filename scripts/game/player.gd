@@ -779,6 +779,12 @@ func rush_wait() -> float:
 	return move_wait(ComboNode.In.RUSH)
 
 
+## Seconds left of a move's recharge (the HUD writes them on the diamond, PT-26).
+func move_secs(input: ComboNode.In) -> float:
+	var node := ComboTree.find(tree.neutral, input)
+	return runner.cooldown_left(node.id) if node != null and node.cooldown > 0.0 else 0.0
+
+
 func move_wait(input: ComboNode.In) -> float:
 	var node := ComboTree.find(tree.neutral, input)
 	return clampf(runner.cooldown_left(node.id) / node.cooldown, 0.0, 1.0) if node != null and node.cooldown > 0.0 else 0.0

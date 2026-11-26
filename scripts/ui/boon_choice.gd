@@ -657,6 +657,8 @@ static func key_in_text(action: StringName, marked := false) -> String:
 	if action == &"":
 		return ""
 	var k := UiKit.action_label(action)
+	if marked and UiKit.action_mouse_button(action) > 0 and MouseGlyph.button_of(k) > 0:
+		return " " + MouseGlyph.bbcode(MouseGlyph.button_of(k), 18)
 	return " " + (UiKit.strong("[lb]%s[rb]" % k) if marked else "[%s]" % k)
 
 

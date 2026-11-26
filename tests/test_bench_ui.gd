@@ -206,6 +206,8 @@ func test_every_number_of_every_blessing_is_marked() -> void:
 		for lv in [1, 2]:
 			var text := BoonChoice.describe(b, lv, 1.5, true)
 			var bare := re.sub(text, "", true)
+			# the mouse icon (PT-26-1) is an image with digits in its path and size, not a number of the rule
+			bare = RegEx.create_from_string("\\[img=[^\\]]*\\][^\\[]*\\[/img\\]").sub(bare, "", true)
 			assert_null(digit.search(bare), "%s: a number outside a mark in '%s'" % [b.id, text])
 
 
