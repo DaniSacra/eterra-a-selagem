@@ -556,6 +556,7 @@ func _card(b: Boon, state: BoonState) -> BoonCard:
 	var card := BoonCard.new()
 	card.listed = list != null
 	card.fresh = b != null and fresh.has(b.id)
+	card.guest_of_family = b != null and angel != null and not Encounter.belongs(state, b, angel.family)
 	var rarity := card_rarity(b, state)
 	if b:
 		var lv := state.level(b.id)

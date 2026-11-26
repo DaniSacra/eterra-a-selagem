@@ -169,6 +169,10 @@ var _fits := 0
 static var _glow: GradientTexture2D
 
 
+## UI-S2: the card is from another angel's family (the hand was short): its caption says so, even on a listed screen.
+var guest_of_family := false
+
+
 ## level: the gift's level now (0 = new; an exchange: the level it keeps); replaces: the gift it would replace, or null.
 ## upgrade: the card is an exchange one rarity up; replaced_rarity: the rarity of the gift it replaces.
 ## replaced_level: the level of the gift it replaces (its numbers stand before the card's, dimmed, on a trade).
@@ -195,7 +199,9 @@ func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replace
 		title.add_child(nm)
 		box.add_child(title)
 		var cap := EloLink.caption(from) if not from.is_empty() else T.t(Boon.FAMILY_KEY[b.family])
-		if not listed or not from.is_empty():
+		if guest_of_family and from.is_empty():
+			cap = T.t(&"boon_guest_family", {"f": cap})
+		if not listed or not from.is_empty() or guest_of_family:
 			# (a line of the Blessing screen leaves the family out: the screen is in its angel's colour, SW-B1)
 			box.add_child(_text(cap, EloLink.METAL_LIT if not from.is_empty() else b.color().lightened(0.25), 17, UiKit.BOLD_FONT))
 		var meta := _meta(b, level)

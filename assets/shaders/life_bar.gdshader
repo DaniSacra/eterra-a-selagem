@@ -16,6 +16,11 @@ uniform vec3 trail_color : source_color = vec3(1.0, 0.9, 0.78);
 // PT-0 (2026-11-23): the Quebra's gauge in its own light blue (the life is red, the armor gold, the trail white)
 uniform vec3 poise_color : source_color = vec3(0.45, 0.78, 1.0);
 uniform vec3 elite_frame : source_color = vec3(0.56, 0.45, 0.27);
+// UI-S1: the status pips over a bar, the same colours as the glossary (Glossary.COLORS)
+uniform vec3 pip_burn : source_color = vec3(1.0, 0.66, 0.36);
+uniform vec3 pip_frost : source_color = vec3(0.62, 0.86, 0.96);
+uniform vec3 pip_weak : source_color = vec3(0.85, 0.73, 0.63);
+uniform vec3 pip_mark : source_color = vec3(0.81, 0.78, 0.43);
 // Meters of the frame on each side (as thick on the ends as on the long sides, and on a tall armored bar).
 uniform float frame_m = 0.04;
 // The armored bar's split: the armor's strip takes this share of the inside (from the top).
@@ -31,13 +36,17 @@ varying float fade;
 varying float elite;
 varying float ticks;
 varying float poise_gauge;
+varying float pip;
 varying vec2 size_m;
 
 void vertex() {
 	fill = vec3(INSTANCE_CUSTOM.r, INSTANCE_CUSTOM.g, INSTANCE_CUSTOM.a);
 	// +8: the poise gauge under a common's bar (C1b): pale, r = poise left
-	poise_gauge = INSTANCE_CUSTOM.b > 7.5 ? 1.0 : 0.0;
-	float b = INSTANCE_CUSTOM.b - 8.0 * poise_gauge;
+	// +16: a status pip (UI-S1): a small lozenge, r = which status (0 burn, 1 frost, 2 weak, 3 mark)
+	pip = INSTANCE_CUSTOM.b > 15.5 ? 1.0 : 0.0;
+	float bb = INSTANCE_CUSTOM.b - 16.0 * pip;
+	poise_gauge = bb > 7.5 ? 1.0 : 0.0;
+	float b = bb - 8.0 * poise_gauge;
 	ticks = b > 3.5 ? 1.0 : 0.0;
 	float rest = b - 4.0 * ticks;
 	elite = rest > 1.5 ? 1.0 : 0.0;
@@ -51,6 +60,17 @@ void vertex() {
 
 void fragment() {
 	vec2 uv = UV;
+	if (pip > 0.5) {
+		vec2 q = abs(uv - 0.5) * 2.0;
+		if (q.x + q.y > 1.0) {
+			discard;
+		}
+		int k = int(fill.r + 0.5);
+		vec3 pc = k == 0 ? pip_burn : (k == 1 ? pip_frost : (k == 2 ? pip_weak : pip_mark));
+		ALBEDO = (q.x + q.y > 0.7) ? back_color : pc;
+		ALPHA = fade;
+		return;
+	}
 	bool armored = fill.g > 0.0;
 	bool common = elite < 0.5 && !armored && poise_gauge < 0.5;
 	float tall = size_m.y;

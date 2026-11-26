@@ -68,6 +68,7 @@ entries = {
 "boon_passo_frio": "Passo Frio",
 "boon_passo_frio_desc": "A Investida congela por {a} s.",
 "boon_rest": "Fôlego",
+"boon_guest_family": "De outro anjo: {f}",
 "boon_rest_desc": "Todas as Bênçãos já estão com você. Recupere {a} de vida.",
 "choice_title": "Escolha uma Bênção",
 "choice_level": "Nível {n} de {max}",

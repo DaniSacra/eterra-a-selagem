@@ -130,6 +130,8 @@ const BAR_MIN_WIDTH := 1.1
 const BAR_HEIGHT := 0.18
 const BAR_ARMOR_HEIGHT := 0.09
 const BAR_ABOVE := 0.35
+## UI-S1: the side (meters) of a status pip over a bar.
+const PIP_SIZE := 0.2
 ## PT-0 (Daniel 2026-11-23, the white bar read as noise): the Quebra's gauge shows only once half of it is worn.
 const POISE_SHOW := 0.5
 ## C1b: the poise gauge is this share of the life bar's width and height (life_bar.gdshader, +8 in b).
@@ -465,6 +467,14 @@ func add_bar(d: EnemyDef, top: Vector3, life: float, armor: float, crowded := fa
 	life = clampf(life, 0.0, 1.0)
 	_put(_bars, Vector3(w, 0, 0), Vector3(0, h, 0), Vector3.BACK, at,
 		Color(life, clampf(armor, 0.0, 1.0), (BAR_CROWD_FADE if crowded else 1.0) + (2.0 if d.elite else 0.0) + (4.0 if armor > 0.0 and (d.elite or d.heavy) else 0.0), maxf(life, clampf(trail, 0.0, 1.0))))
+
+
+## UI-S1: a status pip (which: 0 burn, 1 frost, 2 weak, 3 mark) over a life bar; i of n pips in a centred row.
+func add_status_pip(d: EnemyDef, top: Vector3, which: int, i: int, n: int, crowded := false) -> void:
+	var s := PIP_SIZE * (BAR_CROWD_HEIGHT if crowded else 1.0)
+	var at := top + Vector3(((float(i) - (n - 1) * 0.5) * 1.35) * s, BAR_ABOVE + BAR_HEIGHT + s * 0.7, 0)
+	_put(_bars, Vector3(s, 0, 0), Vector3(0, s, 0), Vector3.BACK, at,
+		Color(float(which), 0.0, (BAR_CROWD_FADE if crowded else 1.0) + 16.0, 1.0))
 
 
 ## C1b: the poise's small gauge under a common enemy's life bar (pale, empties; only after a blow wore it). left: 0..1.

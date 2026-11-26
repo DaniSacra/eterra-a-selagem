@@ -544,6 +544,20 @@ static func stride_lean(sway: float, t: float, loop: float) -> float:
 	return deg_to_rad(sway) * sin(TAU * t / loop)
 
 
+## UI-S1: the statuses on an enemy worth showing over its bar, as StatusPip ids (0 burn, 1 frost or slow, 2 weak, 3 mark).
+static func status_pips(e: Enemy) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	if e.burn_t > 0.0:
+		out.append(0)
+	if e.frozen_t > 0.0 or e.cold_slow > 0.0 or e.slow_t > 0.0:
+		out.append(1)
+	if e.weak_t > 0.0:
+		out.append(2)
+	if e.mark_t > 0.0:
+		out.append(3)
+	return out
+
+
 func _speed(e: Enemy) -> float:
 	return e.def.speed * speed_scale * (0.45 if e.slow_t > 0.0 else 1.0) * (1.0 - e.cold_slow) * (1.0 + e.haste_pace if e.haste_t > 0.0 else 1.0)
 
@@ -3054,6 +3068,10 @@ func render(render_dt := 1.0 / 60.0) -> void:
 				e.armor / maxf(e.max_armor, 0.001) if e.max_armor > 0.0 else 0.0, crowded, bar_trails.shown(e, life, now))
 			if d.poise > 0.0 and (e.armor <= 0.0 or d.elite) and e.poise < e.poise_full * CrowdRenderer.POISE_SHOW:
 				renderer.add_poise_bar(d, Vector3(e.pos.x, top, e.pos.y), e.poise / maxf(e.poise_full, 0.001), crowded, e.armor > 0.0)
+			# UI-S1: what is on it (burn, frost or slow, weak, mark) as small lozenges over the bar
+			var pips := Horde.status_pips(e)
+			for i in pips.size():
+				renderer.add_status_pip(d, Vector3(e.pos.x, top, e.pos.y), pips[i], i, pips.size(), crowded)
 	_draw_ward_threads(now)
 	for e in dying:
 		var burst := e.def.death_burst
