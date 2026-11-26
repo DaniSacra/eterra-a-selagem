@@ -6,6 +6,7 @@ extends GutTest
 ## pause back to the hub, --hub, and a fake save through death, hub and a new descent (nothing doubled).
 
 const DT := 1.0 / 60.0
+const SV := preload("res://tests/test_hub_sv.gd")
 
 var hub: Hub
 var went: Array[String] = []
@@ -77,11 +78,11 @@ func _frames(n: int) -> void:
 func test_the_plan_turns_into_the_world_and_back() -> void:
 	# the spec's own table (2.3, 2.4): local (u, v) and world (x, z)
 	assert_almost_eq(HubPlan.to_world(Vector2(0.0, 1.0), 35.0), Vector2(-0.574, -0.819), Vector2(0.01, 0.01), "the camera's point")
-	# HV-A: the portal's at the foot of its stairs, the Livro's about 10 m off the axis, the arrival on the Retorno's
-	# seal at the south-east (the plan's (18; -11.4))
-	assert_almost_eq(HubPlan.use_point(HubPlan.PORTAL, 35.0), Vector2(-6.31, -9.01), Vector2(0.06, 0.06))
-	assert_almost_eq(HubPlan.use_point(HubPlan.BOOK, 35.0), Vector2(11.20, -1.62), Vector2(0.06, 0.06))
-	assert_almost_eq(HubPlan.to_world(HubPlan.ARRIVAL, 35.0), Vector2(21.28, -0.99), Vector2(0.06, 0.06))
+	# SV-R: the gate's use point in front of its west face, the Livro's at the end of the high gallery, the arrival at
+	# the Ponto de Vigilia (the package's (-24; -7))
+	assert_almost_eq(HubPlan.use_point(HubPlan.PORTAL, 35.0), Vector2(29.65, -13.44), Vector2(0.06, 0.06))
+	assert_almost_eq(HubPlan.use_point(HubPlan.BOOK, 35.0), Vector2(4.67, -26.46), Vector2(0.06, 0.06))
+	assert_almost_eq(HubPlan.to_world(HubPlan.ARRIVAL, 35.0), Vector2(-15.64, 19.5), Vector2(0.06, 0.06))
 	for p: Vector2 in [Vector2(3, -7), Vector2(-12, 4), Vector2(0.5, 0.25)]:
 		assert_almost_eq(HubPlan.to_local(HubPlan.to_world(p, 35.0), 35.0), p, Vector2(0.0001, 0.0001))
 
@@ -102,12 +103,7 @@ func test_the_layout_is_its_own_and_stands_on_the_plan() -> void:
 					"two stations never both in reach (%s, %s)" % [id, other])
 	assert_eq(l.cam_reach, HubPlan.CAM_REACH)
 	assert_gt(l.cam_reach, 10.0, "the camera goes wherever he walks in the hub, not 3 m off its point")
-	# the floor about twice the first plan's each way (the PO, HUB-B2): 50 x 33 m
-	var area := 0.0
-	for i in HubPlan.FLOOR.size():
-		area += HubPlan.FLOOR[i].cross(HubPlan.FLOOR[(i + 1) % HubPlan.FLOOR.size()]) * 0.5
-	# (HUB-D: plus the lobes beside the portal's terrace; HV-A: the south-east corner whole, no well)
-	assert_between(absf(area), 1400.0, 1800.0, "about 48 to 52 by 30 to 34 m")
+	# the floor of SV-R (the package's 71 x 54 m outline, less the basins and the future rooms) is checked in test_hub_sv
 
 
 # ---------- focus ----------
@@ -151,33 +147,20 @@ func test_a_body_pushed_at_a_round_middle_slides_round_it() -> void:
 	assert_gt(glance.x, 0.0, "off the middle he slides to his own side")
 
 
-func test_pushed_straight_at_the_fountain_he_goes_round_it() -> void:
-	_hub()
-	var up := HubPlan.to_world(Vector2(0, 1))
-	hub.player.pos = HubPlan.to_world(Vector2(0, -4))
-	var stood := 0
-	for i in 240:
-		if HubPlan.to_local(hub.player.pos).y > 2.0:
-			break
-		var was := hub.player.pos
-		hub.player.step(DT, up, Vector2.ZERO)
-		if hub.player.pos.distance_to(was) < 0.01:
-			stood += 1
-	assert_gt(HubPlan.to_local(hub.player.pos).y, 2.0, "past the fountain, on the way to the portal")
-	assert_lt(stood, 3, "never stopped on the axis")
-
-
 func test_every_station_is_reached_from_the_arrival() -> void:
 	_hub()
-	for id in HubPlan.STATIONS:
+	# walking the package's paths (test_hub_sv.ROUTES), point to point, as the player does
+	for id: StringName in SV.ROUTES:
 		hub.player.pos = hub.arena.start
-		var target := HubPlan.use_point(id)
-		for i in 900:
-			var to := target - hub.player.pos
-			if to.length() < 0.3:
-				break
-			hub.player.step(DT, to.normalized(), Vector2.ZERO)
-		assert_lt(hub.player.pos.distance_to(target), 0.5, "%s reached walking from the arrival" % id)
+		var pts: Array = SV.ROUTES[id]
+		for k in range(1, pts.size()):
+			var target := HubPlan.to_world(pts[k])
+			for i in 600:
+				var to := target - hub.player.pos
+				if to.length() < 0.3:
+					break
+				hub.player.step(DT, to.normalized(), Vector2.ZERO)
+		assert_lt(hub.player.pos.distance_to(HubPlan.use_point(id)), 0.5, "%s reached walking from the arrival" % id)
 
 
 # ---------- interact ----------

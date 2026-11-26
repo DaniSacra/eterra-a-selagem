@@ -59,11 +59,11 @@ func test_the_game_plays_the_warrior_while_she_is_locked() -> void:
 
 # ---------- the place ----------
 
-func test_the_station_is_beside_the_vendedor_and_off_every_other_piece() -> void:
+func test_the_station_is_in_the_upper_gallery_and_off_every_other_piece() -> void:
 	assert_true(HubPlan.STATIONS.has(HubPlan.HEROES))
 	var l := HubPlan.layout()
 	assert_true(l.floor.contains(HubPlan.use_point(HubPlan.HEROES), Player.RADIUS))
-	assert_lt(HubPlan.USE[HubPlan.HEROES].distance_to(HubPlan.USE[HubPlan.VENDOR]), 9.0, "beside the stall")
+	assert_lt(HubPlan.USE[HubPlan.HEROES].distance_to(HubPlan.USE[HubPlan.VENDOR]), 20.0, "in the stall's quarter: the upper gallery (SV-R)")
 	for other in HubPlan.STATIONS:
 		if other != HubPlan.HEROES:
 			assert_gt(HubPlan.use_point(HubPlan.HEROES).distance_to(HubPlan.use_point(other)), HubPlan.FOCUS_OUT * 2.0, "apart from %s" % other)
