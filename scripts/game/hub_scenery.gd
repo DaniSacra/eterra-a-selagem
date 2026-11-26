@@ -62,7 +62,10 @@ const BRIDGE_U := Vector2(6.75, 26.0)
 const BRIDGE_V := Vector2(-15.5, -10.5)
 const BRIDGE_ARCHES: Array[float] = [10.8, 16.4, 22.0]
 const ARCH_SPAN := 4.0
-const ARCH_SPRING := 2.2
+## Round 5: the arches under the way sprang from +2.2 m and stood above the deck in front of the camera; now the whole ring is
+## under the cornice (apex about -0.7 m), the recess behind them dark stone (ARCH_BACK) and never a flat black panel.
+const ARCH_SPRING := -4.1
+const ARCH_BACK := 0.38
 const ARCH_RING := 0.4
 const ARCH_FOOT := -6.2
 const FALL_SHADER := preload("res://assets/shaders/waterfall.gdshader")
@@ -148,6 +151,7 @@ const TREE_TRUNK := Vector2(0.24, 2.3)
 const TREE_SHELF := Vector2(1.9, 0.9)  # a rock shelf under a tree: width, how far it stands out under the lip
 const LAMP_EVERY := 21.0
 const LAMP := Vector3(0.1, 1.9, 0.26)  # post width, height, lantern size
+const HANG_CLEAR := 4.0
 const PLANT_CLEAR := 2.6  # from a station's use point, a door or the arrival
 const PIECE_PAD := 0.9
 const SEED := 4417
@@ -177,6 +181,10 @@ const RAIL_LOW := 0.8
 const RAIL_MIN := 2.5
 const RAIL_LANTERN_EVERY := 4  # round 3: one lantern every fourth post (was every second)
 const RAIL_CLEAR := 1.5
+## Round 5: a rail only where the edge looks over a drop (no floor within RAIL_TRENCH beyond it: between two courts one rail
+## stays, the south one), and a lantern (on a post or a lamp post) at most every LANTERN_APART m.
+const RAIL_TRENCH := Vector2(2.5, 4.5)
+const LANTERN_APART := 6.0
 const LANTERN_SIZE := 0.2
 const LAMP_LANTERN := 0.24  # a lamp post's lantern
 ## Round 3: the lanterns are amber (never white), each with a small cap of dark iron over it and a soft halo; the pool of
@@ -200,7 +208,7 @@ const SQUARE_POOLS: Array[Array] = [
 	[Vector2(33.0, -6.0), 5.4, 0.5, GOLD_POOL], [Vector2(3.0, 6.0), 4.8, 0.3, GOLD_POOL],
 ]
 ## Planters of stone with flowers along the rails (the art's canteiros), every so many metres of edge.
-const PLANTER_EVERY := 9.0
+const PLANTER_EVERY := 13.0  # round 5: was 9
 const PLANTER_INSET := 1.55
 const PLANTER := Vector3(2.6, 0.45, 0.75)
 ## The cliffs: tufts of shrub, flowers and hanging wisteria on the face, and ledges of rock (the hub_cliff stone).
@@ -210,7 +218,9 @@ const LEDGE_EVERY := 4.0
 ## Round 3: stacks of rock stepping out and down the face (the talus), and ivy hanging from the lip.
 const ROCK_STEP_EVERY := 3.4
 const ROCK_STEPS := Vector2i(2, 4)
-const ROCK_STEP_SIZE := Vector3(2.8, 1.3, 1.5)  # along the edge, tall, out of the face
+const ROCK_CHAMFER := 0.28
+const ROCK_TILT := 0.14
+const ROCK_TALL_SHARE := 0.35
 const ROCK_STEP_OUT := 0.65  # how much further out each step down stands
 const ROCK_STEP_DROP := Vector2(0.9, 1.7)
 const IVY_EVERY := 2.6
@@ -266,6 +276,7 @@ const SKY_CARD := Vector4(260.0, 900.0, 320.0, -60.0)  # v, width, height, botto
 var look: HubLook
 var _rng := RandomNumberGenerator.new()
 var _pieces: Array[Rect2] = []  # footprints of the stations' pieces and the doors (local u, v), padded
+var _lantern_at: Array[Vector2] = []  # where a rail post or a lamp post already carries a lantern
 var _avoid: Array[Vector2] = []  # use points, door centres, the arrival
 var _roof_mat: ShaderMaterial
 var _window_mat: StandardMaterial3D
@@ -366,6 +377,15 @@ func _collect(layout: RoomLayout) -> void:
 	_avoid.append(HubPlan.ARRIVAL)
 	for r in HubFacades.reserved():
 		_pieces.append(r)
+
+
+## Round 5: a tassel or a curtain hung from the lip is a tall card seen edge-on beside the hero: none within HANG_CLEAR of the
+## arrival, a use point or a door.
+func _near_avoid(p: Vector2, clear := HANG_CLEAR) -> bool:
+	for a in _avoid:
+		if a.distance_to(p) < clear:
+			return true
+	return false
 
 
 func _blocked(p: Vector2, clear := PLANT_CLEAR) -> bool:
@@ -865,10 +885,14 @@ func _bridge() -> void:
 	for r in RAILS:
 		look.fm.balustrade(_at(r.x, 0.0, r.y), _at(r.z, 0.0, r.w), true, mat)
 	var face := BRIDGE_V.x - 0.12
-	var dark := look._plain(HubBlockout.GATE_DARK, 1.0)
 	var inner := look.m.stone(0.0, look.stone_tint() * HubLook.INNER_TINT)
+	var back := look.m.stone(0.0, look.stone_tint() * HubLook.INNER_TINT * ARCH_BACK)
 	for u in BRIDGE_ARCHES:
-		look.fm.block(_at(u, ARCH_FOOT, BRIDGE_V.x - 0.1), Vector3(ARCH_SPAN + ARCH_RING * 2.0, ARCH_SPRING - ARCH_FOOT + 1.4, 0.08), 0.0, dark, false)
+		var recess := MeshInstance3D.new()
+		recess.mesh = HubFacades.ogive_mesh(ARCH_SPAN, ARCH_SPRING - ARCH_FOOT, 0.8, [], 10)
+		recess.material_override = back
+		recess.position = _at(u, ARCH_FOOT, BRIDGE_V.x - 0.1)
+		look.frame.add_child(recess)
 		look.fm.voussoir_arch(_at(u, ARCH_FOOT, face), Vector2(0.0, 1.0), ARCH_SPAN, ARCH_SPRING - ARCH_FOOT, ARCH_RING, 0.4, inner, 0.8)
 	# the piers between the arches and the cornice under the deck
 	for u: float in [BRIDGE_ARCHES[0] + (BRIDGE_ARCHES[1] - BRIDGE_ARCHES[0]) * 0.5, BRIDGE_ARCHES[1] + (BRIDGE_ARCHES[2] - BRIDGE_ARCHES[1]) * 0.5]:
@@ -1102,8 +1126,8 @@ func _future_yards() -> void:
 			var tread := Vector3(mouth.z * 2.0 + 1.0, top + YARD_DROP, 0.45)
 			look.fm.block(_at(mouth.x, -YARD_DROP, -17.35 - k * 0.45), tread, 0.0, look.facade_stone(), false)
 			look.fm.block(_at(mouth.x, top - 0.01, -17.35 - k * 0.45 - 0.2), Vector3(tread.x + 0.06, STEP_NOSING_H, 0.1), 0.0, nosing, false)
-		_lamp(Vector2(mouth.x - mouth.z + 0.4, -15.9))
-		_lamp(Vector2(mouth.x + mouth.z - 0.4, -15.9))
+		_lamp(Vector2(mouth.x - mouth.z + 0.4, -15.9), true)
+		_lamp(Vector2(mouth.x + mouth.z - 0.4, -15.9), true)
 
 
 # ---------- plants and lamps ----------
@@ -1163,7 +1187,9 @@ func _trees() -> void:
 
 ## A lamp post in cream stone (plinth, shaft, a cap) carrying a lit lantern (the lanterns' one MultiMesh; no light of its
 ## own: the hub is lit by its air, its pools and the few lights of its faces).
-func _lamp(p: Vector2) -> void:
+func _lamp(p: Vector2, force := false) -> void:
+	if not force and not _lantern_free(p):
+		return
 	var stone: Material = look.facade_stone()
 	var fm := look.fm
 	fm.block(_at(p.x, 0.0, p.y), Vector3(0.5, 0.5, 0.5), 0.0, stone, false)
@@ -1203,11 +1229,42 @@ func _balustrades() -> void:
 			var p1 := b - dir * 0.5 + into * RAIL_INSET
 			if not (_on_floor(p0) and _on_floor(p1)):
 				continue
+			if _facing_court(mid, into):
+				continue
 			look.fm.balustrade(_at(p0.x, 0.0, p0.y), _at(p1.x, 0.0, p1.y), true, mat, RAIL_LOW)
 			var spans := maxi(1, roundi(p0.distance_to(p1) / Masonry.POST_GAP))
 			for k in range(0, spans + 1, RAIL_LANTERN_EVERY):
 				var q := p0.lerp(p1, float(k) / spans)
+				if not _lantern_free(q):
+					continue
 				_lantern_xf.append(Transform3D(Basis.from_scale(Vector3.ONE * LANTERN_SIZE), _at(q.x, post_top + LANTERN_SIZE * 0.5 + 0.02, q.y)))
+
+
+## Round 5: a ledge rock is not a crate: a third of them stand tall and narrow, the rest vary in all three sizes; each is
+## chamfered deeply (ROCK_CHAMFER), turned (any yaw within 0.5 rad of the edge's) and tilted up to ROCK_TILT rad.
+func _rock_size() -> Vector3:
+	if _rng.randf() < ROCK_TALL_SHARE:
+		return Vector3(_rng.randf_range(0.9, 1.5), _rng.randf_range(1.9, 3.0), _rng.randf_range(0.9, 1.4))
+	return Vector3(_rng.randf_range(1.3, 2.9), _rng.randf_range(0.7, 1.5), _rng.randf_range(1.0, 1.8))
+
+
+## True when a lantern may stand at p (none within LANTERN_APART); records it when it may.
+func _lantern_free(p: Vector2) -> bool:
+	for q in _lantern_at:
+		if q.distance_to(p) < LANTERN_APART:
+			return false
+	_lantern_at.append(p)
+	return true
+
+
+## True when the edge at `mid` (the floor on its `into` side) has floor again within RAIL_TRENCH beyond it (a trench between
+## two courts, not the drop to the void) and is the northern of the two: its rail would only be a second wall in the middle.
+func _facing_court(mid: Vector2, into: Vector2) -> bool:
+	for d: float in [RAIL_TRENCH.x, RAIL_TRENCH.y]:
+		var beyond := mid - into * d
+		if _on_floor(beyond):
+			return mid.y >= beyond.y
+	return false
 
 
 ## True when the point is on one of RAILS (the bridge's) or near the bridge's arches.
@@ -1272,6 +1329,8 @@ func _cliffs() -> void:
 			_leaf_tall.append(_rng.randf_range(1.0, 1.8))
 		elif roll < 0.58:
 			plant(_rng.randi() % 2, at, _rng.randf_range(0.8, 1.3))
+		elif _near_avoid(p):
+			continue
 		else:
 			# round 3: a tassel hung from the lip (its top at the paving's level, against the rock), never a bubble in the air
 			var hang := _rng.randf_range(HANG_TALL.x, HANG_TALL.y)
@@ -1281,7 +1340,7 @@ func _cliffs() -> void:
 	for e in _edge_points(IVY_EVERY, 0.05, 0.0, false, true):
 		var p: Vector2 = e[0]
 		var out: Vector2 = e[1]
-		if _under_bridge(p):
+		if _under_bridge(p) or _near_avoid(p):
 			continue
 		var tall := _rng.randf_range(IVY_TALL.x, IVY_TALL.y)
 		_ivy_spots.append(Vector3(p.x + out.x * 0.18, 0.05 - tall, p.y + out.y * 0.18))
@@ -1296,9 +1355,11 @@ func _cliffs() -> void:
 		var y := -_rng.randf_range(ROCK_STEP_DROP.x, ROCK_STEP_DROP.y)
 		var steps := _rng.randi_range(ROCK_STEPS.x, ROCK_STEPS.y)
 		for k in steps:
-			var size := Vector3(ROCK_STEP_SIZE.x * _rng.randf_range(0.65, 1.2), ROCK_STEP_SIZE.y * _rng.randf_range(0.8, 1.3), ROCK_STEP_SIZE.z * _rng.randf_range(0.8, 1.3))
+			var size := _rock_size()
 			var c := p + out * (size.z * 0.5 - 0.2 + ROCK_STEP_OUT * k) + along * _rng.randf_range(-0.6, 0.6)
-			look.fm.block(_at(c.x, y - size.y, c.y), size, yaw + _rng.randf_range(-0.2, 0.2), rock, false)
+			var rock_mi := look.fm.block(_at(c.x, y - size.y, c.y), size, 0.0, rock, false)
+			rock_mi.mesh = look.fm.bevel_mesh(size, ROCK_CHAMFER, _rng.randi_range(0, 7), _rng.randf_range(0.2, 0.5))
+			rock_mi.basis = Basis.from_euler(Vector3(_rng.randf_range(-ROCK_TILT, ROCK_TILT), yaw + _rng.randf_range(-0.5, 0.5), _rng.randf_range(-ROCK_TILT, ROCK_TILT)))
 			if k < 2:
 				_leaf_spots.append(Vector3(c.x, y, c.y))
 				_leaf_tall.append(_rng.randf_range(0.5, 1.0))

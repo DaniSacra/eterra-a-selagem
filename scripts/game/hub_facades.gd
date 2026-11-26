@@ -39,8 +39,15 @@ const CARPET_RUN := Vector4(-1.0, 1.9, 20.4, 17.5)
 const GLASSHOUSE := Vector4(-27.6, -22.6, 0.6, 3.0)
 const GLASSHOUSE_EAVES := 2.4
 const GLASSHOUSE_RIDGE := 3.4
-const GLASS_PANE := Color(0.72, 0.9, 0.88)
-const GLASS_ALPHA := 0.26
+## Round 5: the glasshouse glass is dark green-amber (the plants and the warm light show through), the frame dark iron, the
+## roof a gable with rafters; a warm glow stands behind the plants (GLASSHOUSE_GLOW: energy, light energy).
+const GLASS_PANE := Color(0.2, 0.3, 0.2)
+const GLASS_ALPHA := 0.34
+const GLASS_EMIT := Color(1.0, 0.7, 0.3)
+const GLASS_EMIT_ENERGY := 0.12
+const GLASSHOUSE_IRON := Color(0.11, 0.11, 0.1)
+const GLASSHOUSE_GLOW := Vector2(0.8, 1.2)
+const FRAME_THICK := 0.1
 const POST_EVERY := 1.25
 ## The lions at the Portao's feet (round 4, on its terrace in front of the facade): how far each stands from the arch's middle
 ## (u), how far south of its face (v), their size. The banners hang on the wall each side of the ring (their width and length,
@@ -282,7 +289,7 @@ func _glasshouse() -> void:
 	var v1 := g.w
 	var cu := (u0 + u1) * 0.5
 	var cv := (v0 + v1) * 0.5
-	var frame := look._plain(GLASS_FRAME, 0.45)
+	var frame := look._plain(GLASSHOUSE_IRON, 0.5)
 	var pane := _glass_pane()
 	look.fm.block(_at(cu, 0.0, cv), Vector3(u1 - u0, 0.4, v1 - v0), 0.0, look.stone(), false)
 	var h := GLASSHOUSE_EAVES
@@ -294,15 +301,15 @@ func _glasshouse() -> void:
 	var n := maxi(2, roundi((u1 - u0) / POST_EVERY))
 	for i in n + 1:
 		var u := lerpf(u0, u1, float(i) / n)
-		look._bar(_at(u, 0.4 + (h - 0.4) * 0.5, v0), Vector3(0.07, h - 0.4, 0.07), frame)
+		look._bar(_at(u, 0.4 + (h - 0.4) * 0.5, v0), Vector3(FRAME_THICK, h - 0.4, FRAME_THICK), frame)
 	for s: float in [-1.0, 1.0]:
 		for k in 2:
-			look._bar(_at(cu + s * (u1 - u0) * 0.5, 0.4 + (h - 0.4) * 0.5, lerpf(v0, v1, float(k))), Vector3(0.07, h - 0.4, 0.07), frame)
+			look._bar(_at(cu + s * (u1 - u0) * 0.5, 0.4 + (h - 0.4) * 0.5, lerpf(v0, v1, float(k))), Vector3(FRAME_THICK, h - 0.4, FRAME_THICK), frame)
 	look._bar(_at(cu, h, v0), Vector3(u1 - u0 + 0.1, 0.08, 0.08), frame)
 	look._bar(_at(cu, 1.2, v0), Vector3(u1 - u0, 0.05, 0.05), frame)
 	# the hip roof: a ridge along u, four panes
 	var ridge := GLASSHOUSE_RIDGE
-	var inset := 0.9
+	var inset := 0.0  # a gable: the ridge spans the whole length
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var e: Array[Vector3] = [_at(u0, h, v0), _at(u1, h, v0), _at(u1, h, v1), _at(u0, h, v1)]
@@ -319,13 +326,21 @@ func _glasshouse() -> void:
 	look.frame.add_child(roof)
 	for s: float in [-1.0, 1.0]:
 		look._bar((e[0] + t[0]) * 0.5 if s < 0.0 else (e[1] + t[1]) * 0.5, Vector3(0.06, 0.06, 0.06), frame)
-	look._bar(_at(cu, ridge, cv), Vector3(u1 - u0 - inset * 2.0, 0.08, 0.08), frame)
+	look._bar(_at(cu, ridge, cv), Vector3(u1 - u0 - inset * 2.0, 0.12, 0.12), frame)
+	# rafters down each slope at every post, and a warm glow behind the plants
+	for i in n + 1:
+		var u := lerpf(u0, u1, float(i) / n)
+		for ev: float in [v0, v1]:
+			var a := _at(u, h, ev)
+			var b := _at(u, ridge, cv)
+			look._bar((a + b) * 0.5, Vector3(FRAME_THICK * 0.7, FRAME_THICK * 0.7, a.distance_to(b)), frame, Basis.looking_at(b - a, Vector3.UP))
+	_quad(_at(cu, 0.4, v1 - 0.05), Vector2(u1 - u0, h - 0.4), 0.0, HubLook.lit_opening(AMBER, GLASSHOUSE_GLOW.x, 0.15))
 	# the plants inside, in flower
 	for k in 6:
 		var u := lerpf(u0 + 0.6, u1 - 0.6, (k + _rng.randf_range(0.1, 0.9)) / 6.0)
 		var v := _rng.randf_range(v0 + 0.5, v1 - 0.4)
 		scenery.plant(k % 2, Vector3(u, 0.4, v), _rng.randf_range(0.9, 1.5))
-	light(Vector3(cu, 1.6, v0 + 0.5), Color(1.0, 0.86, 0.6), 1.7, 5.0)
+	light(Vector3(cu, 1.6, v0 + 0.5), Color(1.0, 0.8, 0.5), GLASSHOUSE_GLOW.y, 5.0)
 
 
 func _glass_pane() -> StandardMaterial3D:
@@ -336,8 +351,8 @@ func _glass_pane() -> StandardMaterial3D:
 		_pane_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 		_pane_mat.roughness = 0.1
 		_pane_mat.emission_enabled = true
-		_pane_mat.emission = Color(1.0, 0.85, 0.55)
-		_pane_mat.emission_energy_multiplier = 0.25
+		_pane_mat.emission = GLASS_EMIT
+		_pane_mat.emission_energy_multiplier = GLASS_EMIT_ENERGY
 	return _pane_mat
 
 
