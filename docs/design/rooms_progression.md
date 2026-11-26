@@ -1818,3 +1818,22 @@ a pede. A posição da faixa ficou com o dono do lote (o room-designer não escr
 - **Em aberto** (não contido): o robô não busca ilhas de esquiva nem relíquias de propósito (quem mede o prêmio é o jogador); o dano do perigo aos inimigos não aparece em `rooms[]` (só o
   `hurt_by` do herói), então a proporção herói e inimigos continua só pelos testes de `hazard`; `Rooms.spawn_point` cai no centro da primeira zona se nenhuma tentativa for alcançável (hoje
   nenhuma planta chega lá, o teste 3 trava o caso das travessias).
+
+
+## Lote 2 (2026-11-26 noite): PM-3 Fendas e PM-4 fontes por caminho (`room-designer`)
+
+**PM-3, o herói ficava 77% no leste.** O robô vai sempre ao inimigo mais perto e o herói entra no sudoeste, mas as três zonas de nascimento
+cedo eram todas no leste e o sorteio pelo lado oposto (`far_spawn` 1,5) trazia o resto até ele: a luta caía no brinco leste. Agora as Fendas
+nascem em duas zonas do oeste (a de x -18,5 a -12, z 1 a 6, a 7 m da entrada, e a do canto noroeste) e três do leste (nordeste, parede leste e a
+cabeça sul pequena); a cabeça sul inteira e a parede oeste ficam para os tardios; `far_spawn` 0. Medida (robô 0,25, 12 sementes, tempo de luta
+nas Fendas, 600 a 650 s): antes leste 71%, oeste 13%, ponte sul 8%, caminho sul 6%; depois leste 52%, oeste 34%, caminho sul 9%, ponte sul 4%.
+Nenhuma zona acima de 60%. Ouro e quebráveis já estão nos cantos (3 grupos mais a ilha); o robô não os busca, então só o nascimento move o jogo.
+Tentativas: só zona oeste cedo com `far_spawn` 1,5 deixou 71% leste; oeste 58% com o sul inteiro cedo (zona a 3,4 m da entrada, reprovada);
+oeste 67% com leste menor. Chegada em Morvath 8 de 12 antes e depois, `stuck` 0.
+
+**PM-4, fontes por caminho.** 300 descidas do `RunMap` (`tools/fountain_probe.gd`): ANTES todo mapa tinha um caminho com 4 fontes (a de antes de cada
+guardião, salas 4 e 9, e o descanso depois, 6 e 11), e o mínimo era 0 (cada sala tem duas portas); cura total possível 4 x 40% = 160% da vida.
+DEPOIS `StageDef.fountains_per_path` = 2: ficam as das camadas mais cedo (a da sala 4 antes do primeiro guardião e o descanso da 6); nada de fonte
+na segunda metade (salas 7 a 13); máximo por caminho 2 em 300 de 300, cura possível 80% da vida. O teste `test_sw_r` trava os dois números.
+Robô (12 sementes): vida média ao entrar nas salas 7 a 13 de 40,0 para 27,1, chegada em Morvath 8 de 12 nas duas; é a descida "mais difícil sem
+upgrades" pedida, e o respiro depois do segundo guardião passa a ser só a sala leve (orçamento 20) e a cura da sala (`room_heal_base`).

@@ -1106,6 +1106,7 @@ func _stage() -> void:
 	st.fountain_depth_min = 6
 	st.fountain_depth_max = 11
 	st.fountain_more_chance = 0.0
+	st.fountains_per_path = 2  # PM-4: the fountain before the first guardian and the rest after him (300 maps: 4 on every way before)
 	st.boss = &"morvath"
 	# The descent's graph (DM-1; RunMap): always two doors a room, a pomegranate behind a door from room 3 (Q-25 a)
 	st.pom_from_depth = 3
@@ -1962,9 +1963,11 @@ func _rift() -> RoomLayout:
 	_gate(l, Vector2(-9.0, 12.6), -15.0, [14.0, 18.2, 9.8])
 	l.gaps = _ring(RIFT_ISLAND, "nse")
 	# nobody rises on a bridge or in the south way; the first wave across the rift, the west zone from the second
-	l.spawns = [_rect(5, 11, -13.5, -10.5), _rect(16, 19.5, -8, -2), _rect(5, 11, 7, 12)]
-	l.late_spawns = [_rect(-17, -11, -13, -9)]
-	l.far_spawn = 1.5  # SW-R3: the next one rises on the side the paladin is not on (he stood in the east 68 to 82% of the time)
+	# PM-3: the paladin stood 71% of the time in the east (he comes in at the south-west, but the early zones were all east and
+	# the far side drew the packs to him there): the packs rise in the west (two zones) and the east (three, the small south-east bridge head among them); the whole bridge head and the west wall for the late ones; no far-side draw (the pack rises where the fight is)
+	l.spawns = [_rect(-18.5, -12, 1, 6), _rect(-17, -11, -13, -9), _rect(5, 11, -13.5, -10.5), _rect(16, 19.5, -8, -2), _rect(6, 10, 8, 12)]
+	l.late_spawns = [_rect(5, 11, 7, 12), _rect(-18.5, -12, -3, 3)]
+	l.far_spawn = 0.0
 	l.cam_bounds = _rect(-6, 7, -4, 5)
 	# RP-01: which bridge, or the way round the south
 	_areas(l, ["bridge_n", _rect(-7, 2, -12, -7), "bridge_s", _rect(-7, 2, -1, 4), "south_way", _rect(-8, 3, 9, 15),
