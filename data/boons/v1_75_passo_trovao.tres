@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_q5go1"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_4wq63"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_27hvx"]
+
+[sub_resource type="Resource" id="Resource_bqys1"]
+script = ExtResource("3_27hvx")
+kind = 1
+trigger = 6
+duration = PackedFloat32Array(0)
+gap = PackedFloat32Array(2)
+cooldown = PackedFloat32Array(4)
+damage = PackedFloat32Array(0)
+count = PackedFloat32Array(1)
+radius = PackedFloat32Array(2)
+status = &"shock"
+status_power = PackedFloat32Array(1)
+
+[resource]
+script = ExtResource("2_4wq63")
+id = &"passo_trovao"
+family = 9
+icon = 4
+max_level = 1
+slot = 4
+skill = SubResource("Resource_bqys1")
+grants = PackedStringArray("shock")
+needs_all = PackedStringArray()

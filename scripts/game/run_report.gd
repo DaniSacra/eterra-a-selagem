@@ -18,7 +18,7 @@ static func result(g: Game) -> Dictionary:
 		"shots_blocked": g.projectiles.blocked, "flinches": g.horde.flinches, "interrupts": g.horde.interrupts, "breaks": g.horde.breaks, "kit": g.hero_gifts.feed.tally,
 		"windups": g.horde.windup_report(), "idle": g.horde.idle_report(), "shot_flight": g.projectiles.flight_report(), "hurt_by": g.hurt_by.keys().reduce(func(a: Dictionary, k: Variant) -> Dictionary: a[k] = int(g.hurt_by[k]); return a, {}),
 		"omega_charges_started": g.player.charges_started, "omega_charges_cancelled": g.player.charges_cancelled(), "boons_at_boss": g.room_tally.boons_at_boss, "shop": g.room_tally.shop, "route_shop": g.room_tally.route_shop,
-		"fountain_used": g.room_tally.fountain_used, "ult": g.ults.stats(), "dealt_by": g.horde.dealt.report(), "elos": g.elos_formed.size(),
+		"fountain_used": g.room_tally.fountain_used, "ult": g.ults.stats(), "dealt_by": g.horde.dealt.report(), "cel": g.combat.celestial.report(), "elos": g.elos_formed.size(),
 		"psalms": g.psalms.ids(), "events": g.room_tally.events.duplicate(true), "map": rooms.map.summary() if rooms else {},
 		"trial": {"active": String(rooms.trials.active.curse.id) if rooms and rooms.trials.active else "",
 			"left": rooms.trials.left if rooms else 0, "won": rooms.trials.won.size() if rooms else 0},

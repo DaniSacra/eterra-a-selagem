@@ -171,7 +171,7 @@ func test_combustion_after_three_applications_with_a_recharge_by_target() -> voi
 	var before := e.hp
 	_hit(e, ["light"])
 	assert_eq(int(game.combat.celestial.tally.get(&"combustion", 0)), 1)
-	assert_almost_eq(before - e.hp, 10.0 + 9.0, 1.5, "the blow and the 9 of fire")
+	assert_almost_eq(before - e.hp, 10.0 + 9.0 + 2.1, 1.5, "the blow, the 9 of fire and 20% of the burn it still owed (V2)")
 	for i in 3:
 		_hit(e, ["light"])
 	assert_eq(int(game.combat.celestial.tally.get(&"combustion", 0)), 1, "3 s of recharge on that enemy")
@@ -505,7 +505,7 @@ func test_echoes_are_a_share_of_the_direct_damage_and_never_echo_again() -> void
 	_run(0.3)
 	assert_eq(before - direct, e.hp, "not yet: 0.4 s of delay")
 	_run(0.3)
-	assert_almost_eq(before - direct - e.hp, direct * 0.4, 1.5, "40% of the direct damage")
+	assert_almost_eq(float(game.horde.dealt.by.get("penumbra_eco", 0.0)), direct * 0.4, 1.5, "40% of the direct damage (the bleed of V2 is apart)")
 	_run(2.0)
 	assert_eq(int(game.combat.celestial.tally.get(&"echo", 0)), 1, "no echo of an echo")
 	# one second of recharge by target

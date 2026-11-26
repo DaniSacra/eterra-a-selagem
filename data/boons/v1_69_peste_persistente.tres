@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_cppb3"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_c08nf"]
+
+[sub_resource type="Resource" id="Resource_tx7ur"]
+script = ExtResource("1_cppb3")
+stat = &"cel_poison_time_pct"
+base = 0.3
+per_level = PackedFloat32Array(0.1, 0.1)
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_8lsfa"]
+script = ExtResource("1_cppb3")
+stat = &"cel_poison_cold"
+base = 1.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_c08nf")
+id = &"peste_persistente"
+family = 8
+icon = 12
+mods = Array[ExtResource("1_cppb3")]([SubResource("Resource_tx7ur"), SubResource("Resource_8lsfa")])
+grants = PackedStringArray()
+needs_all = PackedStringArray("poison")

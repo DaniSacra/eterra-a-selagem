@@ -862,7 +862,7 @@ func _boons() -> void:
 
 # ---------- Blessings V1 (docs/design/bencaos_v1, 2026-11-26): seven angels, 63 powers ----------
 
-## The 63 ids of the active catalog (35 principals: five a family, one a button of the hero but E; 28 complements). The old
+## The 81 ids of the active catalog (45 principals: five a family, one a button of the hero but E; 36 complements; V2 added the angels Zerael and Saarael). The old
 ## ids kept here are the ones whose action and meaning stay (docs/design/bencaos_v1/IMPLEMENTACAO.md has the whole table).
 const V1_IDS: Array[StringName] = [
 	&"golpe_brasa", &"pesado_brasa", &"circulo_brasa", &"passo_brasa", &"chuva_brasas", &"combustao", &"chama_contagiosa", &"brasa_persistente", &"fogo_crescente",
@@ -871,7 +871,10 @@ const V1_IDS: Array[StringName] = [
 	&"golpe_firme", &"pesado_firme", &"circulo_firme", &"passo_firme", &"ultimo_firme", &"ruptura", &"forca_inabalavel", &"peso_vigilia", &"amparo",
 	&"golpe_veu", &"pesado_veu", &"circulo_veu", &"fios_cinza", &"crepusculo", &"vulnerabilidade", &"essencia_restauradora", &"veu_persistente", &"entardecer",
 	&"golpe_mare", &"pesado_mare", &"circulo_mare", &"passos_leves", &"vendaval", &"cadencia", &"turbilhao", &"brisa_favoravel", &"fluxo_continuo",
-	&"golpe_marca", &"pesado_marca", &"circulo_marca", &"olhar_rapido", &"exercito_ecos", &"eco_crescente", &"marca_persistente", &"sombra_revelada", &"ressonancia"]
+	&"golpe_marca", &"pesado_marca", &"circulo_marca", &"olhar_rapido", &"exercito_ecos", &"eco_crescente", &"marca_persistente", &"sombra_revelada", &"ressonancia",
+	# Blessings V2 (2026-11-26): Zerael (Peste) and Saarael (Trovao, angel id thunder)
+	&"golpe_peste", &"pesado_peste", &"circulo_peste", &"passo_peste", &"epidemia_celestial", &"saturacao", &"peste_persistente", &"deterioracao", &"contagio",
+	&"golpe_trovao", &"pesado_trovao", &"circulo_trovao", &"passo_trovao", &"tempestade_celestial", &"descarga", &"conducao", &"sobrecarga", &"ressonancia_eletrica"]
 
 var _v1_n := 0
 
@@ -926,16 +929,16 @@ func _v1_boons() -> void:
 	var T := SkillDef.Trigger
 	# Sarael (Chama): Queimadura and Combustão
 	_v(&"golpe_brasa", F.CHAMA, 2, S.ATTACK, [_vm(&"cel_burn_dps", 3.5, 1.5, true)], null, ["burn"])
-	_v(&"pesado_brasa", F.CHAMA, 0, S.SPECIAL, [_vm(&"cel_burn_dps", 5, 2.5, true)], null, ["burn"])
+	_v(&"pesado_brasa", F.CHAMA, 0, S.SPECIAL, [_vm(&"cel_burn_dps", 5, 2.5, true), _vm(&"cel_antic", 0.5)], null, ["burn"])
 	_v(&"circulo_brasa", F.CHAMA, 1, S.CAST, [], _vs(K.CONSECRATE, {"trigger": T.SHOUT, "damage": [6, 9, 12], "radius": [2.5], "duration": [3.0],
 		"gap": [4.0], "status": &"burn", "status_power": [3.0]}), ["burn"])
 	_v(&"passo_brasa", F.CHAMA, 16, S.DASH, [_vm(&"dodge_ember_dps", 6, 3, true)], null, ["burn"])
 	_v(&"chuva_brasas", F.CHAMA, 0, S.ULT, [], _vs(K.STRIKES, {"trigger": T.ULT, "damage": [20, 30, 42], "count": [8], "radius": [2.2],
 		"status": &"burn", "status_power": [4.0]}), ["burn"])
-	_v(&"combustao", F.CHAMA, 14, S.NONE, [_vm(&"cel_combust_dmg", 9, 4.5, true)], null, [], ["burn"])
+	_v(&"combustao", F.CHAMA, 14, S.NONE, [_vm(&"cel_combust_dmg", 9, 4.5, true), _vm(&"cel_antic_all", 0.2)], null, [], ["burn"])
 	_v(&"chama_contagiosa", F.CHAMA, 14, S.NONE, [_vm(&"cel_spread_pct", 0.5)], null, [], ["burn"])
 	_v(&"brasa_persistente", F.CHAMA, 2, S.NONE, [_vm(&"cel_burn_time_pct", 0.3, 0.1)], null, [], ["burn"])
-	_v(&"fogo_crescente", F.CHAMA, 2, S.NONE, [_vm(&"cel_burn_dps_pct", 0.2, 0.1, true)], null, [], ["burn"])
+	_v(&"fogo_crescente", F.CHAMA, 2, S.NONE, [_vm(&"cel_burn_dps_pct", 0.2, 0.1, true), _vm(&"cel_burn_div", 0.05)], null, [], ["burn"])
 	# Nivael (Geada): Frio and estilhaçamento
 	_v(&"golpe_geada", F.GEADA, 3, S.ATTACK, [_vm(&"cel_cold", 1)], null, ["cold"])
 	_v(&"toque_geada", F.GEADA, 3, S.SPECIAL, [_vm(&"cel_cold", 2)], null, ["cold"])
@@ -943,12 +946,12 @@ func _v1_boons() -> void:
 		"status": &"cold", "status_power": [2.0]}), ["cold"])
 	_v(&"floco_errante", F.GEADA, 4, S.DASH, [], _vs(K.ORBIT, {"trigger": T.DODGE, "damage": [0.0], "count": [2], "cooldown": [0.5],
 		"radius": [2.6], "duration": [3.0], "gap": [0.0], "status": &"cold", "status_power": [1.0], "status_gap": 1.0}), ["cold"])
-	_v(&"peso_inverno", F.GEADA, 5, S.ULT, [], _vs(K.METEOR, {"trigger": T.ULT, "damage": [55, 80, 115], "radius": [4.0],
+	_v(&"peso_inverno", F.GEADA, 5, S.ULT, [_vm(&"cel_slot_shatter", 0.25)], _vs(K.METEOR, {"trigger": T.ULT, "damage": [55, 80, 115], "radius": [4.0],
 		"status": &"cold", "status_power": [3.0]}), ["cold"])
-	_v(&"estilhaco", F.GEADA, 4, S.NONE, [_vm(&"cel_shatter_pct", 0.4, 0.15, true)], null, [], ["cold"])
-	_v(&"inverno_prolongado", F.GEADA, 17, S.NONE, [_vm(&"cel_cold_time_pct", 0.25)], null, [], ["cold"])
-	_v(&"geada_profunda", F.GEADA, 12, S.NONE, [_vm(&"cel_slow_add", 0.05)], null, [], ["cold"])
-	_v(&"cristais_errantes", F.GEADA, 12, S.NONE, [_vm(&"cel_crystal", 1)], null, [], ["estilhaco"])
+	_v(&"estilhaco", F.GEADA, 4, S.NONE, [_vm(&"cel_shatter_pct", 0.4, 0.15, true), _vm(&"cel_shatter_frag", 0.3)], null, [], ["cold"])
+	_v(&"inverno_prolongado", F.GEADA, 17, S.NONE, [_vm(&"cel_cold_time_pct", 0.25), _vm(&"cel_cold_keep", 1.0)], null, [], ["cold"])
+	_v(&"geada_profunda", F.GEADA, 12, S.NONE, [_vm(&"cel_slow_add", 0.05), _vm(&"cel_cold_impact", 1)], null, [], ["cold"])
+	_v(&"cristais_errantes", F.GEADA, 12, S.NONE, [_vm(&"cel_crystal", 1), _vm(&"cel_crystal_dot", 0.3)], null, [], ["estilhaco"])
 	# Lumael (Luz): chance crítica
 	_v(&"golpe_radiante", F.LUZ, 8, S.ATTACK, [_vm(&"cel_crit", 0.1, 0.03)], null, ["crit"])
 	_v(&"pesado_radiante", F.LUZ, 7, S.SPECIAL, [_vm(&"cel_crit", 0.1, 0.03), _vm(&"cel_crit_mult", 0.25)], null, ["crit"])
@@ -958,20 +961,20 @@ func _v1_boons() -> void:
 		"status": &"crit", "status_power": [0.15]}), ["crit"])
 	_v(&"luz_crescente", F.LUZ, 6, S.NONE, [_vm(&"cel_crit_stack", 0.05)], null, [], ["crit"])
 	_v(&"prosperidade", F.LUZ, 13, S.NONE, [_vm(&"gold_pct", 0.1)], null, [], ["fam:luz"])
-	_v(&"fortuna_celestial", F.LUZ, 8, S.NONE, [_vm(&"cel_crit_global", 0.05)], null, [], ["crit"])
-	_v(&"esplendor", F.LUZ, 8, S.NONE, [_vm(&"cel_crit_mult_global", 0.2)], null, [], ["crit"])
+	_v(&"fortuna_celestial", F.LUZ, 8, S.NONE, [_vm(&"cel_crit_global", 0.05, 0.03)], null, [], ["crit"])
+	_v(&"esplendor", F.LUZ, 8, S.NONE, [_vm(&"cel_crit_mult_global", 0.2), _vm(&"cel_crit_apply", 0.5)], null, [], ["crit"])
 	# Shomael (Vigília): Impacto e ruptura
 	_v(&"golpe_firme", F.VIGILIA, 11, S.ATTACK, [_vm(&"cel_impact", 1)], null, ["impact"])
-	_v(&"pesado_firme", F.VIGILIA, 15, S.SPECIAL, [_vm(&"cel_impact", 2)], null, ["impact"])
+	_v(&"pesado_firme", F.VIGILIA, 15, S.SPECIAL, [_vm(&"cel_impact", 2), _vm(&"cel_slot_shatter", 0.25)], null, ["impact"])
 	_v(&"circulo_firme", F.VIGILIA, 9, S.CAST, [], _vs(K.NOVA, {"trigger": T.SHOUT, "damage": [14, 21, 30], "radius": [3.0], "gap": [4.0],
 		"status": &"impact", "status_power": [2.0]}), ["impact"])
 	_v(&"passo_firme", F.VIGILIA, 10, S.DASH, [_vm(&"cel_guard_time", 1.2)], null, [], [])
 	_v(&"ultimo_firme", F.VIGILIA, 11, S.ULT, [], _vs(K.NOVA, {"trigger": T.ULT, "damage": [45, 66, 96], "radius": [6.0],
 		"status": &"impact", "status_power": [3.0]}), ["impact"])
-	_v(&"ruptura", F.VIGILIA, 15, S.NONE, [_vm(&"cel_impact_need", -1)], null, [], ["impact"])
-	_v(&"forca_inabalavel", F.VIGILIA, 11, S.NONE, [_vm(&"cel_stunned_dmg_pct", 0.3, 0.12, true)], null, [], ["impact"])
+	_v(&"ruptura", F.VIGILIA, 15, S.NONE, [_vm(&"cel_impact_need", -1), _vm(&"cel_stun_antic", 0.25)], null, [], ["impact"])
+	_v(&"forca_inabalavel", F.VIGILIA, 11, S.NONE, [_vm(&"cel_stunned_dmg_pct", 0.3, 0.12, true), _vm(&"cel_stun_pulse", 1)], null, [], ["impact"])
 	_v(&"peso_vigilia", F.VIGILIA, 9, S.NONE, [_vm(&"cel_impact_time_pct", 0.3)], null, [], ["impact"])
-	_v(&"amparo", F.VIGILIA, 9, S.NONE, [_vm(&"cel_guard_time_pct", 0.25)], null, [], ["passo_firme"])
+	_v(&"amparo", F.VIGILIA, 9, S.NONE, [_vm(&"cel_guard_time_pct", 0.25), _vm(&"cel_guard_impact", 2)], null, [], ["passo_firme"])
 	# Velael (Véu): Fraqueza
 	_v(&"golpe_veu", F.VEU, 20, S.ATTACK, [_vm(&"cel_weak", 2, 1)], null, ["weak"])
 	_v(&"pesado_veu", F.VEU, 20, S.SPECIAL, [_vm(&"cel_weak", 3, 1)], null, ["weak"])
@@ -979,34 +982,59 @@ func _v1_boons() -> void:
 		"status": &"weak", "status_power": [4.0, 5.5, 7.0]}), ["weak"])
 	_v(&"fios_cinza", F.VEU, 20, S.DASH, [], _vs(K.NOVA, {"trigger": T.DODGE, "damage": [0.0], "radius": [2.0], "gap": [3.0],
 		"status": &"weak", "status_power": [2.0, 3.0, 4.0]}), ["weak"])
-	_v(&"crepusculo", F.VEU, 20, S.ULT, [], _vs(K.NOVA, {"trigger": T.ULT, "damage": [0.0], "radius": [7.0],
+	_v(&"crepusculo", F.VEU, 20, S.ULT, [_vm(&"cel_extend", 2.0)], _vs(K.NOVA, {"trigger": T.ULT, "damage": [0.0], "radius": [7.0],
 		"status": &"weak", "status_power": [5.0, 6.5, 8.0]}), ["weak"])
-	_v(&"vulnerabilidade", F.VEU, 20, S.NONE, [_vm(&"cel_weak_dmg_pct", 0.15, 0.07, true)], null, [], ["weak"])
-	_v(&"essencia_restauradora", F.VEU, 20, S.NONE, [_vm(&"cel_weak_mana", 1)], null, [], ["weak"])
-	_v(&"veu_persistente", F.VEU, 20, S.NONE, [_vm(&"cel_weak_time_pct", 0.25)], null, [], ["weak"])
+	_v(&"vulnerabilidade", F.VEU, 20, S.NONE, [_vm(&"cel_weak_dmg_pct", 0.15, 0.07, true), _vm(&"cel_weak_div", 0.03)], null, [], ["weak"])
+	_v(&"essencia_restauradora", F.VEU, 20, S.NONE, [_vm(&"cel_weak_mana", 1), _vm(&"cel_weak_mana_div", 1)], null, [], ["weak"])
+	_v(&"veu_persistente", F.VEU, 20, S.NONE, [_vm(&"cel_weak_time_pct", 0.25), _vm(&"cel_weak_extend", 1.0)], null, [], ["weak"])
 	_v(&"entardecer", F.VEU, 20, S.NONE, [_vm(&"weak_pct", 0.08)], null, [], ["weak"])
 	# Galael (Vento, id Mare): velocidade e cadência
 	_v(&"golpe_mare", F.MARE, 21, S.ATTACK, [_vm(&"cel_speed", 0.12, 0.04)], null, ["wind"])
 	_v(&"pesado_mare", F.MARE, 21, S.SPECIAL, [], _vs(K.FAN, {"trigger": T.SPECIAL, "damage": [14, 21, 30], "count": [1], "radius": [10.0],
-		"gap": [1.0]}), ["wind"])
+		"gap": [1.0], "status": &"spread", "status_power": [0.3]}), ["wind"])
 	_v(&"circulo_mare", F.MARE, 21, S.CAST, [_vm(&"cel_cd_cut", 0.1, 0.03)], null, ["wind"])
 	_v(&"passos_leves", F.MARE, 21, S.DASH, [_vm(&"dodge_charges", 1)], null, ["wind"])
 	_v(&"vendaval", F.MARE, 21, S.ULT, [_vm(&"cel_haste_speed", 0.3), _vm(&"cel_haste_move", 0.1), _vm(&"cel_haste_time", 5.0)], null, ["wind"])
 	_v(&"cadencia", F.MARE, 21, S.NONE, [_vm(&"cel_cadence", 0.03)], null, ["cadence"], ["fam:mare"])
-	_v(&"turbilhao", F.MARE, 21, S.NONE, [_vm(&"cel_whirl_dmg", 18, 9, true)], null, [], ["cadencia"])
+	_v(&"turbilhao", F.MARE, 21, S.NONE, [_vm(&"cel_whirl_dmg", 18, 9, true), _vm(&"cel_whirl_spread", 0.25)], null, [], ["cadencia"])
 	_v(&"brisa_favoravel", F.MARE, 21, S.NONE, [_vm(&"move_speed_pct", 0.05)], null, [], ["fam:mare"])
-	_v(&"fluxo_continuo", F.MARE, 21, S.NONE, [_vm(&"cel_cadence_time_pct", 0.3)], null, [], ["cadencia"])
+	_v(&"fluxo_continuo", F.MARE, 21, S.NONE, [_vm(&"cel_cadence_time_pct", 0.3), _vm(&"cel_cadence_mix", 1)], null, [], ["cadencia"])
 	# Qeshael (Penumbra, id Marca): Marca e ecos
 	_v(&"golpe_marca", F.MARCA, 22, S.ATTACK, [_vm(&"cel_mark", 3, 1)], null, ["mark"])
-	_v(&"pesado_marca", F.MARCA, 22, S.SPECIAL, [_vm(&"cel_echo", 0.4)], null, ["echo"], ["mark"])
+	_v(&"pesado_marca", F.MARCA, 22, S.SPECIAL, [_vm(&"cel_echo", 0.4), _vm(&"cel_bleed", 0.4, 0.0, true)], null, ["echo"], ["mark"])
 	_v(&"circulo_marca", F.MARCA, 22, S.CAST, [_vm(&"cel_echo", 0.35)], null, ["echo"])
 	_v(&"olhar_rapido", F.MARCA, 22, S.DASH, [_vm(&"cel_mark", 3, 1), _vm(&"cel_radius", 3.0)], null, ["mark"])
-	_v(&"exercito_ecos", F.MARCA, 22, S.ULT, [_vm(&"cel_echo", 0.4), _vm(&"cel_echo_time", 5.0)], null, ["echo"])
-	_v(&"eco_crescente", F.MARCA, 22, S.NONE, [_vm(&"cel_echo_pct", 0.3, 0.15, true)], null, [], ["echo"])
-	_v(&"marca_persistente", F.MARCA, 22, S.NONE, [_vm(&"cel_mark_time_pct", 0.3)], null, [], ["mark"])
-	_v(&"sombra_revelada", F.MARCA, 22, S.NONE, [_vm(&"cel_echo_marked_pct", 0.2, 0.08, true)], null, [], ["mark", "echo"])
+	_v(&"exercito_ecos", F.MARCA, 22, S.ULT, [_vm(&"cel_echo", 0.4), _vm(&"cel_echo_time", 5.0), _vm(&"cel_bleed", 0.2, 0.0, true)], null, ["echo"])
+	_v(&"eco_crescente", F.MARCA, 22, S.NONE, [_vm(&"cel_echo_pct", 0.3, 0.15, true), _vm(&"cel_bleed_pct", 0.3)], null, [], ["echo"])
+	_v(&"marca_persistente", F.MARCA, 22, S.NONE, [_vm(&"cel_mark_time_pct", 0.3), _vm(&"cel_mark_pass", 1)], null, [], ["mark"])
+	_v(&"sombra_revelada", F.MARCA, 22, S.NONE, [_vm(&"cel_echo_marked_pct", 0.2, 0.08, true), _vm(&"cel_bleed_crit", 0.25)], null, [], ["mark", "echo"])
 	_v(&"ressonancia", F.MARCA, 22, S.NONE, [_vm(&"cel_echo_cd_cut", 0.1)], null, [], ["echo"])
-	assert(_v1_n == 63, "the V1 catalog has 63 powers, made %d" % _v1_n)
+	# Zerael (Peste, angel id zerael): Veneno. Provisional icon 12 (the steam's clouds) until the 18 icons are painted.
+	_v(&"golpe_peste", F.PESTE, 12, S.ATTACK, [_vm(&"cel_poison_dps", 0.8, 0.3, true), _vm(&"cel_poison", 1)], null, ["poison"])
+	_v(&"pesado_peste", F.PESTE, 12, S.SPECIAL, [_vm(&"cel_poison_dps", 1.2, 0.4, true), _vm(&"cel_poison", 3)], null, ["poison"])
+	_v(&"circulo_peste", F.PESTE, 12, S.CAST, [], _vs(K.CONSECRATE, {"trigger": T.SHOUT, "damage": [0.0], "radius": [2.5], "duration": [4.0],
+		"gap": [3.0], "status": &"poison", "status_power": [1.0], "status_gap": 1.0}), ["poison"])
+	_v(&"passo_peste", F.PESTE, 12, S.DASH, [_vm(&"dodge_plague_dps", 1.0, 0.5, true)], null, ["poison"])
+	_v(&"epidemia_celestial", F.PESTE, 12, S.ULT, [], _vs(K.NOVA, {"trigger": T.ULT, "damage": [24, 36, 52], "radius": [7.0],
+		"status": &"poison", "status_power": [3.0]}), ["poison"])
+	_v(&"saturacao", F.PESTE, 12, S.NONE, [_vm(&"cel_sat_dmg", 12, 6, true)], null, [], ["poison"])
+	_v(&"peste_persistente", F.PESTE, 12, S.NONE, [_vm(&"cel_poison_time_pct", 0.3, 0.1), _vm(&"cel_poison_cold", 1)], null, [], ["poison"])
+	_v(&"deterioracao", F.PESTE, 12, S.NONE, [_vm(&"cel_poison_grow", 0.06, 0.03)], null, [], ["poison"])
+	_v(&"contagio", F.PESTE, 12, S.NONE, [_vm(&"cel_poison_spread", 0.5, 0.1)], null, [], ["poison"])
+	# Saarael (Trovao, angel id thunder): Eletrificacao e Descarga. Provisional icon 4 (the shards bursting).
+	_v(&"golpe_trovao", F.TROVAO, 4, S.ATTACK, [_vm(&"cel_shock_zap", 1.0, 0.5, true), _vm(&"cel_shock", 1)], null, ["shock"])
+	_v(&"pesado_trovao", F.TROVAO, 4, S.SPECIAL, [_vm(&"cel_shock_zap", 1.5, 0.5, true), _vm(&"cel_shock", 3), _vm(&"cel_force_discharge", 1)], null, ["shock"])
+	_v(&"circulo_trovao", F.TROVAO, 4, S.CAST, [], _vs(K.NOVA, {"trigger": T.SHOUT, "damage": [6, 9, 12], "radius": [3.0], "gap": [4.0],
+		"status": &"shock", "status_power": [2.0]}), ["shock"])
+	_v(&"passo_trovao", F.TROVAO, 4, S.DASH, [], _vs(K.NOVA, {"trigger": T.DODGE, "damage": [0.0], "radius": [2.0], "gap": [2.0],
+		"status": &"shock", "status_power": [1.0]}), ["shock"])
+	_v(&"tempestade_celestial", F.TROVAO, 4, S.ULT, [], _vs(K.STRIKES, {"trigger": T.ULT, "damage": [24, 36, 50], "count": [6], "radius": [1.5],
+		"status": &"shock", "status_power": [2.0]}), ["shock"])
+	_v(&"descarga", F.TROVAO, 4, S.NONE, [_vm(&"cel_discharge", 3, 1.5, true)], null, [], ["shock"])
+	_v(&"conducao", F.TROVAO, 4, S.NONE, [_vm(&"cel_conduct", 2, 1)], null, [], ["descarga"])
+	_v(&"sobrecarga", F.TROVAO, 4, S.NONE, [_vm(&"cel_overload", 0.5, 0.2)], null, [], ["shock"])
+	_v(&"ressonancia_eletrica", F.TROVAO, 4, S.NONE, [_vm(&"cel_reson", 0.10, 0.03)], null, [], ["descarga"])
+	assert(_v1_n == 81, "the V2 catalog has 81 powers, made %d" % _v1_n)
 
 
 # ---------- waves ----------
@@ -3585,6 +3613,9 @@ func _angels() -> void:
 	_angel(4, &"velael", F.VEU, 4, Color(0.7, 0.66, 0.6))
 	_angel(5, &"galael", F.MARE, 5, Color(0.3, 0.48, 0.78))
 	_angel(6, &"qeshael", F.MARCA, 6, Color(0.66, 0.58, 0.3))
+	# Blessings V2: Zerael (Peste: a drop with its bubbles) and Saarael (Trovao, id thunder: a bolt), seal symbols 7 and 8
+	_angel(7, &"zerael", F.PESTE, 7, Color("9fae7a"))
+	_angel(8, &"thunder", F.TROVAO, 8, Color("7d8590"))
 
 
 # ---------- the Gifts medallion (docs/art/dons_medallion_spec.md 3) ----------

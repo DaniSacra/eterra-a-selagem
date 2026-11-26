@@ -1,15 +1,17 @@
 extends GutTest
-## Blessings V1 (docs/design/bencaos_v1/04_TESTES.md): the catalog of the seven angels. 7 families of 9, 63 ids, 35
-## principals (a slot each) and 28 complements, no Duo and nothing of the Investida in the draw, every power eligible,
+## Blessings V1 (docs/design/bencaos_v1/04_TESTES.md), grown by V2 (Zerael and Saarael): the catalog of the nine angels. 9
+## families of 9, 81 ids, 45 principals (a slot each) and 36 complements, no Duo and nothing of the Investida in the draw, every power eligible,
 ## taken and read for both heroes, every rarity, and the table of the document and the data agree.
 
 const FAMILIES: Array[Boon.Family] = [Boon.Family.CHAMA, Boon.Family.GEADA, Boon.Family.LUZ, Boon.Family.VIGILIA, Boon.Family.VEU,
-	Boon.Family.MARE, Boon.Family.MARCA]
+	Boon.Family.MARE, Boon.Family.MARCA, Boon.Family.PESTE, Boon.Family.TROVAO]
 ## The slot each principal holds and the move tag that a hero needs for its action to exist (dodge and ultimate: any hero).
 const SLOT_NEEDS := {Boon.Slot.ATTACK: &"light", Boon.Slot.SPECIAL: &"heavy", Boon.Slot.CAST: &"shout", Boon.Slot.DASH: &"", Boon.Slot.ULT: &""}
 ## What the rarity may multiply (direct extra damage, DPS and relative damage bonuses); the rest of the numbers never scale.
 const SCALES: Array[StringName] = [&"cel_burn_dps", &"dodge_ember_dps", &"cel_combust_dmg", &"cel_whirl_dmg", &"cel_burn_dps_pct",
-	&"cel_shatter_pct", &"cel_stunned_dmg_pct", &"cel_weak_dmg_pct", &"cel_echo_pct", &"cel_echo_marked_pct"]
+	&"cel_shatter_pct", &"cel_stunned_dmg_pct", &"cel_weak_dmg_pct", &"cel_echo_pct", &"cel_echo_marked_pct",
+	# V2
+	&"cel_poison_dps", &"dodge_plague_dps", &"cel_sat_dmg", &"cel_shock_zap", &"cel_discharge", &"cel_bleed"]
 
 var catalog: Array[Boon]
 
@@ -61,9 +63,9 @@ func _source_of(need: String, family: Boon.Family) -> Boon:
 	return best
 
 
-func test_seven_families_of_nine_63_ids_35_principals_28_complements() -> void:
+func test_nine_families_of_nine_81_ids_45_principals_36_complements() -> void:
 	var active := _active().filter(func(b: Boon) -> bool: return not b.is_duo())
-	assert_eq(active.size(), 63)
+	assert_eq(active.size(), 81)
 	var seen := {}
 	var principals := 0
 	var complements := 0
@@ -74,8 +76,8 @@ func test_seven_families_of_nine_63_ids_35_principals_28_complements() -> void:
 			complements += 1
 		else:
 			principals += 1
-	assert_eq(principals, 35)
-	assert_eq(complements, 28)
+	assert_eq(principals, 45)
+	assert_eq(complements, 36)
 	for f in FAMILIES:
 		var mine := active.filter(func(b: Boon) -> bool: return b.family == f)
 		assert_eq(mine.size(), 9, "family %d" % f)
@@ -115,14 +117,14 @@ func test_the_table_of_the_document_is_the_catalog() -> void:
 			continue
 		rows += 1
 		names[parts[2].strip_edges()] = parts[1]
-	assert_eq(rows, 63)
+	assert_eq(rows, 63, "the table of V1 keeps its 63 rows: V2's 18 are in BALANCEAMENTO of its own folder")
 	var mine := {}
 	for b in _active():
 		if not b.is_duo():
 			mine[T.t("boon_%s" % b.id)] = true
 	for n: String in names:
 		assert_true(mine.has(n), "'%s' of the table has no Blessing of that name" % n)
-	assert_eq(mine.size(), 63)
+	assert_eq(mine.size(), 81)
 
 
 func test_every_power_has_text_icon_and_something_to_do() -> void:

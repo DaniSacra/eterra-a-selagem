@@ -263,9 +263,9 @@ func test_material_doors_stand_beside_blessings() -> void:
 
 # ---------- the angels ----------
 
-func test_seven_angels_one_a_family() -> void:
+func test_nine_angels_one_a_family() -> void:
 	var angels := Encounter.load_catalog()
-	assert_eq(angels.size(), 7)
+	assert_eq(angels.size(), 9)
 	var families := {}
 	for a in angels:
 		families[a.family] = a.id
@@ -273,7 +273,8 @@ func test_seven_angels_one_a_family() -> void:
 		assert_ne(T.t(a.line_key), String(a.line_key))
 		assert_false(T.t(a.line_key).contains("—"), "no dash")
 	assert_eq(families, {Boon.Family.CHAMA: &"sarael", Boon.Family.GEADA: &"nivael", Boon.Family.LUZ: &"lumael",
-		Boon.Family.VIGILIA: &"shomael", Boon.Family.VEU: &"velael", Boon.Family.MARE: &"galael", Boon.Family.MARCA: &"qeshael"})
+		Boon.Family.VIGILIA: &"shomael", Boon.Family.VEU: &"velael", Boon.Family.MARE: &"galael", Boon.Family.MARCA: &"qeshael",
+		Boon.Family.PESTE: &"zerael", Boon.Family.TROVAO: &"thunder"})
 
 
 ## A random hand: up to n Blessings taken off random draws.

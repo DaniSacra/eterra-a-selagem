@@ -17,6 +17,12 @@ base = 5.0
 per_level = PackedFloat32Array()
 by_rarity = false
 
+[sub_resource type="Resource" id="Resource_wdso8"]
+script = ExtResource("1_8uw45")
+stat = &"cel_bleed"
+base = 0.2
+per_level = PackedFloat32Array()
+
 [resource]
 script = ExtResource("2_tenpd")
 id = &"exercito_ecos"
@@ -24,6 +30,6 @@ family = 7
 icon = 22
 max_level = 1
 slot = 6
-mods = Array[ExtResource("1_8uw45")]([SubResource("Resource_laxed"), SubResource("Resource_dr3nw")])
+mods = Array[ExtResource("1_8uw45")]([SubResource("Resource_laxed"), SubResource("Resource_dr3nw"), SubResource("Resource_wdso8")])
 grants = PackedStringArray("echo")
 needs_all = PackedStringArray()

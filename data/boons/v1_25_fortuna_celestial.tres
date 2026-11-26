@@ -7,14 +7,13 @@
 script = ExtResource("1_itrsd")
 stat = &"cel_crit_global"
 base = 0.05
-per_level = PackedFloat32Array()
+per_level = PackedFloat32Array(0.03, 0.03)
 by_rarity = false
 
 [resource]
 script = ExtResource("2_nh1sw")
 id = &"fortuna_celestial"
 icon = 8
-max_level = 1
 mods = Array[ExtResource("1_itrsd")]([SubResource("Resource_fglfp")])
 grants = PackedStringArray()
 needs_all = PackedStringArray("crit")

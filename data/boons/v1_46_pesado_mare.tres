@@ -14,7 +14,8 @@ cooldown = PackedFloat32Array(4)
 damage = PackedFloat32Array(14, 21, 30)
 count = PackedFloat32Array(1)
 radius = PackedFloat32Array(10)
-status_power = PackedFloat32Array(0)
+status = &"spread"
+status_power = PackedFloat32Array(0.3)
 
 [resource]
 script = ExtResource("2_a2r81")

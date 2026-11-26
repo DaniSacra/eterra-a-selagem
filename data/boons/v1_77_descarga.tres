@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_qp4yf"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_a67jf"]
+
+[sub_resource type="Resource" id="Resource_h2brb"]
+script = ExtResource("1_qp4yf")
+stat = &"cel_discharge"
+base = 3.0
+per_level = PackedFloat32Array(1.5, 1.5)
+
+[resource]
+script = ExtResource("2_a67jf")
+id = &"descarga"
+family = 9
+icon = 4
+mods = Array[ExtResource("1_qp4yf")]([SubResource("Resource_h2brb")])
+grants = PackedStringArray()
+needs_all = PackedStringArray("shock")

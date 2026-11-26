@@ -332,8 +332,8 @@ func test_grow_offers_only_owned_gifts_that_can_grow() -> void:
 ## BO-2: the attack, the special and the Brado have a gift of every family; the Investida, the dodge and the ultimate the
 ## families done so far (R9 gave Luz and Vigília their Investida, dodge and ultimate cells).
 func test_each_action_has_a_gift_of_its_families() -> void:
-	# (V1: seven angels, five buttons; E carries no Blessing of the draw)
-	var want := {Boon.Slot.ATTACK: 7, Boon.Slot.SPECIAL: 7, Boon.Slot.CAST: 7, Boon.Slot.DASH: 7, Boon.Slot.RUSH: 0, Boon.Slot.ULT: 7}
+	# (V1: seven angels, V2: nine, five buttons; E carries no Blessing of the draw)
+	var want := {Boon.Slot.ATTACK: 9, Boon.Slot.SPECIAL: 9, Boon.Slot.CAST: 9, Boon.Slot.DASH: 9, Boon.Slot.RUSH: 0, Boon.Slot.ULT: 9}
 	for slot: Boon.Slot in want:
 		var families := {}
 		for b in state.catalog:

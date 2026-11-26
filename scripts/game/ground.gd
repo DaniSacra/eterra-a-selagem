@@ -12,7 +12,7 @@ signal hazard_landed(z: Zone)
 ## Any warning that lands, on the frame its blow does (AT-Q1: what breaks the breakables, BreakFloor).
 signal zone_landed(z: Zone)
 
-enum Kind { WARNING, EMBER, MARK, HOLY, STEAM, BIND, SHELTER, STONE }
+enum Kind { WARNING, EMBER, MARK, HOLY, STEAM, BIND, SHELTER, STONE, PLAGUE }
 ## The same order as GroundLook.Shape (which draws them).
 enum Shape { CIRCLE, LINE, ARC }
 
@@ -110,6 +110,7 @@ const COLORS := {
 	Kind.HOLY: Color(1.0, 0.85, 0.45), Kind.STEAM: Color(0.75, 0.85, 0.95), Kind.BIND: Color(1.0, 0.95, 0.8),
 	# the Psalms' (E4): ivory over old gold and old gold, inside the palette (never bright yellow nor white)
 	Kind.SHELTER: Color(0.95, 0.86, 0.62), Kind.STONE: Color(0.78, 0.62, 0.34),
+	Kind.PLAGUE: Color(0.62, 0.68, 0.48),
 }
 
 class Zone:

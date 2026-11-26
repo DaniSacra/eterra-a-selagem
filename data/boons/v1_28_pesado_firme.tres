@@ -10,6 +10,13 @@ base = 2.0
 per_level = PackedFloat32Array()
 by_rarity = false
 
+[sub_resource type="Resource" id="Resource_ep3mx"]
+script = ExtResource("1_4e43j")
+stat = &"cel_slot_shatter"
+base = 0.25
+per_level = PackedFloat32Array()
+by_rarity = false
+
 [resource]
 script = ExtResource("2_rljux")
 id = &"pesado_firme"
@@ -17,6 +24,6 @@ family = 3
 icon = 15
 max_level = 1
 slot = 2
-mods = Array[ExtResource("1_4e43j")]([SubResource("Resource_rgcdm")])
+mods = Array[ExtResource("1_4e43j")]([SubResource("Resource_rgcdm"), SubResource("Resource_ep3mx")])
 grants = PackedStringArray("impact")
 needs_all = PackedStringArray()

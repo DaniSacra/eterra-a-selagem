@@ -27,7 +27,7 @@ func test_damage_rules() -> void:
 
 func test_three_angels_with_their_families() -> void:
 	var angels := Encounter.load_catalog()
-	assert_eq(angels.size(), 7)
+	assert_eq(angels.size(), 9, "V2 added Zerael and Saarael")
 	var by := {}
 	for a in angels:
 		by[a.id] = a.family

@@ -10,12 +10,19 @@ base = 0.25
 per_level = PackedFloat32Array()
 by_rarity = false
 
+[sub_resource type="Resource" id="Resource_goj71"]
+script = ExtResource("1_yj232")
+stat = &"cel_guard_impact"
+base = 2.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
 [resource]
 script = ExtResource("2_i2vuc")
 id = &"amparo"
 family = 3
 icon = 9
 max_level = 1
-mods = Array[ExtResource("1_yj232")]([SubResource("Resource_4oq3b")])
+mods = Array[ExtResource("1_yj232")]([SubResource("Resource_4oq3b"), SubResource("Resource_goj71")])
 grants = PackedStringArray()
 needs_all = PackedStringArray("passo_firme")

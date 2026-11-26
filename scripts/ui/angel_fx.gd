@@ -52,6 +52,8 @@ func _draw() -> void:
 		Boon.Family.MARCA: _marks(col)
 		Boon.Family.MARE: _water(col)
 		Boon.Family.VEU: _veils(col)
+		Boon.Family.PESTE: _spores(col)
+		Boon.Family.TROVAO: _sparks(col)
 
 
 func _s() -> float:
@@ -174,6 +176,30 @@ func _water(col: Color) -> void:
 		var p := _rise(i, 0.07)
 		var pos := Vector2(center.x + (hash01(i, 0) - 0.5) * reach * 1.7, size.y * (1.0 - p))
 		draw_arc(pos, (3.0 + 5.0 * hash01(i, 4)) * s, 0.0, TAU, 12, Color(col, sin(p * PI) * 0.6 * strength), maxf(1.0, s))
+
+
+func _spores(col: Color) -> void:
+	var s := _s()
+	for i in 22:
+		var p := _rise(i, 0.05)
+		var pos := Vector2(center.x + (hash01(i, 0) - 0.5) * reach * 1.7 + sin(_t * 0.6 + hash01(i, 1) * TAU) * 16.0 * s, size.y * (1.0 - p * 0.9))
+		var r := (2.0 + 5.0 * hash01(i, 4)) * s
+		draw_arc(pos, r, 0.0, TAU, 14, Color(col, sin(p * PI) * 0.55 * strength), maxf(1.0, 1.4 * s))
+		draw_circle(pos, r * 0.35, Color(col, sin(p * PI) * 0.35 * strength))
+
+
+func _sparks(col: Color) -> void:
+	var s := _s()
+	for i in 6:
+		var ph := fposmod(_t / (2.5 + i * 0.4) + hash01(i, 0), 1.0)
+		if ph > 0.12:
+			continue
+		var a := (1.0 - ph / 0.12) * 0.8 * strength
+		var p := Vector2(center.x + (hash01(i, 1) - 0.5) * reach * 1.4, size.y * 0.1)
+		for k in 5:
+			var n := p + Vector2((hash01(i * 7 + k, 2) - 0.5) * 36.0 * s, size.y * 0.16)
+			draw_line(p, n, Color(col, a), maxf(1.0, 1.6 * s))
+			p = n
 
 
 func _veils(col: Color) -> void:

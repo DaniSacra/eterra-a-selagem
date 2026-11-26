@@ -151,9 +151,9 @@ func test_the_temper_marks_stay_under_the_glow() -> void:
 			assert_lte(String(x).to_float(), 1.0, "%s under the glow threshold" % name)
 
 
-func test_the_seven_seals_draw_and_the_elo_has_none() -> void:
-	assert_eq(AngelSeal.TINT.size(), 8, "indexed by Boon.Family, the Elo's place old gold")
-	for f in [Boon.Family.CHAMA, Boon.Family.GEADA, Boon.Family.LUZ, Boon.Family.VIGILIA, Boon.Family.DUO, Boon.Family.VEU, Boon.Family.MARE, Boon.Family.MARCA]:
+func test_the_nine_seals_draw_and_the_elo_has_none() -> void:
+	assert_eq(AngelSeal.TINT.size(), 10, "indexed by Boon.Family, the Elo's place old gold")
+	for f in [Boon.Family.CHAMA, Boon.Family.GEADA, Boon.Family.LUZ, Boon.Family.VIGILIA, Boon.Family.DUO, Boon.Family.VEU, Boon.Family.MARE, Boon.Family.MARCA, Boon.Family.PESTE, Boon.Family.TROVAO]:
 		var seal := AngelSeal.new().setup(f, 96.0)
 		add_child_autofree(seal)
 		var dim := AngelSeal.new().setup(f, 48.0, false)

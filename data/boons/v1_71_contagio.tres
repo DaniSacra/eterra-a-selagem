@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_axbxk"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_1c3mc"]
+
+[sub_resource type="Resource" id="Resource_11w0q"]
+script = ExtResource("1_axbxk")
+stat = &"cel_poison_spread"
+base = 0.5
+per_level = PackedFloat32Array(0.1, 0.1)
+by_rarity = false
+
+[resource]
+script = ExtResource("2_1c3mc")
+id = &"contagio"
+family = 8
+icon = 12
+mods = Array[ExtResource("1_axbxk")]([SubResource("Resource_11w0q")])
+grants = PackedStringArray()
+needs_all = PackedStringArray("poison")

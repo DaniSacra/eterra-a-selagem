@@ -1265,6 +1265,10 @@ func _on_dodged(dir: Vector2) -> void:
 	if dps > 0.0 and arcane == null:  # (the Maga's Passo lays its own at both ends: Arcane._on_dodged)
 		for k in 3:
 			ground.add_zone(Ground.Kind.EMBER, player.pos + dir * (k * 2.0), 1.4, Combat.TRAIL_TIME, dps, Combat.EMBER_CEL_TAGS)
+	var plague := boons.stat(&"dodge_plague_dps")
+	if plague > 0.0 and arcane == null:  # V2 (Zerael): the same trail, of poison (a stack a second whose DPS is the Blessing's)
+		for k in 3:
+			ground.add_zone(Ground.Kind.PLAGUE, player.pos + dir * (k * 2.0), 1.4, Combat.TRAIL_TIME, plague, [&"skill", &"peste", &"passo_peste"] as Array[StringName])
 
 
 func _on_shield_broke() -> void:

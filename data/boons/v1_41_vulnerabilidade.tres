@@ -9,11 +9,18 @@ stat = &"cel_weak_dmg_pct"
 base = 0.15
 per_level = PackedFloat32Array(0.07, 0.07)
 
+[sub_resource type="Resource" id="Resource_7ie2k"]
+script = ExtResource("1_u7cof")
+stat = &"cel_weak_div"
+base = 0.03
+per_level = PackedFloat32Array()
+by_rarity = false
+
 [resource]
 script = ExtResource("2_6gcj1")
 id = &"vulnerabilidade"
 family = 5
 icon = 20
-mods = Array[ExtResource("1_u7cof")]([SubResource("Resource_k1wuq")])
+mods = Array[ExtResource("1_u7cof")]([SubResource("Resource_k1wuq"), SubResource("Resource_7ie2k")])
 grants = PackedStringArray()
 needs_all = PackedStringArray("weak")

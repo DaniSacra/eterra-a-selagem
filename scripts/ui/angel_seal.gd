@@ -23,7 +23,7 @@ const IVORY := SealMedal.IVORY
 ## not the danger's red near 350 nor the life's), the Vigília a sage (hue 88: its family's green, but far from the
 ## Emeth's emerald near 150 and the hero's petrol near 180; it was petrol, hue 177).
 const TINT: Array[Color] = [Color(0.82, 0.5, 0.27), Color(0.58, 0.76, 0.88), Color(0.92, 0.82, 0.56), Color(0.58, 0.68, 0.43), UiKit.OLD_GOLD,
-	Color(0.7, 0.66, 0.6), Color(0.3, 0.48, 0.78), Color(0.66, 0.58, 0.3)]
+	Color(0.7, 0.66, 0.6), Color(0.3, 0.48, 0.78), Color(0.66, 0.58, 0.3), Color("9fae7a"), Color("7d8590")]
 ## The mark's reach against the seal's radius (SealMedal.GLYPH).
 const MARK := 0.74
 
@@ -181,6 +181,22 @@ static func mark(ci: CanvasItem, f: Boon.Family, c: Vector2, r: float, w: float,
 			ci.draw_line(c + Vector2(0, -r * 0.04), c + Vector2(0, r * 0.55), ink, w, true)
 			ci.draw_line(c + Vector2(0, r * 0.55), c + Vector2(-r * 0.12, r * 0.42), ink, w * 0.8, true)
 			ci.draw_line(c + Vector2(0, r * 0.55), c + Vector2(r * 0.12, r * 0.42), ink, w * 0.8, true)
+		Boon.Family.PESTE:
+			# a drop with two bubbles rising from it
+			var drop := PackedVector2Array([c + Vector2(0, -r * 0.7)])
+			for i in 15:
+				var a := lerpf(-0.75, PI + 0.75, float(i) / 14.0)
+				drop.append(c + Vector2(0, r * 0.28) + Vector2(cos(a), sin(a)) * r * 0.46)
+			ci.draw_colored_polygon(drop, Color(col, col.a * 0.85))
+			ci.draw_polyline(_closed(drop), ink, w, true)
+			ci.draw_arc(c + Vector2(r * 0.42, -r * 0.3), r * 0.1, 0.0, TAU, 12, ink, w * 0.8, true)
+			ci.draw_arc(c + Vector2(r * 0.55, -r * 0.62), r * 0.07, 0.0, TAU, 12, ink, w * 0.8, true)
+		Boon.Family.TROVAO:
+			# a bolt: a zigzag in three strokes with a pointed tip
+			var bolt := PackedVector2Array([c + Vector2(r * 0.18, -r * 0.82), c + Vector2(-r * 0.3, r * 0.06), c + Vector2(0, r * 0.06), c + Vector2(-r * 0.18, r * 0.82),
+				c + Vector2(r * 0.34, -r * 0.1), c + Vector2(r * 0.04, -r * 0.1)])
+			ci.draw_colored_polygon(bolt, col)
+			ci.draw_polyline(_closed(bolt), ink, w, true)
 		_:
 			pass
 

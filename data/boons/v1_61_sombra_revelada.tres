@@ -9,11 +9,18 @@ stat = &"cel_echo_marked_pct"
 base = 0.2
 per_level = PackedFloat32Array(0.08, 0.08)
 
+[sub_resource type="Resource" id="Resource_a2k6o"]
+script = ExtResource("1_jv54h")
+stat = &"cel_bleed_crit"
+base = 0.25
+per_level = PackedFloat32Array()
+by_rarity = false
+
 [resource]
 script = ExtResource("2_6ffeg")
 id = &"sombra_revelada"
 family = 7
 icon = 22
-mods = Array[ExtResource("1_jv54h")]([SubResource("Resource_oh7fh")])
+mods = Array[ExtResource("1_jv54h")]([SubResource("Resource_oh7fh"), SubResource("Resource_a2k6o")])
 grants = PackedStringArray()
 needs_all = PackedStringArray("mark", "echo")

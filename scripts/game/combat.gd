@@ -146,6 +146,11 @@ const VIGIL := Color(0.66, 0.78, 0.46)
 const VEIL := Color(0.76, 0.7, 0.64)
 const TIDE := Color(0.3, 0.5, 0.86)
 const MARK := Color(0.7, 0.62, 0.3)
+## Blessings V2: Peste a sulphur (Boon.FAMILY_COLOR), Trovão a storm grey (its yellow lives only in the 2 or 3 frames of the
+## flash), the bleed a dark rust (never the danger's red).
+const PLAGUE := Color("c9b458")
+const VOLT := Color("7d8590")
+const BLEED := Color(0.62, 0.30, 0.20)
 ## The paladin's own sword, Emeth: the green of its blade.
 const EMETH := Color(0.3, 1.0, 0.45)
 ## Damage numbers of the sword's common blows: pale, so the emerald ones (finishers, held blows) stand out.
@@ -719,7 +724,7 @@ func on_shot_hit(e: Enemy, shot: Projectiles.Shot) -> void:
 			# the special's wave lands with its first enemy (the passive counts its Omega once)
 			shot.counted = true
 			landed.emit(null, shot.tags, 1)
-	_apply_status(e, shot.status, shot.status_power)
+	_apply_status(e, shot.status, shot.status_power, [], 0.0, -shot.get_instance_id())
 
 
 func on_zone_hit(e: Enemy, z: Ground.Zone) -> void:
@@ -735,6 +740,9 @@ func on_zone_hit(e: Enemy, z: Ground.Zone) -> void:
 		Ground.Kind.HOLY:
 			hit_enemy(e, z.power * Ground.TICK, z.tags if not z.tags.is_empty() else HOLY_TAGS, Vector2.ZERO, 0.0, false)
 			e.slow_t = maxf(e.slow_t, 0.5)
+		Ground.Kind.PLAGUE:
+			# V2: a Blessing's poisoned ground puts one stack a second on whoever stands in it (its power is the DPS of a stack)
+			celestial.apply_poison(e, 1, 0, z.power, &"zone", CelRules.PLAGUE_GAP)
 		Ground.Kind.STEAM:
 			if not e.def.heavy:
 				e.blind_t = 1.0
@@ -773,6 +781,7 @@ func skill_hit(e: Enemy, damage: float, tags: Array[StringName], away: Vector2, 
 		# Julgamento da Luz (V1): the ray's own chance, the Blessing's crit multiplier
 		damage *= celestial.skill_crit(power)
 		status = &""
+	damage *= celestial.skill_mult(e, tags)  # V2: a Blessing's own blow shatters a frozen enemy when its Blessing says so
 	if damage <= 0.0:
 		# a Blessing that only puts a status (the ice of Poder Glacial, a veil): no blow, no number
 		if e.alive and not e.invulnerable:
@@ -784,7 +793,7 @@ func skill_hit(e: Enemy, damage: float, tags: Array[StringName], away: Vector2, 
 	return died
 
 
-func _apply_status(e: Enemy, status: StringName, power: float, tags: Array[StringName] = [], gap := 0.0) -> void:
+func _apply_status(e: Enemy, status: StringName, power: float, tags: Array[StringName] = [], gap := 0.0, action := 0) -> void:
 	if power <= 0.0 or not e.alive or e.invulnerable:
 		return
 	match status:
@@ -792,6 +801,12 @@ func _apply_status(e: Enemy, status: StringName, power: float, tags: Array[Strin
 			celestial.apply_cold(e, roundi(power), 0, tags[2] if tags.size() > 2 else &"", gap)
 		&"impact":
 			celestial.apply_impact(e, roundi(power), 0)
+		&"poison":
+			celestial.apply_poison(e, roundi(power), 0, CelRules.POISON_SKILL_DPS, tags[2] if tags.size() > 2 else &"", gap)
+		&"shock":
+			celestial.apply_shock(e, roundi(power), 0, CelRules.SHOCK_SKILL_ZAP, tags[2] if tags.size() > 2 else &"", gap)
+		&"spread":
+			celestial.spread(e, power, action)
 		&"burn":
 			_burn(e, power)
 		&"freeze":
@@ -803,6 +818,7 @@ func _apply_status(e: Enemy, status: StringName, power: float, tags: Array[Strin
 			e.slow_t = maxf(e.slow_t, power)
 		&"weak":
 			_weaken(e, power)
+			celestial.after_weak(e, tags)
 		&"mark":
 			_mark(e, power)
 
@@ -923,7 +939,7 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 		died = horde.damage(e, maxf(1.0, roundf(detonation)), away, 0.0, FIRE, true)
 		horde.dealing = &""
 	if direct:
-		celestial.after_hit(e, tags, dmg, died)  # V1: the statuses and the echo of the action's Blessings
+		celestial.after_hit(e, tags, dmg, died, shut)  # V1: the statuses and the echo of the action's Blessings
 	if died:
 		return true
 	var burn := boons.stat(&"burn_dps", tags)
@@ -1071,6 +1087,10 @@ func color_of(tags: Array[StringName]) -> Color:
 		return TIDE
 	if tags.has(&"marca"):
 		return MARK
+	if tags.has(&"peste"):
+		return PLAGUE
+	if tags.has(&"trovao"):
+		return VOLT
 	for t in GIFT_TAGS:
 		if tags.has(t):
 			return LIGHT
@@ -1090,6 +1110,10 @@ func color_of(tags: Array[StringName]) -> Color:
 			return TIDE
 		Boon.Family.MARCA:
 			return MARK
+		Boon.Family.PESTE:
+			return PLAGUE
+		Boon.Family.TROVAO:
+			return VOLT
 	return EMETH
 
 

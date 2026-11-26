@@ -5,6 +5,13 @@
 [ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_01gpy"]
 
 [sub_resource type="Resource" id="Resource_1u6wp"]
+script = ExtResource("1_ingmi")
+stat = &"cel_slot_shatter"
+base = 0.25
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_s7xhr"]
 script = ExtResource("3_01gpy")
 kind = 4
 trigger = 7
@@ -23,6 +30,7 @@ id = &"peso_inverno"
 family = 1
 icon = 5
 slot = 6
-skill = SubResource("Resource_1u6wp")
+mods = Array[ExtResource("1_ingmi")]([SubResource("Resource_1u6wp")])
+skill = SubResource("Resource_s7xhr")
 grants = PackedStringArray("cold")
 needs_all = PackedStringArray()

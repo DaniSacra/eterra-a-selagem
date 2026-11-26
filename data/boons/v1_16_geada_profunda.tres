@@ -10,12 +10,19 @@ base = 0.05
 per_level = PackedFloat32Array()
 by_rarity = false
 
+[sub_resource type="Resource" id="Resource_nsarc"]
+script = ExtResource("1_n2uay")
+stat = &"cel_cold_impact"
+base = 1.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
 [resource]
 script = ExtResource("2_1csox")
 id = &"geada_profunda"
 family = 1
 icon = 12
 max_level = 1
-mods = Array[ExtResource("1_n2uay")]([SubResource("Resource_2jd7j")])
+mods = Array[ExtResource("1_n2uay")]([SubResource("Resource_2jd7j"), SubResource("Resource_nsarc")])
 grants = PackedStringArray()
 needs_all = PackedStringArray("cold")

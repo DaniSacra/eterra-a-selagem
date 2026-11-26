@@ -10,12 +10,19 @@ base = 0.25
 per_level = PackedFloat32Array()
 by_rarity = false
 
+[sub_resource type="Resource" id="Resource_c7qr0"]
+script = ExtResource("1_ld57c")
+stat = &"cel_cold_keep"
+base = 1.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
 [resource]
 script = ExtResource("2_m0iys")
 id = &"inverno_prolongado"
 family = 1
 icon = 17
 max_level = 1
-mods = Array[ExtResource("1_ld57c")]([SubResource("Resource_6jt5y")])
+mods = Array[ExtResource("1_ld57c")]([SubResource("Resource_6jt5y"), SubResource("Resource_c7qr0")])
 grants = PackedStringArray()
 needs_all = PackedStringArray("cold")

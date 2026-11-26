@@ -192,8 +192,8 @@ func test_the_codex_has_the_angels() -> void:
 	assert_eq((sarael.find_child("Name", true, false) as Label).text, T.t(&"angel_sarael"))
 	assert_not_null(sarael.find_child("Counts", true, false))
 	assert_null(list.find_child("nivael", true, false), "the unmet angels are one line")
-	assert_eq((list.find_child("undiscovered", true, false).find_child("Name", true, false) as Label).text, T.t(&"codex_undiscovered", {"n": 6}))
-	assert_eq(c.progress(CodexScreen.Tab.ANGELS), Vector2i(1, 7))
+	assert_eq((list.find_child("undiscovered", true, false).find_child("Name", true, false) as Label).text, T.t(&"codex_undiscovered", {"n": 8}))
+	assert_eq(c.progress(CodexScreen.Tab.ANGELS), Vector2i(1, 9))
 
 
 func test_a_defeated_enemy_is_drawn_in_ink() -> void:

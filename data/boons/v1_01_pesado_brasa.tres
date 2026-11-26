@@ -9,11 +9,18 @@ stat = &"cel_burn_dps"
 base = 5.0
 per_level = PackedFloat32Array(2.5, 2.5)
 
+[sub_resource type="Resource" id="Resource_rkpfv"]
+script = ExtResource("1_qaqbj")
+stat = &"cel_antic"
+base = 0.5
+per_level = PackedFloat32Array()
+by_rarity = false
+
 [resource]
 script = ExtResource("2_6gybw")
 id = &"pesado_brasa"
 family = 0
 slot = 2
-mods = Array[ExtResource("1_qaqbj")]([SubResource("Resource_m0gn6")])
+mods = Array[ExtResource("1_qaqbj")]([SubResource("Resource_m0gn6"), SubResource("Resource_rkpfv")])
 grants = PackedStringArray("burn")
 needs_all = PackedStringArray()

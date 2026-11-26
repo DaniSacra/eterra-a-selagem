@@ -667,8 +667,8 @@ static func key_in_text(action: StringName, marked := false) -> String:
 
 ## The stats whose value is a time, a damage each second, or a count added: how a fact reads its value.
 const SECONDS: Array[StringName] = [&"freeze_time", &"steam_time", &"shield_cooldown", &"weak_time", &"mark_time", &"cel_echo_time",
-	&"cel_guard_time", &"cel_haste_time", &"cel_mark", &"cel_weak"]
-const PER_SECOND: Array[StringName] = [&"burn_dps", &"dodge_ember_dps", &"cast_dps", &"cel_burn_dps"]
+	&"cel_guard_time", &"cel_haste_time", &"cel_mark", &"cel_weak", &"cel_extend", &"cel_cold_keep", &"cel_weak_extend"]
+const PER_SECOND: Array[StringName] = [&"burn_dps", &"dodge_ember_dps", &"cast_dps", &"cel_burn_dps", &"cel_poison_dps", &"dodge_plague_dps", &"cel_overload"]
 const ADDED: Array[StringName] = [&"max_hp", &"dodge_charges"]
 
 

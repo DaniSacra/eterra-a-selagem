@@ -42,6 +42,27 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   dado. Eco e propagação não geram eco nem propagação. Tetos de totais: velocidade 50%, recarga 30%, lentidão 40%, Fraqueza 40%.
   Os números de texto fixos vêm de `CelRules.text_args()` (`{marcadores}` da frase). A Maga leva a mesma camada, ao lado do
   `Arcane` dela (queima e frio nativos não mudam). Ids antigos continuam carregando (reserva): um save ou um teste ainda os pega.
+- **Bênçãos V2 (2026-11-26, GP-2; especificação `docs/design/bencaos_v2/IMPLEMENTACAO_V2.md`)**: nove anjos, 81 poderes (63 da V1 com os
+  mesmos ids, 26 deles com efeito novo, e 18 de Zerael (Peste, `F.PESTE`, id `zerael`) e Saarael (Trovão, `F.TROVAO`, id técnico `thunder`)),
+  gerados por `tools/make_data.gd boons angels` (`assert(_v1_n == 81)`). Motor novo por cima de `Celestial`, `CelState` e `CelRules`, sem
+  reescrevê-los: **Veneno** (até 5 acúmulos, um relógio só de 5 s que renova até 8, tique de 0,5 s com `dealing` `veneno`, Saturação,
+  Deterioração, Peste Persistente, Contágio), **Sangramento** (fatia do golpe direto, saldo de no máximo 3 fatias, 4 s, `sangramento`),
+  **Eletrificação e Descarga** (5 cargas, 6 s, faísca na hora, Descarga em 5 cargas com recarga de 4 s por alvo, Condução, Sobrecarga,
+  Ressonância; nunca atordoa), **antecipação** de DoT (`Celestial._antic`: entrega uma fração do que faltava e tira a mesma fração do
+  efeito), **propagação única** (`_copy_dots`, `copy_lock` de 3 s nos dois lados: cópia não copia), a **Abertura** de chefe e guardião
+  (medidor de Frio 8 e de Impacto 10; 4 s com +25% nos golpes diretos somado a `direct_mult`, depois 10 s sem somar; o guardião só por
+  Impacto; não toca `frozen_t`, `stun_t` nem `poise`) e a **diversidade** de condições (`CelState.diversity`, 0 a 6, máx 3 nas
+  Bênçãos que a leem). Linhagem e orçamento: `core/cel_chain.gd` (`CelChain`, tabela `CelRules.EDGES`, profundidade 3) e `Celestial._go`
+  (8 reações por ação nas 3 últimas ações, 24 por quadro; o recusado conta em `tally[&"blocked"]`); `CelRules.DOT_DPS_CAP` 16 encolhe veneno
+  e sangramento, nunca a queimadura. `after_hit` só aplica estado se o golpe causou dano e não foi barrado pela guarda (`shut`);
+  o Golpe Esmagador (`omega_attack`) vale x2 nas contagens e x1,5 nas taxas (`CelRules.hold_count/hold_rate`); o crítico do golpe
+  (`_hit_crit`) intensifica as aplicações dele com o Esplendor. Zona `Ground.Kind.PLAGUE` (um acúmulo por segundo por inimigo, sem dano de contato;
+  o rastro do Passo Pestilento usa a mesma) e habilidades `poison`/`shock`/`spread` em `Combat._apply_status`. Cores: `Combat.PLAGUE` (enxofre)
+  e `Combat.VOLT` (cinza-tempestade; o amarelo-relâmpago só vale no clarão do VFX), sangramento ferrugem `Combat.BLEED`. Textos em
+  `data/text_pt.tres` (`gloss_poison/bleed/shock/window/antic` são termos de `Glossary.TERMS`). Ícones das 18 novas: provisórios (12 da Peste, 4 do Trovão).
+  Fica para o Guerreiro V1: Poder/Especial nos rótulos, `circulo_mare` virar velocidade do Poder (`cel_speed` no slot `CAST`), as tags `lance`/`heavy`
+  em `trigger_of`. Fica para o VFX: bolhas, zigue-zague, gota e a UI do medidor do chefe (dois pontinhos sob a barra). Testes
+  `tests/test_blessings_v2_*.gd`.
 - **Bênçãos e economia da E3 (Hades II; regras, números e decisões em `docs/design/e3_blessings.md`, métricas do robô em
   `docs/qa/e3_metrics.md`; a V1 acima desligou a troca por raridade e o Elo no sorteio dos anjos, o que resta aqui vale para
   portas, raridade, romã e loja)**: as portas tiram cartas de um baralho sem repor que volta inteiro quando nada serve

@@ -9,11 +9,18 @@ stat = &"cel_whirl_dmg"
 base = 18.0
 per_level = PackedFloat32Array(9, 9)
 
+[sub_resource type="Resource" id="Resource_88853"]
+script = ExtResource("1_ec2j5")
+stat = &"cel_whirl_spread"
+base = 0.25
+per_level = PackedFloat32Array()
+by_rarity = false
+
 [resource]
 script = ExtResource("2_k2ppc")
 id = &"turbilhao"
 family = 6
 icon = 21
-mods = Array[ExtResource("1_ec2j5")]([SubResource("Resource_xfgyw")])
+mods = Array[ExtResource("1_ec2j5")]([SubResource("Resource_xfgyw"), SubResource("Resource_88853")])
 grants = PackedStringArray()
 needs_all = PackedStringArray("cadencia")

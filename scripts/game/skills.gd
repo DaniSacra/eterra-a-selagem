@@ -195,6 +195,9 @@ func _cast(b: Boon) -> bool:
 			if s.status == &"burn":
 				# embers on the floor: damage a second to whoever stands there, and burning (Combat.on_zone_hit)
 				game.ground.add_zone(Ground.Kind.EMBER, at, r, time, _damage(b, lv), Combat.EMBER_CEL_TAGS)
+			elif s.status == &"poison":
+				# V2 (Zerael): poisoned ground, a stack a second on whoever stands in it (its power is the DPS of a stack)
+				game.ground.add_zone(Ground.Kind.PLAGUE, at, r, time, CelRules.POISON_SKILL_DPS, tags)
 			else:
 				game.ground.add_zone(Ground.Kind.HOLY, at, r, time, _damage(b, lv), tags)
 			if not _mark(b.family, at, r, color):
