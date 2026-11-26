@@ -58,7 +58,8 @@ void fragment() {
 		}
 		if (along > 0.0 && along < len) {
 			float k = along / len;
-			float w = 0.05 * (1.0 - k) + 0.004;
+			// ART_REVIEW_2026-11-26c: the ink strokes are fatter at the root (0.075 m) so the fan, not the core, is the snap
+			float w = (ink > 0.5 ? 0.075 : 0.05) * (1.0 - k) + 0.004;
 			float on = 1.0 - smoothstep(w * 0.6, w, across);
 			star = max(star, on);
 			tip = max(tip, on * k);
@@ -76,7 +77,8 @@ void fragment() {
 		vec2 c = m - vec2(cos(base), sin(base)) * heart_m * 0.35;
 		float rr = length(c) / (heart_m * mix(1.0, 0.7, life));
 		float core = 1.0 - smoothstep(0.78, 0.92, rr);
-		float rim = (1.0 - smoothstep(1.0, 1.25, rr)) * smoothstep(0.78, 0.92, rr);
+		// ART_REVIEW_2026-11-26c: a hairline rim (out to 1.12, was 1.25): the round ring read as a reticle or an eye
+		float rim = (1.0 - smoothstep(1.0, 1.12, rr)) * smoothstep(0.78, 0.92, rr);
 		float va = max(star, max(core, rim)) * fadeout;
 		if (va <= 0.01) discard;
 		vec3 tipc = color.rgb / max(max(color.r, max(color.g, color.b)), 0.0001);

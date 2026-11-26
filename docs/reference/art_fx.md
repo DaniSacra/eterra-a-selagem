@@ -491,3 +491,6 @@ A cena da primeira descida: só o que já existe (preto, uma estrela, a luz de E
   (a fase 4 só muda o ar, `RoomMood.LAST_BREATH`); a conferência é por captura: `tools/gpu.sh shot x.png --bot --start=boss --boss-hp=0.2 --shot-at=14`.
 - Testes: `tests/test_gp3_families.gd`. Capturas para a sessão principal: `--start=boss --boss-hp=0.2` (fase 4, meias-luas e aviso), `--boons=25` com
   `--bot` (famílias), e um quadro por forma chamando `fx.form_mark(N, ...)`.
+- **Revisão 2026-11-26c** (`docs/art/ART_REVIEW_2026-11-26c.md`): contato com tinta lia como retícula; `CONTACT_INK_CORE` 0,10, aro do
+  `contact.gdshader` até 1,12 e raiz dos traços 0,075 (só `ink`). Trovão (forma 8) com espaçamento e comprimento irregulares para não
+  ler como sol. Pendentes: corte com Bênção sobre o herói, cor da Marca, `--lab-form=N` para capturar Peste e Trovão.

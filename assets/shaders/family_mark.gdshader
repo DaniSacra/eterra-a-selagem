@@ -199,7 +199,10 @@ void fragment() {
 		float fade = 1.0 - smoothstep(time * 0.3, time, age);
 		float bolts = 0.0;
 		for (int k = 0; k < 6; k++) {
-			float ak = TAU * float(k) / 6.0 + hash(vec2(float(k), seed)) * 0.8;
+			// ART_REVIEW_2026-11-26c: uneven spacing (+-0.8 rad off the sixths, was 0 to 0.8) and uneven lengths (0.65 to 1.0
+			// of the radius), so six bolts never read as a sun's rays
+			float ak = TAU * float(k) / 6.0 + (hash(vec2(float(k), seed)) - 0.5) * 1.6;
+			float klen = 0.65 + 0.35 * hash(vec2(float(k), seed + 9.0));
 			float da = mod(a - ak + PI, TAU) - PI;
 			float lateral = da * m;
 			float seg = 0.42;
@@ -208,7 +211,7 @@ void fragment() {
 			float main = line(lateral - off * 0.5, line_m * 1.4, px);
 			float fork = line(lateral - off * 0.5 - (m - radius_m * 0.5) * 0.55, line_m, px) * step(radius_m * 0.5, m) * step(0.5, hash(vec2(float(k), seed + 4.0)));
 			float gaps = step(0.12, fract(m / seg * 1.7 + float(k) * 0.3));
-			float reach = step(m, radius_m * smoothstep(0.0, 0.07, age) * 1.05) * step(0.2 * radius_m, m);
+			float reach = step(m, radius_m * klen * smoothstep(0.0, 0.07, age) * 1.05) * step(0.2 * radius_m, m);
 			bolts += (main + fork * 0.8) * gaps * reach;
 		}
 		bolts = clamp(bolts, 0.0, 1.0);

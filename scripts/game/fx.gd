@@ -41,7 +41,8 @@ const CONTACT_GROW := 1.4
 ## PM-1, stylized: so many ink fragments (never more than 5, never a ring), the dark core's radius (m), the star a
 ## heavy blow keeps (scale of the usual one).
 const CONTACT_INK_FRAGMENTS := Vector2i(3, 5)
-const CONTACT_INK_CORE := 0.14
+## ART_REVIEW_2026-11-26c: 0.10 (was 0.14), so the dark core is a seed under the strokes, never a target ringed round.
+const CONTACT_INK_CORE := 0.10
 const CONTACT_INK_HEAVY_STAR := 0.6
 const CONTACT_SPIKES := Vector2(0.4, 0.9)
 const CONTACT_SPIKES_HEAVY := Vector2(0.6, 1.4)
