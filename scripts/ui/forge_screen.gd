@@ -52,6 +52,9 @@ var _oficios: OficiosDef
 var _stage: Control
 var _title: Label
 var _sub: Label
+var _how: Label
+## The first-visit sheet (null once it is closed or when it is not due).
+var intro: Control
 var _strip: Control
 var _slot_label: Label
 var _purse: HBoxContainer
@@ -124,6 +127,8 @@ func open(data: Dictionary = {}, start: Tab = Tab.EMETH) -> void:
 	if Dev.has("forge-mark") and marks().has(StringName(Dev.arg("forge-mark"))):
 		focus_mark(StringName(Dev.arg("forge-mark")), true)
 	_enter()
+	if intro_due(_data):
+		_open_intro()
 
 
 func _build_top() -> void:
@@ -136,6 +141,14 @@ func _build_top() -> void:
 	_sub.position = Vector2(42, 62)
 	_sub.visible = Dev.arg("hero") == "maga"
 	_stage.add_child(_sub)
+	# PT-26-6: what the bench is for, always in sight under the title (the first visit also opens the full sheet)
+	_how = UiKit.label(T.t(&"forge_how_line"), UiKit.PALE, 16)
+	_how.name = "how_line"
+	_how.position = Vector2(42, 62)
+	_how.size = Vector2(500, 44)
+	_how.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_how.visible = not _sub.visible
+	_stage.add_child(_how)
 	_purse = HBoxContainer.new()
 	_purse.name = "purse"
 	_purse.add_theme_constant_override(&"separation", 18)
@@ -222,6 +235,64 @@ func marks() -> Array[StringName]:
 	return out
 
 
+# ---- the first visit ----
+
+## The sheet "Como a Forja funciona" comes once per save (the tips' list), never in a run without a save, the robot or a
+## test; `--forge-intro` forces it for captures.
+static func intro_due(data: Dictionary) -> bool:
+	if Dev.has("forge-intro"):
+		return true
+	return Save.enabled and FirstTips.enabled() and not FirstTips.shown(data).has("forge")
+
+
+func _open_intro() -> void:
+	intro = Control.new()
+	intro.name = "intro"
+	intro.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	intro.mouse_filter = Control.MOUSE_FILTER_STOP
+	intro.gui_input.connect(func(e: InputEvent) -> void:
+		if e is InputEventMouseButton and e.pressed:
+			_close_intro())
+	add_child(intro)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.72)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	intro.add_child(dim)
+	var centre := CenterContainer.new()
+	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	intro.add_child(centre)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(660, 0)
+	panel.add_theme_stylebox_override(&"panel", UiKit.box(Color(0.1, 0.085, 0.07, 0.97), UiKit.OLD_GOLD, 2, 26, 6))
+	centre.add_child(panel)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override(&"separation", 12)
+	panel.add_child(col)
+	var head := UiKit.label(T.t(&"forge_how_title"), UiKit.GOLD, 28, UiKit.TITLE_FONT)
+	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(head)
+	for k in [&"forge_how_1", &"forge_how_2", &"forge_how_3", &"forge_how_4"]:
+		var l := UiKit.label(T.t(k), UiKit.PALE, 19)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		col.add_child(l)
+	var go := UiKit.label(T.t(&"forge_how_go"), UiKit.DIM, 16)
+	go.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(go)
+
+
+func _close_intro() -> void:
+	if intro == null:
+		return
+	intro.queue_free()
+	intro = null
+	Audio.play(&"ui_ok")
+	if not Dev.has("forge-intro"):
+		FirstTips.mark(_data, &"forge")
+		_write()
+
+
 # ---- the benches ----
 
 func _show_tab(t: Tab, by_hand: bool = false) -> void:
@@ -230,6 +301,8 @@ func _show_tab(t: Tab, by_hand: bool = false) -> void:
 	for i in _tabs.size():
 		_tabs[i].on = _tab_order[i] == t
 	_title.text = T.t(&"forge_title_workshop" if t == Tab.WORKSHOP else &"forge_title")
+	if _how != null:
+		_how.text = T.t(&"forge_workshop_lead" if t == Tab.WORKSHOP else &"forge_how_line")
 	if by_hand:
 		Audio.play(&"ui_ok")
 	_cool()
@@ -640,6 +713,11 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if intro != null:
+		if event.is_action_pressed(&"ui_accept") or event.is_action_pressed(&"ui_cancel"):
+			get_viewport().set_input_as_handled()
+			_close_intro()
+		return
 	if info == null:
 		return
 	for action: StringName in [&"ui_left", &"ui_right", &"ui_up", &"ui_down"]:

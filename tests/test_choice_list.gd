@@ -199,21 +199,17 @@ func test_left_and_right_change_the_angel_in_focus() -> void:
 	assert_eq(meet.focus, 1)
 
 
-func test_a_lone_angel_speaks_first_for_a_person_and_a_press_goes_on() -> void:
+func test_a_lone_angel_goes_straight_to_its_cards() -> void:
 	await _meeting()
 	game.encounters.angels_now.clear()
 	game.close_screen()
 	EncounterScreen.attach(game)
 	game.encounters.dev_open("sarael")
 	await wait_process_frames(2)
-	var meet := game._screen as EncounterScreen
-	assert_not_null(meet, "BC-4: the stage before the options, as with a pair")
-	assert_eq(meet.buttons.size(), 1)
-	assert_eq(meet.stages.size(), 1)
-	assert_not_null(meet.stages[0].figure, "with its figure")
-	meet._opened_at -= BoonChoice.GUARD_MS * 2
-	meet.buttons[0].pressed.emit()
-	assert_true(game._screen is BoonChoice, "one press and the options")
+	# PT-26-2: nothing to choose, so no screen waiting for Enter; the angel's art stays on the cards
+	assert_false(game._screen is EncounterScreen)
+	assert_true(game._screen is BoonChoice, "straight to the options")
+	assert_not_null(game._screen.find_child("angel_column", true, false), "with its figure")
 
 
 func test_autopick_never_waits_at_the_stage() -> void:
