@@ -494,3 +494,20 @@ A cena da primeira descida: só o que já existe (preto, uma estrela, a luz de E
 - **Revisão 2026-11-26c** (`docs/art/ART_REVIEW_2026-11-26c.md`): contato com tinta lia como retícula; `CONTACT_INK_CORE` 0,10, aro do
   `contact.gdshader` até 1,12 e raiz dos traços 0,075 (só `ink`). Trovão (forma 8) com espaçamento e comprimento irregulares para não
   ler como sol. Pendentes: corte com Bênção sobre o herói, cor da Marca, `--lab-form=N` para capturar Peste e Trovão.
+
+## Revisão 2026-11-26c, correções (technical-artist; só VFX, `RESULT` do `smoke.sh 30 --seed=5` igual; sem captura)
+- **P1-2**: `Fx.slash` passa `body_clear_m` (1,0 m) também com `family >= 0`, e o `slash.gdshader` aplica a mesma limpeza (`clear`) à luz da família
+  (`fam`), não só ao miolo; `slash_ink.gdshader` ganhou `body_clear_m` (só com família). Corte sem família: igual.
+- **P1-3**: `Fx._family_white(family)`: o pico de tela do corte usa 0,1 de branco para Marca e Véu (0,3 nas outras).
+- **P1-5 (decisão do Game Director)**: forma 8 (Trovão, anjo) agora **cai de cima**: tronco grosso e torto no lado de cima da tela (-z), 1 ou 2
+  galhos curtos, coroa de seixos no impacto, ardósia com clarão #F1E08A nos 0,05 s; pó de pedra (`STONE_DUST`) em vez de farpas. Forma nova 9 (`ARCO`,
+  `FORM_BY_NAME`, `FORM_SCREEN`, `FORM_TIME` 0,3 s): o raio da Maga, uma linha fina e contínua que salta na horizontal (eixo `start`), sem queda,
+  sem galho, sem falhas, na cor `ElementLook.VOLT`. Nenhum shader novo (ramo novo em `family_mark.gdshader`). Nada chama a forma 9 ainda
+  (a Maga está parada); fica pronta.
+- **P2**: `SLASH_PAINT` 0,9 e o fio externo do corte da Emeth ganha falhas (textura de pincel em outra frequência); `FAMILY_NUMBER_OUTLINE` 2 nos
+  números diretos com cor de família; `tick_color` devolve `TICK_VEIL` (âmbar apagado) para o Véu em vez do verde da Emeth.
+- **Captura**: `--lab-form=N` (opcional `--lab-form-at=m`, `--lab-t`) no `_lab` do `game.gd` chama `fx.form_mark(N, ...)` à frente do herói;
+  `Fx.freeze_t` agora também congela as marcas.
+- Linhas tocadas em `fx.gd` (outro agente mexe no orçamento): constantes `FORM_BY_NAME/SCREEN/TIME`, `STONE_DUST`, `TICK_VEIL`, `FAMILY_NUMBER_OUTLINE`,
+  `_family_white` (antes de `slash`), as 3 linhas de `body_clear_m`/`style_peak` em `slash`, `_form_extras` caso 8, `_family_hit_new` caso 8, `number`, `tick_color`,
+  o laço de `_marks` no passo.

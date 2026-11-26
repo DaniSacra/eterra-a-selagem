@@ -18,8 +18,9 @@ shader_type spatial;
 //   6 Marca: thin oblique incisions (one slope, broken by gaps) crossing the ring's band, bronze, never a long line;
 //   7 Peste: threads of mist rising off the ring in strands (`color` sulphur, `accent` lichen) with luminous seeds in them,
 //      over a charcoal heart (`ink`);
-//   8 Trovão: segmented zigzag bolts from the middle (one forks at half way), slate (`color`), and for the first 3 frames
-//      (0.05 s) only the flash `accent` (lightning yellow).
+//   8 Trovão (the angel's): a bolt that falls from above onto the middle (a thick jagged trunk down the screen's far
+//      side, one or two short branches, a pebble crown), slate (`color`), the first 0.05 s only the flash `accent`;
+//   9 Arco (the Maga's volt): one thin continuous line leaping across along `start`, jittering, no fall, no fork.
 render_mode unshaded, blend_premul_alpha, cull_disabled, depth_draw_never, shadows_disabled, fog_disabled;
 
 uniform int form = 0;
@@ -193,29 +194,39 @@ void fragment() {
 		light += (color * strand * 0.75 + accent * seedpt * 1.0) * fade;
 		float heart = smoothstep(0.5, 0.7, r + 0.08 * noise(p * 5.0 + seed)) * (1.0 - smoothstep(0.88, 1.05, r));
 		cover = heart * 0.4 * fade;
-	} else {
-		// Trovão: bolts of segments with a fork; the flash first
+	} else if (form == 8) {
+		// Trovão (the angel's): bolts FALL from above onto the target. The camera looks from +z, so up the screen is -z on
+		// the floor: one thick trunk comes down the -z side to the centre with one or two short branches, a pale flash
+		// first, and a pebble crown where it lands. Never a ring of rays (a sun) nor a line across (the Maga's arc).
 		float flash = 1.0 - step(0.05, age);
 		float fade = 1.0 - smoothstep(time * 0.3, time, age);
-		float bolts = 0.0;
-		for (int k = 0; k < 6; k++) {
-			// ART_REVIEW_2026-11-26c: uneven spacing (+-0.8 rad off the sixths, was 0 to 0.8) and uneven lengths (0.65 to 1.0
-			// of the radius), so six bolts never read as a sun's rays
-			float ak = TAU * float(k) / 6.0 + (hash(vec2(float(k), seed)) - 0.5) * 1.6;
-			float klen = 0.65 + 0.35 * hash(vec2(float(k), seed + 9.0));
-			float da = mod(a - ak + PI, TAU) - PI;
-			float lateral = da * m;
-			float seg = 0.42;
-			float sid = floor(m / seg);
-			float off = mix(hash(vec2(sid, float(k) + seed)), hash(vec2(sid + 1.0, float(k) + seed)), fract(m / seg)) - 0.5;
-			float main = line(lateral - off * 0.5, line_m * 1.4, px);
-			float fork = line(lateral - off * 0.5 - (m - radius_m * 0.5) * 0.55, line_m, px) * step(radius_m * 0.5, m) * step(0.5, hash(vec2(float(k), seed + 4.0)));
-			float gaps = step(0.12, fract(m / seg * 1.7 + float(k) * 0.3));
-			float reach = step(m, radius_m * klen * smoothstep(0.0, 0.07, age) * 1.05) * step(0.2 * radius_m, m);
-			bolts += (main + fork * 0.8) * gaps * reach;
-		}
-		bolts = clamp(bolts, 0.0, 1.0);
-		light += mix(color, accent, flash) * bolts * (0.8 + 0.4 * flash) * fade;
+		float zx = p.x * radius_m;
+		float up = -p.y * radius_m;
+		float seg = 0.38;
+		float sid = floor(up / seg);
+		float off = mix(hash(vec2(sid, seed)), hash(vec2(sid + 1.0, seed)), fract(up / seg)) - 0.5;
+		float drop = smoothstep(0.0, 0.06, age);
+		float trunk = line(zx - off * 0.5 * smoothstep(0.0, 0.5, up / radius_m), line_m * 4.0, px) * step(-0.05 * radius_m, up) * step(up, radius_m * 1.0 * drop);
+		float b1 = line(zx - off * 0.3 - (up - radius_m * 0.35) * 0.7, line_m * 2.2, px) * step(radius_m * 0.35, up) * step(up, radius_m * 0.62 * drop);
+		float b2 = line(zx - off * 0.3 + (up - radius_m * 0.55) * 0.6, line_m * 2.0, px) * step(radius_m * 0.55, up) * step(up, radius_m * 0.78 * drop) * step(0.5, hash(vec2(seed, 3.0)));
+		float bolt = clamp(trunk + b1 + b2, 0.0, 1.0);
+		float crown = (1.0 - smoothstep(0.1, 0.22, r)) * (0.5 + 0.5 * flash) * step(0.04, age);
+		float stones = step(0.9, hash(floor(p * radius_m * 7.0) + seed)) * step(0.2, r) * (1.0 - smoothstep(0.35, 0.6, r)) * step(0.06, age);
+		light += mix(color, accent, flash) * bolt * (0.85 + 0.4 * flash) * fade;
+		light += color * (crown * 0.7 + stones * 0.5) * fade;
+		cover = (crown * 0.35 + stones * 0.3) * fade;
+	} else {
+		// the Maga's arc (ElementLook.VOLT, form 9): one thin continuous line that leaps across, jittering, along `start`;
+		// it has no fall, no fork and no gaps (so it never reads as the Trovão in grey)
+		float age_t = smoothstep(0.0, 0.08, age);
+		float fade = 1.0 - smoothstep(time * 0.35, time, age);
+		vec2 dirv = normalize(start);
+		float ax = dot(p, dirv) * radius_m;
+		float ay = dot(p, vec2(-dirv.y, dirv.x)) * radius_m;
+		float arch = 0.18 * radius_m * (1.0 - pow(abs(ax) / radius_m, 2.0));
+		float jit = (noise(vec2(ax * 3.5, floor(age * 40.0) + seed * 7.0)) - 0.5) * 0.22 * radius_m;
+		float arc_line = line(ay - arch - jit, line_m * 1.1, px) * step(abs(ax), radius_m * 0.98 * age_t);
+		light += mix(color, vec3(1.0), 0.2) * arc_line * fade;
 	}
 	float peak = max(light.r, max(light.g, light.b)) * cap;
 	vec3 lit = light * cap;

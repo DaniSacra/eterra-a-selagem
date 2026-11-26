@@ -1907,6 +1907,12 @@ func _lab() -> void:
 		fx.slash(player.pos, dir, reach, Dev.num("lab-width", 270.0), Combat.EMETH, 0.25)
 		if Dev.has("lab-crescent"):
 			fx.crescent(player.pos, dir, reach, Dev.num("lab-width", 270.0), Combat.EMETH)
+	if Dev.has("lab-form"):
+		# a floor form of the families alone, by number (Fx.FORM_BY_NAME: 7 Peste, 8 Trovão, 9 Arco), at the centre of the
+		# screen, frozen at --lab-t of its life (use --lab-count=0 for a clean floor)
+		var form := int(Dev.num("lab-form", 8))
+		var fcolor := ElementLook.VOLT if form == 9 else Fx.TROVAO_SLATE if form == 8 else Fx.PESTE_SULFUR
+		fx.form_mark(form, player.pos + dir * Dev.num("lab-form-at", 2.5), 2.5, fcolor, Fx.FORM_TIME[clampi(form, 0, Fx.FORM_TIME.size() - 1)], dir, 360.0)
 	if Dev.has("lab-impact"):
 		fx.frame_left = 1000.0  # hold the impact frame for the still
 	if Dev.has("lab-slow"):

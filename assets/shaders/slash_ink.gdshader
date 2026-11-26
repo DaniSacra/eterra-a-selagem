@@ -23,6 +23,8 @@ uniform float blade_m = 0.0;
 uniform float body_depth = 0.75;
 // The veil past the edge out to the reach: its share of the body's ink.
 uniform float reach_veil = 0.2;
+// ART_REVIEW_2026-11-26c P1-2: no ink within this many meters of the paladin (0: off), for a cut with a family
+uniform float body_clear_m = 0.0;
 
 // Eterra Stylized (STY-06, T23): with the global art_style at 1 the ink's tail breaks into the same strokes as the
 // light's (slash_strokes.gdshaderinc), and the whole ink is style_veil of its alpha (STY-10, P2-3: the stroke covered
@@ -79,6 +81,9 @@ void fragment() {
 	if (art_style > 0.5) {
 		float band_m = reach_m > 0.0 ? (1.0 - band_from) * reach_m : 1.0;
 		band *= slash_strokes(y * band_m, clamp(behind / max(head, 0.001), 0.0, 1.0), smoothstep(0.35, 1.0, t), fwidth(y * band_m));
+	}
+	if (body_clear_m > 0.0 && reach_m > 0.0) {
+		band *= smoothstep(body_clear_m * 0.65, body_clear_m, mix(band_from * reach_m, reach_m, y));
 	}
 	if (band <= 0.01) discard;
 	ALBEDO = color.rgb;

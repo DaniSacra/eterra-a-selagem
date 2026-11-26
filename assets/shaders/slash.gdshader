@@ -140,15 +140,21 @@ void fragment() {
 		core = (y < e && inside < 1.0) ? pow(1.0 - inside, 0.8) : 0.0;
 		float band_m = reach_m > 0.0 ? (1.0 - band_from) * reach_m : 1.0;
 		core *= slash_strokes(y * band_m, k, rest, fwidth(y * band_m));
-		if (body_clear_m > 0.0 && reach_m > 0.0) {
-			float dist = mix(band_from * reach_m, reach_m, y);
-			core *= smoothstep(body_clear_m * 0.65, body_clear_m, dist);
-		}
+	}
+	// the same clearing for the family's own light (ART_REVIEW_2026-11-26c P1-2: the Marca's band crossed his head)
+	float clear = 1.0;
+	if (styled && body_clear_m > 0.0 && reach_m > 0.0) {
+		float dist = mix(band_from * reach_m, reach_m, y);
+		clear = smoothstep(body_clear_m * 0.65, body_clear_m, dist);
+		core *= clear;
 	}
 	if (paint_amt > 0.0) {
 		float brush = texture(paint, vec2(along * 1.6 - k * 0.25, y * 1.3)).r;
 		core *= mix(1.0, 0.25 + 1.1 * brush, paint_amt);
 		wire *= mix(1.0, 0.55 + 0.9 * brush, paint_amt * 0.6 * smoothstep(0.1, 0.7, k));
+		// P2-1: the outer thread breaks in a few places along the arc (at least two gaps), more in the tail
+		float gap = texture(paint, vec2(along * 2.3 + 0.37, 0.61)).r;
+		wire *= 1.0 - paint_amt * 0.8 * (1.0 - smoothstep(0.2, 0.4, gap)) * smoothstep(0.05, 0.4, k);
 	}
 	float glow = pow(1.0 - k, 1.6);
 	float life = pow(1.0 - rest, 1.5);
@@ -183,6 +189,7 @@ void fragment() {
 		fam = mix(color.rgb, vec3(1.0), 0.2) * strokes * 0.5;
 	}
 
+	fam *= clear;
 	vec3 edge_c = mix(color.rgb, vec3(1.0), edge_pale);
 	vec3 core_c = pale_to(color.rgb, core_sat);
 	if (wire + core <= 0.002 && max(fam.r, max(fam.g, fam.b)) <= 0.002) discard;
