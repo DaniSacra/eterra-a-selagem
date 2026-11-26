@@ -570,6 +570,10 @@ func _build_column() -> void:
 
 
 ## Bottom centre: the action diamonds, centred; the gifts that act alone sit in the bottom right corner over the coins.
+## GP-5: the Brado and the Investida left the Maga too (her buttons are tap and hold): no diamond for them.
+const RETIRED: Array[StringName] = [&"shout", &"rush"]
+
+
 func _build_actions() -> void:
 	var row := HBoxContainer.new()
 	_action_row = row
@@ -579,8 +583,8 @@ func _build_actions() -> void:
 	add_child(row)
 	var arcane := game != null and game.hero != null and game.hero.arcane != null
 	for i in ACTIONS.size():
-		if not arcane and Controls.MAGA_ONLY.has(ACTIONS[i]):
-			continue  # GP-1: the Warrior has no Q nor E: four groups, left, right, Space, Shift
+		if RETIRED.has(ACTIONS[i]):
+			continue  # GP-1 and GP-5: no hero has Q nor E any more: four groups, left, right, Shift, Space
 		if ACTIONS[i] == &"dodge":  # Shift (the ultimate) stands before Space
 			_ult_slot = ActionSlot.new().setup(&"ultimate", Boon.Slot.NONE, ROW_DIAMOND, ROW_KEY_DROP)
 			_ult_slot.label_text = T.t(&"hud_slot_ultimate")

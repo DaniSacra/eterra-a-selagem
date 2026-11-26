@@ -81,9 +81,8 @@ func test_the_rhythm_arc_follows_the_armed_rhythm() -> void:
 	game.hero_gifts.rhythm.clear()
 
 
-func test_the_maga_keeps_her_brado_and_investida() -> void:
-	assert_true(Controls.MAGA_ONLY.has(&"shout") and Controls.MAGA_ONLY.has(&"rush"))
-	assert_true(Hud.ACTIONS.has(&"shout") and Hud.ACTIONS.has(&"rush"), "her diamonds are still built for her")
+func test_no_hero_builds_a_brado_nor_an_investida_diamond() -> void:
+	assert_true(Hud.RETIRED.has(&"shout") and Hud.RETIRED.has(&"rush"), "GP-5: the Maga lost Q and C too")
 
 
 func test_the_how_to_page_has_no_brado_nor_investida_rows() -> void:
