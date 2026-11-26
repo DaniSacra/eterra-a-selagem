@@ -480,6 +480,9 @@ func _build() -> bool:
 		for g: int in [miniboss_depth, miniboss2_depth]:
 			if g > 0 and g + 1 < stage.rooms and not fountains.has(g + 1):
 				fountains.append(g + 1)
+	if stage.fountains_per_path > 0 and fountains.size() > stage.fountains_per_path:
+		fountains.sort()
+		fountains.resize(stage.fountains_per_path)
 	var altar: Array[int] = []
 	if stage.altar_layout != null:
 		altar = _event_depths(stage.altar_depth_min, stage.altar_depth_max, stage.altar_chance, false, fountains)

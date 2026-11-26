@@ -124,11 +124,13 @@ func test_the_anchors_are_always_in_place() -> void:
 			assert_eq(r.kind, RunMap.Kind.MINIBOSS, "guardian in room 10")
 		for r in m.layer(13):
 			assert_eq(r.kind, RunMap.Kind.SHOP, "the shop in a fixed place")
-		for d in [6, 11]:
+		# PM-4: only the fountain before the first guardian (room 4) and the rest after him (6); none later
+		for d in [6]:
 			var springs := m.layer(d).filter(func(r: RunMap.Room) -> bool: return r.kind == RunMap.Kind.FOUNTAIN)
 			assert_eq(springs.size(), 1, "run %d: the rest after the guardian, room %d" % [run, d])
 			rest += springs.size()
 			assert_eq(m.layer(d).size(), 2, "the two doors stay together")
+		assert_lte(_most_fountains(m), 2, "run %d: at most two fountains on any way" % run)
 		var fights2 := m.layer(2).filter(func(r: RunMap.Room) -> bool: return r.kind == RunMap.Kind.COMBAT)
 		assert_eq(fights2[0].reward, R.BOON, "room 2: a Blessing")
 		assert_eq(m.layer(1)[0].reward, R.BOON, "room 1: a Blessing")
@@ -140,7 +142,7 @@ func test_the_anchors_are_always_in_place() -> void:
 		assert_eq(fights11[0].reward, R.BOON, "room 11: a Blessing")
 		if fights11.size() > 1:
 			assert_eq(fights11[1].reward, R.GOLD)
-	assert_eq(rest, 600)
+	assert_eq(rest, 300)
 
 
 func test_the_shorter_descents_keep_no_fixed_door() -> void:
@@ -152,8 +154,8 @@ func test_the_shorter_descents_keep_no_fixed_door() -> void:
 # ---------- SW-R3 ----------
 
 func test_the_far_side_is_drawn_more_often() -> void:
-	var rift := _arena(&"rift")
-	assert_gt(rift.far_spawn, 0.0, "the Fendas draw from the far side")
+	var rift := _arena(&"sanctuary")  # (the Fendas left the far-side draw for PM-3: their zones lie on both sides)
+	assert_gt(rift.far_spawn, 0.0, "the Santuario draws from the far side")
 	var left: Arena = autofree(Arena.new())
 	left.layout = rift
 	left.spawns = [Rect2(-19, -4, 6, 8), Rect2(13, -4, 6, 8)]
@@ -176,7 +178,7 @@ func _arena(id: StringName) -> RoomLayout:
 
 
 func test_the_fendas_raise_enemies_on_the_far_side_of_the_paladin() -> void:
-	# the hero fights on the east platform: with the far side weighing more, west of the rift rises a share of the heads (late zones open)
+	# (PM-3: the Fendas keep far_spawn 0 now; the mechanism is tried by setting it here) the hero fights on the east platform: with the far side weighing more, west of the rift rises a share of the heads (late zones open)
 	var rift := _arena(&"rift")
 	var a: Arena = add_child_autofree(Arena.new())
 	a.build(rift, 2, 1406)
@@ -189,6 +191,21 @@ func test_the_fendas_raise_enemies_on_the_far_side_of_the_paladin() -> void:
 		for i in 300:
 			if Rooms.spawn_point(a, hero, rng, true).x < 0.0:
 				west[far] += 1
-	rift.far_spawn = 1.5
+	rift.far_spawn = 0.0
 	gut.p("rift, hero east: %d of 300 heads rise west with the far side, %d without" % [west[true], west[false]])
 	assert_gt(west[true], west[false] + 40, "the far side is drawn more often (%d against %d of 300)" % [west[true], west[false]])
+
+
+## PM-4: the most fountains (rests included) any way of the graph passes.
+func _most_fountains(m: RunMap) -> int:
+	var best := {}
+	for d in range(m.last_depth(), 0, -1):
+		for r in m.layer(d):
+			var below := 0
+			for n in r.next:
+				below = maxi(below, best[n])
+			best[r.id] = below + (1 if r.kind == RunMap.Kind.FOUNTAIN else 0)
+	var top := 0
+	for r in m.layer(1):
+		top = maxi(top, best[r.id])
+	return top

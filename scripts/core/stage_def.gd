@@ -27,6 +27,8 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var fountain_depth_min := 5
 @export var fountain_depth_max := 8
 @export var fountain_more_chance := 0.35
+## PM-4: the most fountains (rests included) one way can pass, the earliest layers keep theirs (0 = no limit).
+@export var fountains_per_path := 0
 @export var boss: StringName = &"morvath"
 ## Room shapes the generator draws from (the boss and the shop have their own).
 @export var layouts: Array[RoomLayout] = []

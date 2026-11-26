@@ -951,3 +951,9 @@ Leitura: o ajuste leva o natural a meio caminho do antigo (1989 contra 1444); a 
 - Passos Leves (Galael): pedir a sensação ao Daniel antes de mexer (ver achado 3).
 - Nivael e Velael valem sobre inimigos comuns; falta uma medida de dano sofrido por sala com anjo forçado (o ruído de 12 sementes é maior que o efeito).
 - Depois do teste do Daniel: o `runs.jsonl` (`angels` por sala, `chose`) diz que anjos as pessoas pegam e onde morrem; recomparar com estas tabelas.
+
+
+## PM-4 (2026-11-26 noite, room-designer): fontes por caminho
+Antes: 4 fontes em todo caminho possível (salas 4, 6, 9 e 11; 300 mapas), cura 160% da vida. Depois: `fountains_per_path` 2 (salas 4 e 6), cura 80%,
+sem fonte da sala 7 à 13. Robô 12 sementes: vida média ao entrar nas salas 7 a 13 de 40,0 para 27,1; Morvath alcançado 8 de 12 nas duas medidas.
+Se for duro demais para o novato, o botão é `st.fountains_per_path = 3` em `make_data` (uma fonte antes do segundo guardião) e regerar `stage`.
