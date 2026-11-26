@@ -105,6 +105,8 @@ func step(dt: float) -> void:
 ## special the heavy one, the Brado the shout, the Omega its tag, the attack's last blow the finisher); -1 for a
 ## blow that is no button's end (the first cuts of the combo).
 static func trigger_of(node: ComboNode) -> int:
+	if node.has_tag(&"lance"):
+		return SkillDef.Trigger.SPECIAL  # GP-1: the Lança of the Especial slot (an Omega by its tag, but the special's button)
 	if node.has_tag(&"omega"):
 		return SkillDef.Trigger.OMEGA
 	if node.has_tag(&"dash"):
@@ -217,9 +219,9 @@ func _beam(at: Vector2, color: Color, radius: float, height: float, time: float)
 ## The family's floor form (Fx.family_mark) for a gift that acts round a point; false for a family without one (the
 ## Elo shows its two in its blows), so the caller keeps the plain ring.
 func _mark(family: int, at: Vector2, radius: float, color: Color) -> bool:
-	if not Fx.MARK_FORM.has(family):
+	if Fx.form_of(family) < 0:
 		return false
-	game.fx.family_mark(family, at, radius, color, MARK_TIME[family])
+	game.fx.family_mark(family, at, radius, color, Fx.mark_time(family))
 	return true
 
 

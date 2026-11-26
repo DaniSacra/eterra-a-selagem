@@ -79,7 +79,7 @@ func test_the_bars_the_row_and_the_column_do_not_overlap_or_leave_the_screen() -
 func test_the_column_shows_the_blessing_of_each_button_and_greys_the_empty_ones() -> void:
 	var hud := await _run()
 	var col: BuildColumn = hud._column
-	assert_eq(col.entries.size(), 6, "left, right, Q, E, Shift, Space")
+	assert_eq(col.entries.size(), 4, "GP-1: left, right, Shift, Space")
 	game.boons.take(game.boons.find(&"golpe_brasa"))
 	await wait_process_frames(2)
 	assert_not_null(col.entries[0].icon.boon, "the left button holds its Blessing")
@@ -88,9 +88,7 @@ func test_the_column_shows_the_blessing_of_each_button_and_greys_the_empty_ones(
 	assert_eq(col.entries[0].name_label.text, T.t("boon_golpe_brasa"), "the row names the Blessing")
 	assert_null(col.entries[1].icon.boon, "the right button is empty")
 	assert_eq(col.entries[1].icon.icon, BoonIcon.ACTION_GLYPH + Boon.Slot.SPECIAL)
-	assert_eq(col.entries[2].icon.icon, BoonIcon.SHOUT_GLYPH, "Q shows the Brado's mark")
-	assert_eq(col.entries[3].icon.icon, BoonIcon.RUSH_GLYPH, "E shows the Investida's")
-	assert_eq(col.entries[5].icon.icon, BoonIcon.ACTION_GLYPH + Boon.Slot.DASH, "Space the dodge's")
+	assert_eq(col.entries[3].icon.icon, BoonIcon.ACTION_GLYPH + Boon.Slot.DASH, "Space the dodge's")
 	assert_lt(col.entries[1].icon.modulate.a, 1.0, "grey and quiet")
 	assert_eq(col.entries[1].level_label.text, "")
 
@@ -144,33 +142,20 @@ func test_the_hud_greets_a_material_found_in_the_corner() -> void:
 	assert_true(hud._coins.get_global_rect().position.x > hud.get_viewport_rect().size.x * 0.6, "bottom right")
 
 
-# ---------- H2: the rajada's price and the Brado's buff ----------
+# ---------- H2: the special's price (GP-1: the Brado is gone, so is its buff mark: the UI pass removes the HUD code) ----------
 
 func test_the_rajada_shows_its_cost_and_says_without_magia() -> void:
 	var hud := await _run()
 	var special: ActionSlot = hud._slots[1]
-	assert_eq(special.cost, 12, "the rajada's 12 Magia (weak start)")
+	assert_eq(special.hold_cost, 20, "GP-1: the right button's hold is the Lança, 20 Magia")
 	assert_eq(special.caption, "", "paid: no words")
 	game.player.magick.value = 0.0
 	await wait_process_frames(2)
 	assert_eq(special.caption, "", "UX2-01: no permanent words, the diamond is starved instead")
-	assert_true(special.starved)
+	assert_true(special.hold_starved)
 	game.player.magick.value = game.player.magick.max_value
 	await wait_process_frames(2)
 	assert_eq(special.caption, "")
-
-
-func test_the_buff_shows_while_the_brado_runs_beside_the_bars() -> void:
-	var hud := await _run()
-	assert_false(hud._buff.visible)
-	game.player.gifts.rally(5.0, 0.2, 0.15)
-	await wait_process_frames(2)
-	assert_true(hud._buff.visible)
-	var bars: Rect2 = hud._life.get_global_rect()
-	var b := hud._buff.get_global_rect()
-	assert_gt(b.position.x, bars.end.x, "beside the bars")
-	assert_almost_eq(b.get_center().y, bars.get_center().y, 2.0)
-	assert_false(b.intersects(hud._ult_slot.get_global_rect()))
 
 
 func test_the_buff_mark_has_an_emerald_dot_only_while_the_brado_absorbs() -> void:

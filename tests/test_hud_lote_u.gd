@@ -10,12 +10,12 @@ func test_controls_lines_have_no_fixed_names() -> void:
 		assert_false(line.to_lower().contains("ultimate"), line)
 		assert_false(line.contains("Ômega"), line)
 		assert_false(line.contains("—"), line)
-		for a: StringName in [&"light_attack", &"heavy_attack", &"dodge", &"shout", &"rush", &"ultimate", &"interact"]:
+		for a: StringName in [&"light_attack", &"heavy_attack", &"dodge", &"ultimate", &"interact"]:
 			assert_string_contains(line, UiKit.bound_name(a, pad), "%s in %s" % [a, "pad" if pad else "keys"])
 
 
 func test_the_pad_line_follows_a_rebound_button() -> void:
-	assert_eq(UiKit.bound_name(&"rush", true), "R3", "the default")
+	assert_eq(UiKit.bound_name(&"interact", true), "A", "the default (GP-1: interact on A)")
 	assert_eq(UiKit.bound_name(&"ultimate", false), "Shift")
 
 

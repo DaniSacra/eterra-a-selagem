@@ -468,3 +468,46 @@ A cena da primeira descida: só o que já existe (preto, uma estrela, a luz de E
   só depois sobem.
 - **DT-1**: apagados `dome_film`, `dome_clock`, `fury_ember`, `dark_water_matte` (e `.uid`); sem referência em código, cenas, dados e testes; as
   quatro entradas saíram de `assets/warmup/warmup_set.res` (regravado por script, 36 KB para 179 KB no disco; `test_warmup` verde).
+
+## GP-3 de 2026-11-26: VFX "tinta em movimento", parte 2 (technical-artist; só desenho, `RESULT` do `smoke.sh 30 --seed=5` igual; sem captura)
+- **Assinatura 4, formas por família** em `family_mark.gdshader` (mesmo shader, sem arquivo novo, então o `warmup_set` não muda): forma 4 Véu (bruma
+  cinza-amarelada em faixa sobre o anel, só a borda do banco de névoa em âmbar apagado, sem violeta), 5 Maré (duas fitas que ondulam em volta do
+  anel, espuma prateada nas cristas, `arc` estreita para uma direção), 6 Marca (incisões finas oblíquas e curtas, bronze, nunca linha longa), 7 Peste
+  (fios de névoa enxofre subindo do anel, sementes de líquen que brilham, miolo carvão `PESTE_CHARCOAL` por baixo), 8 Trovão (6 raios em
+  segmentos com uma bifurcação na metade, ardósia; nos primeiros 0,05 s só o clarão `TROVAO_FLASH`). As quatro de antes seguem iguais.
+- **Ponto de entrada (para o código das Bênçãos)**: `Fx.form_of(family)` acha a forma pelo NOME da família em `Boon.Family` (`FORM_BY_NAME`; um nome
+  que o enum ainda não tem, como PESTE e TROVAO, dá -1 sem erro; quando o outro agente criar `PESTE` e `TROVAO` no enum, funciona sem mexer em
+  `Fx`). Chão: `fx.family_mark(family, centro, raio, cor, Fx.mark_time(family), dir, arc_deg)` (ou `fx.form_mark(form, ...)` com o número da forma);
+  `Fx.form_of(f) < 0` (Elo, família sem forma) pede o `ring` simples. Golpe que acerta: `fx.family_hit(Fx.family_of(cor), pos, dir, cor, pesado)`, que o
+  `Combat` já chama; `family_of` agora também conhece Véu, Maré, Marca, Peste e Trovão pela cor em `Boon.FAMILY_COLOR` (o Elo continua -1).
+  Cores de Peste (sulfur #C9B458, líquen #9FAE7A, carvão #2E2B26) e Trovão (ardósia #4E5866, tempestade #7D8590, clarão #F1E08A) em `Fx.PESTE_*`/`TROVAO_*`;
+  `Boon.FAMILY_COLOR` das duas deve ser sulfur e ardósia para a carta e o efeito concordarem. Peças que sobem do chão: `_form_extras` (orçamento `motes`/`wisps`).
+  Golpe: `_family_hit_new` (Véu fumaça, Maré gotas longas pela direção do golpe, Marca lascas oblíquas, Peste fio e sementes, Trovão faíscas).
+- Chamadores trocados: `skills.gd::_mark` e `game.gd` (escolha da Bênção) usavam `Fx.MARK_FORM.has` e `MARK_TIME[family]` (índice fora do limite com
+  família nova); agora `Fx.form_of` e `Fx.mark_time`. `Fx.MARK_FORM` continua com as quatro de antes.
+- **Assinatura 5**: `enemy_orb.gdshader` ganhou borda suja (o contorno da bola comido por ruído, `dirt` 0,14; a agulha da besta fica inteira; tamanho e
+  acerto iguais); `soul_crescent.gdshader` ganhou corrosão (buracos no corpo, nunca na linha do meio). Já existiam e ficam: magia dos mortos em carmim e
+  magenta com miolo escuro (V-11), cauda de fumaça violeta (`SOUL_TAIL`, `SCYTHE_SMOKE`), foice com borda roída (V-16). O aviso vermelho do chão não foi tocado
+  (a fase 4 só muda o ar, `RoomMood.LAST_BREATH`); a conferência é por captura: `tools/gpu.sh shot x.png --bot --start=boss --boss-hp=0.2 --shot-at=14`.
+- Testes: `tests/test_gp3_families.gd`. Capturas para a sessão principal: `--start=boss --boss-hp=0.2` (fase 4, meias-luas e aviso), `--boons=25` com
+  `--bot` (famílias), e um quadro por forma chamando `fx.form_mark(N, ...)`.
+- **Revisão 2026-11-26c** (`docs/art/ART_REVIEW_2026-11-26c.md`): contato com tinta lia como retícula; `CONTACT_INK_CORE` 0,10, aro do
+  `contact.gdshader` até 1,12 e raiz dos traços 0,075 (só `ink`). Trovão (forma 8) com espaçamento e comprimento irregulares para não
+  ler como sol. Pendentes: corte com Bênção sobre o herói, cor da Marca, `--lab-form=N` para capturar Peste e Trovão.
+
+## Revisão 2026-11-26c, correções (technical-artist; só VFX, `RESULT` do `smoke.sh 30 --seed=5` igual; sem captura)
+- **P1-2**: `Fx.slash` passa `body_clear_m` (1,0 m) também com `family >= 0`, e o `slash.gdshader` aplica a mesma limpeza (`clear`) à luz da família
+  (`fam`), não só ao miolo; `slash_ink.gdshader` ganhou `body_clear_m` (só com família). Corte sem família: igual.
+- **P1-3**: `Fx._family_white(family)`: o pico de tela do corte usa 0,1 de branco para Marca e Véu (0,3 nas outras).
+- **P1-5 (decisão do Game Director)**: forma 8 (Trovão, anjo) agora **cai de cima**: tronco grosso e torto no lado de cima da tela (-z), 1 ou 2
+  galhos curtos, coroa de seixos no impacto, ardósia com clarão #F1E08A nos 0,05 s; pó de pedra (`STONE_DUST`) em vez de farpas. Forma nova 9 (`ARCO`,
+  `FORM_BY_NAME`, `FORM_SCREEN`, `FORM_TIME` 0,3 s): o raio da Maga, uma linha fina e contínua que salta na horizontal (eixo `start`), sem queda,
+  sem galho, sem falhas, na cor `ElementLook.VOLT`. Nenhum shader novo (ramo novo em `family_mark.gdshader`). Nada chama a forma 9 ainda
+  (a Maga está parada); fica pronta.
+- **P2**: `SLASH_PAINT` 0,9 e o fio externo do corte da Emeth ganha falhas (textura de pincel em outra frequência); `FAMILY_NUMBER_OUTLINE` 2 nos
+  números diretos com cor de família; `tick_color` devolve `TICK_VEIL` (âmbar apagado) para o Véu em vez do verde da Emeth.
+- **Captura**: `--lab-form=N` (opcional `--lab-form-at=m`, `--lab-t`) no `_lab` do `game.gd` chama `fx.form_mark(N, ...)` à frente do herói;
+  `Fx.freeze_t` agora também congela as marcas.
+- Linhas tocadas em `fx.gd` (outro agente mexe no orçamento): constantes `FORM_BY_NAME/SCREEN/TIME`, `STONE_DUST`, `TICK_VEIL`, `FAMILY_NUMBER_OUTLINE`,
+  `_family_white` (antes de `slash`), as 3 linhas de `body_clear_m`/`style_peak` em `slash`, `_form_extras` caso 8, `_family_hit_new` caso 8, `number`, `tick_color`,
+  o laço de `_marks` no passo.

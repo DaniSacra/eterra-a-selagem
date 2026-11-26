@@ -34,7 +34,7 @@ static func learned(catalog: Array[EnchantDef], data: Dictionary = {}, hero_id :
 		inscribed = Forge.block(data, hero_id).get("inscribed", [])
 	var out: Array[EnchantDef] = []
 	for e in catalog:
-		if e.learned or inscribed.has(String(e.id)):
+		if not e.reserve and (e.learned or inscribed.has(String(e.id))):
 			out.append(e)
 	return out
 

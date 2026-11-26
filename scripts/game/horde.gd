@@ -159,6 +159,8 @@ var list: Array[Enemy] = []
 ## comes from (Combat sets it around a hit; &"" counts as other).
 var dealt := DealtBy.new()
 var dealing: StringName = &""
+## GP-1 (Ritmo de Batalha): more share of the full poise (or the boss's Postura) the blow being dealt wears, on top of its button's weight.
+var poise_extra := 0.0
 ## Fatia 2, the Refinar Peso: a blow's flinch lasts this many times its own (Combat sets it while it deals a blow).
 var stun_scale := 1.0
 ## Imposição, Voz do Leão: the Quebra's stun lasts this much longer (Combat sets 1 + stun_pct around its damage, the cry too).
@@ -2638,9 +2640,10 @@ func _wear_poise(e: Enemy, from_dir: Vector2) -> void:
 	var d := e.def
 	if not Poise.takes(d.poise, e.frozen_t, e.stun_t, e.state == Enemy.State.DOWN or e.state == Enemy.State.RISE, e.invulnerable):
 		return
-	var shr := Poise.share(dealing, Feel.live().poise_weights) * d.poise_mult
+	var shr := Poise.share(dealing, Feel.live().poise_weights)
 	if shr <= 0.0:
 		return
+	shr = (shr + poise_extra) * d.poise_mult
 	e.poise = Poise.wear(e.poise, d.poise, shr)  # (a blow takes the same of the bar however many breaks it has had: the bar grows)
 	e.poise_idle = 0.0
 	if e.poise > 0.0:

@@ -6,7 +6,7 @@
 [sub_resource type="Resource" id="Resource_7uorp"]
 script = ExtResource("1_nv4ya")
 stat = &"omega_cost_pct"
-base = 1.5
+base = 1.0
 per_level = PackedFloat32Array()
 by_rarity = false
 
@@ -14,7 +14,14 @@ by_rarity = false
 script = ExtResource("1_nv4ya")
 stat = &"final_pct"
 tag = &"omega"
-base = 1.6
+base = 2.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_q33sr"]
+script = ExtResource("1_nv4ya")
+stat = &"magick_max"
+base = 10.0
 per_level = PackedFloat32Array()
 by_rarity = false
 
@@ -29,4 +36,4 @@ cost = 4
 unlock_level = 17
 memory_cost = 4
 needs = &"forca_concentrada"
-mods = Array[ExtResource("1_nv4ya")]([SubResource("Resource_7uorp"), SubResource("Resource_s1qt7")])
+mods = Array[ExtResource("1_nv4ya")]([SubResource("Resource_7uorp"), SubResource("Resource_s1qt7"), SubResource("Resource_q33sr")])

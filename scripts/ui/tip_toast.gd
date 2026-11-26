@@ -55,7 +55,7 @@ static func text_of(id: StringName) -> String:
 	var key := id if String(id).begins_with("first_tip_") else StringName("tip_" + String(id))
 	return T.t(key, {
 		"attack": UiKit.action_label(&"light_attack"), "special": UiKit.action_label(&"heavy_attack"),
-		"dodge": UiKit.action_label(&"dodge")})
+		"power": UiKit.action_label(&"heavy_attack"), "dodge": UiKit.action_label(&"dodge"), "interact": UiKit.action_label(&"interact")})
 
 
 func _process(delta: float) -> void:
@@ -99,7 +99,8 @@ func context(fighting: bool) -> Dictionary:
 				armored = true
 				break
 	return {"fighting": fighting, "fight_t": _fight_t, "armored": armored,
-			"boons": game.boons.owned().size(), "elos": game.boons.new_elos({}).size(), "tutorial": Objective.tutorial()}
+			"boons": game.boons.owned().size(), "elos": game.boons.new_elos({}).size(), "tutorial": Objective.tutorial(),
+			"rhythm": game.hero_gifts != null and game.hero_gifts.rhythm.armed()}
 
 
 func show_tip(id: StringName) -> void:

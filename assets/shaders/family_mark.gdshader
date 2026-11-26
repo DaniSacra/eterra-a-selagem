@@ -11,6 +11,16 @@ shader_type spatial;
 //      inside it;
 //   3 Vigília: three segmented arcs (12 segments with gaps) opening from 0.55 to the radius in 0.2 s, no fill; `arc`
 //      (half, radians) narrows them to a cry toward +x of the quad (Fx turns the quad to the blow's way).
+// GP-3 (VFX "tinta em movimento", assinatura 4), the other forms, each with a shape of its own (not only a colour):
+//   4 Véu: a grey-yellow mist, a band of noisy fog thickening on the ring (no violet), dimming what is under it a little;
+//   5 Maré: two flowing ribbons round the ring (a wave in the radius, `arc` narrows them to a way) with silver foam
+//      specks riding their crests;
+//   6 Marca: thin oblique incisions (one slope, broken by gaps) crossing the ring's band, bronze, never a long line;
+//   7 Peste: threads of mist rising off the ring in strands (`color` sulphur, `accent` lichen) with luminous seeds in them,
+//      over a charcoal heart (`ink`);
+//   8 Trovão (the angel's): a bolt that falls from above onto the middle (a thick jagged trunk down the screen's far
+//      side, one or two short branches, a pebble crown), slate (`color`), the first 0.05 s only the flash `accent`;
+//   9 Arco (the Maga's volt): one thin continuous line leaping across along `start`, jittering, no fall, no fork.
 render_mode unshaded, blend_premul_alpha, cull_disabled, depth_draw_never, shadows_disabled, fog_disabled;
 
 uniform int form = 0;
@@ -29,6 +39,9 @@ uniform float line_m = 0.05;
 uniform float hex_m = 0.55;
 uniform vec2 start = vec2(0.0, 1.0);
 uniform vec3 gold : source_color = vec3(0.95, 0.72, 0.3);
+// The second hue of a form (Peste lichen, Trovão flash, Maré foam) and the dark that covers (Peste charcoal)
+uniform vec3 accent : source_color = vec3(0.62, 0.68, 0.48);
+uniform vec3 ink : source_color = vec3(0.18, 0.17, 0.15);
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -109,7 +122,7 @@ void fragment() {
 			* step(radius_m - 0.28, m) * step(m, radius_m + 0.12);
 		float thread = line(m - radius_m * 0.86, line_m * 0.6, px);
 		light += (mix(color, vec3(1.0), 0.3) * (ring + marks) + gold * thread * 0.7) * drawn * fade;
-	} else {
+	} else if (form == 3) {
 		float open = mix(0.55, 1.0, 1.0 - pow(1.0 - smoothstep(0.0, 0.2, age), 3.0));
 		float fade = 1.0 - smoothstep(time * 0.5, time, age);
 		float inside_arc = 1.0 - smoothstep(arc - 0.05, arc, abs(a));
@@ -120,6 +133,100 @@ void fragment() {
 			arcs += line(m - rk, line_m * (1.3 - 0.2 * float(k)), px) * (1.0 - 0.25 * float(k));
 		}
 		light += mix(color, vec3(1.0), 0.15) * arcs * segments * inside_arc * fade;
+	} else if (form == 4) {
+		// Véu: fog on the ring, drifting; born in 0.1 s, thinning out to the end
+		float fade = smoothstep(0.0, 0.1, age) * (1.0 - smoothstep(time * 0.45, time, age));
+		float band = smoothstep(0.35, 0.8, r) * (1.0 - smoothstep(0.88, 1.12, r));
+		float fog = noise(p * 4.5 + vec2(age * 1.4, seed * 9.0)) * 0.65 + noise(p * 9.0 - vec2(0.0, age * 2.0)) * 0.35;
+		float body = band * smoothstep(0.3, 0.75, fog);
+		// the amber is the dim edge of the cloud only
+		float rim = band * (1.0 - smoothstep(0.42, 0.6, fog)) * smoothstep(0.2, 0.4, fog);
+		light += (color * 0.55 * body + vec3(0.9, 0.62, 0.22) * 0.22 * rim) * fade;
+		cover = body * 0.3 * fade;
+	} else if (form == 5) {
+		// Maré: the ribbons run round the ring and swing in and out, foam on the crests
+		float open = 1.0 - pow(1.0 - smoothstep(0.0, 0.18, age), 3.0);
+		float fade = 1.0 - smoothstep(time * 0.5, time, age);
+		float inside_arc = 1.0 - smoothstep(arc - 0.05, arc, abs(a));
+		float ribbons = 0.0;
+		float foam = 0.0;
+		for (int k = 0; k < 2; k++) {
+			float swing = sin(a * 5.0 + float(k) * 2.4 - age * 9.0 + seed * 6.0);
+			float rk = radius_m * open * (0.8 + 0.2 * float(k)) + swing * 0.12 * radius_m * 0.5;
+			float wide = line_m * (2.6 - 0.8 * float(k)) * (0.7 + 0.5 * smoothstep(-1.0, 1.0, swing));
+			ribbons += line(m - rk, wide, px) * (1.0 - 0.3 * float(k));
+			float speck = step(0.8, hash(vec2(floor(a * 24.0 + float(k) * 7.0), floor(age * 12.0))));
+			foam += line(m - rk - 0.04, line_m * 1.8, px) * speck * step(0.6, swing);
+		}
+		light += (color * ribbons + mix(accent, vec3(1.0), 0.6) * foam * 0.9) * inside_arc * fade;
+	} else if (form == 6) {
+		// Marca: oblique incisions, every one short; they land one after the other in 0.1 s
+		float fade = 1.0 - smoothstep(time * 0.5, time, age);
+		vec2 q = p * radius_m;
+		float slope = 0.62;
+		vec2 across = vec2(cos(slope), sin(slope));
+		vec2 along = vec2(-across.y, across.x);
+		float lane = dot(q, across) / 0.32;
+		float lane_id = floor(lane);
+		float d = (fract(lane) - 0.5) * 0.32;
+		float at = dot(q, along);
+		float from_at = (hash(vec2(lane_id, seed)) - 0.5) * 1.2;
+		float len = 0.35 + 0.5 * hash(vec2(lane_id, seed + 3.0));
+		float cut = line(d, line_m * 0.8, px) * step(from_at, at) * step(at, from_at + len);
+		float band = step(0.45, r) * step(r, 1.0 + 0.02);
+		float order = hash(vec2(lane_id, 5.0)) * 0.1;
+		float shown = step(order, age) * step(0.4, hash(vec2(lane_id, seed + 9.0)) + 0.35);
+		light += mix(color, vec3(1.0), 0.12) * cut * band * shown * fade;
+		cover = cut * band * shown * 0.35 * fade;
+	} else if (form == 7) {
+		// Peste: strands rising off the ring, then seeds that glow; the charcoal heart under the ring
+		float fade = smoothstep(0.0, 0.12, age) * (1.0 - smoothstep(time * 0.5, time, age));
+		float n = max(count, 6.0);
+		float cell = a / TAU * n + seed * 5.0;
+		float lane = abs(fract(cell) * 2.0 - 1.0);
+		float rise = (r - 0.55) / 0.5;
+		float wob = 0.18 * sin(rise * 7.0 + floor(cell) * 3.0 - age * 6.0);
+		float strand = (1.0 - smoothstep(0.04, 0.16, abs(lane - 0.5 - wob))) * step(0.0, rise) * (1.0 - smoothstep(0.55, 1.0, rise));
+		strand *= step(0.3, hash(vec2(floor(cell), seed)));
+		vec2 g = p * radius_m * 6.0 + vec2(0.0, -age * 2.0);
+		vec2 gi = floor(g);
+		float seedpt = step(0.93, hash(gi + seed)) * (1.0 - smoothstep(0.08, 0.2, length(fract(g) - 0.5))) * step(0.5, r) * step(r, 1.05);
+		light += (color * strand * 0.75 + accent * seedpt * 1.0) * fade;
+		float heart = smoothstep(0.5, 0.7, r + 0.08 * noise(p * 5.0 + seed)) * (1.0 - smoothstep(0.88, 1.05, r));
+		cover = heart * 0.4 * fade;
+	} else if (form == 8) {
+		// Trovão (the angel's): bolts FALL from above onto the target. The camera looks from +z, so up the screen is -z on
+		// the floor: one thick trunk comes down the -z side to the centre with one or two short branches, a pale flash
+		// first, and a pebble crown where it lands. Never a ring of rays (a sun) nor a line across (the Maga's arc).
+		float flash = 1.0 - step(0.05, age);
+		float fade = 1.0 - smoothstep(time * 0.3, time, age);
+		float zx = p.x * radius_m;
+		float up = -p.y * radius_m;
+		float seg = 0.38;
+		float sid = floor(up / seg);
+		float off = mix(hash(vec2(sid, seed)), hash(vec2(sid + 1.0, seed)), fract(up / seg)) - 0.5;
+		float drop = smoothstep(0.0, 0.06, age);
+		float trunk = line(zx - off * 0.5 * smoothstep(0.0, 0.5, up / radius_m), line_m * 4.0, px) * step(-0.05 * radius_m, up) * step(up, radius_m * 1.0 * drop);
+		float b1 = line(zx - off * 0.3 - (up - radius_m * 0.35) * 0.7, line_m * 2.2, px) * step(radius_m * 0.35, up) * step(up, radius_m * 0.62 * drop);
+		float b2 = line(zx - off * 0.3 + (up - radius_m * 0.55) * 0.6, line_m * 2.0, px) * step(radius_m * 0.55, up) * step(up, radius_m * 0.78 * drop) * step(0.5, hash(vec2(seed, 3.0)));
+		float bolt = clamp(trunk + b1 + b2, 0.0, 1.0);
+		float crown = (1.0 - smoothstep(0.1, 0.22, r)) * (0.5 + 0.5 * flash) * step(0.04, age);
+		float stones = step(0.9, hash(floor(p * radius_m * 7.0) + seed)) * step(0.2, r) * (1.0 - smoothstep(0.35, 0.6, r)) * step(0.06, age);
+		light += mix(color, accent, flash) * bolt * (0.85 + 0.4 * flash) * fade;
+		light += color * (crown * 0.7 + stones * 0.5) * fade;
+		cover = (crown * 0.35 + stones * 0.3) * fade;
+	} else {
+		// the Maga's arc (ElementLook.VOLT, form 9): one thin continuous line that leaps across, jittering, along `start`;
+		// it has no fall, no fork and no gaps (so it never reads as the Trovão in grey)
+		float age_t = smoothstep(0.0, 0.08, age);
+		float fade = 1.0 - smoothstep(time * 0.35, time, age);
+		vec2 dirv = normalize(start);
+		float ax = dot(p, dirv) * radius_m;
+		float ay = dot(p, vec2(-dirv.y, dirv.x)) * radius_m;
+		float arch = 0.18 * radius_m * (1.0 - pow(abs(ax) / radius_m, 2.0));
+		float jit = (noise(vec2(ax * 3.5, floor(age * 40.0) + seed * 7.0)) - 0.5) * 0.22 * radius_m;
+		float arc_line = line(ay - arch - jit, line_m * 1.1, px) * step(abs(ax), radius_m * 0.98 * age_t);
+		light += mix(color, vec3(1.0), 0.2) * arc_line * fade;
 	}
 	float peak = max(light.r, max(light.g, light.b)) * cap;
 	vec3 lit = light * cap;

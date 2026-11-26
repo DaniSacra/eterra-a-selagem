@@ -97,6 +97,6 @@ func test_combat_for_those_who_read_late() -> void:
 	assert_eq(HeroDef.maga().ultimate(&"converge").charge, 75.0)
 	var maga := HeroDef.maga()
 	assert_eq(_find(maga, &"spark").glint, 0.0)
-	assert_eq(_find(HeroDef.warrior(), &"bolt").hit_stop_ms, 25.0)
+	assert_eq(_find(HeroDef.warrior(), &"smash").hit_stop_ms, 90.0)
 	assert_eq(_find(maga, &"shard").hit_stop_ms, 25.0)
 	assert_eq(_find(maga, &"spark").hit_stop_ms, 0.0, "nothing on the light shots")

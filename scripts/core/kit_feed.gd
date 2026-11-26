@@ -4,8 +4,8 @@ extends RefCounted
 ## Quebra gives (capped by a sliding window, and one wave refunds at most so much of its cost), and how many seconds
 ## of the Brado's recharge each gives back. HeroGifts feeds it the fight's events and does what it answers.
 
-## Sources of a Quebra that feed (DealtBy sources): the attack, the wave, the Investida and the two Omegas. Never the Brado or the ultimate.
-const BREAK_SOURCES: Array[StringName] = [&"attack", &"special", &"dash", &"omega_attack", &"omega_special"]
+## Sources of a Quebra that feed (DealtBy sources): the attack, the wave and the two Omegas. Never the Corte Circular (`shout`), the dodge or the ultimate (GP-1).
+const BREAK_SOURCES: Array[StringName] = [&"attack", &"special", &"omega_attack", &"omega_special"]
 
 var hero: HeroDef
 var _now := 0.0

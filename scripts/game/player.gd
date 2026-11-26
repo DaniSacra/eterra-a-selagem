@@ -35,6 +35,8 @@ signal ult_landed(dir: Vector2)
 signal ult_refused
 ## The special was pressed without the Magia it costs (the HUD flashes the Magia bar).
 signal magick_refused
+## The roll is over: where it began and where it ended (Investida Implacável stuns what the segment crossed).
+signal dodge_ended(from: Vector2, to: Vector2)
 
 ## ULT: the ultimate's gesture (UltDef.gesture), protected, planted, the runner locked as in the roll.
 enum State { MOVE, DODGE, HURT, DEAD, REST, ULT }
@@ -199,6 +201,12 @@ var charge_t := 0.0
 var _charge_action := &""
 var _charge_tap := ComboNode.In.HEAVY
 var _charge_held := ComboNode.In.CHARGE
+## GP-1 (ButtonIntent): tap or hold on each blow button, by action. The Maga keeps the old press-plays-at-once flow (hero.arcane).
+var intents: Dictionary[StringName, ButtonIntent] = {&"light_attack": ButtonIntent.new(), &"heavy_attack": ButtonIntent.new()}
+## The blow each button plays as a tap and as a hold (ComboNode.In).
+const INTENT_MOVES := {&"light_attack": [ComboNode.In.LIGHT, ComboNode.In.CHARGE_LIGHT], &"heavy_attack": [ComboNode.In.HEAVY, ComboNode.In.CHARGE]}
+## For the HUD's flash and the RESULT: how many times a held blow was refused for want of Magia.
+var refusals := 0
 var magick := Magick.new(hero.magick_max)
 ## The Gifts' rules in this run (HeroGifts sets it; null: no Gift). Ainda de Pé reads it when he falls.
 var gifts: GiftState
@@ -210,7 +218,6 @@ var omega_discount := 0.0
 var omega_cost_pct := 0.0
 var charge_time_pct := 0.0
 var dash_pierce := false
-var _piercing := false
 ## The Passo Etéreo ended this step: bodies of the crowd do not hold her where she came out (the dash goes through them).
 var _blinked := false
 var _charge_discount := 0.0
@@ -241,6 +248,8 @@ var _casting := false
 var _cast_t := 0.0
 var _state_t := 0.0
 var _dodge_dir := Vector2.DOWN
+## Where the roll began (the segment it crossed is Combat.dodge_through's).
+var _dodge_from := Vector2.ZERO
 var _dodge_recharge := 0.0
 ## Seconds before another close dodge is rewarded (Feel.close_cooldown).
 var _close_cd := 0.0
@@ -302,11 +311,7 @@ func _ready() -> void:
 	tree = load(hero.combos)
 	runner = ComboRunner.new(tree)
 	runner.move_started.connect(_on_move_started)
-	runner.move_hit.connect(func(node: ComboNode) -> void:
-		_follow_through(node)
-		_step_in(node)
-		_body_layer(node)
-		struck.emit(node, pos, facing))
+	runner.move_hit.connect(_on_move_hit)
 	runner.move_glint.connect(func(node: ComboNode, time: float) -> void:
 		_anim.speed_scale = GLINT_ANIM_SPEED
 		glinted.emit(node, pos, facing, time, blade_tip))
@@ -619,6 +624,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 			pos += _dodge_dir * feel.dodge_speed * dt * (1.0 - _state_t / feel.dodge_time * 0.5)
 			if _state_t >= feel.dodge_time:
 				state = State.MOVE
+				dodge_ended.emit(_dodge_from, pos)  # Investida Implacável (Combat.dodge_through)
 				runner.on_dodge_end()
 				last_dodge_end = pos
 				dodge_age = 0.0
@@ -653,8 +659,8 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 				# free again (no move, the chain window, or past a special's walk_after): he walks and runs, no sliding
 				pos += move * sp * dt + (_lunge + _step) * dt
 				if move.length() > 0.1:
-					if charging and _charge_action == &"light_attack":
-						# C19-4: the attack's Omega charging, his body all but locked (charge_turn_light degrees a second)
+					if charging:
+						# C19-4: an Omega charging, his body all but locked (charge_turn_light degrees a second)
 						facing = Horde.turned(facing, move.normalized(), deg_to_rad(hero.charge_turn_light) * dt)
 					else:
 						facing = move.normalized()
@@ -676,9 +682,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 	if dashing and not _dodge_cut and wanted.distance_to(pos) > 0.05:
 		_dodge_cut = true
 		dodge_blocked.emit(arena.blocker_at(wanted, RADIUS))
-	if _lunge.length_squared() <= 0.04:
-		_piercing = false
-	if horde and not dashing and not _blinked and not _piercing:
+	if horde and not dashing and not _blinked:
 		# the enemies' bodies stop him: he slides along them and pushes no one (BodyBlock)
 		pos = horde.stop_walker(start, pos, RADIUS, arena.resolve)
 	_show(dt, move)
@@ -714,6 +718,34 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 	if Controls.pressed(&"ultimate"):
 		ult_refused.emit()
 	_ult_want = maxf(0.0, _ult_want - dt)
+	if hero.arcane == null:
+		_read_intents(dt, false)
+	else:
+		_read_legacy_attacks()
+	if charging:
+		charge_t += dt
+		if charge_t >= CHARGE_SOUND_AT and charge_t - dt < CHARGE_SOUND_AT:
+			Audio.play(&"charge_up")
+			charges_started += 1
+		if not Controls.held(_charge_action):
+			_end_charge()  # let go before the charge filled: nothing more comes
+			_intent_of(_charge_action).cancel(false)
+		elif charge_t >= _charge_time() - _charge_lead() and not runner.is_attacking():
+			# the held move starts its windup (and glint) inside the charge, so it lands when the charge fills (GF-08)
+			_end_charge()
+			charges_filled += 1
+			if charge_t < CHARGE_SOUND_AT:
+				charges_started += 1
+			_intent_of(_charge_action).fire()
+			runner.press(_charge_held)
+			fx.hero_burst(&"light", Vector3(pos.x, 1.4, pos.y))
+			Audio.play(&"charged")
+	_read_cast(dt)
+
+
+## The Maga's buttons (and the Brado and the Investida of a tree that has them): a press plays the move at once, holding it on
+## charges its held version (the model of Hades II). The Warrior's are the ButtonIntents (_read_intents).
+func _read_legacy_attacks() -> void:
 	_press_attack(&"light_attack", ComboNode.In.LIGHT, ComboNode.In.CHARGE_LIGHT)
 	if _press_move(&"shout", ComboNode.In.SHOUT) or _press_move(&"rush", ComboNode.In.RUSH):
 		_end_charge()
@@ -723,23 +755,79 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 			_end_charge()
 	else:
 		_press_special()
-	if charging:
-		charge_t += dt
-		if charge_t >= CHARGE_SOUND_AT and charge_t - dt < CHARGE_SOUND_AT:
-			Audio.play(&"charge_up")
-			charges_started += 1
-		if not Controls.held(_charge_action):
-			_end_charge()  # let go before the charge filled: nothing more comes
-		elif charge_t >= _charge_time() - _charge_lead() and not runner.is_attacking():
-			# the held move starts its windup (and glint) inside the charge, so it lands when the charge fills (GF-08)
-			_end_charge()
-			charges_filled += 1
-			if charge_t < CHARGE_SOUND_AT:
-				charges_started += 1
-			runner.press(_charge_held)
-			fx.hero_burst(&"light", Vector3(pos.x, 1.4, pos.y))
-			Audio.play(&"charged")
-	_read_cast(dt)
+
+
+func _intent_of(action: StringName) -> ButtonIntent:
+	return intents.get(action, _no_intent)
+
+
+## A throwaway for an action without an intent (the Maga's charges): its calls change nothing that matters.
+var _no_intent := ButtonIntent.new()
+
+
+## GP-1: tap or hold on the left and right buttons. A tap plays its blow when the button is let go (or at the threshold, never
+## both); a hold past Feel.hold_threshold with the Magia for it charges the held blow; without the Magia the button is refused
+## (magick_refused, once) and nothing strikes. `locked`: he cannot act now (the roll, the stagger): a tap is kept by the locked
+## runner, a hold does not charge.
+func _read_intents(dt: float, locked: bool) -> void:
+	var feel := Feel.live()
+	for action: StringName in intents:
+		var it: ButtonIntent = intents[action]
+		var moves: Array = INTENT_MOVES[action]
+		if action == CURSE_ACTION and curse.active():
+			# the curse locks the right button whole: a press does nothing, a charge under way is dropped
+			if charging and _charge_action == action:
+				_end_charge()
+			it.cancel(Controls.held(action))
+			continue
+		var held_in: ComboNode.In = moves[1]
+		# (locked: no refusal, the Magia is looked at when he can act again)
+		var can_hold := locked or _affordable(held_in)
+		var out := it.update(dt, Controls.pressed(action), Controls.held(action), can_hold, feel.hold_threshold, feel.hold_fallback_tap)
+		match out:
+			ButtonIntent.Out.TAP:
+				_tap(moves[0])
+			ButtonIntent.Out.REFUSED:
+				_refuse()
+			ButtonIntent.Out.REFUSED_TAP:
+				_refuse()
+				_tap(moves[0])
+		if not locked and it.holding() and not charging:
+			# the hold is on (it began now, or in the roll or the stagger: its clock starts over here)
+			charging = true
+			charge_t = it.held_t if out == ButtonIntent.Out.HOLD_BEGAN else 0.0
+			_charge_action = action
+			_charge_tap = moves[0]
+			_charge_held = held_in
+			_charge_discount = omega_discount
+
+
+## A tap's blow goes to the runner; one that costs Magia (the Corte Circular) is refused, once, when the Magia is not there.
+func _tap(input: ComboNode.In) -> void:
+	var node := ComboTree.find(tree.neutral, input)
+	if node == null:
+		return
+	if node.magick_cost > 0.0 and not magick.can_pay(_cost_now(node)):
+		_refuse()
+		return
+	runner.press(input)
+
+
+func _refuse() -> void:
+	refusals += 1
+	magick_refused.emit()
+
+
+## What the move costs if it were begun now (the held Omegas' Lâmina Faminta discount counts only on an Omega).
+func _cost_now(node: ComboNode) -> float:
+	return cost_of(node, omega_discount if node.has_tag(&"omega") else 0.0)
+
+
+## Back to rest on every button: a pause, a new room, a fall. A button still down is ignored until it is let go.
+func reset_intents() -> void:
+	_end_charge()
+	for action: StringName in intents:
+		(intents[action] as ButtonIntent).cancel(Controls.held(action))
 
 
 ## Presses while he cannot act (the roll, the stagger): attack and special are kept by the runner (it is locked, so
@@ -749,6 +837,9 @@ func _queue_buttons() -> void:
 		_dodge_want = DODGE_BUFFER
 	if Controls.pressed(&"ultimate"):
 		_ult_want = DODGE_BUFFER
+	if hero.arcane == null:
+		_read_intents(0.1, true)  # (presses are kept 0.25 s: a hold past the threshold is not a tap, but never charges here)
+		return
 	if Controls.pressed(&"light_attack"):
 		runner.press(ComboNode.In.LIGHT)
 	_press_move(&"shout", ComboNode.In.SHOUT)
@@ -833,6 +924,12 @@ func _press_attack(action: StringName, tap: ComboNode.In, held: ComboNode.In) ->
 		_charge_discount = omega_discount
 
 
+## GP-1: the dodge (and the ultimate) take every button back to rest: nothing is pending, nothing is spent.
+func _cancel_intents() -> void:
+	for action: StringName in intents:
+		(intents[action] as ButtonIntent).cancel(Controls.held(action))
+
+
 ## Ends an Omega's charge (filled, let go or cut): its rising sound fades out in CHARGE_SOUND_FADE (C19-4, Hades).
 func _end_charge() -> void:
 	if charging:
@@ -844,7 +941,7 @@ func _end_charge() -> void:
 func charge_move_scale() -> float:
 	if not charging:
 		return 1.0
-	return hero.charge_move_light if _charge_action == &"light_attack" else hero.charge_move_heavy
+	return hero.charge_move_light if _charge_action == &"light_attack" or hero.arcane == null else hero.charge_move_heavy
 
 
 ## Omega charges let go, cut (dodge, blow, curse) or out of Magia before they filled; one still under way is not counted.
@@ -929,6 +1026,7 @@ var _dodge_cut := false
 
 func _start_dodge(move: Vector2) -> void:
 	_end_charge()  # (C19-4: the dodge cuts the charge on the frame of the press; no Magia is spent)
+	_cancel_intents()
 	_casting = false
 	if hero.arcane != null:
 		_teleport(move)
@@ -939,6 +1037,7 @@ func _start_dodge(move: Vector2) -> void:
 	dodge_charges -= 1
 	_dodge_cut = false
 	_dodge_dir = move.normalized() if move.length() > 0.2 else facing
+	_dodge_from = pos
 	facing = _dodge_dir
 	runner.on_dodge()
 	# B-b: no mix into the dash (its pose is there on the frame of the press, as its 19 frames of shelter are)
@@ -979,6 +1078,7 @@ func _teleport(move: Vector2) -> void:
 ## blade lands as the gesture ends (UltDef.anim_peak).
 func _start_ult() -> void:
 	_end_charge()
+	_cancel_intents()
 	_casting = false
 	sprinting = false
 	state = State.ULT
@@ -1046,8 +1146,6 @@ func _step_move_sound(dt: float) -> void:
 
 func _on_move_started(node: ComboNode) -> void:
 	facing = _strike_dir()
-	if node.magick_cost > 0.0:
-		magick.spend(cost_of(node, _charge_discount if node.has_tag(&"omega") else 0.0))
 	_anim.speed_scale = 1.0
 	_sound_node = null
 	if hero.id == &"maga" and node.has_tag(&"finisher") and node.has_tag(&"bolt"):
@@ -1064,7 +1162,6 @@ func _on_move_started(node: ComboNode) -> void:
 	_lunge = facing * node.lunge * LUNGE_DECAY
 	if node.input != ComboNode.In.LIGHT:
 		_step = Vector2.ZERO  # the special's and the Brado's wind-up starts from a standstill: no slide left of the last blow
-	_piercing = dash_pierce and node.lunge > 0.0  # Investida Implacável: the bodies of the crowd do not stop this lunge
 	# (Ímpeto plays every blow faster: runner.speed)
 	_play(node.anim, node.anim_speed * runner.speed, node.anim_from)
 	_move_anim = node.anim
@@ -1073,6 +1170,18 @@ func _on_move_started(node: ComboNode) -> void:
 	_held = 0.0
 	if node.title != &"":
 		move_shown.emit(node)
+
+
+## The blow lands (GP-1: the Magia is spent now, never when the windup began, so a dodge that cuts the windup costs nothing). Without
+## the Magia for it (two presses queued) it is refused: no strike, nothing spent.
+func _on_move_hit(node: ComboNode) -> void:
+	if node.magick_cost > 0.0 and not magick.spend(cost_of(node, _charge_discount if node.has_tag(&"omega") else 0.0)):
+		_refuse()
+		return
+	_follow_through(node)
+	_step_in(node)
+	_body_layer(node)
+	struck.emit(node, pos, facing)
 
 
 ## The blow landed: the rest of its clip is the recovery, played over the recovery's length (ComboNode.follow_speed)
@@ -1147,6 +1256,7 @@ func hurt(amount: float, from: Vector2) -> void:
 	_blink = hero.hurt_invuln
 	_flash = 1.0
 	_end_charge()
+	_cancel_intents()
 	runner.reset(false)
 	# presses in the stagger are kept for its end (GF-03)
 	runner.locked = true
@@ -1267,8 +1377,8 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 	_model.rotation.x = _lean.step(on_legs, dt)
 	if state != State.MOVE or runner.planted():
 		return  # planted in a blow: its own clip (or its held pose), never the run
-	if charging and _charge_action == &"light_attack" and not runner.is_attacking():
-		# C19-4: charging the attack's Omega he holds its blow drawn back (never the run in slow motion at 0.2 m/s)
+	if charging and (_charge_action == &"light_attack" or hero.arcane == null) and not runner.is_attacking():
+		# C19-4: charging an Omega he holds its blow drawn back (never the run in slow motion at 0.2 m/s)
 		var held := ComboTree.find(tree.neutral, _charge_held)
 		if held != null and held.anim != &"" and _current_anim != held.anim:
 			_play(held.anim, 0.0, held.anim_from)

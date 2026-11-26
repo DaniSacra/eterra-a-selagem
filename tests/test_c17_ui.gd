@@ -43,16 +43,17 @@ func test_every_move_of_the_special_is_the_wave() -> void:
 			var title := T.t((m.node as ComboNode).title)
 			assert_false(title.to_lower().contains("seta"), "%s in %s" % [title, path])
 	assert_eq(T.t(&"move_wave"), "Onda de Luz")
-	assert_true(T.t(&"howto_heavy_attack_desc").contains("onda de luz"))
+	assert_false(T.t(&"howto_heavy_attack_desc").to_lower().contains("seta"), "GP-1: the right button is the Corte Circular and the Lança")
 
 
 # ---------- QW-110: one word for each action ----------
 
 func test_one_word_for_each_action() -> void:
-	var words := {&"light_attack": &"slot_attack", &"heavy_attack": &"slot_special", &"dodge": &"slot_dash"}
+	# GP-1: the right button holds two (the touch is the Poder, the hold the Especial)
+	var words := {&"light_attack": T.t(&"slot_attack"), &"heavy_attack": "%s e %s" % [T.t(&"slot_cast"), T.t(&"slot_special")], &"dodge": T.t(&"slot_dash")}
 	for action: StringName in words:
-		assert_eq(T.t("action_" + String(action)), T.t(words[action]), "Controles names %s as the HUD" % action)
-		assert_eq(T.t("howto_" + String(action)), T.t(words[action]), "Como Jogar names %s as the HUD" % action)
+		assert_eq(T.t("action_" + String(action)), words[action], "Controles names %s as the HUD" % action)
+		assert_eq(T.t("howto_" + String(action)), words[action], "Como Jogar names %s as the HUD" % action)
 	assert_eq(T.t(&"action_ultimate"), T.t(&"howto_ultimate"))
 
 

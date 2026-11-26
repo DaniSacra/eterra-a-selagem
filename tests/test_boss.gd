@@ -423,12 +423,18 @@ func test_the_curse_locks_the_special_but_not_the_attack() -> void:
 	Controls.virtual = pad
 	game.player.state = Player.State.MOVE
 	assert_true(game.player.apply_curse(def.curse_time, def.curse_slow, def.curse_immunity))
+	# GP-1: a tap plays on its release
 	pad.press(&"heavy_attack")
 	game.player.step(1.0 / 60.0, Vector2.ZERO, Vector2.RIGHT)
-	assert_false(game.player.runner.is_attacking(), "the special is locked")
 	pad.release(&"heavy_attack")
 	pad.end_frame()
+	game.player.step(1.0 / 60.0, Vector2.ZERO, Vector2.RIGHT)
+	assert_false(game.player.runner.is_attacking(), "the special is locked")
+	pad.end_frame()
 	pad.press(&"light_attack")
+	game.player.step(1.0 / 60.0, Vector2.ZERO, Vector2.RIGHT)
+	pad.release(&"light_attack")
+	pad.end_frame()
 	game.player.step(1.0 / 60.0, Vector2.ZERO, Vector2.RIGHT)
 	assert_true(game.player.runner.is_attacking(), "the attack is not")
 	Controls.virtual = old

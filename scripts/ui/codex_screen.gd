@@ -923,7 +923,9 @@ static func move_marks(path: Array, from_dodge: bool, lit: bool = true) -> HBoxC
 		if input == ComboNode.In.SHOUT or input == ComboNode.In.RUSH:
 			h.add_child(ActionSlot.glyph_mark(BoonIcon.SHOUT_GLYPH if input == ComboNode.In.SHOUT else BoonIcon.RUSH_GLYPH, MOVE_MARK))
 			continue
-		h.add_child(ActionSlot.mark(Boon.Slot.ATTACK if light else Boon.Slot.SPECIAL, MOVE_MARK))
+		# GP-1: the right button's touch is the Poder (the Corte Circular), its hold the Especial (the Lança)
+		var slot := Boon.Slot.ATTACK if light else (Boon.Slot.SPECIAL if input == ComboNode.In.CHARGE else Boon.Slot.CAST)
+		h.add_child(ActionSlot.glyph_mark(BoonIcon.ACTION_GLYPH + slot, MOVE_MARK))
 		if input == ComboNode.In.CHARGE or input == ComboNode.In.CHARGE_LIGHT:
 			h.add_child(_word(T.t(&"moves_hold"), ink))
 	if not lit:

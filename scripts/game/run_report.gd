@@ -15,7 +15,7 @@ static func result(g: Game) -> Dictionary:
 		"step_ms_avg": snappedf(g.step_timer.average(), 0.01), "step_ms_peak": snappedf(g.step_timer.peak, 0.01), "fps": Engine.get_frames_per_second(),
 		"boss": g.boss_stats, "bot": g.bot.stats() if g.bot else {}, "rooms": g.room_tally.rooms(g.time), "hp_at_boss": g.room_tally.hp_at_boss,
 		"arena": String(g.arena.id) if g.arena else "", "stuck": g.horde.stuck_count(), "stuck_by": g.horde.stuck_by,
-		"shots_blocked": g.projectiles.blocked, "flinches": g.horde.flinches, "interrupts": g.horde.interrupts, "breaks": g.horde.breaks, "kit": g.hero_gifts.feed.tally,
+		"shots_blocked": g.projectiles.blocked, "flinches": g.horde.flinches, "interrupts": g.horde.interrupts, "breaks": g.horde.breaks, "kit": g.hero_gifts.feed.tally, "rhythm": g.hero_gifts.rhythm.tally, "magick_refused": g.player.refusals, "dash_crossed": g.combat.dash_crossed,
 		"windups": g.horde.windup_report(), "idle": g.horde.idle_report(), "shot_flight": g.projectiles.flight_report(), "hurt_by": g.hurt_by.keys().reduce(func(a: Dictionary, k: Variant) -> Dictionary: a[k] = int(g.hurt_by[k]); return a, {}),
 		"omega_charges_started": g.player.charges_started, "omega_charges_cancelled": g.player.charges_cancelled(), "boons_at_boss": g.room_tally.boons_at_boss, "shop": g.room_tally.shop, "route_shop": g.room_tally.route_shop,
 		"fountain_used": g.room_tally.fountain_used, "ult": g.ults.stats(), "dealt_by": g.horde.dealt.report(), "cel": g.combat.celestial.report(), "elos": g.elos_formed.size(),

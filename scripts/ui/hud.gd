@@ -189,8 +189,8 @@ const SLOTS: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.
 ## The Maga's marks over the diamonds that carry no Blessing (M1b); Q and E always wear theirs.
 const MAGA_GLYPHS := {&"light_attack": BoonIcon.BOLT_GLYPH, &"heavy_attack": BoonIcon.BLAST_GLYPH, &"shout": BoonIcon.ACTION_GLYPH + Boon.Slot.CAST,
 	&"rush": BoonIcon.DOME_GLYPH}
-## Where the ultimate's diamond stands among them: before the dodge.
-const ULT_AT := 4
+## GP-1: the hold's name beside each button's own (the Warrior's two buttons have a touch and a hold).
+const HOLD_TEXT := {&"light_attack": &"hud_hold_attack", &"heavy_attack": &"hud_hold_heavy_attack"}
 ## Between the room's number and what lies beyond the doors.
 const AHEAD_GAP := 14
 ## Seconds the ultimate's caption shows after a refused press or when it fills (T5).
@@ -279,9 +279,6 @@ var _ult_was_ready := false
 ## The how-to-charge notice shows once a run, on the first refused press.
 var _ult_told := false
 var _ult_heard := false
-var _shout_tip_t := 0.0
-var _shout_told := 0
-var _shout_room: RunMap.Room
 var _passives: HBoxContainer
 var _arrow: Label
 var _arrow_mark: HudMark
@@ -580,13 +577,18 @@ func _build_actions() -> void:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(row)
+	var arcane := game != null and game.hero != null and game.hero.arcane != null
 	for i in ACTIONS.size():
-		if i == ULT_AT:
+		if not arcane and Controls.MAGA_ONLY.has(ACTIONS[i]):
+			continue  # GP-1: the Warrior has no Q nor E: four groups, left, right, Space, Shift
+		if ACTIONS[i] == &"dodge":  # Shift (the ultimate) stands before Space
 			_ult_slot = ActionSlot.new().setup(&"ultimate", Boon.Slot.NONE, ROW_DIAMOND, ROW_KEY_DROP)
 			_ult_slot.label_text = T.t(&"hud_slot_ultimate")
 			row.add_child(_ult_slot)
 		var s := ActionSlot.new().setup(ACTIONS[i], SLOTS[i], ROW_DIAMOND, ROW_KEY_DROP)
 		s.label_text = T.t("hud_slot_" + String(ACTIONS[i]))
+		if not arcane and HOLD_TEXT.has(ACTIONS[i]):
+			s.hold_text = T.t(HOLD_TEXT[ACTIONS[i]])
 		if ACTIONS[i] == &"shout":
 			s.glyph = BoonIcon.SHOUT_GLYPH
 		elif ACTIONS[i] == &"rush":
@@ -969,10 +971,11 @@ func _update_magick(p: Player) -> void:
 		_magick.show_value(p.magick.ratio(), text)
 		return
 	var dt := get_process_delta_time()
-	if magick_wakes(_magick_last, value, Controls.held(&"heavy_attack")):
+	if magick_wakes(_magick_last, value, Controls.held(&"heavy_attack") or p.charging):
 		_magick_hot = HOT_TIME
 	_magick_hot = maxf(0.0, _magick_hot - dt)
 	_magick_last = value
+	_magick.ticks = _magick_ticks(p)
 	_magick.modulate.a = lerpf(MAGICK_IDLE_ALPHA, 1.0, clampf(_magick_hot / 0.4, 0.0, 1.0))
 	_magick.show_value(p.magick.ratio(), text if _magick_hot > 0.0 else "")
 
@@ -993,17 +996,20 @@ func _update_slots(p: Player) -> void:
 			var mine: int = MAGA_GLYPHS.get(s.action, -1)
 			s.glyph = mine if mine >= 0 and (by_action.get(s.action) == null or s.action == &"shout" or s.action == &"rush") else -1
 		if s.action == &"shout":
-			# the Brado (Q): its recharge and the Blessing of its slot, hidden for a hero without it
+			# the Brado (Q), the Maga's: its recharge and the Blessing of its slot, hidden for a hero without it
 			s.visible = ComboTree.find(p.tree.neutral, ComboNode.In.SHOUT) != null
 			s.refresh(by_action.get(&"shout"), p.shout_wait(), 0, 0, false, p.move_secs(ComboNode.In.SHOUT))
 			continue
 		if s.action == &"rush":
-			# the Investida (E): its recharge
+			# the Investida (C), the Maga's: its recharge
 			s.visible = ComboTree.find(p.tree.neutral, ComboNode.In.RUSH) != null
 			s.refresh(by_action.get(&"rush"), p.rush_wait(), 0, 0, false, p.move_secs(ComboNode.In.RUSH))
 			continue
 		var b: Boon = by_action.get(s.action)
 		var starved := not p.magick.can_pay(_omega(p, s.slot))
+		if not arcane and (s.action == &"light_attack" or s.action == &"heavy_attack"):
+			_update_button(s, p, b)
+			continue
 		match s.slot:
 			Boon.Slot.DASH:
 				s.refresh(b, _dash_wait(p), p.dodge_charges, p.dodge_max)
@@ -1023,28 +1029,49 @@ func _update_slots(p: Player) -> void:
 				s.refresh(b, 0.0, 0, 0, starved)
 	_update_ult(p)
 	_update_buff(p)
-	_update_shout_tip(p)
 
 
-## UI 11: "Q: Brado" over the Q diamond for a second when the Brado is ready and a pack stands close (Bot.shout_worth), a
-## couple of times a room and only in the save's first descents (FirstTips.shout_due); never for the robot or --nosave.
-func _update_shout_tip(p: Player) -> void:
-	var q := _slots[ACTIONS.find(&"shout")]
-	if game.rooms != null and game.rooms.room != _shout_room:
-		_shout_room = game.rooms.room
-		_shout_told = 0
-	if _shout_tip_t > 0.0:
-		_shout_tip_t -= get_process_delta_time()
-		if _shout_tip_t <= 0.0:
-			q.caption = ""
-		return
-	if not q.visible or game.bot != null or not FirstTips.enabled() or game.mode != Game.Mode.PLAY:
-		return
-	if FirstTips.shout_due(Save.data, _shout_told, Bot.shout_worth(game, p.pos)):
-		_shout_told += 1
-		_shout_tip_t = FirstTips.SHOUT_TIME
-		q.caption = T.t(&"hud_shout_tip", {"key": UiKit.action_label(&"shout")})
-		q.caption_color = UiKit.PALE
+## GP-1: the Warrior's left and right buttons, each with its touch and its hold: the Magia of each (the node's cost, with Força
+## Titânica and the discount), dimmed on its own when it lacks; the ring of the held blow filling while it charges; the Ritmo's
+## arc where the armed rhythm improves the blow; the Curse's lock on the right button.
+func _update_button(s: ActionSlot, p: Player, b: Boon) -> void:
+	var moves: Array = Player.INTENT_MOVES[s.action]
+	s.refresh(b, 0.0, 0, 0, false)
+	var tap := _cost_of(p, moves[0])
+	var hold := _cost_of(p, moves[1])
+	s.tap_cost = tap
+	s.hold_cost = hold
+	s.tap_starved = tap > 0 and not p.magick.can_pay(tap)
+	s.hold_starved = hold > 0 and not p.magick.can_pay(hold)
+	s.starved = s.hold_starved and not p.curse.active()
+	s.charge = p.charge_progress() if p.charging and Controls.held(s.action) else 0.0
+	var rhythm: BattleRhythm = game.hero_gifts.rhythm if game.hero_gifts != null else null
+	# the left button's touch is the combo (no gain): the arc says "the hold is better now" there too
+	s.rhythm = rhythm.share() if rhythm != null and rhythm.armed() else 0.0
+	if s.action == &"heavy_attack":
+		s.locked = p.curse.ratio()
+		var flock := game.psalms.holding(PsalmDef.Effect.FLOCK) if game.psalms else null
+		s.show_lights(game.psalms.lights if flock else 0, flock.count if flock else 0, PsalmIcon.tint(flock).lightened(0.2) if flock else UiKit.OLD_GOLD)
+
+
+## What a move costs in Magia now (0: free or the hero has no such move).
+func _cost_of(p: Player, input: ComboNode.In) -> int:
+	var node := ComboTree.find(p.tree.neutral, input)
+	if node == null or node.magick_cost <= 0.0:
+		return 0
+	return roundi(p.cost_of(node, p.omega_discount if node.has_tag(&"omega") else 0.0))
+
+
+## The Magia bar's ticks: the costs of the Warrior's moves as shares of the bar (the Maga's wide bar has none).
+func _magick_ticks(p: Player) -> PackedFloat32Array:
+	var ticks := PackedFloat32Array()
+	if p.hero.arcane != null or p.magick.max_value <= 0.0:
+		return ticks
+	for input: ComboNode.In in [ComboNode.In.HEAVY, ComboNode.In.CHARGE_LIGHT, ComboNode.In.CHARGE]:
+		var c := _cost_of(p, input)
+		if c > 0:
+			ticks.append(minf(1.0, c / p.magick.max_value))
+	return ticks
 
 
 ## The Brado's buff (its 5 s of faster blows and less damage taken) over the Q diamond while it runs.
@@ -1142,6 +1169,10 @@ static func ult_caption(has_ult: bool, full: bool, ratio: float, first_level: in
 
 ## The special pressed without its Magia (the rajada): a short word, no more.
 func _on_magick_refused() -> void:
+	for s in _slots:  # the buttons that were just pressed or are held show it on their own frame
+		if s.tap_cost > 0 or s.hold_cost > 0:
+			if Controls.held(s.action) or Controls.pressed(s.action):
+				s.refuse()
 	show_notice(T.t(&"hud_no_magick"), 1.0)
 
 

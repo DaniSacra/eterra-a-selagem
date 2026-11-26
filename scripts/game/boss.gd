@@ -1604,9 +1604,10 @@ func _on_struck(target: Enemy, tags: Array[StringName], _damage: float) -> void:
 func _on_blow(target: Enemy, source: StringName) -> void:
 	if target != e or def.posture <= 0.0 or not _posture_open():
 		return
-	var shr := Poise.share(source, Feel.live().poise_weights) * def.posture_mult
+	var shr := Poise.share(source, Feel.live().poise_weights)
 	if shr <= 0.0:
 		return
+	shr = (shr + game.horde.poise_extra) * def.posture_mult
 	_posture = Poise.wear(_posture, def.posture, shr)
 	_posture_idle = 0.0
 	if _posture > 0.0:

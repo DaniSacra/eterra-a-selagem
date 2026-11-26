@@ -41,7 +41,8 @@ const CONTACT_GROW := 1.4
 ## PM-1, stylized: so many ink fragments (never more than 5, never a ring), the dark core's radius (m), the star a
 ## heavy blow keeps (scale of the usual one).
 const CONTACT_INK_FRAGMENTS := Vector2i(3, 5)
-const CONTACT_INK_CORE := 0.14
+## ART_REVIEW_2026-11-26c: 0.10 (was 0.14), so the dark core is a seed under the strokes, never a target ringed round.
+const CONTACT_INK_CORE := 0.10
 const CONTACT_INK_HEAVY_STAR := 0.6
 const CONTACT_SPIKES := Vector2(0.4, 0.9)
 const CONTACT_SPIKES_HEAVY := Vector2(0.6, 1.4)
@@ -53,7 +54,28 @@ const SMOKE_RING_POOL := 12
 const FAMILY_MARK := preload("res://assets/shaders/family_mark.gdshader")
 const MARK_POOL := 12
 const MARK_SCREEN: Array[int] = [210, 210, 210, 195, 210]
+## The four forms older code asks `has()` of (Skills and Game guard with it); `form_of` is the whole list.
 const MARK_FORM := {Boon.Family.CHAMA: 0, Boon.Family.GEADA: 1, Boon.Family.LUZ: 2, Boon.Family.VIGILIA: 3}
+## GP-3 (signature 4): the form of every family with one, by the family's name in `Boon.Family` (a name the enum does not
+## have yet, PESTE and TROVAO while the other agent creates them, is simply not found: no crash, no mark). The Elo (DUO)
+## shows the two families' own, so it has none. `FORM_SCREEN` the screen's peak of each form, `FORM_TIME` how long its
+## mark stays (Skills.MARK_TIME is the old list of the first four; `mark_time` covers all).
+const FORM_BY_NAME := {"CHAMA": 0, "GEADA": 1, "LUZ": 2, "VIGILIA": 3, "VEU": 4, "MARE": 5, "MARCA": 6, "PESTE": 7, "TROVAO": 8, "ARCO": 9}
+const FORM_SCREEN: Array[int] = [210, 210, 210, 195, 200, 210, 200, 200, 215, 215]
+const FORM_TIME: Array[float] = [1.5, 0.8, 0.5, 0.4, 0.7, 0.55, 0.5, 0.9, 0.4, 0.3]
+## The second hue of the forms that have one: Maré's silver foam, Peste's lichen seeds, Trovão's lightning flash (only
+## 2 to 3 frames), Marca's bronze edge. Peste's sulphur (#C9B458) and Trovão's slate (#4E5866, storm grey #7D8590) are
+## the families' own colours (Boon.FAMILY_COLOR); the charcoal heart of Peste is `PESTE_CHARCOAL` (#2E2B26).
+const MARE_FOAM := Color(0.86, 0.92, 0.94)
+const PESTE_SULFUR := Color("c9b458")
+const PESTE_LICHEN := Color("9fae7a")
+const PESTE_CHARCOAL := Color("2e2b26")
+const TROVAO_SLATE := Color("4e5866")
+const TROVAO_STORM := Color("7d8590")
+const TROVAO_FLASH := Color("f1e08a")
+## The dust of stone a Trovão bolt raises where it lands.
+const STONE_DUST := Color(0.55, 0.56, 0.58)
+const FORM_ACCENT := {5: MARE_FOAM, 7: PESTE_LICHEN, 8: TROVAO_FLASH}
 const FAMILY_SLASH_TONGUES := Vector2i(3, 5)
 const LUZ_RAY := Vector3(0.06, 5.0, 0.15)
 const VIGIL_HIT := Vector3(1.8, 0.3, 30.0)
@@ -105,7 +127,7 @@ const FINISHER_SLASH_SCALE := 1.22
 ## The brush streaks' share in the paladin's own arcs, and how much whiter their edge is (family colour stays in the fringe).
 const ARC_SPARKS := 6
 const SLASH_CORE_SAT := 1.0
-const SLASH_PAINT := 0.75
+const SLASH_PAINT := 0.9
 const SLASH_EDGE_WHITE := 0.4
 const SLASH_WIRE_CAP := 3.8
 const THRUST := preload("res://assets/shaders/emeth_thrust.gdshader")
@@ -273,6 +295,10 @@ const TICK_VALUE := 0.75
 const TICK_MIN_SAT := 0.3
 const TICK_OUTLINE := 3
 const TICK_FALLBACK := Color(0.3, 1.0, 0.45)
+## The Véu's damage over time keeps a muted amber (its own grey is below TICK_MIN_SAT: never the Emeth's green, P2-3).
+const TICK_VEIL := Color(0.8, 0.64, 0.36)
+## The edge of a direct number in a family colour (P2-2), under the TICK_OUTLINE of a tick.
+const FAMILY_NUMBER_OUTLINE := 2
 const WORD_SIZE := 21
 ## Gold picked up (gold): its size, its pale old gold, and how far apart two drops still join one word.
 const GOLD_SIZE := 14
@@ -837,6 +863,11 @@ func behind(pos: Vector3, meters: float) -> Vector3:
 	return back.normalized() * meters if back.length_squared() > 0.0001 else Vector3.ZERO
 
 
+## The white a family's cut peak takes (P1-3): the Marca and the Véu keep their own darker hue, the rest 0.3.
+static func _family_white(family: int) -> float:
+	return 0.1 if family == Boon.Family.MARCA or family == Boon.Family.VEU else 0.3
+
+
 ## A sword arc on the floor plane at waist height: from origin towards dir, reach meters, width degrees.
 ## ink: lay the dark half-moon under the cut. blade: meters from origin where its edge is drawn (the Emeth's tip;
 ## 0: the outer edge of the arc, for a cut that is not the paladin's). The head sweeps the arc in
@@ -874,9 +905,10 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 	if own and family < 0:
 		lit = SLASH_EMERALD
 	(s.mat as ShaderMaterial).set_shader_parameter(&"color", lit)
-	(s.mat as ShaderMaterial).set_shader_parameter(&"style_peak", ScreenTone.linear_peak(lit.lerp(Color.WHITE, 0.15 if own else 0.3), SLASH_STYLE_SCREEN if own else ScreenTone.SAFE))
+	(s.mat as ShaderMaterial).set_shader_parameter(&"style_peak", ScreenTone.linear_peak(lit.lerp(Color.WHITE, 0.15 if own else _family_white(family)), SLASH_STYLE_SCREEN if own else ScreenTone.SAFE))
 	(s.mat as ShaderMaterial).set_shader_parameter(&"edge_px", SLASH_EDGE_PX * float(SLASH_EDGE_LEVELS[level]) if own else 3.0)
-	(s.mat as ShaderMaterial).set_shader_parameter(&"body_clear_m", SLASH_BODY_CLEAR if own else 0.0)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"body_clear_m", SLASH_BODY_CLEAR if own or family >= 0 else 0.0)
+	(ink.mat as ShaderMaterial).set_shader_parameter(&"body_clear_m", SLASH_BODY_CLEAR if family >= 0 else 0.0)
 	if family < 0:
 		(s.mat as ShaderMaterial).set_shader_parameter(&"core_depth", SLASH_CORE.x)
 		(s.mat as ShaderMaterial).set_shader_parameter(&"core_light", SLASH_CORE.y)
@@ -1537,6 +1569,10 @@ func elite_surge(at: Vector2, radius: float = 1.6) -> void:
 ## own green or anything else (vfx_pass_spec.md 5.3: the family's form rides on the colour the blow already carries).
 static func family_of(color: Color) -> int:
 	var known := {Boon.Family.CHAMA: [Combat.FIRE], Boon.Family.GEADA: [Combat.FROST], Boon.Family.LUZ: [Combat.LIGHT], Boon.Family.VIGILIA: [Combat.VIGIL]}
+	# GP-3: the families with a form of their own (Véu, Maré, Marca and the new Peste and Trovão) are known by their colour too
+	for f in Boon.FAMILY_COLOR.size():
+		if f != Boon.Family.DUO and not known.has(f) and form_of(f) >= 0:
+			known[f] = []
 	for f: int in known:
 		var list: Array = known[f].duplicate()
 		list.append(Boon.FAMILY_COLOR[f])
@@ -1546,12 +1582,34 @@ static func family_of(color: Color) -> int:
 	return -1
 
 
+## The form (family_mark.gdshader's `form`) of a family, -1 for one with none (the Elo, a family the enum lacks).
+static func form_of(family: int) -> int:
+	var key: Variant = Boon.Family.find_key(family)
+	return FORM_BY_NAME.get(str(key), -1) if key != null else -1
+
+
+## How long a family's floor mark stays (seconds), 0.5 for a family with no form.
+static func mark_time(family: int) -> float:
+	var f := form_of(family)
+	return FORM_TIME[f] if f >= 0 else 0.5
+
+
+## The point of entry for the code of the Blessings (GP-3, signature 4). Where a gift acts round a point on its own:
+## `Fx.family_mark(family, center, radius, color, Fx.mark_time(family))` (Elo or a family with no form: `form_of(f) < 0`,
+## draw the plain `ring`). Where a blow of the family lands: `Fx.family_hit(family, pos, dir, color)` (Combat already calls
+## it with `Fx.family_of(color)`). A way (Vigília, Maré, Marca, the cry) goes in `dir` with `arc_deg` under 180.
 ## The floor form of a family (vfx_pass_spec.md 5.3, family_mark.gdshader) at center, radius meters, for time seconds:
 ## Chama a ring of tongues over a charred ring, Geada hexagonal frost plates, Luz a thin ring with eight marks drawn
 ## round from the side toward `dir`, Vigília three segmented arcs opening (only within `arc_deg` of dir when it is less
 ## than 180). Nothing for the Elo (it shows the two families' own) nor an unknown family.
 func family_mark(family: int, center: Vector2, radius: float, color: Color, time: float = 0.5, dir: Vector2 = Vector2.ZERO, arc_deg: float = 180.0) -> void:
-	if not MARK_FORM.has(family) or not budget.allows(&"marks"):
+	form_mark(form_of(family), center, radius, color, time, dir, arc_deg)
+
+
+## family_mark by the form's number (family_mark.gdshader's `form`, FORM_BY_NAME), for the code that has the form and not
+## the family (it never names an enum member that may not exist).
+func form_mark(form: int, center: Vector2, radius: float, color: Color, time: float = 0.5, dir: Vector2 = Vector2.ZERO, arc_deg: float = 180.0) -> void:
+	if form < 0 or not budget.allows(&"marks"):
 		return
 	var e: Dictionary = _take(_marks)
 	var mi: MeshInstance3D = e.node
@@ -1563,9 +1621,11 @@ func family_mark(family: int, center: Vector2, radius: float, color: Color, time
 	mi.rotation.y = -atan2(way.y, way.x) if arc_deg < 180.0 else 0.0
 	e.time = time
 	var mat: ShaderMaterial = e.mat
-	mat.set_shader_parameter(&"form", MARK_FORM[family])
+	mat.set_shader_parameter(&"form", form)
 	mat.set_shader_parameter(&"color", color)
-	mat.set_shader_parameter(&"cap", ScreenTone.linear_peak(color, MARK_SCREEN[family]))
+	mat.set_shader_parameter(&"accent", FORM_ACCENT.get(form, color.lerp(Color.WHITE, 0.4)))
+	mat.set_shader_parameter(&"ink", PESTE_CHARCOAL if form == 7 else Color(0.18, 0.17, 0.15))
+	mat.set_shader_parameter(&"cap", ScreenTone.linear_peak(color, FORM_SCREEN[form]))
 	mat.set_shader_parameter(&"life", 0.0)
 	mat.set_shader_parameter(&"time", time)
 	mat.set_shader_parameter(&"radius_m", radius)
@@ -1575,7 +1635,7 @@ func family_mark(family: int, center: Vector2, radius: float, color: Color, time
 	mat.set_shader_parameter(&"arc", deg_to_rad(minf(arc_deg, 180.0)) if arc_deg < 180.0 else PI + 0.1)
 	mat.set_shader_parameter(&"start", Vector2(way.x, way.y) if arc_deg >= 180.0 else Vector2(1, 0))
 	mat.set_shader_parameter(&"gold", OLD_GOLD * 0.7)
-	if family == Boon.Family.CHAMA:
+	if form == 0:
 		# the tongues rise off the floor too: slivers shaped like tongues, a little smoke at the end
 		var n := clampi(roundi(radius * 4.0), 12, 18)
 		for k in budget.take(&"motes", n):
@@ -1585,6 +1645,32 @@ func family_mark(family: int, center: Vector2, radius: float, color: Color, time
 		for k in 3:
 			var a := TAU * k / 3.0 + _rng.randf()
 			wisps(Vector3(center.x + cos(a) * radius * 0.7, 0.4, center.y + sin(a) * radius * 0.7), Vector3.UP, SMOKE, 1, 0.8, 0.5, 0.8, 0.5, 1.0)
+	elif form >= 4:
+		_form_extras(form, center, radius, color)
+
+
+## What rises off the floor with the new forms (GP-3), a few pieces each, all under the `motes` and `wisps` budgets: Véu
+## grey-yellow smoke, Maré long drops, Marca slanted slivers, Peste threads of sulphur mist and seeds of lichen, Trovão
+## slate sparks (the flash is in the shader).
+func _form_extras(form: int, center: Vector2, radius: float, color: Color) -> void:
+	var n := clampi(roundi(radius * 2.0), 4, 8)
+	for k in n:
+		var a := TAU * k / n + _rng.randf_range(-0.3, 0.3)
+		var at := Vector3(center.x + cos(a) * radius * 0.8, 0.15, center.y + sin(a) * radius * 0.8)
+		var out := Vector3(cos(a), 0.0, sin(a))
+		match form:
+			4:
+				wisps(at, Vector3.UP, color * 0.7, 1, 0.6, 0.7, 0.9, 0.4, 0.6)
+			5:
+				_spray(at, out * 0.6 + Vector3.UP, MARE_FOAM, budget.take(&"motes", 1), 3.0, 0.22, 0.4, 0.2, 7.0, false, 0, SHAPE_LENS)
+			6:
+				_spray(at, (out + Vector3(0.6, 0.0, -0.6)).normalized() + Vector3.UP * 0.4, color * 0.9, budget.take(&"motes", 1), 3.5, 0.22, 0.3, 0.1, 4.0, false, 0, SHAPE_BARB)
+			7:
+				wisps(at, Vector3.UP, color * 0.6, 1, 0.7, 0.5, 1.0, 0.3, 0.9)
+				_spray(at, Vector3.UP, PESTE_LICHEN, budget.take(&"motes", 1), 0.9, 0.12, 0.8, 0.3, -1.0, false, 0, SHAPE_LENS)
+			8:
+				# stone dust thrown up where the bolt lands, heavy and slow (the angel's Trovão falls, it does not arc across)
+				_spray(at, out * 0.4 + Vector3.UP * 0.8, STONE_DUST, budget.take(&"motes", 1), 2.6, 0.2, 0.45, 0.5, 5.0, false, 0, SHAPE_LENS)
 
 
 ## The circle of light let go (vfx_pass_spec.md V-07): its rim drawn round from the side toward `from` in 0.12 s (the
@@ -1628,6 +1714,36 @@ func family_hit(family: int, pos: Vector3, dir: Vector3, color: Color, heavy: bo
 			family_mark(family, Vector2(pos.x, pos.z), 0.8 if not heavy else 1.1, color, 0.35, -Vector2(dir.x, dir.z))
 		Boon.Family.VIGILIA:
 			family_mark(family, Vector2(pos.x, pos.z), VIGIL_HIT.x * (1.2 if heavy else 1.0), color, VIGIL_HIT.y, Vector2(dir.x, dir.z), VIGIL_HIT.z)
+		_:
+			_family_hit_new(form_of(family), pos, dir, color, heavy)
+
+
+## GP-3: where a blow of the new families lands (small marks, the floor form of `family_mark` at 0.8 to 1.1 m plus pieces):
+## Véu a puff of grey-yellow fog, Maré two long drops thrown along the blow and a ribbon opening toward it, Marca three
+## fine oblique slivers and its incisions, Peste a thread of sulphur mist with two seeds, Trovão slate sparks and a bolt.
+func _family_hit_new(form: int, pos: Vector3, dir: Vector3, color: Color, heavy: bool) -> void:
+	if form < 4:
+		return
+	var way := Vector3(dir.x, 0.0, dir.z).normalized() if dir.length_squared() > 0.0001 else Vector3.RIGHT
+	var at2 := Vector2(pos.x, pos.z)
+	var size := 1.1 if heavy else 0.8
+	match form:
+		4:
+			wisps(pos, Vector3.UP, color * 0.7, budget.take(&"wisps", 3), 0.8, 0.6, 0.7, 0.5, 0.6)
+			form_mark(4, at2, size, color, 0.4)
+		5:
+			_spray(pos, way + Vector3.UP * 0.5, MARE_FOAM, budget.take(&"motes", 4 if heavy else 3), 5.0, 0.24, 0.35, 0.3, 8.0, false, 0, SHAPE_LENS)
+			form_mark(5, at2, size * 1.4, color, 0.35, Vector2(way.x, way.z), 40.0)
+		6:
+			_spray(pos, (way + Vector3(-way.z, 0.0, way.x) * 0.7).normalized(), color * 0.95, budget.take(&"motes", 3), 6.0, 0.22, 0.3, 0.12, 3.0, false, 0, SHAPE_BARB)
+			form_mark(6, at2, size, color, 0.3)
+		7:
+			wisps(pos, Vector3.UP, color * 0.6, budget.take(&"wisps", 2), 0.7, 0.5, 0.9, 0.3, 0.9)
+			_spray(pos, Vector3.UP, PESTE_LICHEN, budget.take(&"motes", 2), 1.0, 0.12, 0.7, 0.3, -1.0, false, 0, SHAPE_LENS)
+			form_mark(7, at2, size, color, 0.5)
+		8:
+			_spray(pos, Vector3.UP * 0.9 + way * 0.3, STONE_DUST, budget.take(&"motes", 5), 3.0, 0.18, 0.4, 0.9, 5.0, false, 0, SHAPE_LENS)
+			form_mark(8, at2, size * 1.2, color, 0.3)
 
 
 ## A pillar of light (or shadow) at a point on the floor. intensity: its light (beam.gdshader's; BEAM_INTENSITY
@@ -1669,14 +1785,15 @@ func number(pos: Vector3, amount: float, color: Color, big: bool = false, key: i
 	var size := NUMBER_BIG if e.big else (NumberTally.GROUP_SIZE if e.group else NUMBER_SIZE)
 	if tick:
 		size = maxi(size, ceili(NUMBER_BIG * TICK_SHARE))
-	_show_label(i, str(roundi(e.amount)), e.color, size, TICK_OUTLINE if tick else 0)
+	var edge := TICK_OUTLINE if tick else (FAMILY_NUMBER_OUTLINE if family_of(e.color) >= 0 else 0)
+	_show_label(i, str(roundi(e.amount)), e.color, size, edge)
 
 
 ## The colour of a damage-over-time number: grey (low saturation) is no family, so it takes the Emeth's green; the value
 ## never falls under TICK_VALUE.
 static func tick_color(c: Color) -> Color:
 	if c.s < TICK_MIN_SAT:
-		c = TICK_FALLBACK
+		c = TICK_VEIL if family_of(c) == Boon.Family.VEU else TICK_FALLBACK
 	return Color.from_hsv(c.h, c.s, maxf(c.v, TICK_VALUE), c.a)
 
 
@@ -1913,6 +2030,8 @@ func animate(delta: float) -> void:
 	for m in _marks:
 		if (m.node as Node3D).visible:
 			_age(m, delta)
+			if freeze_t >= 0.0:
+				m.life = freeze_t  # --lab-form: the form held at --lab-t of its life
 			(m.mat as ShaderMaterial).set_shader_parameter(&"life", m.life)
 	for r in _smoke_rings:
 		if (r.node as Node3D).visible:

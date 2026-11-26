@@ -35,8 +35,6 @@ const PAUSE_CROWD := 3
 const APOGEE_STOP_MS := 90.0
 const APOGEE_SLOW_MS := 40.0
 const APOGEE_SHAKE := 1.2
-const DASH_STOP_MS := 35.0
-const DASH_STOPS_MAX := 3
 ## Slow motion in a fight is rare, as in Hades II (there only the last kill of a room and a boss's death slow the
 ## world; a blow only gets a few hundredths of a second of hit slow): a blow that fells SLOW_MO_KILLS at once or
 ## lands on SLOW_MO_CROWD, at most once every SLOW_MO_COOLDOWN seconds. Speed, seconds held, seconds back.
@@ -196,6 +194,8 @@ var _near: Array[Enemy] = []
 var _swing := 0
 ## The cry's blow on one that is not common: no stun at all, Combat.strike.
 var _no_stun := false
+## The Ritmo de Batalha (GP-1; HeroGifts sets it, null: none): the next Esmagador, Corte Circular or Lança takes its bonus (strike).
+var rhythm: BattleRhythm
 var _behind: Array[Enemy] = []
 var _slow_cd := 0.0
 var _slow_node := &""
@@ -287,16 +287,31 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	_swing += 1
 	kill_blow = _swing
 	celestial.on_action(node)
-	_dash_stops = 0
 	_apogee_landed = false
 	var tags := node.tags
 	var hits := 0
+	# Ritmo de Batalha: an armed rhythm is spent by this blow when it is one that spends Magia (it landed: Player paid for it)
+	var rhythm_kind := rhythm.consume(node) if rhythm != null else BattleRhythm.Kind.NONE
+	var rhythm_dmg := 1.0
+	var rhythm_reach := 0.0
+	var poise_more := 0.0
+	var rhythm_stun := 0.0
+	match rhythm_kind:
+		BattleRhythm.Kind.SMASH:
+			poise_more = rhythm.hero.rhythm_smash_poise
+		BattleRhythm.Kind.POWER:
+			poise_more = rhythm.hero.rhythm_power_poise
+			rhythm_stun = rhythm.hero.rhythm_power_stun
+		BattleRhythm.Kind.SPECIAL:
+			rhythm_dmg += rhythm.hero.rhythm_special_dmg
+			rhythm_reach = rhythm.hero.rhythm_special_reach
+	var base_damage := node.damage * rhythm_dmg
 	# Retorno do Corte (Fatia 2): the blow right after a Corte Veloz reaches farther and wider
 	var back := 0.0
 	if _return_t > 0.0 and not node.has_tag(&"dash"):
 		back = _return_reach
 		_return_t = 0.0
-	var shape := swing_shape(node, boons.stat(&"reach_pct", tags) + back, back)
+	var shape := swing_shape(node, boons.stat(&"reach_pct", tags) + back + rhythm_reach, back)
 	var reach: float = shape.hit_reach
 	var color := color_of(tags)
 	var heavy := node.has_tag(&"heavy")
@@ -338,7 +353,7 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	for e: Enemy in struck:
 		var away := (e.pos - origin).normalized() if node.shape == ComboNode.Shape.CIRCLE else dir if (e.pos - origin).dot(dir) >= 0.0 else -dir
 		if e.invulnerable:
-			hit_enemy(e, node.damage, tags, away, node.knockback, true, finisher)  # only a spark on his ward
+			hit_enemy(e, base_damage, tags, away, node.knockback, true, finisher)  # only a spark on his ward
 			continue
 		if stars < MAX_STARS and not shout:
 			stars += 1
@@ -347,7 +362,9 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		# (the cry only pushes: not even the stun of a plain blow comes with it)
 		_no_stun = shout
 		_strike_node = node if node.tags.has(&"light") and not shout else null
-		var died := hit_enemy(e, node.damage, tags, away, node.knockback, true, finisher)
+		horde.poise_extra = poise_more
+		var died := hit_enemy(e, base_damage, tags, away, node.knockback, true, finisher)
+		horde.poise_extra = 0.0
 		_strike_node = null
 		_no_stun = false
 		hits += 1
@@ -357,10 +374,10 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		if died:
 			kills += 1
 			continue
-		if node.has_tag(&"dash"):
-			_dash_through(e, tags)
 		if shout and StunRule.shout_stuns(is_common(e.def), boons.stat(&"stun_pct", tags)):
-			horde.flinch(e, StunRule.SHOUT_STUN)  # Voz do Leão: the cry interrupts the common (B4)
+			horde.flinch(e, StunRule.SHOUT_STUN)  # the Brado's cry interrupts the common (the Maga's tree)
+		if rhythm_stun > 0.0 and StunRule.shout_stuns(is_common(e.def), rhythm_stun):
+			horde.flinch(e, rhythm_stun)  # Ritmo: the Corte Circular stuns the commons it reaches (elites and bosses take the Quebra)
 		match node.effect:
 			ComboNode.Effect.LAUNCH:
 				if not e.def.heavy:
@@ -431,20 +448,33 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		landed.emit(node, tags, hits)
 
 
-## Investida Implacável (B.4): each enemy the Investida's thrust goes through (once: one strike a lunge) is stunned dash_stun
-## seconds when it is common (StunRule.dash_stuns); armor takes more by the Gift's armor_pct (hit_enemy), and a boss takes
-## the Quebra of a combo's blow (the Postura, as an `attack` source: no new number, decision G of the plan).
-func _dash_through(e: Enemy, tags: Array[StringName]) -> void:
-	var pierce := boons.stat(&"dash_pierce", tags)
-	if pierce <= 0.0:
+## Investida Implacável (GP-1, warrior_v1 7): the roll goes through the bodies, and each enemy whose body the segment it crossed
+## touched (once a roll) is stunned dash_stun seconds when it is common (StunRule.dash_stuns); elites, guardians and bosses take the
+## Quebra of the dodge instead (Feel.poise_weights, source dash: 0.5). The roll itself deals no damage. Player.dodge_ended calls it.
+func dodge_through(from: Vector2, to: Vector2) -> void:
+	var pierce := boons.stat(&"dash_pierce", DASH_TAGS)
+	if pierce <= 0.0 or horde == null:
 		return
-	if e.def.behavior == EnemyDef.Behavior.BOSS:
-		horde.boss_blow.emit(e, &"attack")
-	elif StunRule.dash_stuns(is_common(e.def), pierce):
-		horde.flinch(e, boons.stat(&"dash_stun", tags))
-	if _dash_stops < DASH_STOPS_MAX:
-		_dash_stops += 1
-		fx.blow_stop(0.0, DASH_STOP_MS * Feel.live().hit_stop_scale)
+	var stun := boons.stat(&"dash_stun", DASH_TAGS)
+	for e: Enemy in horde.list.duplicate():
+		if not e.alive or e.invulnerable:
+			continue
+		var closest := Geometry2D.get_closest_point_to_segment(e.pos, from, to)
+		if closest.distance_to(e.pos) > DODGE_BODY + e.def.radius:
+			continue
+		if StunRule.dash_stuns(is_common(e.def), pierce):
+			horde.flinch(e, stun)
+		else:
+			horde.crack(e, &"dash")
+		dash_crossed += 1
+
+
+## The tags of the dodge's Gifts (Investida Implacável's mods).
+const DASH_TAGS: Array[StringName] = [&"dash"]
+## The hero's body radius (Player.RADIUS; not read from it: Player needs the autoloads, the data tools load Combat).
+const DODGE_BODY := 0.5
+## For the RESULT: enemies the roll went through with Investida Implacável.
+var dash_crossed := 0
 
 
 ## The wave of a move with Effect.WAVE (the special and its Omega; the Pastor's flock throws more of them, E4): its
@@ -836,7 +866,6 @@ var apogee := ApogeeLedger.new()
 ## This blow carried Apogeu's sum onto some target (set by _apogee, read and cleared by strike).
 var _apogee_landed := false
 ## Frames of hit stop the Investida has already given on this lunge.
-var _dash_stops := 0
 
 
 ## What Apogeu adds to this blow on `e` (0 for any blow but the last of the sequence, which spends the books): the share

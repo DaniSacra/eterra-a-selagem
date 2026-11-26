@@ -37,18 +37,12 @@ func _move(id: StringName) -> ComboNode:
 	return null
 
 
-func test_the_special_keeps_its_numbers() -> void:
-	var bolt := _move(&"bolt")
-	assert_not_null(bolt, "the special")
-	assert_eq(bolt.effect, ComboNode.Effect.WAVE)
-	assert_true(bolt.wave_bolt, "flies as the special's shot (SPARK)")
-	assert_eq(bolt.effect_power, 55.0, "damage 55 (the rajada, rebalanced 2026-11-23)")
-	assert_almost_eq(bolt.effect_radius, 6.0, 0.001, "reach 6 m")
-	assert_eq(bolt.magick_cost, 12.0, "12 Magia")
-	assert_almost_eq(bolt.effect_size, 1.4, 0.001, "1.4 m across")
-	assert_almost_eq(bolt.cooldown, 0.5, 0.001)
-	assert_almost_eq(bolt.move_hold, 0.71, 0.001, "legs held 0.71 s, only the dodge cuts it (D-44)")
-	assert_almost_eq(bolt.recovery, 18.0 / 60.0, 0.001)
+func test_the_warriors_special_is_no_wave_any_more() -> void:
+	# GP-1: the rajada left the tree; the Lança strikes along the line itself. The wave (SPARK) stays for the Maga and the Pastor.
+	assert_null(_move(&"bolt"), "the rajada left")
+	var lance := _move(&"lance")
+	assert_not_null(lance)
+	assert_eq(lance.effect, ComboNode.Effect.NONE)
 	assert_almost_eq(Projectiles.SPARK_SPEED, 62.5, 0.001, "Hades II's ProjectileStaffBall")
 	assert_null(_move(&"burst"), "the held special left the Warrior's tree")
 

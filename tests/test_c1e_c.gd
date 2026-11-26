@@ -440,9 +440,9 @@ func test_the_bot_deals_with_the_canalizador_and_the_armadilheiro_within_a_minut
 	Controls.virtual = bot.pad
 	var a := _spawn(&"armadilheiro", Vector2(7, -4))
 	var c := _spawn(&"canalizador", Vector2(-8, 3))
-	# (SW-C2: the spin hits for 30 and the pair fell in 9 s, before the first plate; they last as they did, so the plates show)
-	a.hp *= 2.0
-	c.hp *= 2.0
+	# (SW-C2: the spin hits for 30 and the pair fell in 9 s, before the first plate; GP-1: the Esmagador and the Corte kill faster still, so 5x life: the plates show)
+	a.hp *= 5.0
+	c.hp *= 5.0
 	var taken := 0.0
 	game.horde.hit_player.connect(func(x: float, _f: Vector2) -> void: taken += x)
 	game.ground.hit_player.connect(func(x: float, _f: Vector2) -> void: taken += x)

@@ -25,7 +25,7 @@ func test_the_numbers_of_today() -> void:
 	assert_eq(hero.hurt_invuln, 0.7)
 	assert_eq(hero.dodge_charges, 1)
 	assert_almost_eq(hero.dodge_recharge, 0.8, 0.0001)
-	assert_eq(hero.magick_max, 50.0)
+	assert_eq(hero.magick_max, 30.0)
 	# the circle of light
 	assert_eq(hero.cast_charge, 0.25)
 	assert_eq(hero.cast_slow, 0.6)

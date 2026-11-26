@@ -75,7 +75,7 @@ static func text(key: StringName) -> String:
 	if key == &"":
 		return ""
 	return T.t(key, {"attack": UiKit.action_label(&"light_attack"), "dodge": UiKit.action_label(&"dodge"),
-			"interact": UiKit.action_label(&"interact"), "special": UiKit.action_label(&"heavy_attack"),
+			"interact": UiKit.action_label(&"interact"), "special": UiKit.action_label(&"heavy_attack"), "power": UiKit.action_label(&"heavy_attack"),
 			"shout": UiKit.action_label(&"shout"), "rush": UiKit.action_label(&"rush")})
 
 

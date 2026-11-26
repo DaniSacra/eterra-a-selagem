@@ -10,28 +10,28 @@ extends RefCounted
 ##   l.key() -> &"lesson_special"   (the next tip)
 ##   l.done() -> true when every step and the Blessing are done (the door opens)
 
-## The steps in the order they are told, and the gesture each waits for.
-const ORDER: Array[StringName] = [&"attack", &"special", &"dodge", &"shout", &"rush", &"blessing"]
+## The steps in the order they are told, and the gesture each waits for. GP-1: the Warrior's are the attack, the Poder (the Corte
+## Circular), the dodge, the Especial (the Lança) and the Blessing; the Esmagador is taught by the hold tip (tip_hold), not by a step.
+const ORDER: Array[StringName] = [&"attack", &"power", &"dodge", &"special", &"blessing"]
+## The Maga's (her tree still has the Brado and the Investida buttons).
+const ORDER_ARCANE: Array[StringName] = [&"attack", &"special", &"dodge", &"shout", &"rush", &"blessing"]
 ## The text key of each step (Objective's line).
-const KEYS := {&"attack": &"lesson_attack", &"special": &"lesson_special", &"dodge": &"lesson_dodge", &"shout": &"lesson_shout",
-		&"rush": &"lesson_rush", &"blessing": &"obj_bless"}
+const KEYS := {&"attack": &"lesson_attack", &"special": &"lesson_special", &"power": &"lesson_power", &"dodge": &"lesson_dodge",
+		&"shout": &"lesson_shout", &"rush": &"lesson_rush", &"blessing": &"obj_bless"}
 ## Clicks of the attack that make the step (the chain's three blows; the finisher alone counts as the third).
 const CLICKS := 3
-## The events fed: &"light" (a blow of the attack's chain), &"finisher", &"special", &"crossed" (over the stream), &"shout",
-## &"rush", &"blessing" (the Blessing's choice opened).
-const EVENT_OF := {&"special": &"special", &"crossed": &"dodge", &"shout": &"shout", &"rush": &"rush", &"blessing": &"blessing"}
+## The events fed: &"light" (a blow of the attack's chain), &"finisher", &"special" (the Lança), &"power" (the Corte Circular),
+## &"crossed" (over the stream), &"shout", &"rush" (the Maga's), &"blessing" (the Blessing's choice opened).
+const EVENT_OF := {&"special": &"special", &"power": &"power", &"crossed": &"dodge", &"shout": &"shout", &"rush": &"rush", &"blessing": &"blessing"}
 
 var steps: Array[StringName] = []
 var _done := {}
 var _clicks := 0
 
 
-## has_shout, has_rush: whether the hero's tree has those moves (the Guerreiro: both).
-func _init(has_shout := true, has_rush := true) -> void:
-	for s in ORDER:
-		if (s == &"shout" and not has_shout) or (s == &"rush" and not has_rush):
-			continue
-		steps.append(s)
+## arcane: the Maga's steps (ORDER_ARCANE), else the Warrior's.
+func _init(arcane := false) -> void:
+	steps.assign(ORDER_ARCANE if arcane else ORDER)
 
 
 ## One thing the paladin did (see the events above).

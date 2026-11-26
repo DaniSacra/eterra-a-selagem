@@ -141,7 +141,7 @@ func test_the_hit_count_stands_right_of_the_row_out_of_the_field() -> void:
 	var row := hud.find_child("Combo", true, false) as Control
 	assert_not_null(row)
 	var r := row.get_global_rect()
-	assert_gte(r.position.x, hud._action_row.get_global_rect().end.x, "right of the diamonds (the row is centred since Lote 2)")
+	assert_gte(r.position.x, (hud._slots.back() as Control).get_global_rect().end.x, "right of the diamonds (the row is centred since Lote 2; GP-1: its box is wider than the diamonds shown)")
 	assert_gte(r.position.y, screen.y * 0.75, "at the bottom")
 	for l: Label in [hud._combo_word, hud._move]:
 		assert_ne(l.get_theme_font(&"font"), UiKit.TITLE_FONT, "no Cinzel under 24 px")

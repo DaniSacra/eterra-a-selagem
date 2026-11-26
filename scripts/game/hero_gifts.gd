@@ -9,12 +9,16 @@ var game: Game
 var state: GiftState
 ## C1c: the buttons feed each other (Magia by hit and Quebra, the Brado's recharge).
 var feed: KitFeed
+## GP-1: the Ritmo de Batalha (a finisher that lands arms it; the next Esmagador, Corte Circular or Lança spends it).
+var rhythm: BattleRhythm
 const DASH_TAGS: Array[StringName] = [&"dash"]
 
 
 func _init(g: Game) -> void:
 	game = g
 	feed = KitFeed.new(game.hero)
+	rhythm = BattleRhythm.new(game.hero)
+	game.combat.rhythm = rhythm
 	equip()
 	game.combat.landed.connect(_on_landed)
 	game.combat.swung.connect(_on_swung)
@@ -44,6 +48,7 @@ func equip() -> void:
 func step(dt: float) -> void:
 	state.step(dt)
 	feed.step(dt)
+	rhythm.step(dt)
 	var p := game.player
 	var tags: Array[StringName] = []
 	if p.runner.node != null:
@@ -63,6 +68,8 @@ func _on_landed(node: ComboNode, tags: Array[StringName], hits: int) -> void:
 	var p := game.player
 	var magick := state.passive_magick(tags, hits)
 	var attack := node != null and DealtBy.source(tags) == &"attack"
+	if attack and hits > 0 and node.has_tag(&"finisher"):
+		rhythm.arm()  # Ritmo de Batalha: the spin that lands
 	if attack:
 		# C1c: once a swing, not for each enemy; Determinação: attack_magick_pct more of it
 		magick += feed.hit_magick(node.magick_per_hit * (1.0 + state.value(&"attack_magick_pct")))

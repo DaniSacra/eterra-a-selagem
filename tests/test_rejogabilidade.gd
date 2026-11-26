@@ -68,7 +68,7 @@ func test_a_version_5_save_opens_whole_and_keeps_everything_through_four_runs() 
 	# Mastery 6 (330 XP): Disciplina, Força Concentrada, Ruptura, Cadência and Determinação are revealed; Voz do Leão at 8
 	for id in ["disciplina", "forca_concentrada", "ruptura", "cadencia", "determinacao"]:
 		assert_true((w.opened as Array).has(id), "%s unlocked before: opened for free" % id)
-	assert_false((w.opened as Array).has("voz_do_leao"), "nothing past its Mastery")
+	assert_false((w.opened as Array).has("alcance_marcial"), "nothing past its Mastery")
 	assert_eq(int(w.forge.temper), 0)
 	assert_eq(w.tools, [])
 	assert_eq(MaterialPurse.amount(out, MaterialPurse.SILVER), 20, "5 a descent played (4)")

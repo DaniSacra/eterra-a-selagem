@@ -29,10 +29,9 @@ const EMPTY := Color(0.42, 0.42, 0.46)
 ## The buttons in the row's order: the Blessing slot each holds (Boon.Slot.NONE: none can yet) and the mark of the
 ## button itself (a BoonIcon glyph id; -1: the bare action's, BoonIcon.ACTION_GLYPH + slot).
 const BUTTONS: Array[Array] = [[Boon.Slot.ATTACK, -1, &"light_attack"], [Boon.Slot.SPECIAL, -1, &"heavy_attack"],
-	[Boon.Slot.CAST, BoonIcon.SHOUT_GLYPH, &"shout"], [Boon.Slot.RUSH, BoonIcon.RUSH_GLYPH, &"rush"],
 	[Boon.Slot.ULT, BoonIcon.ULT_GLYPH, &"ultimate"], [Boon.Slot.DASH, -1, &"dodge"]]
 ## The index of Shift's entry (its mark is the ultimate's, set by show_build).
-const ULT_AT := 4
+const ULT_AT := 2
 
 ## One row: the medallion, the Blessing's name and, under it, the state.
 class Entry extends Control:
@@ -188,7 +187,7 @@ func show_build(boons: BoonState, ult_glyph: int = -1, psalm: PsalmDef = null) -
 		if b.is_duo():
 			elos.append(b)
 		elif b.slot != Boon.Slot.NONE and not by_button.has(b.button()):
-			by_button[b.button()] = b  # BC-2: the Investida's Blessings share the dash slot but belong to E
+			by_button[b.button()] = b  # one row a button (GP-1: the right button holds the Poder and the Especial; the second goes below)
 		else:
 			extra.append(b)  # PT-26-4: a passive or a second one on the button: shown too, never dropped
 	for i in BUTTONS.size():

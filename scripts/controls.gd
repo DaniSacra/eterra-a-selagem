@@ -6,15 +6,17 @@ extends Node
 signal device_changed(pad: bool)
 
 const ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"shout", &"rush", &"ultimate", &"interact", &"pause", &"feel_panel"]
+## GP-1: the Warrior has no Brado nor Investida button (Q and E fight for nothing: E interacts). `shout` and `rush` stay in the map
+## only for the Maga's tree (Q and C, never remappable, never in a Warrior's hint); nothing reads them without those moves.
+const MAGA_ONLY: Array[StringName] = [&"shout", &"rush"]
 ## Actions the player may rebind in Options.
-## interact (HUB-B1): use the station in focus in the hub (F since 2026-11-21, A on the gamepad); in a descent (C19, Q-13)
-## take the reward, buy a shop's item, walk through a door. shout (2026-11-21): the Warrior's Brado de Guerra on Q (RB on
-## the gamepad); rush: his Investida on E (R3); the ultimate on Shift. The circle (cast) has no key now: it left the
-## Warrior's kit (the Paladin's later), so it is not remappable.
-const REMAPPABLE: Array[StringName] = [&"move_up", &"move_down", &"move_left", &"move_right", &"light_attack", &"heavy_attack", &"dodge", &"shout", &"rush", &"ultimate", &"interact"]
+## interact (HUB-B1): use the station in focus in the hub (E since GP-1, A on the gamepad); in a descent (C19, Q-13)
+## take the reward, buy a shop's item, walk through a door. GP-1: the Brado (Q) and the Investida (E) left the Warrior's buttons;
+## the ultimate is on Shift. The circle (cast) has no key now: it left the Warrior's kit (the Paladin's later), so it is not remappable.
+const REMAPPABLE: Array[StringName] = [&"move_up", &"move_down", &"move_left", &"move_right", &"light_attack", &"heavy_attack", &"dodge", &"ultimate", &"interact"]
 const DEFAULT_KEYS := {
 	&"move_left": [KEY_A, KEY_LEFT], &"move_right": [KEY_D, KEY_RIGHT], &"move_up": [KEY_W, KEY_UP], &"move_down": [KEY_S, KEY_DOWN],
-	&"dodge": [KEY_SPACE], &"shout": [KEY_Q], &"rush": [KEY_E], &"ultimate": [KEY_SHIFT], &"interact": [KEY_F], &"pause": [KEY_ESCAPE, KEY_P],
+	&"dodge": [KEY_SPACE], &"shout": [KEY_Q], &"rush": [KEY_C], &"ultimate": [KEY_SHIFT], &"interact": [KEY_E], &"pause": [KEY_ESCAPE, KEY_P],
 	# debug builds only: the live tuning panel (scripts/ui/feel_panel.gd)
 	&"feel_panel": [KEY_F1],
 }
@@ -24,14 +26,14 @@ const DEFAULT_MOUSE := {&"light_attack": MOUSE_BUTTON_LEFT, &"heavy_attack": MOU
 ## saved binding holds (keys_for). A saved binding is only the keys the player changed, so an old save with nothing
 ## remapped simply reads the new defaults, and one that remapped something keeps it (a key two actions would share goes
 ## to the spare, never to both).
-const SPARE_KEYS := {&"interact": [KEY_G, KEY_T, KEY_B, KEY_N], &"shout": [KEY_Z, KEY_C, KEY_V, KEY_B], &"rush": [KEY_Z, KEY_C, KEY_V, KEY_B], &"ultimate": [KEY_X, KEY_C, KEY_V, KEY_B]}
+const SPARE_KEYS := {&"interact": [KEY_F, KEY_G, KEY_T, KEY_B, KEY_N], &"ultimate": [KEY_X, KEY_C, KEY_V, KEY_B]}
 const DEFAULT_PAD := {&"interact": JOY_BUTTON_A, &"light_attack": JOY_BUTTON_X, &"heavy_attack": JOY_BUTTON_Y, &"dodge": JOY_BUTTON_B, &"shout": JOY_BUTTON_RIGHT_SHOULDER, &"rush": JOY_BUTTON_RIGHT_STICK, &"ultimate": JOY_BUTTON_LEFT_SHOULDER, &"pause": JOY_BUTTON_START}
 const PAD_AXES := {&"move_left": [JOY_AXIS_LEFT_X, -1.0], &"move_right": [JOY_AXIS_LEFT_X, 1.0], &"move_up": [JOY_AXIS_LEFT_Y, -1.0], &"move_down": [JOY_AXIS_LEFT_Y, 1.0]}
 const STICK_DEADZONE := 0.3
 ## Menu actions, never rebound: LB and RB (PageUp and PageDown on the keyboard) step through a screen's tabs
 ## (Configurações, Como Jogar, the Livro's chapters, the Compendium's index; DT-103, UiKit.step_tabs).
 ## The actions whose gamepad button the player may change (DT-103): those with a button, not the stick's walking.
-const PAD_REMAPPABLE: Array[StringName] = [&"light_attack", &"heavy_attack", &"dodge", &"shout", &"rush", &"ultimate", &"interact"]
+const PAD_REMAPPABLE: Array[StringName] = [&"light_attack", &"heavy_attack", &"dodge", &"ultimate", &"interact"]
 ## The gamepad's buttons of Godot's menu actions (confirm, back).
 const MENU_BUTTONS := {&"ui_accept": JOY_BUTTON_A, &"ui_cancel": JOY_BUTTON_B}
 ## Where a gamepad binding is kept in the saved bindings (beside the key bindings, which use the action's own name).
