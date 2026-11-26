@@ -23,4 +23,7 @@ id = &"passo_geada"
 family = 1
 icon = 17
 slot = 5
+reserve = true
 skill = SubResource("Resource_0gpt0")
+grants = PackedStringArray()
+needs_all = PackedStringArray()

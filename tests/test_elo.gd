@@ -85,30 +85,8 @@ func test_an_elo_has_no_level_and_no_rarity() -> void:
 				assert_true(m.per_level.is_empty(), String(b.id))
 
 
-## C13-06: once an Elo can be formed, about 12% of the cards are one.
-func test_an_elo_comes_about_one_card_in_eight() -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 12
-	var catalog := BoonState.load_catalog()
-	var elos := 0
-	var first := 0
-	var draws := 6000
-	for i in draws:
-		var s := BoonState.new(catalog)
-		s.take(s.find(&"brasas"))
-		s.take(s.find(&"toque_geada"))
-		var cards := s.draw(rng, 3, Boon.RARITY_CHANCE, 0.12, 0.0)
-		if cards[0].boon.is_duo():
-			first += 1
-		for c in cards:
-			if c.boon.is_duo():
-				elos += 1
-				assert_eq(c.rarity, Boon.Rarity.COMMON, "an Elo's card has no rarity")
-				assert_eq(c.level, 1)
-	assert_almost_eq(float(first) / draws, 0.12, 0.01, "the first card is an Elo 12% of the time")
-	assert_gt(elos, first)
-
-
+## (V1, 2026-11-26: the Elos are out of the angel draw and nothing is traded; the resources stay, and test_blessings_v1_draw
+## holds that no Elo comes in a card and that a held slot is not replaced.)
 ## E3-02: an Elo asks for one gift of each list, not two exact gifts.
 func test_any_gift_of_each_list_forms_the_elo() -> void:
 	var vapor := state.find(&"vapor")

@@ -22,4 +22,7 @@ script = ExtResource("2_w82fd")
 id = &"passo_radiante"
 icon = 10
 slot = 5
+reserve = true
 mods = Array[ExtResource("1_w1dba")]([SubResource("Resource_kltuy"), SubResource("Resource_bemyk")])
+grants = PackedStringArray()
+needs_all = PackedStringArray()

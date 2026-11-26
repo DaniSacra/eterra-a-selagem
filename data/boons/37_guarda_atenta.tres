@@ -23,4 +23,7 @@ script = ExtResource("2_3xi04")
 id = &"guarda_atenta"
 family = 3
 icon = 10
+reserve = true
 mods = Array[ExtResource("1_v3i20")]([SubResource("Resource_5q73b"), SubResource("Resource_b20t2")])
+grants = PackedStringArray()
+needs_all = PackedStringArray()

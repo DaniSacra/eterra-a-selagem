@@ -68,6 +68,12 @@ const FAMILY_KEY: Array[StringName] = [&"family_chama", &"family_geada", &"famil
 @export var requires_sets: Array[PackedStringArray] = []
 @export var mods: Array[BoonMod] = []
 @export var skill: SkillDef
+## Blessings V1 (docs/design/bencaos_v1, 2026-11-26): what holding this Blessing gives other Blessings to ask for (a
+## capability word: "burn", "cold", "crit", "impact", "weak", "mark", "echo", "cadence"), and what it asks before it may
+## come on a card: every entry is a capability, a Blessing id, or "fam:<family tag>" (one Blessing of that angel). Empty:
+## nothing. A principal (a slot) asks only a free slot and its action; a complement (no slot) asks these.
+@export var grants: PackedStringArray = PackedStringArray()
+@export var needs_all: PackedStringArray = PackedStringArray()
 
 
 func color() -> Color:
@@ -98,6 +104,11 @@ func acts_alone() -> bool:
 
 func family_tag() -> StringName:
 	return FAMILY_TAG[family]
+
+
+## V1: a complement takes no slot, can be held beside any principal and never twice (the angel's four extras).
+func is_complement() -> bool:
+	return slot == Slot.NONE and not is_duo()
 
 
 func is_duo() -> bool:

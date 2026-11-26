@@ -9,16 +9,23 @@ func test_every_door_id_has_its_painting() -> void:
 	assert_eq(RewardIcon.all_ids().size(), 25)
 
 
-func test_every_blessing_has_its_painted_medallion() -> void:
+func test_every_blessing_has_its_painted_medallion_or_the_drawn_icon() -> void:
+	# (V1: the new Blessings reuse the glyphs the game draws, as BoonArt says: "a gift without its own painting keeps the
+	# drawn BoonIcon"; the ones that had a painting keep it)
 	var dir := DirAccess.open("res://data/boons")
 	var n := 0
+	var painted := 0
 	for f in dir.get_files():
 		if not f.ends_with(".tres"):
 			continue
 		var b: Boon = load("res://data/boons/" + f)
-		assert_not_null(BoonArt.medallion(b.id), "assets/ui/boons/%s.png" % b.id)
+		if BoonArt.medallion(b.id) != null:
+			painted += 1
+		else:
+			assert_lt(b.icon, 23, "%s has neither painting nor a drawn glyph" % b.id)
 		n += 1
-	assert_eq(n, 81)
+	assert_eq(n, 114)
+	assert_gt(painted, 60)
 
 
 func test_the_paintings_import_with_mipmaps() -> void:

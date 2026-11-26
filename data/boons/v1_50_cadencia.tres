@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_fclpe"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_bmi8w"]
+
+[sub_resource type="Resource" id="Resource_6kum4"]
+script = ExtResource("1_fclpe")
+stat = &"cel_cadence"
+base = 0.03
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_bmi8w")
+id = &"cadencia"
+family = 6
+icon = 21
+max_level = 1
+mods = Array[ExtResource("1_fclpe")]([SubResource("Resource_6kum4")])
+grants = PackedStringArray("cadence")
+needs_all = PackedStringArray("fam:mare")

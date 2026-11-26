@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_ukugo"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_5jwxb"]
+
+[sub_resource type="Resource" id="Resource_vm1gp"]
+script = ExtResource("1_ukugo")
+stat = &"cel_speed"
+base = 0.1
+per_level = PackedFloat32Array(0.03, 0.03)
+by_rarity = false
+
+[resource]
+script = ExtResource("2_5jwxb")
+id = &"golpe_mare"
+family = 6
+icon = 21
+slot = 1
+mods = Array[ExtResource("1_ukugo")]([SubResource("Resource_vm1gp")])
+grants = PackedStringArray("wind")
+needs_all = PackedStringArray()

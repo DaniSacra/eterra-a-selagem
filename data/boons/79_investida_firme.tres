@@ -23,4 +23,7 @@ id = &"investida_firme"
 family = 3
 icon = 11
 slot = 5
+reserve = true
 skill = SubResource("Resource_tj81h")
+grants = PackedStringArray()
+needs_all = PackedStringArray()

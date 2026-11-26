@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_sos1j"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_o827m"]
+
+[sub_resource type="Resource" id="Resource_7m56d"]
+script = ExtResource("1_sos1j")
+stat = &"cel_weak_mana"
+base = 1.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_o827m")
+id = &"essencia_restauradora"
+family = 5
+icon = 20
+max_level = 1
+mods = Array[ExtResource("1_sos1j")]([SubResource("Resource_7m56d")])
+grants = PackedStringArray()
+needs_all = PackedStringArray("weak")

@@ -190,6 +190,9 @@ func new_elos(seen: Dictionary) -> Array[Boon]:
 ## one riding on an action first, then those that act alone); -1 when none does (the Emeth's own colour). An untagged
 ## modifier speaks for no blow. Elos are left out (their colour is no family's).
 func family_on(tags: Array[StringName]) -> int:
+	var ruled := in_slot(CelRules.slot_of(tags))  # V1: a Blessing that rides on the action colours it, whatever it carries
+	if ruled != null and not ruled.is_duo() and not ruled.reserve:
+		return ruled.family
 	var alone := -1
 	for b in owned():
 		if b.is_duo():
@@ -224,6 +227,11 @@ func offerable(b: Boon) -> bool:
 		return false
 	if b.needs_tag != &"" and not hero_tags.is_empty() and not hero_tags.has(b.needs_tag):
 		return false
+	# V1: a held slot never comes back to the draw (nothing is replaced), and a complement waits for what it asks
+	if b.slot != Boon.Slot.NONE and in_slot(b.slot) != null and level(b.id) <= 0:
+		return false
+	if not needs_met(b):
+		return false
 	for list in b.requires_sets:
 		var base := false
 		for id in list:
@@ -234,6 +242,58 @@ func offerable(b: Boon) -> bool:
 		if not base:
 			return false
 	return true
+
+
+## V1: the hero holds a Blessing of the V1 catalog (one outside the reserve): the layer of Celestial has work to do.
+func celestial_held() -> bool:
+	if _cache.has(&"@held"):
+		return _cache[&"@held"]
+	var any := false
+	for b in catalog:
+		if level(b.id) > 0 and not b.reserve and not b.is_duo():
+			any = true
+			break
+	_cache[&"@held"] = any
+	return any
+
+
+## V1: true when the hero holds something with this capability word (Boon.grants), is of this angel ("fam:<tag>") or
+## holds the Blessing of this id.
+func has_cap(cap: String) -> bool:
+	if cap.begins_with("fam:"):
+		for b in owned():
+			if String(b.family_tag()) == cap.substr(4):
+				return true
+		return false
+	for b in owned():
+		if b.id == StringName(cap) or b.grants.has(cap):
+			return true
+	return false
+
+
+## V1: every requirement of the Blessing (Boon.needs_all) is held.
+func needs_met(b: Boon) -> bool:
+	for cap in b.needs_all:
+		if not has_cap(cap):
+			return false
+	return true
+
+
+## V1: the sum of a number over the Blessings riding on one action (Boon.slot), at their level and rarity.
+func slot_stat(stat_name: StringName, slot: Boon.Slot) -> float:
+	var key := StringName("%s@%d" % [stat_name, slot])
+	if _cache.has(key):
+		return _cache[key]
+	var total := 0.0
+	for b in catalog:
+		var lv := level(b.id)
+		if lv <= 0 or b.slot != slot:
+			continue
+		for m in b.mods:
+			if m.stat == stat_name:
+				total += m.at(lv, rarity_mult(b.id))
+	_cache[key] = total
+	return total
 
 
 ## Raises a gift by one level (or to at_level when it is higher: a trade keeps the replaced one's level), at least at
@@ -257,7 +317,16 @@ func take(b: Boon, at: Boon.Rarity = Boon.Rarity.COMMON, at_level: int = 0) -> i
 
 ## Takes a card of a draw (its rarity, its level).
 func take_card(c: Card) -> int:
+	if not c.grow and not still_free(c.boon):
+		return 0  # V1: revalidated when taken (its slot filled, or what it asks is gone): nothing is replaced
 	return take(c.boon, c.rarity, c.level)
+
+
+## V1: a Blessing not held may still be taken: its slot is free and what it asks is held.
+func still_free(b: Boon) -> bool:
+	if level(b.id) > 0:
+		return true
+	return (b.slot == Boon.Slot.NONE or in_slot(b.slot) == null) and needs_met(b)
 
 
 ## Equips the hero's Gifts for the descent (Talents.check decides which are valid).
@@ -329,22 +398,18 @@ func offers(rng: RandomNumberGenerator, n: int = 3) -> Array[Boon]:
 	return out
 
 
-## Up to n cards, each a different gift (see the class's comment). chances: the rarity draw (roll_rarity); elo_chance
-## and trade_chance per card. When no fresh gift is left, a card falls back to a plain replacement (no rarity up), then
-## to an Elo that can be formed. allow (b: Boon) -> bool keeps only some gifts in the draw (an angel's family,
+## Up to n cards, each a different gift (see the class's comment; V1: no trade, a held action is never offered again).
+## chances: the rarity draw (roll_rarity); elo_chance per card (trade_chance is kept for old callers and unused). allow (b: Boon) -> bool keeps only some gifts in the draw (an angel's family,
 ## Encounter.cards); every rule stays the same over what is left.
 func draw(rng: RandomNumberGenerator, n: int = 3, chances: Array[float] = Boon.RARITY_CHANCE,
 		elo_chance: float = Boon.ELO_CHANCE, trade_chance: float = Boon.TRADE_CHANCE, allow: Callable = Callable()) -> Array[Card]:
 	var fresh: Array[Boon] = []
-	var trades: Array[Boon] = []
 	var elos: Array[Boon] = []
 	for b in catalog:
 		if level(b.id) > 0 or not offerable(b) or (allow.is_valid() and not allow.call(b)):
 			continue
 		if b.is_duo():
 			elos.append(b)
-		elif replaced_by(b) != null:
-			trades.append(b)
 		else:
 			fresh.append(b)
 	var out: Array[Card] = []
@@ -352,20 +417,32 @@ func draw(rng: RandomNumberGenerator, n: int = 3, chances: Array[float] = Boon.R
 		var c: Card = null
 		if not elos.is_empty() and rng.randf() < elo_chance:
 			c = Card.new(elos.pop_at(rng.randi() % elos.size()))
-		elif not trades.is_empty() and rng.randf() < trade_chance:
-			c = trade_card(trades.pop_at(rng.randi() % trades.size()), rng, chances)
 		elif not fresh.is_empty():
-			c = Card.new(fresh.pop_at(rng.randi() % fresh.size()), roll_rarity(rng, chances))
-		elif not trades.is_empty():
-			var b: Boon = trades.pop_at(rng.randi() % trades.size())
-			c = Card.new(b, roll_rarity(rng, chances))
-			c.replaces = replaced_by(b)
+			c = Card.new(pick_weighted(fresh, rng), roll_rarity(rng, chances))
 		elif not elos.is_empty():
 			c = Card.new(elos.pop_at(rng.randi() % elos.size()))
 		else:
 			break
 		out.append(c)
 	return out
+
+
+## V1 (02_REGRAS): a Blessing taken out of the list by chance, a principal weighing PRINCIPAL_WEIGHT and a complement
+## COMPLEMENT_WEIGHT (the empty slots first, never blocking an eligible complement). Without replacement: it leaves the list.
+const PRINCIPAL_WEIGHT := 2.0
+const COMPLEMENT_WEIGHT := 1.0
+
+
+static func pick_weighted(list: Array[Boon], rng: RandomNumberGenerator) -> Boon:
+	var total := 0.0
+	for b in list:
+		total += PRINCIPAL_WEIGHT if b.slot != Boon.Slot.NONE else COMPLEMENT_WEIGHT
+	var roll := rng.randf() * total
+	for i in list.size():
+		roll -= PRINCIPAL_WEIGHT if list[i].slot != Boon.Slot.NONE else COMPLEMENT_WEIGHT
+		if roll < 0.0 or i == list.size() - 1:
+			return list.pop_at(i)
+	return list.pop_back()
 
 
 ## A trade for b (E3-01): it replaces the Blessing on its action one rarity higher than that one (never past

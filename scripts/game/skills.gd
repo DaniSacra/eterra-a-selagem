@@ -194,7 +194,7 @@ func _cast(b: Boon) -> bool:
 			var time := s.get_duration(lv) if s.get_duration(lv) > 0.0 else s.get_status_power(lv)
 			if s.status == &"burn":
 				# embers on the floor: damage a second to whoever stands there, and burning (Combat.on_zone_hit)
-				game.ground.add_zone(Ground.Kind.EMBER, at, r, time, _damage(b, lv), Combat.EMBER_TAGS)
+				game.ground.add_zone(Ground.Kind.EMBER, at, r, time, _damage(b, lv), Combat.EMBER_CEL_TAGS)
 			else:
 				game.ground.add_zone(Ground.Kind.HOLY, at, r, time, _damage(b, lv), tags)
 			if not _mark(b.family, at, r, color):
@@ -297,7 +297,7 @@ func _land(q: Pending) -> void:
 	for e in _found.duplicate():
 		game.combat.skill_hit(e, q.damage, q.tags, (e.pos - q.at).normalized(), 5.0 if not q.big else 10.0, q.status, q.power)
 	if fire and q.big == false:
-		game.ground.add_zone(Ground.Kind.EMBER, q.at, q.radius * 0.6, 1.6, q.power, q.tags)
+		game.ground.add_zone(Ground.Kind.EMBER, q.at, q.radius * 0.6, 1.6, q.power, Combat.EMBER_CEL_TAGS)
 
 
 static func _ember_mesh(scale: float) -> CapsuleMesh:
@@ -380,7 +380,7 @@ func _step_orbit(b: Boon, dt: float) -> void:
 		var at := Vector2(orb.position.x, orb.position.z)
 		game.horde.in_circle(at, 0.8, _found)
 		for e in _found.duplicate():
-			game.combat.skill_hit(e, _damage(b, lv), tags, (e.pos - p).normalized(), 4.0, s.status, s.get_status_power(lv))
+			game.combat.skill_hit(e, _damage(b, lv), tags, (e.pos - p).normalized(), 4.0, s.status, s.get_status_power(lv), s.status_gap)
 
 
 ## Up to n enemies near a point, nearest first, each a different one.

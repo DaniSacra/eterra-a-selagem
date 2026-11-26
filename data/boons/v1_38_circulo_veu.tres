@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_hp1ql"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_ojog2"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_lg7x5"]
+
+[sub_resource type="Resource" id="Resource_gtpkf"]
+script = ExtResource("3_lg7x5")
+kind = 1
+trigger = 4
+duration = PackedFloat32Array(0)
+gap = PackedFloat32Array(0)
+cooldown = PackedFloat32Array(4)
+damage = PackedFloat32Array(0)
+count = PackedFloat32Array(1)
+radius = PackedFloat32Array(3)
+status = &"weak"
+status_power = PackedFloat32Array(4, 5.5, 7)
+
+[resource]
+script = ExtResource("2_ojog2")
+id = &"circulo_veu"
+family = 5
+icon = 20
+max_level = 1
+slot = 3
+skill = SubResource("Resource_gtpkf")
+grants = PackedStringArray("weak")
+needs_all = PackedStringArray()

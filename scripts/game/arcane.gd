@@ -25,7 +25,7 @@ const DOME_RIM := 0.7
 const DOME_PUSH := 4.0
 const DOME_HEAL_CAP := 6
 ## The embers the Passo lays at both ends (Rastro and its kin): radius, seconds, unused.
-const STEP_TRAIL := Vector3(1.4, 2.5, 0.0)
+const STEP_TRAIL := Vector3(1.4, Combat.TRAIL_TIME, 0.0)
 ## Seconds of immunity to a new freeze after one (so the Geada does not hold a body frozen for good).
 const THAW := 1.0
 
@@ -536,8 +536,8 @@ func _release(d: Dome) -> void:
 func _on_dodged(_dir: Vector2) -> void:
 	var trail := _stat(&"dodge_ember_dps")
 	if trail > 0.0:
-		game.ground.add_zone(Ground.Kind.EMBER, game.player.last_blink_from, STEP_TRAIL.x, STEP_TRAIL.y, trail, Combat.EMBER_TAGS)
-		game.ground.add_zone(Ground.Kind.EMBER, game.player.pos, STEP_TRAIL.x, STEP_TRAIL.y, trail, Combat.EMBER_TAGS)
+		game.ground.add_zone(Ground.Kind.EMBER, game.player.last_blink_from, STEP_TRAIL.x, STEP_TRAIL.y, trail, Combat.EMBER_CEL_TAGS)
+		game.ground.add_zone(Ground.Kind.EMBER, game.player.pos, STEP_TRAIL.x, STEP_TRAIL.y, trail, Combat.EMBER_CEL_TAGS)
 
 
 ## A flat disc on the floor (the Geada's and the embers' area): unlit, translucent.

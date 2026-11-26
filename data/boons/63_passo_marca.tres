@@ -23,4 +23,7 @@ id = &"passo_marca"
 family = 7
 icon = 22
 slot = 5
+reserve = true
 mods = Array[ExtResource("1_yfsp1")]([SubResource("Resource_beqp7"), SubResource("Resource_lvfk7")])
+grants = PackedStringArray()
+needs_all = PackedStringArray()

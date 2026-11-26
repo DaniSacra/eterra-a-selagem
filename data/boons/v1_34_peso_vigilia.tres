@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_tsych"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_ag0u2"]
+
+[sub_resource type="Resource" id="Resource_6feqf"]
+script = ExtResource("1_tsych")
+stat = &"cel_impact_time_pct"
+base = 0.3
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_ag0u2")
+id = &"peso_vigilia"
+family = 3
+icon = 9
+max_level = 1
+mods = Array[ExtResource("1_tsych")]([SubResource("Resource_6feqf")])
+grants = PackedStringArray()
+needs_all = PackedStringArray("impact")

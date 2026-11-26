@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_ei4bp"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_oy8du"]
+
+[sub_resource type="Resource" id="Resource_jojpl"]
+script = ExtResource("1_ei4bp")
+stat = &"move_speed_pct"
+base = 0.05
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_oy8du")
+id = &"brisa_favoravel"
+family = 6
+icon = 21
+max_level = 1
+mods = Array[ExtResource("1_ei4bp")]([SubResource("Resource_jojpl")])
+grants = PackedStringArray()
+needs_all = PackedStringArray("fam:mare")

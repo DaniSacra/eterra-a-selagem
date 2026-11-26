@@ -349,7 +349,7 @@ func test_two_to_three_new_blessings_a_family() -> void:
 	for f in [Boon.Family.CHAMA, Boon.Family.LUZ]:
 		assert_gte(count[f], 9)
 	for id in [&"geada_final", &"omega_geada", &"vigia_firme", &"vigilia_longa", &"guarda_atenta",
-			&"omega_brasa", &"chuva_brasas", &"final_radiante", &"onda_clara"]:
+			&"omega_brasa", &"final_radiante", &"onda_clara"]:
 		var b := state.find(id)
 		assert_not_null(b, String(id))
 		assert_eq(b.slot, Boon.Slot.NONE, "%s acts on its own: never takes an action's place" % id)

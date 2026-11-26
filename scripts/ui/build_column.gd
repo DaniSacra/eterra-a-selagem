@@ -99,6 +99,8 @@ class Entry extends Control:
 
 	## Only a Blessing above level 1 says its level (a "Nv. 1" on every row was noise).
 	func _level_text() -> String:
+		if boon != null and boon.is_complement() and not boon.reserve:
+			return T.t(&"hud_build_complement")  # V1: a complement is told from the principal of a button
 		return T.t(&"hud_build_level", {"n": lv}) if boon != null and boon.has_rarity() and lv > 1 else ""
 
 	## b: the Blessing of the button (null: empty, its own mark in grey). glyph: that mark's BoonIcon id.

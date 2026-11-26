@@ -13,4 +13,7 @@ per_level = PackedFloat32Array(0.3, 0.3)
 script = ExtResource("2_sx6on")
 id = &"consolo"
 icon = 6
+reserve = true
 mods = Array[ExtResource("1_oiro7")]([SubResource("Resource_qh1af")])
+grants = PackedStringArray()
+needs_all = PackedStringArray()

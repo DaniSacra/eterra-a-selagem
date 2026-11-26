@@ -200,8 +200,12 @@ func test_temper_adds_to_the_blows_through_the_boons_stat() -> void:
 	assert_almost_eq(state.stat(&"damage_pct", [&"heavy", &"wave"]), 0.2, 0.0001, "the special")
 	assert_almost_eq(state.stat(&"damage_pct", [&"heavy", &"wave", &"charge", &"omega"]), 0.2, 0.0001,
 		"its Omega, counted once")
-	state.take(state.find(&"golpe_radiante"))
-	assert_almost_eq(state.stat(&"damage_pct", [&"light"]), 0.45, 0.0001, "summed with a Blessing")
+	var more := BoonMod.new()  # (V1: no Blessing adds plain damage; a Gift or a granted bonus does, and the sum is the same)
+	more.stat = &"damage_pct"
+	more.tag = &"light"
+	more.base = 0.25
+	state.grant([more])
+	assert_almost_eq(state.stat(&"damage_pct", [&"light"]), 0.45, 0.0001, "summed with another bonus")
 
 
 # ---------- the deck and the map ----------
@@ -304,7 +308,8 @@ func test_two_thousand_meetings_offer_no_invalid_card() -> void:
 			meetings += 1
 			var cards := Encounter.cards(state, a, Encounter.cards_dice(i, 1, 3, a.id), 3, stage.rarity_chance,
 				stage.elo_chance, stage.trade_chance)
-			assert_eq(cards.size(), 3, "an eligible angel has three cards (BO-2: Encounter.CARDS)")
+			assert_eq(cards.size(), mini(3, Encounter.supply(state, a)), "an eligible angel has up to three cards (V1: as many as it has)")
+			assert_gt(cards.size(), 0)
 			var ids := {}
 			for c in cards:
 				assert_false(ids.has(c.boon.id), "no card twice")
@@ -326,29 +331,7 @@ func test_two_thousand_meetings_offer_no_invalid_card() -> void:
 		gut.p("A8 (random hands): %s in %.1f%% of the angels shown" % [id, float(offered[id]) / meetings * 100.0])
 
 
-## A4: the trade and the Elo keep their E3 chances inside a family (10% and 12% a card, within 2 points).
-func test_trade_and_elo_keep_their_chances_inside_a_family() -> void:
-	var book := Encounter.new(Encounter.load_catalog())
-	var state := BoonState.new(BoonState.load_catalog())
-	state.take(state.find(&"golpe_brasa"))  # Lumael's attack is then a trade, no Elo of his can be formed
-	var trades := 0
-	var n := 4000
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 5
-	for i in n:
-		var c := Encounter.cards(state, book.find(&"lumael"), rng, 1, stage.rarity_chance, stage.elo_chance, stage.trade_chance)
-		if c[0].trade:
-			trades += 1
-	assert_almost_eq(float(trades) / n, stage.trade_chance, 0.02, "trade")
-	var both := BoonState.new(BoonState.load_catalog())
-	both.take(both.find(&"brasas"))
-	both.take(both.find(&"toque_geada"))  # Vapor can be formed: an Elo of Sarael's (and Nivael's)
-	var elos := 0
-	for i in n:
-		var c := Encounter.cards(both, book.find(&"sarael"), rng, 1, stage.rarity_chance, stage.elo_chance, stage.trade_chance)
-		if c[0].boon.is_duo():
-			elos += 1
-	assert_almost_eq(float(elos) / n, stage.elo_chance, 0.02, "Elo")
+## (V1, 2026-11-26: no trade and no Elo in the angel draw; test_blessings_v1_draw holds it.)
 
 
 func test_one_angel_alone_or_none() -> void:

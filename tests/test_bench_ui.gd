@@ -233,32 +233,6 @@ func test_the_cards_say_their_facts_and_stand_as_tall_as_their_words() -> void:
 					assert_ne((row.find_child("Value", false, false) as Label).text, "")
 			assert_eq((c.find_child("Desc", true, false) as RichTextLabel).horizontal_alignment, HORIZONTAL_ALIGNMENT_LEFT)
 
-
-func test_a_trade_shows_the_numbers_it_leaves() -> void:
-	# Golpe Radiante (damage) goes out, Golpe Firme (reach and damage) comes in one rarity up: the damage it had first
-	state.take(state.find(&"golpe_radiante"))
-	var choice := BoonChoice.new()
-	add_child_autofree(choice)
-	choice.open([state.find(&"golpe_firme")] as Array[Boon], state, {&"golpe_firme": {"rarity": Boon.Rarity.EPIC, "upgrade": true}})
-	await wait_process_frames(2)
-	var card := choice.cards()[0]
-	assert_not_null(card.find_child("Replaces", true, false), "what goes out and what comes in")
-	var old := BoonChoice.facts(state.find(&"golpe_radiante"), 1)
-	var new := BoonChoice.facts(state.find(&"golpe_firme"), 1, Boon.RARITY_MULT[Boon.Rarity.EPIC])
-	var row := card.find_child("Fact_damage_pct", true, false)
-	assert_not_null(row, "the damage on both")
-	var old_v := ""
-	var new_v := ""
-	for f: Array in old:
-		if f[0] == &"damage_pct":
-			old_v = f[2]
-	for f: Array in new:
-		if f[0] == &"damage_pct":
-			new_v = f[2]
-	if old_v != new_v:
-		assert_eq((row.find_child("Was", false, false) as Label).text, T.t(&"fact_was", {"v": old_v}))
-
-
 func test_the_glossary_names_the_words_of_the_card_in_focus() -> void:
 	assert_eq(Glossary.terms_of("O especial congela por 0,4 s."), [&"freeze"] as Array[StringName])
 	assert_eq(Glossary.terms_of("O ataque incendeia: 3 de dano por segundo."), [&"burn"] as Array[StringName])

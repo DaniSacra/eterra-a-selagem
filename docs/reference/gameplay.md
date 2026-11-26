@@ -23,8 +23,28 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   região 2 papéis, meio 3 que se completam, fim misturas exigentes com elites e uma especial rara de 4. `--horde` e
   `--stress` ignoram os tetos. O RESULT do `--smoke` traz `max_alive` (pico de inimigos de pé, chefe incluído), `boss_at` e o custo do passo da simulação medido só nos quadros com inimigos de pé, `step_ms_avg` e `step_ms_peak` (`StepTimer`, `core/step_timer.gd`; `step_ms` continua, suavizado e lido no fim). Nó `Rooms` (`game/rooms.gd`) conduz: ondas, recompensa,
   portas, fonte, loja (o botão de usar compra, C19), chefe. Magia enche em toda sala; sem experiência nem níveis.
+- **Bênçãos V1 (2026-11-26, pedido do PO; especificação em `docs/design/bencaos_v1/`, o que foi feito, a tabela de ids e o que
+  ficou de fora em `docs/design/bencaos_v1/IMPLEMENTACAO.md`)**: sete anjos, nove poderes cada, 63 em `data/boons/v1_NN_<id>.tres`
+  (gerados por `tools/make_data.gd boons`). Cinco principais por anjo, um por botão (ataque `light`, especial `heavy`, Brado,
+  esquiva, Golpe Supremo; o E, a Investida, não tem Bênção) e quatro complementares (`Boon.Slot.NONE`) que pedem uma capacidade
+  (`Boon.grants` e `needs_all`: queimadura, frio, crítico, impacto, fraqueza, marca, eco, cadência, ou `fam:luz`, `fam:mare`).
+  Sorteio sem substituição: botão ocupado sai do baralho antes de sortear (`BoonState.offerable`, `still_free` ao pegar a carta),
+  não existe `trade` nem "Substitui:", o Elo e os Encantos ficam fora do sorteio dos anjos (os recursos continuam). Um anjo mostra
+  de 0 a 3 cartas (`Encounter.supply`, `MIN_CARDS` 1); sem nenhuma, ele sai antes da porta e a carta de descanso de sempre é a
+  resposta. Principal pesa o dobro de um complementar. Maré aparece como Vento e Marca como Penumbra (os ids de família ficam).
+  Comportamento novo na camada `Celestial` (`game/celestial.gd`, filha de `Combat`, chamada por `Combat.hit_enemy`), regras puras em
+  `core/cel_rules.gd` (todos os limites e números fixos num lugar) e `core/cel_state.gd` (Frio, Impacto, Marca e contagens por
+  inimigo). A ação de um golpe vem de `CelRules.slot_of` (`DealtBy.source`), nunca da etiqueta solta: a Investida leva `light` e
+  `dash` e é do E. Queimadura, Fraqueza e congelamento usam os relógios que já existiam (`burn_t`, `weak_t`, `frozen_t`); uma
+  Bênção nunca soma Queimadura (renova o tempo e fica o maior dano por segundo). Frio: 3 acúmulos em 4 s congelam um comum por 0,8 s
+  e o deixam imune por 2 s; Impacto: 5 pontos em 4 s atordoam por 0,6 s, imune por 3 s; chefes nunca congelam, atrasam nem atordoam.
+  Crítico sem chance própria (só as fontes de Lumael), 150% do dano, tetos de 60% e 250%; DOT, eco e golpes secundários não rolam
+  dado. Eco e propagação não geram eco nem propagação. Tetos de totais: velocidade 50%, recarga 30%, lentidão 40%, Fraqueza 40%.
+  Os números de texto fixos vêm de `CelRules.text_args()` (`{marcadores}` da frase). A Maga leva a mesma camada, ao lado do
+  `Arcane` dela (queima e frio nativos não mudam). Ids antigos continuam carregando (reserva): um save ou um teste ainda os pega.
 - **Bênçãos e economia da E3 (Hades II; regras, números e decisões em `docs/design/e3_blessings.md`, métricas do robô em
-  `docs/qa/e3_metrics.md`)**: as portas tiram cartas de um baralho sem repor que volta inteiro quando nada serve
+  `docs/qa/e3_metrics.md`; a V1 acima desligou a troca por raridade e o Elo no sorteio dos anjos, o que resta aqui vale para
+  portas, raridade, romã e loja)**: as portas tiram cartas de um baralho sem repor que volta inteiro quando nada serve
   (`StageDef.reward_deck`, `RewardDeck`: 6 Bênçãos, 2 romãs, 2 corações, 2 Magia, 2 ouro). Raridade em sequência
   (`BoonState.roll_rarity`: rara 16%, épica 6%, lendária 2%, ou 77,4 / 14,7 / 5,9 / 2 (SW-B2; era 10 / 5 / 1); guardião rara 90%, épica 7%), quatro raridades
   comum 1, rara 1,5, épica 2 e lendária 2,5 (D-52, D-53), a lendária só pela troca (E3-01: 10% por carta, a Bênção de

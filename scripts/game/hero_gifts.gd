@@ -48,8 +48,8 @@ func step(dt: float) -> void:
 	var tags: Array[StringName] = []
 	if p.runner.node != null:
 		tags = p.runner.node.tags
-	p.runner.speed = state.attack_speed(tags)
-	p.runner.cooldown_cut = state.cooldown_cut(tags)
+	p.runner.speed = state.attack_speed(tags) + game.combat.celestial.attack_speed(tags)
+	p.runner.cooldown_cut = minf(state.cooldown_cut(tags) + game.combat.celestial.cooldown_cut(tags), 0.5)
 	p.omega_cost_pct = state.value(&"omega_cost_pct")
 	p.charge_time_pct = state.value(&"charge_time_pct")
 	p.dash_pierce = state.value(&"dash_pierce", DASH_TAGS) > 0.0

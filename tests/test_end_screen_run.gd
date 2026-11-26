@@ -16,7 +16,7 @@ func after_each() -> void:
 
 func _two_gifts() -> Array:
 	var out := []
-	for path: String in ["res://data/boons/00_brasas.tres", "res://data/boons/03_toque_geada.tres"]:
+	for path: String in ["res://data/boons/00_brasas.tres", "res://data/boons/01_redemoinho.tres"]:
 		out.append({"boon": load(path) as Boon, "level": 2})
 	return out
 

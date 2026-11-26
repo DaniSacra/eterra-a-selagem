@@ -31,13 +31,18 @@ func test_every_gift_has_its_levels_text_and_an_icon() -> void:
 	for b in state.catalog:
 		assert_false(seen.has(b.id), "duplicate %s" % b.id)
 		seen[b.id] = true
-		assert_eq(b.max_level, 1 if b.is_duo() else 3, String(b.id))
+		# (V1: a Blessing grows only when a number of it has a gain per level; the others are held once)
+		var grows := b.skill != null and b.skill.damage.size() > 1
+		for m in b.mods:
+			grows = grows or not m.per_level.is_empty()
+		assert_eq(b.max_level, 3 if grows and not b.is_duo() else 1, String(b.id))
 		assert_lt(b.icon, icons, String(b.id))
 		assert_ne(T.t("boon_%s" % b.id), "boon_%s" % b.id, "name of %s" % b.id)
 		assert_true(b.mods.size() > 0 or b.skill != null, "%s does nothing" % b.id)
 		for m in b.mods:
 			if not b.is_duo():
-				assert_false(m.per_level.is_empty(), "%s needs a gain per level" % b.id)
+				if b.reserve:
+					assert_false(m.per_level.is_empty(), "%s needs a gain per level" % b.id)
 			else:
 				assert_true(m.per_level.is_empty(), "an Elo never grows (BUG-017): %s" % b.id)
 		for lv in range(1, b.max_level + 1):
@@ -78,11 +83,13 @@ func test_levels_go_up_to_the_maximum_and_stop() -> void:
 
 
 func test_stat_follows_the_level() -> void:
-	assert_eq(state.stat(&"freeze_time", [&"cast"] as Array[StringName]), 0.0)
-	_take(&"circulo_geada")
-	assert_almost_eq(state.stat(&"freeze_time", [&"cast"] as Array[StringName]), 1.0, 0.001)
-	_take(&"circulo_geada", 2)
-	assert_almost_eq(state.stat(&"freeze_time", [&"cast"] as Array[StringName]), 1.8, 0.001)
+	assert_eq(state.slot_stat(&"cel_burn_dps", Boon.Slot.ATTACK), 0.0)
+	var m: BoonMod = state.find(&"golpe_brasa").mods[0]
+	_take(&"golpe_brasa")
+	assert_almost_eq(state.slot_stat(&"cel_burn_dps", Boon.Slot.ATTACK), m.value(1), 0.001)
+	_take(&"golpe_brasa", 2)
+	assert_almost_eq(state.slot_stat(&"cel_burn_dps", Boon.Slot.ATTACK), m.value(3), 0.001)
+	assert_gt(m.value(3), m.value(1))
 
 
 ## C13-05 (Hades II's GetProcessedValue): level 1 is the base times the rarity, every level after adds a fixed gain the
@@ -113,15 +120,24 @@ func test_every_blessing_grows_by_its_gains() -> void:
 			for lv in range(1, b.max_level + 1):
 				var want := m.base
 				for k in range(2, lv + 1):
-					want += m.per_level[mini(k - 2, m.per_level.size() - 1)]
+					if not m.per_level.is_empty():
+						want += m.per_level[mini(k - 2, m.per_level.size() - 1)]
 				assert_almost_eq(m.value(lv), want, 0.0001, "%s %s level %d" % [b.id, m.stat, lv])
 
 
 func test_tagged_modifiers_only_touch_their_moves() -> void:
-	_take(&"toque_geada")
+	# (V1: the Blessings carry no move tag, the engine keeps the filter for the Gifts and the data that use one)
+	var heavy := BoonMod.new()
+	heavy.stat = &"freeze_time"
+	heavy.tag = &"heavy"
+	heavy.base = 1.0
+	var any := BoonMod.new()
+	any.stat = &"shatter_pct"
+	any.base = 0.5
+	state.grant([heavy, any])
 	assert_eq(state.stat(&"freeze_time", [&"light"] as Array[StringName]), 0.0, "light moves do not freeze")
 	assert_eq(state.stat(&"freeze_time"), 0.0)
-	_take(&"estilhaco")
+	assert_almost_eq(state.stat(&"freeze_time", [&"heavy"] as Array[StringName]), 1.0, 0.001)
 	assert_almost_eq(state.stat(&"shatter_pct", [&"light"] as Array[StringName]), 0.5, 0.001, "untagged modifiers apply everywhere")
 
 
@@ -149,12 +165,13 @@ func test_skill_gifts_cast_on_their_own() -> void:
 
 
 func test_bonuses_from_different_gifts_add_up() -> void:
-	_take(&"lamina_ardente", 2)
-	_take(&"circulo_geada", 3)
-	_take(&"onda_maior")
-	_take(&"aurora", 1)
-	var tags: Array[StringName] = [&"cast", &"luz"]
-	assert_almost_eq(state.stat(&"freeze_time", tags), 1.8 + 0.8, 0.001)
+	_take(&"brasa_persistente", 2)
+	var more := BoonMod.new()
+	more.stat = &"cel_burn_time_pct"
+	more.base = 0.2
+	state.grant([more])
+	var m: BoonMod = state.find(&"brasa_persistente").mods[0]
+	assert_almost_eq(state.stat(&"cel_burn_time_pct"), m.value(2) + 0.2, 0.001)
 
 
 func test_offers_are_three_different_gifts() -> void:
@@ -174,14 +191,14 @@ func test_combinations_are_not_offered_before_both_gifts_are_owned() -> void:
 
 
 func test_combination_shows_up_once_both_gifts_are_owned() -> void:
-	_take(&"brasas")
+	_take(&"golpe_brasa")
 	_take(&"toque_geada")
 	assert_true(state.can_offer(state.find(&"vapor")))
 	var seen := false
 	for i in 40:
 		for b in state.offers(rng):
 			seen = seen or b.id == &"vapor"
-	assert_true(seen)
+	assert_false(seen, "V1: the Elos are out of the angel draw (the resource stays, a save or a test can still hold it)")
 	_take(&"vapor")
 	assert_gt(state.stat(&"steam_time"), 0.0)
 	assert_false(state.can_offer(state.find(&"vapor")), "an Elo never grows: it leaves the draw once taken")
@@ -315,11 +332,12 @@ func test_grow_offers_only_owned_gifts_that_can_grow() -> void:
 ## BO-2: the attack, the special and the Brado have a gift of every family; the Investida, the dodge and the ultimate the
 ## families done so far (R9 gave Luz and Vigília their Investida, dodge and ultimate cells).
 func test_each_action_has_a_gift_of_its_families() -> void:
-	var want := {Boon.Slot.ATTACK: 7, Boon.Slot.SPECIAL: 7, Boon.Slot.CAST: 7, Boon.Slot.DASH: 4, Boon.Slot.RUSH: 7, Boon.Slot.ULT: 4}
+	# (V1: seven angels, five buttons; E carries no Blessing of the draw)
+	var want := {Boon.Slot.ATTACK: 7, Boon.Slot.SPECIAL: 7, Boon.Slot.CAST: 7, Boon.Slot.DASH: 7, Boon.Slot.RUSH: 0, Boon.Slot.ULT: 7}
 	for slot: Boon.Slot in want:
 		var families := {}
 		for b in state.catalog:
-			if b.slot == slot:
+			if b.slot == slot and not b.reserve:
 				families[b.family] = true
 				for m in b.mods:
 					# (the attack's spin is its last blow: a tag of the same light attack)

@@ -15,4 +15,7 @@ script = ExtResource("2_bc1jj")
 id = &"omega_veu"
 family = 5
 icon = 20
+reserve = true
 mods = Array[ExtResource("1_07kj5")]([SubResource("Resource_iagk3")])
+grants = PackedStringArray()
+needs_all = PackedStringArray()

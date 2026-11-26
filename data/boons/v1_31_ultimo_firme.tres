@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_n882s"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_emhpl"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_yqg7n"]
+
+[sub_resource type="Resource" id="Resource_ev2qg"]
+script = ExtResource("3_yqg7n")
+kind = 1
+trigger = 7
+duration = PackedFloat32Array(0)
+gap = PackedFloat32Array(0)
+cooldown = PackedFloat32Array(4)
+damage = PackedFloat32Array(30, 45, 66)
+count = PackedFloat32Array(1)
+radius = PackedFloat32Array(6)
+status = &"impact"
+status_power = PackedFloat32Array(3)
+
+[resource]
+script = ExtResource("2_emhpl")
+id = &"ultimo_firme"
+family = 3
+icon = 11
+slot = 6
+skill = SubResource("Resource_ev2qg")
+grants = PackedStringArray("impact")
+needs_all = PackedStringArray()

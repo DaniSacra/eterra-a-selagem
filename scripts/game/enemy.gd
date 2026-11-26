@@ -51,6 +51,9 @@ var dmg_scale := 1.0
 var mark_t := 0.0
 ## Seconds it still slides from a Mare blow (Combat.SHOVE_TIME): a blow on it then hits harder (stat shove_pct).
 var shove_t := 0.0
+## Blessings V1: what the Blessings put on it (CelState, null until one does) and the share of its speed the Frio takes.
+var cel: CelState
+var cold_slow := 0.0
 var burn_t := 0.0
 var burn_dps := 0.0
 var burn_tick := 0.0

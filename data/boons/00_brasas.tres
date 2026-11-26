@@ -21,3 +21,5 @@ id = &"brasas"
 family = 0
 reserve = true
 skill = SubResource("Resource_utjrv")
+grants = PackedStringArray()
+needs_all = PackedStringArray()

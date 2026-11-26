@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_w0gsc"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_alym2"]
+
+[sub_resource type="Resource" id="Resource_i37we"]
+script = ExtResource("1_w0gsc")
+stat = &"cel_crit_stack"
+base = 0.05
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_alym2")
+id = &"luz_crescente"
+icon = 6
+max_level = 1
+mods = Array[ExtResource("1_w0gsc")]([SubResource("Resource_i37we")])
+grants = PackedStringArray()
+needs_all = PackedStringArray("crit")

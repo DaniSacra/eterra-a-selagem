@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_mnx67"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_tx20e"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_6b5vv"]
+
+[sub_resource type="Resource" id="Resource_805o3"]
+script = ExtResource("3_6b5vv")
+kind = 5
+trigger = 4
+duration = PackedFloat32Array(3)
+gap = PackedFloat32Array(4)
+cooldown = PackedFloat32Array(4)
+damage = PackedFloat32Array(6, 9, 12)
+count = PackedFloat32Array(1)
+radius = PackedFloat32Array(2.5)
+status = &"burn"
+status_power = PackedFloat32Array(3)
+
+[resource]
+script = ExtResource("2_tx20e")
+id = &"circulo_brasa"
+family = 0
+icon = 1
+slot = 3
+skill = SubResource("Resource_805o3")
+grants = PackedStringArray("burn")
+needs_all = PackedStringArray()

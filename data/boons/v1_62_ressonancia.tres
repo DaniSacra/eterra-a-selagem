@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_odfmn"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_im0sh"]
+
+[sub_resource type="Resource" id="Resource_1sata"]
+script = ExtResource("1_odfmn")
+stat = &"cel_echo_cd_cut"
+base = 0.1
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_im0sh")
+id = &"ressonancia"
+family = 7
+icon = 22
+max_level = 1
+mods = Array[ExtResource("1_odfmn")]([SubResource("Resource_1sata")])
+grants = PackedStringArray()
+needs_all = PackedStringArray("echo")

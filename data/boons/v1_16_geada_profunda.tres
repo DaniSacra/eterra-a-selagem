@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_n2uay"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_1csox"]
+
+[sub_resource type="Resource" id="Resource_2jd7j"]
+script = ExtResource("1_n2uay")
+stat = &"cel_slow_add"
+base = 0.05
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_1csox")
+id = &"geada_profunda"
+family = 1
+icon = 12
+max_level = 1
+mods = Array[ExtResource("1_n2uay")]([SubResource("Resource_2jd7j")])
+grants = PackedStringArray()
+needs_all = PackedStringArray("cold")

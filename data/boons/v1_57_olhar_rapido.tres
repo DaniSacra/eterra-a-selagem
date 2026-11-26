@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_trlmi"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_y2vjk"]
+
+[sub_resource type="Resource" id="Resource_wv2hp"]
+script = ExtResource("1_trlmi")
+stat = &"cel_mark"
+base = 3.0
+per_level = PackedFloat32Array(1, 1)
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_jon0p"]
+script = ExtResource("1_trlmi")
+stat = &"cel_radius"
+base = 3.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_y2vjk")
+id = &"olhar_rapido"
+family = 7
+icon = 22
+slot = 4
+mods = Array[ExtResource("1_trlmi")]([SubResource("Resource_wv2hp"), SubResource("Resource_jon0p")])
+grants = PackedStringArray("mark")
+needs_all = PackedStringArray()

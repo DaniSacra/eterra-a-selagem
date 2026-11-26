@@ -14,4 +14,7 @@ script = ExtResource("2_xv0yg")
 id = &"olho_atento"
 family = 7
 icon = 22
+reserve = true
 mods = Array[ExtResource("1_ynmyt")]([SubResource("Resource_86osw")])
+grants = PackedStringArray()
+needs_all = PackedStringArray()

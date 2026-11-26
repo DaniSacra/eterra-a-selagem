@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_fmx7a"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_u15h5"]
+
+[sub_resource type="Resource" id="Resource_87dh5"]
+script = ExtResource("1_fmx7a")
+stat = &"cel_crit"
+base = 0.15
+per_level = PackedFloat32Array(0.03, 0.03)
+by_rarity = false
+
+[resource]
+script = ExtResource("2_u15h5")
+id = &"circulo_radiante"
+icon = 6
+slot = 3
+mods = Array[ExtResource("1_fmx7a")]([SubResource("Resource_87dh5")])
+grants = PackedStringArray("crit")
+needs_all = PackedStringArray()

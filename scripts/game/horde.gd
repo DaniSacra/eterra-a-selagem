@@ -545,7 +545,7 @@ static func stride_lean(sway: float, t: float, loop: float) -> float:
 
 
 func _speed(e: Enemy) -> float:
-	return e.def.speed * speed_scale * (0.45 if e.slow_t > 0.0 else 1.0) * (1.0 + e.haste_pace if e.haste_t > 0.0 else 1.0)
+	return e.def.speed * speed_scale * (0.45 if e.slow_t > 0.0 else 1.0) * (1.0 - e.cold_slow) * (1.0 + e.haste_pace if e.haste_t > 0.0 else 1.0)
 
 
 ## C1e: how much faster than its own its attacks come back (a Gritador's shout, a Furioso): SupportRules.pace.

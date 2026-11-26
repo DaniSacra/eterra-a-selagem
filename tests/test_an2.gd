@@ -47,14 +47,14 @@ func test_nine_blessings_a_family_one_a_button_and_twelve_elos() -> void:
 		var n := 0
 		var slots := {}
 		for b in state.catalog:
-			if b.family == f:
+			if b.family == f and not b.reserve:  # (V1: the old ids that stay are out of the draw, not in the nine)
 				n += 1
 				if b.slot != Boon.Slot.NONE:
 					slots[b.slot] = b.id
 				assert_ne(T.t("boon_%s" % b.id), "boon_%s" % b.id)
 				assert_ne(T.t("boon_%s_desc" % b.id), "boon_%s_desc" % b.id)
 		assert_eq(n, 9, "family %d" % f)
-		assert_eq(slots.size(), 4, "a Blessing for attack, special, Brado and Investida")
+		assert_eq(slots.size(), 5, "a Blessing for attack, special, Brado, dodge and ultimate (E has none in V1)")
 	var elos := state.catalog.filter(func(b: Boon) -> bool: return b.is_duo())
 	assert_eq(elos.size(), 12)
 	for e: Boon in elos:
@@ -82,20 +82,15 @@ func test_fraqueza_cuts_what_the_enemy_deals() -> void:
 	assert_almost_eq(game.horde._out(e), game.horde.damage_scale * (1.0 - Combat.WEAK_CUT), 0.001)
 	_take(game, &"entardecer")
 	game.combat.hit_enemy(e, 1.0, tags, Vector2.RIGHT, 0.0)
-	assert_almost_eq(game.horde.weak_cut, Combat.WEAK_CUT + 0.1, 0.001, "Entardecer deepens it")
+	assert_almost_eq(game.horde.weak_cut, Combat.WEAK_CUT + 0.05, 0.001, "Névoa Profunda (entardecer) deepens it")
 	e.weak_t = 0.0
 	assert_eq(game.horde._out(e), game.horde.damage_scale, "it wears off")
 
 
 func test_marca_makes_the_marked_take_more() -> void:
 	var game := _game()
-	_take(game, &"golpe_marca")
-	var e := game.horde.spawn(game.horde.def(&"guard"), Vector2(3, 0), false)
-	var tags: Array[StringName] = [&"light"]
-	var before := e.hp
-	game.combat.hit_enemy(e, 20.0, tags, Vector2.RIGHT, 0.0)
-	var first := before - e.hp - e.armor * 0.0
-	assert_gt(e.mark_t, 0.0)
+	# (V1: Marca of the Blessings is a state of the layer, with no bonus damage of its own; the old mark of a skill is this)
+	var first := 0.0
 	var f := game.horde.spawn(game.horde.def(&"guard"), Vector2(-3, 0), false)
 	var g := game.horde.spawn(game.horde.def(&"guard"), Vector2(0, 3), false)
 	f.armor = 0.0
@@ -121,7 +116,11 @@ func test_mare_pushes_farther_and_hits_the_sliding_harder() -> void:
 	var tags: Array[StringName] = [&"light"]
 	game.combat.hit_enemy(e, 1.0, tags, Vector2.RIGHT, 4.0)
 	var plain := e.push.length()
-	_take(game, &"golpe_mare")
+	var push := BoonMod.new()  # (V1: no Blessing pushes; the stat stays for what asks it)
+	push.stat = &"push_pct"
+	push.tag = &"light"
+	push.base = 0.5
+	game.boons.grant([push])
 	var f := game.horde.spawn(game.horde.def(&"skeleton"), Vector2(-3, 0), false)
 	game.combat.hit_enemy(f, 1.0, tags, Vector2.RIGHT, 4.0)
 	assert_gt(f.push.length(), plain, "pushed farther")

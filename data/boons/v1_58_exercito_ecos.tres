@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_8uw45"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_tenpd"]
+
+[sub_resource type="Resource" id="Resource_laxed"]
+script = ExtResource("1_8uw45")
+stat = &"cel_echo"
+base = 0.25
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_dr3nw"]
+script = ExtResource("1_8uw45")
+stat = &"cel_echo_time"
+base = 5.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_tenpd")
+id = &"exercito_ecos"
+family = 7
+icon = 22
+max_level = 1
+slot = 6
+mods = Array[ExtResource("1_8uw45")]([SubResource("Resource_laxed"), SubResource("Resource_dr3nw")])
+grants = PackedStringArray("echo")
+needs_all = PackedStringArray()

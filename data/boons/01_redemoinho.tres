@@ -23,4 +23,7 @@ id = &"redemoinho"
 family = 0
 icon = 1
 slot = 5
+reserve = true
 skill = SubResource("Resource_ncq1e")
+grants = PackedStringArray()
+needs_all = PackedStringArray()

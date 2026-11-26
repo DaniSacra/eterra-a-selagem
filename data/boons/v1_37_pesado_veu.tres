@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_a3nnr"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_2fc44"]
+
+[sub_resource type="Resource" id="Resource_q5ftw"]
+script = ExtResource("1_a3nnr")
+stat = &"cel_weak"
+base = 3.0
+per_level = PackedFloat32Array(1, 1)
+by_rarity = false
+
+[resource]
+script = ExtResource("2_2fc44")
+id = &"pesado_veu"
+family = 5
+icon = 20
+slot = 2
+mods = Array[ExtResource("1_a3nnr")]([SubResource("Resource_q5ftw")])
+grants = PackedStringArray("weak")
+needs_all = PackedStringArray()

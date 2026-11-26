@@ -44,8 +44,12 @@ func test_an_elo_asks_one_blessing_of_each_list() -> void:
 
 func test_a_move_tag_asks_the_combo_for_it() -> void:
 	var st := _state()
-	assert_eq(BoonNeeds.lines(st.find(&"final_radiante"), st.catalog), PackedStringArray([T.t(&"need_tag_finisher")]))
-	assert_eq(BoonNeeds.lines(st.find(&"golpe_geada"), st.catalog), PackedStringArray([T.t(&"need_tag_spin")]))
+	# (V1: no Blessing of the draw asks a move shape any more; the line stays for the data that does)
+	for tag in [&"finisher", &"spin"]:
+		var b := Boon.new()
+		b.id = StringName("needs_%s" % tag)
+		b.needs_tag = tag
+		assert_eq(BoonNeeds.lines(b, st.catalog), PackedStringArray([T.t(StringName("need_tag_%s" % tag))]))
 
 
 func test_a_plain_blessing_asks_nothing_and_null_is_safe() -> void:
@@ -115,7 +119,7 @@ func test_the_numbers_run_in_one_line_with_the_real_values() -> void:
 
 func test_a_button_blessing_never_says_every_n_seconds() -> void:
 	var state := BoonState.new(BoonState.load_catalog())
-	var b := state.find(&"pesado_brasa")
+	var b := state.find(&"circulo_brasa")
 	for r: Array in BoonChoice.facts(b, 1):
 		assert_ne(r[0], &"cd", "a button's skill is not periodic")
 	var gap: Array = BoonChoice.facts(b, 1).filter(func(r: Array) -> bool: return r[0] == &"gap")
@@ -132,7 +136,7 @@ func test_the_rarity_stands_beside_the_name() -> void:
 
 
 func test_a_word_of_rule_under_the_pointer_shows_its_own_box() -> void:
-	var choice := _choice([&"circulo_brasa"])
+	var choice := _choice([&"pesado_brasa"])
 	await wait_process_frames(3)
 	var card := choice.cards()[0]
 	assert_true(card.plain.to_lower().contains("queimadura") or choice.glossary.shown.size() > 0)
