@@ -855,10 +855,16 @@ func _edges_steps() -> Array[Callable]:
 				deep = deep.duplicate() as ShaderMaterial
 				for k in look:
 					deep.set_shader_parameter(k, look[k])
-			mi.material_override = deep
+			var own := cliff_material()
+			mi.material_override = own if own != null else deep
 			mi.layers = 1 | ArenaKit.DEPTH_LAYER
 			add_child(mi))
 		return steps]
+
+
+## The material of the cliffs under the floor's edges (null: the depths' unlit stone with cliff_look). The hub's mountain.
+func cliff_material() -> Material:
+	return null
 
 
 ## One edge of the floor from a to b, the abyss (or the outside) toward `out`. By default the broken edge over the

@@ -59,6 +59,8 @@ const STY_CROWN_RAGGED := 0.12
 const SHRUB_TALL := Vector2(1.0, 1.7)
 const SHRUB_WIDE := 1.5
 const SHRUB_EVERY := 1.4
+## The Videira's fountain stands in the middle of its bed: no shrub of the bed's row within this of the middle.
+const FOUNTAIN_CLEAR := 2.1
 
 # ---------- the stations ----------
 ## Vendedor (spec 3.2; HUB-D): the awning's back and front heights, how far it reaches south and north of the
@@ -73,10 +75,10 @@ const AWNING_RIDGE := Vector2(0.62, 5.0)
 const AWNING_DEPTH := Vector2(1.5, 2.4)
 const AWNING_HALF := 2.9
 const VALANCE := Vector2(0.28, 1.6)
-const AWNING_CLOTH := Color(0.26, 0.14, 0.1)
+const AWNING_CLOTH := Color(0.5, 0.12, 0.17)
 ## Every other run of the cloth along v a muted wine (HV-C 6.2: hue 355, saturation 0.35, never the danger's red; an
 ## awning, not a sign); runs a metre.
-const AWNING_STRIPE := Color(0.22, 0.13, 0.14)
+const AWNING_STRIPE := Color(0.84, 0.74, 0.58)
 const AWNING_RUNS := 2.0
 const AWNING_LION := 1.5
 const POST_R := 0.07
@@ -157,13 +159,22 @@ const SCROLL := Color(0.64, 0.57, 0.44)
 # ---------- air and light ----------
 ## SV-R: the air under the far ridges (HubScenery draws them) and the cliffs of the drop: pale blue haze, warm grey stone
 ## (palette 04-paleta-e-iluminacao.md: water and distant mist #527F8C, shaded stone #8F8775), never a dark panel.
-const MIST := Color(0.5, 0.6, 0.66)
-const CLIFF := {&"stone_color": Color(0.3, 0.28, 0.25), &"edge_color": Color(0.5, 0.46, 0.4), &"mist_color": Color(0.5, 0.6, 0.66),
+const MIST := Color(0.44, 0.33, 0.46)
+const CLIFF := {&"stone_color": Color(0.3, 0.28, 0.25), &"edge_color": Color(0.5, 0.46, 0.4), &"mist_color": MIST,
 	&"glow_color": Color(0.5, 0.6, 0.7)}
+## Hub refine round 1: the platform is the top of a mountain at dusk. The cliffs are warm layered rock (hub_cliff.gdshader)
+## going into the lilac mist of the abyss planes (their opaque floor is about this share of MIST).
+const CLIFF_SHADER := preload("res://assets/shaders/hub_cliff.gdshader")
+const CLIFF_ROCK_A := Color(0.56, 0.45, 0.35)
+const CLIFF_ROCK_B := Color(0.38, 0.32, 0.31)
+const CLIFF_MOSS := Color(0.3, 0.42, 0.17)
+const CLIFF_MIST_SHARE := 0.5
+const CLIFF_FADE := Vector2(2.0, 19.0)
 ## The hub's air (spec 4.1: lighter and warmer than any room, the cold in the sky and the vista) and its stylized look.
+const DUSK_GOLD := Color(1.0, 0.8, 0.55)
 const AIR := {
-	&"sky": Color(0.46, 0.58, 0.66), &"fog": Color(0.55, 0.58, 0.58), &"fog_depth": Vector2(90.0, 220.0),
-	&"ambient": Color(0.86, 0.84, 0.78), &"ambient_gain": 1.4, &"moon": Color(0.96, 0.86, 0.67), &"moon_energy": 1.1,
+	&"sky": Color(0.5, 0.42, 0.52), &"fog": Color(0.62, 0.5, 0.52), &"fog_depth": Vector2(90.0, 220.0),
+	&"ambient": Color(0.86, 0.8, 0.8), &"ambient_gain": 1.4, &"moon": DUSK_GOLD, &"moon_energy": 1.1,
 	&"moon_shadow": true,
 }
 ## The classic look's floor (F7): the warm limestone of the stylized one, so the square is not the hall's rose slab.
@@ -181,8 +192,8 @@ const STYLE := {
 	&"joint_cold": Color(0.86, 0.93, 0.98), &"slab_paint": Vector2(0.82, 1.18), &"slab_hue": 6.0, &"olive_share": 0.03,
 	&"edge_value": 1.0, &"pool_saturation": 0.8, &"metal": true,
 	&"fire": {&"candle_range": 3.5, &"candle_gain": 1.2, &"bowl_range": 4.2, &"bowl_gain": 0.95},
-	&"air": {&"sky": Color(0.46, 0.58, 0.66), &"fog": Color(0.55, 0.58, 0.58), &"ambient": Color(0.86, 0.84, 0.78),
-		&"ambient_gain": STY_AMBIENT_GAIN, &"moon": Color(0.96, 0.86, 0.67), &"moon_energy": STY_MOON, &"moon_shadow": true},
+	&"air": {&"sky": Color(0.5, 0.42, 0.52), &"fog": Color(0.62, 0.5, 0.52), &"ambient": Color(0.86, 0.8, 0.8),
+		&"ambient_gain": STY_AMBIENT_GAIN, &"moon": DUSK_GOLD, &"moon_energy": STY_MOON, &"moon_shadow": true},
 	&"shadow_glow": STY_SHADOW_GLOW, &"vignette": STY_VIGNETTE,
 }
 ## ENV-HB6 and BH-07 (docs/design/ciclo_visual_2026-11-20.md item 2; benchmark_hades2_style.md 4.1; rooms_progression.md
@@ -195,8 +206,8 @@ const STYLE := {
 ## glow reads the more for it on arriving, and a pale green pool at the foot of its flight (the top of the screen on
 ## arriving, where the camera holds the portal itself out of the frame) points the way. Each pool: station, aim (u, height, v), from (u, height, v), energy, cone
 ## (degrees), reach, colour.
-const STY_AMBIENT_GAIN := 1.1
-const STY_MOON := 0.9
+const STY_AMBIENT_GAIN := 0.98
+const STY_MOON := 1.05
 const STY_KEY_SHARE := 0.8
 const STY_FORGE_GAIN := 1.5
 const STY_POOLS: Array[Array] = [
@@ -295,6 +306,34 @@ func mist() -> Color:
 
 func cliff_look() -> Dictionary:
 	return CLIFF
+
+
+## The buildings' wall: warm cream limestone ashlar that keeps its own colour in the stylized look (the art's calcário e
+## marfim, 04-paleta-e-iluminacao.md): the room's grey-blue ashlar read as a brick box.
+const WALL_A := Color(0.62, 0.53, 0.41)
+const WALL_B := Color(0.8, 0.7, 0.55)
+var _wall_mat: ShaderMaterial
+
+
+func facade_stone() -> ShaderMaterial:
+	if _wall_mat == null:
+		_wall_mat = fm.ashlar(0.0, stone_tint()).duplicate() as ShaderMaterial
+		_wall_mat.set_shader_parameter(&"stone_a", WALL_A)
+		_wall_mat.set_shader_parameter(&"stone_b", WALL_B)
+		_wall_mat.set_meta(ArenaKit.PAINT_OWN, ArenaKit.OWN_KEEP)
+	return _wall_mat
+
+
+## The mountain's rock under every edge (hub_cliff.gdshader), the same for all of them.
+func cliff_material() -> Material:
+	var mat := ShaderMaterial.new()
+	mat.shader = CLIFF_SHADER
+	mat.set_shader_parameter(&"rock_a", CLIFF_ROCK_A)
+	mat.set_shader_parameter(&"rock_b", CLIFF_ROCK_B)
+	mat.set_shader_parameter(&"moss_color", CLIFF_MOSS)
+	mat.set_shader_parameter(&"mist_color", MIST * CLIFF_MIST_SHARE)
+	mat.set_shader_parameter(&"fade", CLIFF_FADE)
+	return mat
 
 
 ## Every edge of the floor, the basins' too, a plain cliff under it (SV-R: the buildings and doors are dressed in the
@@ -716,6 +755,8 @@ func _bed(c: Vector2, o: ArenaObstacle) -> void:
 	for k in n:
 		var t := (k + 0.5) / n - 0.5
 		var p := c + (Vector2(t * length, 0.0) if long else Vector2(0.0, t * length))
+		if p.distance_to(Vector2(HubPlan.VINE_BED.x, HubPlan.VINE_BED.y)) < FOUNTAIN_CLEAR:
+			continue
 		_shrub_spots.append(Vector3(p.x, h, p.y))
 		_shrub_tall.append(r.randf_range(SHRUB_TALL.x, SHRUB_TALL.y))
 

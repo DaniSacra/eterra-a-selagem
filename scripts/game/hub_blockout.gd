@@ -23,6 +23,13 @@ const GATE_HEAD_SIDE := 1.4
 const GATE_DARK := Color(0.02, 0.05, 0.035)
 const DOOR_WOOD := Color(0.2, 0.12, 0.07)
 const DOOR_IRON := Color(0.09, 0.09, 0.1)
+## Hub refine round 1: an open door shows the warm light of the room inside (the art's doors are lit), and the future
+## rooms' doors carry a gold padlock (the art's Area Futura).
+const DOOR_GLOW := Color(1.0, 0.66, 0.3)
+const DOOR_GLOW_ENERGY := 1.1
+const LOCK_GOLD := Color(0.72, 0.55, 0.22)
+const LOCK_SIZE := Vector3(0.44, 0.38, 0.1)
+var _glow: StandardMaterial3D
 
 var look: HubLook
 
@@ -53,7 +60,7 @@ static func _is_closed(layout: RoomLayout, id: StringName) -> bool:
 func _building(r: Vector4, h: float) -> void:
 	var c := Vector2(r.x + r.z, r.y + r.w) * 0.5
 	var size := Vector2(r.z - r.x, r.w - r.y)
-	var mat := look.ashlar()
+	var mat: Material = look.facade_stone()
 	look.fm.block(HubLook.at(c.x, 0.0, c.y), Vector3(size.x, h, size.y), 0.0, mat, false)
 	look.fm.block(HubLook.at(c.x, 0.0, c.y), Vector3(size.x + PLINTH.x * 2.0, PLINTH.y, size.y + PLINTH.x * 2.0), 0.0, mat, false)
 	look.fm.block(HubLook.at(c.x, h - CORNICE.y, c.y), Vector3(size.x + CORNICE.x * 2.0, CORNICE.y, size.y + CORNICE.x * 2.0), 0.0, mat, false)
@@ -66,7 +73,7 @@ func _gate() -> void:
 	var g := HubPlan.GATE
 	var face := HubPlan.GATE_FACE_U
 	var mid := HubPlan.GATE_MID_V
-	var mat := look.ashlar()
+	var mat: Material = look.facade_stone()
 	var half := GATE_W * 0.5
 	# the wall south and north of the opening, the lintel over it, the stone behind
 	var head := half + GATE_HEAD_SIDE
@@ -119,6 +126,28 @@ func _door(id: StringName, closed: bool) -> void:
 			var y := h * (0.3 + 0.4 * k)
 			var strap := Vector3(long_half * 2.0, 0.1, depth + 0.04) if across_u else Vector3(depth + 0.04, 0.1, long_half * 2.0)
 			look.fm.block(HubLook.at(c.x, y, c.y), strap, 0.0, look._plain(DOOR_IRON, 0.6), false)
+		if id == HubPlan.FUTURE_A or id == HubPlan.FUTURE_B:
+			_padlock(c, h)
 	else:
 		var gap := Vector3(long_half * 2.0, h, 0.04) if across_u else Vector3(0.04, h, long_half * 2.0)
-		look.fm.block(HubLook.at(c.x, 0.0, c.y), gap, 0.0, look._plain(GATE_DARK, 1.0), false)
+		look.fm.block(HubLook.at(c.x, 0.0, c.y), gap, 0.0, _door_glow(), false)
+
+
+func _door_glow() -> StandardMaterial3D:
+	if _glow == null:
+		_glow = StandardMaterial3D.new()
+		_glow.albedo_color = DOOR_GLOW * 0.4
+		_glow.emission_enabled = true
+		_glow.emission = DOOR_GLOW
+		_glow.emission_energy_multiplier = DOOR_GLOW_ENERGY
+	return _glow
+
+
+## A gold padlock on the leaf's south face: a body and a shackle (two posts and a bar), seen from the camera.
+func _padlock(c: Vector2, h: float) -> void:
+	var gold := look._plain(LOCK_GOLD, 0.45)
+	var p := HubLook.at(c.x, h * 0.46, c.y - 0.2)
+	look._bar(p, LOCK_SIZE, gold)
+	for sd: float in [-1.0, 1.0]:
+		look._bar(p + Vector3(sd * 0.13, LOCK_SIZE.y * 0.5 + 0.16, 0), Vector3(0.06, 0.32, 0.06), gold)
+	look._bar(p + Vector3(0, LOCK_SIZE.y * 0.5 + 0.34, 0), Vector3(0.32, 0.06, 0.06), gold)
