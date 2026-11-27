@@ -7,8 +7,8 @@
 script = ExtResource("1_note3")
 stat = &"burn_dps"
 tag = &"finisher"
-base = 4.0
-per_level = PackedFloat32Array(2, 2)
+base = 9.0
+per_level = PackedFloat32Array(5, 5)
 
 [sub_resource type="Resource" id="Resource_05mqd"]
 script = ExtResource("1_note3")

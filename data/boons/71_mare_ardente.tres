@@ -7,7 +7,7 @@
 script = ExtResource("1_odhlr")
 stat = &"burn_dps"
 tag = &"cast"
-base = 4.0
+base = 9.0
 per_level = PackedFloat32Array()
 
 [resource]

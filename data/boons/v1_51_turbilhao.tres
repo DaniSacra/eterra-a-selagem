@@ -6,8 +6,8 @@
 [sub_resource type="Resource" id="Resource_xfgyw"]
 script = ExtResource("1_ec2j5")
 stat = &"cel_whirl_dmg"
-base = 18.0
-per_level = PackedFloat32Array(9, 9)
+base = 45.0
+per_level = PackedFloat32Array(22.5, 22.5)
 
 [sub_resource type="Resource" id="Resource_88853"]
 script = ExtResource("1_ec2j5")

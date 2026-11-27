@@ -9,11 +9,11 @@ script = ExtResource("3_wrj0s")
 duration = PackedFloat32Array(0)
 gap = PackedFloat32Array(0)
 cooldown = PackedFloat32Array(3.5, 3, 2.5)
-damage = PackedFloat32Array(11, 16, 22)
+damage = PackedFloat32Array(27, 39, 54)
 count = PackedFloat32Array(3, 4, 6)
 radius = PackedFloat32Array(2.2, 2.4, 2.6)
 status = &"burn"
-status_power = PackedFloat32Array(3, 4, 5)
+status_power = PackedFloat32Array(8, 11, 14)
 
 [resource]
 script = ExtResource("2_odan1")

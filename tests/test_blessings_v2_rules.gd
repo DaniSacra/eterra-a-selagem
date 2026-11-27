@@ -37,9 +37,9 @@ func test_poison_tick_grows_only_to_thirty_percent() -> void:
 
 
 func test_dot_cap_shrinks_poison_and_bleed_and_never_the_burn() -> void:
-	assert_eq(CelRules.dot_scale(4.0, 5.0, 5.0), 1.0, "4 + 10 fits in 16")
-	assert_almost_eq(CelRules.dot_scale(6.0, 10.0, 10.0), 0.5, 0.001, "6 + 20 over 16: the other two take half")
-	assert_eq(CelRules.dot_scale(20.0, 3.0, 0.0), 0.0, "a burn over the ceiling leaves no room (it is not cut)")
+	assert_eq(CelRules.dot_scale(10.0, 12.0, 12.0), 1.0, "10 + 24 fits in 40")
+	assert_almost_eq(CelRules.dot_scale(15.0, 25.0, 25.0), 0.5, 0.001, "15 + 50 over 40: the other two take half")
+	assert_eq(CelRules.dot_scale(50.0, 3.0, 0.0), 0.0, "a burn over the ceiling leaves no room (it is not cut)")
 	assert_eq(CelRules.dot_scale(5.0, 0.0, 0.0), 1.0)
 
 

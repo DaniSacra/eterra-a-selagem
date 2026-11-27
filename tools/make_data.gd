@@ -132,12 +132,12 @@ func _tree(fifth: bool) -> ComboTree:
 		"move_hold": 11.0 / 60.0, "magick_per_hit": 0.5, "step": STEP[0],
 		"chain_window": 0.4, "hit_stop_ms": 35.0, "shake": 0.9, "move_scale": 0.0}, [cut2])
 	# GP-1 (docs/design/heroes/warrior_v1_2026-11-26.md 2): the blows on the two buttons. Left: a tap is the combo above, held
-	# 0.6 s the Golpe Esmagador (75, 12 Magia, 2.6 m close, breaks a common's poise at once). Right: a tap is the Corte Circular
+	# 0.6 s the Golpe Esmagador (200 since 2026-11-27, was 75; 12 Magia, 2.6 m close, breaks a common's poise at once). Right: a tap is the Corte Circular
 	# (35, 8 Magia, 360 degrees, pushes everyone), held 0.8 s the Lança da Emeth. The Magia is spent when the blow lands
 	# (Player), never when it is begun.
 	# Esmagador (CHARGE_LIGHT): its windup and glint play inside the charge (GF-08), so it lands when the charge fills.
 	var smash := _move(&"smash", CL, &"Slash_A", [&"light", &"omega", &"smash"],
-		{"magick_cost": 12.0, "charge_time": 0.6, "damage": 75.0, "reach": 2.6, "width": 120.0, "knockback": 12.0, "windup": 0.22,
+		{"magick_cost": 12.0, "charge_time": 0.6, "damage": 200.0, "reach": 2.6, "width": 120.0, "knockback": 12.0, "windup": 0.22,
 		"glint": FINISHER_GLINT, "recovery": 0.5, "move_hold": 0.5, "step": 0.4, "chain_window": 0.4, "hit_stop_ms": 90.0, "shake": 1.8,
 		"move_scale": 0.0, "sound": &"blade_heavy", "layers": LAYER_TURN}, [], &"move_smash")
 	# Corte Circular (HEAVY, a tap): the Poder. Tags shout and cast: the Blessings of the Poder slot count on it, the Quebra reads the
@@ -150,7 +150,7 @@ func _tree(fifth: bool) -> ComboTree:
 	# kept whole; only its button and its tags changed: the Especial slot, `lance`). Its windup and glint play inside the charge
 	# (GF-08, Player._charge_lead). Hades II's Swing5: 0.78 s after it without walking or striking.
 	var lance := _move(&"lance", C, &"Sword_Attack", [&"heavy", &"omega", &"thrust", &"lance"],
-		{"magick_cost": 20.0, "charge_time": 0.8, "damage": 150.0, "shape": ComboNode.Shape.LINE, "reach": 1080.0 / U, "width": 1.8,
+		{"magick_cost": 20.0, "charge_time": 0.8, "damage": 375.0, "shape": ComboNode.Shape.LINE, "reach": 1080.0 / U, "width": 1.8,
 		"both_ways": true, "knockback": 18.0, "windup": 0.06, "recovery": 0.78, "move_hold": 0.78, "chain_window": 0.4, "hit_stop_ms": 50.0, "shake": 2.0,
 		"move_scale": 0.0, "sound": &"thrust", "sound_at": 0.06 - THRUST_PEAK, "layers": LAYER_STEP}, [], &"move_lance")
 	var tree := ComboTree.new()
@@ -656,13 +656,23 @@ func _pair(base: Dictionary, elite: Dictionary) -> void:
 ## at a common card: base the old level 1, the gains the old steps 1 to 2 and 2 to 3.
 ## CB-1 (Daniel, 2026-11-22: the hero starts weak, 15, 15, 20): the share kept of the damage that is a number of its own
 ## (the Blessings that act alone, the fire), or they would be worth twice as much beside his blows.
-const FLAT := 0.6
+const FLAT := 1.5
+## Chapter 1 = SWORN numbers (2026-11-27): enemies have 2.5 to 3 times the life, so every fixed damage of the hero takes this too.
+const FIXED_X := 2.5
+
+
+## Stats that are a damage number of their own (not a share of a blow): they follow the enemies (FIXED_X).
+const ABS_MODS: Array[StringName] = [&"dodge_ember_dps", &"detonate_dmg", &"shield_burst", &"dodge_plague_dps", &"cel_burn_dps", &"cel_combust_dmg",
+	&"cel_poison_dps", &"cel_sat_dmg", &"cel_shock_zap", &"cel_whirl_dmg", &"cel_discharge"]
 
 
 func _mod(stat: StringName, base: float, per_level: Array = [], tag: StringName = &"", by_rarity: bool = true) -> BoonMod:
 	var m := BoonMod.new()
 	m.stat = stat
 	m.tag = tag
+	if ABS_MODS.has(stat):
+		base *= FIXED_X
+		per_level = per_level.map(func(v: float) -> float: return v * FIXED_X)
 	# CB-1 (2026-11-22): damage that does not grow with his blows falls with them
 	m.base = maxf(1.0, roundf(base * FLAT)) if stat == &"burn_dps" else base
 	m.per_level = PackedFloat32Array(per_level.map(func(v: float) -> float: return maxf(1.0, roundf(v * FLAT))) if stat == &"burn_dps" else per_level)
@@ -875,8 +885,9 @@ var _v1_n := 0
 func _vm(stat: StringName, base: float, gain := 0.0, scale := false) -> BoonMod:
 	var m := BoonMod.new()
 	m.stat = stat
-	m.base = base
-	m.per_level = PackedFloat32Array([gain, gain]) if gain > 0.0 else PackedFloat32Array()
+	var x := FIXED_X if ABS_MODS.has(stat) else 1.0
+	m.base = base * x
+	m.per_level = PackedFloat32Array([gain * x, gain * x]) if gain > 0.0 else PackedFloat32Array()
 	m.by_rarity = scale
 	return m
 
@@ -887,6 +898,8 @@ func _vs(kind: SkillDef.Kind, props: Dictionary) -> SkillDef:
 	s.kind = kind
 	for k: String in props:
 		var v: Variant = props[k]
+		if v is Array and k == "damage":
+			v = v.map(func(x: float) -> float: return roundf(x * FIXED_X))
 		s.set(k, PackedFloat32Array(v) if v is Array else v)
 	return s
 
@@ -2395,11 +2408,11 @@ func _ultimates() -> void:
 	# cleave) and the life lost (ULT_HURT_CHARGE a point): a player who never holds an Omega still gets it
 	_ult(0, &"cleave", UltDef.Kind.CLEAVE, {"charge": 75.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 3, "gesture": 0.3, "weapon": &"emeth",
 		"tags": [&"ultimate", &"light"] as Array[StringName], "anim": &"Slash_C", "anim_peak": PEAK[&"Slash_C"], "knockback": 6.0,
-		"length": 12.0, "width": 4.0, "core_width": 1.5, "core_damage": 180.0, "damage": 120.0, "stun": 1.0, "armor_mult": 2.0})
+		"length": 12.0, "width": 4.0, "core_width": 1.5, "core_damage": 450.0, "damage": 300.0, "stun": 1.0, "armor_mult": 2.0})
 	_ult(1, &"vortex", UltDef.Kind.VORTEX, {"charge": 105.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 10, "gesture": 0.3, "weapon": &"", "reserve": true,
 		"tags": [&"ultimate", &"cast"] as Array[StringName], "anim": &"Sword_Attack", "anim_peak": PEAK[&"Sword_Attack"], "knockback": 2.0,
-		"ahead": 4.0, "aim_max": 8.0, "radius": 6.0, "radius_cap": 7.5, "duration": 4.0, "tick": 0.25, "tick_damage": 5.0,
-		"implode_damage": 72.0, "implode_radius": 3.0, "implode_stun": 0.8, "pull": 3.5, "swirl": 2.0, "core": 1.2,
+		"ahead": 4.0, "aim_max": 8.0, "radius": 6.0, "radius_cap": 7.5, "duration": 4.0, "tick": 0.25, "tick_damage": 12.0,
+		"implode_damage": 180.0, "implode_radius": 3.0, "implode_stun": 0.8, "pull": 3.5, "swirl": 2.0, "core": 1.2,
 		"elite_pull": 0.5, "guardian_pull": 0.25, "stun": 0.0, "armor_mult": 2.0})
 
 
@@ -2450,15 +2463,15 @@ func _talents() -> void:
 	# GP-1 (D-14): the held blows cost twice and hit three times as hard; the Magia maximum rises by 10 (30 to 40) with it alone
 	_talent(7, &"forca_titanica", B.IMPETO, T.APEX, 4, 17, {"needs": &"forca_concentrada", "mods": [_fixed(&"omega_cost_pct", 1.0), _fixed(&"final_pct", 2.0, [], &"omega"),
 		_fixed(&"magick_max", 10.0)] as Array[BoonMod]})
-	# Domínio: the finisher breaks armor 50% faster; the Brado is wider, stronger and interrupts (the old Voz Larga's numbers);
-	# the stun of a blow lasts 50% longer; the Investida goes through and stuns whoever it hits for 2 s (B.4), armor takes 50% more
-	_talent(8, &"ruptura", B.DOMINIO, T.ENTRY, 2, 3, {"mods": [_fixed(&"armor_pct", 0.5, [], &"finisher"), _fixed(&"armor_pct", 0.5, [], &"smash")] as Array[BoonMod]})
+	# Domínio: the finisher wears 50% more Quebra; the Brado is wider, stronger and interrupts (the old Voz Larga's numbers);
+	# the stun of a blow lasts 50% longer; the Investida goes through and stuns whoever it hits for 2 s (B.4), Quebra wears 50% more
+	_talent(8, &"ruptura", B.DOMINIO, T.ENTRY, 2, 3, {"mods": [_fixed(&"poise_pct", 0.5, [], &"finisher"), _fixed(&"poise_pct", 0.5, [], &"smash")] as Array[BoonMod]})
 	# GP-1 (D-12): Alcance Marcial takes the Voz do Leão's place: the Corte Circular reaches 25% farther and pushes 30% more
 	_talent(9, &"alcance_marcial", B.DOMINIO, T.MIDDLE, 3, 8, {"needs": &"ruptura", "mods": [_fixed(&"reach_pct", 0.25, [], &"cast"),
 		_fixed(&"push_pct", 0.3, [], &"cast")] as Array[BoonMod]})
 	_talent(10, &"imposicao", B.DOMINIO, T.MIDDLE, 3, 13, {"needs": &"ruptura", "mods": [_fixed(&"stun_pct", 0.5)] as Array[BoonMod]})
 	_talent(11, &"investida_implacavel", B.DOMINIO, T.APEX, 4, 18, {"needs": &"imposicao", "mods": [_fixed(&"dash_pierce", 1.0, [], &"dash"),
-		_fixed(&"dash_stun", 2.0, [], &"dash"), _fixed(&"armor_pct", 0.5, [], &"dash")] as Array[BoonMod]})
+		_fixed(&"dash_stun", 2.0, [], &"dash"), _fixed(&"poise_pct", 0.5, [], &"dash")] as Array[BoonMod]})
 
 
 ## A wave a blow throws (Combat._gift_wave) on the moves with this tag: damage, meters it runs, meters across.
@@ -2485,7 +2498,7 @@ func _hero() -> void:
 		"max_hp": 50.0, "hurt_time": 0.18, "hurt_invuln": 0.7, "dodge_charges": 1, "dodge_recharge": 0.8,
 		"magick_max": 30.0, "circle": false,
 		"cast_charge": 0.25, "cast_slow": 0.6, "cast_cooldown": 6.0, "cast_attack_lock": 8.0 / 60.0, "cast_omega_time": 0.6,
-		"cast_omega_cost": 20.0, "cast_radius": 5.4, "cast_time": 3.0, "cast_burst": 150.0,
+		"cast_omega_cost": 20.0, "cast_radius": 5.4, "cast_time": 3.0, "cast_burst": 375.0,
 		"magick_on_finisher": 2.0,
 		# C1c (kit_c1c.md 1): the buttons feed each other
 		"magick_on_break": 3.0, "cd_refund_hit": 0.0, "cd_refund_break": 0.0, "cd_floor": 0.0, "gain_cap": 3.0, "gain_window": 1.0,
@@ -2679,7 +2692,7 @@ func _psalms() -> void:
 		["circulo_brasa", "circulo_geada", "circulo_radiante", "circulo_firme"],
 		["escudo", "passos", "firmeza", "golpe_firme", "pesado_firme"],
 		["bastiao", "rastro", "passo_frio", G + "alcance_marcial", G + "imposicao", G + "forca_concentrada"]],
-		{"damage": 30.0})
+		{"damage": 75.0})
 	# sheltering: the dodge leaves a shelter of 2.6 m for 3 s where it ends (two at most) that undoes enemy shots
 	_psalm(1, &"abrigo", &"shelter", S.DASH, E.SHELTER, [
 		["passos", "passo_brasa", "passo_geada", "passo_radiante"],
@@ -2691,13 +2704,13 @@ func _psalms() -> void:
 		["toque_geada", "pesado_brasa", "pesado_radiante", "pesado_firme"],
 		["consolo", "onda_maior", "flagelo", "golpe_radiante", "circulo_radiante", "passo_radiante"],
 		["aurora", "chama_viva", G + "forca_concentrada", G + "determinacao", G + "forca_titanica"]],
-		{"count": 3, "spread": 14.0, "damage": 55.0, "radius": 6.0})
+		{"count": 3, "spread": 14.0, "damage": 140.0, "radius": 6.0})
 	# firmness: the spin plants a stone of light: 30 within 4 m, the common ones stunned 1 s, then 3 s slowing there
 	_psalm(3, &"rocha", &"rock", S.ATTACK, E.STONE, [
 		["golpe_brasa", "golpe_geada", "golpe_radiante", "golpe_firme"],
 		["firmeza", "escudo", "pesado_firme", "estilhaco", "peso_inverno"],
 		["vapor", "bastiao", G + "maestria_marcial", G + "apogeu", G + "cadencia", G + "ruptura"]],
-		{"damage": 30.0, "radius": 4.0, "stun": 1.0, "duration": 3.0})
+		{"damage": 75.0, "radius": 4.0, "stun": 1.0, "duration": 3.0})
 
 
 # ---------- E5: the Provação ----------
@@ -3564,14 +3577,14 @@ func _forge() -> void:
 	# Fatia 2: Temperar III (C2), every blow of the Emeth 10% more (the attack's and the special's tags; no blow has both), 60
 	_forge_rank(2, &"temper_3", 3, 60, [_fixed(&"damage_pct", 0.1, [], &"light"), _fixed(&"damage_pct", 0.1, [], &"heavy")] as Array[BoonMod])
 	# Refinar (sistemas.md 1.5): a choice on each action, 25 Prata each, opened by the Forjador's first tool; Fio
-	# (reach), Peso (more armor taken off) and Pressa (the blows faster) on the attack, their twins on the special
+	# (reach), Peso (more Quebra worn) and Pressa (the blows faster) on the attack, their twins on the special
 	var R := Forge.REFINE
 	var tool := Forge.TOOL_REFINE
 	_forge_rank(10, &"refine_fio", 1, 25, [_fixed(&"reach_pct", 0.1, [], &"light")] as Array[BoonMod], R, &"attack", tool)
-	_forge_rank(11, &"refine_peso", 1, 25, [_fixed(&"armor_pct", 0.2, [], &"light")] as Array[BoonMod], R, &"attack", tool)
+	_forge_rank(11, &"refine_peso", 1, 25, [_fixed(&"poise_pct", 0.2, [], &"light")] as Array[BoonMod], R, &"attack", tool)
 	_forge_rank(12, &"refine_pressa", 1, 25, [_fixed(&"blow_speed", 0.08, [], &"light")] as Array[BoonMod], R, &"attack", tool)
 	_forge_rank(13, &"refine_onda_larga", 1, 25, [_fixed(&"wave_size_pct", 0.2, [], &"heavy")] as Array[BoonMod], R, &"special", tool)
-	_forge_rank(14, &"refine_onda_pesada", 1, 25, [_fixed(&"armor_pct", 0.3, [], &"heavy")] as Array[BoonMod], R, &"special", tool)
+	_forge_rank(14, &"refine_onda_pesada", 1, 25, [_fixed(&"poise_pct", 0.3, [], &"heavy")] as Array[BoonMod], R, &"special", tool)
 	_forge_rank(15, &"refine_onda_pronta", 1, 25, [_fixed(&"blow_speed", 0.08, [], &"heavy")] as Array[BoonMod], R, &"special", tool)
 	# Fatia 3 (sistemas.md 1.5, working names): Despertar, one property of the blade awake at a time, in Esmeralda,
 	# opened by the second tool: Sede (0.5 life a kill), Ímpeto (3 Magia more on each finisher), Eco Longo (each
@@ -3620,7 +3633,7 @@ func _enchants() -> void:
 	for f in DirAccess.get_files_at(ENCHANT_DIR):
 		DirAccess.remove_absolute(ENCHANT_DIR + f)
 	var S := Boon.Slot
-	var fan := _wave(&"spin", 12.0, 6.0, 3.0)
+	var fan := _wave(&"spin", 30.0, 6.0, 3.0)
 	fan.append(_fixed(&"blow_wave_fan", 2, [], &"spin"))
 	_enchant(0, &"lamina_triplice", S.ATTACK, fan, [&"corte_crescente"] as Array[StringName])
 	_enchant(1, &"eco_da_verdade", S.ATTACK, [_fixed(&"echo_pct", 0.5, [], &"spin"), _fixed(&"echo_delay", 0.3, [], &"spin")] as Array[BoonMod])
@@ -3630,8 +3643,8 @@ func _enchants() -> void:
 	# strikes the floor: a pulse of 4.5 m for 25 round him (past the spin's 3 m); Onda Gêmea, the special throws two smaller waves in a fan,
 	# 15 each, 9 m (never with the Onda Carregada); Eco do Passo, the Corte Veloz strikes again 0.3 s later for half
 	# (never with the Retorno do Corte, the same dash)
-	_enchant(3, &"corte_sismico", S.ATTACK, [_fixed(&"ground_pulse", 15.0, [], &"spin"), _fixed(&"ground_pulse_m", 4.5, [], &"spin")] as Array[BoonMod])
-	var twin := _wave(&"heavy", 15.0, 9.0, 2.4)
+	_enchant(3, &"corte_sismico", S.ATTACK, [_fixed(&"ground_pulse", 38.0, [], &"spin"), _fixed(&"ground_pulse_m", 4.5, [], &"spin")] as Array[BoonMod])
+	var twin := _wave(&"heavy", 38.0, 9.0, 2.4)
 	twin.append(_fixed(&"blow_wave_fan", 2, [], &"heavy"))
 	twin.append(_fixed(&"blow_wave_side", 1, [], &"heavy"))
 	_enchant(4, &"onda_gemea", S.SPECIAL, twin, [&"onda_carregada"] as Array[StringName])

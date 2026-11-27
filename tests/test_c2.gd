@@ -1,5 +1,5 @@
 extends GutTest
-## Lote C2 (docs/design/evolucao_c2.md, salas_14_c2.md): the evolution that is felt (armor_pct, Fúria Plena, Temperar III,
+## Lote C2 (docs/design/evolucao_c2.md, salas_14_c2.md): the evolution that is felt (poise_pct, Fúria Plena, Temperar III,
 ## the waves of 12, Fôlego de Guerra, Escudo de Guerra) and the 14 rooms (pools, elites, gold).
 
 const LIGHT: Array[StringName] = [&"light"]
@@ -47,24 +47,24 @@ func _lost(e: Enemy, base: float, tags: Array[StringName]) -> float:
 	return before - e.hp - e.armor
 
 
-func test_armor_pct_only_with_armor_and_by_tag() -> void:
-	_run([_mod(&"armor_pct", 0.2, &"light")] as Array[BoonMod])
-	var elite := game.horde.spawn(game.horde.def(&"archer_elite"), Vector2(5, 0), false)
-	elite.max_armor = 190.0  # (no enemy has armor since 2026-11-27: the bar is given by hand to keep its rule tested)
-	elite.armor = 190.0
-	assert_almost_eq(_lost(elite, 20.0, LIGHT), 24.0, 0.01, "20% more of the armor bar")
-	assert_almost_eq(_lost(elite, 20.0, HEAVY), 30.0, 0.01, "no other tag: the special's base only")
-	var plain := game.horde.spawn(game.horde.def(&"skeleton"), Vector2(-5, 0), false)
-	assert_eq(plain.armor, 0.0)
-	assert_almost_eq(_lost(plain, 20.0, LIGHT), 20.0, 0.01, "no armor: nothing")
+func _quebra_lost(mods: Array[BoonMod], tags: Array[StringName]) -> float:
+	_run(mods)
+	var e := game.horde.spawn(game.horde.def(&"skeleton"), Vector2(5, 0), false)
+	var before := e.poise
+	game.combat.hit_enemy(e, 1.0, tags, Vector2.RIGHT, 0.0)
+	return absf(before - e.poise)
 
 
-func test_armor_pct_adds_to_the_specials_base() -> void:
-	_run([_mod(&"armor_pct", 0.3, &"heavy")] as Array[BoonMod])
-	var elite := game.horde.spawn(game.horde.def(&"archer_elite"), Vector2(5, 0), false)
-	elite.max_armor = 190.0
-	elite.armor = 190.0
-	assert_almost_eq(_lost(elite, 20.0, HEAVY), 36.0, 0.01, "80% in all")
+func test_poise_pct_wears_more_quebra_by_tag() -> void:
+	var base := _quebra_lost([] as Array[BoonMod], LIGHT)
+	assert_gt(base, 0.0, "the attack wears the Quebra")
+	assert_almost_eq(_quebra_lost([_mod(&"poise_pct", 0.2, &"light")] as Array[BoonMod], LIGHT), base * 1.2, 0.01, "20% more of the Quebra")
+	assert_almost_eq(_quebra_lost([_mod(&"poise_pct", 0.2, &"light")] as Array[BoonMod], HEAVY), _quebra_lost([] as Array[BoonMod], HEAVY), 0.01, "no other tag: nothing")
+
+
+func test_poise_pct_on_the_special() -> void:
+	var base := _quebra_lost([] as Array[BoonMod], HEAVY)
+	assert_almost_eq(_quebra_lost([_mod(&"poise_pct", 0.3, &"heavy")] as Array[BoonMod], HEAVY), base * 1.3, 0.01, "30% more of the Quebra")
 
 
 func test_no_forge_rank_promises_a_stun_now() -> void:
@@ -72,8 +72,8 @@ func test_no_forge_rank_promises_a_stun_now() -> void:
 	for r in forge.catalog:
 		for m in r.mods:
 			assert_ne(m.stat, &"stun_pct", "%s" % r.id)
-	assert_eq(forge.find(&"refine_peso").mods[0].stat, &"armor_pct")
-	assert_eq(forge.find(&"refine_onda_pesada").mods[0].stat, &"armor_pct")
+	assert_eq(forge.find(&"refine_peso").mods[0].stat, &"poise_pct")
+	assert_eq(forge.find(&"refine_onda_pesada").mods[0].stat, &"poise_pct")
 
 
 func test_temper_three_is_ten_percent_and_the_waves_are_twelve() -> void:

@@ -5,7 +5,7 @@
 
 [sub_resource type="Resource" id="Resource_fbw7w"]
 script = ExtResource("1_p2h8s")
-stat = &"armor_pct"
+stat = &"poise_pct"
 tag = &"heavy"
 base = 0.3
 per_level = PackedFloat32Array()

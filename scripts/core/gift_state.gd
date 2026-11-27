@@ -15,7 +15,7 @@ extends RefCounted
 ##   room, E6: none today).
 ## - Fatia 2 (Encantos, Refinar): blow_wave_fan more waves in a fan (Lâmina Tríplice); echo_pct of a blow again after
 ##   echo_delay (Eco da Verdade, Combat); return_reach after a blow with return_time (Retorno do Corte, Combat);
-##   blow_speed (Pressa) and armor_pct (Peso, Onda Pesada, Combat).
+##   blow_speed (Pressa) and poise_pct (Peso, Onda Pesada, Combat).
 ## - Respiro: room_heal of life a room won. ult_charge_pct (the ultimate reads it), finisher_magick.
 ## The Dons of the redesign are read where they act: dodge_window_add (ComboRunner), attack_magick_pct (KitFeed), charge_time_pct
 ## and omega_cost_pct (Player), final_pct and apogee_pct and stun_pct (Combat), dash_pierce and dash_stun (Combat, Player).

@@ -7,7 +7,7 @@
 script = ExtResource("1_otr7c")
 stat = &"ground_pulse"
 tag = &"spin"
-base = 15.0
+base = 38.0
 per_level = PackedFloat32Array()
 by_rarity = false
 

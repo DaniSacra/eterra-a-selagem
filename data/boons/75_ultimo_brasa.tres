@@ -10,11 +10,11 @@ trigger = 7
 duration = PackedFloat32Array(0)
 gap = PackedFloat32Array(0)
 cooldown = PackedFloat32Array(4)
-damage = PackedFloat32Array(12, 18, 25)
+damage = PackedFloat32Array(30, 45, 63)
 count = PackedFloat32Array(8, 10, 12)
 radius = PackedFloat32Array(2.2)
 status = &"burn"
-status_power = PackedFloat32Array(4, 5, 6)
+status_power = PackedFloat32Array(9, 12, 15)
 
 [resource]
 script = ExtResource("2_3p8k7")

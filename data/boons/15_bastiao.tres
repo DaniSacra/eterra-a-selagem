@@ -6,7 +6,7 @@
 [sub_resource type="Resource" id="Resource_i21av"]
 script = ExtResource("1_cu6uw")
 stat = &"shield_burst"
-base = 40.0
+base = 100.0
 per_level = PackedFloat32Array()
 
 [resource]

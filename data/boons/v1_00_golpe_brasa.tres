@@ -6,8 +6,8 @@
 [sub_resource type="Resource" id="Resource_pyce4"]
 script = ExtResource("1_kdcai")
 stat = &"cel_burn_dps"
-base = 3.5
-per_level = PackedFloat32Array(1.5, 1.5)
+base = 8.75
+per_level = PackedFloat32Array(3.75, 3.75)
 
 [resource]
 script = ExtResource("2_hak1r")

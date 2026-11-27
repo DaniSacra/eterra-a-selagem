@@ -15,6 +15,7 @@ magick_max = 30.0
 charge_move_heavy = 0.03
 circle = false
 cast_cooldown = 6.0
+cast_burst = 375.0
 magick_on_break = 3.0
 passive_tags = Array[StringName]([&"finisher"])
 rhythm_time = 3.0

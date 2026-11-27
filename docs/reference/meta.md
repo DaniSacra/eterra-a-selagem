@@ -67,7 +67,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - `ButtonIntent` (`core/button_intent.gd`): toque ou segurar, limiar `Feel.hold_threshold` 0,20 s, sem disparo duplo; esquiva cancela a carga sem custo; sem Magia a recusa é visível (`Player.refusals`, sinal `magick_refused`). A Magia sai no `move_hit` (`Player._on_move_hit`), não no início do golpe.
 - `BattleRhythm` (`core/battle_rhythm.gd`, parâmetros `rhythm_*` no `HeroDef`): o último golpe do Combo arma 3 s; o próximo Esmagador, Corte ou Lança consome (Quebra extra, atordoamento, dano e alcance do especial). Criado em `HeroGifts`; limpo ao entrar na sala, no Supremo e na morte. `share()` e `armed()` são o que a UI lê.
 - Magia máxima 30; sem reembolso de recarga (`cd_refund_*` 0); `Combat.dodge_through(from, to)` (sinal `Player.dodge_ended`) dá a Investida Implacável pela esquiva (atordoa comuns, Quebra nos demais).
-- Dons: Voz do Leão saiu, **Alcance Marcial** entrou (`reach_pct` 0,25 e `push_pct` 0,3 na tag `cast`); Força Titânica é dado (custo x2, dano x3, `magick_max` +10); Ruptura dá `armor_pct` 0,5 ao Esmagador.
+- Dons: Voz do Leão saiu, **Alcance Marcial** entrou (`reach_pct` 0,25 e `push_pct` 0,3 na tag `cast`); Força Titânica é dado (custo x2, dano x3, `magick_max` +10); Ruptura dá `poise_pct` 0,5 (gasta 50% mais Quebra) ao Esmagador e aos finalizadores.
 - Bênçãos: slot CAST = Poder (Corte Circular), SPECIAL = Lança (tags `lance`, `heavy`); `circulo_mare` = `cel_speed`; Pastor e Onda Gêmea na Lança. Encantos `reserve` (Eco do Passo) não entram no sorteio.
 - Save versão 17 (`SaveData.migrate_removed_dons`, idempotente): devolve a Memória dos Dons removidos e limpa as teclas guardadas.
 

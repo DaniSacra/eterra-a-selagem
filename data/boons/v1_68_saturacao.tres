@@ -6,8 +6,8 @@
 [sub_resource type="Resource" id="Resource_227x0"]
 script = ExtResource("1_dq4wl")
 stat = &"cel_sat_dmg"
-base = 8.0
-per_level = PackedFloat32Array(4, 4)
+base = 20.0
+per_level = PackedFloat32Array(10, 10)
 
 [resource]
 script = ExtResource("2_u2wgp")

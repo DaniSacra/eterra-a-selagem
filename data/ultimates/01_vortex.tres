@@ -18,5 +18,5 @@ anim = &"Sword_Attack"
 anim_peak = 0.4
 stun = 0.0
 knockback = 2.0
-tick_damage = 5.0
-implode_damage = 72.0
+tick_damage = 12.0
+implode_damage = 180.0

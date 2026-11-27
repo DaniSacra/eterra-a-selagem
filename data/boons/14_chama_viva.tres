@@ -7,7 +7,7 @@
 script = ExtResource("1_hoepa")
 stat = &"burn_dps"
 tag = &"luz"
-base = 3.0
+base = 8.0
 per_level = PackedFloat32Array()
 
 [resource]

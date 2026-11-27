@@ -32,7 +32,7 @@ enum Tier { ENTRY, MIDDLE, APEX }
 @export var needs: StringName = &""
 ## The Gift's numbers, summed with the Blessings in BoonState.stat (level 1, no rarity). Plain stats the fight already
 ## read (reach_pct, magick_max, max_hp) and the stats of the Gifts' rules (GiftState: fury_*, dash_back_on_kill,
-## blow_wave*, hungry_time, omega_discount, spin_loop_hits, dash_chain, fury_full_pct, armor_pct, shout_ward, cooldown_pct, wave_through, finisher_magick,
+## blow_wave*, hungry_time, omega_discount, spin_loop_hits, dash_chain, fury_full_pct, poise_pct, shout_ward, cooldown_pct, wave_through, finisher_magick,
 ## ult_charge_pct, room_heal, rise_share, rise_boss_share); a tag limits a number to the moves carrying it.
 @export var mods: Array[BoonMod] = []
 ## A Gift that changes the attack's chain: the combo tree the hero plays instead of HeroDef.combos (Quarto Corte).

@@ -67,7 +67,7 @@ const HOLD_RATE_COEF := 1.5
 const POISON_MAX := 5
 const POISON_TIME := 5.0
 const POISON_TICK := 0.5
-const POISON_SKILL_DPS := 1.0
+const POISON_SKILL_DPS := 2.5
 const POISON_TIME_MAX := 8.0
 ## The poison zone puts one stack on whoever stands in it every this many seconds.
 const PLAGUE_GAP := 1.0
@@ -92,14 +92,14 @@ const DISCHARGE_FORCE := 3
 const CONDUCT_RADIUS := 3.5
 const CONDUCT_SHARE := 0.5
 const RESON_MAX := 4
-const SHOCK_SKILL_ZAP := 1.0
+const SHOCK_SKILL_ZAP := 2.5
 ## Antecipação: the recharge on one target. Propagation: where a condition goes, the lock it leaves and the least time.
 const ANTIC_COOLDOWN := 2.0
 const COPY_RADIUS := 3.0
 const COPY_LOCK := 3.0
 const COPY_MIN_TIME := 2.0
 ## A target's DoT ceiling (burn, poison and bleed together; the burn is the game's and is never cut).
-const DOT_DPS_CAP := 16.0
+const DOT_DPS_CAP := 40.0
 ## The lineage budget: targets of a reaction, reactions of an action (the last ACTIONS_KEPT actions) and of a frame.
 const REACT_TARGETS := 5
 const ACTION_REACT_CAP := 8
