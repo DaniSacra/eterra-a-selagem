@@ -349,7 +349,7 @@ const STAFF_CLIPS := {
 const MODELS := {
 	# 1. the soldier: bare bone, steel pauldrons and greaves, a torn red loincloth; the blade is the KayKit one
 	"skeleton": {
-		"meshy": "skeleton_gpt", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "skeleton_gpt", "grade": GPT_GRADE, "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "skeleton.png",
 		"held": [{"hand": "Right", "meshy": "w_cleaver", "triangles": 800, "slot": 0, "grip": Vector3(0.26, 0, 0), "scale": 1.35, "lift": 2.2, "turn": CLEAVER_TURN, "name": "sword"}],
 		"anims": {
@@ -369,7 +369,7 @@ const MODELS := {
 	# C5, the Trinca (CB-7): the soldier's bone with nothing in its hands, low and bent, arms hanging (the figure is drawn
 	# at size 0.85 by three at a time); its pounce is the soldier's blow without the blade
 	"trio": {
-		"meshy": "skeleton_gpt", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "skeleton_gpt", "grade": GPT_GRADE, "height": 1.92, "triangles": BODY_TRIANGLES,
 		"bend": {"Spine02": Vector3(24, 0, 0), "Head": Vector3(18, 0, 0)},
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 20, true, RUNNER_JOG], "idle": [&"ual2", "Zombie_Idle", 12, true],
@@ -381,7 +381,7 @@ const MODELS := {
 	# cleaver's blade on its tip (the bar of the floor and the pole are one line), leaning; the sweep is the library's
 	# spinning blow stretched over 1.6 s (the crowd draws an attack clip 1.4 times as fast as it runs: 2.24 s of clip)
 	"sweeper": {
-		"meshy": "archer_gpt", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "archer_gpt", "grade": GPT_GRADE, "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "archer.png",
 		"bend": {"Spine01": Vector3(14, 0, 0)},
 		"held": [
@@ -397,7 +397,7 @@ const MODELS := {
 	# C1e lote A, the Gritador: the sorcerer's body drawn upright (chest out, head up) with no staff, a tall banner in the left
 	# hand (a 2.1 m pole, a hanging amber cloth, a bone finial) so that it reads as a standard-bearer at 720p
 	"herald": {
-		"meshy": "mage_gpt", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "mage_gpt", "grade": GPT_GRADE, "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "mage.png",
 		"bend": {"Spine01": Vector3(-7, 0, 0), "Head": Vector3(-8, 0, 0)},
 		"held": [
@@ -415,7 +415,7 @@ const MODELS := {
 	# C1e lote A, the Coveiro: the priest's body stooped, a spade leaning in the right hand (the blade low) and a lantern
 	# hanging from the left (an ember in a dark cage), the two things a gravedigger carries
 	"gravedigger": {
-		"meshy": "priest_gpt", "height": 1.93, "triangles": BODY_TRIANGLES,
+		"meshy": "priest_gpt", "grade": GPT_GRADE, "height": 1.93, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "priest.png",
 		"bend": {"Spine02": Vector3(18, 0, 0), "Head": Vector3(14, 0, 0)},
 		"marks": {"hands": ["LeftHand", "RightHand"], "hand_l": ["LeftHand"], "hand_r": ["RightHand"]},
@@ -435,7 +435,7 @@ const MODELS := {
 	# C1e lote C, the Armadilheiro: the crossbowman's hood and bone bent low over the floor, a flat spiked plate carried in the left hand
 	# instead of the crossbow (the thing it lays); it never shoots, so no crossbow clips
 	"trapper": {
-		"meshy": "archer_gpt", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "archer_gpt", "grade": GPT_GRADE, "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "archer.png",
 		"bend": {"Spine01": Vector3(12, 0, 0), "Spine02": Vector3(16, 0, 0), "Head": Vector3(18, 0, 0)},
 		"marks": {"hands": ["LeftHand", "RightHand"], "hand_l": ["LeftHand"], "hand_r": ["RightHand"]},
@@ -451,7 +451,7 @@ const MODELS := {
 	},
 	# 2. the runner: burnt bone and red rags, no weapon, stooped, an ember in the chest
 	"runner": {
-		"meshy": "runner_gpt", "height": 1.65, "triangles": BODY_TRIANGLES,
+		"meshy": "runner_gpt", "grade": GPT_GRADE, "height": 1.65, "triangles": BODY_TRIANGLES,
 		"bend": {"Spine02": Vector3(14, 0, 0), "Head": Vector3(25, 0, 0)},
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 20, true, RUNNER_JOG], "idle": [&"ual2", "Zombie_Idle", 12, true],
@@ -466,7 +466,7 @@ const MODELS := {
 	# the elite runner (7.4 m/s): the same figure on its own stride (RUNNER_ELITE_JOG); on the common one it ran 259
 	# steps a minute (docs/qa/t5b_boss_fight.md), a frantic patter. Its EnemyDef.model is "runner_elite".
 	"runner_elite": {
-		"meshy": "runner_gpt", "height": 1.65, "triangles": BODY_TRIANGLES,
+		"meshy": "runner_gpt", "grade": GPT_GRADE, "height": 1.65, "triangles": BODY_TRIANGLES,
 		"bend": {"Spine02": Vector3(14, 0, 0), "Head": Vector3(25, 0, 0)},
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 20, true, RUNNER_ELITE_JOG], "idle": [&"ual2", "Zombie_Idle", 12, true],
@@ -480,7 +480,7 @@ const MODELS := {
 	},
 	# 3. the sorcerer: dark hood and robe over the ribs, steel arms; the staff with the cold violet gem is KayKit's
 	"mage": {
-		"meshy": "mage_gpt", "height": 1.15, "triangles": BODY_TRIANGLES,
+		"meshy": "mage_gpt", "grade": GPT_GRADE, "height": 1.15, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "mage.png",
 		"held": [
 			{"hand": "Left", "meshy": "w_staff", "triangles": 1000, "slot": 0, "grip": STAFF_GRIP, "scale": 1.3, "rot": THUMB_UP, "name": "staff"},
@@ -498,7 +498,7 @@ const MODELS := {
 	# held up in the spell pose as the idle, a cold orb in each fist and a ring of cold light over the head, so that it
 	# reads as the one who holds a beam open (the Mago holds a staff and walks)
 	"channeler": {
-		"meshy": "mage_gpt", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "mage_gpt", "grade": GPT_GRADE, "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "mage.png",
 		"held": [
 			{"hand": "Left", "shape": "sphere", "at": Vector3(0, 0.12, 0), "size": Vector3(0.12, 0.12, 0), "cell": C_GLOW_COLD, "name": "orb", "mark": true},
@@ -513,7 +513,7 @@ const MODELS := {
 	},
 	# 4. the crossbowman: dark hood, red scarf; the crossbow is KayKit's
 	"archer": {
-		"meshy": "archer_gpt", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "archer_gpt", "grade": GPT_GRADE, "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "archer.png",
 		# the crossbow in dark wood and iron, the size of a hand crossbow beside the figure (it was a white piece over
 		# its head)
@@ -526,7 +526,7 @@ const MODELS := {
 	},
 	# 5. the brute: dark plate, the tower shield with its emblem and the sword are the model's own
 	"guard": {
-		"meshy": "guard_gpt", "height": 2.03, "triangles": BODY_TRIANGLES,
+		"meshy": "guard_gpt", "grade": GPT_GRADE, "height": 2.03, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "knight.png",
 		# 2026-11-27: the painted guard (enemy_guard_gpt) carries no shield or sword of its own: it takes the Knight's Meshy
 		# pair (w_knight_sword, w_knight_shield) in the hands, the shield larger (a tower shield), named as the old rigid
@@ -558,7 +558,7 @@ const MODELS := {
 	},
 	# 6. the priest of the dead: dark purple hood and robes, no weapon
 	"priest": {
-		"meshy": "priest_gpt", "height": 1.93, "triangles": BODY_TRIANGLES,
+		"meshy": "priest_gpt", "grade": GPT_GRADE, "height": 1.93, "triangles": BODY_TRIANGLES,
 		# LC-3: where its hands are in every pose (BakedModel.marks), for the light of the rite between them (EnemyFx)
 		"marks": {"hands": ["LeftHand", "RightHand"], "hand_l": ["LeftHand"], "hand_r": ["RightHand"]},
 		"anims": {
@@ -849,6 +849,12 @@ const NPCS := {
 }
 
 
+## 2026-11-27: the Meshy textures of the ChatGPT paintings are warm and saturated (mean saturation 0.35 to 0.50, the old ones
+## 0.08 to 0.27) and the stylized crowd light (style_light 0.22) turned them into flat orange-brown. At bake the body atlas is
+## graded: "chroma" (its colour's distance from grey times this), "balance" (a cool white balance that takes the orange cast
+## off the steel and bone) and "luma" (the gain that brings its mean brightness up to this, never above "gain_max").
+const GPT_GRADE := {"chroma": 0.72, "balance": Color(0.96, 1.0, 1.05), "luma": 0.35, "gain_max": 1.6}
+
 var _done := false
 ## `-- old`: the entries' "meshy" keys without "_gpt" (the earlier models, which stay in assets/models/meshy).
 var _old_models := false
@@ -913,6 +919,29 @@ func _process(_delta: float) -> bool:
 
 # ---------- the Meshy figures ----------
 
+## The body atlas graded (see GPT_GRADE): chroma, white balance, then a gain on its mean luma.
+static func _grade(atlas: Image, g: Dictionary) -> void:
+	var bal: Color = g.balance
+	var sum := 0.0
+	var n := 0
+	for y in atlas.get_height():
+		for x in atlas.get_width():
+			var c := atlas.get_pixel(x, y)
+			if c.a < 0.5:
+				continue
+			var l := c.r * 0.3 + c.g * 0.55 + c.b * 0.15
+			c = Color(l, l, l, c.a).lerp(c, g.chroma)
+			c = Color(c.r * bal.r, c.g * bal.g, c.b * bal.b, c.a)
+			atlas.set_pixel(x, y, c)
+			sum += c.r * 0.3 + c.g * 0.55 + c.b * 0.15
+			n += 1
+	var gain := minf(float(g.luma) / maxf(sum / maxf(n, 1), 0.001), float(g.gain_max))
+	for y in atlas.get_height():
+		for x in atlas.get_width():
+			var c := atlas.get_pixel(x, y)
+			atlas.set_pixel(x, y, Color(minf(c.r * gain, 1.0), minf(c.g * gain, 1.0), minf(c.b * gain, 1.0), c.a))
+
+
 func _bake_meshy(spec: Dictionary) -> BakedModel:
 	_slots.clear()
 	var key: String = String(spec.meshy).trim_suffix("_gpt") if _old_models else spec.meshy
@@ -923,6 +952,8 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 	var slim := MeshSlim.slim(mi.mesh.surface_get_arrays(0), PoseBaker.find_albedo(mi).get_image(), spec.triangles, ATLAS)
 	var arrays: Array = slim[0]
 	var atlas: Image = slim[1]
+	if spec.has("grade") and not _old_models:
+		_grade(atlas, spec.grade)
 	var parts := {}
 	for r: Dictionary in spec.get("rigid", []):
 		var piece := _rigid(arrays, mi, r)
