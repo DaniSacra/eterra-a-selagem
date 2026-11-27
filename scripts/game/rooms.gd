@@ -1092,7 +1092,8 @@ func _collect() -> void:
 		_reward_shaft.take()
 	_reward_shaft = null
 	# what the room gave, beside the door that promised it (DV-1, MAP-02: the log checks the promise)
-	game.room_tally.event("reward", game.time, {"node": room.id, "reward": (RunMap.Reward.keys()[reward] as String).to_lower()})
+	game.room_tally.event("reward", game.time, {"node": room.id, "reward": (RunMap.Reward.keys()[reward] as String).to_lower(),
+			"promised": _promised, "hand": game.boons.owned().size()})
 	_give(reward, room.kind == RunMap.Kind.MINIBOSS, true)
 	_open_doors()
 
@@ -1601,6 +1602,10 @@ static func door_word(r: RunMap.Room) -> String:
 	return w
 
 
+## What the door taken promised (door_word), logged beside what the room gave (PT-27a: the log checks the promise).
+var _promised := ""
+
+
 ## The log of a room left by a door: the doors there were and the one taken; a slab not stepped on is refused; an
 ## altar left without a trade.
 func _log_leaving(next: RunMap.Room) -> void:
@@ -1613,7 +1618,9 @@ func _log_leaving(next: RunMap.Room) -> void:
 		altar_used.emit(&"")
 	if next_rooms.size() > 1:
 		t.event("door", game.time, {"chosen": next_rooms.find(next), "doors": next_rooms.map(door_word), "node": next.id,
-			"offered": next_rooms.map(func(r: RunMap.Room) -> int: return r.id)})
+			"offered": next_rooms.map(func(r: RunMap.Room) -> int: return r.id),
+			"angels": next_rooms.map(func(r: RunMap.Room) -> String: return "meeting" if r.meeting else String(r.angel))})
+	_promised = door_word(next)
 
 
 # ---------- E5: the Provação ----------

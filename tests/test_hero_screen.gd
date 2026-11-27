@@ -184,7 +184,8 @@ func test_report_tells_the_sources_and_what_the_new_levels_unlocked() -> void:
 	# several levels at once: one line each, the names joined
 	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 1, 4), [
 		T.t(&"end_unlocked_many", {"name": ", ".join([T.t(&"talent_forca_concentrada"), T.t(&"talent_ruptura"), T.t(&"talent_cadencia")])}), T.t(&"end_unlocked_ult", {"name": T.t(&"ult_cleave")})] as Array[String])
-	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 9, 10), [T.t(&"end_unlocked_ult", {"name": T.t(&"ult_vortex")})] as Array[String])
+	# DT-2: the Voragem is in reserve, so level 10 never announces it
+	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 9, 10), [] as Array[String])
 	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 3, 3), [] as Array[String])
 
 

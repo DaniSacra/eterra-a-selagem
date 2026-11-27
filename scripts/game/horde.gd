@@ -2292,22 +2292,30 @@ func _set_state(e: Enemy, state: Enemy.State, anim: StringName, restart: bool = 
 
 
 func _separate(e: Enemy) -> void:
+	# the hot loop of a crowd (DT QA 26c: 300 bodies born in a heap): the body's own numbers read once, the cells' arrays
+	# straight off the hash, the same arithmetic (and so the same result) as before
 	var cx := int(floor(e.pos.x / CELL - 0.5))
 	var cy := int(floor(e.pos.y / CELL - 0.5))
+	var radius := e.def.radius
+	var heavy := e.def.heavy
 	for oy in 2:
 		for ox in 2:
-			for other: Enemy in _hash.at_cell(cx + ox, cy + oy):
+			var cell := _hash.at_cell(cx + ox, cy + oy)
+			if cell.is_empty():
+				continue
+			for other: Enemy in cell:
 				if other == e:
 					continue
 				var d := e.pos - other.pos
-				var min_d := e.def.radius + other.def.radius
+				var min_d := radius + other.def.radius
 				var len_sq := d.length_squared()
 				if len_sq < min_d * min_d and len_sq > 0.0001:
 					var len := sqrt(len_sq)
 					var shove := d / len * (min_d - len) * SEPARATE
-					if not e.def.heavy or other.def.heavy:
+					var other_heavy := other.def.heavy
+					if not heavy or other_heavy:
 						e.pos += shove
-					if not other.def.heavy or e.def.heavy:
+					if not other_heavy or heavy:
 						other.pos -= shove
 
 

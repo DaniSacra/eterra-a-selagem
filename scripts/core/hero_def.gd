@@ -143,6 +143,8 @@ func ult_for_weapon(level: int) -> UltDef:
 func first_ult_level() -> int:
 	var low := 0
 	for u in ultimates:
+		if u.reserve:
+			continue
 		if low == 0 or u.mastery_level < low:
 			low = u.mastery_level
 	return low

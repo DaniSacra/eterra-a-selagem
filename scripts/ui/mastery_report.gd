@@ -122,7 +122,7 @@ static func unlocks(hero: HeroDef, from: int, to: int) -> Array[String]:
 		for t in book.unlocked_at(n):
 			gifts.append(T.t(t.name_key))
 		for u in hero.ultimates:
-			if u.mastery_level == n:
+			if u.mastery_level == n and not u.reserve:
 				ults.append(T.t(u.name_key))
 	var out: Array[String] = []
 	if not gifts.is_empty():

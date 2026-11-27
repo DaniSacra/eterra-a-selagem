@@ -5,6 +5,11 @@
 - **PT-27a (bug, investigar):** "escolhi pegar um coração na sala 3 mas veio uma Bênção do Sarael com uma opção apenas". O registro
   das partidas (`runs.jsonl`) não mostra o caso: nas partidas registradas o coração deu vida. Hipóteses: medalhão do Sarael
   (vermelho) confundido com o coração, ou mão de 1 carta pela linhagem V2. Dono: gameplay-engineer e ui-ux-designer.
+  **Investigado (gameplay-engineer, 2026-11-26):** nenhum caminho de HEART abre Bênção (`_give` só soma vida; `settle` só vira POM,
+  PSALM e ENCHANT; coração nunca é encontro nem mostra anjo; mão sempre com 3 cartas, `tests/test_heart_door.gd`). No registro dele a
+  única coisa que bate é a porta de Bênção com um anjo só (`fallback: "door"`, `offered: [sarael]`, 3 cartas), desenho previsto da
+  Fatia 2: porta vermelha de Sarael ao lado da do coração (`run 32`, sala 3). Hipótese: confusão de medalhão. O registro agora grava
+  `angels` por porta e `promised`/`hand` no evento `reward`. Proposta ao ui-ux: diferenciar o medalhão do anjo do coração.
 - **PT-27b (depois de fechar o que temos):** jogo muito difícil; heróis dão pouco dano no capítulo 1. Repensar com o balance-designer.
 - **PT-27c (depois):** a Maga está chata de jogar, "vamos ter que repensar muito nela". HUD da Maga parado até lá.
 - Ordem do Daniel: finalizar tudo o que já temos e só depois pensar em dificuldade, dano e Maga.
@@ -27,7 +32,7 @@ vale a regra do Daniel (sempre commit e push). As seções abaixo ficam como his
 | id | o quê | dono |
 |---|---|---|
 | DT-1 | Shaders sem uso: `dome_film`, `dome_clock`, `fury_ember`, `dark_water_matte` (apagar depois de conferir) | technical-artist |
-| DT-2 | O Guerreiro ainda referencia duas ultimates (`00_cleave`, `01_vortex`); a decisão de 2026-11-24 é Corte do Juízo único, Voragem guardada (conferir se a seleção já sumiu e limpar o dado) | gameplay-engineer |
+| DT-2 | O Guerreiro ainda referencia duas ultimates (`00_cleave`, `01_vortex`); a decisão de 2026-11-24 é Corte do Juízo único, Voragem guardada (conferir se a seleção já sumiu e limpar o dado) **Feito 2026-11-26:** `ult_for_weapon` já ignorava a reserva; faltava o anúncio do nível 10 (`unlocks_at`, `MasteryReport`, `first_ult_level`), agora sem a Voragem. | gameplay-engineer |
 | DT-3 | CSV das Bênçãos desatualizado (fonte é `make_data.gd`); regerar do dado | balance-designer |
 | DT-4 | Custo por golpe com 150+ inimigos ainda 25 a 35 ms no `--stress=300` | qa-performance |
 | DT-5 | Morvath assado acima de 60 MB (TA-07), medalhões acima de 512 px (TA-08), `disk_report.sh` (TA-02), `docs/steam-ia.md` em dia (TA-12) | technical-artist |
