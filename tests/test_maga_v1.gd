@@ -97,7 +97,7 @@ func test_her_body_and_magia_numbers() -> void:
 	var h := HeroDef.maga()
 	assert_eq([h.max_hp, h.magick_max, h.dodge_charges, h.dodge_recharge], [30.0, 50.0, 2, 1.0])
 	assert_eq(h.arcane.blink_distance, 4.5)
-	assert_eq([h.magick_regen, h.charge_move_light, h.charge_move_heavy, h.charge_turn_light], [2.0, 0.5, 0.5, 90.0])
+	assert_eq([h.magick_regen, h.charge_move_light, h.charge_move_heavy, h.charge_turn_light], [3.0, 0.5, 0.5, 90.0])
 	assert_eq([h.magick_on_finisher, h.magick_on_break, h.cd_floor], [0.0, 0.0, 0.0], "no Magia from a finisher or a Quebra")
 	assert_true(h.passive_tags.is_empty())
 	assert_eq(h.arcane.shot_magick, 0.0, "the Centelha gives no Magia")
@@ -109,13 +109,13 @@ func test_four_blows_two_buttons_no_recharge() -> void:
 	var tree := load(HeroDef.maga().combos) as ComboTree
 	assert_eq(tree.neutral.size(), 4, "no Combustão, no Suspensão, nothing on Q or E")
 	var N := ComboNode.In
-	var want := {N.LIGHT: [&"spark", 0.0], N.CHARGE_LIGHT: [&"arc", 10.0], N.HEAVY: [&"shard", 5.0], N.CHARGE: [&"frost", 20.0]}
+	var want := {N.LIGHT: [&"spark", 0.0], N.CHARGE_LIGHT: [&"arc", 8.0], N.HEAVY: [&"shard", 4.0], N.CHARGE: [&"frost", 15.0]}
 	for input: ComboNode.In in want:
 		var n := _node(input)
 		assert_eq([n.id, n.magick_cost, n.cooldown], [want[input][0], want[input][1], 0.0], "%s" % want[input][0])
 	var k := HeroDef.maga().arcane
-	assert_eq([k.arc_damage, k.arc_targets, k.shard_damage, k.frost_dps, k.frost_time, k.frost_radius], [12.0, 3, 6.0, 5.0, 4.0, 2.5])
-	assert_eq([_node(N.CHARGE_LIGHT).charge_time, _node(N.CHARGE).charge_time], [0.6, 0.6])
+	assert_eq([k.arc_damage, k.arc_targets, k.shard_damage, k.frost_dps, k.frost_time, k.frost_radius], [20.0, 3, 10.0, 6.0, 4.0, 2.5])
+	assert_eq([_node(N.CHARGE_LIGHT).charge_time, _node(N.CHARGE).charge_time], [0.35, 0.45])
 
 
 func test_the_tags_put_each_blow_in_its_slot() -> void:
@@ -171,17 +171,17 @@ func _gain_in(seconds: float) -> float:
 	return game.player.magick.value - 10.0
 
 
-func test_two_a_second_standing_walking_and_rolling() -> void:
+func test_three_a_second_standing_walking_and_rolling() -> void:
 	_start()
-	assert_almost_eq(_gain_in(5.0), 10.0, 0.3, "standing")
+	assert_almost_eq(_gain_in(5.0), 15.0, 0.3, "standing")
 	pad.move = Vector2.RIGHT
-	assert_almost_eq(_gain_in(5.0), 10.0, 0.3, "walking")
+	assert_almost_eq(_gain_in(5.0), 15.0, 0.3, "walking")
 	pad.move = Vector2.ZERO
 	game.player.magick.value = 10.0
 	for i in 5:
 		pad.press(&"dodge")
 		_step(60)
-	assert_almost_eq(game.player.magick.value - 10.0, 10.0, 0.4, "teleporting every second")
+	assert_almost_eq(game.player.magick.value - 10.0, 15.0, 0.4, "teleporting every second")
 
 
 func test_the_regeneration_stops_at_the_bar_and_for_the_dead() -> void:
@@ -204,9 +204,9 @@ func test_the_regeneration_is_no_charge_for_the_supremo_and_no_spending() -> voi
 	assert_eq(game.ults.charge.value, 0.0, "only the Magia spent counts")
 
 
-func test_fluxo_arcano_makes_it_three_a_second() -> void:
+func test_fluxo_arcano_makes_it_four_a_second() -> void:
 	_start([&"fluxo_arcano"])
-	assert_almost_eq(_gain_in(5.0), 15.0, 0.4)
+	assert_almost_eq(_gain_in(5.0), 20.0, 0.4)
 
 
 func test_the_centelha_and_a_quebra_give_no_magia() -> void:
@@ -239,28 +239,28 @@ func test_a_tap_on_the_left_is_the_centelha_and_costs_nothing() -> void:
 	assert_eq(game.player.magick.spent, 0.0)
 
 
-func test_a_tap_on_the_right_is_the_estilhaco_for_five() -> void:
+func test_a_tap_on_the_right_is_the_estilhaco_for_four() -> void:
 	_start()
 	_dummy(Vector2(4, 0))
 	_tap(&"heavy_attack")
 	assert_eq(strikes, [&"shard"])
-	assert_almost_eq(game.player.magick.spent, 5.0, 0.001)
+	assert_almost_eq(game.player.magick.spent, 4.0, 0.001)
 
 
-func test_a_hold_on_the_left_is_the_arco_for_ten_and_never_the_tap_too() -> void:
+func test_a_hold_on_the_left_is_the_arco_for_eight_and_never_the_tap_too() -> void:
 	_start()
 	_dummy(Vector2(4, 0))
 	_hold(&"light_attack", 70)
 	assert_eq(strikes, [&"arc"], "the Arco only, not the Centelha")
-	assert_almost_eq(game.player.magick.spent, 10.0, 0.001)
+	assert_almost_eq(game.player.magick.spent, 8.0, 0.001)
 
 
-func test_a_hold_on_the_right_is_the_geada_for_twenty() -> void:
+func test_a_hold_on_the_right_is_the_geada_for_fifteen() -> void:
 	_start()
 	_dummy(Vector2(4, 0))
 	_hold(&"heavy_attack", 70)
 	assert_eq(strikes, [&"frost"])
-	assert_almost_eq(game.player.magick.spent, 20.0, 0.001)
+	assert_almost_eq(game.player.magick.spent, 15.0, 0.001)
 	assert_not_null(game.arcane.frost)
 
 
@@ -279,7 +279,7 @@ func test_without_the_magia_a_hold_is_refused_and_nothing_strikes() -> void:
 func test_the_dodge_cuts_the_charge_and_spends_nothing() -> void:
 	_start()
 	_dummy(Vector2(4, 0))
-	for i in 16:
+	for i in 14:
 		pad.press(&"light_attack")
 		game._step(DT)
 		pad.end_frame()
@@ -335,7 +335,7 @@ func test_the_convergence_gives_these_reactions_at_these_ticks() -> void:
 
 func test_the_numbers_the_third_phase_depends_on_are_locked() -> void:
 	var k := HeroDef.maga().arcane
-	assert_eq([k.converge_phase, k.converge_tick, k.react_gap, k.burn_time], [1.5, 0.5, 0.5, 3.0])
+	assert_eq([k.converge_phase, k.converge_tick, k.react_gap, k.burn_time], [1.5, 0.5, 0.5, 4.0])
 	assert_gte(k.burn_time, k.converge_phase + k.converge_tick, "a shorter Queimadura would cost the phase its Sobrecarga")
 
 
@@ -430,7 +430,7 @@ func test_the_convergence_charges_no_next_supremo() -> void:
 func test_afinidade_makes_the_states_last_four_and_a_half() -> void:
 	_start([&"afinidade"])
 	var b := game.arcane.book
-	assert_eq([b.burn_time, b.cold_time, b.volt_time, b.burn_dps], [4.5, 4.5, 4.5, 4.0])
+	assert_eq([b.burn_time, b.cold_time, b.volt_time, b.burn_dps], [6.0, 6.0, 6.0, 4.0])
 
 
 func test_catalisador_makes_the_reactions_hit_thirty_percent_more() -> void:
@@ -438,10 +438,10 @@ func test_catalisador_makes_the_reactions_hit_thirty_percent_more() -> void:
 	var b := game.arcane.book
 	var e := RefCounted.new()
 	b.apply(e, F)
-	assert_almost_eq(b.apply(e, I)[0].damage, 45.5, 0.001)
+	assert_almost_eq(b.apply(e, I)[0].damage, 58.5, 0.001)
 	var o := RefCounted.new()
 	b.apply(o, F)
-	assert_almost_eq(b.apply(o, V)[0].damage, 32.5, 0.001)
+	assert_almost_eq(b.apply(o, V)[0].damage, 39.0, 0.001)
 
 
 func test_propagacao_passes_the_element_to_the_nearest_once_a_cast() -> void:
@@ -560,19 +560,19 @@ func test_confluencia_shocks_who_stands_in_the_geada_and_an_ember_every_two_seco
 func test_agilidade_arcana_charges_the_held_spells_in_0_42() -> void:
 	_start([&"fluxo_arcano", &"agilidade_arcana"])
 	game.player._charge_held = ComboNode.In.CHARGE_LIGHT
-	assert_almost_eq(game.player._charge_time(), 0.42, 0.001)
+	assert_almost_eq(game.player._charge_time(), 0.245, 0.001)
 
 
-func test_reciprocidade_gives_two_once_a_cast() -> void:
+func test_reciprocidade_adds_three_to_the_resonance_once_a_cast() -> void:
 	_start([&"fluxo_arcano", &"reciprocidade"])
 	for i in 3:
 		game.arcane.apply_element(_dummy(Vector2(4 + i * 0.5, 0)), F)
 	game.player.magick.value = 10.0
 	game.arcane.cast(_node(ComboNode.In.CHARGE), game.player.pos, Vector2.RIGHT)
 	_step()
-	assert_almost_eq(game.player.magick.value, 12.05, 0.1, "three reactions, 2 of Magia")
+	assert_almost_eq(game.player.magick.value, 16.07, 0.1, "three reactions, 3 of Ressonância and 3 of the Dom, once")
 	_step(300)
-	assert_lt(game.player.magick.value, 12.05 + 3.0 * 5.0 + 0.5, "the ticks of the Geada paid no more")
+	assert_lt(game.player.magick.value, 16.07 + 4.0 * 5.0 + 0.5, "the ticks of the Geada paid no more")
 
 
 func test_transcendencia_makes_the_next_held_spell_free_and_quick_and_it_is_kept_when_cancelled() -> void:
@@ -586,7 +586,7 @@ func test_transcendencia_makes_the_next_held_spell_free_and_quick_and_it_is_kept
 	assert_eq(game.player.cost_of(arc, 0.0), 0.0)
 	game.player._charge_held = ComboNode.In.CHARGE_LIGHT
 	assert_almost_eq(game.player._charge_time(), Feel.live().hold_threshold, 0.001, "only the threshold")
-	assert_eq(game.player.cost_of(_node(ComboNode.In.HEAVY), 0.0), 5.0, "a tap is not held: it pays")
+	assert_eq(game.player.cost_of(_node(ComboNode.In.HEAVY), 0.0), 4.0, "a tap is not held: it pays")
 	# let go before it filled: kept
 	for i in 5:
 		pad.press(&"light_attack")

@@ -970,6 +970,9 @@ func _update_slots(p: Player) -> void:
 			continue
 		var b: Boon = by_action.get(s.action)
 		var starved := not p.magick.can_pay(_omega(p, s.slot))
+		if arcane and s.action == &"light_attack":
+			# Maga V2: the 3-point pin of the Centelha's chain (0 at rest, 1 after the first bolt, 2 after the second)
+			s.show_lights(chain_step(p.runner.node), 3, ElementLook.FIRE)
 		if not arcane and (s.action == &"light_attack" or s.action == &"heavy_attack"):
 			_update_button(s, p, b)
 			continue
@@ -992,6 +995,13 @@ func _update_slots(p: Player) -> void:
 				s.refresh(b, 0.0, 0, 0, starved)
 	_update_ult(p)
 	_update_buff(p)
+
+
+## The Centelha's chain step the pin shows after `last` (null: none under way): 0, 1 or 2 (the third bolt closes the chain).
+static func chain_step(last: ComboNode) -> int:
+	if last == null:
+		return 0
+	return 1 if last.id == &"spark" else 2 if last.id == &"spark2" else 0
 
 
 ## HUD v3: one slot of the Warrior's two buttons (a touch or a hold): the Magia of its blow (the node's cost, with Força Titânica and the
