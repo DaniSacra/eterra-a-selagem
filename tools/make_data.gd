@@ -1681,7 +1681,7 @@ func _roots(tips: Array) -> HazardDef:
 ## before the niche wakes with someone in it (him 0.3 s, an enemy 0.2 s): 1.2 s of warning (combat_cadence.md 9.4, P0
 ## with the 10), a grab of 0.25 s, 10 to him and 60 to an enemy, a pull of 1 m toward the niche without holding (his
 ## dodge stays his), 6 s before it wakes again. It never dies: a blow of the Emeth only sparks on it. From the 4th room.
-const NICHE_AT := Vector2(-12.0, -6.5)
+const NICHE_AT := Vector2(-12.0, 4.6)  # 2026-11-27: south of the east slit band (the slit moved to x -11.3 in the door pass)
 const NICHE_REACH := 2.2
 func _niche() -> HazardDef:
 	var h := _plates([], PLATES_FROM)
@@ -1918,7 +1918,7 @@ func _place_breakables(st: StageDef) -> void:
 					south_west, north_east])
 				# AT-Q4: B's west group moved off the niche's strip (AT-H2) to the foot of the north-west sarcophagus
 				l.variants[0].breakables = _breakable_groups([
-					[[F.URN, -11.2, 3.2, 0.8], [F.VASE, -11.2, 4.0, 0.6]],
+					[[F.URN, -11.2, 7.4, 0.8], [F.VASE, -11.2, 8.2, 0.6]],
 					south_west, north_east])
 			# AT-Q4 (room-designer): every other room, groups of 2 or 3 in its corners and against its walls (the far
 			# ends from the way in first), 1.5 m and more from a door and its mark, the way in, the reward, a spawn, the

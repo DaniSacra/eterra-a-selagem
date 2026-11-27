@@ -88,7 +88,7 @@ func test_the_niche_grabs_and_pulls_without_holding() -> void:
 	assert_not_null(pf, "a fight in the Cripta B has its niche")
 	assert_not_null(game.rooms.plates, "beside its slabs")
 	var h := pf.hazard.def
-	var at := Vector2(-10.6, -6.5)
+	var at := Vector2(-10.6, 4.6)
 	game.player.place(at)
 	game.player.invuln = 0.0
 	var e := game.horde.spawn(game.horde.def(&"guard"), Vector2(-10.4, -5.6), false)
@@ -99,7 +99,7 @@ func test_the_niche_grabs_and_pulls_without_holding() -> void:
 	for i in roundi(6.0 / DT):
 		if struck_at < 0:
 			game.player.place(at)
-			e.pos = Vector2(-10.4, -5.6)
+			e.pos = Vector2(-10.4, 5.5)
 		var before := game.player.pos
 		pf.step(DT)
 		game.ground.step(DT)
@@ -131,7 +131,7 @@ func test_the_pull_never_lands_him_in_another_warning() -> void:
 	var pf := game.rooms.plates_also
 	var dir := Vector2.LEFT
 	for k in 12:
-		var p := Vector2(-10.0 - k * 0.1, -6.5 + (k % 3) * 0.5)
+		var p := Vector2(-10.0 - k * 0.1, 4.6 + (k % 3) * 0.5)
 		var w := game.ground.add_warning(p + dir * 1.3, 0.5, 5.0, 0.0)
 		var reach := pf.pull_reach(p, dir, 1.0, null)
 		var end := p + dir * reach
@@ -139,12 +139,12 @@ func test_the_pull_never_lands_him_in_another_warning() -> void:
 		assert_lt(reach, 1.0, "cut short")
 		Ground.end_zone(w)
 	# and with nothing in the way the whole metre (until the wall: the niche is at x -12)
-	assert_almost_eq(pf.pull_reach(Vector2(-10.4, -6.5), dir, 1.0, null), 1.0, 0.06)
+	assert_almost_eq(pf.pull_reach(Vector2(-10.4, 4.6), dir, 1.0, null), 1.0, 0.06)
 
 
 ## A blow of the Emeth on the skeleton or the plant only sparks: nothing hurt, nothing struck, counted as a spark.
 func test_a_blow_only_sparks() -> void:
-	for pair: Array in [[&"crypt", Vector2(-12.0, -6.5)], [&"garden", Vector2(-16.6, -1.5)]]:
+	for pair: Array in [[&"crypt", Vector2(-12.0, 4.6)], [&"garden", Vector2(-16.6, -1.5)]]:
 		var game := _room(pair[0], 1)
 		var pf := game.rooms.plates_also
 		var at: Vector2 = pair[1]
