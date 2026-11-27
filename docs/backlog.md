@@ -65,6 +65,15 @@ encontros, Ancião Retorcido, recompensa, fim da prévia). O resto é planejamen
   do Capítulo II" e volta ao Santuário, sem marcar vitória completa.
 - **C2-D** QA, equilíbrio (lutas comuns 35 a 75 s, guardião 90 a 150 s numa build mediana; Guerreiro e Maga), exe.
 
+**Decisão do Daniel (2026-11-27, substitui as propostas anteriores que conflitam): progressão e minichefes do
+Capítulo II.** Cinco salas antes do minichefe; só **um** minichefe obrigatório no capítulo, escolhido pelo jogador nas
+portas da sala anterior (uma porta por minichefe). Recompensas: só o sorteio que já existe, qualquer recompensa elegível
+pode sair; nada de recompensa própria de minichefe, tabela especial, sistema novo ou raridade privilegiada. Vale só para o
+Capítulo II; o Capítulo I fica como está até validar. Prioridade: ação, fluidez, simplicidade, aleatoriedade e
+rejogabilidade. Consequências no plano acima: a fatia jogável passa a ter 5 salas antes do minichefe (não 3), a
+escolha entre minichefes vira duas portas na sala 5, e o "segundo guardião" (sala 09) e os "dois de três guardiões por
+partida" do Master Plan saem; a recompensa do minichefe é a da porta, pelo sorteio normal.
+
 **Futuro (só registrar):** salas 05 a 12 (descanso, Labirinto, evento, Vila, segundo guardião, loja, Coroa Partida),
 18 layouts em 6 famílias, seis inimigos (Cascudo, Feiticeiro, Serpente, Lumífago, Caranguejo, Marionete), guardiões
 Rei do Brejo e Flor Adormecida, chefe A Coroa Partida (Rainha e Guardião, 4 fases), eventos (Tesouro, Sementes da
