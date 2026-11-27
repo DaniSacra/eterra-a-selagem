@@ -139,6 +139,8 @@ var game: Game
 func _game() -> Player:
 	game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
 	add_child_autofree(game)
+	game.rooms.start_at(RunMap.Kind.COMBAT)  # (the run opens in the Sala 00, whose altar stands in the middle)
+	await wait_process_frames(3)
 	for e in game.horde.list:
 		e.alive = false
 	game.horde.list.clear()
@@ -167,7 +169,7 @@ func _play(seconds: float, move: Vector2) -> void:
 
 
 func test_in_game_walking_stops_at_an_enemy_and_does_not_push_it() -> void:
-	var p := _game()
+	var p := await _game()
 	var e := _still(Vector2(2.5, 0))
 	game.horde.rehash()
 	_play(1.0, Vector2.RIGHT)
@@ -177,7 +179,7 @@ func test_in_game_walking_stops_at_an_enemy_and_does_not_push_it() -> void:
 
 
 func test_in_game_the_dash_goes_through_an_enemy() -> void:
-	var p := _game()
+	var p := await _game()
 	var e := _still(Vector2(1.5, 0))
 	game.horde.rehash()
 	p._start_dodge(Vector2.RIGHT)
@@ -187,7 +189,7 @@ func test_in_game_the_dash_goes_through_an_enemy() -> void:
 
 
 func test_in_game_a_kind_that_does_not_block_is_walked_through() -> void:
-	var p := _game()
+	var p := await _game()
 	_still(Vector2(1.5, 0), false)
 	game.horde.rehash()
 	_play(1.0, Vector2.RIGHT)
@@ -196,7 +198,7 @@ func test_in_game_a_kind_that_does_not_block_is_walked_through() -> void:
 
 func test_in_game_surrounded_walking_is_held_but_the_dash_always_gets_out() -> void:
 	for k in 8:
-		var p := _game()
+		var p := await _game()
 		var ring: Array[Enemy] = []
 		# ten bodies shoulder to shoulder (a gap narrower than he is between each two)
 		for j in 10:
@@ -219,7 +221,7 @@ func test_in_game_surrounded_walking_is_held_but_the_dash_always_gets_out() -> v
 
 
 func test_in_game_a_pressing_crowd_neither_enters_him_nor_shoves_him() -> void:
-	var p := _game()
+	var p := await _game()
 	var d: EnemyDef = game.horde.def(&"skeleton").duplicate()
 	d.behavior = EnemyDef.Behavior.CHASE
 	d.attack_cooldown = 1000.0

@@ -670,8 +670,8 @@ func _save_with(opened: Array, equipped: Array) -> Dictionary:
 
 
 func test_the_save_is_version_17() -> void:
-	assert_eq(SaveData.VERSION, 18)
-	assert_eq(SaveData.defaults().version, 18)
+	assert_eq(SaveData.VERSION, 19)
+	assert_eq(SaveData.defaults().version, 19)
 
 
 func test_the_migration_gives_the_memoria_back_and_frees_the_vaga() -> void:

@@ -1806,5 +1806,13 @@ entries = {
 "tip_controls_v1": "Os botões mudaram: toque e segure o esquerdo e o direito, Espaço esquiva, Shift é o Golpe Supremo e {interact} interage.",
 "tip_rhythm": "Termine o combo para preparar o Ritmo: o próximo golpe forte sai reforçado.",
 "talent_alcance_marcial": "Alcance Marcial",
-"talent_alcance_marcial_desc": "Corte Circular: alcança 25% mais longe e empurra 30% mais."
+"talent_alcance_marcial_desc": "Corte Circular: alcança 25% mais longe e empurra 30% mais.",
+"arena_ante": "Caminho para Valmor",
+"arena_sala00": "Câmara de Preparação",
+"room_sala00": "Câmara de Preparação",
+"lesson_heavy": "Segure {attack}: o Golpe Esmagador é um golpe forte e gasta Magia",
+"lesson_trap": "A placa de espinhos avisa antes de acertar. Passe por um dos lados",
+"obj_altar": "Receba a Bênção no altar",
+"altar_intro": "Chegue ao altar e aperte {interact}. A Bênção que você escolher vale para toda esta descida.",
+"hub_use_altar_bless": "Receber a Bênção"
 }

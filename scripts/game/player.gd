@@ -1158,6 +1158,10 @@ const WARD_MIN := 4.0
 var close_any := false
 
 
+## The Antessala (2026-11-26): no blow takes the last of his life (Rooms sets it there and takes it off as he leaves; nothing else does).
+var guard_death := false
+
+
 func hurt(amount: float, from: Vector2) -> void:
 	absorbed_last = false
 	if amount > 0.0 and state == State.DODGE:
@@ -1190,6 +1194,8 @@ func hurt(amount: float, from: Vector2) -> void:
 		return
 	var guard := gifts.guard() if gifts != null else 0.0  # the Brado's buff
 	amount = maxf(1.0, roundf(amount * (1.0 - damage_reduction - guard) * hurt_scale))
+	if guard_death:
+		amount = minf(amount, maxf(hp - 1.0, 0.0))  # (the Antessala's trap: it leaves him at 1 life at the least)
 	hp -= amount
 	invuln = hero.hurt_invuln
 	_blink = hero.hurt_invuln

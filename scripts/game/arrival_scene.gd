@@ -216,11 +216,14 @@ static func is_clear(arena: Arena, p: Vector2) -> bool:
 	return true
 
 
-## Starts the scene on `spot` (x, z in meters, the birth spot): black at once, the hero parked and unseen.
-func play(g: Game, spot: Vector2) -> void:
+## Starts the scene on `spot` (x, z in meters, the birth spot): black at once, the hero parked and unseen. from_clock: where in its
+## clock it begins (Prologue.SHORT_FROM: the short arrival of the passage from the Antessala to the Sala 00, with no star and no
+## black first); with_caption: the line of the first arrival at the foot of the screen (a new save's, once).
+func play(g: Game, spot: Vector2, from_clock := 0.0, with_caption := true) -> void:
 	game = g
 	at = spot
-	clock = 0.0
+	clock = from_clock
+	_captioned = not with_caption
 	_hold = Dev.num("arrival-hold", -1.0) if Dev.has("arrival-hold") else -1.0
 	_playing = true
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -256,7 +259,7 @@ func play(g: Game, spot: Vector2) -> void:
 	_build_crystals()
 	_build_comet()
 	_hold_hero()
-	_apply(ArrivalTimeline.state_at(0.0))
+	_apply(ArrivalTimeline.state_at(from_clock))
 
 
 ## A press after SKIP_FROM: the scene goes to its second 4.0 (the hero formed, the light going out, control given) and
@@ -668,7 +671,7 @@ func _give_control() -> void:
 	game.player.visible = true
 	if game.ui != null:
 		game.ui.visible = _ui_was_visible
-	if skipped:
+	if skipped and not _captioned:
 		_caption(SKIPPED_SECONDS)
 	finished.emit()
 

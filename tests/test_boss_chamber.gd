@@ -336,6 +336,9 @@ func test_the_chamber_air_goes_back_to_the_hall_air_on_the_next_room() -> void:
 	game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
 	add_child_autofree(game)
 	await get_tree().process_frame
+	game.rooms.start_at(RunMap.Kind.COMBAT)  # (the run opens in the Sala 00: the hall's air is a combat room's)
+	await get_tree().process_frame
+	await get_tree().process_frame
 	var e := game.get_world_3d().environment
 	if e == null:
 		for n in get_tree().root.find_children("*", "WorldEnvironment", true, false):

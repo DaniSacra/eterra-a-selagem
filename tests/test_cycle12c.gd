@@ -101,6 +101,8 @@ func test_door_gems_keep_their_hue_under_the_glow() -> void:
 
 func test_the_gems_drawn_in_a_room_stay_under_the_glow() -> void:
 	_start()
+	game.rooms.start_at(RunMap.Kind.COMBAT)  # (the run opens in the Sala 00, which has no reward)
+	await wait_process_frames(2)
 	game.player.pos = game.arena.middle
 	game.rooms._room_cleared()
 	game.rooms._collect()

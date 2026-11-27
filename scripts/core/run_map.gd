@@ -32,7 +32,9 @@ signal changed
 ## E5: TRIAL is the Provação's chamber (no door leads there: its slab, Rooms; the depth stays, it is no room of the
 ## graph), ALTAR the Altar Esquecido (a room of the graph, no fight). SW-O3: ANTE is the Antessala of the guided first
 ## descent (RunMap.scripted only): the catacomb hall with no fight, its door open from the start, nothing given.
-enum Kind { COMBAT, MINIBOSS, FOUNTAIN, SHOP, BOSS, TRIAL, ALTAR, ANTE }
+## SALA00 (the Câmara de Preparação, 2026-11-26) is the room every descent begins in (Prologue): one Blessing at its altar, no fight; like ANTE
+## it is no room of the graph, and it comes last in the enum so no saved number moves.
+enum Kind { COMBAT, MINIBOSS, FOUNTAIN, SHOP, BOSS, TRIAL, ALTAR, ANTE, SALA00 }
 ## What a room gives when it is cleared (or what the shop sells).
 ## BOON: a gift (three to choose). POM: one more level for a gift already owned. HEART: more life.
 ## MAGICK: more Magia. GOLD: gold for the shop. HEAL: life back (shop only). POM_SLICE: one level more for a gift
@@ -55,7 +57,7 @@ const MATERIAL_REWARDS: Array[Reward] = [Reward.SILVER, Reward.MEMORY]
 const GROUP_OF := {Reward.BOON: Group.POWER, Reward.POM: Group.POWER, Reward.ENCHANT: Group.POWER,
 	Reward.PSALM: Group.POWER, Reward.POM_SLICE: Group.POWER, Reward.HEART: Group.BODY, Reward.MAGICK: Group.BODY,
 	Reward.GOLD: Group.BODY, Reward.HEAL: Group.BODY, Reward.SILVER: Group.HOME, Reward.MEMORY: Group.HOME}
-const KIND_KEY: Array[StringName] = [&"room_combat", &"room_miniboss", &"room_fountain", &"room_shop", &"room_boss", &"room_trial", &"room_altar", &"room_ante"]
+const KIND_KEY: Array[StringName] = [&"room_combat", &"room_miniboss", &"room_fountain", &"room_shop", &"room_boss", &"room_trial", &"room_altar", &"room_ante", &"room_sala00"]
 
 ## The doors of every room (DM-1; every arena has 3, the hall too: CatacombHall._doors), but the one before the shop's
 ## and the shop's own.

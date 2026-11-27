@@ -19,6 +19,8 @@ const BY_ARENA := {
 	&"runes": &"amb_runes",
 	&"trial": &"amb_trial",
 	&"altar": &"amb_altar",
+	&"ante": &"amb_garden",  # the Antessala is in the open air, the Sala 00 a chapel's quiet (2026-11-26)
+	&"sala00": &"amb_altar",
 	&"seal_chamber": &"amb_seal",
 }
 ## Under every loop on the Ambience bus: the air sits well below the music and the blows (tools/mix_probe.gd).

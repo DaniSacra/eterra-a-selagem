@@ -1302,12 +1302,11 @@ func _stage() -> void:
 	hall.platform = true
 	_arena(hall, &"hall", RoomLayout.Size.MEDIUM, 0, Vector2(0.0, 0.0))
 	hall.fountain = true
-	# SW-O3: the Antessala of the guided first descent, the hall's variant 1 ("ante": never drawn by the long descent)
-	hall.variants = [_ante_variant()]
 	# E5 (docs/art/e5_spec.md): the Santuário (the guardian's house, high, from 40% of the descent), the Ponte and the
 	# Câmara das Runas (high, from half of it); the rooms of the two events
 	st.layouts = [hall, _crypt(), _rift(), _garden(), _sanctuary(), _bridge(), _runes(), _knight_hall(), _elder_hall()]
 	st.shop_layout = hall
+	_prologue(st)
 	st.trial_layout = _trial_room()
 	st.altar_layout = _altar_room()
 	_oficios_stage(st)
@@ -1493,13 +1492,73 @@ func _plates(rects: Array[Rect2], from := 0.0, tiled := true) -> HazardDef:
 	return h
 
 
-## PT-25-9 (docs/design/rooms_progression.md, "Antessala"): the Antessala's stream, a band of water the width of the hall
-## (x -16.5 to 16.5, under the balustrades) and 2.6 m across (z -10.6 to -8.0), between the way in (south-west) and the door
-## (north-east, z -17 to -12.6): walking never crosses it, the dodge (5.6 m) does. It lies between the vases of the west wall
-## (z -6.6 and -12.4) and keeps 2 m clear of the door's mouth, so there is room to practise the Brado and the Investida on the
-## far bank. It never hurts (gap_fall 0): one who lands in it is put back on the nearest bank. (SW-O3's three teaching slabs
-## were here until PT-25-9; the stream teaches the dodge in their place.)
-const ANTE_GAP := Rect2(-16.5, -10.6, 33.0, 2.6)
+## The prologue's two rooms (2026-11-26, docs/art/ref/antessala_sala00_2026-11-26, the planta JSON of each is the truth of the
+## collision; x lateral, z south, the room's middle at 0). Neither is a room of the graph (Prologue): the Antessala is the corridor of
+## 14 x 48 m of a new save's guided descent (the lessons: a stream only the dash crosses, six breakables with nothing in them, the
+## trap's slab with a way round on each side, the monumental door of 3 x 5.5 m); the Sala 00 the chamber of 18 x 16 m with the
+## altar of the Blessing at its middle and the same door in the north. The art of both is a painting to be projected on this form
+## (GP-8): piece, wall, step, door, altar, stream and slab matter here, not the finish.
+const ANTE_HALF := Vector2(7.0, 24.0)
+const ANTE_STREAM := Rect2(-7.0, -8.3, 14.0, 2.6)
+const ANTE_SLAB := Rect2(-2.5, -18.5, 5.0, 3.0)
+const SALA00_HALF := Vector2(9.0, 8.0)
+const PRELUDE_DOOR := 3.0
+
+
+func _prologue(st: StageDef) -> void:
+	st.ante_layout = _ante_room()
+	st.sala00_layout = _sala00_room()
+
+
+func _ante_room() -> RoomLayout:
+	const F := BreakablePiece.Form
+	var l := RoomLayout.new()
+	_arena(l, &"ante", RoomLayout.Size.LONG, 0, Vector2(-1.0, -1.0))
+	l.floor = FloorShape.poly([FloorShape.box(_rect(-ANTE_HALF.x, ANTE_HALF.x, -ANTE_HALF.y, ANTE_HALF.y))])
+	l.half = l.floor.extent()
+	l.guardian = false
+	var cols: Array[ArenaObstacle] = []
+	for z: float in [19.0, 5.0, -12.0, -21.0]:
+		for x: float in [-6.0, 6.0]:
+			cols.append(_column(x, z, 3.2, 0.5))
+	l.obstacles = cols
+	_gate(l, Vector2(0.0, 20.0), -ANTE_HALF.y, [0.0])
+	l.exits = _doors(-ANTE_HALF.y, [0.0], PRELUDE_DOOR)
+	# the stream: the dodge crosses it, walking does not, it never hurts (gap_fall 0)
+	l.gaps = [ANTE_STREAM] as Array[Rect2]
+	l.gap_fall = 0.0
+	# the slab of the trap: asleep until stepped on, warned 1.2 s, wide of it 4.5 m of floor on each side
+	l.hazard = _plates([ANTE_SLAB], 0.0, false)
+	# the six to break, nothing in them (Breakables gives nothing in any room): a vase, a crate, an urn, two barricades, a vase
+	l.breakables = _breakable_groups([
+		[[F.VASE, -4.8, 17.0, 0.8], [F.CRATE, 4.5, 16.0, 0.8], [F.URN, 5.3, 14.5, 0.8]],
+		[[F.PLANK, -4.5, 8.0, 1.0]],
+		[[F.PLANK, 4.5, 4.0, 1.0]],
+		[[F.VASE, -5.0, 1.0, 0.8]],
+	])
+	# the camera follows him along the corridor (the point it looks at runs the length, the width held near the middle)
+	l.cam_bounds = Rect2(-2.0, -21.0, 4.0, 42.0)
+	return l
+
+
+func _sala00_room() -> RoomLayout:
+	var l := RoomLayout.new()
+	_arena(l, &"sala00", RoomLayout.Size.SMALL, 0, Vector2(-1.0, -1.0))
+	l.floor = FloorShape.poly([FloorShape.box(_rect(-SALA00_HALF.x, SALA00_HALF.x, -SALA00_HALF.y, SALA00_HALF.y))])
+	l.half = l.floor.extent()
+	l.guardian = false
+	var cols: Array[ArenaObstacle] = []
+	for z: float in [-4.0, 4.0]:
+		for x: float in [-5.0, 5.0]:
+			cols.append(_column(x, z, 3.6, 0.6))
+	# the altar of the Blessing: 2.2 m square, 1.35 m high, used from its south side at (0, 1.7) and reached from any side
+	cols.append(_piece(0.0, 0.0, 2.2, 2.2, 1.35, &"altar"))
+	l.obstacles = cols
+	_gate(l, Vector2(0.0, 6.0), -SALA00_HALF.y, [0.0])
+	l.exits = _doors(-SALA00_HALF.y, [0.0], PRELUDE_DOOR)
+	l.cam_target = Vector2(0.0, 0.5)
+	l.cam_reach = 1.5
+	return l
 
 
 ## PT-25-9, the optional crossings of the common rooms (docs/design/rooms_progression.md, "Travessias"): a patch of floor
@@ -1529,14 +1588,6 @@ func _ring(inner: Rect2, sides := "nsew") -> Array[Rect2]:
 const SANCTUARY_ISLAND := Rect2(-10.0, -1.0, 3.0, 2.0)
 ## The Fendas' patch against the west wall (x -21), between the way in's side and the breakable crates of the south-west.
 const RIFT_ISLAND := Rect2(-21.0, 3.5, 3.5, 3.0)
-
-
-func _ante_variant() -> ArenaVariant:
-	var v := ArenaVariant.new()
-	v.depth = Vector2(-1.0, -1.0)  # (no share of the descent holds it: only RunMap.scripted asks for it)
-	v.gaps = [ANTE_GAP] as Array[Rect2]
-	v.gap_fall = 0.0
-	return v
 
 
 ## RP-06: the slabs wake from the 4th room (progress 0.34); in the 2nd and 3rd they lie at rest and teach.
@@ -3269,7 +3320,7 @@ func _first() -> void:
 	d.boss_hp_scale = 0.35  # the short Morvath: a newcomer with 4 or 5 Blessings brings his first third down (0.6 killed the robot)
 	var bone5 := ["bone_rat", "bone_rat", "bone_rat", "bone_rat", "bone_rat"]
 	var rooms: Array = [
-		_first_room(0, &"ante", K.ANTE, &"hall", {"variant": 1, "angel": &"sarael", "objective": &"obj_explore"}),
+		_first_room(0, &"ante", K.ANTE, &"ante", {"objective": &"obj_explore"}),
 		_first_room(1, &"crypt_a", K.COMBAT, &"crypt", {"variant": 1, "reward": R.GOLD, "cap": 3,
 			"waves": _wave_lists([["skeleton"], ["skeleton", "skeleton"]]),
 			"tip": &"first_tip_fight", "objective": &"obj_win"}),

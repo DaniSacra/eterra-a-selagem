@@ -414,13 +414,11 @@ func _game() -> Game:
 
 func test_the_result_and_the_arena_name() -> void:
 	var game := _game()
-	assert_eq(game.arena.id, &"hall", "the run opens in the hall")
-	assert_eq(game.hud.place_shown(), T.t(&"arena_hall"), "the name of the place shows on entering")
+	assert_eq(game.arena.id, &"sala00", "the run opens in the Sala 00")
+	assert_eq(game.hud.place_shown(), T.t(&"arena_sala00"), "the name of the place shows on entering")
 	var r := game.result()
-	assert_eq(r.arena, "hall")
-	assert_eq(r.rooms.size(), 1)
-	assert_eq(r.rooms[0].layout, "hall")
-	assert_eq(int(r.rooms[0].node), game.rooms.map.first().id)
+	assert_eq(r.arena, "sala00")
+	assert_eq(r.rooms.size(), 0, "the Sala 00 is no room of the tally: room 1 is the first line")
 	assert_eq(float(r.hp_at_boss), -1.0, "not at Morvath yet")
 	for key in ["stuck", "stuck_by", "shots_blocked", "map"]:
 		assert_true(r.has(key), "RESULT has %s" % key)

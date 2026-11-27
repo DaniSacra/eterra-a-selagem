@@ -3,8 +3,13 @@ extends GutTest
 ## and the screen stays black for Rooms.HOLD_FRAMES drawn frames with the world not stepping (the first draw compiles
 ## the room's shaders, seconds on an iGPU); only then it fades in. Without a screen nothing waits (same RESULT).
 
+func before_each() -> void:
+	Dev.put("no-arrival", "1")
+
+
 func after_each() -> void:
 	Dev.drop("hold-frames")
+	Dev.drop("no-arrival")
 
 
 func test_without_a_screen_nothing_waits() -> void:
@@ -131,6 +136,7 @@ func test_the_warm_up_note() -> void:
 ## for ever on a screen: the world never stepped, the clock stayed at 0:00, the robot stood still. With a screen
 ## (hold-frames forced) the world steps under the scene, the hero is given back and walks.
 func test_the_arrival_gives_the_hero_back_on_a_screen() -> void:
+	Dev.drop("no-arrival")
 	Dev.put("hold-frames", "2")
 	Dev.put("first", "1")
 	var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
