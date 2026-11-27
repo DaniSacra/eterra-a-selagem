@@ -483,6 +483,18 @@ const SHOP_RUG := Vector2(2.6, 1.8)
 const SHOP_RUG_Y := 0.012
 ## PT-11: the column behind each wall item (size) and how far behind the item it stands.
 const SHOP_COLUMN := Vector3(0.45, 2.4, 0.45)
+## The carved column (AT PT-11): shaft radius, plinth (side, height), base ring (radius gain, height), fluting lines, capital
+## (side gain, height) and how far the shaft stands from the wall-side centre.
+const SHOP_SHAFT_R := 0.2
+const SHOP_PLINTH := Vector2(0.56, 0.22)
+const SHOP_BASE := Vector2(0.08, 0.14)
+const SHOP_CAPITAL := Vector2(0.2, 0.2)
+## The parchment plaque on the column's room face: its size (w, h, thickness), height of its middle, the little rolls
+## top and bottom (radius), and its colour; the price itself is the DoorSign's (the plaque is what it hangs on).
+const SHOP_PLAQUE := Vector3(0.5, 0.36, 0.03)
+const SHOP_PLAQUE_Y := 1.15
+const SHOP_ROLL_R := 0.035
+const SHOP_PARCHMENT := Color(0.78, 0.66, 0.44)
 const SHOP_COLUMN_BACK := 1.1
 ## The shop's lanterns: from the item's point, how far back (away from the camera) and to the right the bracket's rod
 ## stands on the reliquary's side, how far the arm reaches on into the gap; the arm's height, where the lantern's
@@ -756,6 +768,7 @@ func dress_shop(points: Array[Vector2]) -> void:
 	var rug := ShaderMaterial.new()
 	rug.shader = DECAL_SHADER
 	rug.set_shader_parameter(&"rug_size", SHOP_RUG)
+	var parchment := mason.stone(0.0, SHOP_PARCHMENT)
 	for k in points.size():
 		var p := points[k]
 		var mi := MeshInstance3D.new()
@@ -771,7 +784,7 @@ func dress_shop(points: Array[Vector2]) -> void:
 		# PT-11: a thin stone column behind the item, against the nearest wall (back or side), under its bubble of light
 		var wall := Vector2(0.0, -1.0) if p.y < -8.0 else Vector2(signf(p.x), 0.0)
 		var c := p + wall * SHOP_COLUMN_BACK
-		mason.box(Vector3(c.x, SHOP_COLUMN.y * 0.5, c.y), SHOP_COLUMN, 0.0, mason.stone(0.0, SHOP_CLOTH), false)
+		_shop_column(mason, c, -wall, parchment)
 	# the provisions under their cloth
 	for c: Vector4 in SHOP_CLOTHS:
 		mason.box(Vector3(c.x, c.w, c.y), Vector3(c.z, 0.04, c.z * 0.7), 0.4, mason.stone(0.0, SHOP_CLOTH), false)
@@ -782,6 +795,27 @@ func dress_shop(points: Array[Vector2]) -> void:
 	_trail(node, points)
 	var k2 := ArenaKit.new(node, 0)
 	k2.paint_look(STYLE)
+
+
+## A carved shop column at `c` (plinth, base ring, shaft, capital) with a parchment plaque and two little rolls on its
+## face toward the room (`out`, unit), where the item's price hangs. The column replaces the old plain box.
+func _shop_column(mason: Masonry, c: Vector2, out: Vector2, parchment: Material) -> void:
+	var mat := mason.stone(0.0, SHOP_CLOTH)
+	var foot := Vector3(c.x, 0.0, c.y)
+	var top := SHOP_COLUMN.y - SHOP_CAPITAL.y
+	mason.block(foot, Vector3(SHOP_PLINTH.x, SHOP_PLINTH.y, SHOP_PLINTH.x), 0.0, mat, false)
+	mason.shaft(foot + Vector3(0, SHOP_PLINTH.y, 0), SHOP_SHAFT_R + SHOP_BASE.x, SHOP_BASE.y, mat)
+	mason.shaft(foot + Vector3(0, SHOP_PLINTH.y + SHOP_BASE.y, 0), SHOP_SHAFT_R, top - SHOP_PLINTH.y - SHOP_BASE.y, mat)
+	mason.shaft(foot + Vector3(0, top - 0.08, 0), SHOP_SHAFT_R + 0.05, 0.08, mat)
+	var cap := SHOP_SHAFT_R * 2.0 + SHOP_CAPITAL.x
+	mason.block(foot + Vector3(0, top, 0), Vector3(cap, SHOP_CAPITAL.y, cap), 0.0, mat, false)
+	var yaw := atan2(out.x, out.y)
+	var at := foot + Vector3(out.x, 0, out.y) * (SHOP_SHAFT_R + SHOP_PLAQUE.z * 0.5)
+	mason.box(at + Vector3(0, SHOP_PLAQUE_Y, 0), SHOP_PLAQUE, yaw, parchment, false)
+	for sd: float in [-1.0, 1.0]:
+		var r := mason.box(at + Vector3(0, SHOP_PLAQUE_Y + sd * SHOP_PLAQUE.y * 0.5, 0),
+			Vector3(SHOP_PLAQUE.x + SHOP_ROLL_R * 2.0, SHOP_ROLL_R * 2.0, SHOP_ROLL_R * 2.0), yaw, parchment, false)
+		r.name = "PlaqueRoll"
 
 
 ## Sworn P2 SW-H3: a worn trail of darker slabs from the way in to the row of reliquaries and along it (floor_decal

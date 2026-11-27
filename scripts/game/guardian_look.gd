@@ -323,8 +323,7 @@ func _west_wall() -> void:
 	var mat := m.ashlar(0.0, stone_tint())
 	var a := Vector2(_west, _south)
 	var b := Vector2(_west, _north)
-	var mid := 0.0  # PT-6: the west arch stays as it was (sealed); he now comes in from the south
-	var open: Array[Vector4] = [Vector4(a.y - mid - ENTRY_HALF - JAMB, a.y - mid + ENTRY_HALF + JAMB, 0.0, WALL_DOOR.y + 0.4)]
+	var open: Array[Vector4] = []  # PT-6 art: no west arch any more (ArenaRoom._way_in)
 	var backs: Array[Vector4] = []
 	var depths: Array[float] = []
 	if armory():
@@ -341,11 +340,6 @@ func _west_wall() -> void:
 	wall(a, b, Vector2(-1, 0), float(_cfg()[&"wall"]), open, mat)
 	for i in backs.size():
 		wall_part(a, b, Vector2(-1, 0), backs[i].x, backs[i].y, FACE_SET + depths[i], FACE_SET + FACE_THICK, 0.0, backs[i].w, mat)
-	# the way in: its arch, stairs going up out of the room, a thin old gold sill on the edge
-	var w := ENTRY_HALF * 2.0
-	door_arch(Vector2(_west, mid), Vector2(1, 0), w)
-	m.stairs(Vector3(_west - 0.05, 0.0, mid), Vector2(-1, 0), w, ENTRY_STEPS, ENTRY_STEP.x, ENTRY_STEP.y, m.stone(0.0, stone_tint() * 0.8))
-	tomb.bar(Vector3(_west + 0.04, SILL_GOLD.y * 0.5, mid), Vector3(SILL_GOLD.x, SILL_GOLD.y, w), 0.0, tomb.gold())
 
 
 ## The south and the east walls, cut low (ArenaRoom.cut_wall) with the doors' gaps.

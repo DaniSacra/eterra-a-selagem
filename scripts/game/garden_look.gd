@@ -407,7 +407,6 @@ func dress_steps() -> Array[Callable]:
 		_walls_west_wall,
 		_walls_corners,
 		_moss,
-		_entry,
 		_statues,
 		_grass,
 		func() -> void:
@@ -446,9 +445,6 @@ func edge(a: Vector2, b: Vector2, out: Vector2, kind: Edge, faces: SurfaceTool) 
 	if kind != Edge.OUTER:
 		return
 	var mid := (a + b) * 0.5
-	if mid.distance_to(ENTRY) < ENTRY_WIDTH * 0.6:
-		filet(a, b, out)
-		return
 	if out.x > 0.5 or out.y > 0.5:
 		balustrade_edge(a, b, out, false)
 		_cliff_arches(a, b, out)

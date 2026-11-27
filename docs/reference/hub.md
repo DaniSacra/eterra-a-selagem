@@ -584,3 +584,7 @@ Os 10 itens do art-director. Tudo provisório (formas simples).
   0,95), borda das folhas `STY_CROWN_RAGGED` 0,05 (era 0,08).
 - Hera e cipreste (item 7), nicho em arco (8) e Portão de lado: já feitos na rodada 3 (`IVY_EVERY` 4 só nas bordas, `VIGIL_ARCH`,
   `GATE_WALL_H`); só conferir nas capturas.
+
+## PM-2, rodada 2 (2026-11-26 noite; environment-artist, SEM captura)
+- Fundo: duas serras novas a leste (`HubScenery.RIDGES_EAST`, u 76 e 120, viradas para oeste) para o vazio depois do Portão não ficar liso; as do oeste e o paredão norte (`_backdrop`) já existiam. Hera, folhagem, nicho em arco da Vigília e Portão de lado já estavam feitos (rodadas 3 e PM-2); só conferir.
+- Capturas: `tools/gpu.sh shot x.png --hub --shot-at=4`, `--hub --hero-at=portal`, `--hub --hub-open=all --shot-at=3`.

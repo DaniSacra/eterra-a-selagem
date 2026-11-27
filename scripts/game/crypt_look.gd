@@ -416,8 +416,6 @@ func dress_steps() -> Array[Callable]:
 	return [
 		func() -> void:
 			wall_fill(WALL_FILL_COLOR, WALL_FILL_ENERGY)
-			if layout.guardian_home:
-				entry = Vector2(-2.0, 2.0)  # PT-6: the old west arch stays (sealed); he now comes in from the south
 			var b := layout.floor.polys[0]
 			var box := Rect2(b[0], Vector2.ZERO)
 			for p in b:
@@ -431,8 +429,7 @@ func dress_steps() -> Array[Callable]:
 		_back_niches,
 		_front_walls,
 		func() -> void:
-			_heap()
-			_entry(),
+			_heap(),
 		_slabs,
 		_fountain,
 		func() -> void:
@@ -541,8 +538,7 @@ func _back_wall_west() -> void:
 	for z in WEST_NICHES:
 		west.append(Vector4(west_a.y - z - NICHE.x * 0.5, west_a.y - z + NICHE.x * 0.5, niche_low, niche_high))
 		wdeep.append(-1.0)
-	west.append(Vector4(west_a.y - entry.y - JAMB, west_a.y - entry.x + JAMB, 0.0, WALL_DOOR.y + 0.4))
-	wdeep.append(0.0)
+	# PT-6 art: no west arch any more (he comes in from the south, ArenaRoom._way_in)
 	_wall(west_a, Vector2(_west, _north), Vector2(-1, 0), west, wdeep)
 
 
@@ -1164,7 +1160,6 @@ func _quiet_b(divider: ArenaObstacle) -> void:
 	if _shaft_dust != null:
 		VisualProfile.vary(_shaft_dust, {&"visible": false})
 	_ossuary_wash(divider)
-	_entry_warm()
 
 
 ## AT-CB1: the warm light at the way in (see STY_ENTRY_WARM).

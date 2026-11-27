@@ -321,7 +321,6 @@ func dress_steps() -> Array[Callable]:
 			_heap()
 			_front(),
 		func() -> void:
-			_entry()
 			_slabs(),
 		func() -> void:
 			_rubble()
@@ -552,7 +551,6 @@ func _front() -> void:
 	var east_a := Vector2(_east, _south)
 	var east_b := Vector2(_east, east_from)
 	var east_gaps := door_gaps(east_a, east_b, Vector2(1, 0))
-	east_gaps.append(Vector2(_south - ENTRY.y - 0.3, _south - ENTRY.x + 0.3))
 	cut_wall(east_a, east_b, Vector2(1, 0), east_gaps)
 	# the south-west cut: low blocks fallen out of the wall there, never over 0.9 m, off the floor
 	var sw := _cut_edge(Vector2(-1, 1))

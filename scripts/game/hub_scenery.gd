@@ -312,6 +312,11 @@ const RIDGES_WEST: Array[Dictionary] = [
 	{&"u": -58.0, &"v": 20.0, &"w": 340.0, &"h": 120.0, &"y": -60.0, &"low": Color(0.22, 0.2, 0.34), &"top": Color(0.44, 0.37, 0.5), &"base": 0.66, &"amp": 0.28, &"seed": 47.0},
 	{&"u": -38.0, &"v": 20.0, &"w": 260.0, &"h": 90.0, &"y": -60.0, &"low": Color(0.16, 0.15, 0.27), &"top": Color(0.33, 0.29, 0.42), &"base": 0.7, &"amp": 0.25, &"seed": 53.0},
 ]
+## PM-2 round 2: the same on the east side (past the Gate the void beside the floor was still flat), turned to face west.
+const RIDGES_EAST: Array[Dictionary] = [
+	{&"u": 120.0, &"v": 20.0, &"w": 420.0, &"h": 150.0, &"y": -60.0, &"low": Color(0.3, 0.26, 0.42), &"top": Color(0.58, 0.48, 0.62), &"base": 0.62, &"amp": 0.3, &"seed": 59.0},
+	{&"u": 76.0, &"v": 20.0, &"w": 320.0, &"h": 110.0, &"y": -60.0, &"low": Color(0.2, 0.18, 0.31), &"top": Color(0.4, 0.34, 0.47), &"base": 0.66, &"amp": 0.28, &"seed": 61.0},
+]
 ## The sky (a standing card behind the ridges) and the sea of cloud under the floor (a flat plane), as gradients.
 const SKY_SHADER := preload("res://assets/shaders/hub_sky.gdshader")
 const SKY_TOP := Color(0.24, 0.3, 0.58)
@@ -1662,6 +1667,8 @@ func _ridges() -> void:
 		_ridge_card(r, RIDGE_U, float(r[&"v"]), 0.0)
 	for r in RIDGES_WEST:
 		_ridge_card(r, float(r[&"u"]), float(r[&"v"]), PI * 0.5)
+	for r in RIDGES_EAST:
+		_ridge_card(r, float(r[&"u"]), float(r[&"v"]), -PI * 0.5)
 
 
 ## One ridge card of the far mountains at (u, v), turned `yaw` about the vertical (0 faces south, the camera).

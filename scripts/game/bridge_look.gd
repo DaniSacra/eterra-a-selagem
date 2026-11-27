@@ -274,8 +274,6 @@ func edge(a: Vector2, b: Vector2, out: Vector2, kind: Edge, faces: SurfaceTool) 
 		return
 	broken_edge(a, b, out, faces)
 	var mid := (a + b) * 0.5
-	if out.x < -0.9 and absf(mid.y) < ENTRY_WIDE * 0.5 + 0.2:
-		return
 	# RS-C7: the end posts where an edge meets a deck or a door's mouth stepped back off the walkable floor
 	balustrade_edge(a, b, out, false, null, true)
 
@@ -324,8 +322,7 @@ func dress_steps() -> Array[Callable]:
 		_bridges,
 		func() -> void:
 			for w in _landings:
-				_landing(w)
-			_entry(),
+				_landing(w),
 		_far,
 		func() -> Array[Callable]: return _dress_styled_steps(),
 	]

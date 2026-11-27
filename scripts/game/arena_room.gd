@@ -271,6 +271,7 @@ func build_steps(a: Arena, l: RoomLayout, exit_count: int, seed_: int) -> Array[
 				for o in layout.obstacles.slice(from, from + PIECES_A_STEP):
 					_piece_of(o))
 		more.append(_doors)
+		more.append(_way_in)
 		more.append(_light)
 		return more))
 	steps.append(_timed.bind(&"dress", func() -> Array[Callable]: return dress_steps()))
@@ -2173,6 +2174,43 @@ func in_wall(_i: int) -> bool:
 ## SL-02: opens the leaves of door i, for an arena whose doors have them (the Cripta's); nothing otherwise.
 func open_door_leaves(_i: int) -> void:
 	pass
+
+
+## PT-6 art: the way he came in, on the south edge behind the spawn (he enters from below, the camera's side). A worn
+## stone threshold with two low posts and the iron grille shut across it (the grille of the unused doors), no light and no
+## medallion, so it reads as the gate that closed behind him and never as an exit. Visual only, off the collision.
+const WAY_IN_WIDTH := 3.2
+const WAY_IN_SILL := Vector3(1.0, 0.1, 0.5)  # the sill's width margin over the grille, height, depth (m)
+const WAY_IN_POST := 1.15
+const WAY_IN_MIN := 1.2  # nearer than this to the spawn there is no room for it
+const WAY_IN_MAX := 6.0  # the floor must end this close behind the spawn, or the room has no south edge to draw it on
+const WAY_IN_STEP := 0.25
+
+
+func _way_in() -> void:
+	var edge := way_in_edge(layout)
+	if edge.x == INF:
+		return
+	var z := edge.y  # everything stands on or past the floor's edge, never over the open floor
+	var x := edge.x
+	var half := WAY_IN_WIDTH * 0.5
+	var mat := stone()
+	m.block(Vector3(x, 0.0, z + WAY_IN_SILL.z * 0.3), Vector3(WAY_IN_WIDTH + WAY_IN_SILL.x, WAY_IN_SILL.y, WAY_IN_SILL.z), 0.0, mat, false)
+	for sd: float in [-1.0, 1.0]:
+		m.post(Vector3(x + sd * (half + 0.5), WAY_IN_SILL.y, z + 0.7), 0.0, WAY_IN_POST, mat)
+	tomb.grille(Vector3(x - half, WAY_IN_SILL.y, z + 0.3), Vector3(x + half, WAY_IN_SILL.y, z + 0.3))
+
+
+## Where the south edge lies behind the spawn: (x, z) of the last floor point going south from it, or (INF, 0) when
+## there is none worth drawing on (the edge too near or too far).
+static func way_in_edge(l: RoomLayout) -> Vector2:
+	var at := l.hero_spawn
+	var d := 0.0
+	while d < WAY_IN_MAX and l.floor.covers(at + Vector2(0, d + WAY_IN_STEP)):
+		d += WAY_IN_STEP
+	if d < WAY_IN_MIN or d >= WAY_IN_MAX:
+		return Vector2(INF, 0.0)
+	return at + Vector2(0, d)
 
 
 ## Every door of the layout: its stairs going down out of the room from the end of its mouth; a door used gets its

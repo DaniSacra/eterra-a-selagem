@@ -373,8 +373,6 @@ func edge(a: Vector2, b: Vector2, out: Vector2, kind: Edge, faces: SurfaceTool) 
 			filet(a, b, out)
 		return
 	broken_edge(a, b, out, faces)
-	if out.x < -0.9 and mid.y > ENTRY.x - 0.1 and mid.y < ENTRY.y + 0.1:
-		return
 	if out.y < -0.9 and minf(a.x, b.x) < MERLON_SPAN.y and maxf(a.x, b.x) > MERLON_SPAN.x:
 		# SW-F3: a stretch of the north edge in low merlons (the stylized look; the classic keeps its balustrade)
 		var lo := Vector2(maxf(minf(a.x, b.x), MERLON_SPAN.x), a.y)
@@ -533,7 +531,6 @@ func dress_steps() -> Array[Callable]:
 			_old_arches(),
 		_facade,
 		func() -> void:
-			_entry()
 			_far(),
 		func() -> void:
 			_inscriptions()
