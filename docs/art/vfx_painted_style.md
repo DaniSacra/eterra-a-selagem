@@ -107,3 +107,9 @@ Passa se:
 7. Sobre uma poça de tocha o corte ainda tem borda (a tinta por baixo aparece).
 8. fps e `step_ms` da linha `RESULT` na GPU sem queda visível contra a captura sem `--painted-fx`.
 Registro em `docs/art/visual_review.md`; aprovação final do Daniel.
+
+## Daniel 2026-11-27: os efeitos da espada têm a cor da espada (verde da Emeth)
+Vale no lugar do marfim e ouro das seções 2 e 3 para o golpe sem Bênção: o corpo é `EmethSword.GREEN` misturado a metade
+com `Combat.EMETH`, o miolo é `Combat.EMETH` clareado 75% (quase branco, verde pálido) e o aro e o anel do acerto usam o
+mesmo corpo. Tudo em `Fx.painted_colors` (lido das constantes, sem copiar números). Bênção que colore o golpe continua
+mandando na cor. Teto de tela igual: corpo 205, miolo 230.

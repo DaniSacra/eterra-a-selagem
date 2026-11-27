@@ -94,6 +94,29 @@ const STAR6_TEX := preload("res://assets/textures/fx/star6.png")
 const PUFF_TEX := preload("res://assets/textures/fx/puff_sheet.png")
 const PAINT_TEX := preload("res://assets/textures/fx/brush_streaks.png")
 const STAR_POOL := 14
+# Hand-painted effect cards (docs/art/vfx_painted_style.md): flipbook sheets, one card per cut. `outer`: where the paint's
+# outer edge sits in its cell (0..1 of the half cell), `head`/`span`: where an arc's head is (degrees, counter-clockwise from
+# the right) and how many degrees it covers, mode: 1 trims an arc from its tail, 2 trims a fan around "up", 0 shows it whole.
+const PAINTED_FX := preload("res://assets/shaders/painted_fx.gdshader")
+const PAINTED_CARDS := 16
+const PAINTED_SPARKS := 12
+const PAINTED_SHEETS := {
+	&"cut1": {"tex": preload("res://assets/textures/fx/painted/cut1.png"), "grid": Vector2(3, 2), "frames": 6, "time": 0.13, "outer": 0.9, "mode": 1, "head": 190.0, "span": 240.0},
+	&"cut2": {"tex": preload("res://assets/textures/fx/painted/cut2.png"), "grid": Vector2(3, 2), "frames": 6, "time": 0.16, "outer": 0.9, "mode": 1, "head": 190.0, "span": 240.0},
+	&"smash": {"tex": preload("res://assets/textures/fx/painted/smash.png"), "grid": Vector2(3, 2), "frames": 6, "time": 0.2, "outer": 0.89, "mode": 2, "head": 90.0, "span": 110.0},
+	&"spin": {"tex": preload("res://assets/textures/fx/painted/spin.png"), "grid": Vector2(4, 2), "frames": 8, "time": 0.3, "outer": 0.8, "mode": 0, "head": 0.0, "span": 360.0},
+	&"contact": {"tex": preload("res://assets/textures/fx/painted/contact.png"), "grid": Vector2(3, 2), "frames": 4, "time": 0.08, "outer": 0.86, "mode": 0, "head": 0.0, "span": 0.0},
+	&"hit_ring": {"tex": preload("res://assets/textures/fx/painted/hit_ring.png"), "grid": Vector2(3, 2), "frames": 5, "time": 0.12, "outer": 0.9, "mode": 0, "head": 0.0, "span": 0.0},
+}
+const PAINTED_BODY_SCREEN := 205
+const PAINTED_CORE_SCREEN := 230
+const PAINTED_CORE_WHITE := 0.75  # (Daniel 2026-11-27: the sword's effects are the sword's colour; the core is a pale, near-white green)
+const PAINTED_HEAVY_TIME := 0.11
+const PAINTED_SPARK_GROW := 1.25
+const PAINTED_RING_SIZE := Vector2(0.9, 1.4)
+const PAINTED_RING_GROW := 1.4
+const PAINTED_WAVE_TIME := 0.34
+const PAINTED_WAVE_OPACITY := 0.7
 const PUFF_POOL := 12
 const SCORCH_POOL := 6
 const BUDGET_STARS := 5
@@ -473,6 +496,9 @@ var _smoke_rings: Array[Dictionary] = []
 var _contacts: Array[Dictionary] = []
 var _stars: Array[Dictionary] = []
 var _puff_pool: Array[Dictionary] = []
+var _painted_cards: Array[Dictionary] = []
+var _painted_sparks: Array[Dictionary] = []
+var _painted_n := 0  # (the cuts take turns, cut 1 then cut 2: drawn only)
 var _scorches: Array[Dictionary] = []
 var _compat := false
 var _spikes: Array[Dictionary] = []
@@ -612,6 +638,17 @@ func setup(cam: Camera3D, over: Control) -> void:
 		_puff_pool.append(e)
 	var flat := PlaneMesh.new()
 	flat.size = Vector2(2, 2)
+	for i in PAINTED_CARDS:
+		var e := _effect_node(PAINTED_FX, flat)
+		(e.node as MeshInstance3D).extra_cull_margin = 4.0
+		(e.mat as ShaderMaterial).render_priority = 1
+		_painted_cards.append(e)
+	for i in PAINTED_SPARKS:
+		var e := _effect_node(PAINTED_FX, cq)
+		(e.node as MeshInstance3D).sorting_offset = 11.0
+		(e.node as MeshInstance3D).extra_cull_margin = 2.0
+		(e.mat as ShaderMaterial).set_shader_parameter(&"billboard", 1.0)
+		_painted_sparks.append(e)
 	for i in SCORCH_POOL:
 		var e := _effect_node(SCORCH, flat)
 		(e.mat as ShaderMaterial).render_priority = -3
@@ -872,7 +909,7 @@ static func _family_white(family: int) -> float:
 ## ink: lay the dark half-moon under the cut. blade: meters from origin where its edge is drawn (the Emeth's tip;
 ## 0: the outer edge of the arc, for a cut that is not the paladin's). The head sweeps the arc in
 ## Feel.slash_sweep_time and is already SLASH_LEAD into it on the frame it starts.
-func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, time: float = 0.2, flip: bool = false, height: float = 0.9, ink_under: bool = true, blade: float = BLADE_REACH) -> void:
+func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, time: float = 0.2, flip: bool = false, height: float = 0.9, ink_under: bool = true, blade: float = BLADE_REACH, ribbon: bool = true) -> void:
 	# the blow's weight from the time it was asked with (Combat: 0.12 a cut, 0.16 heavy, 0.3 the finisher)
 	var level := 2 if time >= 0.25 else 1 if time >= 0.14 else 0
 	if blade > 0.0 and level == 2:
@@ -937,7 +974,11 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"opacity", feel.ink_opacity if ink_under else 0.0)
 	if own:
 		_arc_end_sparks(origin, dir, blade, width_deg, flip, height, lit)
-	if own and width_deg >= SPIN_DEGREES:
+	if not ribbon:
+		# the painted card (painted_cut) is the cut; the ink under it, the motes and the tongues stay
+		(s.node as Node3D).visible = false
+		s.life = 1.0
+	if own and width_deg >= SPIN_DEGREES and ribbon:
 		# E1-3: the turn all round him leaves a sharp circle of cut light on the floor at his waist (a line, never a disc)
 		ring(origin, reach * 0.95, SLASH_EMERALD, time + SPIN_RING_EXTRA, height, true, true)
 
@@ -992,28 +1033,33 @@ func gash(pos: Vector3, axis: Vector3, color: Color, length: float = 1.2, cross:
 func contact(pos: Vector3, dir: Vector3, color: Color, heavy: bool = false, level: int = 0) -> void:
 	if not budget.allows(&"contacts"):
 		return
-	var e: Dictionary = _take(_contacts)
-	var mi: MeshInstance3D = e.node
-	mi.position = pos
+	var painted := painted_on()
 	var spikes := CONTACT_SPIKES_HEAVY if heavy else CONTACT_SPIKES
-	e.size = spikes.y * CONTACT_GROW
-	mi.scale = Vector3.ONE * e.size
-	e.time = CONTACT_TIME
-	var mat: ShaderMaterial = e.mat
-	mat.set_shader_parameter(&"color", color)
-	mat.set_shader_parameter(&"life", 0.0)
-	mat.set_shader_parameter(&"seed", _rng.randf())
-	# review: 6 or 7 (with 5 and the fan's spikes on one line it could read as a 4-point star)
-	# PM-1 (stylized): brush ink, 3 to 5 fragments in a fan toward the blade, a dark core with an ivory-mint rim; the
-	# classic look keeps the star
 	var ink := VisualProfile.stylized()
-	mat.set_shader_parameter(&"ink", 1.0 if ink else 0.0)
-	mat.set_shader_parameter(&"count", float(_rng.randi_range(CONTACT_INK_FRAGMENTS.x, CONTACT_INK_FRAGMENTS.y) if ink else _rng.randi_range(6, 7)))
-	mat.set_shader_parameter(&"heart_m", CONTACT_INK_CORE if ink else 0.12)
-	mat.set_shader_parameter(&"half_m", e.size)
-	mat.set_shader_parameter(&"spike_min_m", spikes.x)
-	mat.set_shader_parameter(&"spike_max_m", spikes.y)
-	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(Color(1.0, 0.97, 0.9), CONTACT_SCREEN))
+	if painted:
+		painted_contact(pos, dir, color, heavy)
+	else:
+		var e: Dictionary = _take(_contacts)
+		var mi: MeshInstance3D = e.node
+		mi.position = pos
+		e.size = spikes.y * CONTACT_GROW
+		mi.scale = Vector3.ONE * e.size
+		e.time = CONTACT_TIME
+		var mat: ShaderMaterial = e.mat
+		mat.set_shader_parameter(&"color", color)
+		mat.set_shader_parameter(&"life", 0.0)
+		mat.set_shader_parameter(&"seed", _rng.randf())
+		# review: 6 or 7 (with 5 and the fan's spikes on one line it could read as a 4-point star)
+		# PM-1 (stylized): brush ink, 3 to 5 fragments in a fan toward the blade, a dark core with an ivory-mint rim; the
+		# classic look keeps the star
+		mat.set_shader_parameter(&"ink", 1.0 if ink else 0.0)
+		mat.set_shader_parameter(&"count", float(_rng.randi_range(CONTACT_INK_FRAGMENTS.x, CONTACT_INK_FRAGMENTS.y) if ink else _rng.randi_range(6, 7)))
+		mat.set_shader_parameter(&"heart_m", CONTACT_INK_CORE if ink else 0.12)
+		mat.set_shader_parameter(&"half_m", e.size)
+		mat.set_shader_parameter(&"spike_min_m", spikes.x)
+		mat.set_shader_parameter(&"spike_max_m", spikes.y)
+		mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(Color(1.0, 0.97, 0.9), CONTACT_SCREEN))
+		mat.set_shader_parameter(&"aim", _screen_aim(dir))
 	if heavy:
 		hit_light(pos, color, 1.8, 4.0)
 	else:
@@ -1022,17 +1068,23 @@ func contact(pos: Vector3, dir: Vector3, color: Color, heavy: bool = false, leve
 	var sparks := budget.take(&"motes", CONTACT_SPARKS)
 	if sparks > 0:
 		_spray(pos, Vector3.UP * 0.4, CONTACT_SPARK_TINT * 0.9, sparks, CONTACT_SPARK_SPEED, 0.1, CONTACT_SPARK_LIFE, 1.2, MOTE_GRAVITY, false)
-	var aim := Vector2(1, 0)
-	if camera != null and dir.length_squared() > 0.0001:
-		var b := camera.global_transform.basis
-		aim = Vector2(dir.dot(b.x), dir.dot(b.y))
-		aim = aim.normalized() if aim.length_squared() > 0.0001 else Vector2(1, 0)
-	mat.set_shader_parameter(&"aim", aim)
+	if painted:
+		return
 	# the ink look has no white-hot star under it (it was the cross at the middle of every blow); a heavy blow keeps a small one
 	if not ink:
 		hit_star(pos, color, 1.0, heavy)
 	elif heavy:
 		hit_star(pos, color, CONTACT_INK_HEAVY_STAR, true)
+
+
+## The way dir (a world direction) points on the screen, as (right, up), unit length; right when there is no camera.
+func _screen_aim(dir: Vector3) -> Vector2:
+	var aim := Vector2(1, 0)
+	if camera != null and camera.is_inside_tree() and dir.length_squared() > 0.0001:
+		var b := camera.global_transform.basis
+		aim = Vector2(dir.dot(b.x), dir.dot(b.y))
+		aim = aim.normalized() if aim.length_squared() > 0.0001 else Vector2(1, 0)
+	return aim
 
 
 ## The flash where a blow lands: a white-hot painted star (a 4 or 6 pointed one, torn rays) that turns to the blow's colour
@@ -1067,6 +1119,130 @@ func puff(pos: Vector3, size: float = PUFF_SIZE, tint: Color = BONE_DUST, lit: f
 	mat.set_shader_parameter(&"life", 0.0)
 	mat.set_shader_parameter(&"lit", lit if not _compat else 0.0)
 	mat.set_shader_parameter(&"rot", _rng.randf() * TAU)
+
+
+# ---------- hand-painted cards (docs/art/vfx_painted_style.md; the stylized look, --painted-fx=off keeps the old effects) ----------
+
+## True when the sword's slashes and contacts are drawn as painted flipbook cards: the stylized look (the classic look keeps
+## the procedural effects) unless --painted-fx=off.
+static func painted_on() -> bool:
+	return Dev.arg("painted-fx") != "off" and VisualProfile.stylized()
+
+
+## Which sheet draws a blow: a turn all round is the spin, a heavy blow the smash, the finisher's arc the wider cut 2, and
+## the light blows take turns between cut 1 and cut 2 (n counts them).
+static func painted_sheet(spin: bool, heavy: bool, finisher: bool, n: int) -> StringName:
+	if spin:
+		return &"spin"
+	if heavy:
+		return &"smash"
+	if finisher:
+		return &"cut2"
+	return &"cut1" if n % 2 == 0 else &"cut2"
+
+
+## The frame of a sheet a card shows at life 0..1: stepped, never blended (0 to frames - 1).
+static func painted_frame(life: float, frames: int) -> int:
+	return clampi(floori(life * float(frames)), 0, frames - 1)
+
+
+## The colours of a painted body and its core: a Blessing's family tints the body, else the hero's gold and ivory.
+static func painted_colors(color: Color) -> Array[Color]:
+	if family_of(color) < 0:
+		return [EmethSword.GREEN.lerp(Combat.EMETH, 0.5), Combat.EMETH.lerp(Color.WHITE, PAINTED_CORE_WHITE)]
+	return [color, color.lerp(Color.WHITE, 0.55)]
+
+
+func _painted_dress(e: Dictionary, sheet: StringName, body: Color, core: Color, opacity: float = 1.0) -> void:
+	var def: Dictionary = PAINTED_SHEETS[sheet]
+	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"sheet", def.tex)
+	mat.set_shader_parameter(&"grid", def.grid)
+	mat.set_shader_parameter(&"frames", float(def.frames))
+	mat.set_shader_parameter(&"life", 0.0)
+	mat.set_shader_parameter(&"color", body)
+	mat.set_shader_parameter(&"core_color", core)
+	mat.set_shader_parameter(&"body_peak", ScreenTone.linear_peak(body, PAINTED_BODY_SCREEN))
+	mat.set_shader_parameter(&"core_peak", ScreenTone.linear_peak(core, PAINTED_CORE_SCREEN))
+	mat.set_shader_parameter(&"core_amt", 0.0 if _compat else 1.0)
+	mat.set_shader_parameter(&"opacity", opacity)
+	e.out = false
+	e.time = float(def.time)
+
+
+## A painted cut on the floor plane at waist height (the sheet's own arc, trimmed to width_deg from its tail so the head
+## sits where the blade ends): sheet from painted_sheet, reach meters to the outer edge. far_reach > 0: the finisher's
+## flight past the blow (the same paint growing to far_reach, paler). Drawn only.
+func painted_cut(sheet: StringName, origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, flip: bool, height: float = 0.9, far_reach: float = 0.0) -> void:
+	var def: Dictionary = PAINTED_SHEETS[sheet]
+	var e: Dictionary = _take(_painted_cards)
+	var cols := painted_colors(color)
+	var wave := far_reach > 0.0
+	_painted_dress(e, sheet, cols[0], cols[1], PAINTED_WAVE_OPACITY if wave else 1.0)
+	var mi: MeshInstance3D = e.node
+	mi.position = Vector3(origin.x, height, origin.y)
+	mi.rotation = Vector3(0.0, atan2(dir.x, dir.y), 0.0)
+	e.size = reach / float(def.outer)
+	e.grow = far_reach / maxf(reach, 0.01) if wave else 1.0
+	if wave:
+		e.out = true
+		e.time = PAINTED_WAVE_TIME
+	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"billboard", 0.0)
+	mat.set_shader_parameter(&"flip", 1.0 if flip else 0.0)
+	var mode := int(def.mode)
+	var keep := minf(width_deg, float(def.span))
+	mat.set_shader_parameter(&"mode", float(mode))
+	mat.set_shader_parameter(&"keep_deg", keep)
+	mat.set_shader_parameter(&"head_deg", float(def.head))
+	# the head goes to the end of the blow's arc (90 degrees is straight ahead; the paint is mirrored for a flipped sweep)
+	mat.set_shader_parameter(&"turn_deg", 90.0 + keep * 0.5 - float(def.head) if mode == 1 else 0.0)
+	mi.scale = Vector3(e.size, 1.0, e.size)
+
+
+## The painted spark where a blow lands: a billboard turned the way the blade was going (3 uneven slivers around a small
+## core), and the small broken ring on the floor under the one struck.
+func painted_contact(pos: Vector3, dir: Vector3, color: Color, heavy: bool) -> void:
+	var def: Dictionary = PAINTED_SHEETS[&"contact"]
+	var spikes := CONTACT_SPIKES_HEAVY if heavy else CONTACT_SPIKES
+	var e: Dictionary = _take(_painted_sparks)
+	var cols := painted_colors(color)
+	_painted_dress(e, &"contact", cols[0], cols[1])
+	if heavy:
+		e.time = PAINTED_HEAVY_TIME
+	(e.node as Node3D).position = pos
+	e.size = spikes.y / float(def.outer)
+	e.grow = PAINTED_SPARK_GROW
+	var aim := _screen_aim(dir)
+	(e.mat as ShaderMaterial).set_shader_parameter(&"aim", atan2(aim.y, aim.x))
+	var r: Dictionary = _take(_painted_cards)
+	_painted_dress(r, &"hit_ring", cols[0], cols[1])
+	r.time = 0.12 if not heavy else 0.15
+	(r.node as Node3D).position = Vector3(pos.x, 0.05, pos.z)
+	(r.node as Node3D).rotation = Vector3(0.0, _rng.randf() * TAU, 0.0)
+	var diameter := PAINTED_RING_SIZE.y if heavy else PAINTED_RING_SIZE.x
+	r.size = diameter * 0.5 / float(PAINTED_SHEETS[&"hit_ring"].outer)
+	r.grow = PAINTED_RING_GROW
+	var rmat: ShaderMaterial = r.mat
+	rmat.set_shader_parameter(&"billboard", 0.0)
+	rmat.set_shader_parameter(&"mode", 0.0)
+	rmat.set_shader_parameter(&"flip", 0.0)
+	rmat.set_shader_parameter(&"core_amt", 0.0)
+	(r.node as Node3D).scale = Vector3(r.size, 1.0, r.size)
+
+
+## One painted cut for a blow of the sword (Combat._draw_swing): picks the sheet, and for the finisher flies the same paint
+## on past the blow in place of the crescent.
+func painted_swing(spin: bool, heavy: bool, finisher: bool, origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, flip: bool) -> void:
+	var n := _painted_n
+	if not spin and not heavy and not finisher:
+		_painted_n += 1
+	var sheet := painted_sheet(spin, heavy, finisher, n)
+	if finisher:
+		reach *= FINISHER_SLASH_SCALE
+	painted_cut(sheet, origin, dir, reach, 360.0 if spin else width_deg, color, flip)
+	if finisher:
+		painted_cut(sheet, origin, dir, reach, 360.0 if spin else maxf(width_deg, 120.0), color, flip, 0.7, minf(reach * CRESCENT_GROW, CRESCENT_MAX_REACH))
 
 
 ## The floor darkened under a strong effect so the light over it reads against the green stone. radius in meters.
@@ -1202,7 +1378,7 @@ func showing(kind: StringName) -> int:
 				if l.visible:
 					shown += 1
 			return shown
-	var pools := {&"gashes": _impacts, &"slashes": _slashes, &"thrusts": _thrusts, &"crescents": _crescents, &"rings": _rings, &"smoke_rings": _smoke_rings, &"contacts": _contacts, &"stars": _stars, &"puffs": _puff_pool, &"scorches": _scorches, &"marks": _marks, &"glints": _glints,
+	var pools := {&"gashes": _impacts, &"slashes": _slashes, &"thrusts": _thrusts, &"crescents": _crescents, &"rings": _rings, &"smoke_rings": _smoke_rings, &"contacts": _contacts + _painted_sparks, &"painted": _painted_cards, &"stars": _stars, &"puffs": _puff_pool, &"scorches": _scorches, &"marks": _marks, &"glints": _glints,
 		&"boss_scythes": _boss_scythes, &"boss_wakes": _boss_wakes}
 	var count := 0
 	for e: Dictionary in pools.get(kind, []):
@@ -2081,6 +2257,14 @@ func animate(delta: float) -> void:
 			var mi: Node3D = c.node
 			mi.scale = Vector3.ONE * c.size * lerpf(1.0, CONTACT_GROW, c.life) / CONTACT_GROW
 			(c.mat as ShaderMaterial).set_shader_parameter(&"life", c.life)
+	for list: Array[Dictionary] in [_painted_cards, _painted_sparks]:
+		for c in list:
+			if (c.node as Node3D).visible:
+				_age(c, delta)
+				var k: float = 1.0 - pow(1.0 - c.life, 3.0) if c.get("out", false) else c.life
+				var half: float = lerpf(c.size, c.size * c.grow, k)
+				(c.node as Node3D).scale = Vector3(half, 1.0, half) if list == _painted_cards else Vector3.ONE * half
+				(c.mat as ShaderMaterial).set_shader_parameter(&"life", c.life)
 	for st in _stars:
 		if (st.node as Node3D).visible:
 			_age(st, delta)

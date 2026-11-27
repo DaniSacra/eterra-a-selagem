@@ -546,15 +546,19 @@ func _draw_swing(node: ComboNode, shape: Dictionary, origin: Vector2, dir: Vecto
 			fx.chips(Vector3(tip.x, 0.9, tip.y), Vector3(way.x, 0.2, way.y), color, motes, 4.0, 0.12, 0.4, 0.5, Fx.MOTE_GOLD_EVERY)
 	else:
 		# a turn all around: a clean sweep of light (a dark ring that size reads as a hole in the floor)
-		fx.slash(origin, dir, reach, shape.draw_width, color, time, flip, 0.9, not spin)
+		# (painted look: the ribbon is a painted card, the ink under it and the motes stay)
+		var painted := Fx.painted_on()
+		fx.slash(origin, dir, reach, shape.draw_width, color, time, flip, 0.9, not spin, Fx.BLADE_REACH, not painted)
+		if painted:
+			fx.painted_swing(spin, heavy, finisher, origin, dir, reach, shape.draw_width, color, flip)
 		# the motes leave the end of the arc the way the blade was turning
 		var turn := -1.0 if flip else 1.0
 		var end := dir.angle() - turn * deg_to_rad(minf(shape.draw_width, 300.0)) * 0.5
 		var tip := origin + Vector2.from_angle(end) * reach * 0.92
 		var onward := Vector2.from_angle(end - turn * PI * 0.5)
 		fx.chips(Vector3(tip.x, 0.9, tip.y), Vector3(onward.x, 0.25, onward.y), color, motes, 5.0, 0.12, 0.4, 0.5, Fx.MOTE_GOLD_EVERY)
-	if finisher:
-		# the sweep of the blade flying out past the blow (all the way around for a spin)
+	if finisher and not (Fx.painted_on() and node.shape != ComboNode.Shape.LINE):
+		# the sweep of the blade flying out past the blow (all the way around for a spin; the painted look flies its own card)
 		fx.crescent(origin, dir, reach, 360.0 if spin else maxf(shape.draw_width, 120.0), color)
 
 

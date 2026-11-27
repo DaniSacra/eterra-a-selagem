@@ -527,3 +527,6 @@ A cena da primeira descida: só o que já existe (preto, uma estrela, a luz de E
 - Capturas a rodar pela sessão principal (uma por vez, `tools/gpu.sh shot`): `x.png --bot --boons=25 --shot-at=14` (famílias e efeitos),
   `x.png --lab-form=7`, `--lab-form=8`, `--lab-form=9` (as três formas), `x.png --bot --angels=zerael --boons=25 --shot-at=12`
   (veneno e chão da Peste), `--angels=saarael` (Eletrificação e Descarga), `--angels=qeshael` (sangramento), `--start=boss --boons=25 --shot-at=14` (Abertura).
+
+## Efeitos pintados da espada (2026-11-27)
+`Fx.painted_*` + `assets/shaders/painted_fx.gdshader`: cartas de flipbook (folhas em `assets/textures/fx/painted/`, de `docs/art/vfx_painted/`) no lugar da fita do `slash`, da meia-lua e do `contact` no look estilizado; `--painted-fx=off` e o classico voltam aos efeitos de malha. Folha por golpe: `Fx.painted_sheet` (giro, esmagador, finalizador cut2, leves alternando cut1/cut2). Quadro em degrau, arco aparado ao angulo do golpe a partir da cauda. Cor padrao = verde da Emeth (`Fx.painted_colors`). Sem folha: investida (`thrust`).

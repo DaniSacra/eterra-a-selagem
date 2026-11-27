@@ -15,6 +15,7 @@ RUNS=(
 	"--bot --start=boss" "--bot --start=boss --boss-hp=0.66" "--bot --start=boss --boss-hp=0.3" "--bot --start=boss --boss-hp=0.14"
 	"--bot --stress=10 --stress-ids=skeleton_elite,runner_elite,mage_elite,archer_elite,guard_elite,priest_elite,knight,priest_elder"
 	"--bot --stress=10 --stress-ids=skeleton,runner,mage,archer,guard,priest"
+	"--bot --stress=8 --stress-ids=skeleton,guard,skeleton"  # (the painted sword cards and contact sparks, painted_fx.gdshader)
 	"--bot --stress=10 --stress-ids=trinca,varredor,gritador,coveiro,saltador,lancador,canalizador,armadilheiro,skeleton_big,runner_big,skeleton_raised"
 	"--bot --stress=6 --boon-ids=golpe_peste,pesado_peste,circulo_peste,passo_peste,epidemia_celestial"
 	"--bot --stress=6 --boon-ids=golpe_trovao,pesado_trovao,circulo_trovao,passo_trovao,descarga"
