@@ -1824,7 +1824,7 @@ func _crypt() -> RoomLayout:
 	# on 2026-11-20 and put back: with the robot the fight went south, 40 to 55% of his time in the south third)
 	var b: Array[ArenaObstacle] = [
 		_sarcophagus(0.5, -7.0, 0.8, 7.0, 3.2, &"block", true),
-		_sarcophagus(-5.5, -9.25, 1.2, 2.5), _cracked(_column(6.5, -6.0, 5.2, 0.65)),
+		_sarcophagus(-5.5, -9.25, 1.2, 2.5), _cracked(_column(6.5, -5.2, 5.2, 0.65)),
 		_sarcophagus(-4.0, 3.0, 2.5, 1.2), _sarcophagus(3.0, 3.0, 2.5, 1.2),
 		_capsule(Vector2(-12, -2.5), Vector2(-8, -2.5), 0.6, 0.9), _capsule(Vector2(12, 1.0), Vector2(8, 1.0), 0.6, 0.9),
 		_slit(SLIT_WEST), _slit(SLIT_EAST),
@@ -2818,7 +2818,7 @@ func _sanctuary() -> RoomLayout:
 		a.append(_column(x, 6.0, 5.2, 0.65))
 	a.append_array([_cracked(_column(15.0, -6.0, 3.4, 0.65)), _cracked(_column(-9.0, 6.0, 3.0, 0.65)),
 		ArenaObstacle.circle(Vector2(3.0, -6.0), 0.65, &"column_base", 0.6, false),
-		_capsule(Vector2(3.0, -6.9), Vector2(3.0, -9.8), 1.1, 1.0, &"drums")])
+		_capsule(Vector2(3.0, -6.9), Vector2(3.0, -9.3), 1.1, 1.0, &"drums")])
 	a.append_array(walls)
 	a.append_array(bowls)
 	l.obstacles = a
@@ -3003,8 +3003,10 @@ func _bridge() -> RoomLayout:
 	l.max_ranged = 3
 	l.banned_roles = [&"area", &"sweep", &"trap"]  # (C5: the chain of RP-11 never shares the room with the Varredor's bar; C1e: nor with the Armadilheiro's plates)
 	l.guardian = false
-	var ends: Array[ArenaObstacle] = [_column(-21.0, -4.0, 3.0), _sarcophagus(21.0, -4.8, 2.5, 1.2), _column(20.0, 4.5, 3.6),
-		_statue(21.25, -8.1)]
+	# 2026-11-27 (Daniel): both doors on the far wall, inside the frame of --cam-at=-4,3 --cam-dist=94 (x 17 and 22.6, the statue
+	# between at 19.8); the tomb moved out of the second door's approach (to the east end, off the east door's too)
+	var ends: Array[ArenaObstacle] = [_column(-21.0, -4.0, 3.0), _sarcophagus(25.6, -0.9, 2.5, 1.2), _column(20.0, 4.5, 3.6),
+		_statue(19.8, -8.1)]
 	var a: Array[ArenaObstacle] = ends.duplicate()
 	a.append_array([_piece(0.0, -7.2, 2.8, 1.6, 6.0, &"pylon", true), _piece(2.5, 2.5, 1.0, 3.2, 2.2, &"block", true),
 		_column(-2.5, 3.5, 3.4)])
@@ -3013,14 +3015,17 @@ func _bridge() -> RoomLayout:
 	l.obstacles = a
 	var west_b := _poly([-28, -6, -25, -9, -13, -9, -12, -7, -12, 7, -14, 9, -26, 9, -28, 7])
 	var east_b := _poly([12, -7, 13, -9, 28, -9, 28, 7, 26, 9, 14, 9, 12, 7])
-	var long_bridge := FloorShape.poly([west_b, FloorShape.box(_rect(-12.05, 12.05, -2.5, 2.5)),
-		FloorShape.box(_rect(-3, 3, -4.5, 4.5)), east_b])
+	# 2026-11-27 (Daniel: B looked like A): B is a zigzag. The first deck leaves the west platform along its south side, the
+	# landing is wider than A's middle island, the second deck leaves it along its north side to the east platform: the
+	# crossing bends 5 m across the room, one long bridge in two flights with a landing between them
+	var long_bridge := FloorShape.poly([west_b, FloorShape.box(_rect(-12.05, -2.95, 0.5, 5.5)),
+		FloorShape.box(_rect(-3, 3, -5.5, 5.5)), FloorShape.box(_rect(2.95, 12.05, -5.5, -0.5)), east_b])
 	var b := _variant(ends.duplicate(), long_bridge)
 	b.spawns = [_rect(17, 24, -7.5, -1), _rect(17, 24, 1, 7.5)]
-	_areas(b, ["west", _rect(-28, -12, -9, 9), "landing", _rect(-3, 3, -4.5, 4.5), "bridge", _rect(-12, 12, -3, 3),
-		"east", _rect(12, 28, -9, 9)])
+	_areas(b, ["west", _rect(-28, -12, -9, 9), "landing", _rect(-3, 3, -5.5, 5.5), "bridge", _rect(-12, -3, 0.5, 5.5),
+		"bridge", _rect(3, 12, -5.5, -0.5), "east", _rect(12, 28, -9, 9)])
 	# RP-11: the chain across the long bridge, one half then the other, never within 4 m of the landing (the shelter)
-	b.hazard = _chain([_rect(-11, -9, -2.5, 2.5), _rect(9, 11, -2.5, 2.5)], [Vector2(-CHAIN_PUSH, 0), Vector2(CHAIN_PUSH, 0)])
+	b.hazard = _chain([_rect(-11, -9, 0.5, 5.5), _rect(9, 11, -5.5, -0.5)], [Vector2(-CHAIN_PUSH, 0), Vector2(CHAIN_PUSH, 0)])
 	l.variants = [b]
 	# RP-11: on A one bridge at a time, in turn
 	l.hazard = _chain([_rect(-11.5, -9.5, -2.5, 2.5), _rect(9.5, 11.5, -2.5, 2.5)],
@@ -3028,7 +3033,7 @@ func _bridge() -> RoomLayout:
 	# RP-07: A in the middle of the descent, B (the long bridge) late
 	l.variant_depth = Vector2(0.5, 0.8)
 	l.variants[0].depth = Vector2(0.67, 1.0)
-	_gate(l, Vector2(-22.0, 6.6), -9.0, [17.5, 25.0])
+	_gate(l, Vector2(-22.0, 6.6), -9.0, [17.0, 22.6])
 	l.exits.append(ArenaExit.at_edge(Vector2(28, -5.5), Vector2(-1, 0)))
 	# RP-04: everybody rises on the east platform (the middle no more): the room asks to cross under fire
 	l.spawns = [_rect(17, 24, -7.5, -1), _rect(17, 24, 1, 7.5)]
@@ -3213,7 +3218,8 @@ func _runes() -> RoomLayout:
 	a.append_array(bowls)
 	l.obstacles = a
 	l.hazard = _hazard([&"sweep", &"comb", &"cut", &"herd", &"herd"], RUNES_ENTRY.duplicate())
-	var b: Array[ArenaObstacle] = [_piece(-9, -6, 1.2, 1.2, 4.0, &"rune_pillar", true), _piece(9, 6, 1.2, 1.2, 4.0, &"rune_pillar", true)]
+	# 2026-11-27: the first pillar was in the mouth of the third door (x -8.8): moved west of it (x -12.2), out of every door's approach
+	var b: Array[ArenaObstacle] = [_piece(-12.2, -6, 1.2, 1.2, 4.0, &"rune_pillar", true), _piece(9, 6, 1.2, 1.2, 4.0, &"rune_pillar", true)]
 	# the quiet stone in the middle (its four tiles never light, HazardDef.quiet): drawn smooth, it stops nothing
 	var quiet := ArenaObstacle.box(Vector2.ZERO, Vector2(3, 3), 0.0, &"quiet", 0.0, false)
 	quiet.blocks_move = false
@@ -3276,10 +3282,10 @@ func _altar_room() -> RoomLayout:
 	# a whole bench and a broken one (spec 6.3)
 	l.obstacles = [_piece(0.0, -6.2, 3.6, 1.6, 1.3, &"altar"), _piece(-3.0, -1.0, 2.0, 0.6, 0.9, &"bench"),
 		_piece(3.0, -1.5, 2.0, 0.6, 0.9, &"bench_broken"),
-		_stand_brazier(8.1, -2.65)]
-	# the altar stands against the whole north wall: the two doors are on its sides, in the north half (two doors, RunMap.doors_of)
-	_gate(l, Vector2(0.0, 5.2), -7.0, [])
-	l.exits = [ArenaExit.at_edge(Vector2(9, -5.5), Vector2(-1, 0)), ArenaExit.at_edge(Vector2(9, 0.2), Vector2(-1, 0))]
+		_stand_brazier(8.1, 1.6)]
+	# 2026-11-27 (Daniel): the two doors on the back wall (top of the screen), far apart on either side of the altar's
+	# tomb, which stands between them (the blind arch over it, the basins either side of it, the doors' arches beyond)
+	_gate(l, Vector2(0.0, 5.2), -7.0, [-6.2, 6.2])
 	l.cam_target = Vector2.ZERO
 	l.cam_reach = 1.5
 	return l

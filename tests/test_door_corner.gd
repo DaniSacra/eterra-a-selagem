@@ -59,6 +59,28 @@ func test_first_two_doors_far_apart_with_a_piece_between() -> void:
 					assert_false(o.rect().intersects(e.mouth) if o.shape == ArenaObstacle.Shape.BOX else Geometry2D.is_point_in_circle(e.mouth.get_center(), o.center, o.radius + 0.1), "%s: nothing in a door's mouth" % l.id)
 
 
+## Daniel 2026-11-27 (Runas B): no solid piece stands in a door's approach, the strip of floor in front of its mouth as wide as the
+## mouth and APPROACH_DEPTH deep (a pillar there read as standing in the door's mouth from the camera). Every door of every layout.
+const APPROACH_DEPTH := 4.0
+
+
+func test_no_solid_piece_in_a_doors_approach() -> void:
+	for l in _layouts():
+		if l.id == &"hall":
+			continue
+		for i in l.exits.size():
+			var e := l.exits[i]
+			var side := Vector2(-e.inward.y, e.inward.x)
+			var half := absf(e.mouth.size.dot(side)) * 0.5
+			var c := e.edge()
+			var strip := Rect2(c - side * half, Vector2.ZERO).expand(c + side * half).expand(c + e.inward * APPROACH_DEPTH - side * half).expand(c + e.inward * APPROACH_DEPTH + side * half)
+			for o in l.obstacles:
+				if not o.blocks_move or o.piece == &"trap_block":
+					continue
+				var hit := o.rect().intersects(strip) if o.shape == ArenaObstacle.Shape.BOX else Geometry2D.is_point_in_circle(strip.get_center(), o.center, o.radius + strip.size.length() * 0.5) and strip.grow(o.radius).has_point(o.center)
+				assert_false(hit, "%s: door %d: %s at %s stands in its approach" % [l.id, i, o.piece, o.center])
+
+
 ## The hall of room 1 (built in code, layout "platform"): its portal and its east stairs are the first two doors and stand
 ## together in the north-east corner, with nothing of the room's collision on either spot.
 func test_hall_first_two_doors_together_in_the_north_east() -> void:
