@@ -1,0 +1,8 @@
+CRIPTA A (ossário de catacumba). Fica tudo exatamente no lugar e no tamanho da imagem 1 (posições em % da largura x altura):
+- os três túmulos de pedra com velas acesas: em 37% x 47%, 51% x 55% e 52% x 29%;
+- a parede divisória do ossário com nichos (de 55% x 40% a 64% x 28%), a estátua encapuzada em cima dela em 63% x 17% e a coluna em 71% x 38%;
+- as lajes de túmulo no piso, retângulos gravados, nos mesmos lugares;
+- os quadrados escuros do piso (39% x 31%, 52% x 41% e 62% x 46%): continuam escuros, mesmo contorno;
+- as duas grades de ferro com brilho vermelho de brasa por baixo, em 45% x 45% e 58% x 51%: são objetos do jogo, mantenha o contorno exato e o brilho vermelho;
+- os vasos e urnas de barro (24% x 42%, 18% x 54%, 79% x 44%), a bacia quebrada em 75% x 55%, as muretas e os merlões da frente e os pilares de pedra embaixo da plataforma.
+Na parede da direita ficam os dois arcos de porta altos (centros em 68% x 28% e 76% x 30%), com o trecho de parede de pedra entre eles: pinte as duas portas FECHADAS, madeira escura com ferragens, sem símbolos, no mesmo lugar. O estandarte azul com leão em 84% x 26% vira parede de pedra lisa. As plantas penduradas no alto viram musgo escuro discreto.

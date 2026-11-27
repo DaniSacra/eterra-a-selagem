@@ -1,0 +1,1 @@
+ENCAIXE (a tentativa anterior deslocou os objetos): cada túmulo, grade, coluna e quadrado escuro fica EXATAMENTE sobre o seu par na imagem 1, mesmo tamanho. Túmulo da esquerda em 37% x 47%, túmulo do centro em 51% x 55%, grade da esquerda em 45% x 45%, grade da direita em 58% x 51%, coluna em 71% x 38%. Retire as plantas penduradas do alto da parede do fundo.

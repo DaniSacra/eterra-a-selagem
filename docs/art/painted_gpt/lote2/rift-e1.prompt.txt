@@ -1,0 +1,27 @@
+Repinte a imagem 1 (captura do meu jogo, sem personagens) por cima, como um decalque: mesma câmera, mesmo enquadramento, mesma perspectiva, cada borda no mesmo pixel. Não gire, não aproxime, não afaste, não corte, não mude a inclinação, não acrescente nem remova paredes, muretas, pilares, degraus, portas, arcos, buracos ou blocos da plataforma. A plataforma ocupa exatamente a mesma área da imagem 1, do mesmo tamanho. O formato final é a imagem 1 inteira, de canto a canto.
+
+A imagem 2 é a pintura aprovada de OUTRA sala do mesmo jogo: use dela SÓ o estilo de pintura, a paleta escura do piso, os materiais e a luz. Não copie a planta, os objetos nem a composição dela.
+
+ESTILO: pintura digital feita à mão, ilustrada, como a arte de um jogo de ação visto de cima no estilo do Hades II. Pinceladas visíveis, contorno escuro suave e quebrado (não linha de vetor), formas simples e legíveis, detalhe concentrado nas bordas e o centro do piso calmo (escuro, pouco detalhe) para a luta. Luz quente de tochas, velas e braseiros contra meia-luz fria; névoa cinza-azulada no vazio, arcos e torres em silhueta ao fundo; musgo escuro e algumas folhas vermelhas de outono nas bordas. Acolhedor, aventura, não terror. Não é 3D renderizado, não é foto, não é pixel art, não é anime. Nada de brilho plástico. A referência é só de estilo: nenhum personagem, lugar, símbolo, logotipo ou composição de outro jogo.
+
+O CHÃO É O PALCO, NÃO A ESTRELA: o piso inteiro em tom MÉDIO-ESCURO (cerca de 35% de brilho) e pouco saturado, pedra cinza-esverdeada e ardósia azulada, como o chão das salas do Hades II e do SWORN e como o piso da imagem 2. Nenhuma área grande clara ou amarela no piso. As lajes e juntas ficam visíveis em toda a sala, com pouco contraste dentro do piso e textura discreta no centro. A luz quente laranja e mel fica só em POÇAS pequenas e suaves em volta de cada chama (cerca de uma a duas lajes de raio); o resto da sala em meia-luz fria azul-acinzentada, legível, não sombria. Paredes, muretas e estátuas um pouco mais claras que o piso para a sala ler bem. Os personagens e efeitos do jogo é que terão cor forte por cima.
+
+REGRAS:
+- Sala VAZIA: nenhum personagem, herói, inimigo, pessoa ou animal. Estátuas de pedra podem ficar.
+- NENHUM estandarte, bandeira, flâmula ou pano pendurado em lugar nenhum: onde a imagem 1 tem um estandarte, pinte parede de pedra lisa.
+- Proibido: sol com raios, estrela de muitas pontas, cruz, qualquer símbolo ou emblema.
+- Nada violeta forte e nada verde-esmeralda (cores reservadas). A névoa do fundo é cinza-azulada, não roxa nem anil.
+- Nenhum texto, letra, número, runa legível, ícone ou marca em lugar nenhum.
+- Portas fechadas, de madeira escura com ferragens, sem símbolo brilhando, sem luz saindo delas (o jogo coloca os ícones). Não acrescente portas, arcos ou nichos novos e não mude as portas de lugar.
+
+FENDAS A (pontes sobre abismos). Fica tudo exatamente no lugar e no tamanho da imagem 1 (posições em % da largura x altura):
+- as duas pontes de pedra com balaustradas sobre os dois abismos: ponte de cima centro em 63% x 44%, ponte de baixo centro em 53% x 59%; os abismos debaixo delas continuam buracos escuros e fundos com o mesmo contorno;
+- o buraco octogonal em 81% x 61%, mesmo contorno, escuro por dentro;
+- as colunas e tocos de coluna (37% x 47%, 47% x 43%, 68% x 65%, 78% x 70%) e o túmulo baixo em 44% x 39%;
+- os dois canais de água rasa à esquerda (em torno de 26% x 47%), água azul-acinzentada escura, não brilhante;
+- os braseiros e lanternas acesos nos pilares das pontes e o braseiro em 91% x 46%;
+- a muralha das portas à direita: o bloco de torre em 80% x 30% e os arcos à direita dele (86% x 40% e 94% x 40%), com o trecho de parede e a grade entre eles; pinte as portas FECHADAS, madeira escura com ferragens, sem símbolos, no mesmo lugar;
+- as muretas com merlões em volta da plataforma, a torre alta ao fundo, as correntes e os arcos em ruína à esquerda em silhueta.
+O estandarte azul com leão em 80% x 25% vira parede de pedra lisa. Apague os pequenos sinais claros em 42% x 82% e as setinhas amarelas do piso (o piso fica só pedra; a borda dos abismos pode ter uma linha fina dourada gasta). O piso, que na imagem 1 está azul-arroxeado, vira ardósia cinza-azulada pouco saturada. O vazio em volta continua escuro, com névoa cinza-azulada: nada violeta, nada roxo, sem pontinhos roxos.
+
+CORREÇÃO DE LUZ (uma tentativa anterior ficou escura demais, quase preta): o piso em tom MÉDIO como o piso da imagem 2 (cerca de 35% de brilho, nem claro nem escuro), pedra cinza-esverdeada e ardósia com um leve toque quente, lajes e juntas bem visíveis em toda a sala. Poças de luz quente laranja e mel em volta de cada chama um pouco maiores e suaves (cerca de duas lajes de raio). Paredes, muretas e estátuas em pedra mais clara, iluminadas pelas chamas. O centro do piso continua sem poça clara grande.

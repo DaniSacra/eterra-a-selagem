@@ -1,0 +1,9 @@
+FENDAS A (pontes sobre abismos). Fica tudo exatamente no lugar e no tamanho da imagem 1 (posições em % da largura x altura):
+- as duas pontes de pedra com balaustradas sobre os dois abismos: ponte de cima centro em 63% x 44%, ponte de baixo centro em 53% x 59%; os abismos debaixo delas continuam buracos escuros e fundos com o mesmo contorno;
+- o buraco octogonal em 81% x 61%, mesmo contorno, escuro por dentro;
+- as colunas e tocos de coluna (37% x 47%, 47% x 43%, 68% x 65%, 78% x 70%) e o túmulo baixo em 44% x 39%;
+- os dois canais de água rasa à esquerda (em torno de 26% x 47%), água azul-acinzentada escura, não brilhante;
+- os braseiros e lanternas acesos nos pilares das pontes e o braseiro em 91% x 46%;
+- a muralha das portas à direita: o bloco de torre em 80% x 30% e os arcos à direita dele (86% x 40% e 94% x 40%), com o trecho de parede e a grade entre eles; pinte as portas FECHADAS, madeira escura com ferragens, sem símbolos, no mesmo lugar;
+- as muretas com merlões em volta da plataforma, a torre alta ao fundo, as correntes e os arcos em ruína à esquerda em silhueta.
+O estandarte azul com leão em 80% x 25% vira parede de pedra lisa. Apague os pequenos sinais claros em 42% x 82% e as setinhas amarelas do piso (o piso fica só pedra; a borda dos abismos pode ter uma linha fina dourada gasta). O piso, que na imagem 1 está azul-arroxeado, vira ardósia cinza-azulada pouco saturada. O vazio em volta continua escuro, com névoa cinza-azulada: nada violeta, nada roxo, sem pontinhos roxos.

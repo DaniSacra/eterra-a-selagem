@@ -28,6 +28,7 @@ Generation (curl; the key is read from the file, never printed):
 | 2026-11-27 | VFX lote 1 (generations, no ref): cut1 v1 (ellipse, drift), cut1 v2, cut2 v1, spin v1, smash v1 (radial stripes read as sun rays, rejected), smash v2, contact v1, hit_ring v1 | 8 | 5488 | 2.00 |
 | 2026-11-27 | characters (edits 1024x1536, `docs/art/characters_gpt/`): 8 concepts A1, 8 Meshy fronts B1, 2 hero backs C1; redos: Warrior A2+B2 (chest lion read as a sun), Guard B2 (lost bulk), Maga C2 (staff on wrong side, spear tip) | 22 | 5488 | 5.50 |
 | 2026-11-27 | HUD v3 kit (`docs/art/hud_v3/`): icons_a (6 icons), icons_b (attack + smash redo: first smash fanned up like a burst, first attack read as an arrow), frames_a (slot, rings), frames_b (bar, cartouche, divider, medallions), portrait (1024x1024, 7024 tokens) | 5 | 5488 (portrait 7024) | 1.30 |
+| 2026-11-27 | lote2 (`lote2/`): crypt1 e1 (floor too dark, luma 48), e2 (chosen, sala02); rift e1 (chosen, sala03), e2 (left side 35 to 50 px off); garden e1 (statue niche became a 3rd arch), e2 (platform grew), e3 (chosen, sala04) | 7 | 5488 | 1.75 |
 
 ## style_v2 (2026-11-27): style approval round
 `style_v2/` holds the variants Daniel is choosing from (Downloads\ASelagem-GP8\APROVAR-ESTILO). Request =
@@ -75,3 +76,20 @@ All with `--start=combat --arena=<id> --variant=<n> --no-arrival --doors-shut --
 - rift variant 0 (Fendas A): --cam-at=-7,-2 --cam-dist=84 -> base_rift.png
 - garden variant 0 (Jardim A): --cam-at=3,0 --cam-dist=82 -> base_garden.png
 `--start=combat` (new) enters the first fight room, so `--arena` takes effect outside the guided first descent.
+
+## Lote 2 paintings (2026-11-27): Sala02 Cripta A, Sala03 Fendas A, Sala04 Jardim A
+Request = `lote2/prompt_common.txt` (dark_v3 rules; image 2 = `assets/rooms/painted/sala01.png` as the STYLE of another
+room) + `lote2/room_<base>.txt` + `fix_light.txt` (+ the room's `fix_fit_*.txt` on retries); sent text in
+`lote2/<base>-<tag>.prompt.txt`. Generator `lote2/gen.sh <crypt1|rift|garden> <tag> [fix files]`, overlays
+`lote2/overlay.sh` (`_overlay.jpg` = 3:2 stretch, `_overlay_uniform.jpg` = base scaled to 1536x938 at the top, like sala01).
+Chosen: `lote2/sala02.png` (crypt1-e2), `sala03.png` (rift-e1), `sala04.png` (garden-e3), side-by-sides `sala0N_lado_a_lado.jpg`;
+copies in Downloads\ASelagem-GP8\GPT-Sala02..04 (awaiting Daniel).
+Floor-centre luma: 62, 55, 51 (sala01 dark = 86, antessala 68): darker than Sala 01; brighten in a post pass if Daniel wants.
+Fit: the bases are 1924x1175 like sala01, so the model keeps the aspect: Cripta and Fendas fit with the UNIFORM mapping
+(walls, doors, statue, platform edge within a few px; Cripta tombs, grates and column 10 to 15 px; Fendas bridges 15 to 20 px,
+water and columns 5 to 10 px). Jardim e3 fits the 3:2 STRETCH better (walls, tree, column, altar ~20 px; statue ~25 px;
+right braziers ~40 px; platform edge ~20 to 30 px inside the base). PaintedHall must use the matching mapping per room.
+Rules checked on all three: no banners (lion banners removed), no sun, star, cross or symbol, no text, no figures,
+doors shut and unlit, void blue-slate (R ~ G < B, not violet), no emerald (garden crystals now ice blue), doors only
+where the base has them, with a wall pier (Cripta, Fendas also a brazier) or the statue niche (Jardim) between them.
+
