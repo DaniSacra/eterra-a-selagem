@@ -4032,7 +4032,7 @@ long_fewest = 2
 long_elite_from = 4
 long_gap = Vector2(0.45, 0.75)
 long_delay = 0.8
-cost_curve = PackedFloat32Array(20, 28, 30, 34, 34, 14, 18, 21, 27, 27, 20, 22)
+cost_curve = PackedFloat32Array(6, 9, 11, 12, 12, 9, 11, 13, 16, 16, 14, 16)
 cost_per_rating = 0.55
 horde_share = 0.5
 two_wave_share = 0.5
@@ -4041,6 +4041,13 @@ wave_coef_two = 0.6
 horde_initial = 0.75
 horde_reserve = 0.75
 wave_most = 20
+opening_waves = {
+1: Array[PackedStringArray]([PackedStringArray("skeleton"), PackedStringArray("skeleton", "skeleton")]),
+2: Array[PackedStringArray]([PackedStringArray("archer"), PackedStringArray("archer", "archer", "skeleton")]),
+3: Array[PackedStringArray]([PackedStringArray("runner", "runner"), PackedStringArray("bone_rat", "bone_rat", "bone_rat", "bone_rat", "bone_rat")]),
+4: Array[PackedStringArray]([PackedStringArray("skeleton", "skeleton", "archer"), PackedStringArray("guard", "skeleton")])
+}
+opening_cap = 4
 rest_after_guardian = true
 fixed_rewards = {
 2: PackedInt32Array(1, 3),

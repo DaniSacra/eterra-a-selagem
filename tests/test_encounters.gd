@@ -62,6 +62,8 @@ func test_room_for_summons() -> void:
 func test_no_wave_and_no_floor_past_the_tier_or_twenty() -> void:
 	for st: StageDef in [stage, full]:
 		for depth in range(1, st.rooms):
+			if st.opening_waves.has(depth):
+				continue  # (SW-R1b: written by hand, a few heads a wave)
 			for i in 60:
 				var fight := EncounterGen.generate(st, depth, defs, rng)
 				var r := EncounterGen.alive_range(st, fight.tier)

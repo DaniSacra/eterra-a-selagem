@@ -875,3 +875,10 @@ Vida e dano de todos os inimigos, do Cavaleiro, do Ancião e de Morvath vêm do 
 inimigos vem de `sw_poise` em `tools/make_data.gd` (o teto de stagger do SWORN), atordoamento comum 2,0 s. A dica e o termo do glossário da armadura viraram o da Quebra.
 
 - **Dano fixo x2,5 e `poise_pct` (2026-11-27)**: Esmagador 200, Lança 375, Brado 375, Ultimates, Dons (`FLAT` 1,5), Bênçãos de dano próprio, Salmos e Encantos escalados por `FIXED_X` (tabela em `docs/design/balance.md`, "Dano fixo x2,5"). O stat `armor_pct` virou `poise_pct`: Peso, Onda Pesada, Ruptura e Esquiva Implacável gastam mais Quebra (`Horde.poise_scale`, também na Postura de Morvath).
+
+## SW-R1b, menos cabeças por sala e abertura escrita (2026-11-27; `tests/test_sw_r.gd`, números em `docs/design/balance.md`)
+- `StageDef.opening_waves` (profundidade -> ondas à mão, em `_stage` de `tools/make_data.gd`) e `opening_cap`: `EncounterGen.generate` devolve `EncounterGen.opening`
+  nas salas 1 a 4 (esqueleto; besteiro; corredores e ratos; mistura com o escudo), sem sorteio nem orçamento (`budget` 0). `cost_curve` agora é SWORN x1,5
+  (`6, 9, 11, 12, 12, 9, 11, 13, 16, 16, 14, 16`). A sala sem entrada em `opening_waves` segue o orçamento de sempre; as de 11 em diante são as cheias.
+- `RoomTally.alive` (chamado em `Rooms._step_fight`) grava `rooms[].peak`, `alive_s` e `fight_s` no `RESULT`: máximo de vivos e soma no tempo.
+- O `smoke.sh 300 --seed=5` chega à sala 7 (não a Morvath: a descida de 14 salas pede mais de 300 s); a prova de partida inteira é `smoke.sh 900`.

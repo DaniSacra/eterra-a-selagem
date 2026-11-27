@@ -1172,7 +1172,19 @@ func _stage() -> void:
 	# SW-R1 (docs/design/rooms_progression.md, "O orçamento"): Kingswood's curve (4 in the first room, 8 in the 5th, 6 right after the
 	# guardian, 11 from the 11th: sala x 5 here), a room one wave of it, two of 0.75 or a horde of 0.75 + 0.75 (half of them);
 	# the guardians' depths (5, 10) take none
-	st.cost_curve = PackedFloat32Array([20, 28, 30, 34, 34, 14, 18, 21, 27, 27, 20, 22])
+	# SW-R1b (Daniel, 2026-11-27: too many a room): SWORN's 4 / 8 / 6 / 11 at 1.5 (our heads have more life) in place of x5; depths 1 to 4 are
+	# written by hand (opening_waves) and keep the first four numbers only as the fallback. The late rooms (11 and 12) are the fullest.
+	st.cost_curve = PackedFloat32Array([6, 9, 11, 12, 12, 9, 11, 13, 16, 16, 14, 16])
+	# SW-R1b: the four opening rooms, one lesson each (SWORN's tutorial: a hammer then two axes; two boars then five snakes; heavies; a mix):
+	# 1 the soldier (one, then two), 2 the crossbow to dodge (one, then two with a soldier), 3 the fast ones (two runners, then a pack of rats),
+	# 4 the mix (soldiers and a crossbow, then the shield with a soldier). Costs 3+6, 4+11, 6+5, 10+8: no elite, no modifier, no big one.
+	st.opening_waves = {
+		1: _wave_lists([["skeleton"], ["skeleton", "skeleton"]]),
+		2: _wave_lists([["archer"], ["archer", "archer", "skeleton"]]),
+		3: _wave_lists([["runner", "runner"], ["bone_rat", "bone_rat", "bone_rat", "bone_rat", "bone_rat"]]),
+		4: _wave_lists([["skeleton", "skeleton", "archer"], ["guard", "skeleton"]]),
+	}
+	st.opening_cap = 4
 	st.horde_share = 0.5
 	st.two_wave_share = 0.5
 	st.wave_coef_two = 0.6  # (SWORN 0.75: ours waits for the floor to clear between the two, which asks 10 s more)

@@ -54,6 +54,17 @@ func note(key: String, value: Variant) -> void:
 		_rooms[-1][key] = value
 
 
+## SW-R1b: the heads standing in a fight room this step (rooms[].peak: most at once; alive_s and fight_s: their sum over time, so
+## alive_s / fight_s is the average standing).
+func alive(count: int, dt: float) -> void:
+	if _rooms.is_empty():
+		return
+	var r := _rooms[-1]
+	r["peak"] = maxi(int(r.get("peak", 0)), count)
+	r["alive_s"] = float(r.get("alive_s", 0.0)) + count * dt
+	r["fight_s"] = float(r.get("fight_s", 0.0)) + dt
+
+
 ## C1e: a head of the fight rose in the current room (its kind, and its modifier if it had one), for the draw's report.
 func seen(kind: String, mod: String = "") -> void:
 	if _rooms.is_empty():
@@ -221,6 +232,9 @@ func rooms(time: float) -> Array:
 		var z: Dictionary = r.get("zones", {})
 		for k: String in z:
 			z[k] = snappedf(float(z[k]), 0.1)
+		if r.has("alive_s"):
+			r["alive_s"] = snappedf(float(r.alive_s), 0.1)
+			r["fight_s"] = snappedf(float(r.fight_s), 0.1)
 	return out
 
 

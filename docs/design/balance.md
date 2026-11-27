@@ -1112,3 +1112,35 @@ golpe; `Horde._wear_poise` e a Postura de Morvath (`Boss._on_blow`) multiplicam 
 | Chegou em Morvath (900 s) | 3 de 12 | 4 de 12 (1 vitoria, com 7 de vida) |
 | Chefe, vida que sobra (`--start=boss --boons=25`, 300 s) | 1012 a 5075 de 6000 | 978 a 3823; 1 vitoria |
 | Duracao media da partida | 565 s | 537 s |
+
+## SW-R1b: menos inimigos por sala, as quatro primeiras escritas à mão (2026-11-27, gameplay-engineer, pedido do Daniel)
+Pedido: "muitos inimigos por sala; no SWORN são menos; as 4 primeiras salas com poucos, para aprender". Fonte: `sworn_rea_kingswood_2026-11-25.md` 3.1, 3.2 e 3.4.
+- **Curva** (`StageDef.cost_curve`, orçamento de UMA onda a coeficiente 1,0; o custo por cabeça não mudou: Rato 1, comum 3, atirador 4, pesado 5,
+  elite o dobro, Capitão 12): era a de SWORN x5 (20, 28, 30, 34, 34, 14, 18, 21, 27, 27, 20, 22), passou a SWORN x1,5 (nossas cabeças têm mais
+  vida): `6, 9, 11, 12, 12, 9, 11, 13, 16, 16, 14, 16` (salas 1 a 12; 5 e 10 são guardiões). Vale de depois do guardião (9) e de novo depois do
+  segundo (14); as salas 11 e 12 são as mais cheias, como "11 da sala 11 em diante". Sala de duas ondas 0,6 cada, horda 0,75 + 0,75, como antes.
+- **Salas 1 a 4 escritas** (`StageDef.opening_waves`, `EncounterGen.opening`; sem dado, sem elite, sem modificador, sem maior; 4 em pé no máximo,
+  `opening_cap`; a luta sobe uma cabeça por vez como as demais salas longas): 1 o esqueleto (1, depois 2); 2 o besteiro para esquivar (1, depois
+  2 com um esqueleto); 3 os rápidos (2 corredores, depois 5 ratos de osso); 4 a mistura (2 esqueletos e 1 besteiro, depois o escudo e um esqueleto).
+  Total de cabeças 3, 4, 7 e 5 (antes 8, 13, 14 e 13). Salas "especiais" com mais gente: as de 11 em diante (e a Provação, que é uma maldição sobre
+  luta comum, sem luta própria); não há Onslaught no jogo. A primeira descida guiada (`first_descent.tres`) continua a dela.
+- **Medida** (`RoomTally.alive`: `rooms[].peak`, `alive_s`, `fight_s`; média viva = alive_s / fight_s). `smoke.sh 900 --seed=1..12 --bot-reaction=0.25
+  --ultimate=cleave`, mesmo HEAD, só mudam curva e salas escritas:
+
+| Sala | Cabeças antes | Cabeças depois | Pico antes | Pico depois | Média viva antes | Média viva depois |
+|---|---|---|---|---|---|---|
+| 1 | 7,9 | 3,0 | 3,0 | 3,0 | 2,43 | 2,22 |
+| 2 | 12,6 | 4,0 | 5,5 | 4,0 | 3,87 | 2,61 |
+| 3 | 13,7 | 7,2 | 5,0 | 3,6 | 3,73 | 1,93 |
+| 4 | 13,3 | 5,0 | 5,7 | 3,0 | 3,81 | 2,21 |
+| 6 | 6,7 | 5,2 | 4,3 | 4,7 | 2,69 | 2,53 |
+| 7 | 7,7 | 6,8 | 6,0 | 5,9 | 3,00 | 2,97 |
+| 8 | 10,1 | 6,9 | 6,0 | 5,4 | 3,44 | 3,07 |
+| 9 | 12,6 | 8,6 | 6,2 | 6,1 | 4,24 | 3,43 |
+| 11 | 9,0 | 6,1 | 6,0 | 5,3 | 3,56 | 3,20 |
+| 12 | 8,8 | 7,7 | 6,2 | 6,6 | 3,27 | 4,02 |
+
+  (amostras pequenas nas salas fundas: o robô morre antes; as salas 6 a 12 são mais próximas porque o sorteio já era enxuto ali.) Partida do robô,
+  12 sementes: antes chegou a Morvath em 6 e venceu 2, mortes por sala {5: 3, 7: 1, 9: 1, 10: 1, 14: 4}; depois chegou em 5, venceu 0, mortes
+  {8: 1, 10: 4, 12: 2, 14: 5}, sala final média 10,4 para 11,8. Nada de trivial: a dificuldade se desloca do começo (nenhuma morte nas salas 1 a 4,
+  nem no primeiro guardião) para o segundo guardião e Morvath; as vitórias (0 de 12) caem dentro do ruído do robô, a olhar com mais sementes.
