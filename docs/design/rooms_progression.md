@@ -1837,3 +1837,23 @@ DEPOIS `StageDef.fountains_per_path` = 2: ficam as das camadas mais cedo (a da s
 na segunda metade (salas 7 a 13); máximo por caminho 2 em 300 de 300, cura possível 80% da vida. O teste `test_sw_r` trava os dois números.
 Robô (12 sementes): vida média ao entrar nas salas 7 a 13 de 40,0 para 27,1, chegada em Morvath 8 de 12 nas duas; é a descida "mais difícil sem
 upgrades" pedida, e o respiro depois do segundo guardião passa a ser só a sala leve (orçamento 20) e a cura da sala (`room_heal_base`).
+
+## Portas afastadas, com uma peça entre elas (Daniel, 2026-11-27)
+
+Regra: em toda sala com duas ou mais portas, as duas primeiras ficam a 5,5 m ou mais uma da outra (no máximo 13 m, para a escolha não pedir
+caminhada) e algo fica entre elas. Reverte o canto das portas juntas (PT-6b, 2026-11-25). O salão já cumpria (`CatacombHall.DOOR_X`, estátua do meio).
+Números em `tools/make_data.gd` (`_gate`, `_guardian_doors`, `CRYPT_DOORS`); trava em `tests/test_door_corner.gd` (distância, peça entre, boca livre).
+
+| Sala | Antes (entre as duas primeiras) | Agora | Peça entre elas |
+|---|---|---|---|
+| Cripta (A e B) | 4,2 m (2,8 e 7,0) | 8,8 m (6,6 e -2,2; a terceira em -8,6) | tigela de fogo na parede (3,1) e a urna (1,0); na B o muro divisor |
+| Fendas | 4,2 m (14,0 e 18,2) | 6,0 m (13,0 e 19,0; a terceira em 7,2) | candelabro de pé com chama (16,0, `_stand_brazier`) e tigela na parede (10,1); o pórtico da fachada abraça as três portas |
+| Jardim | 4,2 m (8,8 e 13,0) | 6,8 m (6,6 e 13,4; a terceira em -0,8) | a estátua do nicho (10,0, `GardenLook.STATUES`); janelas do norte em -10,4 e -7,0 |
+| Santuário | 4,2 m (7,3 e 11,5) | 8,6 m (-5,3 e 3,3; a terceira em 11,0) | a estátua do nicho (-1,0) sobre o sarcófago; a armadilha do norte foi para x 7,15 |
+| Ponte | 4,2 m (21,3 e 25,5) | 7,5 m (17,5 e 25,0) | estátua na parede (21,25, `_statue`) |
+| Runas | 4,2 m (6,8 e 11,0) | 7,8 m (7,3 e -0,5; a terceira em -8,8) | tigela de fogo na parede (3,4); na B também o cristal (-4,5) |
+| Provação | 4,2 m (0,3 e 4,5) | 7,2 m (-3,4 e 3,8) | duas tigelas frias, a faixa e a prateleira (`TrialLook`) |
+| Altar | 4,2 m (z -5,2 e -1,0) | 5,7 m (z -5,5 e 0,2) | braseiro de pé (8,1; -2,65) |
+| Casa do Cavaleiro e do Ancião | 4,2 m | 7,4 m | tigelas de fogo na parede entre as portas |
+
+Rastreio: o teste dos buracos (`test_a_dash_never_crosses_the_abyss`) passou a aceitar a boca da porta como chão.

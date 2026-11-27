@@ -77,7 +77,7 @@ const LANTERN_LIGHT := Vector2(1.4, 7.0)
 const NORTH_Z := -14.0
 const WALL_THICK := 0.9
 const NORTH_HEIGHT := Vector2(7.0, 9.0)
-const NORTH_WINDOWS: Array[float] = [-9.5, -3.0]
+const NORTH_WINDOWS: Array[float] = [-10.4, -7.0]
 ## West: its inner face, height, the window (z) and the banners (z).
 const WEST_X := -17.0
 const WEST_HEIGHT := Vector2(6.0, 7.2)
@@ -133,7 +133,7 @@ const ENTRY_WIDTH := 4.4
 
 # ---------- statues, grass, candles ----------
 ## Hooded statues (empty hands) in niches: where (x, z), their facing (degrees, 0 = looking south), height.
-const STATUES: Array[Vector4] = [Vector4(7.6, -14.9, 0.0, 3.0), Vector4(-17.9, 6.0, 90.0, 3.0)]
+const STATUES: Array[Vector4] = [Vector4(10.0, -14.9, 0.0, 3.0), Vector4(-17.9, 6.0, 90.0, 3.0)]
 ## A niche's width and depth behind a statue.
 const NICHE := Vector2(2.0, 1.1)
 ## Tufts of dry grass: how many at most, their size; along each root, how far out of its middle line and how likely at

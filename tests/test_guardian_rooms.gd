@@ -103,7 +103,7 @@ func test_the_knights_hall_has_a_plate_and_stones_in_each_corner() -> void:
 		assert_eq(stones.size(), 1, "stones in the corner %s" % c)
 	# RD2-10: the plates lie flush against the walls where the charges end, on the sides and the south wall
 	for r in plates.plates:
-		var flush := absf(r.position.x) > 8.5 and (r.position.x < -10.9 or r.end.x > 10.9) or r.end.y > 10.9
+		var flush := absf(r.position.x) > 8.5 and (r.position.x < -10.9 or r.end.x > 10.9) or r.end.y > 10.9 or r.position.y < -10.3  # (2026-11-27: one by the middle of the back wall, one in the east, two in the south)
 		assert_true(flush, "plate %s flush against a wall" % r)
 	for z in rocks.drop_zones:
 		for k in 11:
@@ -153,7 +153,7 @@ func test_the_stones_of_the_hall_keep_their_rules() -> void:
 	for i in roundi(240.0 / DT):
 		t += DT
 		if i == roundi(120.0 / DT):
-			hero = Vector2(-8.5, -8.5)  # (then in a corner: half aimed at him)
+			hero = Vector2(-8.5, -5.7)  # (then in a corner: half aimed at him)
 		var did := d.step(DT, hero, [], 2)
 		for r: Rect2 in did.armed:
 			count += 1

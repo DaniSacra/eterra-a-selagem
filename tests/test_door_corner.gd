@@ -1,6 +1,5 @@
 extends GutTest
-## PT-6b (Daniel, 2026-11-25): the doors in use stand together in the north-east corner, 3 to 4.5 m apart, so the choice
-## needs no walking from door to door; the third (when there is one) is to their left.
+## Doors (Daniel 2026-11-25 together, reversed 2026-11-27): far apart with a piece between them.
 
 const STAGE := "res://data/stages/catacombs.tres"
 
@@ -18,22 +17,46 @@ func _layouts() -> Array[RoomLayout]:
 	return out
 
 
-func test_first_two_doors_are_in_the_north_east() -> void:
+## Daniel 2026-11-27: the doors stand far apart (5.5 m or more between the first two) and a piece stands between them: a
+## statue, a fire bowl, a brazier, a wall, a sarcophagus, a crystal... (an obstacle of the layout, or one the look draws
+## between them: the Jardim's niche statue and the Sanctuary's niche statue).
+const PIECE_NEAR_WALL := 4.0
+const APART_MIN := 5.5
+const LOOK_PIECES := {&"garden": 10.0, &"sanctuary": -1.0, &"trial": 0.25}
+
+
+func test_first_two_doors_far_apart_with_a_piece_between() -> void:
 	for l in _layouts():
 		if l.id == &"hall":
 			continue
-		var box := l.floor.bounds()
 		assert_gte(l.exits.size(), 2, l.id)
-		for i in 2:
-			var e := l.exits[i]
-			assert_gt(e.edge().x, 0.0, "%s: door %d east of the middle" % [l.id, i])
-			assert_lt(e.edge().y, box.get_center().y, "%s: door %d in the north half" % [l.id, i])
-			if l.id != &"altar":  # the chapel has its doors in the east wall itself
-				assert_lt(e.edge().x, box.end.x - 1.0, "%s: door %d not glued to the east wall" % [l.id, i])
-		var d := l.exits[0].at.distance_to(l.exits[1].at)
-		assert_between(d, 3.0, 4.5, "%s: the two doors 3 to 4.5 m apart" % l.id)
-		if l.exits.size() > 2 and l.id != &"bridge" and l.id != &"trial":
-			assert_lt(l.exits[2].at.x, minf(l.exits[0].at.x, l.exits[1].at.x), "%s: the third to their left" % l.id)
+		var e0 := l.exits[0]
+		var e1 := l.exits[1]
+		var d := e0.at.distance_to(e1.at)
+		assert_gte(d, APART_MIN, "%s: the two doors %.1f m apart" % [l.id, d])
+		assert_lte(d, 13.0, "%s: not so far that the choice needs a walk" % l.id)
+		# the pieces between: on the line from one to the other (their mouths' gap), near the wall the doors are in
+		var lo := minf(e0.edge().x, e1.edge().x)
+		var hi := maxf(e0.edge().x, e1.edge().x)
+		var vertical := absf(e0.edge().x - e1.edge().x) < 0.5  # doors in a side wall: the line runs along z
+		if vertical:
+			lo = minf(e0.edge().y, e1.edge().y)
+			hi = maxf(e0.edge().y, e1.edge().y)
+		var found := false
+		for o in l.obstacles:
+			var along := o.center.y if vertical else o.center.x
+			var depth := absf(o.center.x - e0.edge().x) if vertical else absf(o.center.y - e0.edge().y)
+			if along > lo and along < hi and depth <= PIECE_NEAR_WALL and o.piece != &"quiet":
+				found = true
+		if not found and LOOK_PIECES.has(l.look if l.look != &"" else l.id):
+			var x: float = LOOK_PIECES[l.look if l.look != &"" else l.id]
+			found = x > lo and x < hi
+		assert_true(found, "%s: a piece between the two doors" % l.id)
+		# neither mouth holds an obstacle that blocks bodies
+		for e in [e0, e1]:
+			for o in l.obstacles:
+				if o.blocks_move:
+					assert_false(o.rect().intersects(e.mouth) if o.shape == ArenaObstacle.Shape.BOX else Geometry2D.is_point_in_circle(e.mouth.get_center(), o.center, o.radius + 0.1), "%s: nothing in a door's mouth" % l.id)
 
 
 ## The hall of room 1 (built in code, layout "platform"): its portal and its east stairs are the first two doors and stand

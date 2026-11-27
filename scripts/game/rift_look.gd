@@ -624,33 +624,47 @@ func _facade() -> void:
 	var mat := ashlar()
 	var face := north - 0.02
 	# the wall, the porch cut back into it, the door's opening through the porch's back
-	var door := Vector2.ZERO
+	# Daniel 2026-11-27: the doors stand far apart with a piece between them: the porch spans all of them (each with its own
+	# opening and arch), the back wall standing between the openings
+	var doors: Array[Vector2] = []
 	for i in layout.exits.size():
 		if in_wall(i):
 			var e := layout.exits[i]
-			door = Vector2(e.mouth.position.x, e.mouth.end.x)
-	_slab(x0, PORCH.x, face, face - FACADE_THICK, 0.0, FACADE_HEIGHT, mat)
-	_slab(PORCH.y, x1, face, face - FACADE_THICK, 0.0, FACADE_HEIGHT, mat)
+			doors.append(Vector2(e.mouth.position.x, e.mouth.end.x))
+	doors.sort_custom(func(p: Vector2, q: Vector2) -> bool: return p.x < q.x)
+	var porch := Vector4(maxf(x0 + 0.2, doors[0].x - 0.9), doors[doors.size() - 1].y + 0.9, PORCH.z, PORCH.w)
+	_slab(x0, porch.x, face, face - FACADE_THICK, 0.0, FACADE_HEIGHT, mat)
+	_slab(porch.y, x1, face, face - FACADE_THICK, 0.0, FACADE_HEIGHT, mat)
 	var back := face - PORCH.z
-	_slab(PORCH.x, door.x - JAMB, back, face - FACADE_THICK, 0.0, FACADE_HEIGHT, mat)
-	_slab(door.y + JAMB, PORCH.y, back, face - FACADE_THICK, 0.0, FACADE_HEIGHT, mat)
-	_slab(door.x - JAMB, door.y + JAMB, back, face - FACADE_THICK, WALL_DOOR.y + 0.5, FACADE_HEIGHT, mat)
-	# the porch's raised floor beside the door's mouth, and its lintel
-	_slab(PORCH.x, door.x, face, back, 0.0, PORCH.w, stone())
-	_slab(door.y, PORCH.y, face, back, 0.0, PORCH.w, stone())
-	_slab(PORCH.x - 0.4, PORCH.y + 0.4, face + 0.25, back, FACADE_HEIGHT - 3.2, FACADE_HEIGHT - 2.4, mat)
-	door_arch(Vector2((door.x + door.y) * 0.5, north), Vector2(0, 1), door.y - door.x, PORCH.z + 0.45)
+	var from := porch.x
+	for d in doors:
+		_slab(from, d.x - JAMB, back, face - FACADE_THICK, 0.0, FACADE_HEIGHT, mat)
+		_slab(d.x - JAMB, d.y + JAMB, back, face - FACADE_THICK, WALL_DOOR.y + 0.5, FACADE_HEIGHT, mat)
+		from = d.y + JAMB
+		# the porch's raised floor under the mouth's two sides, and the door's arch
+		door_arch(Vector2((d.x + d.y) * 0.5, north), Vector2(0, 1), d.y - d.x, PORCH.z + 0.45)
+	_slab(from, porch.y, back, face - FACADE_THICK, 0.0, FACADE_HEIGHT, mat)
+	from = porch.x
+	for d in doors:
+		_slab(from, d.x, face, back, 0.0, PORCH.w, stone())
+		from = d.y
+	_slab(from, porch.y, face, back, 0.0, PORCH.w, stone())
+	_slab(porch.x - 0.4, porch.y + 0.4, face + 0.25, back, FACADE_HEIGHT - 3.2, FACADE_HEIGHT - 2.4, mat)
 	# buttresses, a cornice
-	for bx: float in [x0 + 0.6, PORCH.x - BUTTRESS.x * 0.5, PORCH.y + BUTTRESS.x * 0.5, x1 - 1.5]:
+	for bx: float in [x0 + 0.6, porch.x - BUTTRESS.x * 0.5, porch.y + BUTTRESS.x * 0.5, x1 - 1.5]:
 		m.block(Vector3(bx, 0.0, face - BUTTRESS.y * 0.5 - 0.02), Vector3(BUTTRESS.x, FACADE_HEIGHT - 1.2, BUTTRESS.y), 0.0, mat)
 		m.point(Vector3(bx, FACADE_HEIGHT - 1.2, face - BUTTRESS.y * 0.5 - 0.02), BUTTRESS.x, 0.9, 0.0, 0.3, mat)
 	_slab(x0, x1, face + 0.18, face - 0.6, FACADE_HEIGHT - 0.4, FACADE_HEIGHT, mat)
 	# the statues on their plinths and their light, the banners
 	for sx in STATUES:
+		if sx > porch.x - 0.5 and sx < porch.y + 0.5:
+			continue  # (2026-11-27: the porch spans the doors now; the pieces between them are the layout's)
 		m.block(Vector3(sx, 0.0, face - 0.75), Vector3(1.3, 0.6, 1.3), 0.0, mat)
 		kit.statue(Vector2(sx, face - 0.75), 0.0, STATUE, 0.6, ArenaKit.STATUE_VALUE, false)
 		kit.statue_glow(Vector3(sx + 1.5, 3.5, face + 3.5), Vector3(sx, 2.2, face - 0.75), 1.6, 8.0, 35.0)
 	for bx in BANNERS:
+		if bx > porch.x - 0.5 and bx < porch.y + 0.5:
+			continue
 		kit.banner(Vector3(bx, BANNER_TOP, face + 0.06), 0.0, BANNER_SIZE, 1, ArenaKit.Emblem.LION)
 
 

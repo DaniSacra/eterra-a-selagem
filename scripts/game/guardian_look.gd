@@ -111,14 +111,14 @@ const SILL_GOLD := Vector3(0.05, 0.008, 0.05)
 
 # ---- armory ----
 ## The alcoves of the north wall (x of each; 0 a weapon rack, 1 an armour stand) and of the west wall (z of each).
-const ARMORY_NORTH: Array[Vector2] = [Vector2(-8.6, 0), Vector2(-5.4, 1), Vector2(-2.2, 0)]
+const ARMORY_NORTH: Array[Vector2] = [Vector2(-4.8, 1)]
 const ARMORY_WEST: Array[Vector2] = [Vector2(-7.6, 1), Vector2(7.6, 0)]
 ## The way in's two bowls (z of each, how far behind the edge).
 const ARMORY_BOWLS: Array[float] = [-3.6, 3.6]
 const ARMORY_BOWL_DEPTH := 0.9
 ## The gallery over the north alcoves: x from, to; its shelf's height and thickness, how far it hangs over the floor, the
 ## corbels' spacing; the balustrade stands on it.
-const GALLERY_X := Vector2(-10.2, 0.2)
+const GALLERY_X := Vector2(-5.9, -3.7)
 const GALLERY_Y := 3.75
 const GALLERY_THICK := 0.3
 const GALLERY_HANG := 0.35
@@ -126,7 +126,7 @@ const GALLERY_CORBEL := 1.9
 ## Lion banners (top, size) over the north wall's alcoves and bowls (x) and the west wall's bowls (z).
 const ARMORY_BANNER_TOP := 7.3
 const ARMORY_BANNER_SIZE := Vector2(1.1, 2.4)
-const ARMORY_BANNERS_NORTH: Array[float] = [-8.6, -5.4, -2.2, 1.5, 7.1]
+const ARMORY_BANNERS_NORTH: Array[float] = [-4.8, 2.3]
 const ARMORY_BANNERS_WEST: Array[float] = [-3.6, 3.6]
 ## Iron spikes at each corner's foot (count along each wall, spacing, height range, width, how far behind the edge): the
 ## danger's frame, grey iron.

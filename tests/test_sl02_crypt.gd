@@ -58,7 +58,7 @@ func test_the_cripta_has_two_big_doors_apart_and_their_medallions_hang_in_them()
 	assert_false(a.exit_rod, "no rod: the disc hangs in the doorway")
 	var x0 := a.exits[0].x
 	var x1 := a.exits[1].x
-	assert_almost_eq(absf(x1 - x0), 4.2, 0.01, "centres 4.2 m apart")
+	assert_gte(absf(x1 - x0), 5.5, "centres 5.5 m or more apart")
 	assert_gte(absf(x1 - x0) - CatacombHall.DOOR_CLEAR.x - 2.0 * CatacombHall.DOOR_FRAME, 0.5, "masonry stands between the frames")
 	for i in 2:
 		var p := a.door_anchor(i)
