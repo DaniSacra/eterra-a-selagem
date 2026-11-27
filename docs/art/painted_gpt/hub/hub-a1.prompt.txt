@@ -1,0 +1,25 @@
+Repinte a imagem 1 (captura do hub do meu jogo, o Santuário, uma praça de pedra no alto de um penhasco, vista de cima com a câmera do jogo) por cima, como um decalque: mesma câmera, mesmo enquadramento, mesma perspectiva, cada borda no mesmo pixel. Não gire, não aproxime, não afaste, não corte, não mude a inclinação. Não acrescente nem remova prédios, telhados, paredes, muretas, balaústres, escadas, degraus, pilares, arcos, canteiros ou blocos de piso; cada um fica no mesmo lugar e do mesmo tamanho. O formato final é a imagem 1 inteira, de canto a canto.
+
+A imagem 2 é a pintura aprovada de uma sala do mesmo jogo: use dela SÓ o estilo de pintura, a paleta do piso, os materiais e o tom. Não copie a planta, os objetos nem a composição dela.
+
+ESTILO: pintura digital feita à mão, ilustrada, como a arte de um jogo de ação visto de cima no estilo do Hades II. Pinceladas visíveis, contorno escuro suave e quebrado (não linha de vetor), formas simples e legíveis, detalhe concentrado nas bordas, nos prédios e nos canteiros, e o centro da praça calmo (pouco detalhe) para o herói andar. Musgo escuro e algumas folhas vermelhas de outono nas bordas; ciprestes e arbustos pintados. Acolhedor, aventura, não terror. Não é 3D renderizado, não é foto, não é pixel art, não é anime. Nada de brilho plástico. A referência é só de estilo: nenhum personagem, lugar, símbolo, logotipo ou composição de outro jogo.
+
+O CHÃO É O PALCO, NÃO A ESTRELA: todo o piso da praça e dos caminhos em tom MÉDIO-ESCURO (cerca de 35% de brilho) e pouco saturado, pedra cinza-esverdeada e ardósia azulada com um leve toque quente, como o piso da imagem 2. Hoje o piso da imagem 1 é creme e claro: escureça-o e tire a saturação, mantendo cada laje e junta no lugar, com pouco contraste dentro do piso. Nenhuma área grande clara ou amarela no piso. Paredes, muretas, balaústres e colunas em calcário um pouco mais claro que o piso, para a planta ler bem. Telhados de telha terracota apagada.
+
+ESTA É A VERSÃO DE JOGO: a luz fica por conta do jogo (luzes 3D). Por isso NÃO pinte poças de luz nem brilho: iluminação neutra e uniforme, meia-luz de crepúsculo suave, legível, sem halos em volta de lanternas, sem chão iluminado embaixo delas. O jogo põe por cima, em 3D, tudo o que se mexe ou muda de estado, então RETIRE da pintura:
+- Todos os personagens: o herói com a espada no centro (cerca de 47% da largura, 50% da altura), o ferreiro à esquerda no alto, o vendedor à direita no alto. No lugar, o piso ou o balcão que estaria atrás.
+- Toda a interface: o quadro escuro de texto no meio embaixo do herói (cerca de 37% a 58% da largura, 56% a 65% da altura), os nomes escritos sobre o ferreiro e o vendedor e os contadores no canto de cima à direita. No lugar, o piso, a escada e a mureta que estariam atrás.
+- Toda chama, brasa e fogo: tochas, lanternas, lampiões, castiçais, a forja e o braseiro à esquerda ficam APAGADOS (o suporte de ferro ou pedra fica, sem chama e sem brilho). As janelas e portas acesas viram vidro e vãos escuros, sem luz saindo.
+- Água: a fonte do pavilhão central fica com a bacia de pedra seca e escura.
+- As plantas da videira que cobrem o pavilhão central (folhas, flores e cachos pendurados nele) saem: fica só o pavilhão de pedra, colunas, vigas e degraus, limpo. Os ciprestes, arbustos e canteiros fixos ficam.
+- Os dois portões de madeira com cadeado embaixo, à esquerda e à direita: a folha de madeira e o cadeado saem; fica o arco de pedra e o vão vira uma passagem ESCURA e funda, preta por dentro.
+- Vasos, caixas, frascos soltos e objetos pequenos que quebram ou mudam: chão limpo no lugar.
+
+REGRAS DE ETERRA:
+- NENHUM estandarte, bandeira, flâmula ou pano pendurado em lugar nenhum: onde a imagem 1 tem estandartes vermelhos, pinte parede de pedra lisa. O toldo listrado do vendedor pode ficar como pano fixo, em listras terra e vinho apagado, sem símbolo.
+- Proibido: sol com raios, estrela de muitas pontas, cruz, qualquer símbolo, emblema ou brasão. O tapete da escada do fundo fica liso, vinho apagado.
+- Nada violeta forte e nada verde-esmeralda (cores reservadas). As flores que hoje são roxas viram flores creme, branco-rosado e rosa apagado. Folhagem em verde-oliva e musgo escuro, não esmeralda.
+- Nenhum texto, letra, número, runa legível, ícone ou marca em lugar nenhum.
+- Sem personagens, pessoas ou animais.
+
+VARIANTE A (calcário morno): o santuário em fim de tarde calmo. Piso de lajes cinza-esverdeadas médio-escuras, muretas e prédios em calcário creme apagado, telhas terracota, sombras frias azul-acinzentadas suaves. Folhagem verde-oliva, algumas folhas vermelhas.

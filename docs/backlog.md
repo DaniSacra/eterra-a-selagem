@@ -5,6 +5,16 @@
 
 ## Hoje, 2026-11-27 (LER PRIMEIRO na conversa nova)
 
+**Teste do Daniel no exe 17569337 (noite) e o que foi feito:**
+- Antessala travava no "Segure {attack}": o Golpe Esmagador não alimentava o passo `heavy` (é Omega pela tag). Corrigido em
+  `Rooms._on_struck` (tag `smash`), teste `test_each_mouse_blow_of_the_warrior_closes_its_own_step`.
+- Magia de volta só nos golpes de segurar (Esmagador 12, Lança 20); toques de graça (Corte Circular também). Reverte `53a0a04b`
+  menos o custo do Corte. Barra de Magia azul (`3a7ee8`).
+- HUD sem a linha do Ritmo de Batalha e sem o nome das Bênçãos ao ganhar (só com o mouse em cima e na pausa).
+- "Escolhi Coração e veio Bênção": o registro da partida dele (17h41) mostra a porta do Coração dando +25 de vida máxima (65 para
+  90), sem Bênção; a queixa real é Bênção demais no baralho. Duas Bênçãos viraram Prata e Memória (recursos do hub): 6 de 23.
+- Arte do hub: pedida ao gpt-image-2 (ai-art-producer), para o Daniel aprovar em `Downloads\ASelagem-GP8\GPT-Hub`.
+
 **Entregue:** exe `059930f7` (16h15): 11 personagens novos do Meshy no estilo pintado (Guerreiro, Esqueleto, Corredor,
 Besteiro, Guarda, Mago baixinho, Sacerdote, Maga, Cavaleiro, Ancião, Morvath) com ajuste de cor; HUD v3 com a fileira
 de golpes do desenho do Daniel; portas afastadas com uma peça entre elas em todas as salas e vão só escuro; Salas 00, 01
@@ -88,6 +98,40 @@ Capítulo II; o Capítulo I fica como está até validar. Prioridade: ação, fl
 rejogabilidade. Consequências no plano acima: a fatia jogável passa a ter 5 salas antes do minichefe (não 3), a
 escolha entre minichefes vira duas portas na sala 5, e o "segundo guardião" (sala 09) e os "dois de três guardiões por
 partida" do Master Plan saem; a recompensa do minichefe é a da porta, pelo sorteio normal.
+
+**Bestiário do Capítulo II (lido em 2026-11-27 de `docs/design/cap2/docs/02_FATIA_JOGAVEL.md`, `01_MASTER_PLAN.md`,
+`prompts/01_PROMPTS_MCP.md` e das pranchas `artes/08_bestiario_recorte.jpg` e `09_guardioes_recorte.jpg`).** Regra: inimigo novo
+com comportamento que já existe é só dado (`EnemyDef`, `tools/make_data.gd`); a coluna "Comportamento" diz qual `Behavior` serve ou o
+que falta. Modelos: conceito pela API de imagem, aprovação, depois Meshy (estimar créditos antes). Elites só com o sistema que já existe.
+
+*Fatia jogável (C2-B, quatro):*
+| # | Inimigo | Papel | Desenho | Comportamento | Onde aparece |
+|---|---|---|---|---|---|
+| B2-1 | **Esporinho** | bando, vida baixa | cogumelo atarracado e atrevido, chapéu grande, pernas curtas, rosto expressivo | `PULSE` (corre e solta a nuvem de esporos em volta, anunciada); a nuvem que fica no chão é o perigo de esporos do Pulso do Bosque | Portões, Jardim |
+| B2-2 | **Retorcido** | corpo a corpo, vida média | humanoide alto de raiz, braços compridos e assimétricos, musgo e folhas | `SWEEP` ou `CONE` (golpe largo com preparação clara); conferir qual lê melhor | Portões, Jardim, Templo; os pequenos do Ancião |
+| B2-3 | **Flor Espinhosa** | atiradora, vida baixa, prioridade alta | flor que anda, cabeça de pétalas, caule como pernas | `ARCHER` com leque de sementes (tiro em leque) e `keep_away` para reposicionar; ver se o leque já existe nos tiros | Jardim, Templo |
+| B2-4 | **Sapo do Brejo** | salto, vida média | anfíbio redondo e rabugento, verde musgo e ocre | `LEAP` (salto sinalizado) com onda ao aterrissar (anel no chão); conferir se o `LEAP` já solta onda | Templo |
+
+*Futuros (seis, não implementar agora; combinações pensadas: Cascudo+Flor, Sapo+Serpente, Feiticeiro+Marionete, Lumífago+Caranguejo):*
+| # | Inimigo | Desenho e papel | Comportamento |
+|---|---|---|---|
+| B2-5 | **Cascudo** | tatu-tartaruga de carapaça de pedra; carapaça na frente, fica aberto depois da investida | `RUNNER` + escudo frontal (o do Cavaleiro); a abertura é a janela de punir |
+| B2-6 | **Feiticeiro do Bosque** | cogumelo de chapéu grande, vínculo de fortalecimento visível num aliado | `SUPPORT` (como o Gritador) com fio visível até o fortalecido |
+| B2-7 | **Serpente das Águas** | serpente azul-turquesa, emerge em água sinalizada e lança ondas | novo: emergir só na água (o mais caro dos seis); onda como o `BEAM`/onda do Sapo |
+| B2-8 | **Lumífago** | inseto de asas luminosas, orbes lentos e temporários | `ARCHER` com tiro lento que fica no ar por um tempo; **na prancha é violeta: trocar** (regra) |
+| B2-9 | **Caranguejo das Ruínas** | caranguejo com uma construção nas costas, territorial | `CHASE` preso a uma zona (território); novo só o "volta para casa" |
+| B2-10 | **Marionete do Bosque** | boneco de madeira animada, deslocamentos desajeitados | `CHASE`/`RUNNER` com passos irregulares (dado de movimento) |
+
+*Guardiões (minichefes) e chefe:*
+| # | Nome | Desenho | Quando |
+|---|---|---|---|
+| B2-11 | **Ancião Retorcido** | treant monumental, rosto na madeira, olhos âmbar, braços de galho assimétricos, raízes como pés | fatia (C2-C): 3 fases (100 a 65 golpe largo e raízes; 65 a 30 raízes e até 3 Retorcidos pequenos; 30 a 0 mistura), aviso 1 s, recuperação 1,5 s, raízes 3 s; **nome para o jogador a decidir** (confunde com o Sacerdote Ancião) |
+| B2-12 | **Rei do Brejo** | sapo barrigudo gigante de coroa torta | futuro: saltos e ondas (o Sapo do Brejo em grande) |
+| B2-13 | **Flor Adormecida** | lótus colossal marfim e rosa | futuro: alterna pétalas fechadas (protegida) e expostas, sementes; **prancha com violeta: trocar** |
+| B2-14 | **A Coroa Partida** | Rainha (marfim e ouro velho, coroa de galhos, serena e melancólica) e Guardião (cervo-leão-árvore, musgo, olhos âmbar) | chefe do capítulo, futuro: 4 fases (Guardião, Rainha, dupla coordenada, manifestação e restauração); **lore a aprovar** |
+
+Pendências do bestiário para o Daniel: o nome do Ancião Retorcido para o jogador; a cor do Lumífago e da Flor Adormecida (sem
+violeta); aprovar os conceitos dos quatro da fatia antes do Meshy (crédito estimado antes).
 
 **Futuro (só registrar):** salas 05 a 12 (descanso, Labirinto, evento, Vila, segundo guardião, loja, Coroa Partida),
 18 layouts em 6 famílias, seis inimigos (Cascudo, Feiticeiro, Serpente, Lumífago, Caranguejo, Marionete), guardiões

@@ -14,7 +14,7 @@ const NAMES: Array[StringName] = [&"icon_attack", &"icon_smash", &"icon_power", 
 	&"frame_slot", &"frame_supreme", &"frame_portrait", &"bar_frame", &"bar_icon_life", &"bar_icon_magic", &"bar_icon_supreme",
 	&"cartouche", &"divider", &"portrait_warrior"]
 const EMETH := Color(0.45, 0.95, 0.7)
-const MAGIC_BLUE := Color("2a8fb8")
+const MAGIC_BLUE := Color("3a7ee8")
 const ICON_COLORS := {&"icon_attack": Color(1.0, 0.8, 0.4), &"icon_smash": Color(1.0, 0.72, 0.3), &"icon_power": Color(1.0, 0.76, 0.34),
 	&"icon_lance": Color(0.5, 0.95, 0.68), &"icon_dodge": Color(0.94, 0.9, 0.82), &"icon_supreme": Color(1.0, 0.82, 0.4)}
 

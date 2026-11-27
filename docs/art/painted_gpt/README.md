@@ -35,6 +35,9 @@ Generation (curl; the key is read from the file, never printed):
 | 2026-11-27 | game_v1 (`game_v1/`): game plates of the three rooms in the game, edits of the current paintings: sala01-g1, sala00-g1 (gamma 1.05 after), antessala-g1 | 3 | 5488 | 0.75 |
 | 2026-11-27 | characters part 2 (`docs/art/characters_gpt/`, 09 Knight, 10 Elder, 11 Morvath; image 1 = approved concept as style ref, image 2 = old Meshy threequarter ref): concepts A1 x3, Meshy fronts B1 x3, Morvath back C1; no redos | 7 | 5488 | 1.75 |
 | 2026-11-27 | lote4 (`lote4/`), bases_v2: crypt0 a1+g1; rift0 a1 (third door), a2 (doors touching), a3 (chosen) + g1; garden0 a1 (extra door, platform shrank), a2 (chosen), a3 (platform grew) + g1; knight a1+g1+g2 (arch railings out; armour niche pasted back from g1); elder a1 (4 arches), a2 + g1 + g2 (railings out); crypt1 a1 (copied old door pair), a2 + g1; rift1 a1+g1; garden1 a1 (lost altar, waterfall), a2 + g1; sanct0 a1+g1; sanct1 a1+g1; bridge0 a1+g1; bridge1 a1+g1; trial a1+g1; altar a1+g1; runes0 a1, a2, a3 (all widen the right half) + g1; runes1 a1+g1 | 43 | 5488 | 10.75 |
+| 2026-11-27 | hub (`hub/`), game plate over r9b_far: a1 (lower half squeezed, right side 60-80 px off), b1 (variant B, night slate, same drift, floor luma 42), a2 (A + `fix_fit.txt` fractions, chosen) | 3 | 5488 | 0.75 |
+| 2026-11-27 | hub approval (`hub/aprovacao/`), edit of the approved hub art: Videira tree in the centre (no pavilion), Adventure Gate at top centre (Heroes' hall out), right becomes a lookout terrace, no text/legend | 1 | 5488 | 0.25 |
+| 2026-11-27 | hub game plate (`hub/jogo/`), edit of the approved `hub_aprovacao.png`: Videira, lights, water, Vigília fire and brazier out; open plaza luma 102 -> 76; overlay without double edges | 1 | 5488 | 0.25 |
 
 ## style_v2 (2026-11-27): style approval round
 `style_v2/` holds the variants Daniel is choosing from (Downloads\ASelagem-GP8\APROVAR-ESTILO). Request =
@@ -165,3 +168,15 @@ Files: `salaNN[_v2]_aprovacao.png`, `_jogo.png`, `_lado_a_lado.jpg` (Downloads\A
 | 18 | altar | a1/g1 | few px; the medallion's small pedestal merged into the altar table |
 Rules checked on all: no figures, no banners, no text/labels/medallions, no sun/star/cross, no violet (rift1 swirl, trial light
 removed), no emerald (garden crystals ice blue), doors never touching, entrance a dark arch at the near edge.
+
+
+## Hub (2026-11-27): Santuário game plate, approval pending
+Base = `hub/base_hub.png` (`docs/gallery/hub_refine_2026-11-26/r9b_far.png`, 1672x941, the hub camera Near, with hero, tooltip,
+NPC labels and HUD counters to paint out; it predates the 2026-11-26 evening hub changes: lilac void, east ridges, south gate).
+Request = `hub/common.txt` (game plate: no light pools, flames/water/vine/banners/figures/UI out, locked gate leaves become dark
+passages, purple flowers cream and pink) + `var_a.txt` or `var_b.txt` (+ `fix_fit.txt`, positions as fractions); image 2 =
+`lote4/sala11_jogo.png` (style). Generator `hub/gen.sh`, overlay `hub/overlay.sh` (3:2 stretch fits better than uniform here).
+Chosen: `hub_jogo_A.png` (a2): gates, front wall, red roof, pavilion steps and planter within ~10 to 30 px; right third (vendor
+awning, east planters) ~40 to 60 px to the right. `hub_jogo_B.png` (b1): lower half squeezed ~50 to 70 px, darker. Floor-centre
+luma: base 165, A 64, B 42. Rules checked: no figures, no banners, no text, no sun/star/cross, no strong violet, no emerald.
+Copies in Downloads\ASelagem-GP8\GPT-Hub. The hub scrolls with the hero, so one plate covers one view only.

@@ -1,0 +1,7 @@
+ENCAIXE (o mais importante): a pintura vai ficar por cima do jogo, então cada peça tem de cair no MESMO lugar da imagem 1, em frações da largura (x) e da altura (y) da imagem inteira. Não encolha nem comprima a parte de baixo e não empurre nada para a direita:
+- Mureta da frente da praça, a borda de baixo: em y = 90%. As duas escadas de baixo começam aí e descem até a borda da imagem.
+- Arco do portão de baixo à esquerda: x de 18% a 33%, topo do arco em y = 74%, base em y = 90%. Arco de baixo à direita: x de 77% a 92%, mesma altura.
+- Canteiro central comprido de baixo: x de 47% a 62%, y de 79% a 85%. Bloco central com flores acima dele: x de 45% a 57%, y de 66% a 76%.
+- Pavilhão central: colunas de x = 41% a 56%; a base dos degraus dele em y = 47%.
+- Toldo listrado do vendedor no alto à direita: x de 80% a 95%, y de 11% a 20%. Prédio de telhado vermelho à esquerda: x de 0% a 19%, telhado de y = 15% a 27%.
+- Escadaria do fundo no centro (entrada do prédio de cima): x de 57% a 62%, y de 3% a 11%.

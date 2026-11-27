@@ -49,18 +49,15 @@ func _spin() -> ComboNode:
 
 # ---------- the passive (P-A) ----------
 
-func test_the_passive_gives_no_magia_to_the_warrior_and_two_to_a_hero_that_has_it() -> void:
+func test_the_passive_gives_two_of_magia_for_each_finisher_that_lands() -> void:
 	var s := _state()
-	for tags: Array[StringName] in [SPIN, DASH, LANCE, BOLT, CUT]:
-		assert_eq(s.passive_magick(tags, 1), 0.0, "the Warrior's blows give no Magia (2026-11-27): %s" % [tags])
-	var hero: HeroDef = HeroDef.warrior().duplicate()  # (the cached one is shared by every test)
-	hero.magick_on_finisher = 2.0  # the rule itself still holds for a hero that spends Magia
-	var other := GiftState.new(hero, BoonState.new())
-	assert_eq(other.passive_magick(SPIN, 1), 2.0, "the spin")
-	assert_eq(other.passive_magick(DASH, 1), 0.0, "a `dash` blow refunds nothing")
-	assert_eq(other.passive_magick(LANCE, 1), 0.0, "the Lança pays, it does not refund")
-	assert_eq(other.passive_magick(SPIN, 0), 0.0, "a finisher in the air gives nothing")
-	assert_eq(other.passive_magick(CUT, 3), 0.0, "a plain cut is no finisher")
+	assert_eq(s.passive_magick(SPIN, 1), 2.0, "the spin")
+	assert_eq(s.passive_magick(DASH, 1), 0.0, "GP-1 (D-4): the Investida left; a `dash` blow refunds nothing")
+	assert_eq(s.passive_magick(LANCE, 1), 0.0, "GP-1 (D-4): the Lança pays, it does not refund")
+	assert_eq(s.passive_magick(BOLT, 1), 0.0, "the rajada is no finisher (2026-11-21: the special's Omega left)")
+	assert_eq(s.passive_magick(SPIN, 0), 0.0, "a finisher in the air gives nothing")
+	assert_eq(s.passive_magick(CUT, 3), 0.0, "a plain cut is no finisher")
+	assert_eq(s.passive_magick(BOLT, 1), 0.0, "nor the plain special")
 
 
 func test_an_ultimate_blow_never_feeds_the_passive() -> void:
@@ -72,17 +69,20 @@ func test_an_ultimate_blow_never_feeds_the_passive() -> void:
 		assert_eq(s.passive_magick(tags, 5), 0.0, "%s" % [tags])
 
 
-func test_no_blow_of_the_warrior_gives_magia() -> void:
+func test_the_passive_counts_once_a_blow_and_never_past_the_maximum() -> void:
 	_run()
 	var p := game.player
 	for k in 3:
 		_enemy(&"skeleton", Vector2.from_angle(TAU * k / 3.0) * 1.6)
 	p.magick.value = 10.0
 	game.combat.strike(_spin(), p.pos, Vector2.RIGHT)
-	assert_eq(p.magick.value, 10.0, "three hit by the spin: nothing")
+	assert_eq(p.magick.value, 12.5, "three hit: two of Magia once (the passive) and 0.5 once (C1c, a hit of the attack)")
+	p.magick.value = p.magick.max_value - 1.0
 	game.combat.landed.emit(_spin(), SPIN, 1)
+	assert_eq(p.magick.value, p.magick.max_value, "never past the maximum")
+	p.magick.value = 10.0
 	game.combat.strike(_node(p.tree, &"cut1"), p.pos, Vector2.RIGHT)
-	assert_eq(p.magick.value, 10.0, "nor a plain cut")
+	assert_eq(p.magick.value, 10.5, "a plain cut gives only its 0.5 a hit (C1c), no passive")
 
 
 func test_the_lance_and_the_smash_give_no_magia() -> void:
@@ -349,17 +349,26 @@ func test_the_golpe_carregado_damage_is_the_sum_then_forca_titanica_triples_it()
 	assert_eq(losses[21], 1575.0, "x3 final after Força Concentrada's +40%")
 
 
-func test_forca_titanica_raises_no_cost_and_no_maximum() -> void:
+func test_forca_titanica_raises_the_cost_and_never_leaves_negative_magia() -> void:
 	_run([&"forca_titanica"])
 	game.hero_gifts.step(0.0)
 	var p := game.player
-	assert_eq(p.magick.max_value, 30.0, "no bar to raise")
-	assert_eq(p.cost_of(_node(p.tree, &"lance"), 0.0), 0.0)
-	assert_eq(p.cost_of(_node(p.tree, &"smash"), 0.0), 0.0)
+	var lance := _node(p.tree, &"lance")
+	assert_eq(p.magick.max_value, 40.0, "the Gift raises the bar by 10")
+	assert_eq(p.cost_of(lance, 0.0), 40.0, "x2: the whole bar")
+	assert_eq(p.cost_of(_node(p.tree, &"smash"), 0.0), 24.0)
+	assert_eq(p.cost_of(_node(p.tree, &"sweep"), 0.0), 0.0, "the Corte Circular is no Golpe Carregado (and free)")
 	assert_eq(Player.omega_cost(20.0, 1.2, 1.0), 0.0, "never under zero")
-	p.magick.value = 0.0
-	assert_true(p._affordable(ComboNode.In.CHARGE), "free whatever the bar")
-
+	p.magick.value = 30.0
+	assert_false(p._affordable(ComboNode.In.CHARGE), "30 does not pay 40: no charge starts, the button is refused")
+	assert_false(p.magick.spend(40.0))
+	assert_eq(p.magick.value, 30.0, "nothing was taken")
+	p.magick.value = 40.0
+	assert_true(p._affordable(ComboNode.In.CHARGE))
+	_run()
+	game.hero_gifts.step(0.0)
+	game.player.magick.value = 30.0
+	assert_true(game.player._affordable(ComboNode.In.CHARGE), "without the Gift 30 pays 20")
 
 func test_a_charge_cancelled_costs_nothing() -> void:
 	_run([&"forca_titanica"])
@@ -380,15 +389,32 @@ func test_concentracao_charges_thirty_percent_faster_at_the_same_cost() -> void:
 	assert_almost_eq(p._charge_time(), 0.42, 0.0001, "the Esmagador: 0.6 x 0.7")
 	p._charge_held = ComboNode.In.CHARGE
 	assert_almost_eq(p._charge_time(), 0.56, 0.0001, "the Lança: 0.8 x 0.7")
-	assert_eq(p.cost_of(_node(p.tree, &"lance"), 0.0), 0.0)
+	assert_eq(p.cost_of(_node(p.tree, &"lance"), 0.0), 20.0)
 	_run()
 	game.hero_gifts.step(0.0)
 	game.player._charge_held = ComboNode.In.CHARGE_LIGHT
 	assert_almost_eq(game.player._charge_time(), 0.6, 0.0001)
 
-func test_determinacao_charges_the_supremo_25_percent_faster() -> void:
-	assert_eq(_state().value(&"ult_charge_pct"), 0.0)
-	assert_almost_eq(_state([&"forca_concentrada", &"determinacao"]).value(&"ult_charge_pct"), 0.25, 0.0001)
+func test_determinacao_doubles_the_magia_of_the_attack() -> void:
+	for ids: Array in [[], [&"determinacao"]]:
+		var typed: Array[StringName] = []
+		typed.assign(ids)
+		_run(typed)
+		var e := _enemy(&"skeleton", Vector2(1.5, 0))
+		e.hp = 5000.0
+		game.player.magick.value = 10.0
+		game.combat.strike(_node(game.player.tree, &"cut1"), game.player.pos, Vector2.RIGHT)
+		assert_eq(game.player.magick.value, 11.0 if ids.size() > 0 else 10.5)
+
+
+func test_determinacao_keeps_the_cap_on_the_gain() -> void:
+	_run([&"determinacao"])
+	var e := _enemy(&"skeleton", Vector2(1.5, 0))
+	e.hp = 5000.0
+	game.player.magick.value = 0.0
+	for k in 20:
+		game.combat.strike(_node(game.player.tree, &"cut1"), game.player.pos, Vector2.RIGHT)
+	assert_lte(game.player.magick.value, game.hero.gain_cap + 0.001, "gain_cap per gain_window still holds")
 
 
 # ---------- Domínio ----------
@@ -478,7 +504,7 @@ func test_the_armored_take_more_from_the_roll_and_are_not_stunned() -> void:
 
 # ---------- Lote R1 (backlog 2026-11-24 noite) ----------
 ## Stats some code reads while StunRule is NONE (an inert stat would make a Gift that does nothing).
-const LIVE_STATS: Array[StringName] = [&"dodge_window_add", &"cadence_pct", &"apogee_pct", &"damage_pct", &"ult_charge_pct",
+const LIVE_STATS: Array[StringName] = [&"dodge_window_add", &"cadence_pct", &"apogee_pct", &"damage_pct", &"attack_magick_pct",
 	&"charge_time_pct", &"omega_cost_pct", &"final_pct", &"poise_pct", &"reach_pct", &"push_pct", &"stun_pct", &"dash_pierce", &"dash_stun"]
 
 func test_every_gift_changes_some_number_with_the_stun_rule_none() -> void:

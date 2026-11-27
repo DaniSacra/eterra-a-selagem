@@ -2,10 +2,10 @@ class_name Hud
 extends Control
 ## What stays on screen during the run. HUD v3 (2026-11-27, after Daniel's new reference hud_gpt.png): top left "Sala 8 de 14" with a
 ## diamond mark, a thin gold rule and the objective under it (RoomHeader, ObjectiveLine); top middle the clock in a cartouche with an
-## hourglass (Cartouche); bottom left the round portrait, "Ritmo de Batalha" with its thin gold line (RhythmMeter) and three bars (two for the Warrior, who spends no Magia) with
-## round medallions, the Supremo's charge in gold, Magia in blue (the Maga's), life in red, each with its value on its right end (StatBar); bottom
+## hourglass (Cartouche); bottom left the round portrait, "Ritmo de Batalha" with its thin gold line (RhythmMeter) and three bars with
+## round medallions, the Supremo's charge in gold, Magia in blue, life in red, each with its value on its right end (StatBar); bottom
 ## centre the four blows as square painted slots, left tap, right tap, left hold, right hold (the mouse under each: white = click, gold = hold)
-## and, when a blow has one, its Magia cost as a drop in its corner (the Maga's), then the Supremo (Shift cap), a gold divider and the dodge (Space bar cap) (ActionSlot);
+## and the Magia cost as a drop in its corner, then the Supremo (Shift cap), a gold divider and the dodge (Space bar cap) (ActionSlot);
 ## right edge a column of Blessing medallions in diamond frames, icons only, the name for a few seconds when gained or under the
 ## mouse (BuildColumn); bottom right the coins between two gold rules (CoinCorner). The art lives in assets/ui/hud_v3/ and every
 ## piece falls back to a drawn one (HudArt). Everything sits on the edges so the middle of the screen stays for the fight: the slots
@@ -27,7 +27,7 @@ extends Control
 ## and, by its value, from the scarf's petrol).
 const LIFE_COLOR := Color("c0302a")
 const LIFE_BOTTOM := Color("6a1410")
-const MAGICK_COLOR := Color("2a8fb8")
+const MAGICK_COLOR := Color("3a7ee8")
 const MAGICK_BOTTOM := Color("14506a")
 const BOSS_COLOR := Color(0.62, 0.22, 0.85)
 const MARGIN := 22.0
@@ -44,7 +44,7 @@ const STAT_GAP := 2.0
 const RHYTHM_H := 26.0
 const RHYTHM_GAP := 3.0
 const BARS_GAP := 10.0
-## The number of the bars' fonts live in StatBar.
+## The Magia ticks the Warrior's costs mark on its bar, and the number of the bars' fonts live in StatBar.
 const BOSS := Vector2(480, 12)
 const PASSIVE_ICON := 30
 const PASSIVE_GAP := 4
@@ -62,17 +62,7 @@ const FLOOR_VEIL_ALPHA := 0.55
 ## The bars' stack beside the portrait, bottom to top: life, Magia, the Supremo's charge, the Ritmo de Batalha. Where its bottom stands
 ## (px over the screen's) and its height.
 func _stack_height() -> float:
-	var n := float(_bar_count())
-	return STAT.y * n + STAT_GAP * (n - 1.0) + RHYTHM_GAP + RHYTHM_H
-
-
-## The Magia's bar shows for a hero that spends Magia (the Maga); the Warrior's blows cost none (2026-11-27), so his stack is life and Supremo.
-func _shows_magick() -> bool:
-	return game == null or game.hero == null or game.hero.uses_magick()
-
-
-func _bar_count() -> int:
-	return 3 if _shows_magick() else 2
+	return STAT.y * 3.0 + STAT_GAP * 2.0  # (the Ritmo de Batalha's line left the HUD, Daniel 2026-11-27)
 
 
 func _stack_low() -> float:
@@ -82,10 +72,10 @@ func _stack_low() -> float:
 func _layout_bars() -> void:
 	var x := MARGIN + CREST + BARS_GAP
 	var low := _stack_low()
-	var steps := [_life, _magick, _charge] if _shows_magick() else [_life, _charge]
+	var steps := [_life, _magick, _charge]
 	for i in steps.size():
 		_place(steps[i], Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + i * (STAT.y + STAT_GAP))), STAT)
-	_place(_rhythm, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + float(_bar_count()) * (STAT.y + STAT_GAP) - STAT_GAP + RHYTHM_GAP)), _rhythm.size)
+	_place(_rhythm, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + 3.0 * (STAT.y + STAT_GAP) - STAT_GAP + RHYTHM_GAP)), _rhythm.size)
 
 
 ## The build column on the right edge: where its middle stands (share of the height) and the room it keeps (the edge
@@ -798,10 +788,9 @@ func _process(delta: float) -> void:
 	_passives.visible = false
 	# the pause's panel stands on the left: the medallion and the bars go under it (UI review d2ff05d, P2-7)
 	var paused := game.mode == Game.Mode.PAUSE
-	for c: CanvasItem in [_crest, _life]:
+	for c: CanvasItem in [_crest, _life, _magick]:
 		c.visible = not paused
-	_magick.visible = not paused and _shows_magick()
-	_rhythm.visible = not paused and game.hero_gifts != null and game.hero_gifts.rhythm != null and game.hero_gifts.rhythm.enabled()
+	_rhythm.visible = false  # Daniel, 2026-11-27: no Ritmo de Batalha on the HUD (the mechanic stays, its slot glow too)
 	for c: CanvasItem in [_combo, _combo_word]:
 		c.visible = SHOW_HITS and _combo_count >= 3 and not over
 	_move.visible = not over
@@ -946,8 +935,8 @@ func _idle_pulse(ctx: Dictionary, step: float) -> void:
 
 func _update_life(p: Player) -> void:
 	_life.show_value(p.hp / p.max_hp, "%d/%d" % [ceili(p.hp), roundi(p.max_hp)])
-	if _shows_magick():
-		_magick.show_value(p.magick.ratio(), "%d/%d" % [floori(p.magick.value), roundi(p.magick.max_value)])
+	_magick.show_value(p.magick.ratio(), "%d/%d" % [floori(p.magick.value), roundi(p.magick.max_value)])
+	_magick.bar.ticks = _magick_ticks(p)
 	var rhythm: BattleRhythm = game.hero_gifts.rhythm if game.hero_gifts != null else null
 	_rhythm.show_value(rhythm.share() if rhythm != null and rhythm.armed() else 0.0)
 	if _last_hp >= 0.0 and p.hp < _last_hp - 0.01:
@@ -1029,6 +1018,18 @@ func _cost_of(p: Player, input: ComboNode.In) -> int:
 	if node == null or node.magick_cost <= 0.0:
 		return 0
 	return roundi(p.cost_of(node, p.omega_discount if node.has_tag(&"omega") else 0.0))
+
+
+## The Magia bar's ticks: the costs of the Warrior's moves as shares of the bar (the Maga's wide bar has none).
+func _magick_ticks(p: Player) -> PackedFloat32Array:
+	var ticks := PackedFloat32Array()
+	if p.hero.arcane != null or p.magick.max_value <= 0.0:
+		return ticks
+	for input: ComboNode.In in [ComboNode.In.HEAVY, ComboNode.In.CHARGE_LIGHT, ComboNode.In.CHARGE]:
+		var c := _cost_of(p, input)
+		if c > 0:
+			ticks.append(minf(1.0, c / p.magick.max_value))
+	return ticks
 
 
 ## The Brado's buff (its 5 s of faster blows and less damage taken) over the Q diamond while it runs.

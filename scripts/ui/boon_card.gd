@@ -819,10 +819,8 @@ func setup_altar(o: Dictionary) -> BoonCard:
 		&"candles":
 			give = T.t(&"altar_candles_give", n)
 			give_detail = T.t(&"altar_candles_give_detail", _from_to(o, "give")) if ok else ""
-			# a hero that spends no Magia (the Warrior) gets most life from the candles instead
-			var life: String = "_life" if bool(o.get("life", false)) else ""
-			got = T.t(StringName("altar_candles%s_get" % life), {"n": num(float(o.get("gain", 0)))})
-			got_detail = T.t(StringName("altar_candles%s_get_detail" % life), _from_to(o, "get")) if float(o.get("get_from", 0.0)) > 0.0 else ""
+			got = T.t(&"altar_candles_get", {"n": num(float(o.get("gain", 0)))})
+			got_detail = T.t(&"altar_candles_get_detail", _from_to(o, "get")) if float(o.get("get_from", 0.0)) > 0.0 else ""
 	_deal(box, &"Give", T.t(&"altar_give"), give, give_detail, marks[0])
 	var last := _deal(box, &"Get", T.t(&"altar_get"), got, got_detail, marks[1])
 	last.size_flags_vertical = Control.SIZE_EXPAND_FILL

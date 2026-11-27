@@ -171,29 +171,30 @@ func test_the_row_is_centred_at_the_foot() -> void:
 	assert_lte(row.end.y, screen.y, "inside the screen")
 	assert_lt(row.end.x, hud._passives.get_global_rect().position.x + screen.x, "clear of the right corner")
 	# the bars and the medallion stand left of the row, the gifts' corner right of it
-	var bars := hud._crest.get_global_rect().merge(hud._life.get_global_rect()).merge(hud._charge.get_global_rect())
+	var bars := hud._crest.get_global_rect().merge(hud._life.get_global_rect()).merge(hud._magick.get_global_rect())
 	assert_lt(bars.end.x, row.position.x, "the bars end before the row begins")
 	assert_gte(hud._passives.get_global_rect().position.x, row.end.x, "the gifts in the right corner")
 	for c: Control in [hud._curse_badge, hud._trial_seal]:
-		assert_lte(c.get_global_rect().end.y, hud._charge.get_global_rect().position.y + 1.0, "%s over the bars" % c.name)
+		assert_lte(c.get_global_rect().end.y, hud._magick.get_global_rect().position.y + 1.0, "%s over the bars" % c.name)
 	assert_gte(Hud.ROW_SLOT * 1080.0 / 720.0, 52.0, "a slot of 72 px at 1080")
 	# the permanent HUD of the fight under 6% of the screen: medallion, bars, diamonds, build column
 	var area := 0.0
-	for c: Control in [hud._crest, hud._life, hud._charge, hud._action_row, hud._column]:
+	for c: Control in [hud._crest, hud._life, hud._magick, hud._charge, hud._action_row, hud._column]:
 		area += c.get_global_rect().get_area()
 	assert_lt(area / (screen.x * screen.y), 0.075)
 
 
-func test_the_bars_stack_life_under_the_supremo_beside_the_medallion() -> void:
+func test_the_bars_stack_life_over_magia_beside_the_medallion() -> void:
 	var hud := await _hud_with("")
 	var crest := hud._crest.get_global_rect()
-	var charge := hud._charge.get_global_rect()
+	var magick := hud._magick.get_global_rect()
 	var life := hud._life.get_global_rect()
-	assert_gte(charge.position.x, crest.end.x, "right of the medallion")
-	assert_lt(charge.end.y, life.position.y + 1.0, "the Supremo over life (the Warrior has no Magia bar, 2026-11-27)")
-	assert_almost_eq(charge.position.x, life.position.x, 0.5, "left edges together")
-	assert_lte(life.end.y, crest.end.y + 1.0, "no lower than the medallion")
-	assert_gte(charge.position.y, crest.position.y - 1.0, "no higher than it")
+	assert_gte(magick.position.x, crest.end.x, "right of the medallion")
+	assert_lt(magick.end.y, life.position.y + 1.0, "Magia over life (HUD v3: gold, blue, red from the top)")
+	assert_lt(hud._charge.get_global_rect().end.y, magick.position.y + 1.0, "the Supremo's charge over the bars")
+	assert_almost_eq(magick.position.x, life.position.x, 0.5, "left edges together")
+	assert_lte(magick.end.y, crest.end.y + 1.0, "no lower than the medallion")
+	assert_gte(magick.position.y, crest.position.y - 1.0, "no higher than it")
 
 
 # ---------- UI-HB1, UI-HB2: the cards ----------

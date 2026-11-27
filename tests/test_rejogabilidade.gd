@@ -215,9 +215,9 @@ func test_the_deck_has_a_door_of_silver_and_one_of_memory_more() -> void:
 	assert_eq(deck.size(), 23, "21 of the Fatia 2, plus a gold door and a heart (C2)")
 	assert_eq(deck.count(RunMap.Reward.ENCHANT), 2)
 	assert_eq(deck.count(RunMap.Reward.PSALM), 1)
-	assert_eq(deck.count(RunMap.Reward.SILVER), 1)
-	assert_eq(deck.count(RunMap.Reward.MEMORY), 1)
-	assert_eq(deck.count(RunMap.Reward.BOON), 8, "nothing taken; two more in the Fatia 2 (the same share)")
+	assert_eq(deck.count(RunMap.Reward.SILVER), 2, "Daniel 2026-11-27: rewards for the hub too")
+	assert_eq(deck.count(RunMap.Reward.MEMORY), 2)
+	assert_eq(deck.count(RunMap.Reward.BOON), 6, "two Blessings became a Prata and a Memória door")
 	assert_eq(RunMap.REWARD_KEY.size(), RunMap.Reward.size())
 	for k in RunMap.REWARD_KEY:
 		if k != &"":

@@ -17,25 +17,21 @@ const MIN_LIFE := 10.0
 ## nothing here changes a rule): what is paid before and after (give_from, give_to), what is won before and after
 ## (get_from, get_to; the life trade wins a pomegranate, no number) and, when it cannot be taken, why (a text key, &""
 ## when it can) and the gold missing (short). magick_max: the Magia at most now.
-## life_gain above 0: the candles give most life instead of Magia (a hero that spends none).
-static func options(stage: StageDef, gold: int, max_hp: float, can_grow: bool, magick_max: float = 0.0, life_gain: float = 0.0) -> Array[Dictionary]:
+static func options(stage: StageDef, gold: int, max_hp: float, can_grow: bool, magick_max: float = 0.0) -> Array[Dictionary]:
 	var life_why := &""
 	if not can_grow:
 		life_why = &"altar_why_grow"
 	elif max_hp - stage.altar_life_cost < MIN_LIFE:
 		life_why = &"altar_why_life"
 	var short := maxi(stage.altar_gold_cost - gold, 0)
-	var candles := {"option": Option.CANDLES, "id": IDS[Option.CANDLES], "cost": stage.altar_gold_cost, "gain": stage.altar_magick,
-			"ok": gold >= stage.altar_gold_cost, "why": &"altar_why_gold" if short > 0 else &"", "short": short,
-			"give_from": gold, "give_to": gold - stage.altar_gold_cost,
-			"get_from": magick_max, "get_to": magick_max + stage.altar_magick}
-	if life_gain > 0.0:
-		candles.merge({"gain": life_gain, "life": true, "get_from": max_hp, "get_to": max_hp + life_gain}, true)
 	return [
 		{"option": Option.LIFE, "id": IDS[Option.LIFE], "cost": stage.altar_life_cost, "gain": 1,
 			"ok": can_grow and max_hp - stage.altar_life_cost >= MIN_LIFE, "why": life_why,
 			"give_from": max_hp, "give_to": max_hp - stage.altar_life_cost},
-		candles,
+		{"option": Option.CANDLES, "id": IDS[Option.CANDLES], "cost": stage.altar_gold_cost, "gain": stage.altar_magick,
+			"ok": gold >= stage.altar_gold_cost, "why": &"altar_why_gold" if short > 0 else &"", "short": short,
+			"give_from": gold, "give_to": gold - stage.altar_gold_cost,
+			"get_from": magick_max, "get_to": magick_max + stage.altar_magick},
 	]
 
 

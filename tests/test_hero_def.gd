@@ -37,7 +37,7 @@ func test_the_numbers_of_today() -> void:
 	assert_eq(hero.cast_time, 3.0)
 	assert_eq(hero.cast_burst, 375)
 	# the passive (D-56)
-	assert_eq(hero.magick_on_finisher, 0.0, "2026-11-27: the Warrior spends no Magia, so nothing gives it back")
+	assert_eq(hero.magick_on_finisher, 2.0)
 
 
 func test_the_game_reads_the_hero() -> void:

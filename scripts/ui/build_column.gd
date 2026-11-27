@@ -21,8 +21,9 @@ const TAIL := 0.0
 const NAME_FONT := 15
 const LEVEL_FONT := 12
 const SECS_FONT := 15
-## Seconds a gained Blessing's name stays beside its medallion, how long it fades, and the name plate's width.
-const NAME_TIME := 4.0
+## Seconds a gained Blessing's name stays beside its medallion (0 since Daniel's 2026-11-27 playtest: no names in play, only under
+## the mouse and in the pause), how long it fades, and the name plate's width.
+const NAME_TIME := 0.0
 const NAME_FADE := 0.5
 const NAME_W := 190.0
 ## PT-26-4 (second round): the rows after the buttons' own use the same height; the column keeps room for MAX_ROWS

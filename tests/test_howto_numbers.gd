@@ -27,13 +27,12 @@ func test_the_right_button() -> void:
 	assert_not_null(sweep)
 	_says(&"howto_heavy_attack_desc", "%d de dano" % int(lance.damage))
 	_says(&"howto_heavy_attack_desc", "%d de dano" % int(sweep.damage))
-	assert_eq([lance.magick_cost, sweep.magick_cost], [0.0, 0.0], "no cost to say")
-	assert_false(T.t(&"howto_heavy_attack_desc").contains("de Magia"), "the card names no price")
-	assert_false(T.t(&"hero_skill_special").contains("de Magia"))
+	_says(&"howto_heavy_attack_desc", "%d de Magia" % int(lance.magick_cost))
+	_says(&"howto_heavy_attack_desc", "%d de Magia" % int(sweep.magick_cost))
+	_says(&"hero_skill_special", "%d de Magia" % int(lance.magick_cost))
 
 
 func test_the_left_button() -> void:
 	var smash := _node(&"smash")
 	_says(&"howto_light_attack_desc", "%d de dano" % int(smash.damage))
-	assert_eq(smash.magick_cost, 0.0)
-	assert_false(T.t(&"howto_light_attack_desc").contains("de Magia"))
+	_says(&"howto_light_attack_desc", "%d de Magia" % int(smash.magick_cost))

@@ -4054,7 +4054,7 @@ fixed_rewards = {
 7: PackedInt32Array(2, 4),
 11: PackedInt32Array(1, 5)
 }
-reward_deck = PackedInt32Array(1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 3, 8, 9, 10, 10, 11)
+reward_deck = PackedInt32Array(1, 1, 1, 1, 1, 1, 8, 9, 2, 2, 3, 3, 4, 4, 5, 5, 5, 3, 8, 9, 10, 10, 11)
 gold_cap_min = 10
 gold_cap_max = 15
 gold_per_depth = 0.8
@@ -4115,4 +4115,3 @@ route_shop_items = 3
 altar_life_cost = 10.0
 altar_gold_cost = 75
 altar_magick = 25.0
-altar_candle_life = 10.0

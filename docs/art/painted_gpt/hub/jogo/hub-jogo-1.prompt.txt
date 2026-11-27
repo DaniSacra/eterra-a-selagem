@@ -1,0 +1,13 @@
+Edite a imagem 1, a pintura APROVADA do hub do meu jogo (o Santuário, uma vila de pedra no alto de um penhasco, vista de cima e em diagonal). Mantenha EXATAMENTE a mesma pintura: mesmo estilo de pintura digital feita à mão, mesmo ângulo, mesmo enquadramento de canto a canto, e cada prédio, telhado, parede, mureta, balaústre, escada, ponte, arco, canteiro, árvore e penhasco no mesmo pixel e do mesmo tamanho. Não gire, não aproxime, não afaste, não corte.
+
+Esta é a VERSÃO DE JOGO da mesma arte: o jogo vai pôr por cima, em 3D, as luzes, a água, a videira e tudo que se mexe. Por isso RETIRE só o que está listado abaixo e pinte no lugar o que estaria atrás. Nada mais muda de forma ou de lugar.
+
+1. A VIDEIRA do centro sai inteira (tronco, copa, folhas, cachos, a fonte pequena ao pé). O canteiro redondo de pedra baixo continua no mesmo lugar, com terra escura e pedra por dentro, vazio. A praça em volta continua igual.
+2. TODA LUZ sai: a forja sem fogo (fornalha escura e fria), lanternas, lampiões, velas e tochas APAGADOS (o suporte de ferro fica, sem chama e sem brilho), janelas e vitrais sem brilho (vidro escuro), o arco do Portão no alto sem luz saindo (a passagem fica escura e funda, preta por dentro). Iluminação neutra e uniforme de fim de tarde nublado, sem poças de luz, sem halos, sem chão iluminado embaixo das lanternas, sem raios de luz.
+3. TODA ÁGUA sai: as cachoeiras da direita e de baixo viram leitos de pedra secos e escuros descendo pelo penhasco, sem água, sem espuma, sem névoa de água. Sem fonte, sem poças.
+4. O PONTO DE VIGÍLIA (à esquerda, a fogueira em pedestal redondo com o nicho em arco e dois estandartes atrás) perde a chama E o braseiro: vira um patamar circular de pedra simples e plano, um círculo de lajes no chão, onde o herói chega. O nicho de pedra atrás pode ficar, escuro.
+5. Nada que se mexe: sem fumaça, sem pássaros, sem folhas voando, sem panos esvoaçando. Estandartes podem ficar só se forem rígidos e lisos, vinho com borda dourada, sem símbolo.
+
+O CHÃO É O PALCO: todo o piso da praça, dos caminhos e dos terraços em tom MÉDIO-ESCURO (cerca de 35% de brilho) e pouco saturado, lajes cinza-esverdeadas e ardósia com um leve toque quente, juntas visíveis, pouco contraste dentro do piso. Nenhuma área grande clara, creme ou amarela no piso. Muretas, balaústres e paredes um pouco mais claras que o piso para a planta ler bem. Telhados, árvores, flores e glicínias com as mesmas cores, só sem o brilho quente das luzes.
+
+REGRAS: nenhum texto, letra, número ou ícone; nenhum personagem, pessoa ou animal (as estátuas de leão de pedra ficam); nenhum sol com raios, estrela de muitas pontas, cruz ou emblema. Não é 3D renderizado, não é foto, não é anime.

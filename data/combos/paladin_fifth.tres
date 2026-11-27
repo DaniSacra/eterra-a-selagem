@@ -27,6 +27,7 @@ sound_at = 0.3
 sound_press = &"spin_gather"
 layers = Array[StringName]([&"dash_land", &"dodge"])
 shake = 2.4
+magick_per_hit = 0.5
 
 [sub_resource type="Resource" id="Resource_t6i7i"]
 script = ExtResource("1_fvwfq")
@@ -49,6 +50,7 @@ move_hold = 0.2
 chain_window = 0.4
 hit_stop_ms = 85.0
 shake = 1.8
+magick_per_hit = 0.5
 next = Array[Resource]([SubResource("Resource_2cf54")])
 
 [sub_resource type="Resource" id="Resource_uwpjs"]
@@ -74,6 +76,7 @@ hit_stop_ms = 85.0
 sound = &"thrust"
 sound_at = 0.11500000000000002
 shake = 1.8
+magick_per_hit = 0.5
 next = Array[Resource]([SubResource("Resource_t6i7i")])
 
 [sub_resource type="Resource" id="Resource_7rma2"]
@@ -99,6 +102,7 @@ hit_stop_ms = 60.0
 sound = &"blade_heavy"
 layers = Array[StringName]([&"dodge"])
 shake = 1.1
+magick_per_hit = 0.5
 next = Array[Resource]([SubResource("Resource_uwpjs")])
 
 [sub_resource type="Resource" id="Resource_6d52d"]
@@ -122,6 +126,7 @@ move_hold = 0.18333333333333332
 chain_window = 0.4
 hit_stop_ms = 35.0
 shake = 0.9
+magick_per_hit = 0.5
 next = Array[Resource]([SubResource("Resource_7rma2")])
 
 [sub_resource type="Resource" id="Resource_8ep7d"]
@@ -148,6 +153,7 @@ chain_window = 0.4
 hit_stop_ms = 90.0
 sound = &"blade_heavy"
 layers = Array[StringName]([&"dodge"])
+magick_cost = 12.0
 charge_time = 0.6
 shake = 1.8
 
@@ -201,6 +207,7 @@ hit_stop_ms = 50.0
 sound = &"thrust"
 sound_at = 0.034999999999999996
 layers = Array[StringName]([&"dash_land"])
+magick_cost = 20.0
 charge_time = 0.8
 shake = 2.0
 

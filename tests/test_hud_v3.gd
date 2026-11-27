@@ -19,7 +19,7 @@ func test_every_block_stands_inside_the_safe_area_at_three_sizes() -> void:
 		get_window().size = size
 		await wait_process_frames(3)
 		var safe := hud.get_viewport_rect().grow(-6.0)
-		var blocks := {"head": hud._head, "cartouche": hud._cartouche, "crest": hud._crest, "life": hud._life,
+		var blocks := {"head": hud._head, "cartouche": hud._cartouche, "crest": hud._crest, "life": hud._life, "magick": hud._magick,
 			"charge": hud._charge, "rhythm": hud._rhythm, "row": hud._action_row, "column": hud._column, "coins": hud._coins}
 		for k: String in blocks:
 			var r: Rect2 = (blocks[k] as Control).get_global_rect()
@@ -40,7 +40,7 @@ func test_the_values_bind_to_the_game() -> void:
 	await wait_process_frames(2)
 	assert_eq(hud._life.bar._text, "32/40")
 	assert_almost_eq(hud._life.bar._ratio, 0.8, 0.001)
-	assert_false(hud._magick.visible, "the Warrior spends no Magia: no bar (2026-11-27)")
+	assert_eq(hud._magick.bar._text, "%d/%d" % [22, roundi(p.magick.max_value)])
 	assert_eq(hud._clock.text, SaveData.format_time(game.time))
 	assert_eq(hud._rhythm._text, T.t(&"hud_rhythm"))
 	assert_ne(hud._room.text, "", "the room's count")
@@ -88,7 +88,7 @@ func test_the_mouse_is_white_for_a_click_and_gold_for_a_hold() -> void:
 	assert_lt(right.get_pixelv(lit).b, 0.2, "the right button is dark when the left is lit")
 
 
-func test_a_gained_blessing_shows_its_name_for_a_while_then_hides_it() -> void:
+func test_a_gained_blessing_shows_no_name_in_play() -> void:
 	var hud := await _run()
 	var col: BuildColumn = hud._column
 	col.show_build(game.boons)  # the build the run began with is not "gained"
@@ -97,10 +97,7 @@ func test_a_gained_blessing_shows_its_name_for_a_while_then_hides_it() -> void:
 	col.show_build(st)
 	col.visible = true
 	col.tick(game.skills)
-	assert_eq(col.names_shown().size(), 1, "just gained: its name beside the medallion")
-	col._name_t[&"passo_radiante"] = 0.0
-	col.tick(game.skills)
-	assert_eq(col.names_shown().size(), 0, "icons only afterwards")
+	assert_eq(col.names_shown().size(), 0, "just gained: icons only (Daniel, 2026-11-27)")
 	col.names_all = true
 	col.tick(game.skills)
 	assert_eq(col.names_shown().size(), 1, "the pause lists the names")

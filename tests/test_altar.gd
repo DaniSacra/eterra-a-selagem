@@ -57,11 +57,11 @@ func test_the_trade_in_a_real_room() -> void:
 	assert_eq(rooms.phase, Rooms.Phase.OPEN, "no fight: its doors open at once")
 	assert_eq(rooms.altar_options.size(), 2)
 	rooms.gold = 100
-	var life := game.player.max_hp
+	var magick := game.player.magick.max_value
 	watch_signals(rooms)
 	assert_true(rooms.take_altar(Altar.Option.CANDLES))
 	assert_eq(rooms.gold, 100 - stage.altar_gold_cost)
-	assert_almost_eq(game.player.max_hp, life + stage.altar_candle_life, 0.01, "the Warrior spends no Magia: the candles give most life (2026-11-27)")
+	assert_almost_eq(game.player.magick.max_value, magick + stage.altar_magick, 0.01)
 	assert_signal_emitted_with_parameters(rooms, "altar_used", [&"candles"])
 	assert_false(rooms.take_altar(Altar.Option.LIFE), "only one trade")
 	var e: Dictionary = game.room_tally.events.back()

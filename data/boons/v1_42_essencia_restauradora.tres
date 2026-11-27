@@ -23,7 +23,6 @@ id = &"essencia_restauradora"
 family = 5
 icon = 20
 max_level = 1
-needs_tag = &"arcane"
 mods = Array[ExtResource("1_sos1j")]([SubResource("Resource_7m56d"), SubResource("Resource_mc5tk")])
 grants = PackedStringArray()
 needs_all = PackedStringArray("weak")

@@ -106,9 +106,9 @@ func test_the_lance_strikes_both_ways() -> void:
 	assert_true(lance.both_ways)
 	assert_eq(lance.damage, 375.0)
 	assert_almost_eq(lance.charge_time, 0.8, 0.001)
-	assert_eq(lance.magick_cost, 0.0, "free since 2026-11-27")
+	assert_eq(lance.magick_cost, 20.0)
 	var smash := ComboTree.find(tree.neutral, ComboNode.In.CHARGE_LIGHT)
-	assert_eq([smash.damage, smash.magick_cost, smash.charge_time], [200.0, 0.0, 0.6])
+	assert_eq([smash.damage, smash.magick_cost, smash.charge_time], [200.0, 12.0, 0.6])
 
 
 ## A charge pressed while a swing ends is honoured (the paladin fires the Omega when the charge fills).
@@ -335,12 +335,14 @@ func test_impact_frame_only_for_omegas_and_phase_breaks() -> void:
 	assert_false(Combat.breaks_phase(knight, 5.0), "only a boss has phases")
 
 
-## None of the Warrior's blows costs Magia (Daniel 2026-11-27): the choice comes from reach, power, charge and recovery.
-func test_no_move_costs_magick() -> void:
+## The held (Omega) moves cost Magia; a tap never does (the Corte Circular is free since 2026-11-27).
+func test_only_omega_moves_cost_magick() -> void:
 	for n in tree.all_nodes():
-		assert_eq(n.magick_cost, 0.0, String(n.id))
 		if n.has_tag(&"omega"):
+			assert_gt(n.magick_cost, 0.0, String(n.id))
 			assert_true(n.input == ComboNode.In.CHARGE or n.input == ComboNode.In.CHARGE_LIGHT, String(n.id))
+		else:
+			assert_eq(n.magick_cost, 0.0, String(n.id))
 
 
 func test_holding_light_offers_the_omega_attack() -> void:

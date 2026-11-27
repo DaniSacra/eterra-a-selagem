@@ -221,6 +221,27 @@ func test_a_new_saves_guided_descent_goes_antessala_sala_00_room_one_and_writes_
 	assert_eq(Prologue.kinds(true, Save.data), [RunMap.Kind.SALA00] as Array[RunMap.Kind], "and the Antessala is not met again")
 
 
+## Daniel's playtest, 2026-11-27: holding the attack never closed the "Segure" tip (the Esmagador is an Omega by its tag and fed
+## nothing). Each of the Warrior's four mouse blows, as the player strikes it, closes its own step.
+func test_each_mouse_blow_of_the_warrior_closes_its_own_step() -> void:
+	Dev.put("first", "1")
+	Dev.put("autopick", "1")
+	var game := await _game()
+	var rooms := game.rooms
+	var tree: ComboTree = load("res://data/combos/paladin.tres")
+	var step_of := {&"smash": &"heavy", &"sweep": &"power", &"lance": &"special"}
+	for n in tree.all_nodes():
+		if step_of.has(n.id):
+			assert_false(rooms.lesson.is_done(step_of[n.id]))
+			game.player.struck.emit(n, Vector2.ZERO, Vector2.RIGHT)
+			assert_true(rooms.lesson.is_done(step_of[n.id]), String(n.id))
+	assert_false(rooms.lesson.is_done(&"attack"), "no click of the chain yet")
+	for n in tree.all_nodes():
+		if n.has_tag(&"finisher"):
+			game.player.struck.emit(n, Vector2.ZERO, Vector2.RIGHT)
+	assert_true(rooms.lesson.is_done(&"attack"))
+
+
 func test_the_breakables_of_the_antessala_give_nothing() -> void:
 	Dev.put("first", "1")
 	var game := await _game()

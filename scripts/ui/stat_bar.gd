@@ -11,7 +11,7 @@ enum Kind { LIFE, MAGIC, SUPREME }
 ## Per kind: the medallion's piece, the fill's top and bottom.
 const LOOK := {
 	Kind.LIFE: [&"bar_icon_life", Color("c0302a"), Color("6a1410")],
-	Kind.MAGIC: [&"bar_icon_magic", Color("2a8fb8"), Color("14506a")],
+	Kind.MAGIC: [&"bar_icon_magic", Color("3a7ee8"), Color("163a8a")],
 	Kind.SUPREME: [&"bar_icon_supreme", Color("d9aa4a"), Color("7a5a1e")],
 }
 const FONT := 14

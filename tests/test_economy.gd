@@ -137,7 +137,7 @@ func test_the_shop_in_a_real_run() -> void:
 	game.rooms.start_at(RunMap.Kind.SHOP)
 	assert_false(game.rooms.map.is_route_shop(game.rooms.map.here), "--start=shop is the shop before Morvath, never a route shop")
 	var shelf := game.rooms.shop()
-	assert_eq(shelf.size(), 4, "the Blessing, healing and the heart and an Encanto (no pomegranate: nothing to grow; no Magia tonic for the Warrior, 2026-11-27)")
+	assert_eq(shelf.size(), 5, "the Blessing, healing, the heart, the Magia tonic and an Encanto (no pomegranate: nothing to grow)")
 	var groups := {}
 	var items := {}
 	for item: Dictionary in shelf:

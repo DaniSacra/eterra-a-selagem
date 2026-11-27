@@ -95,7 +95,7 @@ const COST_GEM := 0.46
 const COST_AT := 0.62
 const COST_FONT := 12
 const COST_CORNER_FONT := 14
-const COST_COLOR := Color("2a8fb8")
+const COST_COLOR := Color("3a7ee8")
 ## GP-1: the red of a refused press, the charge ring and the Ritmo's arc.
 const REFUSE_TIME := 0.5
 const REFUSE_COLOR := Color(0.95, 0.3, 0.26)
