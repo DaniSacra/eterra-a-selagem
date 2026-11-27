@@ -126,11 +126,11 @@ func test_poison_one_application_a_blow_the_hold_doubles_and_the_tick_is_its_own
 	assert_eq(e.cel.poison, 2, "a combo of blows applies once a blow")
 	_hit(e, HOLD)
 	assert_eq(e.cel.poison, 4, "the held blow: the double of the count")
-	assert_almost_eq(e.cel.poison_dps, 0.55, 0.001)
+	assert_almost_eq(e.cel.poison_dps, 1.375, 0.001)
 	var before := e.hp
 	_run(1.0)
 	assert_gt(before - e.hp, 1.9, "four stacks of 0,6 for a second")
-	assert_lt(before - e.hp, 2.8)
+	assert_lt(before - e.hp, 7.0)
 	assert_almost_eq(_by("veneno"), before - e.hp, 0.5, "dealt by its own name")
 	_run(5.0)
 	assert_eq(e.cel.poison, 0, "it ran out in five seconds")
@@ -231,7 +231,7 @@ func test_the_three_dots_together_never_pass_sixteen_a_second_and_the_burn_is_no
 	var before := e.hp
 	_run(1.0)
 	var lost := before - e.hp
-	assert_lt(lost, 16.0 + 1.5, "burn 8 plus what is left for the poison and the bleed")
+	assert_lt(lost, 40.0 + 1.5, "burn 8 plus what is left for the poison and the bleed")
 	assert_almost_eq(e.burn_dps, 8.0, 0.001, "the burn is the game's and is never cut")
 
 
@@ -355,7 +355,7 @@ func test_discharge_at_five_clears_the_charges_and_waits_four_seconds() -> void:
 	_hit(e, ["light"])
 	assert_eq(int(_cel().tally.get(&"discharge", 0)), 1, "five charges: the discharge")
 	assert_eq(e.cel.shock, 0)
-	assert_almost_eq(_by("descarga"), 15.0, 0.5, "3 a charge, five charges")
+	assert_almost_eq(_by("descarga"), 37.5, 0.5, "3 a charge, five charges")
 	assert_gt(e.cel.discharge_cd, 3.5)
 	for i in 5:
 		_hit(e, ["light"])
@@ -374,7 +374,7 @@ func test_the_weight_of_thunder_forces_the_discharge_from_three_charges() -> voi
 	assert_eq(e.cel.shock, 3)
 	_hit(e, ["heavy", "wave"])
 	assert_eq(int(_cel().tally.get(&"discharge", 0)), 1, "the Especial empties what had three")
-	assert_almost_eq(_by("descarga"), 9.0, 0.5, "three charges as they were")
+	assert_almost_eq(_by("descarga"), 22.5, 0.5, "three charges as they were")
 	assert_eq(e.cel.shock, 3, "and puts its own three")
 
 
@@ -438,7 +438,7 @@ func test_resonance_adds_a_tenth_for_each_charged_neighbour() -> void:
 	e.cel.shock_t = 6.0
 	_cel()._tracked.append(e)
 	_hit(e, ["light"])
-	assert_almost_eq(_by("descarga"), 15.0 * 1.1, 0.8, "5 charges of 3 and 10% for the neighbour")
+	assert_almost_eq(_by("descarga"), 37.5 * 1.1, 0.8, "5 charges of 3 and 10% for the neighbour")
 
 
 # ---------- antecipação ----------
@@ -454,7 +454,7 @@ func test_the_anticipation_brings_forward_a_share_and_takes_the_same_share_out_o
 	_hit(e, ["heavy", "wave"])
 	assert_almost_eq(_by("antecipacao"), owed * 0.5, 0.8, "half of what was owed")
 	assert_almost_eq(e.burn_t, 3.0, 0.001, "and then the new burn renews the time (antecipate first, apply after)")
-	assert_almost_eq(e.burn_dps, 5.0, 0.001)
+	assert_almost_eq(e.burn_dps, 12.5, 0.001)
 	assert_gt(t0, 2.9)
 	_hit(e, ["heavy", "wave"])
 	assert_eq(int(_cel().tally.get(&"antic", 0)), 1, "two seconds of recharge on that enemy")
@@ -470,7 +470,7 @@ func test_a_burn_antecipated_is_shortened_by_the_same_share() -> void:
 	var hp0 := e.hp
 	_cel()._antic(e, 0.5, false, chain)
 	assert_almost_eq(e.burn_t, 1.0, 0.001)
-	assert_almost_eq(_by("antecipacao"), 3.5, 0.6, "half of 3,5 times two seconds")
+	assert_almost_eq(_by("antecipacao"), 8.75, 1.0, "half of 8,75 times two seconds")
 	assert_almost_eq(e.hp, hp0 - _by("antecipacao"), 1.0, "nothing else was paid")
 
 
@@ -486,7 +486,7 @@ func test_combustion_splashes_a_half_and_brings_forward_a_fifth_of_every_dot() -
 	e.cel.add_poison(2, 5.0, 2.0)
 	_hit(e, ["light"])
 	assert_eq(int(_cel().tally.get(&"combustion", 0)), 1)
-	assert_almost_eq(near.max_hp - near.hp, 4.5, 1.1, "half of the 9 on the one near")
+	assert_almost_eq(near.max_hp - near.hp, 11.25, 1.1, "half of the 22,5 on the one near")
 	assert_eq(far.hp, far.max_hp)
 	assert_gt(_by("antecipacao"), 0.0, "20% of the burn and the poison it owed")
 	assert_lt(e.cel.poison_t, 5.0, "taken out of the poison as well")
@@ -503,7 +503,7 @@ func test_the_gust_copies_a_share_to_one_neighbour_and_the_copy_does_not_copy() 
 	_hit(e, ["light"])
 	_cel().spread(e, 0.3, -77)
 	assert_gt(a.burn_t, 0.0, "the nearest takes it")
-	assert_almost_eq(a.burn_dps, 3.5 * 0.3, 0.01)
+	assert_almost_eq(a.burn_dps, 8.75 * 0.3, 0.01)
 	assert_gte(a.burn_t, 1.4, "half of the time (at least two seconds: a second min)")
 	assert_eq(b.burn_t, 0.0, "one neighbour a hit")
 	_cel().spread(a, 0.3, -77)
@@ -746,9 +746,9 @@ func test_vulnerability_and_the_fire_grow_with_the_conditions_up_to_three() -> v
 	f.cel.mark_t = 5.0
 	f.cel.add_poison(1, 5.0, 1.0)
 	_hit(f, ["light"])
-	assert_almost_eq(f.burn_dps, 3.5 * (1.0 + 0.2 + 0.05 * 2.0), 0.01, "two other conditions")
+	assert_almost_eq(f.burn_dps, 8.75 * (1.0 + 0.2 + 0.05 * 2.0), 0.01, "two other conditions")
 	_hit(f, ["light"])
-	assert_almost_eq(f.burn_dps, 3.5 * 1.3, 0.01, "the burn itself is no 'another'")
+	assert_almost_eq(f.burn_dps, 8.75 * 1.3, 0.01, "the burn itself is no 'another'")
 
 
 func test_essence_gives_two_mana_with_three_conditions() -> void:
@@ -789,7 +789,7 @@ func test_the_hold_of_the_held_blow_doubles_counts_and_a_half_the_rates() -> voi
 	_take(&"golpe_brasa")
 	var e := _enemy()
 	_hit(e, HOLD)
-	assert_almost_eq(e.burn_dps, 3.5 * 1.5, 0.001)
+	assert_almost_eq(e.burn_dps, 8.75 * 1.5, 0.001)
 	_start()
 	_take(&"golpe_trovao")
 	var f := _enemy()
@@ -814,7 +814,7 @@ func test_a_crit_makes_the_applications_of_that_blow_stronger_only() -> void:
 	game.combat.kill_blow = _key
 	_cel().after_hit(e, tags, 10.0, false, false)
 	assert_eq(e.cel.poison, 2, "a stack more on the crit")
-	assert_almost_eq(e.cel.poison_dps, 0.55 * 1.5, 0.001, "and 50% stronger")
+	assert_almost_eq(e.cel.poison_dps, 1.375 * 1.5, 0.001, "and 50% stronger")
 	var f := _enemy(Vector2(6.0, 0.0))
 	_key += 1
 	game.combat.kill_blow = _key
@@ -822,7 +822,7 @@ func test_a_crit_makes_the_applications_of_that_blow_stronger_only() -> void:
 	_cel().after_hit(f, tags, 10.0, false, false)
 	game.combat.kill_blow = 0
 	assert_eq(f.cel.poison, 1, "the next blow, not a crit, does not inherit it")
-	assert_almost_eq(f.cel.poison_dps, 0.55, 0.001)
+	assert_almost_eq(f.cel.poison_dps, 1.375, 0.001)
 
 
 # ---------- zones, skills ----------
@@ -858,7 +858,7 @@ func test_the_plague_zone_gives_one_stack_a_second_and_the_skills_apply() -> voi
 func test_the_dodge_trail_of_peste_lays_poison_ground() -> void:
 	_start()
 	_take(&"passo_peste")
-	assert_almost_eq(game.boons.stat(&"dodge_plague_dps"), 1.0, 0.001)
+	assert_almost_eq(game.boons.stat(&"dodge_plague_dps"), 2.5, 0.001)
 	var before := game.ground.zones.size()
 	game.call(&"_on_dodged", Vector2.RIGHT)
 	var plague := 0

@@ -111,7 +111,7 @@ func test_the_tree_has_exactly_the_four_blows_and_none_of_the_brado_or_the_inves
 func test_the_lance_is_the_one_of_before_but_for_its_button_and_tags() -> void:
 	var tree: ComboTree = load(HeroDef.warrior().combos)
 	var lance := ComboTree.find(tree.neutral, ComboNode.In.CHARGE)
-	assert_eq(lance.damage, 150.0)
+	assert_eq(lance.damage, 375.0)
 	assert_eq(lance.magick_cost, 20.0)
 	assert_eq(lance.charge_time, 0.8)
 	assert_eq(lance.reach, 1080.0 / 80.0)
@@ -129,7 +129,7 @@ func test_the_lance_is_the_one_of_before_but_for_its_button_and_tags() -> void:
 func test_the_smash_and_the_sweep() -> void:
 	var tree: ComboTree = load(HeroDef.warrior().combos)
 	var smash := ComboTree.find(tree.neutral, ComboNode.In.CHARGE_LIGHT)
-	assert_eq(smash.damage, 75.0)
+	assert_eq(smash.damage, 200.0)
 	assert_eq(smash.magick_cost, 12.0)
 	assert_eq(smash.charge_time, 0.6)
 	assert_eq(smash.reach, 2.6)
@@ -524,14 +524,14 @@ func test_forca_titanica_doubles_the_cost_triples_the_damage_and_raises_the_maxi
 	assert_eq(p.cost_of(_node(&"sweep"), 0.0), 8.0, "the sweep is no charged blow")
 	var e := _enemy(&"skeleton", Vector2(4.0, 0))
 	game.combat.strike(_node(&"lance"), p.pos, Vector2.RIGHT)
-	assert_almost_eq(5000.0 - e.hp, 150.0 * 1.4 * 3.0, 2.0, "150 x 1.4 x 3")
+	assert_almost_eq(5000.0 - e.hp, 375.0 * 1.4 * 3.0, 2.0, "375 x 1.4 x 3")
 
 
 func test_ruptura_reads_the_smash_too() -> void:
 	_run([&"ruptura"])
-	assert_almost_eq(game.boons.stat(&"armor_pct", _node(&"smash").tags), 0.5, 0.001)
-	assert_almost_eq(game.boons.stat(&"armor_pct", _node(&"cut3").tags), 0.5, 0.001)
-	assert_eq(game.boons.stat(&"armor_pct", _node(&"cut1").tags), 0.0)
+	assert_almost_eq(game.boons.stat(&"poise_pct", _node(&"smash").tags), 0.5, 0.001)
+	assert_almost_eq(game.boons.stat(&"poise_pct", _node(&"cut3").tags), 0.5, 0.001)
+	assert_eq(game.boons.stat(&"poise_pct", _node(&"cut1").tags), 0.0)
 
 
 func test_investida_implacavel_stuns_the_commons_the_roll_crosses_once() -> void:

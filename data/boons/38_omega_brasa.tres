@@ -7,8 +7,8 @@
 script = ExtResource("1_sqn65")
 stat = &"burn_dps"
 tag = &"omega"
-base = 5.0
-per_level = PackedFloat32Array(2, 2)
+base = 12.0
+per_level = PackedFloat32Array(6, 6)
 
 [resource]
 script = ExtResource("2_6t36k")

@@ -945,8 +945,8 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	var push_pct := _tag_stat(&"push_pct", tags)
 	dmg *= 1.0 + _resisted(e, push_pct, _tag_stat(&"freeze_time", tags))
 	if e.armor > 0.0:
-		# the armor bar goes faster: the special's base, and armor_pct of the blow's tags (Peso, Onda Pesada, Ferro na Investida)
-		dmg *= 1.0 + (ARMOR_SPECIAL if tags.has(&"heavy") else 0.0) + _tag_stat(&"armor_pct", tags)
+		# the armor bar (no data uses it now) goes faster with the special's base
+		dmg *= 1.0 + (ARMOR_SPECIAL if tags.has(&"heavy") else 0.0)
 		# a tough armor feels only the strong blows, unless its shield is away (the knight's opening)
 		dmg *= 1.0 if horde.shield_away(e) else DamageCalc.armor_scale(e.def.armor_soft, tags)
 	var shut := false  # the guard shut it (drawing: grey number, steel sparks)
@@ -970,11 +970,13 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	horde.dealing = source if source != &"" else DealtBy.source(tags)
 	horde.stun_scale = 0.0 if _no_stun else 1.0 + _tag_stat(&"stun_pct", tags)
 	horde.break_scale = 1.0 + _tag_stat(&"stun_pct", tags)
+	horde.poise_scale = 1.0 + _tag_stat(&"poise_pct", tags)  # Peso, Onda Pesada, Ruptura, Esquiva Implacável: wears more Quebra
 	horde.strong = tags.has(OMEGA_TAG)
 	horde.heavy_blow = tags.has(&"heavy")
 	var died := horde.damage(e, dmg, away, knockback, GUARD_NUMBER if shut else _blow_color(tags, big), true, big)
 	horde.stun_scale = 1.0
 	horde.break_scale = 1.0
+	horde.poise_scale = 1.0
 	horde.strong = false
 	horde.heavy_blow = false
 	kill_tags = []

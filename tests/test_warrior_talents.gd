@@ -343,10 +343,10 @@ func test_the_golpe_carregado_damage_is_the_sum_then_forca_titanica_triples_it()
 		e.hp = 5000.0
 		losses[ids.size() * 10 + (1 if ids.has(&"forca_titanica") else 0)] = _strike_loss(e, &"lance")
 	var base: float = losses[0]
-	assert_eq(base, 150.0)
-	assert_eq(losses[10], 210.0, "Força Concentrada: +40%")
-	assert_eq(losses[11], 450.0, "Força Titânica: x3")
-	assert_eq(losses[21], 630.0, "x3 final after Força Concentrada's +40%")
+	assert_eq(base, 375.0)
+	assert_eq(losses[10], 525.0, "Força Concentrada: +40%")
+	assert_eq(losses[11], 1125.0, "Força Titânica: x3")
+	assert_eq(losses[21], 1575.0, "x3 final after Força Concentrada's +40%")
 
 
 func test_forca_titanica_raises_the_cost_and_never_leaves_negative_magia() -> void:
@@ -421,8 +421,8 @@ func test_determinacao_keeps_the_cap_on_the_gain() -> void:
 
 func test_ruptura_breaks_armor_faster_with_the_finisher() -> void:
 	var s := _state([&"ruptura"])
-	assert_eq(s.value(&"armor_pct", SPIN), 0.5)
-	assert_eq(s.value(&"armor_pct", CUT), 0.0)
+	assert_eq(s.value(&"poise_pct", SPIN), 0.5)
+	assert_eq(s.value(&"poise_pct", CUT), 0.0)
 
 
 func test_alcance_marcial_widens_and_pushes_the_corte_circular() -> void:
@@ -492,8 +492,8 @@ func test_the_roll_takes_the_quebra_of_the_dodge_from_a_boss_and_stuns_him_never
 
 func test_the_armored_take_more_from_the_roll_and_are_not_stunned() -> void:
 	var s := _state([&"investida_implacavel"])
-	assert_eq(s.value(&"armor_pct", DASH), 0.5, "x1.5 of armor damage")
-	assert_eq(s.value(&"armor_pct", SPIN), 0.0)
+	assert_eq(s.value(&"poise_pct", DASH), 0.5, "x1.5 of armor damage")
+	assert_eq(s.value(&"poise_pct", SPIN), 0.0)
 	_run([&"investida_implacavel"])
 	var e := _enemy(&"skeleton", Vector2(1.5, 0))
 	e.def = e.def.duplicate()
@@ -505,7 +505,7 @@ func test_the_armored_take_more_from_the_roll_and_are_not_stunned() -> void:
 # ---------- Lote R1 (backlog 2026-11-24 noite) ----------
 ## Stats some code reads while StunRule is NONE (an inert stat would make a Gift that does nothing).
 const LIVE_STATS: Array[StringName] = [&"dodge_window_add", &"cadence_pct", &"apogee_pct", &"damage_pct", &"attack_magick_pct",
-	&"charge_time_pct", &"omega_cost_pct", &"final_pct", &"armor_pct", &"reach_pct", &"push_pct", &"stun_pct", &"dash_pierce", &"dash_stun"]
+	&"charge_time_pct", &"omega_cost_pct", &"final_pct", &"poise_pct", &"reach_pct", &"push_pct", &"stun_pct", &"dash_pierce", &"dash_stun"]
 
 func test_every_gift_changes_some_number_with_the_stun_rule_none() -> void:
 	StunRule.live = StunRule.Mode.NONE

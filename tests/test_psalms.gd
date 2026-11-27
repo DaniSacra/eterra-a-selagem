@@ -252,7 +252,7 @@ func test_sentinela_the_circle_walks_with_him_and_strikes_each_one_coming_in_onc
 	p.pos = Vector2(6.0, 0.0)
 	game.ground.step(Ground.TICK)
 	assert_eq(circle.pos, p.pos, "the circle is where he is")
-	assert_almost_eq(e.max_hp - e.hp, 30.0, 0.5, "a blow of 30 as it comes in")
+	assert_almost_eq(e.max_hp - e.hp, 75, 0.5, "a blow of 75 as it comes in")
 	assert_gt(e.stun_t, 0.0, "held (and flinched)")
 	var hp := e.hp
 	for k in 4:

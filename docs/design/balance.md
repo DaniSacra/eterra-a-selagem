@@ -1074,9 +1074,41 @@ botão (ataque 0,15 do teto). Para dar o mesmo número de golpes leves de 20 por
 Atordoamento ao quebrar: comum 2,0 s (era 1,2), elite 2,5 s, guardião e Morvath 3,5 s (já eram). x1,25 a cada quebra seguinte (já era).
 
 ### O que não mudou (para decidir)
-- Esmagador 75, Lança 150, Brado 150, Ômegas, Dons com dano fixo, Salmos: continuam nos números de antes; com inimigos 2,5 a 3 vezes mais
-  duros os Dons de dano fixo (consagrar 12 a 26, fogo) ficam fracos. Sugestão: escalar em um segundo passo, com medida.
+- Poderes de dano fixo: escalados no passo seguinte (seção abaixo, "Dano fixo x2,5").
 - Orçamento das salas, ondas e custos (`ENEMY_COST`): iguais. Um elite de 1500 de vida custa 6 a 12 e o Hammer comum 3, como no SWORN (Major 10, Hammer 3).
-- Refinos da Forja "Peso" e "Onda Pesada" e o talento "Ruptura" falavam de tirar mais da barra amarela (`armor_pct`): sem barra, ficam
-  sem efeito. Sugestão: virar "gasta mais Quebra" ou ser trocados. Decisão do Daniel/Game Director.
+- Refinos da Forja "Peso" e "Onda Pesada" e o talento "Ruptura" (e o "Esquiva Implacável") agora gastam mais Quebra (seção abaixo).
 - Perigos de sala: 10 de dano, como estava (o `baseHazardResist` 0,9 do SWORN é inferência, fica para depois).
+
+### Dano fixo x2,5 (2026-11-27, segundo passo)
+Inimigos com 2,5 a 3 vezes a vida: todo poder de dano próprio (que não é parte de um golpe) leva o mesmo fator, `FIXED_X` 2,5 em
+`tools/make_data.gd`. Esmagador e Lança foram acertados pelo que matavam, não pelo fator puro. O combo, a vida do herói e os inimigos não mudaram.
+| Poder | Antes | Agora | Conferência |
+|---|---|---|---|
+| Esmagador (smash) | 75 | 200 | ainda mata o Corredor (70 -> 200 de vida) de um golpe; os de 150 a 175 de vida também |
+| Lança da Emeth | 150 | 375 | mata de uma vez tudo que é comum (até 250); o Esqueleto/Corredor Maior (500) pede 2, como antes (300 e 225 pediam 2) |
+| Brado (`cast_burst`) | 150 | 375 | idem à Lança |
+| Corte Circular e combo | 40, 20/20/40 | iguais | (do passo anterior) |
+| Ultimate Corte Largo: miolo / fora | 180 / 120 | 450 / 300 | |
+| Ultimate Voragem: tique / implosão | 5 / 72 | 12 / 180 | |
+| Dons com `skill` (consagrar 12-26, fogo, geada, flagelo...) | números x `FLAT` 0,6 | x `FLAT` 1,5 | consagrar 12 -> 18 (efetivo 7 -> 18), brasas 18 -> 27, estilhaço 20 -> 30 |
+| `burn_dps` dos Dons, Queimadura de `status_power` | x 0,6 | x 1,5 | |
+| `dodge_ember_dps`, `detonate_dmg`, `shield_burst` (Bastião) | 6-8 / 14 / 40 | x2,5: 15-20 / 35 / 100 | |
+| Bênçãos V1/V2 de dano próprio (`cel_burn_dps`, `cel_poison_dps`, `cel_combust_dmg`, `cel_sat_dmg`, `cel_shock_zap`, `cel_discharge`, `cel_whirl_dmg`, `dodge_plague_dps`) e as `skill` delas (`_vs`, campo `damage`) | spec | x 2,5 | ex.: Combustão 9 -> 22,5; Descarga 3 -> 7,5; Redemoinho 18 -> 45 |
+| `CelRules.POISON_SKILL_DPS`, `SHOCK_SKILL_ZAP`, `DOT_DPS_CAP` | 1, 1, 16 | 2,5, 2,5, 40 | |
+| Salmos: Sentinela, Rocha / Pastor | 30 / 55 | 75 / 140 | |
+| Encantos: Lâmina Tríplice (onda) / Onda Gêmea / Corte Sísmico | 12 / 15 / 15 | 30 / 38 / 38 | |
+| Forja (refinos e Temperar) | só `damage_pct` | sem mudança | já são proporções |
+Fora desta rodada: a Maga (pausada, números próprios em `ArcaneKit`) e os perigos de sala (10).
+
+### Peso, Onda Pesada, Ruptura: gastam mais Quebra
+O stat `armor_pct` virou `poise_pct` (o mesmo nome em Forja e Dons, mesmos valores: Peso +20% no ataque, Onda Pesada +30% no especial, Ruptura
++50% nos finalizadores e no Esmagador, Esquiva Implacável +50% na esquiva). `Combat` põe `horde.poise_scale = 1 + poise_pct` ao redor do
+golpe; `Horde._wear_poise` e a Postura de Morvath (`Boss._on_blow`) multiplicam a fração que o botão tira por ele. Textos reescritos em `text_pt.tres`.
+
+### Medida depois do dano fixo (12 sementes, robô `--bot-reaction=0.25 --ultimate=cleave`)
+| | Antes (so os inimigos SWORN) | Depois |
+|---|---|---|
+| Salas alcancadas (media) | 9,1 | 11,2 |
+| Chegou em Morvath (900 s) | 3 de 12 | 4 de 12 (1 vitoria, com 7 de vida) |
+| Chefe, vida que sobra (`--start=boss --boons=25`, 300 s) | 1012 a 5075 de 6000 | 978 a 3823; 1 vitoria |
+| Duracao media da partida | 565 s | 537 s |

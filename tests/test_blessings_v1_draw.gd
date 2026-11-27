@@ -233,10 +233,10 @@ func test_rarity_keeps_its_chances_and_levels_are_kept() -> void:
 	var b := state.find(&"golpe_brasa")
 	state.take(b, Boon.Rarity.EPIC)
 	assert_eq(state.rarity(b.id), Boon.Rarity.EPIC)
-	assert_almost_eq(state.slot_stat(&"cel_burn_dps", Boon.Slot.ATTACK), 7.0, 0.001, "an epic doubles the DPS")
+	assert_almost_eq(state.slot_stat(&"cel_burn_dps", Boon.Slot.ATTACK), 17.5, 0.001, "an epic doubles the DPS")
 	state.take(b, Boon.Rarity.EPIC)
 	assert_eq(state.level(b.id), 2)
-	assert_almost_eq(state.slot_stat(&"cel_burn_dps", Boon.Slot.ATTACK), 7.0 + 1.5, 0.001, "the gain of a level is not scaled twice")
+	assert_almost_eq(state.slot_stat(&"cel_burn_dps", Boon.Slot.ATTACK), 17.5 + 3.75, 0.001, "the gain of a level is not scaled twice")
 
 
 func test_the_old_ids_still_load_and_can_be_held_by_a_save_or_a_test() -> void:

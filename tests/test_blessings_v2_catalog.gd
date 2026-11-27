@@ -154,7 +154,7 @@ func test_only_the_marked_numbers_scale_with_rarity_in_the_new_cards() -> void:
 				var want := m.base * mult if scales.has(m.stat) else m.base
 				assert_almost_eq(m.at(1, mult), want, 0.0001, "%s %s x%s" % [id, m.stat, mult])
 	# the explicit table of the spec (level 1)
-	var table := {&"golpe_peste": 0.55, &"pesado_peste": 0.8, &"passo_peste": 1.0, &"saturacao": 8.0, &"golpe_trovao": 1.0, &"pesado_trovao": 1.5, &"descarga": 3.0}
+	var table := {&"golpe_peste": 1.375, &"pesado_peste": 2.0, &"passo_peste": 2.5, &"saturacao": 20.0, &"golpe_trovao": 2.5, &"pesado_trovao": 3.75, &"descarga": 7.5}
 	for id: StringName in table:
 		var m := _find(id).mods[0]
 		var got: Array[float] = []
@@ -166,11 +166,11 @@ func test_only_the_marked_numbers_scale_with_rarity_in_the_new_cards() -> void:
 
 func test_the_numbers_of_the_spec_are_the_numbers_in_play() -> void:
 	var state := BoonState.new(catalog)
-	var want := {&"golpe_peste": [&"cel_poison_dps", 0.55], &"pesado_peste": [&"cel_poison_dps", 0.8], &"passo_peste": [&"dodge_plague_dps", 1.0],
-		&"saturacao": [&"cel_sat_dmg", 8.0], &"peste_persistente": [&"cel_poison_time_pct", 0.3], &"deterioracao": [&"cel_poison_grow", 0.06],
-		&"contagio": [&"cel_poison_spread", 0.5], &"golpe_trovao": [&"cel_shock_zap", 1.0], &"pesado_trovao": [&"cel_shock_zap", 1.5],
-		&"descarga": [&"cel_discharge", 3.0], &"conducao": [&"cel_conduct", 2.0], &"sobrecarga": [&"cel_overload", 0.5],
-		&"ressonancia_eletrica": [&"cel_reson", 0.1], &"pesado_brasa": [&"cel_burn_dps", 5.0], &"combustao": [&"cel_combust_dmg", 9.0],
+	var want := {&"golpe_peste": [&"cel_poison_dps", 1.375], &"pesado_peste": [&"cel_poison_dps", 2.0], &"passo_peste": [&"dodge_plague_dps", 2.5],
+		&"saturacao": [&"cel_sat_dmg", 20.0], &"peste_persistente": [&"cel_poison_time_pct", 0.3], &"deterioracao": [&"cel_poison_grow", 0.06],
+		&"contagio": [&"cel_poison_spread", 0.5], &"golpe_trovao": [&"cel_shock_zap", 2.5], &"pesado_trovao": [&"cel_shock_zap", 3.75],
+		&"descarga": [&"cel_discharge", 7.5], &"conducao": [&"cel_conduct", 2.0], &"sobrecarga": [&"cel_overload", 0.5],
+		&"ressonancia_eletrica": [&"cel_reson", 0.1], &"pesado_brasa": [&"cel_burn_dps", 12.5], &"combustao": [&"cel_combust_dmg", 22.5],
 		&"pesado_marca": [&"cel_echo", 0.4], &"eco_crescente": [&"cel_echo_pct", 0.3], &"fogo_crescente": [&"cel_burn_dps_pct", 0.2]}
 	for id: StringName in want:
 		assert_almost_eq(state.find(id).mods[0].base, float(want[id][1]), 0.0001, String(id))

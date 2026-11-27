@@ -873,3 +873,5 @@ Vida e dano de todos os inimigos, do Cavaleiro, do Ancião e de Morvath vêm do 
 0): os textos acima sobre armadura, `armor_soft`, blindagem do sacerdote e o "A3" do Ancião descrevem código que segue no jogo sem dado que o acione
 (para o escudo futuro, tipo energy shield). Elite não estremece com golpe (`stun_time` 0): só a Quebra o atordoa. `EnemyDef.poise_mult` dos
 inimigos vem de `sw_poise` em `tools/make_data.gd` (o teto de stagger do SWORN), atordoamento comum 2,0 s. A dica e o termo do glossário da armadura viraram o da Quebra.
+
+- **Dano fixo x2,5 e `poise_pct` (2026-11-27)**: Esmagador 200, Lança 375, Brado 375, Ultimates, Dons (`FLAT` 1,5), Bênçãos de dano próprio, Salmos e Encantos escalados por `FIXED_X` (tabela em `docs/design/balance.md`, "Dano fixo x2,5"). O stat `armor_pct` virou `poise_pct`: Peso, Onda Pesada, Ruptura e Esquiva Implacável gastam mais Quebra (`Horde.poise_scale`, também na Postura de Morvath).

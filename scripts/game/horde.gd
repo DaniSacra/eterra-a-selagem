@@ -165,6 +165,8 @@ var poise_extra := 0.0
 var stun_scale := 1.0
 ## Imposição, Voz do Leão: the Quebra's stun lasts this much longer (Combat sets 1 + stun_pct around its damage, the cry too).
 var break_scale := 1.0
+## Peso, Onda Pesada, Ruptura: the blow being dealt wears this many times the usual Quebra (Combat sets 1 + poise_pct around its damage).
+var poise_scale := 1.0
 ## The blow being dealt is an Omega (Combat sets it while it deals one): strong for the StunRule though not `big`.
 var strong := false
 ## The blow being dealt is the special (tag heavy) or an Omega: only drawn (combate_c1_leitura 7), armor gives it more sparks.
@@ -2651,7 +2653,7 @@ func _wear_poise(e: Enemy, from_dir: Vector2) -> void:
 	var shr := Poise.share(dealing, Feel.live().poise_weights)
 	if shr <= 0.0:
 		return
-	shr = (shr + poise_extra) * d.poise_mult
+	shr = (shr + poise_extra) * d.poise_mult * poise_scale
 	e.poise = Poise.wear(e.poise, d.poise, shr)  # (a blow takes the same of the bar however many breaks it has had: the bar grows)
 	e.poise_idle = 0.0
 	if e.poise > 0.0:

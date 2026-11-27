@@ -7,7 +7,7 @@
 script = ExtResource("1_vqwxm")
 stat = &"blow_wave"
 tag = &"spin"
-base = 12.0
+base = 30.0
 per_level = PackedFloat32Array()
 by_rarity = false
 

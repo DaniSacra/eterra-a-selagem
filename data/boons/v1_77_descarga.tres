@@ -6,8 +6,8 @@
 [sub_resource type="Resource" id="Resource_h2brb"]
 script = ExtResource("1_qp4yf")
 stat = &"cel_discharge"
-base = 3.0
-per_level = PackedFloat32Array(1.5, 1.5)
+base = 7.5
+per_level = PackedFloat32Array(3.75, 3.75)
 
 [resource]
 script = ExtResource("2_a67jf")

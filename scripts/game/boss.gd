@@ -1607,7 +1607,7 @@ func _on_blow(target: Enemy, source: StringName) -> void:
 	var shr := Poise.share(source, Feel.live().poise_weights)
 	if shr <= 0.0:
 		return
-	shr = (shr + game.horde.poise_extra) * def.posture_mult
+	shr = (shr + game.horde.poise_extra) * def.posture_mult * game.horde.poise_scale
 	_posture = Poise.wear(_posture, def.posture, shr)
 	_posture_idle = 0.0
 	if _posture > 0.0:

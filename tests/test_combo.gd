@@ -104,11 +104,11 @@ func test_both_buttons_have_a_held_blow() -> void:
 func test_the_lance_strikes_both_ways() -> void:
 	var lance := ComboTree.find(tree.neutral, ComboNode.In.CHARGE)
 	assert_true(lance.both_ways)
-	assert_eq(lance.damage, 150.0)
+	assert_eq(lance.damage, 375.0)
 	assert_almost_eq(lance.charge_time, 0.8, 0.001)
 	assert_eq(lance.magick_cost, 20.0)
 	var smash := ComboTree.find(tree.neutral, ComboNode.In.CHARGE_LIGHT)
-	assert_eq([smash.damage, smash.magick_cost, smash.charge_time], [75.0, 12.0, 0.6])
+	assert_eq([smash.damage, smash.magick_cost, smash.charge_time], [200.0, 12.0, 0.6])
 
 
 ## A charge pressed while a swing ends is honoured (the paladin fires the Omega when the charge fills).

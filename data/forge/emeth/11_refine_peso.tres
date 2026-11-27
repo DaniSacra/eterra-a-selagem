@@ -5,7 +5,7 @@
 
 [sub_resource type="Resource" id="Resource_0khmw"]
 script = ExtResource("1_ebus8")
-stat = &"armor_pct"
+stat = &"poise_pct"
 tag = &"light"
 base = 0.2
 per_level = PackedFloat32Array()
