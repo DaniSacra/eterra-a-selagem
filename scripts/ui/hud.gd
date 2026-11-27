@@ -246,6 +246,7 @@ var _xp_fill: ColorRect
 var _boss_box: VBoxContainer
 var _boss_name: Label
 var _boss_bar: HudBar
+var _boss_opening: OpeningDots
 var _phase_rule_top: GoldRule
 var _phase_rule_bottom: GoldRule
 var _phase_box: VBoxContainer
@@ -424,6 +425,8 @@ func _build_top() -> void:
 	_boss_bar = HudBar.new().setup(BOSS_COLOR, BOSS, 11, true)
 	_boss_bar.over_color = Horde.ARMOR_COLOR
 	_boss_box.add_child(_boss_bar)
+	_boss_opening = OpeningDots.new()
+	_boss_box.add_child(_boss_opening)
 	# the phase's name and its hint, under the bar for a moment
 	_phase_box = VBoxContainer.new()
 	_phase_box.add_theme_constant_override(&"separation", 0)
@@ -1346,6 +1349,8 @@ func _update_boss(b: Enemy) -> void:
 		# the ritual's count: a seal per dead that breaks the shield, while the shield shows
 		_ritual_hint = boss != null and boss.shielded()
 		_boss_bar.show_ritual(boss.ritual_left() if boss else 0, boss.ritual_total() if boss and _shield_t > 0.0 else 0)
+		# GP-2: the Abertura's meters under the bar (only while a meter has points)
+		_boss_opening.show_state(b.cel, CelRules.METER_COLD, game.combat.celestial.impact_need())
 
 
 ## The count and the move's name stand right of the last diamond shown (the robot has no ultimate's).

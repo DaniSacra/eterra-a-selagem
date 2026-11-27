@@ -63,3 +63,26 @@ func test_the_tip_needs_open_doors_and_the_hero_close() -> void:
 	assert_false(DoorTip.tip_allowed(false, 1.0), "doors still shut (before door_open)")
 	assert_true(DoorTip.tip_allowed(true, DoorTip.TIP_RANGE - 0.1))
 	assert_false(DoorTip.tip_allowed(true, DoorTip.TIP_RANGE + 0.1), "too far")
+
+
+## BG-2: the Provação's box does not repeat the sign's word and has no badge on the medallion.
+func test_the_trial_door_box_says_what_it_gives() -> void:
+	var d := DoorTip.describe(_room(RunMap.Kind.TRIAL, RunMap.Reward.NONE))
+	assert_ne(d.title, T.t(&"room_trial"))
+	assert_eq(d.title, T.t(&"trial_slab_offer"))
+
+
+## GP-2: the Abertura's dots read the boss's meters and the window.
+func test_opening_dots_read_the_meters() -> void:
+	var st := CelState.new()
+	st.meter_c = 3
+	st.meter_i = 99
+	var r := OpeningDots.read(st, CelRules.METER_COLD, CelRules.METER_IMPACT)
+	assert_eq(r.cold, 3)
+	assert_eq(r.impact, CelRules.METER_IMPACT, "never past the meter")
+	assert_eq(OpeningDots.read(null, 8, 10).cold, 0)
+	var dots := OpeningDots.new()
+	add_child_autofree(dots)
+	assert_false(dots.shown(), "nothing permanent")
+	dots.show_state(st, 8, 10)
+	assert_true(dots.shown())

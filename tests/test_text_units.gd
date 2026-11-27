@@ -11,4 +11,4 @@ func test_words_are_left_alone() -> void:
 	assert_eq(TextTable.glue_units("a Sala 5 de 14"), "a Sala 5 de 14")
 
 func test_t_goes_through_it() -> void:
-	assert_eq(T.t(&"boon_passo_frio_desc", {"a": "1,5"}), "A Investida congela por 1,5 s.")
+	assert_eq(T.t(&"boon_passo_frio_desc", {"a": "1,5"}), "A esquiva congela por 1,5 s.")

@@ -688,9 +688,14 @@ func _dot(e: Enemy, amount: float, source: StringName, color: Color) -> void:
 
 ## Points of Frio (a boss) or Impacto (a boss or guardian) fill the meter; when it fills, the Abertura opens for WINDOW_TIME and
 ## the meters rest a while. Nothing of the enemy's own (poise, frost, stun, scripts) is touched.
+## Points that fill the Impacto's meter (the HUD's dots read it).
+func impact_need() -> int:
+	return maxi(1, CelRules.METER_IMPACT + 2 * roundi(_glob(&"cel_impact_need")))
+
+
 func _meter(e: Enemy, kind: StringName, points: int) -> void:
 	var st := state_of(e)
-	var need := CelRules.METER_COLD if kind == &"c" else maxi(1, CelRules.METER_IMPACT + 2 * roundi(_glob(&"cel_impact_need")))
+	var need := CelRules.METER_COLD if kind == &"c" else impact_need()
 	if st.add_meter(kind, points, need):
 		combat.fx.burst(&"dust", Vector3(e.pos.x, 1.6, e.pos.y))
 		combat.fx.opening_flash(Vector3(e.pos.x, 1.6, e.pos.y))
