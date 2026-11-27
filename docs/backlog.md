@@ -14,6 +14,10 @@
 - **PT-27c (depois):** a Maga está chata de jogar, "vamos ter que repensar muito nela". HUD da Maga parado até lá.
 - Ordem do Daniel: finalizar tudo o que já temos e só depois pensar em dificuldade, dano e Maga.
 
+- **GP-8, mudança do Daniel (2026-11-26 22h):** "vamos tentar com o GPT primeiro, eu não achei ruim o GPT, achei ruim como foi aplicado".
+  Midjourney em espera. Técnica A com a pintura do ChatGPT já aprovada (`docs/art/ref/sala01_2026-11-25/01-arte-aprovada.jpg`)
+  projetada como a própria sala (`--painted`), protótipo com o environment-artist.
+
 ## Backlog priorizado (2026-11-26 noite): tudo o que está aberto, numa lista só
 Junta o que ficou aberto nas rodadas até o exe `abcc4c89` (seções abaixo, revisões `qa_2026-11-26b.md` e `ART_REVIEW_2026-11-26b.md`)
 com os 3 pacotes do ChatGPT de 2026-11-26 (textos em `docs/design/packs_2026-11-26/`: `vfx` = PK-1, `herois_v1` = PK-2,
