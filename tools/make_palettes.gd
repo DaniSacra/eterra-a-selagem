@@ -56,7 +56,7 @@ const ROYAL_PURPLE := ["54386a", "1a1022"]
 const DARK_BRONZE := ["8c6c48", "2c2014"]
 ## The priests (cycle 5, docs/art/cycle5_spec.md A1): dark metal, aged bone that does not burn white under the key
 ## light, and the hood in the black cell turned a little purple, a dark frame around the light skull.
-const PRIESTS := ["priest", "priest_elder"]
+const PRIESTS := ["priest", "priest_elder", "priest_elder_gpt"]
 const PRIEST_METAL := {3: ["4e4a52", "18161c"], 4: ["3a3436", "121012"], 9: ["d8cbb0", "4e3e30"], 2: ["2e2236", "0e0a12"]}
 
 ## Each enemy over the faction. cell -> [light, shadow].
@@ -80,6 +80,9 @@ const PALETTES := {
 	# the elder: purple and gold, crown, staff with a purple orb
 	"priest_elder": {18: ROYAL_PURPLE, PURPLE: ROYAL_PURPLE, 17: ROYAL_PURPLE, 21: FACTION[GOLD],
 		16: FACTION[GOLD], EYES: ["d070ff", "8a20e0"]},
+	# the painted elder (Meshy, 2026-11-27): the same cloth, the orb of his staff yellow-green instead of purple
+	"priest_elder_gpt": {18: ROYAL_PURPLE, PURPLE: ROYAL_PURPLE, 17: ROYAL_PURPLE, 21: FACTION[GOLD],
+		16: FACTION[GOLD], EYES: ["d070ff", "8a20e0"], GLOW_PURPLE: ["d8e860", "7a9a14"]},
 	# Morvath, the king who betrayed the light: pale bone, dark armor with gold, purple robes, white hair, purple gem
 	"morvath": {9: ["f6eee0", "7a6a5c"], 3: ["4c4654", "18141e"], 4: FACTION[GOLD], 18: ROYAL_PURPLE, 22: FACTION[GOLD],
 		EYES: ["d070ff", "8a20e0"]},

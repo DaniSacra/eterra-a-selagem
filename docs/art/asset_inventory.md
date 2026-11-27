@@ -378,8 +378,11 @@ foram copiados para o repositório. Os modelos antigos ficam no repositório (`h
 | `enemy_mage_gpt` | feiticeiro, Gritador, Canalizador | `mage` (1,15 m, baixinho), `herald`, `channeler` (1,92 m) | definitivo; cajado 1,3 vezes |
 | `enemy_priest_gpt` | sacerdote, Coveiro | `priest`, `gravedigger` | definitivo |
 | `enemy_guard_gpt` | guarda | `guard` | o modelo não traz escudo nem espada: leva o par do Cavaleiro (`w_knight_sword`, `w_knight_shield` 1,3 vezes) como peças presas; carga com `GUARD_RUSH` |
+| `enemy_knight_gpt` | Cavaleiro guardião | `knight` (2,03 m) | definitivo; o modelo não traz arma: espada e escudo (0,9) do `w_knight_*` como peças presas; `GPT_GRADE` (luma 0,329, sat 0,18) |
+| `enemy_priest_elder_gpt` | Sacerdote Ancião | `priest_elder` (2,07 m) | definitivo; cajado KayKit `w_staff` e esfera presa, brilho amarelo-esverdeado (célula 29 da paleta `priest_elder_gpt.png`, só dele); luma 0,325, sat 0,38 |
+| `enemy_morvath_gpt` | Morvath (chefe) | `morvath` (2,02 m) | definitivo; foice `w_morvath_scythe` + cabo montado como peças presas, violeta só nele; 5,5 mil triângulos, 10,3 MB assados |
 
-Assados: 5,35 mil triângulos o guarda (3,9 mil de corpo mais as duas armas), 3,9 a 5,1 mil os outros; `assets/baked/` 72,9 MB
+Assados: 5,35 mil triângulos o guarda (3,9 mil de corpo mais as duas armas), 3,9 a 5,1 mil os outros; `assets/baked/` 72,8 MB (69,5 MiB, depois dos três guardiões e do chefe)
 no total (teto de 70 MB do `test_living_crowd` conta em MiB, 73,4 MB; folga de 0,5 MB). Cadência de passo reajustada às pernas novas
 (`SOLDIER_JOG`, `RUNNER_JOG`, `CROSSBOW_JOG`, `MAGE_JOG_SHORT`): escorregamento de 1,4 a 5,6 cm por passo. Os modelos antigos
 dos inimigos voltam com `tools/bake.gd -- old` (sobrescreve os assados; os valores de passo seguem os novos); só o herói e a Maga

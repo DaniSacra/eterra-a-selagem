@@ -4,6 +4,8 @@ extends SceneTree
 ##
 ## 2026-11-27: the skeleton, runner and archer (and their variants) are the Meshy models made from the ChatGPT paintings
 ## Daniel approved (enemy_<id>_gpt, same 24 bones and 15 thousand triangles); `-- old` bakes the earlier ones back.
+## Later the same day: the guardian knight, the elder priest and Morvath too (the elder's staff orb glows yellow-green, palette
+## priest_elder_gpt.png; the knight's sword and shield, the scythe and the elder's staff stay the held pieces).
 ## The enemies of the first region are the Meshy models Daniel approved (assets/models/meshy/enemy_<id>/, the same
 ## 24 bones as the hero, a painted texture each; docs/art/enemies_phase1.md). Per entry of MODELS:
 ## "meshy" (the model's id), "height" (meters to the top of its head, standing idle, at EnemyDef.size 1: what the
@@ -571,7 +573,7 @@ const MODELS := {
 	},
 	# 7. the guardian knight: crowned helmet, heavy plate, red cape; blade and shield are KayKit's
 	"knight": {
-		"meshy": "knight", "height": 2.03, "triangles": BODY_TRIANGLES,
+		"meshy": "knight_gpt", "grade": GPT_GRADE, "height": 2.03, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "knight.png",
 		"held": [
 			{"hand": "Right", "meshy": "w_knight_sword", "triangles": 750, "slot": 0, "grip": Vector3(0, -0.33, 0), "scale": 1.2, "lift": 1.6, "rot": EDGE_OUT, "aim": KNIGHT_SWORD_AIM, "name": "sword"},
@@ -591,8 +593,8 @@ const MODELS := {
 	},
 	# 8. the elder priest: crown over the hood, purple and gold robes; the staff with the purple orb is KayKit's
 	"priest_elder": {
-		"meshy": "priest_elder", "height": 2.07, "triangles": BODY_TRIANGLES,
-		"palette": PALETTE + "priest_elder.png",
+		"meshy": "priest_elder_gpt", "grade": GPT_GRADE, "height": 2.07, "triangles": BODY_TRIANGLES,
+		"palette": PALETTE + "priest_elder_gpt.png",
 		"held": [
 			{"hand": "Left", "meshy": "w_staff", "triangles": 1000, "slot": 0, "grip": STAFF_GRIP, "scale": ELDER_STAFF_SCALE, "rot": THUMB_UP},
 			# the purple orb held in the top of the staff (the sheet's block 8)
@@ -608,7 +610,7 @@ const MODELS := {
 	# 9. Morvath, the king who betrayed the light: crown, long white hair, purple and gold robes, the purple gem on
 	# the chest are the model's own; the blade is KayKit's
 	"morvath": {
-		"meshy": "morvath", "height": 2.02, "triangles": BODY_TRIANGLES,
+		"meshy": "morvath_gpt", "grade": GPT_GRADE, "height": 2.02, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "morvath.png",
 		# GR-7 (combate_c1_leitura 8): where his head is in every pose, for the two points of his eyes (EnemyFx)
 		"marks": {"head": ["Head"]},
