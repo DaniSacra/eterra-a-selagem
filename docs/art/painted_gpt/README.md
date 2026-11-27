@@ -29,6 +29,7 @@ Generation (curl; the key is read from the file, never printed):
 | 2026-11-27 | characters (edits 1024x1536, `docs/art/characters_gpt/`): 8 concepts A1, 8 Meshy fronts B1, 2 hero backs C1; redos: Warrior A2+B2 (chest lion read as a sun), Guard B2 (lost bulk), Maga C2 (staff on wrong side, spear tip) | 22 | 5488 | 5.50 |
 | 2026-11-27 | HUD v3 kit (`docs/art/hud_v3/`): icons_a (6 icons), icons_b (attack + smash redo: first smash fanned up like a burst, first attack read as an arrow), frames_a (slot, rings), frames_b (bar, cartouche, divider, medallions), portrait (1024x1024, 7024 tokens) | 5 | 5488 (portrait 7024) | 1.30 |
 | 2026-11-27 | lote2 (`lote2/`): crypt1 e1 (floor too dark, luma 48), e2 (chosen, sala02); rift e1 (chosen, sala03), e2 (left side 35 to 50 px off); garden e1 (statue niche became a 3rd arch), e2 (platform grew), e3 (chosen, sala04) | 7 | 5488 | 1.75 |
+| 2026-11-27 | HUD icons v2 full tiles (`docs/art/hud_v3/raw/tiles_a.png`, `tiles_b.png`, prompts in `hud_v3/prompts/tiles_*.txt`): tiles_a (6 tiles; kept power, lance, lion; attack read as an arrow, smash fanned up, dodge too bright), tiles_b (attack/smash/dodge 2 variants each; kept crescent slash r1, smash r1, muted dodge r2; hammer variant unused). Crops 256x256 opaque to `assets/ui/hud_v3/icon_*.png`, old glyphs kept as `icon_*_glyph.png` | 2 | 5488 | 0.50 |
 
 ## style_v2 (2026-11-27): style approval round
 `style_v2/` holds the variants Daniel is choosing from (Downloads\ASelagem-GP8\APROVAR-ESTILO). Request =
