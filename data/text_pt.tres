@@ -473,7 +473,7 @@ entries = {
 "howto_light_attack": "Ataque",
 "howto_light_attack_desc": "Toque: três golpes seguidos; o terceiro gira a espada, devolve Magia e prepara o Ritmo de Batalha. Segure: o Golpe Esmagador, 200 de dano de perto, gasta 12 de Magia e abala a postura.",
 "howto_heavy_attack": "Poder e Especial",
-"howto_heavy_attack_desc": "Toque: o Corte Circular gira a espada em volta, 40 de dano, empurra todos e não gasta Magia. Segure: a Lança da Emeth, 375 de dano em linha de 13 metros, atravessa os inimigos e gasta 20 de Magia.",
+"howto_heavy_attack_desc": "Toque: o Corte Circular gira a espada em volta, 90 de dano, empurra todos e não gasta Magia. Segure: a Lança da Emeth, 375 de dano em linha de 13 metros, atravessa os inimigos e gasta 20 de Magia.",
 "howto_rush": "Investida",
 "howto_shout": "Brado de Guerra",
 "howto_shout_desc": "Um grito em volta, a 4 metros: fere 35 e empurra 1,5 metro e abala a postura dos comuns. Por 5 segundos: golpes 15% mais rápidos, uma carga de Ímpeto, 15% menos dano sofrido e um golpe inimigo absorvido por inteiro. Volta em 12 segundos, ou em até 8 se você acertar golpes e quebrar inimigos.",

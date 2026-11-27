@@ -98,6 +98,9 @@ const THRUST_PEAK := 0.025
 ## Hades II measures distances in its own units: its heroine walks 540 a second and stands 200 tall. 80 of them make
 ## a meter here (6.75 m/s, a 2.5 m tall paladin), so every distance below is written as Hades units / U.
 const U := 80.0
+## 2026-11-27 (PT-27b, "heróis dão pouco dano"): the combo, the Corte Circular and the extra blows of Maestria Marcial hit this many times
+## harder than the SWORN 20/20/40 (a skeleton of 250 fell to 12 light blows; now 4 to 5). The powers already carried FIXED_X.
+const HERO_X := 2.25
 ## PT-25-4 and PT-25-11 (Daniel: "atacar e andar um pouquinho é sempre melhor"): the short step each blow of the combo
 ## takes forward the moment it lands (ComboNode.step, meters): cut1, cut2 and the finisher. The finisher's is the longest,
 ## to reach what the first two pushed away. It stops at bodies (BodyBlock) and walls; it replaces the planted blows of E1c.
@@ -115,7 +118,7 @@ func _tree(fifth: bool) -> ComboTree:
 	# legs held (move_hold, only the dodge cuts it): cut1 0.08 / 8 frames / 11 frames (press to walking 0.26 s),
 	# cut2 0.13 / 13 / 19 (0.45 s), the spin 0.28 + 0.08 of glint = 0.36 / 18 / 30 (0.86 s).
 	var cut3 := _move(&"cut3", L, &"Slash_C", [&"light", &"spin", &"finisher"],
-		{"damage": 40.0, "shape": ComboNode.Shape.CIRCLE, "reach": 240.0 / U, "knockback": 16.0, "windup": 0.36 - FINISHER_GLINT,
+		{"damage": HERO_X * 40.0, "shape": ComboNode.Shape.CIRCLE, "reach": 240.0 / U, "knockback": 16.0, "windup": 0.36 - FINISHER_GLINT,
 		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "magick_per_hit": 0.5, "step": STEP[2], "chain_window": 0.6, "hit_stop_ms": 100.0, "shake": 2.4, "move_scale": 0.0, "sound": &"blade_spin",
 		# QW-103: the spin's swish (its samples peak 30 to 90 ms in) on the blade's frame, 0.36 s after the press; the
 		# press only gathers
@@ -124,11 +127,11 @@ func _tree(fifth: bool) -> ComboTree:
 	if fifth:
 		after_cut2 = [_extra_blows(cut3)]
 	var cut2 := _move(&"cut2", L, &"Slash_B", [&"light"],
-		{"damage": 20.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[1], "windup": 0.13, "recovery": 13.0 / 60.0,
+		{"damage": HERO_X * 20.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[1], "windup": 0.13, "recovery": 13.0 / 60.0,
 		"move_hold": 19.0 / 60.0, "magick_per_hit": 0.5, "step": STEP[1],
 		"chain_window": 0.4, "hit_stop_ms": 60.0, "shake": 1.1, "move_scale": 0.0, "sound": &"blade_heavy", "layers": LAYER_TURN}, after_cut2)
 	var cut1 := _move(&"cut1", L, &"Slash_A", [&"light"],
-		{"damage": 20.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.08, "recovery": 8.0 / 60.0,
+		{"damage": HERO_X * 20.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.08, "recovery": 8.0 / 60.0,
 		"move_hold": 11.0 / 60.0, "magick_per_hit": 0.5, "step": STEP[0],
 		"chain_window": 0.4, "hit_stop_ms": 35.0, "shake": 0.9, "move_scale": 0.0}, [cut2])
 	# GP-1 (docs/design/heroes/warrior_v1_2026-11-26.md 2): the blows on the two buttons. Left: a tap is the combo above, held
@@ -143,7 +146,7 @@ func _tree(fifth: bool) -> ComboTree:
 	# Corte Circular (HEAVY, a tap): the Poder. Tags shout and cast: the Blessings of the Poder slot count on it, the Quebra reads the
 	# `shout` weight. It is no Brado: no buff, no Effect.SHOUT. Legs held 0.35 s after it lands.
 	var sweep := _move(&"sweep", H, &"Slash_C", [&"shout", &"cast", &"sweep"],
-		{"damage": 40.0, "shape": ComboNode.Shape.CIRCLE, "reach": 3.4, "knockback": 14.0, "windup": 0.18,
+		{"damage": HERO_X * 40.0, "shape": ComboNode.Shape.CIRCLE, "reach": 3.4, "knockback": 14.0, "windup": 0.18,
 		"recovery": 0.30, "move_hold": 0.35, "chain_window": 0.4, "hit_stop_ms": 80.0, "shake": 1.6, "move_scale": 0.0,
 		"sound": &"blade_spin", "sound_at": 0.18 - SWISH_PEAK, "layers": LAYER_SPIN}, [], &"move_sweep")
 	# Lança da Emeth (CHARGE, held 0.8 s, 20 Magia): a long line of light to the front and to the back (the Omega attack of before,
@@ -172,7 +175,7 @@ func _combos() -> void:
 ## Maestria Marcial (01_GUERREIRO): the three blows become five. A thrust (30 ahead, as Quarto Corte's was) and a backhand cut
 ## sit between cut2 and the spin: the blows 4 and 5 of the sequence are thrust4 and cut4, the spin (5th) is Apogeu's. Their
 ## tags are the attack's (light), so every Blessing of the attack counts on them.
-const EXTRA := {"damage": 20.0, "windup": 0.14, "recovery": 12.0 / 60.0, "move_hold": 18.0 / 60.0}
+const EXTRA := {"damage": HERO_X * 20.0, "windup": 0.14, "recovery": 12.0 / 60.0, "move_hold": 18.0 / 60.0}
 
 
 func _extra_blows(spin: ComboNode) -> ComboNode:
@@ -193,6 +196,7 @@ func _enemy(props: Dictionary) -> void:
 	for k: String in props:
 		if k != "exact_windup" and k != "sw_poise":
 			d.set(k, props[k])
+	d.hp *= _hp_scale(String(d.id))
 	if props.has("sw_poise"):
 		d.poise_mult = snappedf(SW_POISE_REF / float(props["sw_poise"]), 0.01)
 		if not props.has("poise_stun"):
@@ -213,6 +217,26 @@ func _enemy(props: Dictionary) -> void:
 		d.name_key = StringName("enemy_" + String(d.id))
 	d.cost = int(ENEMY_COST.get(String(d.id), 0))
 	_save(d, "res://data/enemies/%s.tres" % d.id)
+
+
+## 2026-11-27 (PT-27b): the hero hits HERO_X harder, so the tough ones (the commons stay at the SWORN life: a skeleton is 4 to 5 blows)
+## are lengthened to keep a fight with them long enough: elites and the Captain, the bigger ones, the guardians, Morvath.
+const ELITE_HP_X := 1.8
+const BIG_HP_X := 1.5
+const GUARDIAN_HP_X := 1.5
+const MORVATH_HP_X := 2.4
+
+
+func _hp_scale(id: String) -> float:
+	if id == "morvath":
+		return MORVATH_HP_X
+	if id == "knight" or id == "priest_elder":
+		return GUARDIAN_HP_X
+	if id.ends_with("_elite") or id == "capitao":
+		return ELITE_HP_X if id != "trinca_elite" else 1.0
+	if id.ends_with("_big"):
+		return BIG_HP_X
+	return 1.0
 
 
 ## Daniel 2026-11-21: the enemies read slow; every one but the boss a little faster (_enemy).
