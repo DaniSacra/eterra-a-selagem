@@ -1,0 +1,11 @@
+CASA DO CAVALEIRO (salão de guarda de uma catacomba, sala quadrada). Posições em % da largura x altura da imagem 1.
+- REMOVA a figura de armadura com escudo em 55% x 37%: no lugar dela, piso de lajes igual ao resto. A sala fica vazia.
+- REMOVA os sete estandartes azuis com leão (23% x 22%, 34% x 13%, 48% x 9%, 54% x 10%, 60% x 12%, 67% x 13%, 79% x 20%): no lugar, parede de pedra lisa e o topo da parede como está.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - as paredes altas da esquerda e do fundo, o canto cortado do fundo à direita, as muretas baixas da frente e da direita, os dois pilaretes da frente (27% x 65% e 36% x 70%) e a base de pedra embaixo da plataforma;
+  - os dois arcos grandes com grades de ferro na direita do fundo (centros em 68% x 30% e 77% x 33%), com o pilar de pedra entre eles; as grades continuam grades de ferro escuro, sem luz;
+  - as três janelinhas gradeadas de madeira (16% x 42%, 49% x 23% e 60% x 26%) e a gradinha baixa de ferro em 58% x 30%;
+  - os quatro braseiros de pedra com chama acesa: 23% x 35%, 34% x 26%, 53% x 22% e 63% x 27%;
+  - as quatro grades de ferro no piso com brilho laranja de brasa por baixo (31% x 39%, 20% x 56%, 70% x 61% e 53% x 78%): mesmo contorno, mesmo tamanho, quatro barras cada;
+  - os vasos de barro (36% x 33%, 25% x 60% e 67% x 71%).
+- Sem portas nesta pintura: não acrescente portas, arcos nem nichos novos.

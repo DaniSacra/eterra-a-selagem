@@ -1,0 +1,8 @@
+Sala 06, Sala do Ancião (GP-8, gpt-image-2, 2026-11-27)
+
+sala06_aprovacao.png: a sala completa como o jogador vai ver, para você aprovar o visual. O Ancião (e o orbe verde) saiu; ficaram as quatro colunas, os arcos do fundo com grade, os dois braseiros acesos, as velas e os vasos.
+sala06_jogo.png: a mesma pintura para entrar no jogo. Saíram as chamas dos braseiros (apagados), as velas (ficaram só os espetos de ferro, o jogo põe as velas acesas) e os vasos (o jogo põe os quebráveis).
+sala06_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: paredes, arcos, muretas e três colunas a poucos pixels da captura; a coluna da direita e o braseiro da esquerda ficaram cerca de 20 pixels para a direita (meio metro no jogo). Uma segunda tentativa não corrigiu e perdeu a névoa do fundo, então ficou a primeira.
+Sala de uma saída: não há porta pintada nesta sala.

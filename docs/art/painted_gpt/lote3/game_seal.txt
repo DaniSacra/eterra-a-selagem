@@ -1,0 +1,9 @@
+Nesta sala o violeta é permitido só onde já está, mas na versão de jogo ele SAI quase todo. RETIRE (posições em % da largura x altura da imagem 1):
+- a rachadura violeta brilhante do portão do santuário (71% x 28%): o portão fica inteiro, fechado, de madeira escura e pedra, sem rachadura, sem luz;
+- a rachadura violeta e todo brilho dentro do círculo do selo (56% x 52%): o círculo fica como LINHAS DE PEDRA GRAVADAS, cinza-escuras e foscas, sem dourado brilhante, sem luz, mesmo desenho, mesmo tamanho e mesmo lugar, com o leão em relevo de pedra no meio; o piso dentro do círculo igual ao piso em volta;
+- as chamas dos dois braseiros (62% x 33% e 80% x 37%): ficam as bacias de pedra apagadas, escuras, sem brasa;
+- as chamas de todas as velas da balaustrada e do santuário: ficam as velas apagadas, sem chama e sem brilho;
+- a luz das quatro lanternas (44% x 36%, 37% x 41%, 72% x 67% e 79% x 59%): ficam as lanternas de ferro com vidro escuro, apagadas;
+- a gradinha violeta no topo da escadaria (41% x 69%): no lugar, o topo da escada e a balaustrada de pedra lisos;
+- todas as pedras soltas flutuando no abismo da esquerda e da direita: no lugar, só névoa e as silhuetas do fundo.
+Ficam iguais, no mesmo pixel: a plataforma redonda e a balaustrada (o mais importante), a escadaria, o santuário com as estátuas e a escadinha, a torre quadrada, as correntes grossas e as gaiolas penduradas, as arcadas e torres do fundo. A névoa do abismo fica cinza-azulada, sem violeta.

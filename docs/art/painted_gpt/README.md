@@ -30,6 +30,7 @@ Generation (curl; the key is read from the file, never printed):
 | 2026-11-27 | HUD v3 kit (`docs/art/hud_v3/`): icons_a (6 icons), icons_b (attack + smash redo: first smash fanned up like a burst, first attack read as an arrow), frames_a (slot, rings), frames_b (bar, cartouche, divider, medallions), portrait (1024x1024, 7024 tokens) | 5 | 5488 (portrait 7024) | 1.30 |
 | 2026-11-27 | lote2 (`lote2/`): crypt1 e1 (floor too dark, luma 48), e2 (chosen, sala02); rift e1 (chosen, sala03), e2 (left side 35 to 50 px off); garden e1 (statue niche became a 3rd arch), e2 (platform grew), e3 (chosen, sala04) | 7 | 5488 | 1.75 |
 | 2026-11-27 | HUD icons v2 full tiles (`docs/art/hud_v3/raw/tiles_a.png`, `tiles_b.png`, prompts in `hud_v3/prompts/tiles_*.txt`): tiles_a (6 tiles; kept power, lance, lion; attack read as an arrow, smash fanned up, dodge too bright), tiles_b (attack/smash/dodge 2 variants each; kept crescent slash r1, smash r1, muted dodge r2; hammer variant unused). Crops 256x256 opaque to `assets/ui/hud_v3/icon_*.png`, old glyphs kept as `icon_*_glyph.png` | 2 | 5488 | 0.50 |
+| 2026-11-27 | lote3 (`lote3/`): knight a1 + g1 (sala05); elder a1 (chosen, right column ~20 px off), a2 (same offset, lost the void fog), g1 (sala06); seal a1 (arena shrank ~4%), a2 (chosen), g1 (sala07, gamma 1.08 after) | 9 | 5488 | 2.25 |
 
 ## style_v2 (2026-11-27): style approval round
 `style_v2/` holds the variants Daniel is choosing from (Downloads\ASelagem-GP8\APROVAR-ESTILO). Request =
@@ -100,3 +101,18 @@ Same flags as lote 2 with `--shot-at=2.5`:
 - seal_chamber: --start=boss --no-boss --cam-at=-5,-2 --cam-dist=86
 - knight_hall: --start=miniboss --guardian=knight --cam-at=0,0 --cam-dist=60 (the Knight stands in it: paint him out)
 - elder_hall: --start=miniboss --guardian=priest_elder --cam-at=0,0 --cam-dist=60 (the Elder stands in it: paint him out)
+
+## Lote 3 paintings (2026-11-27): Sala05 Casa do Cavaleiro, Sala06 Sala do Ancião, Sala07 Câmara do Selo
+Two versions per room (agent rule "aprovação e jogo"). Approval = `lote3/prompt_common.txt` + `room_<knight|elder|seal>.txt`
+(+ `../lote2/fix_light.txt` for knight and elder, + `fix_fit_<room>.txt` on retries), images base + `assets/rooms/painted/sala01.png`.
+Game = `game_common.txt` + `game_<room>.txt`, image 1 = the chosen approval only (edit). Generator `lote3/gen.sh name img1 img2|- prompts...`,
+overlays `lote3/overlay.sh`, delivery `lote3/deliver.sh` (Downloads\ASelagem-GP8\GPT-Sala05..07 with LEIA.txt).
+Chosen: `sala05_*` (knight-a1/g1), `sala06_*` (elder-a1/g1), `sala07_*` (seal-a2, seal-g1 + `eq=gamma=1.08` so the floor matches, luma 51).
+Fit (UNIFORM mapping for all three, like lote 2): Cavaleiro walls, arches, braziers, grates and edge within a few px; Ancião walls,
+arches and three columns a few px, right column and left brazier ~20 px to the right; Selo platform, balustrade, circle, stairs and
+shrine a few px, shrine braziers ~20 px right. Game versions keep every fixed piece on the same pixel as the approval (difference check).
+Removed in the game plates: Cavaleiro flames, 4 floor grates (plain stone), urns; Ancião flames, candles (iron prickets stay), urns;
+Selo violet cracks, seal glow (carved lines stay), flames, candles, lanterns, the violet grate atop the stairs, floating stones.
+Rules: no figures (Knight, Elder painted out), no banners, no sun/star/cross/text, no emerald (Elder's orb gone); violet only in the
+Seal Chamber approval (Morvath's crack, lanterns, stair grate). Floor-centre luma 68, 61, 51.
+

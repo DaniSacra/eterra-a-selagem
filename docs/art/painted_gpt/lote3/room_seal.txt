@@ -1,0 +1,13 @@
+CÂMARA DO SELO (arena final no alto de uma torre redonda sobre o abismo). Posições em % da largura x altura da imagem 1.
+EXCEÇÃO DE COR DESTA SALA: o violeta é a cor do vilão e PODE aparecer aqui, só na rachadura violeta do portão, na rachadura dentro do círculo do selo, nas lanternas e numa névoa violeta leve no abismo da esquerda. O piso continua cinza-azulado médio-escuro, NÃO dourado nem claro: hoje ele está claro e quente demais, escureça.
+- REMOVA os dois estandartes vermelhos (61% x 22% e 78% x 25%): no lugar, parede de pedra lisa.
+- Nenhuma cruz: a laje gravada da direita em 77% x 67% fica uma laje lisa de pedra, sem marca.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - a plataforma redonda (de 31% a 81% da largura, de 38% a 82% da altura) com a balaustrada de pedra em volta, os pilaretes, as velas e as quatro lanternas (43% x 39%, 36% x 44%, 70% x 71%, 77% x 61%);
+  - o círculo do selo no piso (de 46% a 67% da largura, de 49% a 65% da altura): anéis dourados gravados na pedra com pequenos quadrados em volta e, no meio, o leão de pedra em relevo com a rachadura violeta; mesmo tamanho e mesmo lugar;
+  - o santuário do fundo: a fachada de pedra com o telhado em ponta (60% a 83% de largura, 0% a 38% de altura), o portão arredondado fechado em 70% x 30% com a rachadura violeta vertical brilhando, as duas estátuas encapuzadas (63% x 29% e 76% x 32%), os dois braseiros acesos (60% x 35% e 77% x 40%) e a escadinha do santuário (69% x 39%);
+  - a torre quadrada alta da esquerda (36% a 41% da largura, de 0% a 40% da altura);
+  - a escadaria larga da frente à esquerda (de 24% x 100% até 44% x 72%) com a grade baixa no topo em 41% x 74%;
+  - as correntes grossas atravessando o ar, as gaiolas penduradas (22% x 44%, 29% x 44%, 86% x 41% e 87% x 75%) e as pedras flutuando no abismo da esquerda e da direita;
+  - as arcadas e torres em silhueta no fundo e a parede curva do poço em volta.
+- Não acrescente portas, arcos nem nichos novos.

@@ -1,0 +1,8 @@
+Sala 07, Câmara do Selo (GP-8, gpt-image-2, 2026-11-27)
+
+sala07_aprovacao.png: a arena de Morvath completa, para você aprovar o visual. Os dois estandartes vermelhos saíram. Ficaram a plataforma redonda com balaustrada, o círculo do selo, o santuário com a rachadura violeta no portão (o violeta é dele), as estátuas, os braseiros, a escadaria, as correntes, as gaiolas e as pedras flutuando.
+sala07_jogo.png: a mesma pintura para entrar no jogo. Saíram a rachadura violeta (portão e selo), o brilho do selo (ficou só a pedra gravada), as chamas, as velas, as lanternas, a gradinha violeta do topo da escada e as pedras flutuando; o jogo anima tudo isso. Clareada de leve depois da geração para o piso ficar no mesmo tom da aprovação.
+sala07_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: plataforma, balaustrada, círculo, escadaria e santuário a poucos pixels da captura (a primeira tentativa encolheu a arena e foi refeita). Os braseiros do santuário ficaram cerca de 20 pixels para a direita.
+Sala de uma saída: o portão do santuário é a única porta.

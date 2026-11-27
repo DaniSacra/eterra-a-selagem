@@ -1,0 +1,11 @@
+Edite a imagem 1 (pintura aprovada de uma sala do meu jogo). Mantenha EXATAMENTE a mesma pintura: mesma câmera, mesmo enquadramento, mesmo estilo de pintura digital feita à mão, mesmas cores, mesma luz, e cada parede, mureta, pilar, coluna, arco, degrau e borda da plataforma no mesmo pixel e do mesmo tamanho. Não gire, não aproxime, não afaste, não corte. O formato final é a imagem 1 inteira, de canto a canto.
+
+Esta é a versão de JOGO da mesma sala: o jogo vai pôr por cima, em 3D, tudo o que se mexe, muda de estado ou quebra. Por isso RETIRE só essas peças, listadas abaixo, e pinte no lugar delas o que estaria atrás (piso de lajes igual ao vizinho, ou a pedra do suporte). Nada mais muda. Uma luz ambiente quente muito leve pode ficar perto dos braseiros apagados, mas sem chama, sem brasa e sem brilho.
+
+Continua valendo: sala vazia, nenhum personagem, nenhum estandarte, nenhum sol com raios, estrela, cruz, símbolo, texto ou letra; nada violeta forte nem verde-esmeralda (salvo onde dito abaixo).
+
+RETIRE nesta sala (posições em % da largura x altura da imagem 1):
+- as chamas dos quatro braseiros (23% x 30%, 34% x 22%, 53% x 19% e 63% x 23%): ficam as bacias de pedra e os pedestais, APAGADOS, bacia escura e vazia, sem fogo e sem brilho laranja;
+- as quatro grades de ferro do piso com brasa por baixo (33% x 36%, 20% x 52%, 70% x 58% e 53% x 74%): no lugar de cada uma, lajes de pedra lisas iguais ao piso em volta, sem buraco, sem grade, sem moldura, sem brilho;
+- os vasos de barro (36% x 30%, 25% x 57% e 67% x 66%): no lugar, piso e mureta limpos.
+Ficam iguais: os dois arcos com grades de ferro do fundo à direita, as janelinhas gradeadas, a gradinha baixa entre os braseiros, as paredes, muretas, pilaretes, a base de pedra e o abismo com névoa.

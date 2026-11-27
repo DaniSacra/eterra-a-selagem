@@ -1,0 +1,8 @@
+Sala 05, Casa do Cavaleiro (GP-8, gpt-image-2, 2026-11-27)
+
+sala05_aprovacao.png: a sala completa como o jogador vai ver, para você aprovar o visual. O Cavaleiro e os sete estandartes azuis saíram; ficaram as paredes, os dois arcos com grade, as janelinhas gradeadas, os quatro braseiros acesos, as quatro grades de espinhos no chão e os vasos.
+sala05_jogo.png: a mesma pintura para entrar no jogo. Saíram as chamas (braseiros apagados), as quatro grades do chão (viraram pedra lisa, o jogo põe a laje de espinhos por cima) e os vasos (o jogo põe os quebráveis).
+sala05_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: a pintura cai em cima da captura (paredes, arcos, braseiros, muretas e borda da plataforma a poucos pixels).
+Sala de uma saída: não há porta pintada nesta sala.
