@@ -46,6 +46,10 @@ que queremos ao gerador de imagem, **gerar** e **analisar** o resultado antes de
   d'água (fica o leito/canal), fumaça, partículas, cristais que brilham. A luz ambiente quente pode ficar de leve.
   Faça a versão de jogo como edição da aprovada (a aprovada como imagem 1), e confira no teste de encaixe que nada fixo
   mudou de lugar. Entregue as duas: `<sala>_aprovacao.png` e `<sala>_jogo.png`.
+- **Vão das portas e entrada (Daniel, 2026-11-27)**: dentro de cada porta ou arco de saída, só ESCURIDÃO (passagem
+  funda e preta), nunca grade, parede ou chão que pareça sem saída. Toda sala mostra de onde o herói veio: uma entrada
+  visível (arco, escada subindo ou abertura na frente), também escura por dentro.
+- **Perigos do chão** ficam nas pontas de cima e de baixo da tela; o centro fica livre para a luta.
 - **Portas**: nunca juntas. Se a captura base tiver duas portas próximas, NÃO pinte assim: avise no relatório (o jogo
   precisa afastar as portas e pôr a peça entre elas antes da captura). Exemplos pedidos pelo Daniel: estátua entre as
   portas do Jardim, candelabro com chama entre as portas das Fendas.
