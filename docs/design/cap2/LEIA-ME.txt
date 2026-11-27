@@ -1,0 +1,6 @@
+ETERRA — CAPÍTULO II: O BOSQUE SUBMERSO
+Master plan e primeira entrega jogável | 27/11/2026
+
+Comece por prompts/00_CLAUDE_CODE.md. Leia os documentos em docs/ e use artes/ como referências, não como texturas finais. A prancha geral é conceitual: os textos dos documentos prevalecem sobre seus rótulos, inclusive nomes e sequência de salas. O título Punho de Elun na prancha não autoriza renomear o herói.
+Escopo imediato: Morvath → Átrio → chegada → três encontros → Ancião Retorcido → recompensa → ponto final provisório. O restante é planejamento, não autorização para implementar.
+MCP de imagens já conectado conforme PO; verificar ferramentas reais e limites antes de chamar. Não reconstruir integração. Não gastar créditos Meshy sem autorização. Não publicar sem autorização específica; confirmar política vigente de commits/push com PO.

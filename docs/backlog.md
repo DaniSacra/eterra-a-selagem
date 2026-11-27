@@ -1,5 +1,50 @@
 # Backlog de A Selagem
 
+## Capítulo II: O Bosque Submerso (pacote do Daniel de 2026-11-27, `docs/design/cap2/`) — NO BACKLOG, começa depois de fechar as salas do Capítulo I
+
+Pacote: `docs/design/cap2/docs/01_MASTER_PLAN.md`, `02_FATIA_JOGAVEL.md`, `03_BIBLIA_ARTISTICA.md`, ordem em
+`prompts/00_CLAUDE_CODE.md`, prompts de arte em `prompts/01_PROMPTS_MCP.md`, prancha e recortes em `artes/` (só
+inspiração; o texto vale mais que a prancha). Escopo autorizado: só a primeira fatia (Morvath, Átrio, chegada, três
+encontros, Ancião Retorcido, recompensa, fim da prévia). O resto é planejamento.
+
+**Marcos (cada um com exe; arte e plano aprovados antes de gastar):**
+- **C2-A Transição** (gameplay-engineer): vários `StageDef` por dado; índice da região separado da profundidade;
+  passagem idempotente que guarda tudo da partida (herói, vida e Magia, Bênçãos, Elos, Salmos, Encantos, Dons, ouro,
+  materiais, estatísticas, semente); save antigo carrega; registro da região separado da vitória final; chave
+  (flag) desligada mantém o final de Morvath como hoje. **Átrio** sem inimigos: Malahym, diálogo curto, fonte (cura
+  40%), Graça (35% a mais de cura, ou subir a raridade de uma Bênção, ou +1 nível em duas), mercador e portal (E).
+  **Chegada** como cometa de luz, título da região, sem dano.
+- **C2-B Três salas e quatro inimigos**: Portões do Bosque, Jardim dos Esporos, Templo Inundado (técnica GP-8, duas
+  versões, regras de portas e entradas do Capítulo I). Inimigos: Esporinho (bando, nuvem de esporos), Retorcido (golpe
+  largo com preparação), Flor Espinhosa (leque de sementes, reposiciona), Sapo do Brejo (salto com onda), reaproveitando
+  comportamentos que já existem. Pulso do Bosque: água rasa (-15% de movimento, sempre com rota seca), raízes com aviso
+  (nunca sobre o herói nem fechando todas as saídas), esporos (nuvem que afeta todos). Conceitos pela API de imagem,
+  aprovação, depois Meshy (estimar créditos antes).
+- **C2-C Ancião Retorcido**: arena circular, 3 fases (golpe largo e raízes; raízes e Retorcidos pequenos, no máximo 3;
+  mistura), janela de recuperação clara, nada de imunidade; ao vencer a luz âmbar volta ao tronco. Tela "Fim da prévia
+  do Capítulo II" e volta ao Santuário, sem marcar vitória completa.
+- **C2-D** QA, equilíbrio (lutas comuns 35 a 75 s, guardião 90 a 150 s numa build mediana; Guerreiro e Maga), exe.
+
+**Futuro (só registrar):** salas 05 a 12 (descanso, Labirinto, evento, Vila, segundo guardião, loja, Coroa Partida),
+18 layouts em 6 famílias, seis inimigos (Cascudo, Feiticeiro, Serpente, Lumífago, Caranguejo, Marionete), guardiões
+Rei do Brejo e Flor Adormecida, chefe A Coroa Partida (Rainha e Guardião, 4 fases), eventos (Tesouro, Sementes da
+Restauração, Jardineira, Travessia do Rio, Ovo Misterioso), reagentes (Cogumelo Lunar, Asa Luminosa, Raiz Ancestral,
+Cristal das Águas, Semente Dourada, Fragmento da Coroa), reações elementais com o bosque.
+
+**Conflitos com regras atuais, decidir com o Daniel antes de começar:**
+1. **Violeta** aparece na prancha (cogumelos do Jardim, Lumífago, Flor Adormecida, acentos "âmbar e violeta" no
+   prompt do Jardim). Regra: violeta só em Morvath. Proposta: trocar por rosa, magenta quente ou âmbar.
+2. **"Ancião Retorcido"** confunde com o nosso Sacerdote Ancião (guardião do Capítulo I). Proposta: manter o nome
+   técnico e escolher outro nome para o jogador (o Daniel decide).
+3. **Lore nova** (a Rainha, a Coroa Partida, o Guardião cervo-leão-árvore, o Bosque Submerso, a civilização antiga):
+   o pacote já diz que são propostas; conferir com `../dungeon-rpg/docs/mundo/canone.md` e aprovar com o Daniel.
+4. **Malahym da Maré:** o pacote pede o anjo "da Maré" com retrato aprovado. Entre os nossos 9 anjos, o da água é
+   Galael ("abre caminho como a água"), dono das Bênçãos de Maré. Proposta: Galael recebe o herói no Átrio.
+5. **Portas "altas e próximas"** no pacote contra a regra do Daniel de 2026-11-27 (portas afastadas com algo entre
+   elas): vale a regra do Daniel.
+6. **"No máximo dois agentes"** no pacote contra a regra atual (até 4 no WSL): vale a atual.
+7. A prancha escreve "Punho de Elun" no Guerreiro: o jogo continua mostrando só "O Guerreiro" (D-64).
+
 ## Teste do Daniel no exe 1497e18a (2026-11-26, 21h)
 
 - **PT-27a (bug, investigar):** "escolhi pegar um coração na sala 3 mas veio uma Bênção do Sarael com uma opção apenas". O registro
