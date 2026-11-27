@@ -607,6 +607,10 @@ func build_steps(exit_count: int) -> Array[Callable]:
 		_detail,
 		func() -> void: HallLife.dress(kit.root, kit.styled()),
 		_stylize_rest,
+		# GP-8 prototype (--painted): the painting replaces the 3D pieces, the collision follows it
+		func() -> void:
+			if PaintedHall.wanted(arena):
+				PaintedHall.apply(arena),
 	]
 
 
