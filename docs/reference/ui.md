@@ -806,6 +806,12 @@ livro (o livro não passa de 1,9 alturas de largura, `BookDesk.side_room`, ou se
   `tap_cost`/`hold_cost`/`hold_text` saíram; vale `cost`/`starved` do slot. Mantidos: varredura de recarga, recusa vermelha, anel
   do segurar (só no slot de segurar), arco do Ritmo (nos golpes fortes), trava da maldição (os dois da direita), luzes do Pastor
   (Poder), translucidez atrás do herói. A Maga usa dois slots (esquerdo e direito) com os glifos dela; sem Q/C.
+- **Linha de ação (mock do Daniel `docs/art/ref/hud_2026-11-27/slots_mock.png`)**: seis slots quadrados do mesmo tamanho (`Hud.ROW_SLOT`): Ataque (esquerdo
+  toque), Poder (direito toque), Esmagador (esquerdo segurar), Lança (direito segurar), o Supremo (leão, Shift), divisória, esquiva. Ícones são
+  telas cheias (`icon_*.png`, 256 px, sem moldura) desenhadas até a abertura da moldura (`r - FRAME`) sobre um fundo radial escuro quente
+  (`HudArt.fill_tile`). **Regra do mouse: botão aceso branco = clique (toque), dourado = segurar** (`MouseGlyphArt.Style.TAP|HOLD`, PNGs
+  `mouse_N_tap|hold.png` com aro claro; o resto do jogo usa `Style.DEFAULT`, dourado). Shift é uma caixa arredondada com seta para cima, Espaço uma barra
+  longa vazia (`ActionSlot._draw_cap`; no controle volta a placa com a letra).
 - **Coluna de Bênçãos sem nome fixo** (reverte PT-26-4): o nome aparece à esquerda do medalhão por `NAME_TIME` 4 s quando a Bênção
   é ganha (`_note_gained`; o que a partida já trazia não conta), enquanto o mouse está sobre o medalhão e sempre na pausa
   (`names_all`). Recarga (varredura e segundos no medalhão), ponto verde de pronta e pontos de nível seguem. Não há lista no Tab.

@@ -53,16 +53,39 @@ func test_the_supremo_bar_says_its_charge_in_percent() -> void:
 	assert_almost_eq(hud._charge.bar._ratio, 0.65, 0.001)
 
 
-func test_the_row_is_four_squares_a_divider_the_dodge_and_the_round_supremo() -> void:
+func test_the_row_is_four_blows_the_supremo_a_divider_and_the_dodge_all_squares_of_one_size() -> void:
 	var hud := await _run()
 	var kinds: Array[String] = []
+	var sides := {}
 	for c in hud._action_row.get_children():
-		kinds.append("divider" if c is HudDivider else "round" if (c as ActionSlot).shape == ActionSlot.Shape.ROUND else "square")
-	assert_eq(kinds, ["square", "square", "square", "square", "divider", "square", "round"] as Array[String])
+		kinds.append("divider" if c is HudDivider else "square" if (c as ActionSlot).shape == ActionSlot.Shape.SQUARE else "other")
+		if c is ActionSlot:
+			sides[(c as ActionSlot).side] = true
+	assert_eq(kinds, ["square", "square", "square", "square", "square", "divider", "square"] as Array[String])
+	assert_eq(sides.size(), 1, "the six slots are one size")
+	assert_eq(hud._action_row.get_child(4), hud._ult_slot, "the Supremo is the fifth slot, before the divider")
+	assert_eq(hud._action_row.get_child(6), hud._slots.back(), "the dodge is last")
 	var pieces: Array[StringName] = []
+	var holds: Array[bool] = []
 	for s: ActionSlot in hud._slots:
 		pieces.append(s.piece)
-	assert_eq(pieces, [&"icon_attack", &"icon_smash", &"icon_power", &"icon_lance", &"icon_dodge"] as Array[StringName])
+		holds.append(s.hold)
+	assert_eq(pieces, [&"icon_attack", &"icon_power", &"icon_smash", &"icon_lance", &"icon_dodge"] as Array[StringName])
+	assert_eq(holds, [false, false, true, true, false] as Array[bool], "tap, tap, hold, hold")
+	assert_eq([hud._slots[0].action, hud._slots[1].action, hud._slots[2].action, hud._slots[3].action],
+		[&"light_attack", &"heavy_attack", &"light_attack", &"heavy_attack"], "left, right, left, right")
+
+
+func test_the_mouse_is_white_for_a_click_and_gold_for_a_hold() -> void:
+	var tap := MouseGlyphArt.rasterize(MOUSE_BUTTON_LEFT, MouseGlyphArt.Style.TAP)
+	var hold := MouseGlyphArt.rasterize(MOUSE_BUTTON_LEFT, MouseGlyphArt.Style.HOLD)
+	var plain := MouseGlyphArt.rasterize(MOUSE_BUTTON_LEFT)
+	var lit := Vector2i(int(MouseGlyphArt.W * 0.3 * MouseGlyphArt.SCALE), int(MouseGlyphArt.H * 0.2 * MouseGlyphArt.SCALE))
+	assert_gt(tap.get_pixelv(lit).b, 0.85, "tap: the button is white")
+	assert_lt(hold.get_pixelv(lit).b, 0.4, "hold: the button is gold")
+	assert_lt(plain.get_pixelv(lit).b, 0.4, "the cards' mouse keeps the gold")
+	var right := MouseGlyphArt.rasterize(MOUSE_BUTTON_RIGHT, MouseGlyphArt.Style.TAP)
+	assert_lt(right.get_pixelv(lit).b, 0.2, "the right button is dark when the left is lit")
 
 
 func test_a_gained_blessing_shows_its_name_for_a_while_then_hides_it() -> void:
@@ -112,8 +135,8 @@ func test_the_costs_come_from_the_player() -> void:
 	var hud := await _run()
 	await wait_process_frames(2)
 	var p := game.player
-	var moves: Array = []
-	moves.append_array(Player.INTENT_MOVES[&"light_attack"])
-	moves.append_array(Player.INTENT_MOVES[&"heavy_attack"])
+	var l: Array = Player.INTENT_MOVES[&"light_attack"]
+	var h: Array = Player.INTENT_MOVES[&"heavy_attack"]
+	var moves: Array = [l[0], h[0], l[1], h[1]]  # left tap, right tap, left hold, right hold
 	for i in 4:
 		assert_eq((hud._slots[i] as ActionSlot).cost, hud._cost_of(p, moves[i]), "slot %d" % i)

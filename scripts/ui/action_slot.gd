@@ -27,6 +27,10 @@ enum Shape { DIAMOND, SQUARE, ROUND }
 ## Under a square or round slot: the gap to its key or mouse, and the cost's drop and number.
 const KEY_GAP := 4.0
 const SQUARE_MOUSE_H := 26.0
+## The key caps under the Supremo (Shift) and the dodge (Space): width and height.
+const SHIFT_CAP_W := 40.0
+const SPACE_CAP_W := 52.0
+const SQUARE_CAP_H := 20.0
 const CHAMFER := 5.0
 const RING_GAP := 4.0
 const RING_W := 3.0
@@ -389,11 +393,15 @@ func _draw() -> void:
 		draw_colored_polygon(_poly(c, r + 2.0), Color(UiKit.INK, 0.92 * body))
 		draw_colored_polygon(_poly(c, r), Color(rim, body))
 	draw_colored_polygon(_poly(c, r - UiKit.FRAME), Color(UiKit.INK, body))
-	draw_colored_polygon(_poly(c, core), Color(gem.darkened(0.78), body) if boon else Color(0.06, 0.045, 0.06, 0.94 * body))
-	if boon:
+	var tile := shape != Shape.DIAMOND and glyph < 0 and piece != &""
+	if tile:  # HUD v3: the painted picture is a whole tile; under it a warm dark radial fill (what shows where a picture is not full)
+		HudArt.fill_tile(self, _poly(c, core), c, core, body)
+	else:
+		draw_colored_polygon(_poly(c, core), Color(gem.darkened(0.78), body) if boon else Color(0.06, 0.045, 0.06, 0.94 * body))
+	if boon and not tile:
 		draw_colored_polygon(_poly(c + Vector2(0, -r * 0.08), r * 0.72), Color(gem.darkened(0.5), body))
 		draw_colored_polygon(_poly(c + Vector2(0, -r * 0.16), r * 0.4), Color(gem.darkened(0.1), 0.55 * body))
-	var lift := r * 0.14 if charges_max > 0 or starved else 0.0
+	var lift := 0.0 if tile else r * 0.14 if charges_max > 0 or starved else 0.0
 	var ink := Color(IVORY, BUSY_ALPHA) if busy() else IVORY
 	if starved and shape != Shape.DIAMOND:
 		ink.a *= 0.5
@@ -408,7 +416,7 @@ func _draw() -> void:
 		draw_colored_polygon(_poly(c, core), SEAL_VEIL)
 		ink = Color(IVORY, SEAL_GLYPH)
 	if shape != Shape.DIAMOND and glyph < 0 and piece != &"":
-		HudArt.draw_icon(self, piece, c - Vector2(0, lift), r * 0.78, Color(1, 1, 1, ink.a * body))
+		HudArt.draw_icon(self, piece, c, core, Color(1, 1, 1, ink.a * body))
 	else:
 		var glyph_id := glyph if glyph >= 0 else boon.icon if boon else BoonIcon.ACTION_GLYPH + slot
 		BoonIcon.glyph(self, glyph_id, c - Vector2(0, lift), r * (0.42 if shape == Shape.DIAMOND else 0.55), ink, gem.darkened(0.5))
@@ -576,6 +584,15 @@ func _draw_key(at: Vector2) -> void:
 	if _mouse in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]:
 		_draw_mouse(at)
 		return
+	if shape != Shape.DIAMOND and not Controls.using_pad:
+		# HUD v3: the Shift is a rounded box with an up arrow, the Space a long empty bar (as in the Daniel's mock)
+		var low := _key.to_lower()
+		if action == &"ultimate" and low.contains("shift"):
+			_draw_cap(at, Vector2(SHIFT_CAP_W, SQUARE_CAP_H), true)
+			return
+		if action == &"dodge" and (low.contains("space") or low.contains("espa")):
+			_draw_cap(at, Vector2(SPACE_CAP_W, SQUARE_CAP_H), false)
+			return
 	# UI 10: a ready ultimate keeps its chip lit (the line in the ring's colour), whatever the caption does
 	if pulse and not busy():
 		key_plate(self, at, _key, KEY_FONT, KEY_H, false, READY_COLOR, READY_COLOR.darkened(0.72))
@@ -597,10 +614,24 @@ static func key_plate(ci: CanvasItem, at: Vector2, text: String, font_size: int,
 	return w
 
 
-## A mouse seen from above with the bound button lit (MouseGlyph).
+## HUD v3: a key cap as a pale-outlined rounded box on ink, with an up arrow inside (the Shift) or empty (the Space bar).
+func _draw_cap(at: Vector2, cap: Vector2, arrow: bool) -> void:
+	var rect := Rect2(at - cap * 0.5, cap)
+	var line := Color(MouseGlyphArt.PALE_RIM, 0.55 if busy() else 1.0)
+	draw_style_box(UiKit.box(Color(0.04, 0.03, 0.05, 0.95), line, 2, 0, int(cap.y * 0.35)), rect)
+	if arrow:
+		var h := cap.y * 0.5
+		var w := h * 0.55
+		var top := at + Vector2(0, -h)
+		var pts := PackedVector2Array([top, at + Vector2(w * 1.1, -h * 0.1), at + Vector2(w * 0.45, -h * 0.1), at + Vector2(w * 0.45, h), at + Vector2(-w * 0.45, h),
+			at + Vector2(-w * 0.45, -h * 0.1), at + Vector2(-w * 1.1, -h * 0.1), top])
+		draw_polyline(pts, line, 1.6, true)
+
+
+## A mouse seen from above with the bound button lit (MouseGlyph): in the HUD v3 slots white = a click (tap), gold = a hold.
 func _draw_mouse(at: Vector2) -> void:
 	if shape != Shape.DIAMOND:
-		MouseGlyph.draw(self, at, _mouse, SQUARE_MOUSE_H)
+		MouseGlyph.draw(self, at, _mouse, SQUARE_MOUSE_H, MouseGlyphArt.Style.HOLD if hold else MouseGlyphArt.Style.TAP)
 		return
 	MouseGlyph.draw(self, at + Vector2(0, (MOUSE_H - KEY_H) * 0.5 - 4.0), _mouse, MOUSE_H)
 
