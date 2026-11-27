@@ -40,9 +40,7 @@ demais; robô: 5 de 12 chegam a Morvath, 0 vitórias).
   `rooms_progression.md` e `art_rooms.md`, que viraram índices; mover a seção nova para a pasta certa.
 - `worktree-agent-a8a4f94e23fde4ed7` (`c881136b`): 14 placas do lote 4 ligadas como dado, e a opção `--clear-air`.
 
-**Teste aberto (visual, não bloqueia):** `test_living_crowd` falha para os modelos novos do Cavaleiro (150 passos por
-minuto contra 104 a 138; pé escorrega 0,10 m) e do Ancião (77 contra 92 a 115): ajustar o ritmo da caminhada no assado
-(technical-artist) e conferir na GPU.
+**Caminhada do Cavaleiro e do Ancião (feito 2026-11-27, technical-artist):** `KNIGHT_JOG` passada 0,66 para 0,8 (118 passos por minuto, pé 6,6 cm) e `ELDER_STRIDE` 0,9 para 0,7 (99 passos, 0,2 cm); só `knight.res` e `priest_elder.res` reassados, `test_living_crowd` 12 de 12. Conferir o passo na GPU.
 
 **Exe entregue às 17h16: `17569337`** (mouse sem Magia, menos inimigos, docs divididos; nas duas pastas).
 

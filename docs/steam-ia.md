@@ -84,6 +84,15 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   pelo diretor de arte do PO no ChatGPT (pacote `Eterra_Pintura_Medalhoes_PARTE_1..3`, relatório em
   `docs/art/medallions_rev02.md`). Única edição nossa: o texto solto no alto de `trial.png` apagado.
 
+- **Pinturas de salas, do hub e texturas pintadas de efeito e de HUD (gpt-image-2, API da OpenAI, 2026-11-27; GP-8)**: imagem para
+  imagem a partir de capturas do próprio jogo (sem personagem nem HUD) e da arte aprovada pelo Daniel, no estilo da arte do
+  ChatGPT. No jogo: as pinturas do Salão, da Sala 00 e da Antessala (`assets/rooms/painted/sala01.png`, `sala00.png`,
+  `antessala.png`, projetadas sobre a geometria), as folhas dos golpes de espada (`assets/textures/fx/painted/`: `cut1`, `cut2`,
+  `smash`, `spin`, `contact`, `hit_ring`, geradas sem referência) e o kit do HUD v3 (`assets/ui/hud_v3/`: ícones, molduras,
+  barras, cartela, retrato). Fora do jogo por enquanto (só em `docs/art/painted_gpt/`): as placas dos lotes 2 a 4 (salas 02 a 14)
+  e a do hub (`hub/jogo/`, a partir de `hub_aprovacao.png`). Pedidos, prompts, custos e descartes: `docs/art/painted_gpt/README.md`.
+  Nenhum texto, símbolo ou personagem de outro jogo; nenhuma geração durante o jogo.
+
 - **Ícones pintados, Rev. 03 (vão no jogo, 2026-11-23, substituem a Rev. 02)**: os 25 de `assets/ui/rewards/` e os 77 de
   `assets/ui/boons/`, pintados por IA pelo diretor de arte do PO no ChatGPT, quadrados e sem moldura
   (`Eterra_REV03_01..04`); o recorte redondo e a moldura única são nossos (`tools/art/frame_borderless.gd`).
