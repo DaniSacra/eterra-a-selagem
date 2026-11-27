@@ -1,0 +1,6 @@
+ANTESSALA (corredor de treino). RETIRE (posições em % da largura x altura da imagem 1):
+- as chamas das oito tochas no alto dos pilares baixos (63% x 17%, 55% x 23%, 79% x 24%, 72% x 32%, 37% x 39%, 56% x 51%, 18% x 58% e 38% x 71%): ficam os pilares baixos e o copo de metal no alto, APAGADOS, sem fogo e sem brilho; somem as poças de luz quente em volta;
+- a água da faixa que atravessa o corredor (de 48% x 36% até 68% x 44%): fica o canal com as mesmas bordas de pedra, mesmo lugar e mesma largura, mas SECO e escuro por dentro, fundo de pedra escura, sem água e sem reflexo;
+- a placa de espinhos quadrada no piso (66% x 30%): no lugar, lajes de pedra lisas iguais ao piso em volta, sem moldura, sem buraco, sem espinho;
+- a porta de madeira no arco da parede do fundo (73% x 17%): fica o arco de pedra com a passagem escura, como dito acima.
+Ficam iguais, no mesmo pixel: o corredor, as muretas, os pilares baixos, a parede do fundo, a borda da plataforma, os blocos de pedra embaixo, as ruínas e a névoa do fundo.

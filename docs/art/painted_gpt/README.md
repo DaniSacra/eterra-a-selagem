@@ -32,6 +32,7 @@ Generation (curl; the key is read from the file, never printed):
 | 2026-11-27 | HUD icons v2 full tiles (`docs/art/hud_v3/raw/tiles_a.png`, `tiles_b.png`, prompts in `hud_v3/prompts/tiles_*.txt`): tiles_a (6 tiles; kept power, lance, lion; attack read as an arrow, smash fanned up, dodge too bright), tiles_b (attack/smash/dodge 2 variants each; kept crescent slash r1, smash r1, muted dodge r2; hammer variant unused). Crops 256x256 opaque to `assets/ui/hud_v3/icon_*.png`, old glyphs kept as `icon_*_glyph.png` | 2 | 5488 | 0.50 |
 | 2026-11-27 | lote3 (`lote3/`): knight a1 + g1 (sala05); elder a1 (chosen, right column ~20 px off), a2 (same offset, lost the void fog), g1 (sala06); seal a1 (arena shrank ~4%), a2 (chosen), g1 (sala07, gamma 1.08 after) | 9 | 5488 | 2.25 |
 | 2026-11-27 | lote3 fix (`lote3/seal-g2`, prompt `lote3/gate_open.txt`): Sala07 game plate, shrine gate leaf and violet crack removed, archway now a dark open passage; only a 120x140 crop at (1044,224) pasted onto the v1 plate so every other pixel is identical (old kept as `sala07_jogo_v1.png`) | 1 | 5488 | 0.25 |
+| 2026-11-27 | game_v1 (`game_v1/`): game plates of the three rooms in the game, edits of the current paintings: sala01-g1, sala00-g1 (gamma 1.05 after), antessala-g1 | 3 | 5488 | 0.75 |
 
 ## style_v2 (2026-11-27): style approval round
 `style_v2/` holds the variants Daniel is choosing from (Downloads\ASelagem-GP8\APROVAR-ESTILO). Request =
@@ -117,3 +118,17 @@ Selo violet cracks, seal glow (carved lines stay), flames, candles, lanterns, th
 Rules: no figures (Knight, Elder painted out), no banners, no sun/star/cross/text, no emerald (Elder's orb gone); violet only in the
 Seal Chamber approval (Morvath's crack, lanterns, stair grate). Floor-centre luma 68, 61, 51.
 
+
+## game_v1 (2026-11-27): game plates of Sala01, Sala00, Antessala
+Edits of the current paintings in `assets/rooms/painted/` (image 1 only, no reference), request = `game_v1/game_common.txt`
+(style + keep every pixel + doorways become deep dark open passages) + `game_<room>.txt` (what to remove, in % positions).
+Generator `game_v1/gen.sh <name> <img1> - <prompt files>`; full sent text in `game_v1/<name>.prompt.txt`.
+Removed: all flames and candle flames (holders unlit), door leaves (dark passage), urns/vases/crates (sala01), the
+sala01 canal water (dry stone bed), the antessala water (dry dark channel) and spike plate (plain slabs), the altar candle
+flames (sala00). Fit: the difference with the current painting shows only the removed pieces and their light pools, no
+double edges, so the plates use the same mapping (`v_span` 938/1024 for sala01). Floor luma (centre box): sala01 91.6 ->
+90.7, antessala 67.6 -> 66.9; sala00 off-pool floor 71 -> 66, lifted with gamma 1.05 to 71 (`sala00_jogo.png`).
+Sala01: the model also opened the statue niche between the two doors into a third dark passage; the 76x190 niche crop at
+(1230,150) was pasted back from the current painting (slightly darkened) so only two openings remain.
+Files: `<room>_jogo.png` (to swap in at integration), `<room>-g1.png` raw, `_diff.jpg`, `_overlay.jpg`, `_lado_a_lado.jpg`.
+Not done: no visible entrance was added (the rooms have none today; adding one changes fixed geometry and needs a new base).

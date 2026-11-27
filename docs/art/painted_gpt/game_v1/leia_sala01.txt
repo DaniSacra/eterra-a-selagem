@@ -1,0 +1,5 @@
+
+Versão de jogo (game_v1, 2026-11-27):
+sala01_jogo.png: a mesma pintura do Salão que está no jogo, sem nada que o jogo anima ou quebra. Saíram as chamas dos quatro braseiros (ficam as bacias apagadas), as chamas das velas, os vasos, potes e caixotes, as duas portas de madeira (os dois arcos ficaram com uma passagem funda e escura) e a água do canal (ficou o leito seco de pedra). A estátua entre as portas continua no nicho de pedra.
+sala01_lado_a_lado_jogo.jpg: pintura atual (esquerda) e versão de jogo (direita).
+Encaixe: tudo o que é fixo ficou no mesmo pixel da pintura atual; o piso ficou no mesmo tom (só sumiram as poças de luz das chamas).

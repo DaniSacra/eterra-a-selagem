@@ -1,0 +1,5 @@
+
+Versão de jogo (game_v1, 2026-11-27):
+sala00_jogo.png: a mesma pintura da Câmara de Preparação, sem nada que o jogo anima. Saíram as chamas das velas do altar (as velas ficam apagadas em cima dele) e as das velas nas paredes, e a porta de madeira (o arco ficou com uma passagem funda e escura). Clareada de leve depois da geração para o piso ficar no mesmo tom de agora.
+sala00_lado_a_lado_jogo.jpg: pintura atual (esquerda) e versão de jogo (direita).
+Encaixe: paredes, colunas, altar, muretas e borda no mesmo pixel da pintura atual.

@@ -1,0 +1,5 @@
+SALA 00 (Câmara de Preparação). RETIRE (posições em % da largura x altura da imagem 1):
+- as chamas das quatro velas em cima do altar (52% x 39%): ficam as velas apagadas em cima do altar, sem chama e sem brilho; o altar de pedra fica igual, sem a poça de luz quente em volta;
+- as chamas das velas nos suportes de ferro das paredes (42% x 24%, 50% x 23%, 31% x 34%, 19% x 42%, 78% x 37%, 85% x 32%) e das velinhas no chão (22% x 45%): ficam os suportes e as velas apagados, sem chama e sem brilho; a parede em volta perde o brilho quente;
+- a porta de madeira com ferragens no arco da parede do fundo (64% x 25%): fica o arco de pedra com a passagem escura, como dito acima.
+Ficam iguais, no mesmo pixel: as paredes com hera e folhas vermelhas, as quatro colunas, o altar, as muretas, a borda da plataforma, os blocos de pedra embaixo, as torres e a névoa do fundo.

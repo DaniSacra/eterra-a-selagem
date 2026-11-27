@@ -1,0 +1,5 @@
+
+Versão de jogo (game_v1, 2026-11-27):
+antessala_jogo.png: a mesma pintura da Antessala, sem nada que o jogo anima ou quebra. Saíram as oito tochas acesas (os pilares baixos ficam com o copo apagado), a água (ficou o canal seco e escuro, mesmas bordas), a placa de espinhos (virou laje lisa) e a porta de madeira (o arco ficou com uma passagem funda e escura).
+antessala_lado_a_lado_jogo.jpg: pintura atual (esquerda) e versão de jogo (direita).
+Encaixe: corredor, muretas, pilares, canal e parede da porta no mesmo pixel da pintura atual; piso no mesmo tom.

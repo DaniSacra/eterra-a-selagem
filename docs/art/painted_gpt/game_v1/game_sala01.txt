@@ -1,0 +1,7 @@
+SALA 01 (salão). RETIRE (posições em % da largura x altura da imagem 1):
+- as chamas dos quatro braseiros (30% x 23%, 50% x 18%, 71% x 56% e 58% x 75%): ficam as bacias de metal e os pedestais de pedra, APAGADOS, bacia escura e vazia, sem fogo e sem brilho laranja;
+- as chamas de todas as velas (perto de 33% x 25%, 16% x 38%, 65% x 28%, 70% x 20%, 60% x 17%, 67% x 68% e 65% x 70%): ficam só as velas apagadas, sem chama e sem brilho, ou piso limpo;
+- todos os vasos, potes, urnas e caixotes de madeira soltos (no alto em 36% x 20% a 44% x 21%, 53% x 23%, 68% x 28%, perto de 13% x 40%, 12% x 39%, 24% x 30%, 3% x 50%, 85% x 37%, 36% x 67% e 66% x 67%): no lugar, piso e mureta limpos;
+- as duas portas de madeira da parede da direita (77% x 25% e 88% x 28%): ficam os dois arcos altos com a passagem escura, como dito acima; a estátua encapuzada entre elas (81% x 32%) fica igual;
+- a água do canal em curva no alto à esquerda (de 8% x 45% até 50% x 26%): fica o leito do canal, mesmas bordas de pedra e mesmo traçado, mas SECO, fundo de pedras e cascalho escuros, sem água, sem reflexo.
+Ficam iguais, no mesmo pixel: a plataforma, as muretas com balaústres, os merlões da frente, as duas peças de pedra quadradas da borda da frente, a escada e as estátuas encapuzadas no alto, a parede das portas, os pilares e a corrente no abismo, as ruínas e a névoa do fundo, as pedrinhas soltas no piso.
