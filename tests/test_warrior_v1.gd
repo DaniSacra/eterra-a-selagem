@@ -112,7 +112,7 @@ func test_the_lance_is_the_one_of_before_but_for_its_button_and_tags() -> void:
 	var tree: ComboTree = load(HeroDef.warrior().combos)
 	var lance := ComboTree.find(tree.neutral, ComboNode.In.CHARGE)
 	assert_eq(lance.damage, 375.0)
-	assert_eq(lance.magick_cost, 20.0)
+	assert_eq(lance.magick_cost, 0.0)
 	assert_eq(lance.charge_time, 0.8)
 	assert_eq(lance.reach, 1080.0 / 80.0)
 	assert_eq(lance.width, 1.8)
@@ -130,14 +130,14 @@ func test_the_smash_and_the_sweep() -> void:
 	var tree: ComboTree = load(HeroDef.warrior().combos)
 	var smash := ComboTree.find(tree.neutral, ComboNode.In.CHARGE_LIGHT)
 	assert_eq(smash.damage, 200.0)
-	assert_eq(smash.magick_cost, 12.0)
+	assert_eq(smash.magick_cost, 0.0)
 	assert_eq(smash.charge_time, 0.6)
 	assert_eq(smash.reach, 2.6)
 	assert_eq(smash.width, 120.0)
 	assert_true(smash.has_tag(&"omega") and smash.has_tag(&"smash"))
 	var sweep := ComboTree.find(tree.neutral, ComboNode.In.HEAVY)
 	assert_eq(sweep.damage, 40.0)
-	assert_eq(sweep.magick_cost, 8.0)
+	assert_eq(sweep.magick_cost, 0.0)
 	assert_eq(sweep.shape, ComboNode.Shape.CIRCLE)
 	assert_eq(sweep.reach, 3.4)
 	assert_eq(sweep.effect, ComboNode.Effect.NONE, "no Brado: no buff")
@@ -200,13 +200,11 @@ func test_a_hold_of_the_left_is_the_smash_and_never_the_combo_too() -> void:
 	assert_eq(played, [] as Array[StringName], "and nothing is played yet")
 	_frames(10, [&"light_attack"])
 	assert_eq(played, [&"smash"] as Array[StringName], "the smash begins inside the charge, and no cut1")
-	assert_eq(p.magick.spent, 0.0, "the Magia goes when the blow lands, not when it begins")
 	_frames(20, [&"light_attack"])
-	assert_eq(p.magick.spent, 12.0, "12 Magia once it landed")
 	_frame()
 	_frames(60)
 	assert_eq(played, [&"smash"] as Array[StringName], "the release after the blow plays nothing")
-	assert_eq(p.magick.spent, 12.0)
+	assert_eq(p.magick.spent, 0.0, "the smash costs no Magia (2026-11-27)")
 
 
 func test_the_dodge_in_the_smashs_windup_spends_no_magia() -> void:
@@ -235,81 +233,27 @@ func test_a_hold_let_go_before_the_charge_fills_does_nothing() -> void:
 	assert_eq(game.player.magick.value, 30.0)
 
 
-func test_a_hold_without_the_magia_is_refused_once_and_does_nothing() -> void:
+func test_the_blows_need_no_magia() -> void:
 	_run()
 	var p := game.player
-	p.magick.value = 5.0
+	p.magick.value = 0.0
+	var e := _enemy(&"skeleton", Vector2(2.0, 0))
+	var hp := e.hp
 	var played := _played()
 	var refused := [0]
 	p.magick_refused.connect(func() -> void: refused[0] += 1)
 	_hold(&"light_attack", 0.8)
-	_frames(30)
-	assert_eq(refused[0], 1, "the Magia bar flashes once")
-	assert_eq(played, [] as Array[StringName], "no combo as a consolation")
-	_tap(&"light_attack")
-	_frames(10)
-	assert_eq(played, [&"cut1"] as Array[StringName], "the tap is free")
-
-
-func test_a_tap_of_the_right_is_the_sweep_for_8_magia() -> void:
-	_run()
-	var p := game.player
-	var e := _enemy(&"skeleton", Vector2(2.0, 0))
-	var hp := e.hp
-	var played := _played()
-	_tap(&"heavy_attack")
-	_frames(3)
-	assert_eq(played, [&"sweep"] as Array[StringName])
-	assert_eq(p.magick.value, 30.0, "not spent in the windup")
-	_frames(25)
-	assert_eq(p.magick.value, 22.0, "8 Magia once it landed")
-	assert_lt(e.hp, hp)
-
-
-func test_the_sweep_without_magia_is_refused() -> void:
-	_run()
-	var p := game.player
-	p.magick.value = 7.0
-	var played := _played()
-	var refused := [0]
-	p.magick_refused.connect(func() -> void: refused[0] += 1)
+	_frames(40)
+	assert_eq(played, [&"smash"] as Array[StringName], "the smash comes with the bar empty")
 	_tap(&"heavy_attack")
 	_frames(30)
-	assert_eq(played, [] as Array[StringName])
-	assert_eq(refused[0], 1)
-	assert_eq(p.magick.value, 7.0)
-
-
-func test_a_hold_of_the_right_is_the_lance_and_30_magia_pay_one() -> void:
-	_run()
-	var p := game.player
-	var e := _enemy(&"skeleton", Vector2(5.0, 0))
-	var hp := e.hp
-	var played := _played()
+	assert_eq(played, [&"smash", &"sweep"] as Array[StringName], "so does the sweep")
 	_hold(&"heavy_attack", 1.0)
 	_frames(60)
-	assert_eq(played, [&"lance"] as Array[StringName])
-	assert_eq(p.magick.value, 10.0, "20 Magia")
-	assert_lt(e.hp, hp, "through the line")
-	var refused := [0]
-	p.magick_refused.connect(func() -> void: refused[0] += 1)
-	_hold(&"heavy_attack", 1.0)
-	_frames(30)
-	assert_eq(played, [&"lance"] as Array[StringName], "a second one is out of Magia")
-	assert_eq(refused[0], 1)
-
-
-func test_a_blow_that_cannot_be_paid_when_it_lands_strikes_nothing() -> void:
-	_run()
-	var p := game.player
-	var e := _enemy(&"skeleton", Vector2(2.0, 0))
-	var hp := e.hp
-	_tap(&"heavy_attack")
-	_frames(3)
-	p.magick.value = 2.0
-	_frames(30)
-	assert_eq(e.hp, hp, "no blow for free")
-	assert_eq(p.magick.value, 2.0, "and nothing spent")
+	assert_eq(played, [&"smash", &"sweep", &"lance"] as Array[StringName], "and the lance")
+	assert_eq(refused[0], 0, "nothing is refused")
+	assert_eq(p.magick.spent, 0.0)
+	assert_lt(e.hp, hp)
 
 
 func test_the_curse_locks_the_whole_right_button() -> void:
@@ -514,14 +458,13 @@ func test_alcance_marcial_widens_the_sweep() -> void:
 	assert_eq(game.boons.stat(&"reach_pct", _node(&"lance").tags), 0.0, "only the Poder")
 
 
-func test_forca_titanica_doubles_the_cost_triples_the_damage_and_raises_the_maximum() -> void:
+func test_forca_titanica_triples_the_damage_and_costs_nothing_more() -> void:
 	_run([&"forca_concentrada", &"forca_titanica"])
 	var p := game.player
 	game.hero_gifts.step(0.0)
-	assert_eq(p.magick.max_value, 40.0)
-	assert_eq(p.cost_of(_node(&"lance"), 0.0), 40.0, "the whole bar")
-	assert_eq(p.cost_of(_node(&"smash"), 0.0), 24.0)
-	assert_eq(p.cost_of(_node(&"sweep"), 0.0), 8.0, "the sweep is no charged blow")
+	assert_eq(p.magick.max_value, 30.0, "no Magia maximum to raise (2026-11-27)")
+	assert_eq(p.cost_of(_node(&"lance"), 0.0), 0.0)
+	assert_eq(p.cost_of(_node(&"smash"), 0.0), 0.0)
 	var e := _enemy(&"skeleton", Vector2(4.0, 0))
 	game.combat.strike(_node(&"lance"), p.pos, Vector2.RIGHT)
 	assert_almost_eq(5000.0 - e.hp, 375.0 * 1.4 * 3.0, 2.0, "375 x 1.4 x 3")

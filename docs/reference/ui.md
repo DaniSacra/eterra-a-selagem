@@ -817,3 +817,4 @@ livro (o livro não passa de 1,9 alturas de largura, `BookDesk.side_room`, ou se
   (`names_all`). Recarga (varredura e segundos no medalhão), ponto verde de pronta e pontos de nível seguem. Não há lista no Tab.
 - **Modo horda** e Maga seguem funcionando (mesmos nós; sem Supremo a barra dourada some, sem Ritmo o medidor some).
 - Removidos: `Hud.magick_wakes` (Magia fina que acordava), `_layout_bars(thin)`, `HOLD_TEXT`, `_clock_veil`.
+- **Sem Magia para o Guerreiro (2026-11-27)**: os quatro golpes do mouse custam 0, então a gota de custo não aparece nos slots, a barra azul de Magia some (`Hud._shows_magick`, pilha de duas barras: Vida e Supremo; a Maga segue com três) e as marcas de custo da barra (`_magick_ticks`) saíram. A recusa "Sem Magia" e a gema de custo continuam para a Maga. Textos de Como Jogar, cartas, glossário e dicas sem preço em Magia para o Guerreiro. Velas do Altar mostram "{n} de vida máxima" (`altar_candles_life_get`).

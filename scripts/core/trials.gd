@@ -40,6 +40,15 @@ func _init(defs: Array[TrialDef] = []) -> void:
 	catalog = defs
 
 
+## A hero that spends no Magia never draws a card that only adds to it (Magia Ampla): it leaves the catalog.
+func drop_magick() -> void:
+	var keep: Array[TrialDef] = []
+	for d in catalog:
+		if d.stat(&"magick_max") <= 0.0:
+			keep.append(d)
+	catalog = keep
+
+
 static func load_catalog(dir: String = DIR) -> Array[TrialDef]:
 	var out: Array[TrialDef] = []
 	if not DirAccess.dir_exists_absolute(dir):

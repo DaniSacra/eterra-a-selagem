@@ -18,50 +18,44 @@ func test_the_warrior_has_four_blows_the_dodge_and_the_supremo_and_no_q_nor_e() 
 	var seen: Array[String] = []
 	for s: ActionSlot in hud._slots:
 		seen.append("%s:%s" % [s.action, s.hold])
-	assert_eq(seen, ["light_attack:false", "light_attack:true", "heavy_attack:false", "heavy_attack:true", "dodge:false"],
-			"touch and hold of each button, then Space (Shift is the Supremo's round slot)")
+	assert_eq(seen, ["light_attack:false", "heavy_attack:false", "light_attack:true", "heavy_attack:true", "dodge:false"],
+			"tap, tap, hold, hold (HUD v3), then Space; touch and hold of each button, then Space (Shift is the Supremo's round slot)")
 	assert_not_null(hud._ult_slot)
-	assert_eq(hud._ult_slot.shape, ActionSlot.Shape.ROUND)
+	assert_eq(hud._ult_slot.shape, ActionSlot.Shape.SQUARE, "HUD v3: the Supremo is a square slot before the divider")
 
 
-func test_each_blow_shows_its_own_magia() -> void:
+func test_no_blow_shows_a_magia_cost() -> void:
 	var hud := await _run()
 	var costs: Array[int] = []
 	for i in 4:
 		costs.append((hud._slots[i] as ActionSlot).cost)
-	assert_eq(costs, [0, 12, 8, 20] as Array[int], "the combo is free, the Esmagador, the Corte Circular, the Lança")
+	assert_eq(costs, [0, 0, 0, 0] as Array[int], "no blow of the Warrior costs Magia (2026-11-27)")
 
 
-func test_a_slot_dims_alone_when_its_magia_lacks() -> void:
+func test_a_slot_never_dims_for_magia() -> void:
 	var hud := await _run()
-	var power: ActionSlot = hud._slots[2]
-	var lance: ActionSlot = hud._slots[3]
-	game.player.magick.value = 10.0
-	await wait_process_frames(2)
-	assert_false(power.starved, "8 is there")
-	assert_true(lance.starved, "20 is not")
 	game.player.magick.value = 0.0
 	await wait_process_frames(2)
-	assert_true(power.starved)
-	game.player.magick.value = game.player.magick.max_value
-	await wait_process_frames(2)
-	assert_false(lance.starved)
+	for i in 4:
+		assert_false((hud._slots[i] as ActionSlot).starved, "slot %d is free whatever the Magia" % i)
 
 
-func test_the_magia_bar_marks_the_costs() -> void:
+func test_the_warriors_hud_has_no_magia_bar() -> void:
 	var hud := await _run()
 	await wait_process_frames(2)
-	var max_v := game.player.magick.max_value
-	assert_eq(hud._magick.bar.ticks.size(), 3, "the Corte Circular, the Esmagador, the Lança")
-	assert_almost_eq(hud._magick.bar.ticks[0], 8.0 / max_v, 0.001)
-	assert_almost_eq(hud._magick.bar.ticks[2], 20.0 / max_v, 0.001)
+	assert_false(hud._magick.visible, "nothing of the Warrior spends Magia")
+	assert_false(hud._shows_magick())
+	assert_eq(hud._bar_count(), 2, "life and the Supremo")
 
 
 func test_a_refusal_flashes_the_pressed_frame_and_says_it() -> void:
 	var hud := await _run()
-	var right: ActionSlot = hud._slots[2]
+	var right: ActionSlot = hud._slots[1]
 	game.player.magick.value = 0.0
 	await wait_process_frames(2)
+	# the Warrior's blows are free (2026-11-27): a slot with a price and no Magia stands in for the Maga's
+	right.cost = 8
+	right.starved = true
 	Input.action_press(&"heavy_attack")
 	hud._on_magick_refused()
 	Input.action_release(&"heavy_attack")

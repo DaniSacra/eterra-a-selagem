@@ -43,7 +43,7 @@ func test_awaken_behind_the_second_tool_one_awake() -> void:
 	assert_eq(forge.awake(d).id, &"awaken_impeto", "one awake")
 	var state := BoonState.new(BoonState.load_catalog())
 	state.equip_forge(forge.ranks_for(d))
-	assert_eq(state.stat(&"finisher_magick"), 3.0, "the descent carries the one awake")
+	assert_eq(state.stat(&"ult_charge_pct"), 0.15, "the descent carries the one awake (the Supremo charges 15% faster since 2026-11-27)")
 	assert_eq(state.stat(&"heal_on_kill"), 0.0)
 	var back := SaveData.merged(JSON.parse_string(JSON.stringify(d)))
 	assert_eq(forge.awake(back).id, &"awaken_impeto", "kept in the save")

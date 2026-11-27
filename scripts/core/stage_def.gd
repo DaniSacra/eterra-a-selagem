@@ -237,6 +237,40 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var altar_life_cost := 10.0
 @export var altar_gold_cost := 75
 @export var altar_magick := 25.0
+## What the candles give a hero with no use for Magia (the Warrior): this much most life instead of altar_magick.
+@export var altar_candle_life := 10.0
+
+
+## The stage for a hero that spends no Magia (the Warrior, 2026-11-27): the Magia rewards of the deck and of the fixed doors become
+## gold and the Magia tonic leaves the shelves, so no door nor shelf offers what he cannot use. Same stage when none is there.
+func without_magick() -> StageDef:
+	var more := RunMap.Reward.MAGICK
+	var out: StageDef = duplicate()
+	var deck := PackedInt32Array()
+	for r in reward_deck:
+		deck.append(RunMap.Reward.GOLD if r == more else r)
+	out.reward_deck = deck
+	var fixed := {}
+	for depth: Variant in fixed_rewards:
+		var row := PackedInt32Array()
+		for r in (fixed_rewards[depth] as PackedInt32Array):
+			row.append(RunMap.Reward.GOLD if r == more else r)
+		fixed[depth] = row
+	out.fixed_rewards = fixed
+	var groups: Array[ShopGroup] = []
+	for g in shop_groups:
+		var copy: ShopGroup = g.duplicate()
+		copy.items = PackedInt32Array()
+		copy.prices = PackedInt32Array()
+		copy.weights = PackedFloat32Array()
+		for i in g.items.size():
+			if g.items[i] != more:
+				copy.items.append(g.items[i])
+				copy.prices.append(g.prices[i])
+				copy.weights.append(g.weights[i])
+		groups.append(copy)
+	out.shop_groups = groups
+	return out
 
 
 ## The chance a card is an Elo with this many Blessings held (SW-B2).

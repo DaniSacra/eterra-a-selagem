@@ -148,6 +148,8 @@ func test_every_power_is_eligible_taken_and_reads_for_both_heroes() -> void:
 			if b.is_duo():
 				continue
 			var label := "%s / %s" % [hero.id, b.id]
+			if b.needs_tag != &"" and not tags.has(b.needs_tag):
+				continue  # Essência Restauradora gives Magia back: the Maga's alone (2026-11-27)
 			var state := _state_with_requirements(b, hero)
 			assert_true(state.offerable(b), "%s: not offerable with what it asks held" % label)
 			if b.slot != Boon.Slot.NONE:

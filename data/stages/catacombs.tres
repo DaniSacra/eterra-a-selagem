@@ -4115,3 +4115,4 @@ route_shop_items = 3
 altar_life_cost = 10.0
 altar_gold_cost = 75
 altar_magick = 25.0
+altar_candle_life = 10.0

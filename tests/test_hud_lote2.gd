@@ -144,15 +144,15 @@ func test_the_hud_greets_a_material_found_in_the_corner() -> void:
 
 # ---------- H2: the special's price (GP-1: the Brado is gone, so is its buff mark: the UI pass removes the HUD code) ----------
 
-func test_the_rajada_shows_its_cost_and_says_without_magia() -> void:
+func test_the_lance_shows_no_cost_and_never_says_without_magia() -> void:
 	var hud := await _run()
 	var special: ActionSlot = hud._slots[3]
-	assert_eq(special.cost, 20, "GP-1: the right button's hold is the Lança, 20 Magia")
+	assert_eq(special.cost, 0, "2026-11-27: the right button's hold is the Lança, free")
 	assert_eq(special.caption, "", "paid: no words")
 	game.player.magick.value = 0.0
 	await wait_process_frames(2)
-	assert_eq(special.caption, "", "UX2-01: no permanent words, the diamond is starved instead")
-	assert_true(special.starved)
+	assert_eq(special.caption, "", "UX2-01: no permanent words")
+	assert_false(special.starved, "free whatever the bar")
 	game.player.magick.value = game.player.magick.max_value
 	await wait_process_frames(2)
 	assert_eq(special.caption, "")
