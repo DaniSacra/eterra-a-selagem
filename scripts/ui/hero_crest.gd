@@ -40,7 +40,10 @@ var portrait: Texture2D = PORTRAIT
 ## The face of a hero by its HeroDef id (the Warrior's when it has none of its own).
 static func portrait_of(hero_id: StringName) -> Texture2D:
 	var path := PORTRAIT_DIR + String(hero_id) + ".png"
-	return load(path) if hero_id != &"" and ResourceLoader.exists(path) else PORTRAIT
+	if hero_id != &"" and ResourceLoader.exists(path):
+		return load(path)
+	var painted := HudArt.tex(&"portrait_warrior")  # HUD v3: the kit's painted Warrior, when it has one
+	return painted if painted != null else PORTRAIT
 
 
 func set_hero(hero_id: StringName) -> HeroCrest:
@@ -67,7 +70,8 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var r := minf(size.x, size.y) * 0.5
 	var c := Vector2(r, r)
-	var inner := r - UiKit.FRAME - INK_WIDTH
+	# a painted ring (frame_portrait) opens at about 0.8 of its width: the face is scaled to fill that opening
+	var inner := r * 0.84 if HudArt.tex(&"frame_portrait") != null else r - UiKit.FRAME - INK_WIDTH
 	draw_circle(c, r, UiKit.INK)
 	var disc := _ellipse(c, Vector2(inner, inner), 48)
 	var uvs := PackedVector2Array()
@@ -77,7 +81,13 @@ func _draw() -> void:
 	# a soft shadow towards the ring
 	for i in 4:
 		draw_arc(c, inner - 1.5 - i * 2.0, 0.0, TAU, 48, Color(UiKit.INK, VIGNETTE * (1.0 - i * 0.25)), 3.0, true)
-	_draw_rim(c, r)
+	var frame := HudArt.tex(&"frame_portrait")
+	if frame != null:
+		HudArt.draw_tex(self, frame, c, r)  # the painted ring wears the rim; the warning still tints it below
+		if danger > 0.0 or flash > 0.0 or tint.a > 0.0:
+			_draw_rim(c, r)
+	else:
+		_draw_rim(c, r)
 	if seal != "":
 		_draw_seal(c + Vector2(-r * 0.72, r * 0.72), r * 0.3)
 

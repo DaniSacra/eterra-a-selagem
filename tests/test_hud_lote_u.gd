@@ -19,14 +19,6 @@ func test_the_pad_line_follows_a_rebound_button() -> void:
 	assert_eq(UiKit.bound_name(&"ultimate", false), "Shift")
 
 
-func test_the_thin_magick_wakes_when_it_moves_or_its_button_is_held() -> void:
-	assert_false(Hud.magick_wakes(20.0, 20.0, false), "still")
-	assert_false(Hud.magick_wakes(-1.0, 20.0, false), "first look")
-	assert_true(Hud.magick_wakes(20.0, 21.5, false), "rose")
-	assert_true(Hud.magick_wakes(20.0, 8.0, false), "spent")
-	assert_true(Hud.magick_wakes(20.0, 20.0, true), "held")
-
-
 func _enemy(b: EnemyDef.Behavior, state: Enemy.State, t: float) -> Enemy:
 	var e := Enemy.new()
 	e.def = EnemyDef.new()

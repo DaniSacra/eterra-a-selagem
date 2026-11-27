@@ -166,7 +166,7 @@ func test_the_row_is_centred_at_the_foot() -> void:
 	var screen := hud.get_viewport_rect().size
 	var row := hud._action_row.get_global_rect()
 	assert_almost_eq(row.get_center().x, screen.x * 0.5, 2.0, "centred (Daniel's decision, 2026-11-21)")
-	assert_eq(hud._slots[0].side, Hud.ROW_DIAMOND)
+	assert_eq(hud._slots[0].side, Hud.ROW_SLOT)
 	assert_gte(row.position.y, screen.y * 0.85, "at the bottom")
 	assert_lte(row.end.y, screen.y, "inside the screen")
 	assert_lt(row.end.x, hud._passives.get_global_rect().position.x + screen.x, "clear of the right corner")
@@ -176,7 +176,7 @@ func test_the_row_is_centred_at_the_foot() -> void:
 	assert_gte(hud._passives.get_global_rect().position.x, row.end.x, "the gifts in the right corner")
 	for c: Control in [hud._curse_badge, hud._trial_seal]:
 		assert_lte(c.get_global_rect().end.y, hud._magick.get_global_rect().position.y + 1.0, "%s over the bars" % c.name)
-	assert_gte(Hud.ROW_DIAMOND * 1080.0 / 720.0, 52.0, "about 54 px at 1080")
+	assert_gte(Hud.ROW_SLOT * 1080.0 / 720.0, 52.0, "a slot of 72 px at 1080")
 	# the permanent HUD of the fight under 6% of the screen: medallion, bars, diamonds, build column
 	var area := 0.0
 	for c: Control in [hud._crest, hud._life, hud._magick, hud._charge, hud._action_row, hud._column]:
@@ -190,8 +190,8 @@ func test_the_bars_stack_life_over_magia_beside_the_medallion() -> void:
 	var magick := hud._magick.get_global_rect()
 	var life := hud._life.get_global_rect()
 	assert_gte(magick.position.x, crest.end.x, "right of the medallion")
-	assert_lt(life.end.y, magick.position.y, "life over Magia (Lote B)")
-	assert_lt(magick.end.y, hud._charge.get_global_rect().position.y + 1.0, "the ultimate's charge under the bars")
+	assert_lt(magick.end.y, life.position.y + 1.0, "Magia over life (HUD v3: gold, blue, red from the top)")
+	assert_lt(hud._charge.get_global_rect().end.y, magick.position.y + 1.0, "the Supremo's charge over the bars")
 	assert_almost_eq(magick.position.x, life.position.x, 0.5, "left edges together")
 	assert_lte(magick.end.y, crest.end.y + 1.0, "no lower than the medallion")
 	assert_gte(magick.position.y, crest.position.y - 1.0, "no higher than it")

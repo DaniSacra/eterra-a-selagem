@@ -146,13 +146,13 @@ func test_the_hud_greets_a_material_found_in_the_corner() -> void:
 
 func test_the_rajada_shows_its_cost_and_says_without_magia() -> void:
 	var hud := await _run()
-	var special: ActionSlot = hud._slots[1]
-	assert_eq(special.hold_cost, 20, "GP-1: the right button's hold is the Lança, 20 Magia")
+	var special: ActionSlot = hud._slots[3]
+	assert_eq(special.cost, 20, "GP-1: the right button's hold is the Lança, 20 Magia")
 	assert_eq(special.caption, "", "paid: no words")
 	game.player.magick.value = 0.0
 	await wait_process_frames(2)
 	assert_eq(special.caption, "", "UX2-01: no permanent words, the diamond is starved instead")
-	assert_true(special.hold_starved)
+	assert_true(special.starved)
 	game.player.magick.value = game.player.magick.max_value
 	await wait_process_frames(2)
 	assert_eq(special.caption, "")

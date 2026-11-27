@@ -50,14 +50,12 @@ func test_no_hud_number_is_in_cinzel() -> void:
 	assert_eq(cinzel, [] as Array[String], "numbers set in Cinzel")
 
 
-func test_the_clock_and_the_hit_count_stand_on_a_veil() -> void:
+func test_the_clock_stands_in_its_cartouche_and_the_hit_count_has_an_outline() -> void:
 	await _run()
 	var hud := game.hud
 	hud.on_combo(5)
 	await wait_process_frames(2)
-	var clock := HudVeil.text_rect(hud._clock)
-	assert_true(hud._clock_veil.visible)
-	assert_true(hud._clock_veil.get_global_rect().encloses(clock), "the clock's veil holds its text")
+	assert_true(hud._cartouche.get_global_rect().encloses(hud._clock.get_global_rect()), "the cartouche holds the clock")
 	# the hit count left the field for the bars (UI-HB5, no background): it reads by its dark outline
 	assert_gte(hud._combo.get_theme_constant(&"outline_size"), 4, "the count's own outline")
 	assert_true(hud._combo_row.visible)
@@ -80,7 +78,7 @@ func test_with_a_boss_bar_the_clock_goes_to_the_corner() -> void:
 	assert_lt(hud._boss_box.get_global_rect().position.y, top_middle.y, "the boss's name alone at the top")
 	assert_false(hud._boss_box.get_global_rect().intersects(clock), "nothing stacked")
 	hud._place_clock(false)
-	assert_almost_eq(hud._clock.get_global_rect().get_center().x, view.x * 0.5, 1.0)
+	assert_almost_eq(hud._cartouche.get_global_rect().get_center().x, view.x * 0.5, 1.0)
 
 
 func test_gold_sums_like_the_damage() -> void:

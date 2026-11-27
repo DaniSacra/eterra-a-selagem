@@ -32,13 +32,11 @@ func test_the_column_shows_only_the_blessings_gained() -> void:
 	assert_lt(BuildColumn.height_for(0, 1), BuildColumn.height_for(0))
 
 
-func test_life_stands_over_the_magia_and_the_warriors_is_thin() -> void:
+func test_the_three_bars_stack_gold_blue_red_and_are_alike() -> void:
 	var hud := await _run()
-	assert_lt(hud._life.get_global_rect().position.y, hud._magick.get_global_rect().position.y)
-	assert_eq(hud._life.icon, HudBar.Mark.HEART)
-	# U-3: the Warrior's Magia is a thin quiet bar with no drop (the Maga's keeps it)
-	assert_eq(hud._magick.icon, HudBar.Mark.NONE)
-	assert_lt(hud._magick.size.y, hud._life.size.y)
+	assert_lt(hud._charge.get_global_rect().position.y, hud._magick.get_global_rect().position.y)
+	assert_lt(hud._magick.get_global_rect().position.y, hud._life.get_global_rect().position.y)
+	assert_eq(hud._magick.size, hud._life.size, "HUD v3: the Magia is no longer thin")
 
 
 func test_a_ready_ultimate_keeps_its_ring() -> void:

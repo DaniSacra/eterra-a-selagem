@@ -41,6 +41,10 @@ var ticks := PackedFloat32Array():
 		if v != ticks:
 			ticks = v
 			queue_redraw()
+## HUD v3: the number stands at the right end (inside the point) instead of the middle, and the frame is drawn by someone else
+## (StatBar puts the painted bar_frame over it) when framed is false.
+var text_right := false
+var framed := true
 ## The boss's shield stands (0..1): the bar is veiled in its colour and framed in it.
 var shield := 0.0
 var shield_color := Color(0.4, 1.0, 0.75)
@@ -188,8 +192,9 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var inner := Rect2(Vector2.ZERO, size)
-	_ring(inner.grow(UiKit.FRAME), inner.grow(UiKit.FRAME + INK_WIDTH), UiKit.INK)
-	_ring(inner, inner.grow(UiKit.FRAME), UiKit.OLD_GOLD)
+	if framed:
+		_ring(inner.grow(UiKit.FRAME), inner.grow(UiKit.FRAME + INK_WIDTH), UiKit.INK)
+		_ring(inner, inner.grow(UiKit.FRAME), UiKit.OLD_GOLD)
 	var body := shape(inner)
 	draw_colored_polygon(body, BACK)
 	_band(body, _ratio, trail(), TRAIL, TRAIL, 0.0, size.y)
@@ -223,7 +228,8 @@ func _draw() -> void:
 	if _text != "":
 		var font := UiKit.number_font()
 		var w := font.get_string_size(_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		var at := Vector2((size.x - w) * 0.5, (size.y + font.get_ascent(font_size) - font.get_descent(font_size)) * 0.5).round()
+		var x := size.x - w - size.y * 0.6 - 6.0 if text_right else (size.x - w) * 0.5
+		var at := Vector2(x, (size.y + font.get_ascent(font_size) - font.get_descent(font_size)) * 0.5).round()
 		UiKit.draw_shadow(self, font, at, _text, font_size)
 		draw_string_outline(font, at, _text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, UiKit.INK)
 		draw_string(font, at, _text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiKit.PALE)
@@ -235,12 +241,9 @@ func _draw_icon(c: Vector2) -> void:
 		var k := MARK_SIZE + (1.2 if pass_i == 0 else 0.0)
 		var col := Color(UiKit.INK, 0.9) if pass_i == 0 else UiKit.PALE
 		if icon == Mark.HEART:
-			draw_circle(c + Vector2(-k * 0.5, -k * 0.3), k * 0.55, col)
-			draw_circle(c + Vector2(k * 0.5, -k * 0.3), k * 0.55, col)
-			draw_colored_polygon(PackedVector2Array([c + Vector2(-k * 1.02, -k * 0.1), c + Vector2(k * 1.02, -k * 0.1), c + Vector2(0, k * 1.05)]), col)
+			HudArt.heart(self, c, k, col)
 		else:
-			draw_circle(c + Vector2(0, k * 0.35), k * 0.72, col)
-			draw_colored_polygon(PackedVector2Array([c + Vector2(-k * 0.66, k * 0.2), c + Vector2(k * 0.66, k * 0.2), c + Vector2(0, -k * 1.1)]), col)
+			HudArt.drop(self, c, k, col)
 
 
 ## A boss's phase mark: a dark notch ahead of his life; once passed, old gold with a small diamond over the frame,
