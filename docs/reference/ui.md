@@ -789,3 +789,25 @@ livro (o livro não passa de 1,9 alturas de largura, `BookDesk.side_room`, ou se
   descida feita; save novo tem a Antessala); placeholders `{power}` e `{interact}` em `TipToast.text_of`. Antessala já vinha no núcleo (`AnteLesson.ORDER`).
 - **Textos**: `howto_heavy_attack` e `action_heavy_attack` = "Poder e Especial"; `hero_skill_*`, `hero_passive_desc`, `gloss_armor_text`, `gloss_dash_cut_text`
   e `howto_tip` sem Brado nem Investida.
+
+## HUD v3 (2026-11-27, nova referência do Daniel `docs/art/ref/hud_2026-11-27/hud_gpt.png`; testes em `tests/test_hud_v3.gd`)
+- **Layout** (px a 720 linhas; 1080 = 1,5x): canto superior esquerdo `RoomHeader` (losango, "Sala N de M", filete dourado) com a
+  `ObjectiveLine` logo abaixo; no topo ao centro o relógio na `Cartouche` (ampulheta; com chefe vai para o canto superior direito);
+  embaixo à esquerda o retrato redondo (`HeroCrest`, 104), `RhythmMeter` ("Ritmo de Batalha", leão e filete que enche com
+  `BattleRhythm.share()`) e três `StatBar` (ouro Supremo em %, azul Magia "22/30", vermelho Vida "32/40", medalhão redondo e ponta à
+  direita, valor na ponta); embaixo ao centro quatro `ActionSlot` quadrados (toque e segurar do esquerdo, depois do direito, com o
+  mouse embaixo e o custo em Magia como gota no canto: 0, 12, 8, 20 de `Player.cost_of`), `HudDivider`, a esquiva (Espaço) e o
+  Supremo redondo (Shift, anel dourado que enche com a carga); borda direita `BuildColumn` só com medalhões em losango; canto
+  inferior direito `CoinCorner` entre dois filetes dourados. Saíram: barras finas e legendas, nomes sob os losangos, o card da sala.
+- **Arte** (`HudArt`, `assets/ui/hud_v3/*.png`, 16 peças, cada uma opcional): `HudArt.tex(nome)` devolve null sem o arquivo e o HUD
+  desenha a sua (painel escuro, aro dourado, glifos de golpe, leão, ampulheta). Ícones sem fundo: o slot pinta um fundo escuro por
+  trás; `portrait_warrior` é reduzido para caber na abertura do anel (`HeroCrest`, 0,84 do raio); `divider` (horizontal) é girado.
+- **`ActionSlot` ganhou forma** (`Shape.SQUARE|ROUND`, canto cortado, `piece`, `hold`, `row_side`): cada slot tem um gesto, então
+  `tap_cost`/`hold_cost`/`hold_text` saíram; vale `cost`/`starved` do slot. Mantidos: varredura de recarga, recusa vermelha, anel
+  do segurar (só no slot de segurar), arco do Ritmo (nos golpes fortes), trava da maldição (os dois da direita), luzes do Pastor
+  (Poder), translucidez atrás do herói. A Maga usa dois slots (esquerdo e direito) com os glifos dela; sem Q/C.
+- **Coluna de Bênçãos sem nome fixo** (reverte PT-26-4): o nome aparece à esquerda do medalhão por `NAME_TIME` 4 s quando a Bênção
+  é ganha (`_note_gained`; o que a partida já trazia não conta), enquanto o mouse está sobre o medalhão e sempre na pausa
+  (`names_all`). Recarga (varredura e segundos no medalhão), ponto verde de pronta e pontos de nível seguem. Não há lista no Tab.
+- **Modo horda** e Maga seguem funcionando (mesmos nós; sem Supremo a barra dourada some, sem Ritmo o medidor some).
+- Removidos: `Hud.magick_wakes` (Magia fina que acordava), `_layout_bars(thin)`, `HOLD_TEXT`, `_clock_veil`.

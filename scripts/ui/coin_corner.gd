@@ -41,11 +41,14 @@ func setup() -> CoinCorner:
 	plate.name = "plate"
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	plate.size_flags_horizontal = Control.SIZE_SHRINK_END
-	var sb := UiKit.box(VEIL, Color(0, 0, 0, 0), 0, 0, 6)
-	sb.content_margin_left = 10
-	sb.content_margin_right = 10
-	sb.content_margin_top = 3
-	sb.content_margin_bottom = 3
+	# HUD v3: the row stands between two thin gold rules (the reference's), on a faint veil of ink
+	var sb := UiKit.box(VEIL, Color(UiKit.OLD_GOLD.lightened(0.1), 0.85), 0, 0, 0)
+	sb.border_width_top = 1
+	sb.border_width_bottom = 1
+	sb.content_margin_left = 12
+	sb.content_margin_right = 12
+	sb.content_margin_top = 5
+	sb.content_margin_bottom = 5
 	plate.add_theme_stylebox_override(&"panel", sb)
 	add_child(plate)
 	counts = HBoxContainer.new()

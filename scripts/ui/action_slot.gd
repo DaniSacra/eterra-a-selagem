@@ -21,6 +21,15 @@ extends Control
 ## real state: pulse is the charge being full (Hud._update_ult), the ring goes with it.
 
 const DIAMOND := 54.0
+## HUD v3 (2026-11-27): the same slot in other shapes. The Warrior's row is square slots (a painted picture, the Magia cost as a blue
+## drop in the lower right corner, the mouse or key under it) and the Supremo's round one; the diamond stays for the cards' marks.
+enum Shape { DIAMOND, SQUARE, ROUND }
+## Under a square or round slot: the gap to its key or mouse, and the cost's drop and number.
+const KEY_GAP := 4.0
+const SQUARE_MOUSE_H := 26.0
+const CHAMFER := 5.0
+const RING_GAP := 4.0
+const RING_W := 3.0
 const KEY_H := 17.0
 const KEY_FONT := 14
 ## PT-26-4: the mouse icon under a diamond (px tall: the left and right buttons read apart) and the action's short
@@ -81,6 +90,7 @@ const SEAL_GLYPH := 0.35
 const COST_GEM := 0.46
 const COST_AT := 0.62
 const COST_FONT := 12
+const COST_CORNER_FONT := 14
 const COST_COLOR := Color("2a8fb8")
 ## GP-1: the red of a refused press, the charge ring and the Ritmo's arc.
 const REFUSE_TIME := 0.5
@@ -91,6 +101,13 @@ const RHYTHM_GAP := 4.0
 
 var action: StringName
 var slot: Boon.Slot
+## HUD v3: the shape, the piece of art it shows (HudArt.NAMES; "" none: the Blessing's or the action's glyph) and the tallest
+## slot of its row (the key or mouse of every slot hangs at the same line under it).
+var shape := Shape.DIAMOND
+var piece: StringName = &""
+var row_side := 0.0
+## Which gesture of its button the slot is (the touch or the hold): only the hold ring fills.
+var hold := false
 ## The diamond's height in pixels (DIAMOND; the --hud=row test layout draws them smaller, Hud.ROW_DIAMOND).
 var side := DIAMOND
 ## How far under the diamond's lower point the key's plate stands (0: over the point; the small diamonds of the row
@@ -109,20 +126,6 @@ var cost := 0:
 	set(v):
 		if v != cost:
 			cost = v
-			queue_redraw()
-## GP-1: a button with two gestures (the Warrior's left and right). tap_cost and hold_cost are the Magia of the touch and of the
-## hold (the touch gem sits on the diamond's upper left, the hold gem, ringed, on the upper right; 0 draws none and a button
-## whose touch is free shows only the hold's); each dims on its own when the Magia lacks (tap_starved, hold_starved).
-## hold_text is the hold's name beside label_text ("Ataque · Esmagador").
-var tap_cost := 0
-var hold_cost := 0
-var tap_starved := false
-var hold_starved := false
-var hold_text := "":
-	set(v):
-		if v != hold_text:
-			hold_text = v
-			_fit_width()
 			queue_redraw()
 ## 0..1: how much of the held blow is charged (a ring that fills round the frame; 0 hides it) and the Ritmo's share still to
 ## run (a thin gold arc outside the frame; 0 hides it).
@@ -213,26 +216,31 @@ var _flash := 0.0
 var _release := 0.0
 
 
-func setup(action_name: StringName, action_slot: Boon.Slot, side_px: float = DIAMOND, drop: float = 0.0) -> ActionSlot:
+func setup(action_name: StringName, action_slot: Boon.Slot, side_px: float = DIAMOND, drop: float = 0.0, form: Shape = Shape.DIAMOND) -> ActionSlot:
 	action = action_name
 	slot = action_slot
 	side = side_px
 	key_drop = drop
+	shape = form
 	_fit_width()
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_process(false)
 	return self
 
 
-## The slot is as wide as its diamond, or as its name when "Ataque · Esmagador" is wider.
+## The slot is as wide as its diamond, or as its name when that is wider.
 func _fit_width() -> void:
+	if shape != Shape.DIAMOND:
+		var tall := maxf(row_side, side)
+		custom_minimum_size = Vector2(maxf(side, 44.0) + 8.0, tall + KEY_GAP + SQUARE_MOUSE_H)
+		return
 	var w := UiKit.BOLD_FONT.get_string_size(full_name(), HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT).x + 6.0
 	custom_minimum_size = Vector2(maxf(side + 12.0, w), height_for(side, key_drop))
 
 
-## The name under the key: the touch's, then the hold's when the button has both.
+## The name under the key (the diamonds' only; the square slots of HUD v3 carry none).
 func full_name() -> String:
-	return label_text if hold_text == "" else "%s · %s" % [label_text, hold_text]
+	return label_text
 
 
 ## A press without the Magia for it: the frame goes red for a moment.
@@ -297,39 +305,119 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
+## Where the middle of the body stands: a diamond hangs from the top, a square or round slot rests on the line its key hangs from.
+func _centre() -> Vector2:
+	if shape == Shape.DIAMOND:
+		return Vector2(size.x * 0.5, side * 0.5)
+	return Vector2(size.x * 0.5, maxf(row_side, side) - side * 0.5)
+
+
+## The body's outline at half size r around c: the diamond, the square (round corners) or the circle.
+func _poly(c: Vector2, r: float) -> PackedVector2Array:
+	match shape:
+		Shape.SQUARE:
+			var k := CHAMFER
+			return PackedVector2Array([c + Vector2(-r + k, -r), c + Vector2(r - k, -r), c + Vector2(r, -r + k), c + Vector2(r, r - k),
+				c + Vector2(r - k, r), c + Vector2(-r + k, r), c + Vector2(-r, r - k), c + Vector2(-r, -r + k)])
+		Shape.ROUND:
+			var pts := PackedVector2Array()
+			for i in 40:
+				pts.append(c + Vector2.from_angle(TAU * i / 40.0 - PI * 0.5) * r)
+			return pts
+	return _diamond(c, r)
+
+
+## The same outline as a closed line, starting at the top middle and running clockwise (a ring that fills, a flash).
+func _loop(c: Vector2, r: float) -> PackedVector2Array:
+	var pts := _poly(c, r)
+	if shape == Shape.SQUARE:
+		pts = PackedVector2Array([c + Vector2(0, -r)])
+		pts.append_array(_poly(c, r).slice(1))
+		pts.append(_poly(c, r)[0])
+	pts.append(pts[0])
+	return pts
+
+
+## The first part (0..1) of the outline from the top, clockwise, by length.
+func _trace(c: Vector2, r: float, part: float) -> PackedVector2Array:
+	if shape == Shape.DIAMOND:
+		return _sweep(c, r, part)
+	var loop := _loop(c, r)
+	var total := 0.0
+	for i in loop.size() - 1:
+		total += loop[i].distance_to(loop[i + 1])
+	var want := total * clampf(part, 0.0, 1.0)
+	var pts := PackedVector2Array([loop[0]])
+	var done := 0.0
+	for i in loop.size() - 1:
+		var seg := loop[i].distance_to(loop[i + 1])
+		if done + seg >= want:
+			pts.append(loop[i].lerp(loop[i + 1], (want - done) / maxf(seg, 0.001)))
+			break
+		pts.append(loop[i + 1])
+		done += seg
+	return pts
+
+
+## The part of the body between two heights (shares from the top), as _band does for the diamond.
+func _band(c: Vector2, r: float, from: float, to: float) -> Array[PackedVector2Array]:
+	if shape == Shape.DIAMOND:
+		return band(c, r, from, to)
+	var out: Array[PackedVector2Array] = []
+	from = clampf(from, 0.0, 1.0)
+	to = clampf(to, 0.0, 1.0)
+	if to <= from:
+		return out
+	var y0 := c.y - r + 2.0 * r * from
+	var y1 := c.y - r + 2.0 * r * to
+	var cut := PackedVector2Array([Vector2(c.x - r, y0), Vector2(c.x + r, y0), Vector2(c.x + r, y1), Vector2(c.x - r, y1)])
+	for part in Geometry2D.intersect_polygons(_poly(c, r), cut):
+		out.append(part)
+	return out
+
+
 func _draw() -> void:
-	var c := Vector2(size.x * 0.5, side * 0.5)
+	var c := _centre()
 	var r := side * 0.5
 	var gem := boon.color() if boon else Color(0.3, 0.32, 0.36)
 	var core := r - UiKit.FRAME - 0.5
 	var waiting := wait > 0.0
 	var rim := UiKit.OLD_GOLD.darkened(0.5) if waiting else UiKit.OLD_GOLD.lerp(UiKit.PALE, _flash)
 	var body := lerpf(1.0, SEE_THROUGH, veil)
-	draw_colored_polygon(_diamond(c, r + 2.0), Color(UiKit.INK, 0.92 * body))
-	draw_colored_polygon(_diamond(c, r), Color(rim, body))
-	draw_colored_polygon(_diamond(c, r - UiKit.FRAME), Color(UiKit.INK, body))
-	draw_colored_polygon(_diamond(c, core), Color(gem.darkened(0.78), body) if boon else Color(0.06, 0.045, 0.06, 0.94 * body))
+	var framed := shape != Shape.DIAMOND and HudArt.tex(&"frame_supreme" if shape == Shape.ROUND else &"frame_slot") != null
+	if not framed:  # a painted frame (HudArt) wears the body instead of the drawn rim
+		draw_colored_polygon(_poly(c, r + 2.0), Color(UiKit.INK, 0.92 * body))
+		draw_colored_polygon(_poly(c, r), Color(rim, body))
+	draw_colored_polygon(_poly(c, r - UiKit.FRAME), Color(UiKit.INK, body))
+	draw_colored_polygon(_poly(c, core), Color(gem.darkened(0.78), body) if boon else Color(0.06, 0.045, 0.06, 0.94 * body))
 	if boon:
-		draw_colored_polygon(_diamond(c + Vector2(0, -r * 0.08), r * 0.72), Color(gem.darkened(0.5), body))
-		draw_colored_polygon(_diamond(c + Vector2(0, -r * 0.16), r * 0.4), Color(gem.darkened(0.1), 0.55 * body))
+		draw_colored_polygon(_poly(c + Vector2(0, -r * 0.08), r * 0.72), Color(gem.darkened(0.5), body))
+		draw_colored_polygon(_poly(c + Vector2(0, -r * 0.16), r * 0.4), Color(gem.darkened(0.1), 0.55 * body))
 	var lift := r * 0.14 if charges_max > 0 or starved else 0.0
 	var ink := Color(IVORY, BUSY_ALPHA) if busy() else IVORY
+	if starved and shape != Shape.DIAMOND:
+		ink.a *= 0.5
 	if busy():
-		draw_colored_polygon(_diamond(c, core), VEIL)
-		for part in band(c, core, wait, 1.0):
+		draw_colored_polygon(_poly(c, core), VEIL)
+		for part in _band(c, core, wait, 1.0):
 			draw_colored_polygon(part, Color(UiKit.OLD_GOLD, REFILL_ALPHA))
 	if locked > 0.0:
-		draw_colored_polygon(_diamond(c, core), LOCK_VEIL)
+		draw_colored_polygon(_poly(c, core), LOCK_VEIL)
 		ink = Color(IVORY, LOCK_GLYPH)
 	if sealed:
-		draw_colored_polygon(_diamond(c, core), SEAL_VEIL)
+		draw_colored_polygon(_poly(c, core), SEAL_VEIL)
 		ink = Color(IVORY, SEAL_GLYPH)
-	var shape := glyph if glyph >= 0 else boon.icon if boon else BoonIcon.ACTION_GLYPH + slot
-	BoonIcon.glyph(self, shape, c - Vector2(0, lift), r * 0.42, ink, gem.darkened(0.5))
+	if shape != Shape.DIAMOND and glyph < 0 and piece != &"":
+		HudArt.draw_icon(self, piece, c - Vector2(0, lift), r * 0.78, Color(1, 1, 1, ink.a * body))
+	else:
+		var glyph_id := glyph if glyph >= 0 else boon.icon if boon else BoonIcon.ACTION_GLYPH + slot
+		BoonIcon.glyph(self, glyph_id, c - Vector2(0, lift), r * (0.42 if shape == Shape.DIAMOND else 0.55), ink, gem.darkened(0.5))
+	if framed:
+		HudArt.draw_tex(self, HudArt.tex(&"frame_supreme" if shape == Shape.ROUND else &"frame_slot"), c, r + 3.0)
 	if locked > 0.0:
 		# the violet line around the frame, shrinking from the top as the lock runs out, and the padlock over the glyph
-		draw_polyline(_closed(_diamond(c, r - UiKit.FRAME * 0.5)), Color(LOCK.darkened(0.5), 0.9), UiKit.FRAME, true)
-		var left := _sweep(c, r - UiKit.FRAME * 0.5, locked)
+		draw_polyline(_loop(c, r - UiKit.FRAME * 0.5), Color(LOCK.darkened(0.5), 0.9), UiKit.FRAME, true)
+		var left := _trace(c, r - UiKit.FRAME * 0.5, locked)
 		if left.size() > 1:
 			draw_polyline(left, LOCK.lightened(0.2), UiKit.FRAME + 1.0, true)
 		padlock(self, c + Vector2(0, r * 0.08), r * 0.34, LOCK.lightened(0.55))
@@ -339,15 +427,23 @@ func _draw() -> void:
 		_draw_ready(c, r)
 	if _release > 0.0:
 		var k := 1.0 - _release
-		draw_polyline(_closed(_diamond(c, r + 2.0 + RELEASE_REACH * ease(k, 0.4))), Color(UiKit.PALE, _release * 0.9), 2.0, true)
-		draw_colored_polygon(_diamond(c, core), Color(LOCK.lightened(0.6), 0.35 * _release * _release))
+		draw_polyline(_loop(c, r + 2.0 + RELEASE_REACH * ease(k, 0.4)), Color(UiKit.PALE, _release * 0.9), 2.0, true)
+		draw_colored_polygon(_poly(c, core), Color(LOCK.lightened(0.6), 0.35 * _release * _release))
 	if waiting:
 		# the recharge: a pale line running around the frame, from the top, clockwise
-		var done := _sweep(c, r - UiKit.FRAME * 0.5, 1.0 - wait)
-		if done.size() > 1:
-			draw_polyline(done, UiKit.PALE, UiKit.FRAME, true)
+		if shape == Shape.ROUND:
+			# the supremo's charge: a gold ring outside the frame filling clockwise over a dark track
+			var out := r + RING_GAP
+			draw_polyline(_loop(c, out), Color(UiKit.INK, 0.7), RING_W + 2.0, true)
+			var ring := _trace(c, out, 1.0 - wait)
+			if ring.size() > 1:
+				draw_polyline(ring, UiKit.OLD_GOLD.lightened(0.3), RING_W, true)
+		else:
+			var done := _trace(c, r - UiKit.FRAME * 0.5, 1.0 - wait)
+			if done.size() > 1:
+				draw_polyline(done, UiKit.PALE, UiKit.FRAME, true)
 	if _flash > 0.0:
-		draw_polyline(_closed(_diamond(c, r + 2.0 + 4.0 * (1.0 - _flash))), Color(UiKit.PALE, _flash * 0.8), 1.5, true)
+		draw_polyline(_loop(c, r + 2.0 + 4.0 * (1.0 - _flash)), Color(UiKit.PALE, _flash * 0.8), 1.5, true)
 	if secs_left > 0 and waiting:
 		# last, over the sweep line and the pips: one style for every slot (UI review 2026-11-26, item 16)
 		_draw_secs(c)
@@ -355,7 +451,7 @@ func _draw() -> void:
 		var p := c + Vector2((i - (charges_max - 1) * 0.5) * CHARGE_GAP, r * 0.46)
 		draw_colored_polygon(_diamond(p, CHARGE + 1.5), UiKit.INK)
 		draw_colored_polygon(_diamond(p, CHARGE), CHARGE_LIT if i < charges else CHARGE_SPENT)
-	if starved:
+	if starved and shape == Shape.DIAMOND:
 		var bar := Rect2(c + Vector2(-STARVED_SIZE.x * 0.5, r * 0.46 - STARVED_SIZE.y * 0.5), STARVED_SIZE)
 		draw_rect(bar.grow(1.0), UiKit.INK)
 		draw_rect(bar, STARVED)
@@ -364,28 +460,27 @@ func _draw() -> void:
 		draw_colored_polygon(_diamond(p, LIGHT + 1.5), UiKit.INK)
 		draw_colored_polygon(_diamond(p, LIGHT), light_color if i < lights else CHARGE_SPENT)
 	if cost > 0:
-		_draw_cost(c + Vector2(r * COST_AT, -r * COST_AT), r * COST_GEM, cost, starved)
-	if hold_cost > 0:
-		var at := c + Vector2(r * COST_AT, -r * COST_AT)
-		_draw_cost(at, r * COST_GEM, hold_cost, hold_starved)
-		# the hold's gem wears a ring (a touch has none)
-		draw_arc(at, r * COST_GEM + 3.0, 0.0, TAU, 16, Color(COST_COLOR.lightened(0.3), 0.4 if hold_starved else 0.9), 1.5, true)
-	if tap_cost > 0:
-		_draw_cost(c + Vector2(-r * COST_AT, -r * COST_AT), r * COST_GEM, tap_cost, tap_starved)
+		if shape == Shape.DIAMOND:
+			_draw_cost(c + Vector2(r * COST_AT, -r * COST_AT), r * COST_GEM, cost, starved)
+		else:
+			_draw_cost_corner(c + Vector2(r, r), cost, starved)
 	if rhythm > 0.0:
-		var arc := _sweep(c, r + 2.0 + RHYTHM_GAP, rhythm)
+		var arc := _trace(c, r + 2.0 + RHYTHM_GAP, rhythm)
 		if arc.size() > 1:
 			draw_polyline(arc, Color(UiKit.INK, 0.8), 4.0, true)
 			draw_polyline(arc, RHYTHM_COLOR, 2.0, true)
 	if charge > 0.0:
-		var ring := _sweep(c, r - UiKit.FRAME * 0.5, charge)
+		var ring := _trace(c, r - UiKit.FRAME * 0.5, charge)
 		if ring.size() > 1:
 			draw_polyline(ring, Color(UiKit.INK, 0.85), UiKit.FRAME + 3.0, true)
 			draw_polyline(ring, READY_COLOR if charge >= 1.0 else CHARGE_RING, UiKit.FRAME + 1.0, true)
 	if _refused > 0.0:
-		draw_polyline(_closed(_diamond(c, r + 1.0)), Color(REFUSE_COLOR, minf(1.0, _refused / REFUSE_TIME * 1.4)), 3.0, true)
-	_draw_key(Vector2(c.x, side + key_drop))
-	if full_name() != "":
+		draw_polyline(_loop(c, r + 1.0), Color(REFUSE_COLOR, minf(1.0, _refused / REFUSE_TIME * 1.4)), 3.0, true)
+	if shape != Shape.DIAMOND:
+		_draw_key(Vector2(c.x, maxf(row_side, side) + KEY_GAP + SQUARE_MOUSE_H * 0.5))
+	else:
+		_draw_key(Vector2(c.x, side + key_drop))
+	if full_name() != "" and shape == Shape.DIAMOND:
 		_draw_name(Vector2(c.x, side + key_drop + maxf(KEY_H, MOUSE_H) * 0.5 + NAME_H - 3.0))
 	if caption != "":
 		_draw_caption(Vector2(c.x, c.y - r - CAPTION_RISE))
@@ -415,8 +510,8 @@ func _draw_secs(c: Vector2) -> void:
 
 ## The Magia cost: a small gem of Magia's blue with the number in lining figures, ink round both.
 func _draw_cost(at: Vector2, half: float, amount: int, dim: bool) -> void:
-	draw_colored_polygon(_diamond(at, half + 1.5), UiKit.INK)
-	draw_colored_polygon(_diamond(at, half), COST_COLOR.darkened(0.55) if dim else COST_COLOR.darkened(0.2))
+	draw_colored_polygon(_poly(at, half + 1.5), UiKit.INK)
+	draw_colored_polygon(_poly(at, half), COST_COLOR.darkened(0.55) if dim else COST_COLOR.darkened(0.2))
 	var font := UiKit.number_font()
 	var text := str(amount)
 	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, COST_FONT).x
@@ -424,18 +519,32 @@ func _draw_cost(at: Vector2, half: float, amount: int, dim: bool) -> void:
 	draw_string(font, base, text, HORIZONTAL_ALIGNMENT_LEFT, -1, COST_FONT, UiKit.PALE if not dim else Color(UiKit.PALE, 0.6))
 
 
+## HUD v3: the Magia cost in the lower right corner of a slot: a blue drop and the number in lining figures on a small ink plate.
+func _draw_cost_corner(corner: Vector2, amount: int, dim: bool) -> void:
+	var font := UiKit.number_font()
+	var text := str(amount)
+	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, COST_CORNER_FONT).x
+	var h := float(COST_CORNER_FONT) + 3.0
+	var plate := Rect2(corner + Vector2(-(w + 16.0) - 2.0, -h - 2.0), Vector2(w + 16.0, h))
+	draw_style_box(UiKit.box(Color(UiKit.INK, 0.82), Color(0, 0, 0, 0), 0, 0, 4), plate)
+	var blue := COST_COLOR.darkened(0.5) if dim else COST_COLOR.lightened(0.3)
+	HudArt.drop(self, Vector2(plate.position.x + 7.0, plate.get_center().y), 4.2, blue)
+	var base := Vector2(plate.end.x - w - 3.0, plate.get_center().y + (font.get_ascent(COST_CORNER_FONT) - font.get_descent(COST_CORNER_FONT)) * 0.5).round()
+	draw_string(font, base, text, HORIZONTAL_ALIGNMENT_LEFT, -1, COST_CORNER_FONT, UiKit.PALE if not dim else Color(UiKit.PALE, 0.6))
+
+
 ## The ready ultimate: the closed ring of light around the frame (over a dark line so it holds on a lit floor),
 ## breathing a little, and, just after it fills, one pulse running out of it.
 func _draw_ready(c: Vector2, r: float) -> void:
-	var ring := _closed(_diamond(c, r + 2.0 + READY_GAP))
+	var ring := _loop(c, r + 2.0 + READY_GAP)
 	var breath := 1.0 - (URGENT_BREATH if urgent else READY_BREATH) * (0.5 + 0.5 * cos(TAU * _pulse_t / PULSE_PERIOD))
 	var width := URGENT_W if urgent else READY_W
 	draw_polyline(ring, Color(UiKit.INK, 0.8), width + 2.0, true)
 	draw_polyline(ring, Color(READY_COLOR, breath), width, true)
 	if _ready_pulse > 0.0:
 		var k := 1.0 - _ready_pulse
-		draw_polyline(_closed(_diamond(c, r + 2.0 + READY_GAP + PULSE_REACH * ease(k, 0.4))), Color(READY_COLOR, 0.9 * _ready_pulse), 2.0, true)
-		draw_colored_polygon(_diamond(c, r - UiKit.FRAME - 0.5), Color(READY_COLOR, 0.25 * _ready_pulse * _ready_pulse))
+		draw_polyline(_loop(c, r + 2.0 + READY_GAP + PULSE_REACH * ease(k, 0.4)), Color(READY_COLOR, 0.9 * _ready_pulse), 2.0, true)
+		draw_colored_polygon(_poly(c, r - UiKit.FRAME - 0.5), Color(READY_COLOR, 0.25 * _ready_pulse * _ready_pulse))
 
 
 ## Whether the ready ring is drawn now (the tests read it).
@@ -490,6 +599,9 @@ static func key_plate(ci: CanvasItem, at: Vector2, text: String, font_size: int,
 
 ## A mouse seen from above with the bound button lit (MouseGlyph).
 func _draw_mouse(at: Vector2) -> void:
+	if shape != Shape.DIAMOND:
+		MouseGlyph.draw(self, at, _mouse, SQUARE_MOUSE_H)
+		return
 	MouseGlyph.draw(self, at + Vector2(0, (MOUSE_H - KEY_H) * 0.5 - 4.0), _mouse, MOUSE_H)
 
 

@@ -13,56 +13,55 @@ func _run() -> Hud:
 	return game.hud
 
 
-func test_the_warrior_has_four_groups_and_no_q_nor_e() -> void:
+func test_the_warrior_has_four_blows_the_dodge_and_the_supremo_and_no_q_nor_e() -> void:
 	var hud := await _run()
-	var actions: Array[StringName] = []
+	var seen: Array[String] = []
 	for s: ActionSlot in hud._slots:
-		actions.append(s.action)
-	assert_eq(actions, [&"light_attack", &"heavy_attack", &"dodge"] as Array[StringName], "left, right, Space (Shift is the ultimate's)")
+		seen.append("%s:%s" % [s.action, s.hold])
+	assert_eq(seen, ["light_attack:false", "light_attack:true", "heavy_attack:false", "heavy_attack:true", "dodge:false"],
+			"touch and hold of each button, then Space (Shift is the Supremo's round slot)")
 	assert_not_null(hud._ult_slot)
+	assert_eq(hud._ult_slot.shape, ActionSlot.Shape.ROUND)
 
 
-func test_each_half_shows_its_name_and_its_magia() -> void:
+func test_each_blow_shows_its_own_magia() -> void:
 	var hud := await _run()
-	var left: ActionSlot = hud._slots[0]
-	var right: ActionSlot = hud._slots[1]
-	assert_eq(left.full_name(), "%s · %s" % [T.t(&"hud_slot_light_attack"), T.t(&"hud_hold_attack")])
-	assert_eq(right.full_name(), "%s · %s" % [T.t(&"hud_slot_heavy_attack"), T.t(&"hud_hold_heavy_attack")])
-	assert_eq(left.tap_cost, 0, "the combo is free")
-	assert_eq(left.hold_cost, 12, "the Esmagador")
-	assert_eq(right.tap_cost, 8, "the Corte Circular")
-	assert_eq(right.hold_cost, 20, "the Lança da Emeth")
-	assert_gte(left.custom_minimum_size.x, left.side + 12.0)
+	var costs: Array[int] = []
+	for i in 4:
+		costs.append((hud._slots[i] as ActionSlot).cost)
+	assert_eq(costs, [0, 12, 8, 20] as Array[int], "the combo is free, the Esmagador, the Corte Circular, the Lança")
 
 
-func test_a_half_dims_alone_when_the_magia_lacks() -> void:
+func test_a_slot_dims_alone_when_its_magia_lacks() -> void:
 	var hud := await _run()
-	var right: ActionSlot = hud._slots[1]
+	var power: ActionSlot = hud._slots[2]
+	var lance: ActionSlot = hud._slots[3]
 	game.player.magick.value = 10.0
 	await wait_process_frames(2)
-	assert_false(right.tap_starved, "8 is there")
-	assert_true(right.hold_starved, "20 is not")
+	assert_false(power.starved, "8 is there")
+	assert_true(lance.starved, "20 is not")
 	game.player.magick.value = 0.0
 	await wait_process_frames(2)
-	assert_true(right.tap_starved)
+	assert_true(power.starved)
 	game.player.magick.value = game.player.magick.max_value
 	await wait_process_frames(2)
-	assert_false(right.hold_starved)
+	assert_false(lance.starved)
 
 
 func test_the_magia_bar_marks_the_costs() -> void:
 	var hud := await _run()
 	await wait_process_frames(2)
 	var max_v := game.player.magick.max_value
-	assert_eq(hud._magick.ticks.size(), 3, "the Corte Circular, the Esmagador, the Lança")
-	assert_almost_eq(hud._magick.ticks[0], 8.0 / max_v, 0.001)
-	assert_almost_eq(hud._magick.ticks[2], 20.0 / max_v, 0.001)
+	assert_eq(hud._magick.bar.ticks.size(), 3, "the Corte Circular, the Esmagador, the Lança")
+	assert_almost_eq(hud._magick.bar.ticks[0], 8.0 / max_v, 0.001)
+	assert_almost_eq(hud._magick.bar.ticks[2], 20.0 / max_v, 0.001)
 
 
 func test_a_refusal_flashes_the_pressed_frame_and_says_it() -> void:
 	var hud := await _run()
-	var right: ActionSlot = hud._slots[1]
+	var right: ActionSlot = hud._slots[2]
 	game.player.magick.value = 0.0
+	await wait_process_frames(2)
 	Input.action_press(&"heavy_attack")
 	hud._on_magick_refused()
 	Input.action_release(&"heavy_attack")
@@ -72,12 +71,14 @@ func test_a_refusal_flashes_the_pressed_frame_and_says_it() -> void:
 
 func test_the_rhythm_arc_follows_the_armed_rhythm() -> void:
 	var hud := await _run()
-	var right: ActionSlot = hud._slots[1]
+	var right: ActionSlot = hud._slots[3]
 	await wait_process_frames(2)
 	assert_eq(right.rhythm, 0.0, "not armed")
+	assert_eq(hud._rhythm.share, 0.0)
 	game.hero_gifts.rhythm.arm()
 	await wait_process_frames(2)
 	assert_gt(right.rhythm, 0.0)
+	assert_gt(hud._rhythm.share, 0.0, "the Ritmo's gold line fills while it is armed")
 	game.hero_gifts.rhythm.clear()
 
 

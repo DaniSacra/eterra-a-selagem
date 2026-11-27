@@ -1,16 +1,16 @@
 class_name Hud
 extends Control
-## What stays on screen during the run (Lote 2 of the SWORN reference, 2026-11-21: layout approved by the Daniel).
-## Bottom left: the paladin's medallion and, beside it, the bars stacked: Magia above, life under it (numbers on both),
-## the ultimate's charge thin at the foot. Bottom centre: the actions as diamonds (the gift on each, the key, the
-## recharge, the dodges, the rajada's Magia cost and "Sem Magia"), the Brado's buff running over its diamond. Right edge:
-## the build column (BuildColumn, one Blessing per button). Bottom right: the coins and what was just picked up
-## (CoinCorner), the gifts that act alone above them. When life runs low the borders darken (LifeVignette).
-## Top: the room (or the level), the clock, the gold (or the kills); the boss's life under the clock. Right: the
-## hit count and the move's name. Everything sits on the edges so the middle of the screen stays for the fight: the
-## actions turn translucent while someone stands behind them, and small chevrons on the edge point at the elites,
-## the guardian or the boss out of view (the diamonds keep their glyph, recharge and key whole, ActionSlot.veil). One gold for the frames (UiKit.OLD_GOLD, UiKit.FRAME wide), one shadow
-## under every text (UiKit.shadow).
+## What stays on screen during the run. HUD v3 (2026-11-27, after Daniel's new reference hud_gpt.png): top left "Sala 8 de 14" with a
+## diamond mark, a thin gold rule and the objective under it (RoomHeader, ObjectiveLine); top middle the clock in a cartouche with an
+## hourglass (Cartouche); bottom left the round portrait, "Ritmo de Batalha" with its thin gold line (RhythmMeter) and three bars with
+## round medallions, the Supremo's charge in gold, Magia in blue, life in red, each with its value on its right end (StatBar); bottom
+## centre the four blows as square painted slots, left touch, left hold, right touch, right hold, the mouse under each and the Magia
+## cost as a drop in its corner, a gold divider, then the dodge with its key cap and the round Supremo with its ring (ActionSlot);
+## right edge a column of Blessing medallions in diamond frames, icons only, the name for a few seconds when gained or under the
+## mouse (BuildColumn); bottom right the coins between two gold rules (CoinCorner). The art lives in assets/ui/hud_v3/ and every
+## piece falls back to a drawn one (HudArt). Everything sits on the edges so the middle of the screen stays for the fight: the slots
+## turn translucent while someone stands behind them, and small chevrons on the edge point at the elites, the guardian or the boss
+## out of view. One gold for the frames (UiKit.OLD_GOLD, UiKit.FRAME wide), one shadow under every text (UiKit.shadow).
 ## A boss's curse: a seal beside the medallion with a ring that empties and two short lines (what it is, what it
 ## does), the medallion's ring tinted violet, the special's diamond locked until a ring of light says it is back.
 ## A boss's phase: the mark reached on his bar lights and the phase's name shows under the bar for PHASE_TIME (the
@@ -33,62 +33,51 @@ const BOSS_COLOR := Color(0.62, 0.22, 0.85)
 const MARGIN := 22.0
 ## SW-O2: the objective line stands under "Sala N de M"; how often the context is read, and the seconds of standing still
 ## in the Antessala before the line blinks once.
-const OBJ_TOP := 42.0
+const OBJ_TOP := 8.0 + RoomHeader.HEIGHT + 2.0
 const OBJ_EVERY := 0.2
 const OBJ_IDLE := 25.0
 const MILESTONES := "res://scripts/core/milestones.gd"
-const CREST := 76.0
-const LIFE := Vector2(244, 19)
-const MAGICK := Vector2(196, 15)
-## Magia's bar as wide as life's (the stack reads as one block, Magia on top).
-const MAGICK_WIDE := Vector2(244, 15)
-## U-3: the Warrior's Magia is a thin, quiet bar under the life (the sword does the work); it lights for HOT_TIME seconds
-## when it rises, is spent or its buttons are held, and only then says its number.
-const MAGICK_THIN := Vector2(196, 8)
-const MAGICK_IDLE_ALPHA := 0.5
-const HOT_TIME := 1.6
-## Lining figures (UiKit.number_font): at these sizes the numbers stand 9 px tall or more at 720 lines.
-const LIFE_FONT := 16
-const MAGICK_FONT := 15
+const CREST := 104.0
+## HUD v3: the three bars (a medallion, the bar, its value) beside the portrait, the gap between them and the Ritmo's line over them.
+const STAT := Vector2(208, 23)
+const STAT_GAP := 2.0
+const RHYTHM_H := 26.0
+const RHYTHM_GAP := 3.0
+const BARS_GAP := 10.0
+## The Magia ticks the Warrior's costs mark on its bar, and the number of the bars' fonts live in StatBar.
 const BOSS := Vector2(480, 12)
 const PASSIVE_ICON := 30
 const PASSIVE_GAP := 4
 ## The row of gifts that act alone ends at this share of the screen's width; past it the last place says "+N" (BUG-105).
 ## Those with a recharge go first: their timer is what is worth a glance in a fight.
 const PASSIVE_EDGE := 0.96
-## The row (P1-4 of the Hades II UI benchmark, 2026-11-21 centred as in Ravenswatch): the six diamonds (ROW_DIAMOND,
-## about 54 px at 1080) centred at the foot of the screen on a band of ink (HudVeil) so the crowd does not run between
-## them, their bodies veiled only by the hero standing behind (never by the crowd). The hit count stands on the row's
-## line, right of the last diamond, the move's name under it; the curse's badge and the Provação's seal (conditions, not
-## always there) stand over the medallion and the bars.
-const ROW_DIAMOND := 36.0
+## The row of slots at the foot (HUD v3): the four blows are ROW_SLOT squares, the dodge DODGE_SLOT, the Supremo's round slot SUPREME_SLOT;
+## the gap between two slots. The hit count stands on the row's line, right of the last slot, the move's name over the row's middle;
+## the curse's badge and the Provação's seal (conditions, not always there) stand over the portrait and the bars.
+const ROW_SLOT := 48.0
+const DODGE_SLOT := 38.0
+const SUPREME_SLOT := 56.0
 const ROW_GAP := 6
-## The keys hang under the diamonds' point (ActionSlot.key_drop): the little mouse is 22 px tall.
-const ROW_KEY_DROP := 7.0
-const ROW_CAPTION := 20.0
 ## The ink plate under the row: its height (px at 720 lines, 150 at 1080) and its darkest opacity at the bottom edge.
 const FLOOR_VEIL_H := 100.0
 const FLOOR_VEIL_ALPHA := 0.55
-## The bars beside the medallion (Magia over life, the ultimate's charge thin under them): the gap from the medallion,
-## the thin bar's size and the gap between two frames (they share one line of ink).
-const BARS_GAP := 12.0
-const CHARGE := Vector2(196, 6)
-const BAR_GAP := 2.0 * UiKit.FRAME + 1.0
-## The bars beside the medallion, life over Magia over the ultimate's charge. thin: the Warrior's quiet Magia (U-3); the
-## Maga, whose staff lives on it, keeps it wide with its number and the drop.
-func _layout_bars(thin: bool) -> void:
-	_magick_thin = thin
-	var mag := MAGICK_THIN if thin else MAGICK_WIDE
+## The bars' stack beside the portrait, bottom to top: life, Magia, the Supremo's charge, the Ritmo de Batalha. Where its bottom stands
+## (px over the screen's) and its height.
+func _stack_height() -> float:
+	return STAT.y * 3.0 + STAT_GAP * 2.0 + RHYTHM_GAP + RHYTHM_H
+
+
+func _stack_low() -> float:
+	return MARGIN + (CREST - _stack_height()) * 0.5
+
+
+func _layout_bars() -> void:
 	var x := MARGIN + CREST + BARS_GAP
-	var stack := CHARGE.y + LIFE.y + mag.y + 2.0 * BAR_GAP
-	var low := MARGIN + (CREST - stack) * 0.5
-	_place(_charge, Control.PRESET_BOTTOM_LEFT, Vector2(x, -low), CHARGE)
-	_place(_life, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + CHARGE.y + mag.y + 2.0 * BAR_GAP)), LIFE)
-	_magick.custom_minimum_size = mag
-	_magick.icon = HudBar.Mark.NONE if thin else HudBar.Mark.DROP
-	_magick.caption = T.t(&"hud_magick") if thin else ""
-	_place(_magick, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + CHARGE.y + BAR_GAP)), mag)
-	_magick.queue_redraw()
+	var low := _stack_low()
+	var steps := [_life, _magick, _charge]
+	for i in steps.size():
+		_place(steps[i], Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + i * (STAT.y + STAT_GAP))), STAT)
+	_place(_rhythm, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + 3.0 * (STAT.y + STAT_GAP) - STAT_GAP + RHYTHM_GAP)), _rhythm.size)
 
 
 ## The build column on the right edge: where its middle stands (share of the height) and the room it keeps (the edge
@@ -107,7 +96,7 @@ const FONT_TEXT := 19
 const FONT_CLOCK := 22
 ## The clock's box, where it stands (top middle) and, while a boss's bar is up, in the top right corner; the
 ## boss's bar under the clock, or at the top alone while the clock is in the corner.
-const CLOCK_BOX := Vector2(120, 30)
+const CLOCK_BOX := Vector2(152, 34)
 const CLOCK_Y := 7.0
 const CLOCK_BOSS_Y := 7.0
 const BOSS_TOP := 42.0
@@ -189,10 +178,9 @@ const SLOTS: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.
 ## The Maga's marks over the diamonds that carry no Blessing (M1b); Q and E always wear theirs.
 const MAGA_GLYPHS := {&"light_attack": BoonIcon.BOLT_GLYPH, &"heavy_attack": BoonIcon.BLAST_GLYPH, &"shout": BoonIcon.ACTION_GLYPH + Boon.Slot.CAST,
 	&"rush": BoonIcon.DOME_GLYPH}
-## GP-1: the hold's name beside each button's own (the Warrior's two buttons have a touch and a hold).
-const HOLD_TEXT := {&"light_attack": &"hud_hold_attack", &"heavy_attack": &"hud_hold_heavy_attack"}
-## Between the room's number and what lies beyond the doors.
-const AHEAD_GAP := 14
+## HUD v3: the four blows of the Warrior's two buttons, in the row's order: the button, whether it is the hold, the art of the slot.
+const BLOWS: Array[Array] = [[&"light_attack", false, &"icon_attack"], [&"light_attack", true, &"icon_smash"],
+	[&"heavy_attack", false, &"icon_power"], [&"heavy_attack", true, &"icon_lance"]]
 ## Seconds the ultimate's caption shows after a refused press or when it fills (T5).
 const ULT_HINT_TIME := 1.8
 ## UI 10: with the charge full and life below this share the ready ring pulses harder.
@@ -216,19 +204,18 @@ var _door_told := false
 var _crest: HeroCrest
 ## The hero whose face the crest shows (the Maga has her own portrait).
 var _crest_hero: StringName = &""
-var _life: HudBar
-var _magick: HudBar
-var _magick_thin := true
-var _magick_hot := 0.0
-var _magick_last := -1.0
-## The ultimate's charge, thin under the life bar.
-var _charge: HudBar
+var _life: StatBar
+var _magick: StatBar
+## The Supremo's charge, in gold over the Magia's bar, and the Ritmo de Batalha over it.
+var _charge: StatBar
+var _rhythm: RhythmMeter
 var _charge_shown := false
 var _room: Label
 ## What lies beyond the open doors, beside the room's number (Rooms.ahead_text: Discernimento II, the Prévia dos anjos).
 var ahead: Label
 var _clock: Label
-var _clock_veil: HudVeil
+var _cartouche: Cartouche
+var _head: RoomHeader
 var _clock_at_boss := false
 ## The materials greeted so far, by "material/source" (Rejogabilidade, Fatia 1: _greet_materials).
 var _found_seen := {}
@@ -378,28 +365,17 @@ func _build_top() -> void:
 	_xp_back.offset_bottom = 4
 	_xp_fill = _rect(UiKit.GOLD, Control.PRESET_TOP_LEFT)
 	_xp_fill.size = Vector2(0, 4)
-	var top_left := HBoxContainer.new()
-	top_left.name = "top_left"
-	top_left.add_theme_constant_override(&"separation", AHEAD_GAP)
-	top_left.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(top_left)
-	_place(top_left, Control.PRESET_TOP_LEFT, Vector2(MARGIN, 8), Vector2(300, 32))
-	# every number of the HUD in lining figures (UiKit.number_font): Cinzel's 1 is a bare stroke, "Sala 1 de 11" read
-	# "SALA I DE II" (UI review d2ff05d, P0-1)
-	_room = UiKit.shadow(UiKit.label("", UiKit.PALE, FONT_TEXT, UiKit.number_font()))
-	_room.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	top_left.add_child(_room)
-	ahead = UiKit.shadow(UiKit.label("", UiKit.PALE, FONT_SMALL, UiKit.number_font()))
-	ahead.name = "ahead"
-	ahead.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	top_left.add_child(ahead)
+	_head = RoomHeader.new().setup()
+	add_child(_head)
+	_place(_head, Control.PRESET_TOP_LEFT, Vector2(MARGIN, 8), _head.size)
+	_room = _head.room
+	ahead = _head.ahead
 	objective = ObjectiveLine.new()
 	add_child(objective)
 	_place(objective, Control.PRESET_TOP_LEFT, Vector2(MARGIN, OBJ_TOP), Vector2(ObjectiveLine.WIDTH, ObjectiveLine.HEIGHT))
-	_clock = _label("0:00", UiKit.PALE, FONT_CLOCK, UiKit.number_font(), Control.PRESET_CENTER_TOP, Vector2.ZERO)
-	_clock.name = "clock"
-	_clock.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_clock_veil = _veil([_clock])
+	_cartouche = Cartouche.new().setup(CLOCK_BOX)
+	add_child(_cartouche)
+	_clock = _cartouche.label
 	_coins = CoinCorner.new().setup()
 	add_child(_coins)
 	_place(_coins, Control.PRESET_BOTTOM_RIGHT, Vector2(-MARGIN, -MARGIN), Vector2(220, 60))
@@ -528,21 +504,21 @@ func _update_entrance(delta: float) -> void:
 	_entrance_veil.modulate.a *= _entrance.modulate.a
 
 
-## Bottom left: the medallion and, beside it, Magia over life over the ultimate's thin charge, centred on its height.
+## Bottom left: the portrait and, beside it, the three bars (life under Magia under the Supremo's charge) with the Ritmo de Batalha over them.
 func _build_life() -> void:
-	_charge = HudBar.new().setup(UiKit.OLD_GOLD.lightened(0.15), CHARGE, 1, false, UiKit.OLD_GOLD.darkened(0.45))
+	_charge = StatBar.new().setup(StatBar.Kind.SUPREME, STAT)
 	_charge.name = "charge"
-	_charge.caption = T.t(&"hud_bar_ult")
 	add_child(_charge)
-	_life = HudBar.new().setup(LIFE_COLOR, LIFE, LIFE_FONT, false, LIFE_BOTTOM)
-	add_child(_life)
-	_life.icon = HudBar.Mark.HEART
-	_magick = HudBar.new().setup(MAGICK_COLOR, MAGICK_THIN, MAGICK_FONT, false, MAGICK_BOTTOM)
+	_magick = StatBar.new().setup(StatBar.Kind.MAGIC, STAT)
 	add_child(_magick)
-	_layout_bars(true)
+	_life = StatBar.new().setup(StatBar.Kind.LIFE, STAT)
+	add_child(_life)
+	_rhythm = RhythmMeter.new().setup(STAT.x)
+	add_child(_rhythm)
+	_layout_bars()
 	var x := MARGIN + CREST + BARS_GAP
-	var stack := CHARGE.y + LIFE.y + MAGICK_WIDE.y + 2.0 * BAR_GAP
-	var low := MARGIN + (CREST - stack) * 0.5
+	var stack := _stack_height()
+	var low := _stack_low()
 	_crest = HeroCrest.new().setup(CREST)
 	add_child(_crest)
 	_place(_crest, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN, -MARGIN), Vector2(CREST, CREST))
@@ -585,25 +561,30 @@ func _build_actions() -> void:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(row)
 	var arcane := game != null and game.hero != null and game.hero.arcane != null
-	for i in ACTIONS.size():
-		if RETIRED.has(ACTIONS[i]):
-			continue  # GP-1 and GP-5: no hero has Q nor E any more: four groups, left, right, Shift, Space
-		if ACTIONS[i] == &"dodge":  # Shift (the ultimate) stands before Space
-			_ult_slot = ActionSlot.new().setup(&"ultimate", Boon.Slot.NONE, ROW_DIAMOND, ROW_KEY_DROP)
-			_ult_slot.label_text = T.t(&"hud_slot_ultimate")
-			row.add_child(_ult_slot)
-		var s := ActionSlot.new().setup(ACTIONS[i], SLOTS[i], ROW_DIAMOND, ROW_KEY_DROP)
-		s.label_text = T.t("hud_slot_" + String(ACTIONS[i]))
-		if not arcane and HOLD_TEXT.has(ACTIONS[i]):
-			s.hold_text = T.t(HOLD_TEXT[ACTIONS[i]])
-		if ACTIONS[i] == &"shout":
-			s.glyph = BoonIcon.SHOUT_GLYPH
-		elif ACTIONS[i] == &"rush":
-			s.glyph = BoonIcon.RUSH_GLYPH
+	var tall := maxf(ROW_SLOT, maxf(DODGE_SLOT, SUPREME_SLOT))
+	# the Warrior's two buttons split into touch and hold (four slots); the Maga's stay one slot each (her buttons are tap and hold too,
+	# but her Blessings and glyphs ride on the button)
+	var blows: Array[Array] = []
+	if arcane:
+		blows = [[&"light_attack", false, &"icon_attack"], [&"heavy_attack", false, &"icon_power"]]
+	else:
+		blows.assign(BLOWS)
+	for spec: Array in blows:
+		var s := _new_slot(spec[0], SLOTS[ACTIONS.find(spec[0])], ROW_SLOT, ActionSlot.Shape.SQUARE, tall)
+		s.piece = spec[2]
+		s.hold = spec[1]
 		row.add_child(s)
 		_slots.append(s)
-	# centred on the screen's middle whatever the number of diamonds (the row's own box is as wide as the six)
-	var height := ActionSlot.height_for(ROW_DIAMOND, ROW_KEY_DROP)
+	row.add_child(HudDivider.new())
+	var dodge := _new_slot(&"dodge", Boon.Slot.DASH, DODGE_SLOT, ActionSlot.Shape.SQUARE, tall)
+	dodge.piece = &"icon_dodge"
+	row.add_child(dodge)
+	_slots.append(dodge)
+	_ult_slot = _new_slot(&"ultimate", Boon.Slot.NONE, SUPREME_SLOT, ActionSlot.Shape.ROUND, tall)
+	_ult_slot.piece = &"icon_supreme"
+	row.add_child(_ult_slot)
+	# centred on the screen's middle whatever the number of slots (the row's own box is as wide as they are)
+	var height := row.get_combined_minimum_size().y
 	var width := row.get_combined_minimum_size().x
 	_place(row, Control.PRESET_CENTER_BOTTOM, Vector2(0.0, -MARGIN), Vector2(width, height))
 	row.grow_horizontal = Control.GROW_DIRECTION_BOTH
@@ -629,6 +610,13 @@ func _build_actions() -> void:
 	_passives.offset_right = 0.0
 	_passives.offset_bottom = -MARGIN - PASSIVE_LIFT
 	_passives.offset_top = -MARGIN - PASSIVE_LIFT - PASSIVE_ICON - 6.0
+
+
+## A slot of the row: its shape and size, as tall as the row's tallest so the keys hang at one line.
+func _new_slot(action: StringName, boon_slot: Boon.Slot, side: float, form: ActionSlot.Shape, tall: float) -> ActionSlot:
+	var s := ActionSlot.new()
+	s.row_side = tall
+	return s.setup(action, boon_slot, side, 0.0, form)
 
 
 ## A plate of ink fading upward behind the row (UI review 2026-11-26, P1): a brazier at the south edge of the scene no
@@ -688,7 +676,7 @@ func _build_combo() -> void:
 	for c: Control in [_combo_row, _move]:
 		c.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 		c.offset_left = x
-		c.offset_right = x + LIFE.x
+		c.offset_right = x + STAT.x
 	_combo_row.offset_top = _action_row.offset_top - 2.0
 	_combo_row.offset_bottom = _combo_row.offset_top + COMBO_H
 	# art review 2026-11-21 (10): the name on its own line under the count, never touching it, and both on the
@@ -739,25 +727,14 @@ static func oficio_notice(text: String) -> bool:
 	return text == T.t(&"oficio_noted") or text == T.t(&"oficio_found", {"name": T.t(&"oficio_pick_head")})
 
 
-## A veil of ink under labels that stand over the scene (HudVeil), drawn under them.
-func _veil(over: Array[Control]) -> HudVeil:
-	var v := HudVeil.new()
-	v.covers = over
-	add_child(v)
-	move_child(v, over[0].get_index())
-	return v
-
-
 ## The clock: at the top in the middle, or, while a boss's bar is up, in the top right corner, so the
 ## boss's name stands alone over his bar (UI review d2ff05d, P1-2). The boss's bar and the phase's name go up with it.
 func _place_clock(boss: bool) -> void:
 	_clock_at_boss = boss
 	if boss:
-		_place(_clock, Control.PRESET_TOP_RIGHT, Vector2(-MARGIN, CLOCK_BOSS_Y), CLOCK_BOX)
-		_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_place(_cartouche, Control.PRESET_TOP_RIGHT, Vector2(-MARGIN, CLOCK_BOSS_Y), CLOCK_BOX)
 	else:
-		_place(_clock, Control.PRESET_CENTER_TOP, Vector2(0, CLOCK_Y), CLOCK_BOX)
-		_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_place(_cartouche, Control.PRESET_CENTER_TOP, Vector2(0, CLOCK_Y), CLOCK_BOX)
 	var top := BOSS_TOP_ALONE if boss else BOSS_TOP
 	_boss_box.position.y = top
 	_place_phase_box()
@@ -814,6 +791,7 @@ func _process(delta: float) -> void:
 	var paused := game.mode == Game.Mode.PAUSE
 	for c: CanvasItem in [_crest, _life, _magick]:
 		c.visible = not paused
+	_rhythm.visible = not paused and game.hero_gifts != null and game.hero_gifts.rhythm != null and game.hero_gifts.rhythm.enabled()
 	for c: CanvasItem in [_combo, _combo_word]:
 		c.visible = SHOW_HITS and _combo_count >= 3 and not over
 	_move.visible = not over
@@ -854,8 +832,8 @@ func _process(delta: float) -> void:
 	_update_column()
 	# art review 2026-11-23 (10): the angels' meeting is a stage of its own: no clock, room count or Blessing column over it
 	var meeting := game._screen is EncounterScreen
-	_clock.visible = not meeting
-	_room.visible = not meeting
+	_cartouche.visible = not meeting
+	_head.visible = not meeting
 	# the Blessing screen has its own column of buttons and glossary on the right and its footer over the row of
 	# diamonds: the pile of Blessings and the diamonds wait under it (art review 2026-11-25 sweep)
 	var picking := game._screen is BoonChoice
@@ -875,7 +853,6 @@ func _process(delta: float) -> void:
 	_update_boss(chief)
 	if _boss_box.visible != _clock_at_boss:
 		_place_clock(_boss_box.visible)
-	_clock_veil.follow()
 	if _row_band:
 		_row_band.follow()
 		_follow_row()
@@ -958,8 +935,11 @@ func _idle_pulse(ctx: Dictionary, step: float) -> void:
 
 
 func _update_life(p: Player) -> void:
-	_life.show_value(p.hp / p.max_hp, "%d / %d" % [ceili(p.hp), roundi(p.max_hp)])
-	_update_magick(p)
+	_life.show_value(p.hp / p.max_hp, "%d/%d" % [ceili(p.hp), roundi(p.max_hp)])
+	_magick.show_value(p.magick.ratio(), "%d/%d" % [floori(p.magick.value), roundi(p.magick.max_value)])
+	_magick.bar.ticks = _magick_ticks(p)
+	var rhythm: BattleRhythm = game.hero_gifts.rhythm if game.hero_gifts != null else null
+	_rhythm.show_value(rhythm.share() if rhythm != null and rhythm.armed() else 0.0)
 	if _last_hp >= 0.0 and p.hp < _last_hp - 0.01:
 		_crest.flash = 1.0
 	_last_hp = p.hp
@@ -967,33 +947,6 @@ func _update_life(p: Player) -> void:
 	_vignette.danger = _crest.danger if game.mode == Game.Mode.PLAY and p.hp > 0.0 else 0.0
 	_curse_badge.ratio = p.curse.ratio()
 	_crest.tint = Color(CURSE_COLOR, CURSE_TINT * _curse_badge.shown())
-
-
-## U-3: the Magia as the hero's kit asks. The Maga: the full bar with its number. The Warrior: thin and dim, lit (with its
-## number) while it rises or falls, or while the buttons that spend it are held.
-func _update_magick(p: Player) -> void:
-	var thin := game.hero == null or game.hero.arcane == null
-	if thin != _magick_thin:
-		_layout_bars(thin)
-	var value := p.magick.value
-	var text := "%d / %d" % [floori(value), roundi(p.magick.max_value)]
-	if not thin:
-		_magick.modulate.a = 1.0
-		_magick.show_value(p.magick.ratio(), text)
-		return
-	var dt := get_process_delta_time()
-	if magick_wakes(_magick_last, value, Controls.held(&"heavy_attack") or p.charging):
-		_magick_hot = HOT_TIME
-	_magick_hot = maxf(0.0, _magick_hot - dt)
-	_magick_last = value
-	_magick.ticks = _magick_ticks(p)
-	_magick.modulate.a = lerpf(MAGICK_IDLE_ALPHA, 1.0, clampf(_magick_hot / 0.4, 0.0, 1.0))
-	_magick.show_value(p.magick.ratio(), text if _magick_hot > 0.0 else "")
-
-
-## Whether the thin Magia lights: it changed by a point or more since last looked, or a button that spends it is held.
-static func magick_wakes(last: float, now: float, held: bool) -> bool:
-	return held or (last >= 0.0 and absf(now - last) >= 1.0)
 
 
 func _update_slots(p: Player) -> void:
@@ -1042,27 +995,22 @@ func _update_slots(p: Player) -> void:
 	_update_buff(p)
 
 
-## GP-1: the Warrior's left and right buttons, each with its touch and its hold: the Magia of each (the node's cost, with Força
-## Titânica and the discount), dimmed on its own when it lacks; the ring of the held blow filling while it charges; the Ritmo's
-## arc where the armed rhythm improves the blow; the Curse's lock on the right button.
+## HUD v3: one slot of the Warrior's two buttons (a touch or a hold): the Magia of its blow (the node's cost, with Força Titânica and the
+## discount) and dim on its own when it lacks; the ring of the held blow filling on the hold's slot while it charges; the Ritmo's arc on
+## the blows it reinforces (the hold, and the right button's Corte Circular); the Curse's lock on the whole right button.
 func _update_button(s: ActionSlot, p: Player, b: Boon) -> void:
 	var moves: Array = Player.INTENT_MOVES[s.action]
-	s.refresh(b, 0.0, 0, 0, false)
-	var tap := _cost_of(p, moves[0])
-	var hold := _cost_of(p, moves[1])
-	s.tap_cost = tap
-	s.hold_cost = hold
-	s.tap_starved = tap > 0 and not p.magick.can_pay(tap)
-	s.hold_starved = hold > 0 and not p.magick.can_pay(hold)
-	s.starved = s.hold_starved and not p.curse.active()
-	s.charge = p.charge_progress() if p.charging and Controls.held(s.action) else 0.0
+	var price := _cost_of(p, moves[1 if s.hold else 0])
+	s.refresh(b, 0.0, 0, 0, price > 0 and not p.magick.can_pay(price))
+	s.cost = price
+	s.charge = p.charge_progress() if s.hold and p.charging and Controls.held(s.action) else 0.0
 	var rhythm: BattleRhythm = game.hero_gifts.rhythm if game.hero_gifts != null else null
-	# the left button's touch is the combo (no gain): the arc says "the hold is better now" there too
-	s.rhythm = rhythm.share() if rhythm != null and rhythm.armed() else 0.0
+	s.rhythm = rhythm.share() if rhythm != null and rhythm.armed() and (s.hold or s.action == &"heavy_attack") else 0.0
 	if s.action == &"heavy_attack":
 		s.locked = p.curse.ratio()
 		var flock := game.psalms.holding(PsalmDef.Effect.FLOCK) if game.psalms else null
-		s.show_lights(game.psalms.lights if flock else 0, flock.count if flock else 0, PsalmIcon.tint(flock).lightened(0.2) if flock else UiKit.OLD_GOLD)
+		var mine := not s.hold and flock != null
+		s.show_lights(game.psalms.lights if mine else 0, flock.count if mine else 0, PsalmIcon.tint(flock).lightened(0.2) if flock else UiKit.OLD_GOLD)
 
 
 ## What a move costs in Magia now (0: free or the hero has no such move).
@@ -1098,6 +1046,7 @@ func _update_buff(p: Player) -> void:
 
 ## The build column reads the Blessings, the Elos and the Psalm again when one of them changed.
 func _update_column() -> void:
+	_column.names_all = game.mode == Game.Mode.PAUSE  # the pause reads the whole build; in play a name shows when gained or hovered
 	_column.tick(game.skills)
 	var psalm: PsalmDef = game.psalms.taken.back() if game.psalms != null and not game.psalms.taken.is_empty() else null
 	var kind := game.ults.def.kind if game.ults != null and game.ults.def != null else -1
@@ -1130,11 +1079,11 @@ func _update_ult(p: Player) -> void:
 	_charge_shown = open and ult != null and game.bot == null
 	_charge.visible = _charge_shown and game.mode != Game.Mode.PAUSE
 	if ult != null:
-		_charge.show_value(game.ults.ratio())
 		var done := game.ults.charge.ready()
-		_charge.fill_top = ActionSlot.READY_COLOR if done else UiKit.OLD_GOLD.lightened(0.15)
-		_charge.fill_bottom = ActionSlot.READY_COLOR.darkened(0.4) if done else UiKit.OLD_GOLD.darkened(0.45)
-		_charge.queue_redraw()
+		_charge.show_value(game.ults.ratio(), "%d%%" % floori(game.ults.ratio() * 100.0))
+		_charge.bar.fill_top = ActionSlot.READY_COLOR if done else StatBar.LOOK[StatBar.Kind.SUPREME][1]
+		_charge.bar.fill_bottom = ActionSlot.READY_COLOR.darkened(0.4) if done else StatBar.LOOK[StatBar.Kind.SUPREME][2]
+		_charge.bar.queue_redraw()
 	if not _ult_slot.visible:
 		return
 	var full := ult != null and game.ults.charge.ready()
@@ -1142,14 +1091,13 @@ func _update_ult(p: Player) -> void:
 		_ult_hint_t = ULT_HINT_TIME
 	_ult_was_ready = full
 	var shown := ult if ult != null else game.hero.ult_for_weapon(first)
-	_ult_slot.glyph = BoonIcon.ULT_GLYPH + shown.kind
+	_ult_slot.glyph = BoonIcon.ULT_GLYPH + shown.kind if game.hero.arcane != null else -1  # the Warrior's is the lion
 	_ult_slot.refresh(null, 1.0 - game.ults.ratio() if ult != null else 0.0)
 	_ult_slot.sealed = ult == null
 	_ult_slot.pulse = full
 	_ult_slot.urgent = ult_urgent(full, p.hp / p.max_hp)
 	# sealed: the Maestria it asks for takes the place of the name under the diamond, nothing floats over it
-	_ult_slot.caption = ult_caption(ult != null, full, game.ults.ratio(), first, _ult_hint_t > 0.0) if ult != null else ""
-	_ult_slot.label_text = T.t(&"hud_slot_ultimate") if ult != null else ult_caption(false, false, 0.0, first, false)
+	_ult_slot.caption = ult_caption(ult != null, full, game.ults.ratio(), first, _ult_hint_t > 0.0)
 	_ult_slot.caption_color = UiKit.PALE if _ult_hint_t > 0.0 else UiKit.DIM
 
 
@@ -1180,10 +1128,9 @@ static func ult_caption(has_ult: bool, full: bool, ratio: float, first_level: in
 
 ## The special pressed without its Magia (the rajada): a short word, no more.
 func _on_magick_refused() -> void:
-	for s in _slots:  # the buttons that were just pressed or are held show it on their own frame
-		if s.tap_cost > 0 or s.hold_cost > 0:
-			if Controls.held(s.action) or Controls.pressed(s.action):
-				s.refuse()
+	for s in _slots:  # the slots of the button just pressed or held that cannot be paid show it on their own frame
+		if s.cost > 0 and s.starved and (Controls.held(s.action) or Controls.pressed(s.action)):
+			s.refuse()
 	show_notice(T.t(&"hud_no_magick"), 1.0)
 
 
@@ -1359,11 +1306,11 @@ func _update_boss(b: Enemy) -> void:
 
 ## The count and the move's name stand right of the last diamond shown (the robot has no ultimate's).
 func _follow_row() -> void:
-	var last: Control = _slots.back()  # (the dodge, Space: always there, after the ultimate's)
-	var x := last.get_global_rect().end.x - get_global_rect().position.x + ROW_COUNT_GAP - ActionSlot.KEY_H * 0.5
+	var last: Control = _ult_slot if _ult_slot.visible else _slots.back()  # (the Supremo, else the dodge: always there)
+	var x := last.get_global_rect().end.x - get_global_rect().position.x + ROW_COUNT_GAP
 	if not is_equal_approx(_combo_row.offset_left, x):
 		_combo_row.offset_left = x
-		_combo_row.offset_right = x + LIFE.x
+		_combo_row.offset_right = x + STAT.x
 	# UX2-01/UX2-10: the move's name has its own strip, always at the same spot: centred over the row, above the
 	# diamonds' captions (so the two never share a line)
 	var cx := _action_row.get_global_rect().get_center().x - get_global_rect().position.x

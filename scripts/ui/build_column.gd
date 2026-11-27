@@ -1,23 +1,30 @@
 class_name BuildColumn
 extends Control
-## H1 of the SWORN reference (2026-11-21): the run's build on the right edge, read at a glance. A dark banner standing
-## down the edge (a swallow tail at its foot), one row per Blessing: its medallion on the left, its name on the right
-## and under the name its state (the recharge seconds, or the level when above 1). First the Blessing of each button in
-## the order of the row at the bottom (left button, right button, Q, E, Shift, Space), then the ones that own no
-## button (passives, a second on the same button). A button without a Blessing has no row (the bottom row says it).
-## Under them, if any: the Elos formed and the Psalm taken. Pure display: Hud calls show_build() each time the build
-## changes and veil() while someone stands behind it. px at 720 lines; the window stretches the canvas.
+## HUD v3 (2026-11-27, Daniel's new reference): the run's build as a column of medallions on the right edge, icons only: each
+## Blessing a round gem inside a diamond frame, in the order of the bottom row's buttons (left, right, Shift, Space) and then the ones
+## that own no button (passives, a second on the same button). The name does not stand beside it all the time (PT-26-4 reversed): it
+## shows to the left of the medallion for NAME_TIME seconds when the Blessing is gained, while the mouse is over the medallion and
+## while `names_all` is set (the pause). The state stays on the medallion: the recharge sweep with its seconds, a ready dot, the
+## level as pips (BoonIcon). Under them, if any: the Elos formed and the Psalm taken. Pure display: Hud calls show_build() each time
+## the build changes, tick() every frame and veil() while someone stands behind it. px at 720 lines; the window stretches the canvas.
 ##   var col := BuildColumn.new().setup()
 ##   col.show_build(boons, ult_glyph, psalm)       # boons: BoonState
 
-const WIDTH := 168.0
-const ROW_H := 38.0
-const ICON := 32.0
+const WIDTH := 52.0
+const ROW_H := 44.0
+const ICON := 28.0
+## The diamond frame's half diagonal.
+const DIAMOND_R := 21.0
 const FOOT_ICON := 28.0
 const PAD := 6.0
-const TAIL := 10.0
-const NAME_FONT := 13
+const TAIL := 0.0
+const NAME_FONT := 15
 const LEVEL_FONT := 12
+const SECS_FONT := 15
+## Seconds a gained Blessing's name stays beside its medallion, how long it fades, and the name plate's width.
+const NAME_TIME := 4.0
+const NAME_FADE := 0.5
+const NAME_W := 190.0
 ## PT-26-4 (second round): the rows after the buttons' own use the same height; the column keeps room for MAX_ROWS
 ## rows so it never leaves the screen (the rest becomes a "+N"). MARGIN: the gap to the screen's edge.
 const EXTRA_H := ROW_H
@@ -48,27 +55,61 @@ class Entry extends Control:
 
 	func _draw_dot() -> void:
 		if ready_dot and icon != null and icon.boon != null:
-			var at := icon.position + Vector2(icon.size.x - 2.0, 5.0)
+			var at := Vector2(WIDTH * 0.5 + DIAMOND_R * 0.62, ROW_H * 0.5 - DIAMOND_R * 0.62)
 			dot.draw_circle(at, 5.0, UiKit.INK)
 			dot.draw_circle(at, 3.5, BuildColumn.READY)
+
+	## The name stands to the left of the medallion, right aligned, on a plate; level_label is its second line.
+	var name_box: Control
+	var secs_label: Label
+	## Seconds of the name still to show (a gained Blessing), and whether it shows for another reason (the mouse, the pause).
+	var name_t := 0.0
+
+	func _draw() -> void:
+		var c := Vector2(WIDTH * 0.5, ROW_H * 0.5)
+		var rim := UiKit.OLD_GOLD.lightened(0.15) if boon != null else Color(UiKit.OLD_GOLD, 0.45)
+		HudArt.diamond(self, c, DIAMOND_R + 1.5, Color(UiKit.INK, 0.95), true)
+		HudArt.diamond(self, c, DIAMOND_R, rim, true)
+		HudArt.diamond(self, c, DIAMOND_R - UiKit.FRAME, Color(0.05, 0.04, 0.06, 0.92), true)
 
 	func build() -> Entry:
 		custom_minimum_size = Vector2(WIDTH, ROW_H)
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		icon = BoonIcon.new().setup(null, ICON)
-		icon.position = Vector2(PAD, (ROW_H - ICON) * 0.5)
+		icon.position = Vector2((WIDTH - ICON) * 0.5, (ROW_H - ICON) * 0.5 - 1.0)
 		add_child(icon)
-		var x := PAD + ICON + 7.0
+		name_box = Control.new()
+		name_box.name = "NameBox"
+		name_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		name_box.position = Vector2(-NAME_W - 2.0, 4.0)
+		name_box.size = Vector2(NAME_W, ROW_H - 8.0)
+		name_box.visible = false
+		add_child(name_box)
+		name_box.draw.connect(func() -> void:
+			var plate := UiKit.box(Color(BuildColumn.BACK, 0.9), Color(UiKit.OLD_GOLD, 0.6), 1, 0, 4)
+			name_box.draw_style_box(plate, Rect2(Vector2.ZERO, name_box.size)))
 		name_label = UiKit.shadow(UiKit.label("", UiKit.PALE, NAME_FONT, UiKit.BOLD_FONT))
-		name_label.position = Vector2(x, 2.0)
-		name_label.size = Vector2(WIDTH - x - 4.0, 18.0)
+		name_label.position = Vector2(6.0, 0.0)
+		name_label.size = Vector2(NAME_W - 12.0, 20.0)
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		name_label.clip_text = true
 		name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		add_child(name_label)
+		name_box.add_child(name_label)
 		level_label = UiKit.shadow(UiKit.label("", UiKit.PALE, LEVEL_FONT, UiKit.BOLD_FONT))
-		level_label.position = Vector2(x, 20.0)
-		level_label.size = Vector2(WIDTH - x - 4.0, 16.0)
-		add_child(level_label)
+		level_label.position = Vector2(6.0, 20.0)
+		level_label.size = Vector2(NAME_W - 12.0, 16.0)
+		level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		name_box.add_child(level_label)
+		# the recharge's seconds, on the medallion itself
+		secs_label = UiKit.label("", UiKit.PALE, SECS_FONT, UiKit.number_font())
+		secs_label.name = "Secs"
+		secs_label.add_theme_constant_override(&"outline_size", 5)
+		secs_label.add_theme_color_override(&"font_outline_color", UiKit.INK)
+		secs_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		secs_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		secs_label.position = Vector2(0.0, 0.0)
+		secs_label.size = Vector2(WIDTH, ROW_H - 2.0)
+		add_child(secs_label)
 		dot = Control.new()
 		dot.name = "ReadyDot"
 		dot.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -76,6 +117,15 @@ class Entry extends Control:
 		dot.draw.connect(_draw_dot)
 		add_child(dot)
 		return self
+
+	## The medallion's own box on the screen (the mouse's).
+	func hit_rect() -> Rect2:
+		return Rect2(global_position + Vector2(WIDTH * 0.5 - DIAMOND_R, ROW_H * 0.5 - DIAMOND_R), Vector2(DIAMOND_R, DIAMOND_R) * 2.0)
+
+	## The name's plate shows (fully) or hides; `alpha` its fade.
+	func show_name(on: bool, alpha: float = 1.0) -> void:
+		name_box.visible = on and boon != null
+		name_box.modulate.a = alpha
 
 	## The state every frame (Hud): the recharge of a Blessing that has a skill, read from the skills.
 	func tick(skills: Skills) -> void:
@@ -87,8 +137,10 @@ class Entry extends Control:
 		var cd := snappedf(wait, 0.02) if charging else 0.0
 		var lit := not charging
 		var text := T.t(&"hud_build_wait", {"n": ceili(t.x)}) if charging else _level_text()
-		if cd == icon.cooldown and lit == ready_dot and text == level_label.text:
+		var secs := str(ceili(t.x)) if charging else ""
+		if cd == icon.cooldown and lit == ready_dot and text == level_label.text and secs == secs_label.text:
 			return
+		secs_label.text = secs
 		icon.cooldown = cd
 		ready_dot = lit
 		level_label.text = text
@@ -109,6 +161,7 @@ class Entry extends Control:
 		rarity = rarity_
 		ready_dot = false
 		icon.cooldown = 0.0
+		secs_label.text = ""
 		if b != null:
 			icon.boon = b
 			icon.icon = -1
@@ -127,8 +180,15 @@ class Entry extends Control:
 			level_label.text = ""
 		icon.modulate.a = 1.0 if b != null else 0.7
 		icon.queue_redraw()
+		queue_redraw()
 
 var entries: Array[Entry] = []
+## The names show on every medallion (the pause: the whole build can be read with nothing under the mouse).
+var names_all := false
+## Blessings seen so far (the build the run began with is not "gained") and the seconds left of each gained one's name.
+var _known := {}
+var _known_ready := false
+var _name_t := {}
 var _extras: VBoxContainer
 var _extra_count := 0
 var _foot: VBoxContainer
@@ -181,6 +241,7 @@ func _fit(foot_rows: int, button_rows: int = BUTTONS.size(), extra_rows: int = 0
 func show_build(boons: BoonState, ult_glyph: int = -1, psalm: PsalmDef = null) -> void:
 	var by_button := {}
 	var held := 0
+	_note_gained(boons)
 	var elos: Array[Boon] = []
 	var extra: Array[Boon] = []
 	for b in boons.owned():
@@ -241,16 +302,52 @@ func show_build(boons: BoonState, ult_glyph: int = -1, psalm: PsalmDef = null) -
 	_fit(rows, held - shown_extra.size(), _extra_count)
 
 
-## The recharge of every Blessing, every frame (Hud): the sweep, the seconds left, the ready dot.
+## A Blessing not seen before: its name shows beside its medallion for NAME_TIME seconds (not the ones the run began with).
+func _note_gained(boons: BoonState) -> void:
+	var ids := {}
+	for b in boons.owned():
+		ids[b.id] = true
+		if _known_ready and not _known.has(b.id):
+			_name_t[b.id] = NAME_TIME
+	_known = ids
+	_known_ready = true
+
+
+## Every entry shown now: the buttons' rows, then the extras.
+func _all_entries() -> Array[Entry]:
+	var out: Array[Entry] = []
+	for e in entries:
+		if e.visible:
+			out.append(e)
+	for c in _extras.get_children():
+		if c is Entry:
+			out.append(c as Entry)
+	return out
+
+
+## The recharge of every Blessing, every frame (Hud): the sweep, the seconds left, the ready dot, and which names show (the gained
+## ones for a few seconds, the one under the mouse, all of them when names_all).
 func tick(skills: Skills) -> void:
 	if not visible:
 		return
-	for e in entries:
-		if e.visible:
-			e.tick(skills)
-	for c in _extras.get_children():
-		if c is Entry:
-			(c as Entry).tick(skills)
+	var dt := get_process_delta_time()
+	var mouse := get_global_mouse_position()
+	for e in _all_entries():
+		e.tick(skills)
+		var left: float = _name_t.get(e.boon.id, 0.0) if e.boon != null else 0.0
+		if left > 0.0:
+			_name_t[e.boon.id] = maxf(0.0, left - dt)
+		var alpha := 1.0 if names_all or e.hit_rect().has_point(mouse) else clampf(left / NAME_FADE, 0.0, 1.0)
+		e.show_name(alpha > 0.0, alpha)
+
+
+## Whether any name shows now (tests).
+func names_shown() -> Array[String]:
+	var out: Array[String] = []
+	for e in _all_entries():
+		if e.name_box.visible:
+			out.append(e.name_label.text)
+	return out
 
 
 ## Whether the column has anything to show (a Blessing, an Elo or the Psalm).
@@ -270,12 +367,3 @@ func marks() -> Array[int]:
 func veil(share: float) -> void:
 	_alpha = lerpf(1.0, 0.5, clampf(share, 0.0, 1.0))
 	modulate.a = _alpha
-
-
-func _draw() -> void:
-	var h := size.y
-	var body := PackedVector2Array([Vector2(0, 0), Vector2(size.x, 0), Vector2(size.x, h), Vector2(size.x * 0.5, h - TAIL), Vector2(0, h)])
-	draw_colored_polygon(body, BACK)
-	var edge := PackedVector2Array(body)
-	edge.append(body[0])
-	draw_polyline(edge, Color(UiKit.OLD_GOLD, 0.7), 1.5, true)

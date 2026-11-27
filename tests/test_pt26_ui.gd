@@ -110,9 +110,7 @@ func test_the_column_names_each_row_hides_level_one_and_caps_its_height() -> voi
 	assert_not_null(col.find_child("More", true, false), "the rest is a +N")
 
 
-func test_the_diamonds_carry_their_short_names() -> void:
-	for a in Hud.ACTIONS:
-		assert_ne(T.t("hud_slot_" + String(a)), "hud_slot_" + String(a), "%s has a short name" % a)
-	var s := ActionSlot.new().setup(&"light_attack", Boon.Slot.ATTACK, 36.0, 7.0)
-	assert_gte(s.custom_minimum_size.y, 36.0 + ActionSlot.NAME_H, "room for the name under the key")
+func test_the_square_slot_leaves_room_for_the_mouse_under_it() -> void:
+	var s := ActionSlot.new().setup(&"light_attack", Boon.Slot.ATTACK, 48.0, 0.0, ActionSlot.Shape.SQUARE)
+	assert_gte(s.custom_minimum_size.y, 48.0 + ActionSlot.SQUARE_MOUSE_H, "room for the mouse under the slot")
 	s.free()

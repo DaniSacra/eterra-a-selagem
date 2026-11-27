@@ -421,6 +421,7 @@ entries = {
 "hud_build_level": "Nv. {n}",
 "hud_build_wait": "{n} s",
 "hud_bar_ult": "Supremo",
+"hud_rhythm": "Ritmo de Batalha",
 "key_Space": "Espaço",
 "key_Escape": "Esc",
 "key_Up": "Cima",
