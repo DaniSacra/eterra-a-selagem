@@ -959,3 +959,54 @@ Leitura: o ajuste leva o natural a meio caminho do antigo (1989 contra 1444); a 
 Antes: 4 fontes em todo caminho possível (salas 4, 6, 9 e 11; 300 mapas), cura 160% da vida. Depois: `fountains_per_path` 2 (salas 4 e 6), cura 80%,
 sem fonte da sala 7 à 13. Robô 12 sementes: vida média ao entrar nas salas 7 a 13 de 40,0 para 27,1; Morvath alcançado 8 de 12 nas duas medidas.
 Se for duro demais para o novato, o botão é `st.fountains_per_path = 3` em `make_data` (uma fonte antes do segundo guardião) e regerar `stage`.
+
+
+## Bênçãos V2 e retorno 2026-11-26 (balance-designer, HEAD `2eab949a`, robô 0,25, `--ultimate=cleave`, sementes 1 a 12)
+Régua do robô, não de gente. Teto = `--start=boss --hero-hp=500 --boon-ids=<as 9 do anjo> --smoke=900`, tempo de luta médio (`boss.time`). Natural = `smoke.sh 900 --seed=N`. Execução com no máximo 2 partidas ao mesmo tempo, cópias fora de `/tmp`.
+
+### 1. Teto dos anjos: o Guerreiro V1 mudou a régua
+**Observado/medido:** sem Bênção o Morvath levava **306 s** antes do GP-1 e agora leva **410 s** (12 sementes, dano sofrido 357). Os 245 a 275 s da meta do GP-2 foram escritos para os 306 s; com o herói de hoje todos os anjos sobem em segundos absolutos. Por isso a comparação passa a ser **relativa ao sem Bênção**.
+| Anjo (teto, 9 poderes) | Tempo de luta | vs 410 s | Referência antiga (vs 306 s) |
+|---|---|---|---|
+| Sarael | 272 | -34% | -27% (225 s) |
+| Zerael antes do ajuste (corte de 25%) | 307 | -25% | |
+| **Zerael depois (esta rodada)** | **302** | **-26%** | |
+| Saarael (Trovão) | 331 | -19% | |
+| Lumael | 341 | -17% | -13% (266 s) |
+| Velael | 377 | -8% | -10% (275 s) |
+Meta relativa proposta (equivale à antiga): Zerael e Saarael entre Lumael e Velael, **-8% a -17% (340 a 377 s)**.
+- **Saarael: -19%, dentro** (no limite forte). Fontes: ataque 59%, ultimate 14%, descarga 9,4%, faísca 4,5%, tempestade 3,2%; nenhuma fonte de Bênção acima de 30%. **Não mudei.**
+- **Zerael: -26%, forte demais para a meta relativa.** Veneno 18,8% + Saturação 5,9% + Epidemia 1,5% = 26% do dano. Apliquei um corte de uns 10% (`golpe_peste` 0,6 +0,22 para **0,55 +0,2**, `pesado_peste` 0,9 +0,3 para **0,8 +0,27**, `saturacao` 9 +4,5 para **8 +4**; `tools/make_data.gd` `_v1_boons`, regerado com `-- boons angels`): **302 s contra 307 s, ou seja, dentro do ruído** (desvio de uns 15 s em 12 sementes). Para chegar a -17% faltaria cortar uns 35% do veneno. **Não fiz**: o Daniel acabou de dizer que o jogo está difícil e que falta dano, e cortar Bênção vai no sentido contrário. Recomendo manter Zerael como está (-26%, atrás do Sarael -34%) e decidir a meta junto com o dano do herói (seção 3). Testes `test_blessings_v2_catalog` e `test_blessings_v2_combat` atualizados (limite do estouro da Saturação 12 para 11, porque 8 + 4 = 12 não passa de 12); 72 de 72 passando.
+- Aviso: a meta antiga de "245 a 275 s" tomada em absoluto pediria SUBIR Zerael e Saarael (302 e 331 estão acima de 295) e os faria passar o Sarael (272), quebrando "Sarael é o mais forte". Por isso adotei a leitura relativa.
+
+### 2. Natural (sem anjo forçado, partida inteira, 12 sementes, estado antes do ajuste de Zerael)
+- **Vitórias 0 de 12.** Chegam ao Morvath **6 de 12** (sementes 4, 5, 7, 8, 9, 10); mortes: **sala 14 (Morvath) 6**, sala 12 duas, sala 7 duas, sala 5 e sala 10 uma cada.
+- Tempo até o Morvath (quem chegou): **521 s** (462 a 603). Luta no Morvath de quem chegou: 29 a 283 s antes de morrer; fase máxima 1 a 3. Vida que sobra no Morvath de quem chegou: **média 4225** de 5146 (1567 a 7655); melhor semente 8 (1567, fase 3).
+- Vida ao chegar nele: 27 a 67 (fonte e cura já contam). Dano sofrido nas salas 1 a 5: 5 a 59 no total (a semente 11 morreu na sala 5 com 59).
+- Dano do herói: **33 por segundo na partida inteira, 37 por segundo nos primeiros 200 s** (capítulo 1). Fontes: ataque (combo) 66,6%, ultimate 12,3%, Esmagador e Lança (`omega_*`) 10%, Corte Circular (`shout`) 2,1%; **Bênçãos 6 a 7%** (faísca 1,5, queimadura 1,3, veneno 1,1, chuva de brasas 0,6, tempestade 0,7 etc.) e perigos de sala 2% (runas, coluna, placas, espinhos). Sem fonte acima de 30%.
+- Leitura: depois do GP-1 o robô quase não ganha mais; antes da V1 do Guerreiro a mesma régua dava 3 de 12 (f2aa94d5) e vida restante 1444 a 1989.
+
+### 3. Retorno do Daniel: "muito difícil", "os personagens tinham que dar mais dano no capítulo 1" (só medida e propostas, nada aplicado)
+**Medido** (`smoke.sh 200 --seed=N`, mesmas 12 sementes; "antes" = commit `1429bd90^`, imediatamente antes do GP-1):
+| | Antes do GP-1 | Hoje (V1) | Variante A (abaixo) |
+|---|---|---|---|
+| Dano por segundo nos primeiros 200 s | **50,9** | **37,1** (-27%) | 38,6 |
+| Dano sofrido por segundo | 0,10 | 0,14 (+40%) | 0,12 |
+| Sala alcançada em 200 s (média) | 7,0 | 5,9 | 5,8 |
+| Morvath sem Bênção (410 s hoje; 306 s antes) | 306 | 410 | 362 (-12%) |
+| Fontes do dano | combo 34%, Raio (especial) 18%, Investida 10%, Brado 9% | combo 72%, Esmagador/Lança 11%, Corte Circular 2% | combo 74% |
+**Inferência (conta à mão, alvo único, Maestria 1, sem Dons):** o combo (15, 15, 30 = 60 de dano) fazia uns 49 de dano por segundo e continua. Antes ele era completado por Investida (60 a cada ~3 s com o desconto por golpe, +2 de Magia por inimigo), Brado (35 a cada 12 s mais 15% de velocidade), Raio do especial (35 por 12 de Magia, quase sem custo de tempo) e Magia máxima 50. Tudo isso saiu ou encolheu: Magia máxima 30, sem desconto de recarga, e os três botões novos pagam pouco pelo tempo que tomam (Esmagador 75 em ~1,3 s = 58 por segundo, Corte Circular 35 em ~0,8 s = 44, Lança 150 em ~1,6 s = 95 por segundo contra 49 do combo). **O melhor laço de Magia hoje vale só +10% a +25% sobre o combo sozinho** (45 a 51 contra 41 a 49). A referência SWORN do repositório (espada 65 de dano por segundo, mediana de 40 contra o Butcher, sem melhorias 3,3 a 5 min de luta) deixa o Guerreiro em 63% a 75% da espada deles só com o combo; o Hades II, de que o combo é cópia, tem os especiais e o Dash-strike como complemento, que aqui saíram.
+**Medida da variante A** (cópia fora do repositório, descartada): combo 18, 18, 36 (+20%) e Esmagador 100, Corte Circular 45, Lança 180. Resultado: dano por segundo só +4% (38,6) e **sala alcançada igual**; o Morvath sem Bênção cai de 410 para **362 s (-12%)**, dano sofrido por segundo cai 0,14 para 0,12. Natural 12 sementes: 0 vitórias, 4 de 12 chegam ao Morvath (contra 6; ruído). **Leitura importante: nas salas comuns o robô é limitado pelo ritmo das ondas e pelo caminhar, não pela vida dos inimigos** (quantidade de abates por segundo igual, 0,27); então mais dano sozinho encurta pouco as salas e pouco muda a morte. Em gente a sensação de "dano baixo" é provavelmente a de golpes que demoram para tirar um inimigo (Esqueleto 95 de vida contra 60 por combo: 2 combos) e de ter perdido os botões que sempre davam resposta. Pedir ao Daniel que diga se o incômodo é "demoro para matar" ou "morro antes de matar".
+**Propostas numeradas (para o Daniel decidir; cada uma em `tools/make_data.gd`):**
+1. **Valor dos botões fortes (P0, `gameplay-engineer` aplica)**: `smash` 75 para **100**, `sweep` 35 para **45**, `lance` 150 para **180** (função `_tree`, `_move` de cada um). Devolve ao laço de Magia a vantagem de uns +40% sobre o combo (calculado, 45 para 58). Efeito medido na variante A: Morvath -12% de tempo com o resto igual.
+2. **Combo (P1)**: `cut1` e `cut2` 15 para **18**, `cut3` 30 para **36**, `EXTRA` (5º golpe) 15 para 18. Soma +20% em toda a partida, e todos os Dons de dano em porcentagem escalam. Preferir só se o Daniel sentir "demoro para matar" mesmo com a proposta 1.
+3. **Magia (P1)**: `magick_per_hit` do combo 0,5 para **1,0** e `magick_on_finisher` 2 para 3, `gain_cap` 3,0 para 4,5 (hoje o laço do Esmagador fecha a cada 4 combos, uns 5 s). Com 1 e 3, a cada 2 combos. Sozinha ela não muda o dano por segundo da sala (o robô não gasta Magia), muda a frequência da resposta.
+4. **Ritmo de Batalha (P2)**: `rhythm_time` 3,0 para **4,0** s e `rhythm_special_dmg` 0,5 para **0,75**: o golpe forte depois do finalizador passa a valer a pena em alvo único. Medir em partida com o robô forçado a usar Esmagador depois do finalizador.
+5. **Vida dos inimigos das salas 1 a 5 (P1, `room-designer` confere)**: Esqueleto `hp` 95 para **75** (-21%), Arqueiro 180 para **140**, Runner 70 para **60**, Soldado de guarda (`guard`) e Mago proporcionais (-20%). O Esqueleto cai de 1,6 combo (60 de dano) para 1,25. Vai contra a regra antiga "proibido inflar a vida" só no sentido de baixar, e preserva elites e guardiões. Risco: as salas ficam mais curtas e dão menos Bênção por tempo; como o robô é limitado pelas ondas, o efeito medido deve ser pequeno.
+6. **Dano sofrido (P1)**: se o objetivo é "difícil demais" e não "dano baixo", cortar o dano base dos comuns das salas 1 a 5 em **-20%** (Esqueleto `attack_damage` 5 para 4, Runner 8 para 6, Arqueiro e Mago 4 para 3) é mais barato que dar dano: o herói tem 40 de vida e hoje leva 0,14 por segundo contra 0,10 antes. Medir de novo o "morre nas salas 1 a 5" (hoje 1 de 12 no natural, sala 5).
+7. **Não fazer agora**: mexer em Maestria ou Dons (a leitura é de M1 sem Dons; os Dons completos já dobram o ganho no R8.3) e nos números do Zerael. Ordem recomendada: 1, depois 6, e o Daniel testa; 2 e 5 só se ainda faltar.
+**Como medir de novo:** 12 sementes, `smoke.sh 200` (dano por segundo, sala em 200 s, dano sofrido por segundo) e `--start=boss --hero-hp=500` (410 s sem Bênção hoje), natural 900 s; depois, o `runs.jsonl` do Daniel.
+
+### 4. Outros itens
+- **DT-3 feito**: `tools/boons_csv.gd` gera `docs/design/bencaos_v2/BALANCEAMENTO_V2.csv` (81 poderes) do dado, com os números em jogo (`~/tools/godot/godot --headless --path . -s tools/boons_csv.gd`). O CSV de V1 do Daniel fica como histórico.
+- **QW-7 (Passos Leves)**: não medido. O robô o usa mal (V1: 402 s contra 309 s); precisa do Daniel em mão. Segue pendente.

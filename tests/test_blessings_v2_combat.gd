@@ -126,7 +126,7 @@ func test_poison_one_application_a_blow_the_hold_doubles_and_the_tick_is_its_own
 	assert_eq(e.cel.poison, 2, "a combo of blows applies once a blow")
 	_hit(e, HOLD)
 	assert_eq(e.cel.poison, 4, "the held blow: the double of the count")
-	assert_almost_eq(e.cel.poison_dps, 0.6, 0.001)
+	assert_almost_eq(e.cel.poison_dps, 0.55, 0.001)
 	var before := e.hp
 	_run(1.0)
 	assert_gt(before - e.hp, 1.9, "four stacks of 0,6 for a second")
@@ -163,7 +163,7 @@ func test_saturation_bursts_at_five_takes_two_and_waits_four_seconds() -> void:
 	_hit(e, ["heavy", "wave"])
 	assert_eq(int(_cel().tally.get(&"saturate", 0)), 1, "five stacks: it bursts")
 	assert_eq(e.cel.poison, 3, "five and three more is five, and two are spent")
-	assert_gt(_by("saturacao"), 12.0, "the burst on it and half on the one near")
+	assert_gt(_by("saturacao"), 11.0, "the burst on it and half on the one near")
 	assert_lt(near.hp, near.max_hp, "half of the burst on the neighbour")
 	_hit(e, ["heavy", "wave"])
 	assert_eq(int(_cel().tally.get(&"saturate", 0)), 1, "four seconds of recharge on it")
@@ -814,7 +814,7 @@ func test_a_crit_makes_the_applications_of_that_blow_stronger_only() -> void:
 	game.combat.kill_blow = _key
 	_cel().after_hit(e, tags, 10.0, false, false)
 	assert_eq(e.cel.poison, 2, "a stack more on the crit")
-	assert_almost_eq(e.cel.poison_dps, 0.6 * 1.5, 0.001, "and 50% stronger")
+	assert_almost_eq(e.cel.poison_dps, 0.55 * 1.5, 0.001, "and 50% stronger")
 	var f := _enemy(Vector2(6.0, 0.0))
 	_key += 1
 	game.combat.kill_blow = _key
@@ -822,7 +822,7 @@ func test_a_crit_makes_the_applications_of_that_blow_stronger_only() -> void:
 	_cel().after_hit(f, tags, 10.0, false, false)
 	game.combat.kill_blow = 0
 	assert_eq(f.cel.poison, 1, "the next blow, not a crit, does not inherit it")
-	assert_almost_eq(f.cel.poison_dps, 0.6, 0.001)
+	assert_almost_eq(f.cel.poison_dps, 0.55, 0.001)
 
 
 # ---------- zones, skills ----------
