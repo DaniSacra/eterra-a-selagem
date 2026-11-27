@@ -1,15 +1,15 @@
 class_name FirstTips
 extends RefCounted
 ## GP-9 and 10B-2: the four short tips of the first descents, pure. Hitting and dodging, holding for the Omega, the
-## yellow bar (armor) and the pale one (Poise), the pair of Blessings that forms an Elo. Each one shows once per save
+## pale bar (Poise), the pair of Blessings that forms an Elo. Each one shows once per save
 ## (`data.hub.tips` keeps the ids shown) and only while the save is new (fewer than FIRST_RUNS descents; `controls_v1`, GP-1, is the
 ## opposite: once, for a save that already descended). The HUD's
 ## TipToast shows them; nothing here touches the run, so the robot, a smoke run or --nosave see none
 ## (--tips forces them for captures, not written).
-##   FirstTips.pick(Save.data, ctx) -> the tip due now (&"" none); ctx: {fighting, fight_t, armored, boons, elos, tutorial}
+##   FirstTips.pick(Save.data, ctx) -> the tip due now (&"" none); ctx: {fighting, fight_t, poised, boons, elos, tutorial}
 ##   FirstTips.mark(Save.data, id)
 
-const IDS: Array[StringName] = [&"armor", &"fight", &"hold", &"elo", &"rhythm", &"controls_v1", &"maga_v1", &"regen"]
+const IDS: Array[StringName] = [&"poise", &"fight", &"hold", &"elo", &"rhythm", &"controls_v1", &"maga_v1", &"regen"]
 ## The tips the Maga reads in her own words (tip_<id>_maga), GP-5.
 const OF_THE_MAGA: Array[StringName] = [&"hold"]
 ## A save with this many descents or more has no tips (it knows the game).
@@ -62,8 +62,8 @@ static func pick(data: Dictionary, ctx: Dictionary) -> StringName:
 		return &"maga_v1"
 	if bool(ctx.get("maga", false)) and fighting and bool(ctx.get("magick_empty", false)) and open(data, &"regen"):
 		return &"regen"
-	if fighting and bool(ctx.get("armored", false)) and open(data, &"armor"):
-		return &"armor"
+	if fighting and bool(ctx.get("poised", false)) and open(data, &"poise"):
+		return &"poise"
 	# SW-O2: in the guided descent the objective line and the room's own tips teach hitting: no "fight" tip there
 	var tutorial: bool = ctx.get("tutorial", false)
 	if fighting and not tutorial and t >= FIGHT_AFTER and open(data, &"fight"):

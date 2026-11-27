@@ -83,7 +83,7 @@ func _played() -> Array[StringName]:
 
 func test_the_warriors_numbers() -> void:
 	var h := HeroDef.warrior()
-	assert_eq(h.max_hp, 40.0)
+	assert_eq(h.max_hp, 50.0)
 	assert_eq(h.magick_max, 30.0)
 	assert_eq(h.dodge_charges, 1)
 	assert_eq(h.dodge_recharge, 0.8)
@@ -136,7 +136,7 @@ func test_the_smash_and_the_sweep() -> void:
 	assert_eq(smash.width, 120.0)
 	assert_true(smash.has_tag(&"omega") and smash.has_tag(&"smash"))
 	var sweep := ComboTree.find(tree.neutral, ComboNode.In.HEAVY)
-	assert_eq(sweep.damage, 35.0)
+	assert_eq(sweep.damage, 40.0)
 	assert_eq(sweep.magick_cost, 8.0)
 	assert_eq(sweep.shape, ComboNode.Shape.CIRCLE)
 	assert_eq(sweep.reach, 3.4)

@@ -50,7 +50,8 @@ func _lost(e: Enemy, base: float, tags: Array[StringName]) -> float:
 func test_armor_pct_only_with_armor_and_by_tag() -> void:
 	_run([_mod(&"armor_pct", 0.2, &"light")] as Array[BoonMod])
 	var elite := game.horde.spawn(game.horde.def(&"archer_elite"), Vector2(5, 0), false)
-	assert_gt(elite.armor, 0.0)
+	elite.max_armor = 190.0  # (no enemy has armor since 2026-11-27: the bar is given by hand to keep its rule tested)
+	elite.armor = 190.0
 	assert_almost_eq(_lost(elite, 20.0, LIGHT), 24.0, 0.01, "20% more of the armor bar")
 	assert_almost_eq(_lost(elite, 20.0, HEAVY), 30.0, 0.01, "no other tag: the special's base only")
 	var plain := game.horde.spawn(game.horde.def(&"skeleton"), Vector2(-5, 0), false)
@@ -61,6 +62,8 @@ func test_armor_pct_only_with_armor_and_by_tag() -> void:
 func test_armor_pct_adds_to_the_specials_base() -> void:
 	_run([_mod(&"armor_pct", 0.3, &"heavy")] as Array[BoonMod])
 	var elite := game.horde.spawn(game.horde.def(&"archer_elite"), Vector2(5, 0), false)
+	elite.max_armor = 190.0
+	elite.armor = 190.0
 	assert_almost_eq(_lost(elite, 20.0, HEAVY), 36.0, 0.01, "80% in all")
 
 

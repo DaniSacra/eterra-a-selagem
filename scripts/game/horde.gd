@@ -1132,7 +1132,7 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			var guarded := e.guard_t > 0.0
 			_behave_melee_walk(e, dt, toward, dist)
 			if d.guard_up_time > 0.0 and not guarded and e.guard_cd <= 0.0 and target_alive and e.open_t <= 0.0 and e.away_t <= 0.0 \
-					and e.armor > d.armor * d.guard_up_armor and KnightPhase.guard_open(d.guard_up_life, d.guard_up_reach, toughness(e), dist):
+					and KnightPhase.guard_open(d.guard_up_life, d.guard_up_reach, toughness(e), dist):
 				e.memo = KNIGHT_GUARD
 				e.dir = toward
 				_set_state(e, Enemy.State.WINDUP, &"brace")

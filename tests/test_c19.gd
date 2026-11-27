@@ -94,7 +94,8 @@ func test_the_second_blade_hurts_who_stayed_and_a_stun_cuts_it() -> void:
 	while e.blows < 1:
 		_step()
 	var before := hits.size()
-	game.horde.damage(e, 5.0, (e.pos - game.player.pos).normalized(), 0.0, Color.WHITE, false)
+	# (no armor and no flinch since 2026-11-27: only its Quebra breaking cuts an elite's blow)
+	game.horde.interrupt(e)
 	assert_ne(e.state, Enemy.State.ATTACK, "stunned out of its attack")
 	_step(30)
 	assert_eq(e.blows, 1, "the second blade never came")

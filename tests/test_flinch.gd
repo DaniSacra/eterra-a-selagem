@@ -82,25 +82,16 @@ func test_it_winds_up_again_in_full_after_the_stun() -> void:
 	assert_not_null(e.warning)
 
 
-func test_an_armored_elite_struck_in_its_windup_attacks() -> void:
+func test_an_elite_struck_in_its_windup_attacks() -> void:
 	var e := _alone(&"skeleton_elite")
-	assert_gt(e.armor, 10.0)
+	assert_eq(e.armor, 0.0, "no yellow bar since 2026-11-27")
 	assert_true(_into_windup(e))
 	_blow(e, 1.0)
-	assert_gt(e.armor, 0.0, "the armor took it")
-	assert_eq(e.state, Enemy.State.WINDUP, "no flinch while the armor holds")
+	assert_eq(e.state, Enemy.State.WINDUP, "a blow never flinches an elite: only its Quebra staggers it")
 	assert_eq(e.stun_t, 0.0)
 	var states := _watch(e, e.def.attack_windup)
 	assert_true(states.has(Enemy.State.ATTACK), "its blow comes")
 	assert_eq(game.horde.flinches, 0)
-
-
-func test_an_elite_flinches_once_its_armor_is_broken() -> void:
-	var e := _alone(&"skeleton_elite")
-	e.armor = 0.0
-	assert_true(_into_windup(e))
-	_blow(e)
-	assert_eq(e.state, Enemy.State.WALK, "without armor it flinches like the common one")
 
 
 func test_a_strong_blow_stuns_longer() -> void:
@@ -149,7 +140,7 @@ func test_every_common_flinches_and_no_boss_or_guardian_does() -> void:
 		if not f.ends_with(".tres"):
 			continue
 		var d: EnemyDef = load("res://data/enemies/" + f)
-		var common := d.role != &"" or d.id == &"skeleton_raised"  # the Coveiro's dead flinch like the skeleton
+		var common := (d.role != &"" and not d.elite) or d.id == &"skeleton_raised"  # the Coveiro's dead flinch like the skeleton; an elite only staggers by its Quebra
 		if common:
 			assert_gt(d.stun_time, 0.0, "%s flinches" % d.id)
 			assert_gte(d.stun_heavy_time, d.stun_time, "%s: a strong blow at least as long" % d.id)
@@ -158,12 +149,13 @@ func test_every_common_flinches_and_no_boss_or_guardian_does() -> void:
 			assert_eq(d.stun_heavy_time, 0.0, "%s never flinches" % d.id)
 
 
-func test_a_broken_armor_cuts_the_wind_up() -> void:
+func test_a_broken_quebra_cuts_the_elites_wind_up() -> void:
 	var e := _alone(&"skeleton_elite")
 	assert_true(_into_windup(e))
 	var warning := e.warning as Ground.Zone
-	game.horde.damage(e, e.armor + 1.0, Vector2.RIGHT, 0.0)
-	assert_eq(e.armor, 0.0)
+	e.poise = 0.01
+	game.horde.dealing = &"attack"
+	game.horde.damage(e, 5.0, Vector2.RIGHT, 0.0)
 	assert_eq(e.state, Enemy.State.WALK, "the stagger of the break is a stun")
-	assert_gte(e.stun_t, e.def.armor_stagger - 0.001)
+	assert_gte(e.stun_t, e.def.poise_stun - 0.001)
 	assert_true(warning.cancelled)

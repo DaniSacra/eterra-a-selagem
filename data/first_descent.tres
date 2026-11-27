@@ -73,7 +73,7 @@ reward = 1
 hazards = true
 hazard_progress = 0.2
 cap = 5
-tip = &"first_tip_armor"
+tip = &"first_tip_poise"
 objective = &"obj_win"
 
 [sub_resource type="Resource" id="Resource_f14k2"]

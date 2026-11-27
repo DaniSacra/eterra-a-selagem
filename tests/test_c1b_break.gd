@@ -51,11 +51,11 @@ func test_poise_on_the_commons_and_since_SW_C5_on_the_elites_and_guardians() -> 
 
 
 func test_common_life_and_warnings() -> void:
-	assert_eq([_def("skeleton").hp, _def("runner").hp, _def("mage").hp, _def("archer").hp], [95.0, 70.0, 115.0, 180.0])
+	assert_eq([_def("skeleton").hp, _def("runner").hp, _def("mage").hp, _def("archer").hp], [250.0, 200.0, 175.0, 150.0])  # SWORN Kingswood: Hammer, Boar, Mortoad, Axe Thrower
 	# (2026-11-23, ENEMY_WINDUP 0.8: it was 0.75 and 0.85)
 	assert_almost_eq(_def("skeleton").attack_windup, 0.6, 0.001)
 	assert_almost_eq(_def("runner").attack_windup, 0.68, 0.001)
-	assert_eq([_def("skeleton_elite").hp, _def("archer_elite").hp], [60.0, 130.0])
+	assert_eq([_def("skeleton_elite").hp, _def("archer_elite").hp], [1500.0, 1250.0])  # the Major Hammer and the Major Axe
 	assert_eq(HeroDef.warrior().hurt_invuln, 0.7)
 
 
@@ -72,22 +72,24 @@ func test_horde_breaks_a_common_by_the_button() -> void:
 	e.max_hp = 10000.0
 	h.dealing = &"special"
 	h.damage(e, 1.0, Vector2.RIGHT, 0.0, Color.WHITE, false)
-	assert_eq(e.poise, 40.0)
+	# the bar is SWORN's stagger cap: poise_mult makes 20-damage light blows break it as many times as the cap says
+	var mult := e.def.poise_mult
+	assert_almost_eq(e.poise, 100.0 - 60.0 * mult, 0.01)
 	assert_eq(e.broken_t, 0.0)
 	h.dealing = &"burn"
 	h.damage(e, 1.0, Vector2.RIGHT, 0.0, Color.WHITE, false)
-	assert_eq(e.poise, 40.0, "a burn takes none")
+	assert_almost_eq(e.poise, 100.0 - 60.0 * mult, 0.01, "a burn takes none")
 	h.dealing = &"special"
 	h.damage(e, 1.0, Vector2.RIGHT, 0.0, Color.WHITE, false)
 	assert_gt(e.broken_t, 0.0)
-	assert_gt(e.stun_t, 1.0)
+	assert_almost_eq(e.stun_t, 2.0, 0.05)  # SWORN: a common stands stunned 2.0 s
 	assert_eq(h.breaks.get("special"), 1)
 	# open now: +40% damage, and no poise taken while stunned
 	var before := e.hp
 	h.damage(e, 10.0, Vector2.RIGHT, 0.0, Color.WHITE, false)
 	assert_almost_eq(before - e.hp, 14.0, 0.01)
 	assert_eq(e.poise, 0.0, "no poise taken while stunned")
-	for i in 90:
+	for i in 150:
 		h.dealing = &""
 		game._step(1.0 / 60.0)
 	assert_eq(e.broken_t, 0.0)

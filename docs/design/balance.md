@@ -1010,3 +1010,73 @@ Meta relativa proposta (equivale à antiga): Zerael e Saarael entre Lumael e Vel
 ### 4. Outros itens
 - **DT-3 feito**: `tools/boons_csv.gd` gera `docs/design/bencaos_v2/BALANCEAMENTO_V2.csv` (81 poderes) do dado, com os números em jogo (`~/tools/godot/godot --headless --path . -s tools/boons_csv.gd`). O CSV de V1 do Daniel fica como histórico.
 - **QW-7 (Passos Leves)**: não medido. O robô o usa mal (V1: 402 s contra 309 s); precisa do Daniel em mão. Segue pendente.
+
+## Capítulo 1 = SWORN Kingswood (2026-11-27, gameplay-engineer, pedido do Daniel)
+
+> "Pega o dano e a vida dos inimigos exatamente como no SWORN, porque lá a progressão é boa; usa igual no capítulo 1 e depois a
+> gente pensa no que mudar." E: "não gosto da barra amarela, tira; depois pode ter escudo nos fortes, como o energy shield do
+> PoE, mas por ora só vida, ou fica difícil demais."
+
+Fonte: `docs/design/sworn_rea_kingswood_2026-11-25.md` seções 1 e 4 (fatos dos arquivos do jogo). Números em `tools/make_data.gd`
+(regerar `combos enemies bosses hero first`, nunca editar os `.tres`).
+
+### Barra amarela removida
+Nenhum inimigo tem `armor`, `ward_armor` nem `guard_up_armor`: elites, guardiões e Morvath só têm vida. O que a armadura segurava
+passa para a Quebra (a barrinha clara): um elite não estremece mais com um golpe (`stun_time` 0 na versão elite, o Major do SWORN só
+cambaleia pelo poise) e o Cavaleiro levanta a guarda sem olhar a armadura. O sacerdote deixou de blindar os outros (sem
+`ward_count`: o "A3" do Ancião e o fio do sacerdote saem; o código de blindagem e a barra seguem no jogo, sem uso, para o escudo futuro).
+O caminho de código (`Enemy.armor`, desenho da barra, `_step_ward`) ficou: removê-lo mexe em 20 arquivos e nos testes de efeitos; nenhum dado o aciona.
+A dica "barra amarela" virou a dica da Quebra (`first_tip_poise`, `tip_poise`) e o termo "Armadura" do glossário virou "Quebra".
+
+### Herói (papel: combo leve, pesado, esquiva)
+| Item | Antes | Agora | SWORN |
+|---|---|---|---|
+| Vida | 40 | 50 | Vigilante 50 |
+| Golpes 1 e 2 do combo | 15 e 15 | 20 e 20 | Combo 1 e 2: 20 |
+| Golpe 3 (giro) | 30 | 40 | Combo 3 Slash: 40 |
+| Corte Circular (pesado, toque) | 35 | 40 | Spin: 40 |
+| Quarto e quinto golpe (Maestria Marcial) | 15 | 20 | (igual ao leve) |
+| Esmagador 75, Lança da Emeth 150, Brado 150 | sem mudança | sem mudança | Magias do SWORN: 100; sem equivalente exato (ver abaixo) |
+| Golpe na esquiva | não existe | não existe | Dash Attack 20 |
+| Perigos de sala | 10 | 10 (sem mudança) | `baseHazardResist` 0,9 (INFERÊNCIA) |
+
+### Inimigos (vida / dano de cada golpe)
+| Inimigo nosso | Papel | Par no SWORN | Vida antes → agora | Dano antes → agora | Quebra (poise do SWORN) |
+|---|---|---|---|---|---|
+| `bone_rat` (rato de osso) | enxame rápido | Snake | 10 → 20 | 3 → 3 | sem barra |
+| `skeleton_raised` (morto invocado) | fraco invocado | Snake | 40 → 20 | 4 → 3 | sem barra |
+| `trinca` (3 figuras) | enxame | Snake | 45 → 20 cada | 4 → 3 | sem barra |
+| `skeleton` | corpo a corpo comum | Hammer Mob | 95 → 250 | 5 → 10 | 125 |
+| `varredor` | corpo a corpo parado | Hammer Mob (sem par exato) | 160 → 250 | 8 → 10 | sem barra |
+| `runner` | investida e explosão | Boar | 70 → 200 | 8 → 7 | 100 |
+| `guard` | escudo e investida | Boar | 255 → 200 | 8 → 7 | sem barra (como antes) |
+| `archer` | atirador | Axe Thrower | 180 → 150 | 5 → 5 | 75 |
+| `lancador` | atirador do machado | Axe Thrower | 150 → 150 | 8 → 7 | 75 |
+| `canalizador` | raio parado (sem par exato) | Axe Thrower | 130 → 150 | 5 → 5 | 75 |
+| `gritador`, `coveiro`, `armadilheiro` | apoio (sem par exato) | Axe Thrower (só a vida) | 120, 90, 110 → 150 | placa 8 → 7 | 75 |
+| `mage` | morteiro | Mortoad | 115 → 175 | 6 → 7 | 100 |
+| `priest` | vinha parada | Mortoad | 290 → 200 | 8 → 9 | sem barra |
+| `saltador` | pulo com mira | Mortoad ("salta") | 140 → 175 | 8 → 9 | 100 |
+| `skeleton_big`, `runner_big` | versão maior | Cavaleiro de Gawain (500) | 300, 225 → 500 | 7, 8 → 12, 10 | sem barra |
+| `skeleton_elite`, `varredor_elite` | elite | Major Hammer | 60, 220 de armadura + vida → 1500 | 5 → 12 | 400 |
+| `runner_elite`, `guard_elite` | elite | Major Boar | 45+85, 255+330 → 1350 | 8 → 9 | 300 |
+| `archer_elite` | elite | Major Axe | 130+190 → 1250 | 4,8 → 7 | 300 |
+| `mage_elite`, `priest_elite` | elite | Major Mortoad | 80+155, 290+390 → 1300 | 4,8 → 9 (mage: 3 morteiros, eram 7) | 300 |
+| `trinca_elite` | elite (4 figuras) | sem Major de enxame: Snake | 45+60 → 20 cada | 4 → 3 | 300 |
+| `capitao` | capitão | Major Hammer | 520 → 1500 | 8 → 12 | 400 |
+| `knight` (Cavaleiro) | guardião do meio | Questing Beast | 650 + 550 de armadura → 3000 | 15 (investida), 8 (perto), 12 (escudo), 6 (anel), 8 (guarda) → 10, 10, 10, 7, 7 | 750 |
+| `priest_elder` (Ancião) | guardião do meio | Bane of Crows | 420 + 900 → 2500 | 3 (leque), 9 → 5, 10 | 800 |
+| `morvath` | chefe | Gawain | 8500 → 6000 | golpes 6 a 19 → 7 a 15 (foice 15, ceifa 12, lâminas 10, rajada 7, investida 15, erupções 15, ruptura 15) | 800 |
+
+Quebra (poise do SWORN): o SWORN soma o dano do golpe no stagger e quebra ao passar do teto; a nossa barra gasta uma fração por
+botão (ataque 0,15 do teto). Para dar o mesmo número de golpes leves de 20 por quebra, cada `sw_poise` vira `poise_mult = 133,3 / teto`
+(Hammer 1,07; Boar e Mortoad 1,33; Axe 1,78; Major 0,33 a 0,44; Questing Beast 0,18; Bane e Gawain 0,17; `posture_mult` do Morvath 0,5 → 0,17).
+Atordoamento ao quebrar: comum 2,0 s (era 1,2), elite 2,5 s, guardião e Morvath 3,5 s (já eram). x1,25 a cada quebra seguinte (já era).
+
+### O que não mudou (para decidir)
+- Esmagador 75, Lança 150, Brado 150, Ômegas, Dons com dano fixo, Salmos: continuam nos números de antes; com inimigos 2,5 a 3 vezes mais
+  duros os Dons de dano fixo (consagrar 12 a 26, fogo) ficam fracos. Sugestão: escalar em um segundo passo, com medida.
+- Orçamento das salas, ondas e custos (`ENEMY_COST`): iguais. Um elite de 1500 de vida custa 6 a 12 e o Hammer comum 3, como no SWORN (Major 10, Hammer 3).
+- Refinos da Forja "Peso" e "Onda Pesada" e o talento "Ruptura" falavam de tirar mais da barra amarela (`armor_pct`): sem barra, ficam
+  sem efeito. Sugestão: virar "gasta mais Quebra" ou ser trocados. Decisão do Daniel/Game Director.
+- Perigos de sala: 10 de dano, como estava (o `baseHazardResist` 0,9 do SWORN é inferência, fica para depois).

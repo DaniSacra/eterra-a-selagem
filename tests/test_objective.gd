@@ -97,7 +97,7 @@ func test_every_key_has_its_text_without_a_dash() -> void:
 		assert_ne(raw, String(key), "%s has a text" % key)
 		assert_false(raw.contains("—") or raw.contains("–"), "%s has no dash" % key)
 	for key: String in ["opt_objective", "opt_objective_tip", "arrival_line", "first_end_1", "first_end_2", "first_done",
-			"first_tip_fight", "first_tip_archer", "first_tip_hold", "first_tip_armor", "first_tip_knight", "pause_skip_first",
+			"first_tip_fight", "first_tip_archer", "first_tip_hold", "first_tip_poise", "first_tip_knight", "pause_skip_first",
 			"pause_skip_confirm", "pause_skip_yes", "pause_skip_no", "slot_first_ask", "slot_first_line", "slot_first_yes",
 			"slot_first_skip", "hub_open_ult", "guide_ult"]:
 		assert_true(T.table.entries.has(key), key)

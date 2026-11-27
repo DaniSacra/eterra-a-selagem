@@ -866,3 +866,10 @@ Arco (`Effect.ARC`), domo e Passo preservados. Convergência: `Ultimates._step_c
   Testes: `tests/test_flow_pocket.gd`.
 - **Revisão 2026-11-26 (equilíbrio)**: Cavaleiro com 650 de vida, `hp_scale` 1,0 e `attack_damage` 15 (armadura 550 e `armor_soft` 0,5 intactas); `mage_elite`
   com `attack_damage` 4,8 (20% abaixo dos 6 do mago). O `RESULT` ganhou `won` (modo ENDING) e `guardian_fight` (segundos por sala de guardião, `knight_hall` e `elder_hall`).
+
+## Capítulo 1 = números do SWORN Kingswood, sem barra amarela (2026-11-27)
+Vida e dano de todos os inimigos, do Cavaleiro, do Ancião e de Morvath vêm do SWORN (tabela antes e depois em `docs/design/balance.md`, seção
+"Capítulo 1 = SWORN Kingswood"); o herói tem 50 de vida e combo 20/20/40, Corte Circular 40. **Nenhum inimigo tem armadura** (`armor`, `ward_armor`
+0): os textos acima sobre armadura, `armor_soft`, blindagem do sacerdote e o "A3" do Ancião descrevem código que segue no jogo sem dado que o acione
+(para o escudo futuro, tipo energy shield). Elite não estremece com golpe (`stun_time` 0): só a Quebra o atordoa. `EnemyDef.poise_mult` dos
+inimigos vem de `sw_poise` em `tools/make_data.gd` (o teto de stagger do SWORN), atordoamento comum 2,0 s. A dica e o termo do glossário da armadura viraram o da Quebra.

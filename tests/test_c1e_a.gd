@@ -84,7 +84,7 @@ func test_the_new_ones_are_data() -> void:
 		assert_false(d.elite)
 		assert_eq(d.elite_version, &"")
 		assert_ne(T.t(d.name_key), String(d.name_key))
-	assert_eq(g.hp, 120.0)
+	assert_eq(g.hp, 150.0)
 	assert_eq(g.shout_radius, 8.0)
 	assert_eq(g.shout_time, 8.0)
 	assert_almost_eq(g.shout_pace, 0.3, 0.001)
@@ -95,8 +95,8 @@ func test_the_new_ones_are_data() -> void:
 	assert_gt(c.flee_speed, c.speed)
 	assert_true(c.never_with.has(&"swarm"))
 	var r := load("res://data/enemies/skeleton_raised.tres") as EnemyDef
-	assert_eq(r.hp, 40.0)
-	assert_eq(r.attack_damage, 4.0)
+	assert_eq(r.hp, 20.0, "a Snake of SWORN")
+	assert_eq(r.attack_damage, 3.0)
 	assert_eq(r.role, &"", "never drawn into a fight")
 	for role in [&"rally", &"grave"]:
 		assert_ne(T.t(StringName("codex_role_" + String(role))), "codex_role_" + String(role))
@@ -265,7 +265,7 @@ func test_the_coveiro_raises_two_weak_dead_away_from_the_paladin_up_to_four() ->
 	assert_gt(dead.size(), 0)
 	assert_lte(dead.size(), 4, "never more than 4 of its own")
 	for e: Enemy in dead:
-		assert_eq(e.max_hp, 40.0 * game.horde.hp_scale * game.horde.vow_hp)
+		assert_eq(e.max_hp, 20.0 * game.horde.hp_scale * game.horde.vow_hp)
 
 
 func test_the_dead_wait_for_room_under_the_ceiling() -> void:

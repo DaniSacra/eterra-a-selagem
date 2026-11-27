@@ -80,8 +80,9 @@ func test_common_enemies_fall_to_one_attack_chain() -> void:
 	var cut1 := ComboTree.find(tree.neutral, ComboNode.In.LIGHT)
 	var chain := cut1.damage + cut1.following()[0].damage + cut1.following()[0].following()[0].damage
 	# C1b (combate_c1b.md): 1.6 times tougher, so its wind-up and the answer to it happen: two chains at most
-	assert_lte((load("res://data/enemies/skeleton.tres") as EnemyDef).hp, chain * 2.0)
-	assert_lte((load("res://data/enemies/runner.tres") as EnemyDef).hp, chain * 1.5)
+	# 2026-11-27: SWORN Kingswood numbers (Hammer Mob 250, Boar 200 against a chain of 80): about 3 chains
+	assert_lte((load("res://data/enemies/skeleton.tres") as EnemyDef).hp, chain * 3.5)
+	assert_lte((load("res://data/enemies/runner.tres") as EnemyDef).hp, chain * 3.0)
 
 
 func test_spawns_never_pass_the_cap() -> void:
