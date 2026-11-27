@@ -751,7 +751,12 @@ func _frames() -> Array:
 ## The urns of the stylized look (room redesign, lot A 3.2): beside the two groups of pots on the west balustrade, on
 ## the abyss's side of it, and at the foot of the portal's two statues, on their plinths. Nothing on the floor.
 func _urns() -> void:
-	var sm := kit.styled()
+	# GP-8: the urns are the game's own 3D (the plate has none), so the painting never dresses them
+	var holder := Node3D.new()
+	holder.name = "Urns"
+	holder.set_meta(PaintedHall.KEEP_3D, true)
+	kit.styled().root.add_child(holder)
+	var sm := Masonry.new(holder)
 	var mat := sm.carved(0.0, Color.WHITE)
 	for u: Vector4 in URNS:
 		sm.urn(Vector3(u.x, u.w, u.y), u.z, mat)

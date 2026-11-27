@@ -110,14 +110,65 @@ func test_the_painted_hall_wears_the_painting_and_keeps_the_dynamic_pieces() -> 
 	assert_gt(lights, 5, "the lights stay on")
 
 
-func test_a_door_gives_its_own_look_back_when_it_opens() -> void:
+func test_the_doors_keep_their_own_look_and_the_hazards_and_candles_stay_3d() -> void:
 	Dev.put("painted", "1")
 	var a := Arena.new()
 	add_child_autofree(a)
 	a.build(_stage().sala00_layout, 1, 1406)
 	var node := a.get_node("PaintedHall") as PaintedHall
-	assert_gt(node._worn.size(), 0, "the shut door wears the painting")
-	var door: HallDoor = node._doors[0]
-	door.open(0.0)
-	node._process(0.0)
-	assert_eq(node._worn.size(), 0, "opened: its leaves and its black inside are its own again")
+	assert_gt(node._doors.size(), 0)
+	for d in node._doors:
+		for g in d.find_children("*", "GeometryInstance3D", true, false):
+			assert_false(_wears_painting(g), "a door's leaves are the game's own")
+	var kept := 0
+	for n in a.find_children("*", "Node3D", true, false):
+		if n.get_meta(PaintedHall.KEEP_3D, false):
+			kept += 1
+			for g in n.find_children("*", "GeometryInstance3D", true, false):
+				assert_false(_wears_painting(g), "a marked piece (the altar candles) is not dressed")
+	assert_gte(kept, 2, "the altar's burnt-out and lit candles")
+	var ante := Arena.new()
+	add_child_autofree(ante)
+	ante.build(_stage().ante_layout, 1, 1406)
+	for g in ante.find_children("*", "GeometryInstance3D", true, false):
+		if _under(g, HazardPiece):
+			assert_false(_wears_painting(g), "the spike slab is the game's own")
+
+
+func test_a_painted_room_with_a_hazard_is_painted_too() -> void:
+	var a := Arena.new()
+	add_child_autofree(a)
+	a.layout = _stage().ante_layout
+	assert_not_null(a.layout.hazard)
+	assert_true(PaintedHall.wanted(a), "the hazard is 3D on a clean plate")
+
+
+func test_rooms_are_keyed_by_layout_and_variant() -> void:
+	var l := _stage().layouts[0]
+	assert_eq(PaintedHall.key_of(l), &"hall")
+	assert_eq(PaintedHall.key_of(null), &"")
+	var v := RoomLayout.new()
+	v.id = &"crypt"
+	v.variant_index = 1
+	assert_eq(PaintedHall.key_of(v), &"", "no entry: not painted")
+	var table := {&"crypt": {}, &"crypt:1": {}}
+	assert_eq(PaintedHall.key_of(v, table), &"crypt:1", "a variant with its own entry")
+	v.variant_index = 2
+	assert_eq(PaintedHall.key_of(v, table), &"crypt", "another variant uses its layout's")
+	for id: StringName in PaintedHall.ROOMS:
+		var vs: float = PaintedHall.pose_of(id)[&"v_span"]
+		assert_true(vs == PaintedHall.STRETCH or vs == PaintedHall.UNIFORM, "%s: a known mapping" % id)
+
+
+func _wears_painting(g: Node) -> bool:
+	var m := (g as GeometryInstance3D).material_override as ShaderMaterial
+	return m != null and m.shader != null and m.shader.resource_path == PaintedHall.SHADER
+
+
+func _under(n: Node, cls: Variant) -> bool:
+	var p := n.get_parent()
+	while p != null:
+		if is_instance_of(p, cls):
+			return true
+		p = p.get_parent()
+	return false

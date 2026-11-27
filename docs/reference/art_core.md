@@ -353,3 +353,17 @@ The first prototype (an old ChatGPT painting on proxy walls, 15 degree pitch) is
 - Still different: the Antessala painting keeps a few painted props (vases, a crate, a post stub) near the 3D breakables (the 3D ones break, the
   painted ones stay: ask the next repaint to erase them); the Sala 00's painted altar candles stay lit after the Blessing.
 - CPU captures at the painter poses: `docs/gallery/gp8_refine_2026-11-27/` (one water, one flame per brazier, plate on the painted plate).
+
+### GP-8 game plates (2026-11-27): the painting is only the static stage
+- Rule (Daniel): everything that moves, changes state or breaks is the game's own 3D on a clean plate. `assets/rooms/painted/{sala01,sala00,antessala}.png`
+  are now the `game_v1/*_jogo.png` plates (same mapping, `v_span` `PaintedHall.UNIFORM` for the Salao); the lit paintings are kept in
+  `docs/art/painted_gpt/lit_v3/*_lit.png` (not in the pack).
+- Shown again: flames, cards and lights (`HIDE_CARDS` removed; the 3D flame burns on the painted cold bowl, nothing doubled), door leaves and
+  their black faces (they no longer wear the painting nor swap back on open: `_worn`/`_process` gone), the altar's candles and the Salao's
+  urns (meta `PaintedHall.KEEP_3D`, set on the node: it and its subtree are never dressed), `HazardPiece` nodes, the water (`shallow_water` left
+  `HIDDEN`; `HIDDEN` is only the floor decals and the abyss's fog, mist and glow). Breakables, door signs and rings are built after the
+  painting and were never dressed.
+- `PROPS` keeps one entry: the hall's east-pier brazier (17, -14.8), a wall in the plate, so its fire and light stay hidden.
+- New rooms are data: `ROOMS` keys are the layout id or `"id:variant"` (`PaintedHall.key_of`, `RoomLayout.variant_index` set by
+  `variant()`); each entry has its pose and `v_span` (`STRETCH` 1.0 or `UNIFORM`). A hall (or any room) with a hazard is painted too.
+- Gameplay unchanged (`--smoke` seed 5 same RESULT). Tests: `test_painted_hall`, `test_painted_props`.

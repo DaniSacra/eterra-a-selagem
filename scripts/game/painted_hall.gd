@@ -9,10 +9,11 @@ extends Node3D
 ## Collision, doors and everything that moves are the room's own, untouched: what the painting replaces is only how the
 ## static stone looks. Two far planes (the abyss under the room, a wall beyond it) carry the painting where no mesh is.
 ##
-## What is painted and what stays 3D (apply): opaque meshes (stone, floor, banners, the doors' leaves, the abyss's pillars and
-## ruins) take the painting; decals, the abyss's fog and glow are hidden (painted); lights, flames, embers, water, hazards,
-## the altar's lion and glow stay as they are. A door's leaves and its black face wear the painting while shut and get their
-## own look back when the door opens (PaintedHall._process). Swapping a painting is replacing its file in
+## What is painted and what stays 3D (apply; Daniel 2026-11-27: the painting is only the static "stage"): the room's static
+## geometry (stone, floor, banners, the abyss's pillars and ruins) takes the painting; decals, the abyss's fog and glow are
+## hidden (painted). Everything that moves, changes state or breaks is the game's own 3D over a clean plate: flames, embers
+## and lights, the door leaves and their black inside, the altar's candles, urns and breakables, hazards, the water
+## (a node with the meta KEEP_3D, and its subtree, is never dressed). Swapping a painting is replacing its file in
 ## assets/rooms/painted (the pose is the one the painting was made at, see docs/art/painted_gpt/README.md).
 ## Switches: --painted forces it on, --painted=off turns it off (DEFAULT_ON decides without them).
 
@@ -23,25 +24,31 @@ const SHADER := "res://assets/shaders/painted.gdshader"
 const ASPECT := 1924.0 / 1175.0
 ## Off until Daniel approves the paintings: --painted turns it on (flip this to ship it on).
 const DEFAULT_ON := true
-## The painters' cameras, by room (layout id): the painting, and the game camera's flags it was made with.
+## How a painting maps to its pose's frame: the base capture stretched to the file's 3:2 (v_span 1.0), or scaled evenly into the
+## top of the file with a strip of cliff added below (v_span = the share of the file's height the frame takes).
+const STRETCH := 1.0
+const UNIFORM := 938.0 / 1024.0
+## The painters' cameras, by room: the key is the layout id, or "id:variant" for a variant of it (key_of; a variant without
+## its own entry uses its layout's). Each entry: the painting, the pose it was made at (yaw, pitch, fov, dist, at) and the
+## mapping (v_span). A new painted room is only an entry here.
 const ROOMS := {
-	&"hall": {&"painting": "res://assets/rooms/painted/sala01.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 68.0, &"at": Vector2(2.0, 1.0), &"v_span": 938.0 / 1024.0},
-	&"sala00": {&"painting": "res://assets/rooms/painted/sala00.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 52.0, &"at": Vector2(0.0, 0.0)},
-	&"ante": {&"painting": "res://assets/rooms/painted/antessala.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 80.0, &"at": Vector2(0.0, 0.0)},
+	&"hall": {&"painting": "res://assets/rooms/painted/sala01.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 68.0, &"at": Vector2(2.0, 1.0), &"v_span": UNIFORM},
+	&"sala00": {&"painting": "res://assets/rooms/painted/sala00.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 52.0, &"at": Vector2(0.0, 0.0), &"v_span": STRETCH},
+	&"ante": {&"painting": "res://assets/rooms/painted/antessala.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 80.0, &"at": Vector2(0.0, 0.0), &"v_span": STRETCH},
 }
+## A node (and its subtree) the painting never dresses: set this meta to true.
+const KEEP_3D := &"keep_3d"
 ## Shaders whose meshes take the painting (the room's solid stone, floor and the abyss's pillars and ruins).
 ## (by the start of the file name: the stylized twins end in _paint or _fade).
 const SOLID: Array[String] = ["masonry", "catacomb_floor", "depth_stone", "abyss_ruins"]
 ## Shaders whose meshes are hidden (the painting has them): the floor's decals, the abyss's fog, mist and glow.
-## The water too (the Antessala's stream, the Salao's canal and pools): the painting has the water, and the zone that matters
-## to play (the stream only the dash crosses) is moved in the data to sit where the painting has it (tools/make_data.gd ANTE_STREAM).
-const HIDDEN: Array[String] = ["floor_decal", "abyss_fog", "abyss_mist", "abyss_glow", "shallow_water"]
-## 3D props the painting also has painted, by room (applied only when the painting is on; the classic look and --painted=off keep
-## them). A flame or light burns twice (the painted one and the animated one) unless it lands within about 0.3 m of the painted
-## one: then it stays, snapped onto it ("to": where the painted one is; an entry without "to" hides). Entries: "at" (x, z of the
-## prop on the floor), "radius" (m round it), "kinds" (&"fire": the flame's particles and cards; &"light": the omni lights).
-## Hall: the brazier on the east pier of the doors' wall (17, -14.8) is not in the painting (the painter left a wall there), so its
-## fire and light go; the other four braziers fall within 2 px (0.06 m) of their painted flames and stay.
+## The water is NOT here any more: it is the game's own over the plate's dry bed.
+const HIDDEN: Array[String] = ["floor_decal", "abyss_fog", "abyss_mist", "abyss_glow"]
+## 3D props the painting lacks, by room (applied only when the painting is on): their fire and light would burn in the air.
+## Entries: "at" (x, z of the prop on the floor), "radius" (m round it), "kinds" (&"fire": the flame's particles and cards;
+## &"light": the omni lights); with "to" they move there instead of hiding. The flames of the painted bowls are NOT here: the
+## plate has cold bowls and the 3D flame burns on them (the four Salao braziers fall within 0.06 m of their painted bowls).
+## Hall: the brazier on the east pier of the doors' wall (17, -14.8) is a plain wall in the painting.
 const PROPS := {
 	&"hall": [{&"at": Vector2(17.0, -14.8), &"radius": 0.8, &"kinds": [&"fire", &"light"]}],
 }
@@ -51,24 +58,30 @@ const UNDER_DEPTH := 34.0
 const WALL_DISTANCE := 70.0
 const WALL_TOP := 120.0
 const SPAN := 160.0
-## Hide the translucent cards (flame and glow sprites, fake shadows): the painting has them painted.
-const HIDE_CARDS := true
 
 var room: StringName = &"hall"
 var _mat: ShaderMaterial
 var _see: Dictionary = {}
-## Door -> its meshes and what they wore before (given back when it opens), the black faces by their door's x.
+## The doors (their leaves and black faces keep their own look).
 var _doors: Array[HallDoor] = []
-var _worn: Dictionary = {}
 
 
-## True for a room that has a painting in the stylized look (the painting is that look's stone), unless --painted=off. The hall is the opening one (not a hazard room).
+## The ROOMS key of a layout: "id:variant" when that variant has its own entry, else the id (&"" when none is painted).
+static func key_of(layout: RoomLayout, rooms: Dictionary = ROOMS) -> StringName:
+	if layout == null:
+		return &""
+	var k := StringName("%s:%d" % [layout.id, layout.variant_index])
+	if layout.variant_index > 0 and rooms.has(k):
+		return k
+	return layout.id if rooms.has(layout.id) else &""
+
+
+## True for a room that has a painting in the stylized look (the painting is that look's stone), unless --painted=off. A room
+## with a hazard is painted too: its hazard is the game's own 3D over the clean plate.
 static func wanted(arena: Arena) -> bool:
-	if arena.layout == null or not ROOMS.has(arena.layout.id):
+	if key_of(arena.layout) == &"":
 		return false
 	if Dev.arg("painted") == "off" or not VisualProfile.stylized():
-		return false
-	if arena.layout.id == &"hall" and arena.layout.hazard != null:
 		return false
 	return DEFAULT_ON or Dev.has("painted")
 
@@ -108,7 +121,7 @@ static func to_floor(p: Dictionary, uv: Vector2) -> Vector2:
 static func apply(arena: Arena) -> void:
 	var node := PaintedHall.new()
 	node.name = "PaintedHall"
-	node.room = arena.layout.id
+	node.room = key_of(arena.layout)
 	arena.add_child(node)
 	node._dress(arena)
 
@@ -184,6 +197,9 @@ func _walk(n: Node, arena: Arena) -> void:
 			continue
 		if c is HallDoor:
 			_doors.append(c)
+		# what moves or changes is the game's own: hazards, and anything marked
+		if c is HazardPiece or c.get_meta(KEEP_3D, false):
+			continue
 		# a piece the look hides (the classic-only ones) is left alone; the room itself may still be hidden while it is built
 		if c is Node3D and not (c as Node3D).visible:
 			continue
@@ -215,14 +231,12 @@ func _one(g: GeometryInstance3D) -> void:
 		var sm := m as StandardMaterial3D
 		if sm.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED and sm.blend_mode == BaseMaterial3D.BLEND_MODE_MIX:
 			_wear(g, _material(pose_of(room), 0.0))
-		elif HIDE_CARDS:
-			VisualProfile.vary(g, {&"visible": false})
 
 
 func _wear(g: GeometryInstance3D, mat: ShaderMaterial) -> void:
-	var door := _door_of(g)
-	if door >= 0:
-		_worn[g] = [door, g.material_override]
+	# a door's leaves and black inside keep their own look (the plate shows a dark open passage)
+	if _door_of(g) >= 0:
+		return
 	# through the look's registry: the painting is the stylized look's stone (F7 brings the classic one back)
 	VisualProfile.vary(g, {&"material_override": mat})
 
@@ -239,15 +253,6 @@ func _door_of(g: Node) -> int:
 				if absf(_doors[i].global_position.x - (g as Node3D).global_position.x) < 0.05:
 					return i
 	return -1
-
-
-## A door that opens gives its leaves and its black inside their own look back (the painting shows it shut).
-func _process(_dt: float) -> void:
-	for g: GeometryInstance3D in _worn.keys():
-		var door := _doors[_worn[g][0]]
-		if door.is_open:
-			VisualProfile.vary(g, {&"material_override": _worn[g][1]})
-			_worn.erase(g)
 
 
 func _quad(a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:

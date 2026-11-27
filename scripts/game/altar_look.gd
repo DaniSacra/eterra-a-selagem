@@ -232,6 +232,9 @@ func _altar(o: ArenaObstacle) -> void:
 	_out = Node3D.new()
 	_lit = Node3D.new()
 	_lit.visible = false
+	# GP-8: the candles change state (burnt out, then lit): the game's own over the painted altar, never the painting
+	_out.set_meta(PaintedHall.KEEP_3D, true)
+	_lit.set_meta(PaintedHall.KEEP_3D, true)
 	add_child(_out)
 	add_child(_lit)
 	var out_m := Masonry.new(_out)
