@@ -360,7 +360,7 @@ func test_each_arena_holds_its_ceiling_shooters_and_roles() -> void:
 		if l.id == &"hall":
 			continue
 		for i in 200:
-			var depth := 2 + i % 3
+			var depth := 6 + i % 3  # (SW-R1b: 1 to 4 are written by hand)
 			var fight := EncounterGen.generate(stage, depth, defs, rng, 1.0, l)
 			assert_lte(fight.ceiling, l.max_alive.y, "%s: never more standing than it holds" % l.id)
 			assert_between(fight.cap, l.max_alive.x, l.max_alive.y, "%s: the cap in its range" % l.id)

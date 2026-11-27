@@ -66,6 +66,8 @@ static func room_for(alive: int, ceiling: int, want: int) -> int:
 ## avoid: the parts of the room before (C1e: a fight never has the same set of parts twice in a row; drawn again up to REDRAWS times).
 static func generate(stage: StageDef, depth: int, defs: Dictionary, rng: RandomNumberGenerator, mult: float = 1.0, room: RoomLayout = null,
 		avoid: Array[StringName] = []) -> Fight:
+	if stage.opening_waves.has(depth):
+		return opening(stage, depth)
 	var fight := Fight.new()
 	var pool := pick_pool(stage, depth, rng)
 	if pool == null:
@@ -99,6 +101,24 @@ static func generate(stage: StageDef, depth: int, defs: Dictionary, rng: RandomN
 		add_big(fight, alive, defs, rng)
 	if not stage.mods.is_empty() and depth >= stage.mod_from_depth:
 		assign_mods(fight, stage, depth, defs, rng)
+	return fight
+
+
+## SW-R1b: the opening fight of a depth, as written in StageDef.opening_waves (SWORN's tutorial rooms: one thing taught a room, the kinds
+## alone or in pairs before they mix). No dice, no elite, no modifier; its budget is the cost of what is written.
+static func opening(stage: StageDef, depth: int) -> Fight:
+	var fight := Fight.new()
+	for w: PackedStringArray in stage.opening_waves[depth]:
+		var wave: Array = []
+		for id in w:
+			wave.append(StringName(id))
+			if not fight.kinds.has(StringName(id)):
+				fight.kinds.append(StringName(id))
+		fight.waves.append(wave)
+	fight.tier = StageDef.Tier.COMMON
+	fight.cap = stage.opening_cap
+	fight.ceiling = alive_range(stage, fight.tier).y
+	fight.mode = Mode.WAVES
 	return fight
 
 

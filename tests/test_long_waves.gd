@@ -32,7 +32,7 @@ func test_the_last_wave_carries_an_elite() -> void:
 	# (SW-R1: a room is one wave, two or a horde; the last of them carries the elite when a kind of the fight has one)
 	var with_elite := 0
 	var tried := 0
-	for depth in [4, 6, 7, 8, 9]:
+	for depth in [6, 7, 8, 9]:  # (SW-R1b: 1 to 4 are written by hand, no elite)
 		for seed_ in 12:
 			var f := _fight(depth, seed_ + 1)
 			if f.waves.is_empty():

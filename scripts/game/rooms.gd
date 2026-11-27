@@ -1035,6 +1035,7 @@ func _tally_thirds(dt: float) -> void:
 
 
 func _step_fight(dt: float) -> void:
+	game.room_tally.alive(game.horde.count(), dt)
 	if _layout != null and not _layout.areas.is_empty():
 		game.room_tally.zone_time(_layout.area_at(game.player.pos), dt)
 	if _layout != null and _thirds:

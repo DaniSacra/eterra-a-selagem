@@ -57,7 +57,7 @@ func test_a_room_is_a_horde_or_one_or_two_waves() -> void:
 	var one := 0
 	var two := 0
 	for i in 200:
-		var f := _fight(3, 100 + i)
+		var f := _fight(7, 100 + i)
 		if f.mode == EncounterGen.Mode.HORDE:
 			horde += 1
 			assert_eq(f.waves.size(), 2, "the horde is an initial wave and its reserve")
@@ -209,3 +209,40 @@ func _most_fountains(m: RunMap) -> int:
 	for r in m.layer(1):
 		top = maxi(top, best[r.id])
 	return top
+
+
+# ---------- SW-R1b: the four opening rooms, written by hand ----------
+
+func test_the_first_four_fights_are_written_by_hand() -> void:
+	for depth in [1, 2, 3, 4]:
+		assert_true(stage.opening_waves.has(depth), "room %d is written" % depth)
+		var a := _fight(depth, 1)
+		var b := _fight(depth, 99)
+		assert_eq(a.waves, b.waves, "room %d does not depend on the dice" % depth)
+		assert_eq(a.mode, EncounterGen.Mode.WAVES)
+		assert_eq(a.waves.size(), 2, "room %d: two waves" % depth)
+		var heads := 0
+		for w in a.waves:
+			heads += w.size()
+			for id: StringName in w:
+				assert_true(defs.has(id), "%s is an enemy of the stage" % id)
+				assert_false((defs[id] as EnemyDef).elite, "no elite in the opening")
+		assert_lte(heads, 8, "room %d has few heads" % depth)
+	assert_false(stage.opening_waves.has(5) or stage.opening_waves.has(6), "the rooms after them are drawn")
+
+
+func test_each_opening_room_adds_one_thing() -> void:
+	assert_eq(_fight(1, 1).kinds, [&"skeleton"] as Array[StringName], "room 1: only the soldier")
+	assert_true(_fight(2, 1).kinds.has(&"archer"), "room 2: the crossbow")
+	assert_true(_fight(3, 1).kinds.has(&"runner") and _fight(3, 1).kinds.has(&"bone_rat"), "room 3: the fast ones")
+	assert_gte(_fight(4, 1).kinds.size(), 3, "room 4: a mix")
+
+
+func test_the_rooms_after_the_opening_are_few_too() -> void:
+	for depth in [6, 7, 8, 9, 11, 12]:
+		var total := 0
+		for i in 30:
+			var f := _fight(depth, 500 + i)
+			for w in f.waves:
+				total += w.size()
+		assert_lte(total / 30.0, 13.0, "room %d: %.1f heads a room" % [depth, total / 30.0])

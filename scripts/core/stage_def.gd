@@ -118,6 +118,12 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var horde_initial := 0.75
 @export var horde_reserve := 0.75
 @export var wave_most := 20
+## SW-R1b (Daniel, 2026-11-27: fewer enemies, the first rooms teach): the opening fights written by hand, depth -> Array of waves (each a
+## PackedStringArray of enemy ids). A depth listed here is never drawn nor given a budget (EncounterGen.generate returns this fight);
+## the rest of the rooms follow cost_curve. The special rooms (late depths, a Provacao's curse) are the ones not listed.
+@export var opening_waves: Dictionary = {}
+## How many heads stand at once in an opening fight (its cap).
+@export var opening_cap := 4
 ## SW-R2: the rest after a guardian: one of the two doors of the room after it is a fountain (0: none; the guardians' depths are
 ## miniboss_depth and miniboss2_depth), and the doors of these depths with a fixed reward (rewards: depth -> Array of RunMap.Reward
 ## in slot order; a room of fight takes them in order, the rest are drawn as always).
