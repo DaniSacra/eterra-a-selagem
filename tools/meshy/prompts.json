@@ -1,214 +1,289 @@
 {
-  "style": "Stylized hand-painted game character, soft painterly textures, muted cool colors with one crimson accent, realistic adult proportions with long legs and a small head, no base, no ground, empty hands, no weapons.",
-  "models": {
-    "paladin_1": {
-      "polycount": 12000,
-      "pose": "a-pose",
-      "prompt": "Full body slender young paladin, light worn steel breastplate and pauldrons over a dark slate-blue padded tunic, short deep red cloak on the shoulders, a small engraved lion on the chest plate, leather belt, bracers and tall boots, bare head with short dark hair, calm determined face, standing in A-pose facing forward."
-    },
-    "hero_sombra": {
-      "polycount": 12000,
-      "pose": "a-pose",
-      "style": "Stylized hand-painted game character, soft painterly textures, near-monochrome black and dark grey clothes, realistic proportions eight heads tall, not chibi, not a child, no base, no ground, empty hands, no weapons.",
-      "prompt": "Full body tall lanky teenage boy about seventeen, thin and wiry, small head, long thin legs and arms, narrow shoulders. No armor, no cape, no cloak: fitted black cloth tunic to mid-thigh, black trousers, slim black boots, dark grey belt, a tiny grey lion pin, one long thin teal scarf around the neck with two narrow ends hanging down the back. Short messy copper-red hair, serious face. A-pose facing forward."
-    },
-    "hero_explorer": {
-      "ai_model": "latest",
-      "pose": "a-pose",
-      "polycount": 30000,
-      "images": [
-        "tools/meshy/ref/hero_explorer/front.png",
-        "tools/meshy/ref/hero_explorer/side.png",
-        "tools/meshy/ref/hero_explorer/back.png",
-        "tools/meshy/ref/hero_explorer/threequarter.png"
-      ],
-      "texture_prompt": "Premium stylized dark fantasy explorer: tousled copper-red hair, deep teal scarf and short teal mantle with gold trim, dark weathered leather armor and straps with antique brass buckles, steel shoulder guards, fitted leather gloves, brown adventurer boots, hand-painted materials, no weapons."
-    },
-    "enemy_skeleton": {
-      "ai_model": "latest",
-      "pose": "a-pose",
-      "polycount": 15000,
-      "images": [
-        "tools/meshy/ref/enemies/skeleton/front.png",
-        "tools/meshy/ref/enemies/skeleton/side.png",
-        "tools/meshy/ref/enemies/skeleton/back.png",
-        "tools/meshy/ref/enemies/skeleton/threequarter.png"
-      ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton foot soldier: round dented steel helmet, one steel pauldron, ragged dark blood-red cloth at the waist and neck, leather straps, a short rusty blade. A-pose facing forward, no base, no ground, no text.",
-      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Skeleton soldier: dark steel round helmet and one dark steel shoulder plate, faded dark red cloth at the waist and neck, worn leather straps, small red glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
-    },
-    "enemy_runner": {
-      "ai_model": "latest",
-      "pose": "a-pose",
-      "polycount": 15000,
-      "images": [
-        "tools/meshy/ref/enemies/runner/front.png",
-        "tools/meshy/ref/enemies/runner/side.png",
-        "tools/meshy/ref/enemies/runner/back.png",
-        "tools/meshy/ref/enemies/runner/threequarter.png"
-      ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Hunched fast skeleton, no weapon, ragged dark red rags, cracked ribcage with glowing orange embers inside the chest, burnt bone. A-pose facing forward, no base, no ground, no text.",
-      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Explosive skeleton runner: bare ivory bones and open ribs, faded dark red rags, glowing orange embers and cracks in the chest like burning coals, small orange glowing eyes, no weapon. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
-    },
-    "enemy_mage": {
-      "ai_model": "latest",
-      "pose": "a-pose",
-      "polycount": 15000,
-      "images": [
-        "tools/meshy/ref/enemies/mage/front.png",
-        "tools/meshy/ref/enemies/mage/side.png",
-        "tools/meshy/ref/enemies/mage/back.png",
-        "tools/meshy/ref/enemies/mage/threequarter.png"
-      ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton sorcerer: dark hooded robe almost black with dark red trims and scarf, glowing cold violet eyes, wooden staff topped with a cold violet gem (violet, not green). A-pose facing forward, no base, no ground, no text.",
-      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Skeleton sorcerer: dark charcoal hood and long robe with faded dark red lining, glowing cold violet eyes and a cold violet gem, dark wooden details. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
-    },
-    "enemy_archer": {
-      "ai_model": "latest",
-      "pose": "a-pose",
-      "polycount": 15000,
-      "images": [
-        "tools/meshy/ref/enemies/archer/front.png",
-        "tools/meshy/ref/enemies/archer/side.png",
-        "tools/meshy/ref/enemies/archer/back.png",
-        "tools/meshy/ref/enemies/archer/threequarter.png"
-      ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton crossbowman: dark purple hood, dark red scarf and short cape, dark bronze and leather armor pieces, a crossbow. A-pose facing forward, no base, no ground, no text.",
-      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Skeleton crossbowman: dark desaturated purple hood, faded dark red cloak and scarf, dark leather and blackened bronze armor pieces, dark wooden crossbow, small orange glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
-    },
-    "enemy_guard": {
-      "ai_model": "latest",
-      "pose": "a-pose",
-      "polycount": 15000,
-      "images": [
-        "tools/meshy/ref/enemies/guard/front.png",
-        "tools/meshy/ref/enemies/guard/side.png",
-        "tools/meshy/ref/enemies/guard/back.png",
-        "tools/meshy/ref/enemies/guard/threequarter.png"
-      ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Heavy skeleton brute: dark bronze plate armor, tall tower shield with an engraved emblem, a straight sword, dark red cloth at the waist. A-pose facing forward, no base, no ground, no text.",
-      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Heavy skeleton shieldbearer: heavy blackened bronze plate armor, a large dark bronze tower shield with a worn engraved emblem, faded dark red rags, small red glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
-    },
-    "enemy_priest": {
-      "ai_model": "latest",
-      "pose": "a-pose",
-      "polycount": 15000,
-      "images": [
-        "tools/meshy/ref/enemies/priest/front.png",
-        "tools/meshy/ref/enemies/priest/side.png",
-        "tools/meshy/ref/enemies/priest/back.png",
-        "tools/meshy/ref/enemies/priest/threequarter.png"
-      ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton priest of the dead: deep purple hood and long robe with old gold trims, glowing purple eyes, empty hands. A-pose facing forward, no base, no ground, no text.",
-      "retexture": "Stylized hand-painted dark fantasy, painterly matte. Undead skeleton priest of the dead: the face inside the hood is a pale ivory human skull with dark eye sockets and two small glowing purple eyes. Deep desaturated plum-purple hood and long tattered robe. The shoulder plates, the chest ornament, the belt and the vertical bands down the front of the robe and the hood's edge are dark aged gold / antique bronze metal with worn darker edges, clearly gold, never bright yellow. Ivory bone hands and forearms. No red, no pink."
-    },
-    "enemy_knight": {
-      "ai_model": "latest",
-      "pose": "a-pose",
-      "polycount": 15000,
-      "images": [
-        "tools/meshy/ref/enemies/knight/front.png",
-        "tools/meshy/ref/enemies/knight/side.png",
-        "tools/meshy/ref/enemies/knight/back.png",
-        "tools/meshy/ref/enemies/knight/threequarter.png"
-      ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Giant skeleton knight guardian: dark steel plate with old gold trims, helmet with a crown of spikes, long ragged red cape, sword and shield. A-pose facing forward, no base, no ground, no text.",
-      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Giant skeleton knight guardian, the face under the helmet is an ivory skull: dark steel plate armor with dark aged gold trims, a horned helmet with a crown of spikes in dark aged gold, long faded dark red cape, dark steel shield and sword, small red glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
-    },
-    "enemy_priest_elder": {
-      "ai_model": "latest",
-      "pose": "a-pose",
-      "polycount": 15000,
-      "images": [
-        "tools/meshy/ref/enemies/priest_elder/front.png",
-        "tools/meshy/ref/enemies/priest_elder/side.png",
-        "tools/meshy/ref/enemies/priest_elder/back.png",
-        "tools/meshy/ref/enemies/priest_elder/threequarter.png"
-      ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Giant elder skeleton priest guardian: golden crown, purple and old gold layered robes and mantle, staff with a glowing purple orb. A-pose facing forward, no base, no ground, no text.",
-      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Elder skeleton priest guardian: dark aged gold crown with a purple gem, deep desaturated plum-purple layered robes and cape, dark steel shoulder plates with dark aged gold trims, glowing purple eyes, a staff with a glowing purple orb. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
-    },
-    "enemy_morvath": {
-      "ai_model": "latest",
-      "pose": "a-pose",
-      "polycount": 15000,
-      "images": [
-        "tools/meshy/ref/enemies/morvath/front.png",
-        "tools/meshy/ref/enemies/morvath/side.png",
-        "tools/meshy/ref/enemies/morvath/back.png",
-        "tools/meshy/ref/enemies/morvath/threequarter.png"
-      ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton king Morvath, the king who betrayed the light: golden crown, long white hair, layered purple and old gold royal robes and mantle, ornate dark armor, a glowing purple gem on the chest, glowing purple eyes. A-pose facing forward, no base, no ground, no text.",
-      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Morvath, the skeleton king who betrayed the light: long white hair, a dark aged gold crown, ivory skull with glowing purple eyes, layered deep plum-purple royal robes and cape, dark steel armor with dark aged gold trims, a glowing purple gem on the chest. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
-    },
-    "emeth": {
-      "ai_model": "latest",
-      "polycount": 8000,
-      "images": [
-        "tools/meshy/ref/emeth/emeth.png"
-      ],
-      "texture_prompt": "Stylized hand-painted fantasy longsword Emeth: translucent emerald-green crystal blade with thin gold veins and a pale glowing edge, ornate antique gold crossguard with curved horn-like quillons and a round emerald in the centre, dark red leather-wrapped grip, gold pommel with an emerald. Only the sword, no background, no crystals, no ground."
-    },
-    "w_cleaver": {
-      "polycount": 1500,
-      "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
-      "prompt": "A broad heavy butcher cleaver-sword of an undead skeleton, wide rectangular single-edged iron blade much wider than a normal sword, square chipped tip, rust stains, short leather-wrapped grip. Medieval fantasy weapon, not a dagger, not a bayonet."
-    },
-    "w_crossbow": {
-      "polycount": 2000,
-      "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
-      "prompt": "A medieval wooden crossbow seen from above, wide horizontal curved iron bow arms across the front, simple straight wooden tiller stock bound with iron bands, taut string, one bolt loaded. Medieval fantasy weapon, no scope, no rifle stock, no gun parts."
-    },
-    "w_staff": {
-      "polycount": 2000,
-      "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
-      "prompt": "A tall gnarled dark wooden staff of an undead sorcerer, twisted top forming an open claw cage that would hold a glowing orb (cage empty), iron rings and hanging small bone charms along the shaft."
-    },
-    "w_knight_sword": {
-      "polycount": 1500,
-      "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
-      "prompt": "A full size straight double-edged longsword of a fallen knight, blade three times longer than the grip, dark blackened steel with a fuller, heavy straight guard, leather grip, round pommel. Not curved, not a dagger."
-    },
-    "w_knight_shield": {
-      "polycount": 1500,
-      "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
-      "prompt": "A large tall kite shield of a fallen undead knight, dark iron rim with rivets, scratched dented face of dark steel plates, plain with no emblem, seen from the front."
-    },
-    "w_morvath_scythe": {
-      "polycount": 3000,
-      "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
-      "prompt": "A complete two-handed war scythe, the whole weapon in view: a very long straight black iron pole taller than a man, and at its top end one large curved crescent blade attached at a right angle, jagged dark edge with faint violet runes, chains wrapped around the pole. The pole must be included."
-    },
-    "statue_hooded": {
-      "polycount": 6000,
-      "style": "Stylized hand-painted stone sculpture, soft painterly carved forms, weathered grey limestone with moss in the cracks, readable silhouette from above, no ground, no text, no cross symbols.",
-      "prompt": "A tall solemn hooded stone figure in long robes, face hidden in the deep hood, hands folded in front holding a closed book, standing on a short square plinth, ancient catacomb statue."
-    },
-    "lion_seated": {
-      "polycount": 6000,
-      "style": "Stylized hand-painted stone sculpture, soft painterly carved forms, weathered grey limestone with moss in the cracks, readable silhouette from above, no ground, no text, no cross symbols.",
-      "prompt": "A noble seated stone lion guardian on a low rectangular plinth, upright chest, full flowing mane, calm watchful face looking forward, front paws together, heraldic temple guardian statue."
-    },
-    "hero_maga": {
-      "polycount": 20000,
-      "pose": "a-pose",
-      "style": "Stylized hand-painted dark fantasy game character, painterly textures, realistic adult proportions eight heads tall, not chibi, no base, no ground, empty hands, no weapons, no staff, no fire.",
-      "prompt": "Full body young East Asian woman scholar mage, slender, calm face. Very short straight black bob haircut ending above the jaw, ears visible, nothing below the chin. Long navy blue robe with pale gold embroidery, the skirt split into layered tattered pointed panels to the shins. Light ivory mantle on the shoulders, short, open at the front, hood down. Crossed brown leather belts with small pouches and a scroll case, round gold seal medallion. Leather bracers, tall brown boots. A-pose facing forward."
-    },
-    "hero_maga_img": {
-      "ai_model": "latest",
-      "pose": "a-pose",
-      "polycount": 30000,
-      "images": [
-        "tools/meshy/ref/hero_maga/front.png"
-      ],
-      "texture_prompt": "Stylized hand-painted dark fantasy mage: short straight black bob hair, East Asian young woman, deep navy blue robe with pale gold embroidery, ivory mantle with gold patterns, brown leather belts, pouches and scroll case, gold seal medallion, leather bracers, brown boots. Painterly materials, no fire, no glow."
-    },
-    "w_maga_staff": {
-      "polycount": 5000,
-      "style": "Stylized hand-painted game prop, chunky readable silhouette, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols, no fire.",
-      "prompt": "A fantasy mage quarterstaff with two big ornate heads, one at each end. Each head is a large flat open circular gold ring, as wide as a hand span, standing in the plane of the staff, with short spikes around the outside of the ring and a big round amber crystal ball floating in the centre of the ring, held by thin gold spokes, and a short gold blade point past the ring. Between the two heads a straight dark wooden shaft with ivory cloth wraps and gold bands. The two big rings must be clearly visible.",
-      "texture_prompt": "Stylized hand-painted mage staff: polished antique gold ring, spikes and blade point with warm amber highlights, a glowing amber crystal orb, dark brown wooden shaft with ivory cloth wraps and thin gold bands. Painterly, warm amber and ivory palette."
-    }
+ "style": "Stylized hand-painted game character, soft painterly textures, muted cool colors with one crimson accent, realistic adult proportions with long legs and a small head, no base, no ground, empty hands, no weapons.",
+ "models": {
+  "paladin_1": {
+   "polycount": 12000,
+   "pose": "a-pose",
+   "prompt": "Full body slender young paladin, light worn steel breastplate and pauldrons over a dark slate-blue padded tunic, short deep red cloak on the shoulders, a small engraved lion on the chest plate, leather belt, bracers and tall boots, bare head with short dark hair, calm determined face, standing in A-pose facing forward."
+  },
+  "hero_sombra": {
+   "polycount": 12000,
+   "pose": "a-pose",
+   "style": "Stylized hand-painted game character, soft painterly textures, near-monochrome black and dark grey clothes, realistic proportions eight heads tall, not chibi, not a child, no base, no ground, empty hands, no weapons.",
+   "prompt": "Full body tall lanky teenage boy about seventeen, thin and wiry, small head, long thin legs and arms, narrow shoulders. No armor, no cape, no cloak: fitted black cloth tunic to mid-thigh, black trousers, slim black boots, dark grey belt, a tiny grey lion pin, one long thin teal scarf around the neck with two narrow ends hanging down the back. Short messy copper-red hair, serious face. A-pose facing forward."
+  },
+  "hero_explorer": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 30000,
+   "images": [
+    "tools/meshy/ref/hero_explorer/front.png",
+    "tools/meshy/ref/hero_explorer/side.png",
+    "tools/meshy/ref/hero_explorer/back.png",
+    "tools/meshy/ref/hero_explorer/threequarter.png"
+   ],
+   "texture_prompt": "Premium stylized dark fantasy explorer: tousled copper-red hair, deep teal scarf and short teal mantle with gold trim, dark weathered leather armor and straps with antique brass buckles, steel shoulder guards, fitted leather gloves, brown adventurer boots, hand-painted materials, no weapons."
+  },
+  "enemy_skeleton": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/enemies/skeleton/front.png",
+    "tools/meshy/ref/enemies/skeleton/side.png",
+    "tools/meshy/ref/enemies/skeleton/back.png",
+    "tools/meshy/ref/enemies/skeleton/threequarter.png"
+   ],
+   "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton foot soldier: round dented steel helmet, one steel pauldron, ragged dark blood-red cloth at the waist and neck, leather straps, a short rusty blade. A-pose facing forward, no base, no ground, no text.",
+   "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Skeleton soldier: dark steel round helmet and one dark steel shoulder plate, faded dark red cloth at the waist and neck, worn leather straps, small red glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
+  },
+  "enemy_runner": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/enemies/runner/front.png",
+    "tools/meshy/ref/enemies/runner/side.png",
+    "tools/meshy/ref/enemies/runner/back.png",
+    "tools/meshy/ref/enemies/runner/threequarter.png"
+   ],
+   "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Hunched fast skeleton, no weapon, ragged dark red rags, cracked ribcage with glowing orange embers inside the chest, burnt bone. A-pose facing forward, no base, no ground, no text.",
+   "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Explosive skeleton runner: bare ivory bones and open ribs, faded dark red rags, glowing orange embers and cracks in the chest like burning coals, small orange glowing eyes, no weapon. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
+  },
+  "enemy_mage": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/enemies/mage/front.png",
+    "tools/meshy/ref/enemies/mage/side.png",
+    "tools/meshy/ref/enemies/mage/back.png",
+    "tools/meshy/ref/enemies/mage/threequarter.png"
+   ],
+   "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton sorcerer: dark hooded robe almost black with dark red trims and scarf, glowing cold violet eyes, wooden staff topped with a cold violet gem (violet, not green). A-pose facing forward, no base, no ground, no text.",
+   "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Skeleton sorcerer: dark charcoal hood and long robe with faded dark red lining, glowing cold violet eyes and a cold violet gem, dark wooden details. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
+  },
+  "enemy_archer": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/enemies/archer/front.png",
+    "tools/meshy/ref/enemies/archer/side.png",
+    "tools/meshy/ref/enemies/archer/back.png",
+    "tools/meshy/ref/enemies/archer/threequarter.png"
+   ],
+   "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton crossbowman: dark purple hood, dark red scarf and short cape, dark bronze and leather armor pieces, a crossbow. A-pose facing forward, no base, no ground, no text.",
+   "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Skeleton crossbowman: dark desaturated purple hood, faded dark red cloak and scarf, dark leather and blackened bronze armor pieces, dark wooden crossbow, small orange glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
+  },
+  "enemy_guard": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/enemies/guard/front.png",
+    "tools/meshy/ref/enemies/guard/side.png",
+    "tools/meshy/ref/enemies/guard/back.png",
+    "tools/meshy/ref/enemies/guard/threequarter.png"
+   ],
+   "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Heavy skeleton brute: dark bronze plate armor, tall tower shield with an engraved emblem, a straight sword, dark red cloth at the waist. A-pose facing forward, no base, no ground, no text.",
+   "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Heavy skeleton shieldbearer: heavy blackened bronze plate armor, a large dark bronze tower shield with a worn engraved emblem, faded dark red rags, small red glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
+  },
+  "enemy_priest": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/enemies/priest/front.png",
+    "tools/meshy/ref/enemies/priest/side.png",
+    "tools/meshy/ref/enemies/priest/back.png",
+    "tools/meshy/ref/enemies/priest/threequarter.png"
+   ],
+   "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton priest of the dead: deep purple hood and long robe with old gold trims, glowing purple eyes, empty hands. A-pose facing forward, no base, no ground, no text.",
+   "retexture": "Stylized hand-painted dark fantasy, painterly matte. Undead skeleton priest of the dead: the face inside the hood is a pale ivory human skull with dark eye sockets and two small glowing purple eyes. Deep desaturated plum-purple hood and long tattered robe. The shoulder plates, the chest ornament, the belt and the vertical bands down the front of the robe and the hood's edge are dark aged gold / antique bronze metal with worn darker edges, clearly gold, never bright yellow. Ivory bone hands and forearms. No red, no pink."
+  },
+  "enemy_knight": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/enemies/knight/front.png",
+    "tools/meshy/ref/enemies/knight/side.png",
+    "tools/meshy/ref/enemies/knight/back.png",
+    "tools/meshy/ref/enemies/knight/threequarter.png"
+   ],
+   "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Giant skeleton knight guardian: dark steel plate with old gold trims, helmet with a crown of spikes, long ragged red cape, sword and shield. A-pose facing forward, no base, no ground, no text.",
+   "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Giant skeleton knight guardian, the face under the helmet is an ivory skull: dark steel plate armor with dark aged gold trims, a horned helmet with a crown of spikes in dark aged gold, long faded dark red cape, dark steel shield and sword, small red glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
+  },
+  "enemy_priest_elder": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/enemies/priest_elder/front.png",
+    "tools/meshy/ref/enemies/priest_elder/side.png",
+    "tools/meshy/ref/enemies/priest_elder/back.png",
+    "tools/meshy/ref/enemies/priest_elder/threequarter.png"
+   ],
+   "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Giant elder skeleton priest guardian: golden crown, purple and old gold layered robes and mantle, staff with a glowing purple orb. A-pose facing forward, no base, no ground, no text.",
+   "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Elder skeleton priest guardian: dark aged gold crown with a purple gem, deep desaturated plum-purple layered robes and cape, dark steel shoulder plates with dark aged gold trims, glowing purple eyes, a staff with a glowing purple orb. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
+  },
+  "enemy_morvath": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/enemies/morvath/front.png",
+    "tools/meshy/ref/enemies/morvath/side.png",
+    "tools/meshy/ref/enemies/morvath/back.png",
+    "tools/meshy/ref/enemies/morvath/threequarter.png"
+   ],
+   "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton king Morvath, the king who betrayed the light: golden crown, long white hair, layered purple and old gold royal robes and mantle, ornate dark armor, a glowing purple gem on the chest, glowing purple eyes. A-pose facing forward, no base, no ground, no text.",
+   "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Morvath, the skeleton king who betrayed the light: long white hair, a dark aged gold crown, ivory skull with glowing purple eyes, layered deep plum-purple royal robes and cape, dark steel armor with dark aged gold trims, a glowing purple gem on the chest. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
+  },
+  "emeth": {
+   "ai_model": "latest",
+   "polycount": 8000,
+   "images": [
+    "tools/meshy/ref/emeth/emeth.png"
+   ],
+   "texture_prompt": "Stylized hand-painted fantasy longsword Emeth: translucent emerald-green crystal blade with thin gold veins and a pale glowing edge, ornate antique gold crossguard with curved horn-like quillons and a round emerald in the centre, dark red leather-wrapped grip, gold pommel with an emerald. Only the sword, no background, no crystals, no ground."
+  },
+  "w_cleaver": {
+   "polycount": 1500,
+   "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+   "prompt": "A broad heavy butcher cleaver-sword of an undead skeleton, wide rectangular single-edged iron blade much wider than a normal sword, square chipped tip, rust stains, short leather-wrapped grip. Medieval fantasy weapon, not a dagger, not a bayonet."
+  },
+  "w_crossbow": {
+   "polycount": 2000,
+   "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+   "prompt": "A medieval wooden crossbow seen from above, wide horizontal curved iron bow arms across the front, simple straight wooden tiller stock bound with iron bands, taut string, one bolt loaded. Medieval fantasy weapon, no scope, no rifle stock, no gun parts."
+  },
+  "w_staff": {
+   "polycount": 2000,
+   "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+   "prompt": "A tall gnarled dark wooden staff of an undead sorcerer, twisted top forming an open claw cage that would hold a glowing orb (cage empty), iron rings and hanging small bone charms along the shaft."
+  },
+  "w_knight_sword": {
+   "polycount": 1500,
+   "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+   "prompt": "A full size straight double-edged longsword of a fallen knight, blade three times longer than the grip, dark blackened steel with a fuller, heavy straight guard, leather grip, round pommel. Not curved, not a dagger."
+  },
+  "w_knight_shield": {
+   "polycount": 1500,
+   "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+   "prompt": "A large tall kite shield of a fallen undead knight, dark iron rim with rivets, scratched dented face of dark steel plates, plain with no emblem, seen from the front."
+  },
+  "w_morvath_scythe": {
+   "polycount": 3000,
+   "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+   "prompt": "A complete two-handed war scythe, the whole weapon in view: a very long straight black iron pole taller than a man, and at its top end one large curved crescent blade attached at a right angle, jagged dark edge with faint violet runes, chains wrapped around the pole. The pole must be included."
+  },
+  "statue_hooded": {
+   "polycount": 6000,
+   "style": "Stylized hand-painted stone sculpture, soft painterly carved forms, weathered grey limestone with moss in the cracks, readable silhouette from above, no ground, no text, no cross symbols.",
+   "prompt": "A tall solemn hooded stone figure in long robes, face hidden in the deep hood, hands folded in front holding a closed book, standing on a short square plinth, ancient catacomb statue."
+  },
+  "lion_seated": {
+   "polycount": 6000,
+   "style": "Stylized hand-painted stone sculpture, soft painterly carved forms, weathered grey limestone with moss in the cracks, readable silhouette from above, no ground, no text, no cross symbols.",
+   "prompt": "A noble seated stone lion guardian on a low rectangular plinth, upright chest, full flowing mane, calm watchful face looking forward, front paws together, heraldic temple guardian statue."
+  },
+  "hero_maga": {
+   "polycount": 20000,
+   "pose": "a-pose",
+   "style": "Stylized hand-painted dark fantasy game character, painterly textures, realistic adult proportions eight heads tall, not chibi, no base, no ground, empty hands, no weapons, no staff, no fire.",
+   "prompt": "Full body young East Asian woman scholar mage, slender, calm face. Very short straight black bob haircut ending above the jaw, ears visible, nothing below the chin. Long navy blue robe with pale gold embroidery, the skirt split into layered tattered pointed panels to the shins. Light ivory mantle on the shoulders, short, open at the front, hood down. Crossed brown leather belts with small pouches and a scroll case, round gold seal medallion. Leather bracers, tall brown boots. A-pose facing forward."
+  },
+  "hero_maga_img": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 30000,
+   "images": [
+    "tools/meshy/ref/hero_maga/front.png"
+   ],
+   "texture_prompt": "Stylized hand-painted dark fantasy mage: short straight black bob hair, East Asian young woman, deep navy blue robe with pale gold embroidery, ivory mantle with gold patterns, brown leather belts, pouches and scroll case, gold seal medallion, leather bracers, brown boots. Painterly materials, no fire, no glow."
+  },
+  "w_maga_staff": {
+   "polycount": 5000,
+   "style": "Stylized hand-painted game prop, chunky readable silhouette, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols, no fire.",
+   "prompt": "A fantasy mage quarterstaff with two big ornate heads, one at each end. Each head is a large flat open circular gold ring, as wide as a hand span, standing in the plane of the staff, with short spikes around the outside of the ring and a big round amber crystal ball floating in the centre of the ring, held by thin gold spokes, and a short gold blade point past the ring. Between the two heads a straight dark wooden shaft with ivory cloth wraps and gold bands. The two big rings must be clearly visible.",
+   "texture_prompt": "Stylized hand-painted mage staff: polished antique gold ring, spikes and blade point with warm amber highlights, a glowing amber crystal orb, dark brown wooden shaft with ivory cloth wraps and thin gold bands. Painterly, warm amber and ivory palette."
+  },
+  "hero_warrior_gpt": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 30000,
+   "images": [
+    "tools/meshy/ref/gpt/warrior_front.png",
+    "tools/meshy/ref/gpt/warrior_back.png"
+   ],
+   "note": "2026-11-27 test: Daniel's ChatGPT hand-painted Warrior, approved"
+  },
+  "enemy_skeleton_gpt": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/gpt/skeleton_front.png"
+   ],
+   "note": "2026-11-27 test: Daniel's ChatGPT hand-painted Soldado, approved"
+  },
+  "enemy_runner_gpt": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/gpt/runner_front.png"
+   ],
+   "note": "2026-11-27: Daniel's ChatGPT hand-painted art, approved"
+  },
+  "enemy_archer_gpt": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/gpt/archer_front.png"
+   ],
+   "note": "2026-11-27: Daniel's ChatGPT hand-painted art, approved"
+  },
+  "enemy_guard_gpt": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/gpt/guard_front.png"
+   ],
+   "note": "2026-11-27: Daniel's ChatGPT hand-painted art, approved"
+  },
+  "enemy_mage_gpt": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/gpt/mage_front.png"
+   ],
+   "note": "2026-11-27: Daniel's ChatGPT hand-painted art, approved; the mage is short on purpose (Daniel: baixinho, divertido)",
+   "height_m": 1.15
+  },
+  "enemy_priest_gpt": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/gpt/priest_front.png"
+   ],
+   "note": "2026-11-27: Daniel's ChatGPT hand-painted art, approved"
+  },
+  "hero_maga_gpt": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 30000,
+   "images": [
+    "tools/meshy/ref/gpt/maga_front.png",
+    "tools/meshy/ref/gpt/maga_back.png"
+   ],
+   "note": "2026-11-27: Daniel's ChatGPT hand-painted art, approved"
   }
+ }
 }

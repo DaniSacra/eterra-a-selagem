@@ -173,7 +173,7 @@ async function retexture(key, dry) {
 async function rig(key) {
   const task = loadTasks()[key];
   const source = task.retextureId ?? task.imageId ?? task.refineId;
-  const id = (await call('POST', '/v1/rigging', { input_task_id: source, height_meters: 1.8 })).result;
+  const id = (await call('POST', '/v1/rigging', { input_task_id: source, height_meters: JSON.parse(readFileSync(join(here, 'prompts.json'), 'utf8')).models[key]?.height_m ?? 1.8 })).result;
   saveTask(key, { rigId: id });
   console.log(`${key}: rig ${id}`);
   const t = await wait(`/v1/rigging/${id}`, `${key} rig`);

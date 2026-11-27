@@ -328,5 +328,24 @@
     "refineId": "01a20ab2-9102-7687-b652-2b7e43c19d8e",
     "refineCredits": 10,
     "bytes": 3377852
+  },
+  "hero_warrior_gpt": {
+    "mode": "multi-image-to-3d",
+    "images": [
+      "tools/meshy/ref/gpt/warrior_front.png",
+      "tools/meshy/ref/gpt/warrior_back.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a21de3-19c2-7286-907f-ac42b1c7ace5",
+    "attempt": 1
+  },
+  "enemy_runner_gpt": {
+    "mode": "image-to-3d",
+    "images": [
+      "tools/meshy/ref/gpt/runner_front.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a21de3-91bd-70d1-9424-d918fbeee6a7",
+    "attempt": 1
   }
 }
