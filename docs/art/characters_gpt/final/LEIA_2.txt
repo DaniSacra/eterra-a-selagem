@@ -1,0 +1,36 @@
+A SELAGEM: PERSONAGENS PARA APROVAR, PARTE 2 (2026-11-27)
+
+O que é
+Os três personagens que ainda estavam nos modelos antigos, no mesmo estilo dos 8 que você aprovou hoje:
+- 09 Cavaleiro (guardião), 10 Ancião (guardião sacerdote), 11 Morvath (chefe final).
+- NN_nome-conceito.png: o desenho em pose de ação (1024x1536).
+- NN_nome-meshy-frente.png: de frente, pose neutra, fundo cinza claro, sem efeito. É a imagem que vai para o Meshy.
+- 11_morvath-meshy-costas.png: Morvath visto de trás.
+- todos.jpg: a folha com tudo junto (em cima os conceitos, embaixo as vistas do Meshy).
+Nenhum crédito do Meshy foi gasto.
+
+De onde veio o desenho (nada inventado)
+Cada um saiu do modelo antigo do jogo (as imagens de referência do Meshy) e das notas de design:
+- 09 Cavaleiro: esqueleto gigante de armadura pesada de aço escuro com bordas de ouro velho, elmo com dois chifres
+  curtos, capa vermelha rasgada, escudo grande e espada longa. Pose: a investida com o escudo à frente.
+- 10 Ancião: esqueleto sacerdote gigante, coroa de ouro velho, mantos em camadas, ombreiras de aço, cajado com orbe.
+  Pose: lançando o leque de orbes.
+- 11 Morvath, o Lich-Rei do Sul: rei esqueleto alto, cabelo branco longo, coroa, armadura escura com ouro velho, gema
+  no peito, mantos e capa reais, e a foice que ele usa na luta. Um pouco de geada na barra da capa (o cânone diz que o
+  domínio dele é a morte e o inverno sem fim). Pose: girando a foice, com magia na outra mão.
+
+O que mudou em relação aos modelos antigos (regras de Eterra)
+- O Cavaleiro e o Ancião tinham violeta (manto e gema). Violeta agora é só do Morvath: o Ancião ficou em vermelho
+  escuro, branco osso e ocre, com gema âmbar; o Cavaleiro em aço escuro, ouro velho e vermelho apagado.
+- Olhos e magia dos dois guardiões em amarelo-esverdeado (o Cavaleiro tinha olhos vermelhos), como os outros mortos.
+- Escudo do Cavaleiro liso, com borda de ferro, faixas e um cravo redondo, sem símbolo.
+- Coroas com poucas pontas, sem auréola nem raios. Nada de sol, estrela, cruz ou texto.
+- Morvath mantém o violeta: manto, olhos, gema e magia.
+
+Como responder
+Para cada número diga "ok" ou o que mudar, por exemplo:
+  09 ok
+  10 coroa menor
+  11 frente ok, costas refazer
+Com o seu ok, a próxima etapa é mandar as vistas de frente (e as costas do Morvath) para o Meshy, com estimativa de
+créditos antes.

@@ -284,6 +284,34 @@
     "tools/meshy/ref/gpt/maga_back.png"
    ],
    "note": "2026-11-27: Daniel's ChatGPT hand-painted art, approved"
+  },
+  "enemy_knight_gpt": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/gpt/knight_front.png"
+   ],
+   "note": "2026-11-27: hand-painted concept in the approved GPT style (Daniel: request Meshy right away)"
+  },
+  "enemy_priest_elder_gpt": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/gpt/priest_elder_front.png"
+   ],
+   "note": "2026-11-27: hand-painted concept in the approved GPT style (Daniel: request Meshy right away)"
+  },
+  "enemy_morvath_gpt": {
+   "ai_model": "latest",
+   "pose": "a-pose",
+   "polycount": 15000,
+   "images": [
+    "tools/meshy/ref/gpt/morvath_front.png",
+    "tools/meshy/ref/gpt/morvath_back.png"
+   ],
+   "note": "2026-11-27: hand-painted concept in the approved GPT style (Daniel: request Meshy right away)"
   }
  }
 }

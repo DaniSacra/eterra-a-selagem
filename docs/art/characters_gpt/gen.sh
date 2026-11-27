@@ -1,13 +1,14 @@
 #!/bin/bash
-# usage: gen.sh <name> <tag> <input.png> <prompt_file>   one call at a time; writes out/<name>-<tag>.png and .prompt.txt
+# usage: gen.sh <name> <tag> <input.png> <prompt_file> [extra.png ...]   (COMMON=file overrides prompts/common.txt) one call at a time; writes out/<name>-<tag>.png and .prompt.txt
 set -e
 H=/home/dani/games/eterra-a-selagem/docs/art/characters_gpt
-N=$1; T=$2; I=$3; PF=$4
-P="$(cat $H/prompts/common.txt; echo; cat $PF)"
+N=$1; T=$2; I=$3; PF=$4; shift 4
+EX=(); for e in "$@"; do EX+=(-F "image[]=@$e"); done
+P="$(cat ${COMMON:-$H/prompts/common.txt}; echo; cat $PF)"
 O=$H/out/${N}-${T}
 printf '%s\n' "$P" > $O.prompt.txt
 curl -sS --http1.1 --max-time 500 https://api.openai.com/v1/images/edits -H "Authorization: Bearer $(cat ~/.config/eterra/openai_key)" \
-  -F model=gpt-image-2 -F "image[]=@$I" --form-string "prompt=$P" -F size=1024x1536 -F quality=high -o $O.json
+  -F model=gpt-image-2 -F "image[]=@$I" "${EX[@]}" --form-string "prompt=$P" -F size=1024x1536 -F quality=high -o $O.json
 python3 -I -c "
 import json,base64,sys
 d=json.load(open('$O.json'))

@@ -13,3 +13,12 @@ Fixes: Guard shield plain wood with iron rim, two bands and a round boss (was a 
 crook with a yellow-green lantern (was a spiked ring); violet removed from Mage hat/robe, Priest, Warrior cape/trousers,
 Maga skirts/sash; Warrior chest symbol removed (a small lion was tried, read as a sun, removed in A2); undead glow yellow-green.
 22 images, ~US$5.50. Awaiting Daniel. No Meshy credits spent. `docs/steam-ia.md` gets them if they enter the game.
+
+## Part 2 (2026-11-27): 09 Knight, 10 Elder, 11 Morvath
+No pack art: `in/<nn>_old.png` = the old Meshy refs (`tools/meshy/ref/enemies/<id>/threequarter.png`), sent as image 2;
+image 1 = an approved concept as style ref (Guard for the Knight, Priest for the Elder and Morvath). `gen.sh` now takes
+extra images after the prompt file and `COMMON=` to swap the rule header (`prompts/common_morvath.txt` allows violet on
+him only). Prompts `A_/B_/C_` 09 to 11 and `full_*`. Violet removed from the Knight and the Elder (Elder oxblood, bone,
+ochre, amber gem); guardian eyes and magic yellow-green; Morvath keeps violet, scythe, white hair, frost hem (canon:
+death and endless winter). Picks all first try (A1, B1, C1) in `final/` + `todos_2.jpg` + `LEIA_2.txt`; sent to
+Downloads\ASelagem-GP8\APROVAR-PERSONAGENS-2. 7 images, ~US$1.75. No Meshy credits spent.

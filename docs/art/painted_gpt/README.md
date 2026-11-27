@@ -33,6 +33,7 @@ Generation (curl; the key is read from the file, never printed):
 | 2026-11-27 | lote3 (`lote3/`): knight a1 + g1 (sala05); elder a1 (chosen, right column ~20 px off), a2 (same offset, lost the void fog), g1 (sala06); seal a1 (arena shrank ~4%), a2 (chosen), g1 (sala07, gamma 1.08 after) | 9 | 5488 | 2.25 |
 | 2026-11-27 | lote3 fix (`lote3/seal-g2`, prompt `lote3/gate_open.txt`): Sala07 game plate, shrine gate leaf and violet crack removed, archway now a dark open passage; only a 120x140 crop at (1044,224) pasted onto the v1 plate so every other pixel is identical (old kept as `sala07_jogo_v1.png`) | 1 | 5488 | 0.25 |
 | 2026-11-27 | game_v1 (`game_v1/`): game plates of the three rooms in the game, edits of the current paintings: sala01-g1, sala00-g1 (gamma 1.05 after), antessala-g1 | 3 | 5488 | 0.75 |
+| 2026-11-27 | characters part 2 (`docs/art/characters_gpt/`, 09 Knight, 10 Elder, 11 Morvath; image 1 = approved concept as style ref, image 2 = old Meshy threequarter ref): concepts A1 x3, Meshy fronts B1 x3, Morvath back C1; no redos | 7 | 5488 | 1.75 |
 
 ## style_v2 (2026-11-27): style approval round
 `style_v2/` holds the variants Daniel is choosing from (Downloads\ASelagem-GP8\APROVAR-ESTILO). Request =
