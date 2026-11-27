@@ -1,5 +1,5 @@
 extends GutTest
-## C1d lote 7: the Ruptura of phase 4: 1.5 s warning over the whole floor, 16 damage, then 3 s exposed; once in 25 s.
+## C1d lote 7: the Ruptura of phase 4: 1.5 s warning over the whole floor, 15 damage, then 3 s exposed; once in 25 s.
 
 var game: Game
 
@@ -28,7 +28,7 @@ func test_data_and_pure_rule() -> void:
 	var d := load("res://data/bosses/morvath.tres") as BossDef
 	assert_eq(d.rupture_every, 25.0)
 	assert_eq(d.rupture_windup, 1.5)
-	assert_eq(d.rupture_damage, 16.0)
+	assert_eq(d.rupture_damage, 15.0)
 	assert_eq(d.rupture_window, 3.0)
 	assert_eq(d.rupture_phase, 4)
 	assert_false(BossRules.rupture_due(3, 4, 25.0, 0.0), "not before its phase")
@@ -56,7 +56,7 @@ func test_warning_covers_the_floor_then_exposes_him() -> void:
 				break
 	assert_true(seen, "the Ruptura started")
 	assert_almost_eq(warn.total, 1.5, 0.1, "1.5 s of warning")
-	assert_eq(warn.power, 16.0)
+	assert_eq(warn.power, 15.0)
 	assert_gte(warn.radius, game.arena.shape().bounds().size.x * 0.5 - 0.1, "the whole floor, no free lane")
 	assert_eq(int(boss.stats.get("ruptures", 0)), 1)
 	# it lands, he is exposed 3 s, x1.4
@@ -100,8 +100,8 @@ func _pulse_hp(brado: bool) -> float:
 	return hp0 - game.player.hp
 
 
-func test_the_pulse_hits_for_16() -> void:
-	assert_eq(_pulse_hp(false), 16.0)
+func test_the_pulse_hits_for_15() -> void:
+	assert_eq(_pulse_hp(false), 15.0)
 
 
 func test_the_shield_takes_the_pulse_whole() -> void:

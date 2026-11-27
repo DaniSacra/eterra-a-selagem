@@ -56,7 +56,7 @@ func test_elites_are_the_same_figure_in_old_gold() -> void:
 			assert_almost_eq(own.height, common.height, 0.01, "the elite of %s as tall" % d.id)
 		assert_gt(e.gild, 0.5, "the elite of %s wears old gold" % d.id)
 		assert_eq(d.gild, 0.0, "the common %s does not" % d.id)
-		assert_true(e.armor > 0.0, "the elite of %s keeps its armor bar" % d.id)
+		assert_eq(e.armor, 0.0, "the elite of %s has no armor bar (SWORN Major: life only)" % d.id)
 		assert_gt(e.rim, 0.0, "the elite of %s keeps its edge and outline" % d.id)
 
 

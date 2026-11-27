@@ -248,6 +248,8 @@ func test_the_state_survives_its_packing() -> void:
 func test_armor_answers_a_blow_without_the_white_of_a_wound() -> void:
 	var horde := _horde()
 	var e := horde.spawn(_def(&"guard_elite"), Vector2(4, 0), false)
+	e.max_armor = 330.0  # (no enemy has armor since 2026-11-27: the drawing of the bar is kept, so it is given by hand)
+	e.armor = 330.0
 	horde.damage(e, 10.0, Vector2.RIGHT, 5.0, Color.WHITE, false)
 	assert_true(e.absorbed, "the armor took it")
 	assert_gt(e.armor, 0.0)
@@ -280,6 +282,8 @@ func test_drawing_never_rolls_the_simulation_dice_nor_moves_anyone() -> void:
 	horde.render()
 	assert_gt(horde.tells.count, 0, "the wind-ups are drawn")
 	var armored := horde.list[horde.list.size() - 1]
+	armored.max_armor = 80.0
+	armored.armor = 80.0
 	horde.damage(armored, 5.0, Vector2.RIGHT, 0.0, Color.WHITE, false)
 	horde.damage(armored, 10000.0, Vector2.RIGHT, 0.0, Color.WHITE, false)
 	horde.render()
@@ -563,6 +567,8 @@ func test_a_crack_throws_half_the_shards_of_a_break_slower() -> void:
 func test_a_heavy_blow_on_armor_gives_the_body_a_little_and_cracks_once_per_step() -> void:
 	var horde := _horde()
 	var e := horde.spawn(_def(&"guard_elite"), Vector2(4, 0), false)
+	e.max_armor = 330.0
+	e.armor = 330.0
 	horde.heavy_blow = true
 	var before := e.max_armor
 	horde.damage(e, e.max_armor * 0.3, Vector2.RIGHT, 0.0, Color.WHITE, false)

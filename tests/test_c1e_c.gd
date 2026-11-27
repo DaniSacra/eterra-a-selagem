@@ -114,7 +114,7 @@ func test_the_four_are_data_with_the_numbers_of_the_doc() -> void:
 		assert_ne(T.t(StringName("codex_role_" + String(d.role))), "codex_role_" + String(d.role))
 		assert_true(CodexScreen.ENEMIES.has(d.id))
 	assert_eq(c.behavior, EnemyDef.Behavior.BEAM)
-	assert_eq(c.hp, 130.0)
+	assert_eq(c.hp, 150.0)
 	assert_eq(c.speed, 0.0)
 	assert_eq(c.attack_damage, 5.0)
 	assert_eq(c.shot_ticks, 5)
@@ -125,8 +125,8 @@ func test_the_four_are_data_with_the_numbers_of_the_doc() -> void:
 	assert_eq(c.role, &"beam")
 	assert_true(c.never_with.has(&"sweep"), "never with the Varredor")
 	assert_eq(a.behavior, EnemyDef.Behavior.SUPPORT)
-	assert_eq(a.hp, 110.0)
-	assert_eq(a.plate_damage, 8.0)
+	assert_eq(a.hp, 150.0)
+	assert_eq(a.plate_damage, 7.0)
 	assert_gte(a.plate_time, 0.7)
 	assert_eq(a.plate_max, 4)
 	assert_eq(a.role, &"trap")
@@ -282,7 +282,7 @@ func test_the_armadilheiro_lays_a_plate_that_warns_one_second_then_hurts() -> vo
 		_step()
 		game.player.pos = Vector2.ZERO
 	assert_eq(hurts.size(), 1, "standing on it he took it once")
-	assert_almost_eq(hurts[0], 8.0, 0.01)
+	assert_almost_eq(hurts[0], 7.0, 0.01)
 
 
 func test_the_plate_lies_dormant_until_six_seconds_and_its_spikes_hurt_who_steps_on_them() -> void:
@@ -312,7 +312,7 @@ func test_the_plate_lies_dormant_until_six_seconds_and_its_spikes_hurt_who_steps
 	game.player.pos = plate.at
 	_step()
 	assert_eq(hurts.size(), 1, "stepping onto the spikes hurts")
-	assert_almost_eq(hurts[0], 8.0, 0.01)
+	assert_almost_eq(hurts[0], 7.0, 0.01)
 	_step(10)
 	assert_eq(hurts.size(), 1, "once")
 	for i in 600:

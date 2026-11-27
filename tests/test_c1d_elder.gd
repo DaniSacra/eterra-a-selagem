@@ -19,31 +19,8 @@ func test_data() -> void:
 	assert_eq(d.volley_every, 12.0)
 	assert_gte(d.volley_windup, 0.8, "the new pattern warns 0.8 s or more (2026-11-23: 1.0 before the quicker wind-ups)")
 	assert_gte(d.volley_recover, 1.5)
-	assert_eq(d.ward_count, 3)
-	assert_eq(d.ward_armor, 40.0)
-
-
-func test_ward_on_servants_goes_with_the_elder() -> void:
-	var game := _game()
-	var h := game.horde
-	h.target = Vector2(0, 0)
-	var elder := h.spawn(h.def(&"priest_elder"), Vector2(6, 0), false)
-	var servants: Array[Enemy] = []
-	for k in 4:
-		servants.append(h.spawn(h.def(&"skeleton"), Vector2(4 + k, 2), false))
-	elder.ward_t = 0.0
-	h._step_ward(elder, 0.0)
-	var warded := 0
-	for s in servants:
-		warded += int(s.armor == 40.0 and s.warded_by == elder)
-	assert_eq(warded, 3, "three of them, no more")
-	h.dealing = &"ultimate"
-	elder.armor = 0.0
-	h.damage(elder, 100000.0, Vector2.RIGHT, 0.0, Color.WHITE, false)
-	assert_false(elder.alive)
-	for s in servants:
-		assert_eq(s.armor, 0.0, "the shield is gone with him")
-		assert_null(s.warded_by)
+	assert_eq(d.ward_count, 0, "no armor to give since 2026-11-27 (the yellow bar is gone)")
+	assert_eq(d.armor, 0.0)
 
 
 func test_retreat_then_three_slow_orbs_that_turn() -> void:

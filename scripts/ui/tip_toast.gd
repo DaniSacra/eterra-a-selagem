@@ -11,7 +11,7 @@ const FADE := 0.3
 const WIDTH := 460.0
 const BOTTOM := 172.0
 const TEXT_PX := 17
-const NEAR_ARMOR := 14.0
+const NEAR_POISE := 14.0
 const VEIL := Color(0.035, 0.027, 0.04, 0.86)
 
 var game: Game
@@ -90,15 +90,15 @@ func _data() -> Dictionary:
 	return _scratch if Dev.has("tips") else Save.data
 
 
-## What the tips look at: the room's fight, an armored enemy near, the Blessings and Elos owned.
+## What the tips look at: the room's fight, an enemy near with its Quebra bar worn, the Blessings and Elos owned.
 func context(fighting: bool) -> Dictionary:
-	var armored := false
+	var poised := false
 	if fighting:
 		for e in game.horde.list:
-			if e.max_armor > 0.0 and e.armor > 0.0 and e.pos.distance_to(game.player.pos) < NEAR_ARMOR:
-				armored = true
+			if e.alive and e.def.poise > 0.0 and e.poise < e.poise_full and e.pos.distance_to(game.player.pos) < NEAR_POISE:
+				poised = true
 				break
-	return {"fighting": fighting, "fight_t": _fight_t, "armored": armored,
+	return {"fighting": fighting, "fight_t": _fight_t, "poised": poised,
 			"boons": game.boons.owned().size(), "elos": game.boons.new_elos({}).size(), "tutorial": Objective.tutorial(),
 			"rhythm": game.hero_gifts != null and game.hero_gifts.rhythm.armed(),
 			"maga": game.hero.arcane != null, "magick_empty": game.player.magick.value < 5.0}

@@ -49,6 +49,8 @@ func test_a_shield_stops_the_attack_from_the_front_only() -> void:
 
 func test_the_special_wears_armor_down_faster() -> void:
 	var e := _spawn(&"archer_elite", Vector2(5.0, 0.0))
+	e.max_armor = 190.0  # (given by hand: no enemy has armor since 2026-11-27)
+	e.armor = 190.0
 	assert_almost_eq(_hit(e, 20.0, [&"heavy"] as Array[StringName]), 30.0, 0.01)
 	assert_almost_eq(_hit(e, 20.0, [&"light"] as Array[StringName]), 20.0, 0.01)
 
@@ -101,23 +103,6 @@ func test_the_runner_bursts_as_it_falls() -> void:
 	var z := game.ground.zones[-1]
 	assert_almost_eq(z.life, r.def.death_burst, 0.001)
 	assert_almost_eq(z.power, r.def.attack_damage, 0.01)
-
-
-func test_the_priest_armors_the_others_while_it_stands() -> void:
-	var p := _spawn(&"priest", Vector2(6.0, 0.0))
-	var near: Array[Enemy] = []
-	for i in 4:
-		near.append(_spawn(&"skeleton", Vector2(6.0 + i, 2.0)))
-	game.horde._step_ward(p, 1.0)
-	assert_eq(near.filter(func(e: Enemy) -> bool: return e.armor > 0.0).size(), p.def.ward_count)
-	assert_eq(near[0].armor, p.def.ward_armor)
-	game.horde.damage(near[0], 99.0, Vector2.RIGHT, 0.0)
-	assert_eq(near[0].armor, 0.0)
-	assert_eq(near[0].stun_t, 0.0, "a ward broken staggers no one")
-	game.horde.damage(p, 9999.0, Vector2.RIGHT, 0.0)
-	for e in near:
-		assert_eq(e.armor, 0.0, "it fell: the armor goes with it")
-		assert_eq(e.max_armor, 0.0)
 
 
 func test_the_soldier_follows_then_locks() -> void:

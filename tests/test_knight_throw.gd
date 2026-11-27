@@ -104,7 +104,6 @@ func test_knight_is_quick_but_readable() -> void:
 	assert_gte(d.close_windup, 0.4)
 	assert_lte(d.aim_lock, 0.2, "the line follows him until late")
 	assert_gt(d.lunge_speed, 18.0, "a faster lunge")
-	assert_lt(d.armor_soft, 1.0, "the armor shrugs off the light blows")
 	assert_gt(d.throw_flight, 0.0)
 	assert_lt(d.ring_thick, 1.2, "a thin band")
 	assert_false(d.moves.is_empty())

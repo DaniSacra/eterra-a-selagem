@@ -69,7 +69,7 @@ func test_attack_damage_and_timing_follow_hades() -> void:
 	var cut1 := ComboTree.find(tree.neutral, L)
 	var cut2 := cut1.following()[0]
 	var cut3 := cut2.following()[0]
-	assert_eq([cut1.damage, cut2.damage, cut3.damage], [15.0, 15.0, 30.0])
+	assert_eq([cut1.damage, cut2.damage, cut3.damage], [20.0, 20.0, 40.0])  # SWORN sword: 20, 20, 40
 	# E1c: Hades II's staff (docs/design/hades2_feel_study.md): windup + glint, attack lock, legs held
 	assert_almost_eq(cut1.lead(), 0.08, 0.001)
 	assert_almost_eq(cut2.lead(), 0.13, 0.001)
@@ -86,7 +86,7 @@ func test_attack_damage_and_timing_follow_hades() -> void:
 func test_the_right_tap_is_the_corte_circular() -> void:
 	play(H)
 	assert_eq(started, [&"sweep"] as Array[StringName])
-	assert_eq(runner.node.damage, 35.0)
+	assert_eq(runner.node.damage, 40.0)
 	assert_eq(runner.node.shape, ComboNode.Shape.CIRCLE)
 	assert_eq(runner.node.effect, ComboNode.Effect.NONE, "it is no Brado: no buff")
 

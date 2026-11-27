@@ -166,7 +166,7 @@ func test_the_third_blow_is_worth_double_and_the_only_one_that_pushes() -> void:
 	var cut1 := ComboTree.find(tree.neutral, L)
 	var cut2 := cut1.following()[0]
 	var cut3 := cut2.following()[0]
-	assert_eq([cut1.damage, cut2.damage, cut3.damage], [15.0, 15.0, 30.0])
+	assert_eq([cut1.damage, cut2.damage, cut3.damage], [20.0, 20.0, 40.0])  # SWORN sword: 20, 20, 40
 	assert_eq(cut3.damage, cut1.damage * 2.0)
 	# (the horde's decay is 7: the push in meters is about a seventh of the speed)
 	assert_lt(cut1.knockback / Horde.KNOCKBACK_DECAY, 0.15, "blow 1 pushes next to nothing")

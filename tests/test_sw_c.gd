@@ -16,10 +16,10 @@ func _game() -> Game:
 
 # ---------- SW-C4 ----------
 
-func test_commons_hit_for_a_tenth_to_a_fifth_of_forty() -> void:
+func test_commons_hit_for_a_tenth_to_a_fifth_of_fifty() -> void:  # SWORN Kingswood: Snake 3, Axe 5 to 7, Boar 7, Mortoad 7 to 9, Hammer 10, a Gawain knight 12
 	for id in ["skeleton", "runner", "mage", "archer", "guard", "priest", "varredor", "saltador", "lancador", "skeleton_big", "runner_big", "trinca", "bone_rat"]:
 		var d := _def(id)
-		assert_between(d.attack_damage, 3.0, 8.0, id)
+		assert_between(d.attack_damage, 3.0, 12.0, id)
 	assert_lte(_def("armadilheiro").plate_damage, 8.0)
 	assert_lte(_def("guard").close_damage, 8.0)
 
@@ -57,7 +57,7 @@ func test_poise_on_elites_guardians_and_morvath() -> void:
 	assert_eq(b.posture_stun, 3.5)
 	assert_eq(b.posture_growth, 1.25)
 	assert_eq(_def("skeleton").poise_growth, 1.0, "the commons are as they were")
-	assert_eq(_def("skeleton").poise_stun, 1.2)
+	assert_eq(_def("skeleton").poise_stun, 2.0, "SWORN: a common stands stunned 2.0 s")
 
 
 func test_elite_breaks_stuns_2_5_s_then_asks_more() -> void:
@@ -71,9 +71,10 @@ func test_elite_breaks_stuns_2_5_s_then_asks_more() -> void:
 	e.armor = 0.0
 	e.cooldown = 99.0
 	assert_eq(e.poise_full, 100.0)
-	# the special takes 0.6 x 0.5 = 0.3 of the bar: the fourth breaks it (0.7, 0.4, 0.1, 0)
+	# the special takes 0.6 x poise_mult of the bar (SWORN's Major: 400 of stagger): the n-th breaks it
 	h.dealing = &"special"
-	for i in 3:
+	var n := int(ceilf(1.0 / (0.6 * e.def.poise_mult) - 0.0001))
+	for i in n - 1:
 		h.damage(e, 1.0, Vector2.RIGHT, 0.0, Color.WHITE, false)
 	assert_eq(e.broken_t, 0.0)
 	h.damage(e, 1.0, Vector2.RIGHT, 0.0, Color.WHITE, false)
@@ -90,9 +91,11 @@ func test_elite_breaks_stuns_2_5_s_then_asks_more() -> void:
 	assert_eq(e.poise_full, 125.0, "the next break asks 1.25 times more")
 	assert_eq(e.poise, 125.0)
 	h.dealing = &"special"
-	for i in 4:
+	var n2 := int(ceilf(1.25 / (0.6 * e.def.poise_mult) - 0.0001))
+	assert_gt(n2, n - 1, "a bigger bar takes more blows")
+	for i in n2 - 1:
 		h.damage(e, 1.0, Vector2.RIGHT, 0.0, Color.WHITE, false)
-	assert_eq(e.poise_breaks, 1, "0.3 of a bigger bar: four blows no longer break it")
+	assert_eq(e.poise_breaks, 1, "a bigger bar: the blows that broke it before no longer do")
 	h.damage(e, 1.0, Vector2.RIGHT, 0.0, Color.WHITE, false)
 	assert_eq(e.poise_breaks, 2)
 	h.dealing = &""
@@ -106,8 +109,8 @@ func test_guardian_stuns_3_5_s() -> void:
 	e.cooldown = 99.0
 	e.hp = 100000.0
 	e.max_hp = 100000.0
-	h.dealing = &"ultimate"  # a whole bar x 0.3: four of them
-	for i in 3:
+	h.dealing = &"ultimate"  # a whole bar x poise_mult (SWORN's Questing Beast: 750 of stagger)
+	for i in int(ceilf(1.0 / e.def.poise_mult - 0.0001)) - 1:
 		h.damage(e, 1.0, Vector2.RIGHT, 0.0, Color.WHITE, false)
 	assert_eq(e.broken_t, 0.0)
 	h.damage(e, 1.0, Vector2.RIGHT, 0.0, Color.WHITE, false)
@@ -129,7 +132,7 @@ func test_morvath_posture_grows_with_each_break() -> void:
 
 func test_bone_rat_dies_to_one_blow() -> void:
 	var d := _def("bone_rat")
-	assert_lte(d.hp, 15.0, "the first blow of the Warrior is 15")
+	assert_lte(d.hp, 20.0, "the first blow of the Warrior is 20: a Snake of SWORN dies to one")
 	assert_gt(d.speed, _def("skeleton").speed)
 	assert_between(d.attack_damage, 2.0, 4.0)
 	assert_true(d.blocks_body, "solid like every body")
@@ -208,8 +211,9 @@ func test_poise_wears_under_the_armor_too() -> void:
 	var h := game.horde
 	var e := h.spawn(h.def(&"skeleton_elite"), Vector2(3, 0), false)
 	e.cooldown = 99.0
-	assert_gt(e.armor, 0.0)
+	e.max_armor = 80.0  # (given by hand: no enemy has armor since 2026-11-27)
+	e.armor = 80.0
 	h.dealing = &"special"
 	h.damage(e, 1.0, Vector2.RIGHT, 0.0, Color.WHITE, false)
-	assert_almost_eq(e.poise, 70.0, 0.01, "the armor holds, the stun bar wears")
+	assert_almost_eq(e.poise, 100.0 - 60.0 * e.def.poise_mult, 0.01, "the armor holds, the stun bar wears")
 	h.dealing = &""

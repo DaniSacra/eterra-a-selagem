@@ -14,7 +14,7 @@ func _data(runs := 0) -> Dictionary:
 
 
 func _ctx(over := {}) -> Dictionary:
-	var c := {"fighting": true, "fight_t": 0.0, "armored": false, "boons": 0, "elos": 0}
+	var c := {"fighting": true, "fight_t": 0.0, "poised": false, "boons": 0, "elos": 0}
 	c.merge(over, true)
 	return c
 
@@ -23,7 +23,7 @@ func test_nothing_before_the_fight_has_run_a_moment() -> void:
 	assert_eq(FirstTips.pick(_data(), _ctx()), &"")
 
 
-func test_fight_then_hold_then_armor_then_elo() -> void:
+func test_fight_then_hold_then_poise_then_elo() -> void:
 	var d := _data()
 	assert_eq(FirstTips.pick(d, _ctx({"fight_t": 2.0})), &"fight")
 	assert_eq(FirstTips.pick(d, _ctx({"fight_t": 3.0})), &"fight", "until it is marked")
@@ -31,8 +31,8 @@ func test_fight_then_hold_then_armor_then_elo() -> void:
 	assert_eq(FirstTips.pick(d, _ctx({"fight_t": 3.0})), &"")
 	assert_eq(FirstTips.pick(d, _ctx({"fight_t": FirstTips.HOLD_AFTER})), &"hold")
 	FirstTips.mark(d, &"hold")
-	assert_eq(FirstTips.pick(d, _ctx({"armored": true})), &"armor")
-	FirstTips.mark(d, &"armor")
+	assert_eq(FirstTips.pick(d, _ctx({"poised": true})), &"poise")
+	FirstTips.mark(d, &"poise")
 	assert_eq(FirstTips.pick(d, _ctx({"fighting": false, "boons": 2})), &"elo")
 	assert_eq(FirstTips.pick(d, _ctx({"fighting": false, "boons": 1})), &"")
 	assert_eq(FirstTips.pick(d, _ctx({"fighting": false, "boons": 3, "elos": 1})), &"")

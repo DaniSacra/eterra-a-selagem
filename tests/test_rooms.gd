@@ -41,10 +41,10 @@ func test_the_first_kind_is_in_every_wave() -> void:
 			assert_true(w.has(fight.kinds[0]), "the highlight kind comes back")
 
 
-func test_elites_wear_hades_armor() -> void:
-	assert_eq((defs[&"skeleton"] as EnemyDef).hp, 95.0, "C1b: the common one 1.6 times tougher, the elite keeps 60 under its armor")
-	assert_eq((defs[&"skeleton_elite"] as EnemyDef).armor, 80.0)
-	assert_eq((defs[&"skeleton_elite"] as EnemyDef).hp, 60.0, "the elite keeps the same life, armor on top")
+func test_elites_are_the_sworn_majors_with_no_armor() -> void:
+	assert_eq((defs[&"skeleton"] as EnemyDef).hp, 250.0, "SWORN Kingswood: the Hammer Mob")
+	assert_eq((defs[&"skeleton_elite"] as EnemyDef).armor, 0.0, "no yellow bar since 2026-11-27")
+	assert_eq((defs[&"skeleton_elite"] as EnemyDef).hp, 1500.0, "the elite is the Major Hammer")
 
 
 func test_map_runs_opening_guardian_shop_boss() -> void:

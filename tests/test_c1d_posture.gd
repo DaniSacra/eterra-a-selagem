@@ -51,17 +51,17 @@ func test_attack_alone_takes_many_blows_the_buttons_few() -> void:
 	while boss.state != Boss.State.STUNNED and n < 100:
 		_blow(boss, &"attack")
 		n += 1
-	assert_gte(n, 12, "the plain attack is slow")
+	assert_gte(n, 30, "the plain attack is slow (SWORN: 800 of stagger over blows of 20)")
 	var w := Feel.live().poise_weights
 	var per_special := Poise.share(&"special", w) * boss.def.posture_mult
-	assert_lte(ceilf(1.0 / per_special), 4.0, "the special breaks it in 4 or fewer")
+	assert_lte(ceilf(1.0 / per_special), 10.0, "the special breaks it in 10 or fewer (Gawain 800 of stagger)")
 	assert_lt(Poise.share(&"attack", w) * 3.0, Poise.share(&"special", w), "an attack is under 40% of a button")
 
 
 func test_break_kneels_cuts_the_attack_and_takes_more() -> void:
 	var boss := _fight()
 	_run(3.0)
-	for i in 4:
+	for i in int(ceilf(1.0 / (Poise.share(&"special", Feel.live().poise_weights) * boss.def.posture_mult))):
 		_blow(boss, &"special")
 	assert_eq(boss.state, Boss.State.STUNNED)
 	assert_gt(boss.e.broken_t, 2.0)
