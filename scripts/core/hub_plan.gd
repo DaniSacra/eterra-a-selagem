@@ -26,7 +26,12 @@ const SMITH := &"smith"
 const BOOK := &"book"
 const VINE := &"vine"
 const HEROES := &"heroes"
-const STATIONS: Array[StringName] = [PORTAL, VENDOR, TREE, SMITH, BOOK, VINE, HEROES]
+const STATIONS: Array[StringName] = [PORTAL, VENDOR, TREE, SMITH, BOOK, VINE]
+## Hub art 2026-11-27 (the PO's new approval): the Aposento dos Herois is off for now (the PO picks its place later). Its id and
+## its milestone stay as data (HubGate, Milestones, the guide), but it has no building, door, use point or light: HubGuide
+## skips it and Hub never closes a door for it. To bring it back: add it to STATIONS, give it USE, ANCHOR, SHOW, a BUILDINGS
+## entry and a DOORS one, and draw it (HubFacades._hero_hall and HubLook._hero_stand and _hero_steps went with it, see git).
+const DISABLED: Array[StringName] = [HEROES]
 ## Doors that have no station in STATIONS: the Alquimista's (closed by HubGate.FLAGS) and the two future rooms (always).
 const ALCHEMIST_ID := &"alchemist"
 const FUTURE_A := &"future_a"
@@ -51,7 +56,7 @@ const OUTLINE: Array[Vector2] = [
 	Vector2(9.0, -1.0), Vector2(9.0, 1.0), Vector2(21.0, 1.0), Vector2(21.0, -9.0),
 	Vector2(9.0, -9.0), Vector2(9.0, -5.0), Vector2(6.17, -5.0), Vector2(5.27, -4.1),
 	Vector2(4.67, -5.89), Vector2(6.65, -10.5), Vector2(23.96, -10.5), Vector2(30.0, -4.46),
-	Vector2(30.0, 1.0), Vector2(42.0, 1.0), Vector2(42.0, -12.0), Vector2(30.0, -12.0),
+	Vector2(30.0, 1.0), Vector2(35.5, 1.0), Vector2(37.99, 0.51), Vector2(40.1, -0.9), Vector2(41.51, -3.01), Vector2(42.0, -5.5), Vector2(41.51, -7.99), Vector2(40.1, -10.1), Vector2(37.99, -11.51), Vector2(35.5, -12.0), Vector2(30.0, -12.0),
 	Vector2(30.0, -11.54), Vector2(26.04, -15.5), Vector2(6.75, -15.5), Vector2(6.75, -17.0),
 	Vector2(11.0, -17.0), Vector2(11.0, -24.0), Vector2(0.0, -24.0), Vector2(0.0, -17.0),
 	Vector2(3.25, -17.0), Vector2(3.25, -15.26), Vector2(0.35, -8.5), Vector2(-7.0, -8.5),
@@ -126,28 +131,28 @@ const ARRIVAL_EASE := 1.0
 ## Each station's use point on the floor (local), the anchor its sign stands on (u, v, height) and what the camera
 ## shows of it while it is in focus (u, v, height; frame_for).
 const USE := {
-	PORTAL: Vector2(32.0, -6.0), VENDOR: Vector2(12.0, 6.0), TREE: Vector2(10.0, -3.0), SMITH: Vector2(-17.6, 16.2),
-	BOOK: Vector2(19.0, 19.0), VINE: Vector2(-7.0, -5.0), HEROES: Vector2(-1.0, 19.0),
+	PORTAL: Vector2(-1.0, 19.4), VENDOR: Vector2(12.0, 6.0), TREE: Vector2(10.0, -3.0), SMITH: Vector2(-17.6, 16.2),
+	BOOK: Vector2(19.0, 19.0), VINE: Vector2(-7.0, -5.0),
 }
 const ANCHOR := {
-	PORTAL: Vector3(35.0, -6.0, 2.2), VENDOR: Vector3(11.5, 8.6, 3.1), TREE: Vector3(14.6, -4.2, 4.4),
+	PORTAL: Vector3(-1.0, 20.2, 1.8), VENDOR: Vector3(11.5, 8.6, 3.1), TREE: Vector3(14.6, -4.2, 4.4),
 	SMITH: Vector3(-19.8, 17.3, 2.4), BOOK: Vector3(21.1, 19.4, 2.6), VINE: Vector3(-7.0, -2.6, 2.6),
-	HEROES: Vector3(-1.0, 21.1, 2.6),
 }
 const SHOW := {
-	PORTAL: Vector3(37.0, -6.0, 5.5), VENDOR: Vector3(11.5, 10.2, 5.0), TREE: Vector3(14.6, -4.2, 8.0),
+	PORTAL: Vector3(-1.0, 23.0, 5.0), VENDOR: Vector3(11.5, 10.2, 5.0), TREE: Vector3(14.6, -4.2, 8.0),
 	SMITH: Vector3(-23.4, 17.7, 7.6), BOOK: Vector3(19.0, 21.7, 4.8), VINE: Vector3(-7.0, -2.5, 3.4),
-	HEROES: Vector3(-1.0, 21.2, 3.2),
 }
 const SHOW_MARGIN := 0.06
 ## The apex of the gate (u, v, height): the far camera keeps it in the screen from everywhere.
-const PORTAL_TOP := Vector3(37.0, -6.0, 7.8)
+const PORTAL_TOP := Vector3(-1.0, 25.6, 7.8)
 ## The Portão's mass (u0, v0, u1, v1; it runs to the floor's edge so no one slips behind it), its height, and the
-## middle of its opening on its west face (u 37).
-const GATE := Vector4(37.0, -12.6, 42.0, 1.6)
+## middle of its opening on its south face (v GATE_FACE_V). Hub art 2026-11-27: it stands at the top of the main axis, on the
+## terrace the red carpet's flight (GATE_STEPS) climbs to, where the Aposento dos Herois was; the east end, where it stood,
+## is the Mirante (a round belvedere, MIRADOR_*, no station).
+const GATE := Vector4(-9.0, 22.6, 7.0, 30.0)
 const GATE_HEIGHT := 6.0
-const GATE_FACE_U := 37.0
-const GATE_MID_V := -6.0
+const GATE_FACE_V := 25.6
+const GATE_MID_U := -1.0
 ## The buildings (id, rect u0, v0, u1, v1, height): the package's footprints, trimmed where a piece needs room (the
 ## Vigília's by the arrival, the Alquimista's and the Dons' for their bench and dais, the Biblioteca's for its case, the
 ## Mercador's for the awning), each a solid mass; the stations' pieces stand in front of them.
@@ -155,7 +160,6 @@ const BUILDINGS: Array[Dictionary] = [
 	{&"id": &"vigil", &"rect": Vector4(-28.0, -12.0, -25.2, -5.0), &"h": 2.4},
 	{&"id": &"smith", &"rect": Vector4(-28.0, 19.0, -18.0, 24.0), &"h": 4.5},
 	{&"id": &"alchemist", &"rect": Vector4(-28.0, 3.0, -21.4, 9.0), &"h": 3.4},
-	{&"id": &"heroes", &"rect": Vector4(-8.0, 22.0, 6.0, 29.0), &"h": 5.2},
 	{&"id": &"book", &"rect": Vector4(13.0, 22.2, 25.0, 28.0), &"h": 4.6},
 	{&"id": &"vendor", &"rect": Vector4(14.6, 9.6, 21.0, 13.0), &"h": 3.2},
 	{&"id": &"tree", &"rect": Vector4(18.4, -8.0, 21.0, -1.0), &"h": 4.5},
@@ -165,7 +169,7 @@ const BUILDINGS: Array[Dictionary] = [
 ## across their corridors' mouths.
 const DOORS := {
 	SMITH: Vector4(-19.6, 18.85, 0.9, 0.15), ALCHEMIST_ID: Vector4(-21.25, 7.0, 0.15, 0.9),
-	HEROES: Vector4(2.5, 21.85, 0.9, 0.15), BOOK: Vector4(15.0, 22.05, 0.9, 0.15),
+	BOOK: Vector4(15.0, 22.05, 0.9, 0.15),
 	VENDOR: Vector4(14.45, 11.4, 0.15, 0.9), TREE: Vector4(18.25, -6.0, 0.15, 0.9),
 	VINE: Vector4(-7.0, -3.3, 1.4, 0.12),
 	FUTURE_A: Vector4(-14.0, -16.6, 1.75, 0.15), FUTURE_B: Vector4(5.0, -16.6, 1.75, 0.15),
@@ -187,16 +191,26 @@ const SHELF := Vector2(19.0, 21.65)
 const SHELF_HALF := Vector2(2.0, 0.45)
 const VINE_ARCH := Vector2(-7.0, -2.6)
 const VINE_ARCH_HALF := Vector2(1.5, 0.5)
-const VINE_BED := Vector4(-6.5, 1.5, 4.5, 2.0)
-## Round 2: the stand stands on a plinth (HERO_PLINTH high) against the Aposento's face, and the flight of steps with the
-## red carpet (HERO_STEPS, solid: a monument's stair, the way into the chapel is its door) climbs to it from the gallery.
-const HERO_STAND := Vector2(-1.0, 21.6)
-const HERO_STAND_HALF := Vector2(1.5, 0.4)
-const HERO_STEPS := Vector2(-1.0, 20.6)
-const HERO_STEPS_HALF := Vector2(1.5, 0.6)
-const HERO_PLINTH := 0.8
-const HERO_STEP_COUNT := 5
-## Round 3: the stone screen of the Ponto de Vigília's arch, just west of its brazier (centre u, v, half u, half v): it blocks.
+## Hub art 2026-11-27: the centre is the Videira alone, a great tree in a low round stone planter (centre u, v, radius; the
+## layout's collider is a circle). VINE_BED.z is the planter's wall (BED_HEIGHT high); HubScenery draws the tree, the
+## little fountain at its foot and the flowers on its rim.
+const VINE_BED := Vector3(-6.5, 1.5, 3.2)
+## The red carpet's flight (HERO_STEPS before): centre u, v and half u, v, solid (a monument's stair: the Portão's use point
+## is at its foot), GATE_STEP_COUNT treads rising to GATE_TERRACE, the height of the Portão's terrace (HubBlockout reads it).
+const GATE_STEPS := Vector2(-1.0, 21.6)
+const GATE_STEPS_HALF := Vector2(1.5, 1.0)
+const GATE_TERRACE := 0.8
+const GATE_STEP_COUNT := 6
+## The Mirante (the east end, a round belvedere in the plan: centre u, v, radius; OUTLINE's arc): two stone benches along its
+## north rail (centre u, v, half u, half v; they block, no station), a round dais of paving in its middle (MIRADOR_DAIS radius).
+const MIRADOR := Vector3(35.5, -5.5, 6.5)
+const MIRADOR_DAIS := 3.4
+const MIRADOR_BENCHES: Array[Vector4] = [Vector4(32.8, 0.2, 1.0, 0.25), Vector4(38.2, -0.6, 0.8, 0.25)]
+const BENCH_HEIGHT := 0.5
+## The Ponto de Vigília (no fire, 2026-11-27): a round landing of paving where the hero appears (centre u, v, radius), in
+## front of the niche's stone screen. VIGIL_LANDING is its centre.
+const VIGIL_LANDING := Vector3(-23.0, -8.4, 2.3)
+## Round 3: the stone screen of the Ponto de Vigília's arch, just west of its landing (centre u, v, half u, half v): it blocks.
 const VIGIL_ARCH := Vector4(-24.95, -10.2, 0.25, 2.2)
 const ALCHEMIST_BENCH := Vector4(-19.4, 4.2, 0.55, 1.1)
 const BED_HEIGHT := 0.55
@@ -461,14 +475,15 @@ static func layout(yaw_deg: float = Feel.live().cam_yaw, closed: Array[StringNam
 		box.call(LECTERN, Vector2(0.55, 0.6), &"hub_lectern", 1.5),
 		box.call(SHELF, SHELF_HALF, &"hub_shelf", 4.6),
 		box.call(VINE_ARCH, VINE_ARCH_HALF, &"hub_vine", 3.2),
-		box.call(HERO_STAND, HERO_STAND_HALF, &"hub_heroes", 2.6),
-		box.call(HERO_STEPS, HERO_STEPS_HALF, &"hub_heroes_steps", HERO_PLINTH),
-		box.call(Vector2(VINE_BED.x, VINE_BED.y), Vector2(VINE_BED.z, VINE_BED.w), &"hub_bed", BED_HEIGHT),
+		box.call(GATE_STEPS, GATE_STEPS_HALF, &"hub_gate_steps", GATE_TERRACE),
+		ArenaObstacle.circle(w.call(Vector2(VINE_BED.x, VINE_BED.y)), VINE_BED.z, &"hub_bed", BED_HEIGHT),
 		box.call(Vector2(VIGIL_ARCH.x, VIGIL_ARCH.y), Vector2(VIGIL_ARCH.z, VIGIL_ARCH.w), &"hub_vigil_arch", 3.5),
 		box.call(Vector2(PLANTER_BOX.x, PLANTER_BOX.y), Vector2(PLANTER_BOX.z, PLANTER_BOX.w), &"hub_planter", PLANTER_HEIGHT),
 		box.call(Vector2(PLAZA_BED.x, PLAZA_BED.y), Vector2(PLAZA_BED.z, PLAZA_BED.w), &"hub_plaza_bed", PLAZA_BED_HEIGHT),
 		box.call(Vector2(ALCHEMIST_BENCH.x, ALCHEMIST_BENCH.y), Vector2(ALCHEMIST_BENCH.z, ALCHEMIST_BENCH.w), &"hub_alchemist", 2.2),
 	]
+	for bench in MIRADOR_BENCHES:
+		obstacles.append(box.call(Vector2(bench.x, bench.y), Vector2(bench.z, bench.w), &"hub_bench", BENCH_HEIGHT))
 	for b in BUILDINGS:
 		var r: Vector4 = b[&"rect"]
 		obstacles.append(box.call(Vector2(r.x + r.z, r.y + r.w) * 0.5, Vector2(r.z - r.x, r.w - r.y) * 0.5, &"hub_building", b[&"h"], true))

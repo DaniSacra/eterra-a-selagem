@@ -80,7 +80,7 @@ func test_the_plan_turns_into_the_world_and_back() -> void:
 	assert_almost_eq(HubPlan.to_world(Vector2(0.0, 1.0), 35.0), Vector2(-0.574, -0.819), Vector2(0.01, 0.01), "the camera's point")
 	# SV-R: the gate's use point in front of its west face, the Livro's at the end of the high gallery, the arrival at
 	# the Ponto de Vigilia (the package's (-24; -7))
-	assert_almost_eq(HubPlan.use_point(HubPlan.PORTAL, 35.0), Vector2(29.65, -13.44), Vector2(0.06, 0.06))
+	assert_almost_eq(HubPlan.use_point(HubPlan.PORTAL, 35.0), Vector2(-11.95, -15.32), Vector2(0.06, 0.06))
 	assert_almost_eq(HubPlan.use_point(HubPlan.BOOK, 35.0), Vector2(4.67, -26.46), Vector2(0.06, 0.06))
 	assert_almost_eq(HubPlan.to_world(HubPlan.ARRIVAL, 35.0), Vector2(-15.64, 19.5), Vector2(0.06, 0.06))
 	for p: Vector2 in [Vector2(3, -7), Vector2(-12, 4), Vector2(0.5, 0.25)]:

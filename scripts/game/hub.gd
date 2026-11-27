@@ -405,8 +405,6 @@ func evolve() -> void:
 		HubEvolution.apply(arena.look, HubEvolution.of(Save.data, codex_chapters(Save.data)))
 		if arena.look.has_method(&"grow_vine"):
 			arena.look.call(&"grow_vine", Vine.growth(_vine_view()))
-		if arena.look.has_method(&"show_heroes"):
-			arena.look.call(&"show_heroes", Save.data)
 		if arena.look.has_method(&"set_closed"):
 			for id in HubGate.GATED:
 				arena.look.call(&"set_closed", id, not is_open(id))
@@ -419,7 +417,7 @@ func closed_doors() -> Array[StringName]:
 	if not HubGate.FLAGS.get(HubPlan.ALCHEMIST_ID, false):
 		out.append(HubPlan.ALCHEMIST_ID)
 	for id in HubGate.GATED:
-		if not is_open(id):
+		if not is_open(id) and not HubPlan.DISABLED.has(id):  # (a station that is off has no door)
 			out.append(id)
 	return out
 

@@ -15,14 +15,14 @@ const JAMB := Vector3(0.3, 0.3, 0.45)  # width, height over the door, depth
 ## drawn on it is lower) and on it stands the facade: a wall with a pointed arch of voussoirs (GATE_W wide, springing at
 ## GATE_SPRING, its ring GATE_RING) over a sheet of light and the violet view, a cornice and a lion over the keystone; the
 ## banners and the lions are HubFacades'. GATE_FRONT is the facade's south face (v), GATE_DEPTH its thickness, GATE_WALL_U
-## its extent in u (clear of the hero's use point at the west edge), GATE_TOP its crest.
+## its extent in u, GATE_TOP its crest. Hub art 2026-11-27: it stands at the top of the main axis, up the red carpet's flight.
 const GATE_RING := 0.38
 const GATE_W := 2.4
 const GATE_SPRING := 1.5
-const GATE_TERRACE := 0.55
-const GATE_FRONT := -9.0
+const GATE_TERRACE := HubPlan.GATE_TERRACE
+const GATE_FRONT := HubPlan.GATE_FACE_V
 const GATE_DEPTH := 1.4
-const GATE_WALL_U := Vector2(37.6, 42.0)
+const GATE_WALL_U := Vector2(-7.5, 5.5)
 const GATE_TOP := 5.7
 const GATE_CORNICE := 0.3
 const GATE_LIGHT_TINT := Color(1.0, 0.76, 0.34)

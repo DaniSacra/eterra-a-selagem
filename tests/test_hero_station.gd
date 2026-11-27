@@ -59,27 +59,16 @@ func test_the_game_plays_the_warrior_while_she_is_locked() -> void:
 
 # ---------- the place ----------
 
-func test_the_station_is_in_the_upper_gallery_and_off_every_other_piece() -> void:
-	assert_true(HubPlan.STATIONS.has(HubPlan.HEROES))
-	var l := HubPlan.layout()
-	assert_true(l.floor.contains(HubPlan.use_point(HubPlan.HEROES), Player.RADIUS))
-	assert_lt(HubPlan.USE[HubPlan.HEROES].distance_to(HubPlan.USE[HubPlan.VENDOR]), 20.0, "in the stall's quarter: the upper gallery (SV-R)")
-	for other in HubPlan.STATIONS:
-		if other != HubPlan.HEROES:
-			assert_gt(HubPlan.use_point(HubPlan.HEROES).distance_to(HubPlan.use_point(other)), HubPlan.FOCUS_OUT * 2.0, "apart from %s" % other)
-	var mine: ArenaObstacle
-	var vine: ArenaObstacle
+func test_the_station_is_off_for_now_with_no_place_in_the_plan() -> void:
+	assert_true(HubPlan.DISABLED.has(HubPlan.HEROES), "hub art 2026-11-27: the Aposento dos Herois is off until the PO picks its place")
+	assert_false(HubPlan.STATIONS.has(HubPlan.HEROES))
+	assert_false(HubPlan.USE.has(HubPlan.HEROES))
+	assert_false(HubPlan.DOORS.has(HubPlan.HEROES), "no door")
+	for b in HubPlan.BUILDINGS:
+		assert_ne(b[&"id"], HubPlan.HEROES, "no building")
+	var l := HubPlan.layout(Feel.live().cam_yaw, [&"heroes"] as Array[StringName])
 	for o in l.obstacles:
-		if o.piece == &"hub_heroes":
-			mine = o
-		elif o.piece == &"hub_vine":
-			vine = o
-	assert_not_null(mine)
-	var a := _rect(mine)
-	for o in l.obstacles:
-		if o != mine and o.blocks_move:
-			assert_false(a.intersects(_rect(o)), "%s off the standards" % o.piece)
-	assert_false(_rect(vine).intersects(a), "and off the Videira")
+		assert_false(String(o.piece).begins_with("hub_heroes"), "nothing of it on the floor")
 
 
 func test_the_station_opens_after_the_first_victory() -> void:
@@ -105,7 +94,7 @@ func test_the_guide_comes_when_the_maga_opens() -> void:
 	var d := SaveData.defaults()
 	assert_false(HubGuide.due(d, def), "locked: no guide")
 	d.wins = 1
-	assert_true(HubGuide.due(d, def))
+	assert_false(HubGuide.due(d, def), "and none while the station is off (it has no place to show)")
 	HubGuide.mark_shown(d, [&"maga"])
 	assert_false(HubGuide.pending(d).any(func(g: HubGuideDef) -> bool: return g.id == &"maga"), "once")
 
@@ -161,19 +150,12 @@ func test_keys_walk_between_the_heroes_and_it_fits_the_screen() -> void:
 
 # ---------- the hub ----------
 
-func test_the_hub_uses_the_station_and_the_portal_no_longer_picks() -> void:
+func test_the_portal_does_not_pick_the_hero() -> void:
 	Save.data.wins = 1
 	_hub()
-	assert_not_null(hub.arena.look.hero_station)
-	hub.use(HubPlan.HEROES)
-	var s := hub.host.screen as HeroPickScreen
-	assert_not_null(s)
-	s.pick("maga")
-	assert_eq(Save.data.hero, "maga")
-	hub.host.close()
 	hub.use(HubPlan.PORTAL)
 	assert_null(hub.host.screen.find_child("hero", true, false), "no hero button at the Portal")
-	assert_eq(hub.host.screen.find_child("line", true, false).text, T.t(&"hub_descend_line_maga"))
+	assert_eq(hub.host.screen.find_child("line", true, false).text, T.t(&"hub_descend_line_warrior"))
 
 
 func test_the_standards_dim_the_locked_maga() -> void:

@@ -12,9 +12,9 @@ func _w(p: Vector2) -> Vector2:
 
 
 func test_the_upper_terrace_stations_stand_high_and_the_rest_low() -> void:
-	for id: StringName in [HubPlan.SMITH, HubPlan.BOOK, HubPlan.HEROES]:
+	for id: StringName in [HubPlan.SMITH, HubPlan.BOOK, HubPlan.PORTAL]:
 		assert_eq(HubPlan.height_at(HubPlan.USE[id]), HubPlan.TIER_H, "%s on the upper terrace" % id)
-	for id: StringName in [HubPlan.VINE, HubPlan.VENDOR, HubPlan.TREE, HubPlan.PORTAL]:
+	for id: StringName in [HubPlan.VINE, HubPlan.VENDOR, HubPlan.TREE]:
 		assert_eq(HubPlan.height_at(HubPlan.USE[id]), 0.0, "%s on the lower one" % id)
 	assert_eq(HubPlan.height_at(HubPlan.ARRIVAL), 0.0, "he arrives low")
 	assert_eq(HubPlan.ramp_at(HubPlan.VINE_BED.x * Vector2.RIGHT + Vector2(0.0, 2.0)), 0.0, "the garden's fountain stays low")
@@ -69,7 +69,7 @@ func test_the_arena_gives_the_feet_their_height() -> void:
 	var a := Arena.new()
 	add_child_autofree(a)
 	a.build(HubPlan.layout(YAW))
-	assert_eq(a.ground_at(HubPlan.use_point(HubPlan.HEROES, YAW)), HubPlan.TIER_H)
+	assert_eq(a.ground_at(HubPlan.use_point(HubPlan.PORTAL, YAW)), HubPlan.TIER_H)
 	assert_eq(a.ground_at(HubPlan.use_point(HubPlan.VINE, YAW)), 0.0)
 	var other := Arena.new()
 	add_child_autofree(other)
@@ -84,11 +84,6 @@ func test_the_built_hub_is_lifted_where_the_upper_terrace_stands() -> void:
 	a.build(HubPlan.layout())  # (the frame is turned by the camera's yaw: the layout's own)
 	var look := a.look as HubLook
 	assert_not_null(look)
-	var stand := look.hero_station
-	assert_almost_eq(stand.position.y, HubPlan.HERO_PLINTH + 0.1, 0.01, "the heroes' standards stand on the plinth")
-	var post := stand.find_child("post_warrior", false, false) as MeshInstance3D
-	assert_not_null(post)
-	assert_almost_eq(post.position.y - (HeroStation.PLINTH_TOP + HeroStation.POST.y * 0.5), HubPlan.TIER_H, 0.01, "and the terrace lifts them (a mesh node by its origin)")
 	var lo := INF
 	var hi := -INF
 	for n in look.find_children("*", "MeshInstance3D", true, false):
