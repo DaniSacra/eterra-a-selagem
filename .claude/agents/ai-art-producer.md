@@ -32,6 +32,8 @@ que queremos ao gerador de imagem, **gerar** e **analisar** o resultado antes de
 - Sala de jogo: vazia (sem personagem), portas fechadas sem símbolo brilhando (o jogo põe os ícones).
 - Duas portas numa sala: bem separadas, uma à esquerda e outra à direita, com uma peça no meio (estátua); portas altas e
   monumentais como no SWORN (pedido do Daniel, 2026-11-27).
+  Sempre ALGO entre as duas portas, variando de sala para sala: estátua, chafariz, queda de água, um trecho de parede,
+  uma lamparina ou braseiro. O Daniel gostou das portas separadas (2026-11-27); nunca juntas.
 - Nunca inventar lore: nomes e significados vêm de `../dungeon-rpg/docs/mundo/canone.md` ou do Daniel.
 
 ## Pintura de sala sobre captura (técnica GP-8)

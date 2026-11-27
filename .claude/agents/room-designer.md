@@ -59,3 +59,6 @@ o herói e também os inimigos, sempre avisados). Nome, aparência e história s
 ## Entrega
 Responda ao Game Director em português: o que mudou, testes, métricas do robô por sala, riscos e o que precisa de
 arte. Não faça commit nem push: isso é do Game Director.
+
+## Portas (Daniel, 2026-11-27)
+Sala com duas portas: bem separadas (uma à esquerda, outra à direita, altas como no SWORN) e sempre algo entre elas, variando de sala para sala: estátua, chafariz, queda de água, trecho de parede, lamparina ou braseiro. Nunca as duas portas juntas.
