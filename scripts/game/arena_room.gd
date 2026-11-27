@@ -939,6 +939,10 @@ func balustrade_edge(a: Vector2, b: Vector2, out: Vector2, broken := false, mat:
 	if mat == null:
 		var yaw := deg_to_rad(Feel.live().cam_yaw)
 		mat = see(stone()) if out.dot(Vector2(sin(yaw), cos(yaw))) > 0.2 else stone()
+	var w := way_edge()
+	var open_x := Vector2.ZERO  # the opening's span along x on this edge (zero: none)
+	if w.x != INF and out.y > 0.7 and absf(a.y - b.y) < 0.05 and absf(a.y - w.y) < 0.3 and w.x > minf(a.x, b.x) and w.x < maxf(a.x, b.x):
+		open_x = Vector2(w.x - WAY_IN_GAP, w.x + WAY_IN_GAP)
 	var length := a.distance_to(b)
 	var along := (b - a) / maxf(length, 0.001)
 	var off := out * BALUSTRADE_OUT
@@ -950,7 +954,7 @@ func balustrade_edge(a: Vector2, b: Vector2, out: Vector2, broken := false, mat:
 		if a.distance_to(b) < Masonry.POST.x * 2.0 or (b - a).dot(along) <= 0.0:
 			return
 	if not broken:
-		m.balustrade(Vector3(a.x + off.x, 0.0, a.y + off.y), Vector3(b.x + off.x, 0.0, b.y + off.y), true, mat)
+		_rail_cut(a + off, b + off, mat, open_x)
 		_rails.append([a + off, b + off, out])
 		return
 	var r := RandomNumberGenerator.new()
@@ -963,7 +967,8 @@ func balustrade_edge(a: Vector2, b: Vector2, out: Vector2, broken := false, mat:
 		var run := minf(r.randf_range(BALUSTRADE_RUN.x, BALUSTRADE_RUN.y), stop - s)
 		var p0 := a + along * s + off
 		var p1 := a + along * (s + run) + off
-		m.balustrade(Vector3(p0.x, 0.0, p0.y), Vector3(p1.x, 0.0, p1.y), true, mat)
+		# (the way in's opening cuts the run, the random course and the rails' list stay the same with or without it)
+		_rail_cut(p0, p1, mat, open_x)
 		_rails.append([p0, p1, out])
 		s += run
 		var gap := minf(r.randf_range(BALUSTRADE_GAP.x, BALUSTRADE_GAP.y), stop - s)
@@ -974,6 +979,19 @@ func balustrade_edge(a: Vector2, b: Vector2, out: Vector2, broken := false, mat:
 			var stub := m.box(Vector3(g.x, 0.3, g.y), Vector3(Masonry.POST.x * 0.8, 0.6, Masonry.POST.z * 0.8), r.randf() * 0.4, mat)
 			stub.rotate_object_local(Vector3.BACK, r.randf_range(-0.15, 0.15))
 		s += gap
+
+
+## A balustrade from p0 to p1 (on the floor plane), without the stretch `open_x` (from, to along x: the way in's opening; zero: none).
+func _rail_cut(p0: Vector2, p1: Vector2, mat: Material, open_x: Vector2) -> void:
+	if open_x == Vector2.ZERO or minf(p0.x, p1.x) >= open_x.y or maxf(p0.x, p1.x) <= open_x.x:
+		m.balustrade(Vector3(p0.x, 0.0, p0.y), Vector3(p1.x, 0.0, p1.y), true, mat)
+		return
+	var lo := p0 if p0.x < p1.x else p1
+	var hi := p1 if p0.x < p1.x else p0
+	if lo.x < open_x.x - 0.5:
+		m.balustrade(Vector3(lo.x, 0.0, lo.y), Vector3(open_x.x, 0.0, lo.y), true, mat)
+	if hi.x > open_x.y + 0.5:
+		m.balustrade(Vector3(open_x.y, 0.0, hi.y), Vector3(hi.x, 0.0, hi.y), true, mat)
 
 
 ## RS-C7: the end `p` of a balustrade moved `along` (into the run) by RAIL_TRIM_STEP until its end post (offset `off`
@@ -1599,6 +1617,12 @@ func door_gaps(a: Vector2, b: Vector2, out: Vector2, cheek := EXIT_CHEEK.x) -> A
 			continue
 		var w := absf(e.mouth.size.dot(along))
 		gaps.append(Vector2(s - w * 0.5 - cheek, s + w * 0.5 + cheek))
+	# the way in opens the wall of the south edge it stands on
+	var we := way_edge()
+	if we.x != INF and out.y > 0.9 and absf((we - a).dot(out)) <= 0.5:
+		var sw := (we - a).dot(along)
+		if sw > 0.0 and sw < length:
+			gaps.append(Vector2(sw - WAY_IN_GAP, sw + WAY_IN_GAP))
 	return gaps
 
 
@@ -1982,6 +2006,8 @@ func _break_rails() -> void:
 			if _near_door(p, out, RAIL_IVY.x):
 				continue
 			kinds += 1
+			if _near_way_in(p):
+				continue  # (its turn kept, as at a door)
 			if _on_merlons(p):
 				continue  # (SW-F3: the merlons take the rail's place, its turn kept so the rest stands as before)
 			var seed_ := hash(Vector2i(p * 10.0))
@@ -2182,39 +2208,64 @@ func open_door_leaves(_i: int) -> void:
 	pass
 
 
-## PT-6 art: the way he came in, on the south edge behind the spawn (he enters from below, the camera's side). A worn
-## stone threshold with two low posts and the iron grille shut across it (the grille of the unused doors), no light and no
-## medallion, so it reads as the gate that closed behind him and never as an exit. Visual only, off the collision.
+## 2026-11-27 (Daniel: "an entrance floating in the air, make a space the hero could have come from"): the way he came in,
+## on the south edge behind the spawn (he enters from below, the camera's side): a stone landing attached to the platform
+## (a block down into the dark, flush with the floor, low kerbs on its sides with a post at each head) and a short stair
+## going down from its end out of the frame, between kerbs that follow the steps. The parapet or the cut wall of the edge
+## opens over it (WAY_IN_GAP each side of the middle: balustrade_edge, door_gaps). It is decoration off the collision (the
+## floor's edge stays the room's limit), never a light or a medallion (it reads as where he came from, never as an exit),
+## and everything stands on or past the edge so no floor is hidden (the kerbs are 0.55 m high, 0.3 m or more out).
 const WAY_IN_WIDTH := 3.2
-const WAY_IN_SILL := Vector3(1.0, 0.1, 0.5)  # the sill's width margin over the grille, height, depth (m)
-const WAY_IN_POST := 1.15
+const WAY_IN_LAND := 2.4  # the landing's depth past the edge (m)
+const WAY_IN_STEPS := 5
+const WAY_IN_RISE := 0.42
+const WAY_IN_RUN := 0.75
+const WAY_IN_KERB := Vector2(0.4, 0.55)  # a kerb's width and height over the step it follows
+const WAY_IN_GAP := 2.0  # the opening in the edge's parapet or wall, each side of the middle
 const WAY_IN_MIN := 1.2  # nearer than this to the spawn there is no room for it
 const WAY_IN_MAX := 6.0  # the floor must end this close behind the spawn, or the room has no south edge to draw it on
 const WAY_IN_STEP := 0.25
-const WAY_IN_DARK_HEIGHT := 3.0
+var _way_edge := Vector2(INF, 0.0)
+var _way_edge_known := false
 
 
 func _way_in() -> void:
-	var edge := way_in_edge(layout)
+	var edge := way_edge()
 	if edge.x == INF:
 		return
-	var z := edge.y  # everything stands on or past the floor's edge, never over the open floor
 	var x := edge.x
-	var half := WAY_IN_WIDTH * 0.5
+	var z := edge.y  # everything stands on or past the floor's edge, never over the open floor
 	var mat := stone()
-	m.block(Vector3(x, 0.0, z + WAY_IN_SILL.z * 0.3), Vector3(WAY_IN_WIDTH + WAY_IN_SILL.x, WAY_IN_SILL.y, WAY_IN_SILL.z), 0.0, mat, false)
+	var top := -0.03
+	var half := WAY_IN_WIDTH * 0.5
+	# the landing: solid down into the dark, so it hangs from the platform and not in the air
+	m.block(Vector3(x, -3.0, z + WAY_IN_LAND * 0.5), Vector3(WAY_IN_WIDTH + WAY_IN_KERB.x * 2.0, 3.0 + top, WAY_IN_LAND), 0.0, mat, false)
 	for sd: float in [-1.0, 1.0]:
-		m.post(Vector3(x + sd * (half + 0.5), WAY_IN_SILL.y, z + 0.7), 0.0, WAY_IN_POST, mat)
-	tomb.grille(Vector3(x - half, WAY_IN_SILL.y, z + 0.3), Vector3(x + half, WAY_IN_SILL.y, z + 0.3))
-	# Daniel 2026-11-27: the entrance reads as an opening, dark inside (no reward sign, unlike the exits): a black face behind the grille
-	var dark := MeshInstance3D.new()
-	var quad := BoxMesh.new()
-	quad.size = Vector3(WAY_IN_WIDTH, WAY_IN_DARK_HEIGHT, 0.05)
-	dark.mesh = quad
-	dark.material_override = _door_black()
-	dark.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	dark.position = Vector3(x, WAY_IN_SILL.y + WAY_IN_DARK_HEIGHT * 0.5, z + 0.9)
-	add_child(dark)
+		var kx := x + sd * (half + WAY_IN_KERB.x * 0.5)
+		m.block(Vector3(kx, top, z + WAY_IN_LAND * 0.5 + 0.15), Vector3(WAY_IN_KERB.x, WAY_IN_KERB.y, WAY_IN_LAND - 0.3), 0.0, mat, false)
+		m.post(Vector3(kx, top, z + 0.4), 0.0, WAY_IN_KERB.y + 0.45, mat)
+	# the stair down, from the landing's end south: the lowest step first, each with its cheeks
+	var foot := Vector3(x, top - WAY_IN_RISE * WAY_IN_STEPS, z + WAY_IN_LAND + WAY_IN_RUN * WAY_IN_STEPS)
+	m.stairs(foot, Vector2(0, -1), WAY_IN_WIDTH, WAY_IN_STEPS, WAY_IN_RISE, WAY_IN_RUN)
+	for i in WAY_IN_STEPS:
+		var h := WAY_IN_RISE * (i + 1) + 0.6 + WAY_IN_KERB.y
+		var cz := foot.z - WAY_IN_RUN * (i + 0.5)
+		for sd: float in [-1.0, 1.0]:
+			m.block(Vector3(x + sd * (half + WAY_IN_KERB.x * 0.5), foot.y - 0.6, cz), Vector3(WAY_IN_KERB.x, h, WAY_IN_RUN), 0.0, mat, false)
+
+
+## True when p lies at the way in (its opening and a little more).
+func _near_way_in(p: Vector2) -> bool:
+	var w := way_edge()
+	return w.x != INF and absf(p.x - w.x) < WAY_IN_GAP + RAIL_IVY.x * 0.5 and absf(p.y - w.y) < 2.0
+
+
+## The way in's spot on the south edge (cached): (x, z), or (INF, 0) when the room has none worth drawing.
+func way_edge() -> Vector2:
+	if not _way_edge_known:
+		_way_edge = way_in_edge(layout)
+		_way_edge_known = true
+	return _way_edge
 
 
 ## Where the south edge lies behind the spawn: (x, z) of the last floor point going south from it, or (INF, 0) when
@@ -2226,7 +2277,10 @@ static func way_in_edge(l: RoomLayout) -> Vector2:
 		d += WAY_IN_STEP
 	if d < WAY_IN_MIN or d >= WAY_IN_MAX:
 		return Vector2(INF, 0.0)
-	return at + Vector2(0, d)
+	# (the edge to the centimetre: the landing starts on it, never over the floor)
+	while l.floor.covers(at + Vector2(0, d + 0.01)):
+		d += 0.01
+	return at + Vector2(0, d + 0.02)
 
 
 ## Every door of the layout: its stairs going down out of the room from the end of its mouth; a door used gets its

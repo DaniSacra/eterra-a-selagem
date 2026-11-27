@@ -36,7 +36,7 @@ const CANDLE_ENERGY := 1.6
 const CANDLE_REACH := 7.0
 const KINDLE_TIME := 1.2
 ## Banners on the north wall each side of the arch: x, top, size; the torn one's share of the length; how faded.
-const BANNERS: Array[float] = [-6.0, 6.0]
+const BANNERS: Array[float] = [-3.7, 3.7]
 const BANNER_TOP := 5.6
 const BANNER_SIZE := Vector2(1.3, 3.4)
 const BANNER_TORN := 0.62
@@ -95,7 +95,8 @@ const OFFERINGS: Array[Vector3] = [Vector3(-1.45, 0, 0.12), Vector3(-1.1, 2, 0.1
 	Vector3(0.0, 3, 0.12), Vector3(0.55, 2, 0.12), Vector3(1.05, 0, 0.14), Vector3(1.45, 1, 0.1)]
 const OFFERING_IN := 0.12
 const OFFERING_URN := Vector2(0.22, 0.33)
-const SHELVES: Array[Vector2] = [Vector2(-8.6, -3.6), Vector2(3.6, 7.6)]
+## (2026-11-27: the north wall's two doors took the shelves' place)
+const SHELVES: Array[Vector2] = []
 const SHELF_HEIGHT := 0.95
 const SHELF_STEP := 0.55
 const BOWL := Vector3(0.15, 0.09, 0.07)
