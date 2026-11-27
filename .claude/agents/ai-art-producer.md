@@ -36,6 +36,20 @@ que queremos ao gerador de imagem, **gerar** e **analisar** o resultado antes de
   uma lamparina ou braseiro. O Daniel gostou das portas separadas (2026-11-27); nunca juntas.
 - Nunca inventar lore: nomes e significados vêm de `../dungeon-rpg/docs/mundo/canone.md` ou do Daniel.
 
+## Duas versões de cada sala: aprovação e jogo (Daniel, 2026-11-27)
+- **Versão de aprovação**: a sala completa como o jogador vai ver (portas, chamas acesas, água caindo, velas), só para o
+  Daniel aprovar o visual.
+- **Versão de jogo (a que entra no jogo)**: a MESMA pintura com TUDO o que tem movimento, muda de estado ou quebra
+  REMOVIDO, porque o jogo põe essas peças por cima em 3D: chamas e brilho de fogo (fica o braseiro, castiçal ou tocha
+  APAGADO), folhas das portas (fica o arco e o batente; o vão fica escuro), vasos, caixas, urnas e tudo que quebra
+  (chão limpo no lugar), perigos (espinhos, runas, grades que acendem: só a pedra lisa), superfície da água e quedas
+  d'água (fica o leito/canal), fumaça, partículas, cristais que brilham. A luz ambiente quente pode ficar de leve.
+  Faça a versão de jogo como edição da aprovada (a aprovada como imagem 1), e confira no teste de encaixe que nada fixo
+  mudou de lugar. Entregue as duas: `<sala>_aprovacao.png` e `<sala>_jogo.png`.
+- **Portas**: nunca juntas. Se a captura base tiver duas portas próximas, NÃO pinte assim: avise no relatório (o jogo
+  precisa afastar as portas e pôr a peça entre elas antes da captura). Exemplos pedidos pelo Daniel: estátua entre as
+  portas do Jardim, candelabro com chama entre as portas das Fendas.
+
 ## Pintura de sala sobre captura (técnica GP-8)
 1. A sessão principal faz a captura base (só ela usa a placa de vídeo). Ela vem sem herói e sem HUD, em 16:9, com as opções
    de câmera anotadas em `docs/art/painted_gpt/README.md`. Se faltar uma captura, peça no relatório o comando exato
