@@ -215,12 +215,12 @@ func test_morvath_is_asked_before_the_fight_and_in_it_never_after_the_victory() 
 func test_a_long_tip_wraps_inside_the_line_width() -> void:
 	var line := ObjectiveLine.new()
 	add_child_autofree(line)
-	line.set_key(&"lesson_special")
+	line.set_key(&"lesson_shout")
 	await wait_frames(2)
 	var label := line.get_child(0) as RichTextLabel
 	assert_lte(label.size.x, ObjectiveLine.text_width() + 0.5, "never wider than the line")
 	assert_lte(label.position.x + label.size.x, ObjectiveLine.WIDTH + 0.5)
-	assert_gt(label.get_content_height(), label.get_theme_font_size(&"normal_font_size") * 1.5, "the 87 letters take two lines or more")
+	assert_gt(label.get_content_height(), label.get_theme_font_size(&"normal_font_size") * 1.5, "the 75 letters take two lines or more")
 	# the clock stands at the middle of the 1280 px canvas; the line (22 px margin) ends well before it
 	assert_lt(22.0 + ObjectiveLine.WIDTH, 1280.0 * 0.5 - 100.0, "clear of the clock at 1280 x 720")
 

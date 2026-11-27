@@ -34,9 +34,9 @@ func test_the_column_shows_only_the_blessings_gained() -> void:
 
 func test_the_three_bars_stack_gold_blue_red_and_are_alike() -> void:
 	var hud := await _run()
-	assert_lt(hud._charge.get_global_rect().position.y, hud._magick.get_global_rect().position.y)
-	assert_lt(hud._magick.get_global_rect().position.y, hud._life.get_global_rect().position.y)
-	assert_eq(hud._magick.size, hud._life.size, "HUD v3: the Magia is no longer thin")
+	# 2026-11-27: the Warrior spends no Magia, so his stack is the Supremo over the life (the Maga keeps three)
+	assert_lt(hud._charge.get_global_rect().position.y, hud._life.get_global_rect().position.y)
+	assert_false(hud._magick.visible, "no Magia bar for the Warrior")
 
 
 func test_a_ready_ultimate_keeps_its_ring() -> void:

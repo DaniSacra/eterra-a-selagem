@@ -30,6 +30,10 @@ demais; robô: 5 de 12 chegam a Morvath, 0 vitórias).
   `rooms_progression.md` e `art_rooms.md`, que viraram índices; mover a seção nova para a pasta certa.
 - `worktree-agent-a8a4f94e23fde4ed7` (`c881136b`): 14 placas do lote 4 ligadas como dado, e a opção `--clear-air`.
 
+**Teste aberto (visual, não bloqueia):** `test_living_crowd` falha para os modelos novos do Cavaleiro (150 passos por
+minuto contra 104 a 138; pé escorrega 0,10 m) e do Ancião (77 contra 92 a 115): ajustar o ritmo da caminhada no assado
+(technical-artist) e conferir na GPU.
+
 **Próximo, nesta ordem:**
 1. Exe com o mouse sem Magia e a redução de inimigos (testes, exe igual ao editor, cópia nas duas pastas).
 2. Juntar as entradas novas; recapturar as bases na GPU (`--shot-at=2.5`; Runas com `--clear-air`; Ponte com
