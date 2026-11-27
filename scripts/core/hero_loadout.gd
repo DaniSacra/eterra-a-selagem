@@ -276,7 +276,7 @@ func unlocks_at(n: int) -> Array[String]:
 	for t in book.unlocked_at(n):
 		out.append(T.t(t.name_key))
 	for u in hero.ultimates:
-		if u.mastery_level == n:
+		if u.mastery_level == n and not u.reserve:
 			out.append(T.t(u.name_key))
 	return out
 
