@@ -1839,12 +1839,15 @@ func _crypt() -> RoomLayout:
 	var b: Array[ArenaObstacle] = [
 		_sarcophagus(0.5, -7.0, 0.8, 7.0, 3.2, &"block", true),
 		_sarcophagus(-5.5, -9.25, 1.2, 2.5), _cracked(_column(6.5, -6.0, 5.2, 0.65)),
-		_sarcophagus(-4.0, 3.0, 2.5, 1.2), _sarcophagus(3.0, 3.0, 2.5, 1.2),
+		_sarcophagus(-8.5, 6.5, 2.5, 1.2), _sarcophagus(7.0, 6.5, 2.5, 1.2),
 		_capsule(Vector2(-12, -2.5), Vector2(-8, -2.5), 0.6, 0.9), _capsule(Vector2(12, 1.0), Vector2(8, 1.0), 0.6, 0.9),
 		_slit(SLIT_WEST), _slit(SLIT_EAST),
 	]
 	b.append_array(bowls_b)
-	l.variants = [_variant(b)]
+	# 2026-11-27 (room review): the floor of the south half fell in (a pit of 9 x 6 m in front of the dividing wall's end): the
+	# fight is no more in the middle; it goes west or east of the pit, two lanes of 7 m, shots cross the pit, the crowd does not
+	var pit := _poly([-4.5, -0.5, -2, -1.5, 2, -1.5, 4.5, -0.5, 4.5, 3.5, 2, 4.5, -2, 4.5, -4.5, 3.5])
+	l.variants = [_variant(b, FloorShape.poly([l.floor.polys[0]], [pit]))]
 	_gate(l, Vector2(-1.0, 8.6), -10.5, CRYPT_DOORS)
 	l.exits = _doors(-10.5, CRYPT_DOORS, CRYPT_DOOR, CRYPT_MEDAL)
 	# B: the dividing wall stands from the north wall at x 0.5, so two doors west of it and one east
@@ -2079,7 +2082,7 @@ func _rift() -> RoomLayout:
 	# nobody rises on a bridge or in the south way; the first wave across the rift, the west zone from the second
 	# PM-3: the paladin stood 71% of the time in the east (he comes in at the south-west, but the early zones were all east and
 	# the far side drew the packs to him there): the packs rise in the west (two zones) and the east (three, the small south-east bridge head among them); the whole bridge head and the west wall for the late ones; no far-side draw (the pack rises where the fight is)
-	l.spawns = [_rect(-17, -11, -13, -9), _rect(5, 11, -13.5, -10.5), _rect(16, 19.5, -8, -2), _rect(6, 10, 8, 12)]
+	l.spawns = [_rect(-17, -11, -13, -9), _rect(-20, -15, 8.5, 12), _rect(5, 11, -13.5, -10.5), _rect(16, 19.5, -8, -2), _rect(6, 10, 8, 12)]
 	l.late_spawns = [_rect(5, 11, 7, 12)]  # integration: the west wall zones sat on the stream gaps and on unreached floor (test_arenas, test_room_gaps)
 	l.far_spawn = 0.0
 	l.cam_bounds = _rect(-6, 7, -4, 5)
@@ -2134,7 +2137,11 @@ func _garden() -> RoomLayout:
 			[Vector2(-6.6, -1.2), Vector2(-6.2, 0.7), Vector2(-6.1, 2.7), Vector2(-6.3, 4.7)],
 			[Vector2(-11.5, -3.0), Vector2(-12.2, -2.5)]]:
 		b.append_array(_root(TRUNK, TRUNK_RADIUS, pts))
-	b.append_array([_sarcophagus(11.5, -6.0, 1.2, 2.5), _sarcophagus(6.5, 5.0, 2.5, 1.2), _column(12.0, 3.0, 3.4), _column(-12.5, 4.0, 3.0)])
+	b.append_array([_sarcophagus(11.5, -6.0, 1.2, 2.5), _sarcophagus(4.5, 8.5, 2.5, 1.2), _column(12.0, 3.0, 3.4), _column(-12.5, 4.0, 3.0)])
+	# 2026-11-27 (room review): the east field is a terrace: a retaining wall (0.9 m: bodies stop, shots go over) along x 8 with
+	# two stairs (z -4.5 to -1.5 and 3 to 6), so the pack and the paladin take the stairs, never the straight line
+	for seg: Array in [[-9.0, -4.5], [-1.5, 3.0], [6.0, 11.0]]:
+		b.append(_capsule(Vector2(8.0, seg[0]), Vector2(8.0, seg[1]), 0.7, 0.9))
 	b.append_array(bowls)
 	l.variants = [_variant(b)]
 	# RP-10: B's west root (cut short of the way in) and the stub by the west wall; the north one comes near the middle
@@ -2840,10 +2847,16 @@ func _sanctuary() -> RoomLayout:
 	var b: Array[ArenaObstacle] = [_column(-15.0, -6.0, 5.2, 0.65), _column(-9.0, -6.0, 3.2, 0.65),
 		_column(-3.0, -6.0, 5.2, 0.65), _cracked(_column(15.0, -6.0, 3.4, 0.65)), _column(-15.0, 6.0, 5.2, 0.65),
 		_cracked(_column(-9.0, 6.0, 3.0, 0.65)), _column(-3.0, 6.0, 5.2, 0.65), _column(15.0, 6.0, 5.2, 0.65)]
-	b.append_array(walls)
+	# 2026-11-27 (room review): the hole runs on to the south edge (13.9, a 0.1 m rim nobody can stand on), so the nave is cut in two:
+	# the way from the east (the way in) to the west is the north aisle only, round the north lip, no more south aisle
+	for w: ArenaObstacle in walls:
+		if not (w.piece == &"bench_broken" and w.center.x > 0.0):  # the east bench stood over the chasm
+			b.append(w)
 	b.append_array(bowls)
-	var fallen := FloorShape.poly([outline], [_poly([1, -3.2, 4.5, -3.5, 9, -3.1, 9.4, 0, 9, 3.1, 4.5, 3.5, 1, 3.2, 0.6, 0])])
+	var fallen := FloorShape.poly([outline], [_poly([1, -3.2, 4.5, -3.5, 9, -3.1, 9.4, 0, 9.4, 13.9, 0.6, 13.9, 0.6, 0])])
 	l.variants = [_variant(b, fallen)]
+	l.variants[0].spawns = [_rect(-20, -14, -3, 3), _rect(-19, -15, 8, 11), _rect(-8, -2, -12, -8.5), _rect(13, 17, -4, 0),
+		_rect(-2, 6, -12, -8.5)]
 	l.boss_spawn = Vector2(-17.0, 0.0)
 	_gate(l, Vector2(19.6, 11.6), -14.0, [-5.3, 3.3, 11.0])
 	# LR-03: the first wave rises also in the south aisle's east and the middle of the north one, so the fight opens in
@@ -2869,11 +2882,11 @@ func _sanctuary() -> RoomLayout:
 	# RP-13 (B): the edge that crumbles, the slabs at the two ends of the hole (the nave is 1.85 m wide along its long
 	# sides, no room for a slab there): 7 to him (not 10, A1) and everyone on them thrown 2.5 m away from the hole, to the
 	# firm floor (nobody falls, D-28); the same hazard as the aisles' (one hazard that hurts per room)
-	var edge_slabs := aisle_slabs.duplicate()
+	var edge_slabs: Array[Rect2] = [aisle_slabs[0], aisle_slabs[1], aisle_slabs[2]]  # (the south-east slab stood over the chasm)
 	edge_slabs.append_array([_rect(-2.6, 0.4, -1.5, 1.5), _rect(9.6, 12.6, -1.5, 1.5)])
 	var crumble := _plates(edge_slabs, PLATES_FROM)
-	crumble.plate_hero_damage = PackedFloat32Array([0, 0, 0, 0, CRUMBLE_HERO, CRUMBLE_HERO])
-	crumble.plate_push = PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2(-2.5, 0),
+	crumble.plate_hero_damage = PackedFloat32Array([0, 0, 0, CRUMBLE_HERO, CRUMBLE_HERO])
+	crumble.plate_push = PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2(-2.5, 0),
 		Vector2(2.5, 0)])
 	l.variants[0].hazard = crumble
 	# A1, RP-20: stones from the torn vault over the nave round the hole (the rent above it), 6.5 m and more from the

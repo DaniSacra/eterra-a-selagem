@@ -802,6 +802,7 @@ func _commit() -> void:
 	stone_material.set_shader_parameter(&"rock_height", Masonry.ROCK_HEIGHT)
 	var mi := MeshInstance3D.new()
 	mi.name = "StoneTree"
+	mi.set_meta(&"painted_hide", true)
 	mi.layers = 1 | LAYER
 	mi.mesh = mesh
 	mi.material_override = stone_material
@@ -849,6 +850,7 @@ func _crystals(root_bearings: Array[float], glow: float) -> void:
 	crystal_material.set_shader_parameter(&"peak", glow)
 	var mi := MeshInstance3D.new()
 	mi.name = "StoneTreeCrystals"
+	mi.set_meta(&"painted_hide", true)
 	mi.mesh = st.commit()
 	mi.material_override = crystal_material
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

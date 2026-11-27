@@ -38,6 +38,8 @@ const ROOMS := {
 }
 ## A node (and its subtree) the painting never dresses: set this meta to true.
 const KEEP_3D := &"keep_3d"
+## A node the painting replaces (the painted tree of the Jardim): hidden when the room is painted, its collision stays.
+const PAINTED_HIDE := &"painted_hide"
 ## Shaders whose meshes take the painting (the room's solid stone, floor and the abyss's pillars and ruins).
 ## (by the start of the file name: the stylized twins end in _paint or _fade).
 const SOLID: Array[String] = ["masonry", "catacomb_floor", "depth_stone", "abyss_ruins"]
@@ -197,6 +199,9 @@ func _walk(n: Node, arena: Arena) -> void:
 			continue
 		if c is HallDoor:
 			_doors.append(c)
+		if c is Node3D and c.get_meta(PAINTED_HIDE, false):
+			VisualProfile.vary(c, {&"visible": false})
+			continue
 		# what moves or changes is the game's own: hazards, and anything marked
 		if c is HazardPiece or c.get_meta(KEEP_3D, false):
 			continue
