@@ -38,7 +38,7 @@ func _near(n: Node, at: Vector2, r: float) -> bool:
 	return Vector2(w.x, w.z).distance_to(at) <= r
 
 
-func test_the_hall_hides_the_brazier_the_painting_lacks_and_keeps_the_aligned_ones() -> void:
+func test_the_hall_hides_only_the_brazier_the_painting_lacks_and_keeps_the_other_flames() -> void:
 	var at := Vector2(17.0, -14.8)
 	var painted := _build(_stage().layouts[0], true, 2)
 	var bare := _build(_stage().layouts[0], false, 2)
@@ -61,7 +61,7 @@ func test_the_hall_hides_the_brazier_the_painting_lacks_and_keeps_the_aligned_on
 	assert_gte(kept, 12, "the braziers that fall on their painted flames keep burning (4 bowls, 3 layers)")
 
 
-func test_the_painted_rooms_hide_their_3d_water() -> void:
+func test_the_painted_rooms_keep_their_3d_water() -> void:
 	for layout: RoomLayout in [_stage().ante_layout, _stage().layouts[0]]:
 		var a := _build(layout, true)
 		var water := 0
@@ -70,14 +70,12 @@ func test_the_painted_rooms_hide_their_3d_water() -> void:
 			if g.material_override is ShaderMaterial and (g.material_override as ShaderMaterial).shader.resource_path.contains("shallow_water") \
 					and g.is_visible_in_tree():
 				water += 1
-		assert_eq(water, 0, "%s: the painting has the water, no second one over it" % layout.id)
-	var bare := _build(_stage().ante_layout, false)
-	var kept := 0
-	for n in bare.find_children("*", "GeometryInstance3D", true, false):
-		var g := n as GeometryInstance3D
-		if g.material_override is ShaderMaterial and (g.material_override as ShaderMaterial).shader.resource_path.contains("shallow_water"):
-			kept += 1
-	assert_gt(kept, 0, "--painted=off keeps the stream's water")
+		assert_gt(water, 0, "%s: the plate has a dry bed, the game's water runs on it" % layout.id)
+
+
+func test_the_hidden_list_is_only_static_geometry() -> void:
+	for f in PaintedHall.HIDDEN:
+		assert_false(f.contains("water") or f.contains("flame") or f.contains("door"), f)
 
 
 func test_the_antessala_stream_and_slab_sit_where_the_painting_draws_them() -> void:

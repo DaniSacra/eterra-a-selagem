@@ -98,6 +98,8 @@ enum Size { SMALL, MEDIUM, LARGE, LONG }
 @export var cam_bounds := Rect2()
 ## Other ways of dressing it (variant 1 is variants[0]).
 @export var variants: Array[ArenaVariant] = []
+## Which variant this layout stands in (0: itself; set by variant(), keys the painted rooms, PaintedHall.key_of).
+var variant_index := 0
 
 
 ## The layout as it stands in variant n (0 or out of range: itself). A new Resource; the floor is mirrored too.
@@ -107,6 +109,7 @@ func variant(n: int) -> RoomLayout:
 	var v := variants[n - 1]
 	var out := duplicate() as RoomLayout
 	out.variants = []
+	out.variant_index = n
 	if not v.obstacles.is_empty():
 		out.obstacles = v.obstacles.duplicate()
 	if not v.exits.is_empty():
