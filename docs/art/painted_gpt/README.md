@@ -94,3 +94,9 @@ Rules checked on all three: no banners (lion banners removed), no sun, star, cro
 doors shut and unlit, void blue-slate (R ~ G < B, not violet), no emerald (garden crystals now ice blue), doors only
 where the base has them, with a wall pier (Cripta, Fendas also a brazier) or the statue niche (Jardim) between them.
 
+
+## Base captures, lote 3 (2026-11-27), shot later (--shot-at=2.5: at 0.5 some rooms are still dressing)
+Same flags as lote 2 with `--shot-at=2.5`:
+- seal_chamber: --start=boss --no-boss --cam-at=-5,-2 --cam-dist=86
+- knight_hall: --start=miniboss --guardian=knight --cam-at=0,0 --cam-dist=60 (the Knight stands in it: paint him out)
+- elder_hall: --start=miniboss --guardian=priest_elder --cam-at=0,0 --cam-dist=60 (the Elder stands in it: paint him out)
