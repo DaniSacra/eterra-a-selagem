@@ -9,7 +9,7 @@ uniform sampler2D painting : source_color, filter_linear_mipmap, repeat_disable;
 uniform mat4 projector;
 // the share of the file's height the painter's frame takes (1: stretched to the file; less: scaled evenly, cliff below)
 uniform float v_span = 1.0;
-uniform float exposure = 0.52;  // Daniel 2026-11-27: the bright painting fought the fighters (too much contrast): darker (the tonemap eats part of it)
+uniform float exposure = 0.9;  // the dark-floor paintings (Daniel 2026-11-27) carry their own low value; was 0.52 on the bright ones
 uniform float shadow_strength = 0.15;
 uniform vec3 shade_tint = vec3(0.5, 0.6, 0.82);
 uniform float torch_boost = 0.15;
