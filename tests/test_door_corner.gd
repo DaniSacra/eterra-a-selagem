@@ -52,5 +52,5 @@ func test_hall_first_two_doors_together_in_the_north_east() -> void:
 			assert_lt(a.exits[i].y, 0.0, "hall door %d in the north half" % i)
 			assert_true(a.exit_zones[i].has_point(a.exits[i]), "hall door %d: its spot is in its zone" % i)
 			assert_eq(a.resolve(a.exits[i], 0.4), a.exits[i], "hall door %d: nothing in front of it" % i)
-		assert_between(a.exits[0].distance_to(a.exits[1]), 3.0, 4.5, "hall: the two doors 3 to 4.5 m apart")
-		assert_lt(absf(a.door_pos.x - a.exits[0].x), 2.5, "the portal's light stands over door 0")
+		assert_between(a.exits[0].distance_to(a.exits[1]), 5.5, 8.0, "hall: the two doors 5.5 to 8 m apart, a statue between (Daniel 2026-11-27)")
+		assert_lt(absf(a.door_pos.x - a.exits[0].x), 3.5, "the portal's light stands over the door pair (the statue between them)")

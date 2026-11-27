@@ -1,0 +1,18 @@
+Repinte a imagem 1 (captura do meu jogo, sem personagens) por cima, como um decalque: mesma câmera, mesmo enquadramento, mesma perspectiva, cada borda no mesmo pixel. Não gire, não aproxime, não corte, não mude a inclinação, não acrescente nem remova paredes, muretas, pilares, degraus, portas ou blocos da plataforma. O formato final é a imagem 1 inteira, de canto a canto.
+
+A imagem 2 é a arte aprovada desta sala: use dela SÓ o estilo de pintura e os materiais. Ignore o desenho de planta vista de cima, os textos, as setas, as legendas, os sóis, as estrelas, os estandartes e os símbolos dela. As cores do PISO NÃO vêm da imagem 2 (ela é clara demais): siga a regra do chão abaixo.
+
+ESTILO: pintura digital feita à mão, ilustrada, como a arte de um jogo de ação visto de cima no estilo do Hades II. Pinceladas visíveis, contorno escuro suave e quebrado (não linha de vetor), formas simples e legíveis, detalhe concentrado nas bordas e o centro do piso limpo para a luta. Luz quente de tochas e velas contra sombras frias; contraste forte de valor; névoa lilás acinzentada no vazio, arcos e torres em silhueta ao fundo; musgo escuro e algumas folhas vermelhas de outono nas bordas. Acolhedor, aventura, não terror. Não é 3D renderizado, não é foto, não é pixel art, não é anime. Nada de brilho plástico. A referência é só de estilo: nenhum personagem, lugar, símbolo, logotipo ou composição de outro jogo.
+
+O CHÃO É O PALCO, NÃO A ESTRELA (o mais importante desta vez): o piso inteiro em tom MÉDIO-ESCURO e pouco saturado, pedra cinza-esverdeada fria e ardósia azulada, como o chão das salas do Hades II e do SWORN. Nenhuma área grande clara ou amarela no piso. A luz quente laranja das tochas, braseiros e velas fica só em POÇAS pequenas e redondas em volta de cada chama; o resto da sala em meia-luz fria azul-acinzentada, ainda legível (dá para ver as lajes e as juntas), não escuro nem sombrio. Pouco contraste dentro do piso, textura discreta no centro: os personagens e os efeitos do jogo é que terão cor forte e brilho por cima. Paredes e muretas um pouco mais claras que o piso para a sala ler bem. O calor e o aconchego vêm das chamas, não do chão.
+
+REGRAS:
+- Sala VAZIA: nenhum personagem, herói, inimigo, pessoa ou animal. Estátuas de pedra podem ficar.
+- NENHUM estandarte, bandeira, flâmula ou pano pendurado em lugar nenhum: onde a imagem 1 tem pano vermelho, pinte parede de pedra.
+- Proibido: sol com raios, estrela de muitas pontas, cruz, qualquer símbolo ou emblema.
+- Nada violeta forte e nada verde-esmeralda (cores reservadas). A névoa do fundo é cinza-lilás suave, não roxa nem anil.
+- Nenhum texto, letra, número, ícone ou marca em lugar nenhum.
+- Portas fechadas, de madeira escura com ferragens, sem símbolo brilhando, sem luz saindo delas (o jogo coloca os ícones).
+
+SALA 00 (Câmara de Preparação). Fica tudo exatamente no lugar e no tamanho da imagem 1: as quatro muretas e a borda da plataforma flutuante com os blocos de pedra embaixo, os quatro pilares, a única porta em arco na parede do fundo à direita, e o altar baixo no centro com velas acesas em cima. O altar é só pedra com velas: nada de anjo, símbolo ou feixe de luz saindo dele. Apague a faixa de luz que desce do alto à esquerda (ou deixe só um véu de poeira fraco, sem iluminar o piso).
+Pontos exatos em fração da largura e da altura: altar centro em 50% x 46%; pilar do fundo 45% x 31%; pilar da esquerda 32% x 45%; pilar da direita 68% x 42%; pilar da frente 56% x 57%; porta centro 62% x 26%. Mesma altura e grossura dos pilares da imagem 1. As velas do altar fazem uma poça de luz quente pequena só em volta dele.

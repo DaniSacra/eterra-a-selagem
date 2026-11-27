@@ -14,9 +14,13 @@ que queremos ao gerador de imagem, **gerar** e **analisar** o resultado antes de
 ## O estilo que o Daniel quer (explique sempre, com estas palavras, em todo pedido)
 - Pintura digital **feita à mão**, ilustrada, como a arte de um jogo de ação visto de cima no estilo do Hades II:
   pinceladas visíveis, contorno escuro suave e quebrado (não linha de vetor), formas simples e legíveis, detalhe
-  concentrado nas bordas e o centro do piso limpo para a luta.
-- Luz quente de tochas e velas contra sombras frias; contraste forte de valor; névoa lilás no vazio, arcos e torres em
-  silhueta ao fundo; musgo e folhas vermelhas de outono; pedra quente.
+  concentrado nas bordas e o centro do piso calmo (escuro, pouco detalhe) para a luta.
+- **O chão é o palco, não a estrela (Daniel, 2026-11-27, como Hades II e SWORN):** piso em tom MÉDIO-ESCURO e pouco
+  saturado (pedra cinza-esverdeada, ardósia azulada, verde musgo escuro), sem área grande clara. A luz quente das tochas e
+  velas fica em POÇAS pequenas em volta delas; o resto da sala em meia-luz fria. Personagens e efeitos é que têm cor forte
+  e brilho, então o piso nunca pode competir com eles (pouco contraste dentro do piso, textura discreta no centro).
+- Pintado à mão e acolhedor (o Daniel gosta de quente), mas o calor vem das luzes, não do chão inteiro amarelo. Nenhum
+  estandarte. Névoa no vazio, arcos e torres em silhueta ao fundo; musgo e algumas folhas vermelhas nas bordas.
 - Não é 3D renderizado, não é foto, não é pixel art, não é anime. Nada de brilho plástico.
 - A referência é só de **estilo**: nunca pedir personagens, lugares, símbolos, logotipos ou composições do Hades II
   (ou de outro jogo). Só a arte aprovada de Eterra entra como imagem de referência.

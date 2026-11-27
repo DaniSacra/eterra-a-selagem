@@ -8,10 +8,12 @@ const STAGE := "res://data/stages/catacombs.tres"
 
 func before_each() -> void:
 	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
+	Dev.put("painted", "off")  # GP-8: these check the stone look the painted rooms replace (test_painted_hall has the painting)
 
 
 func after_all() -> void:
 	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
+	Dev.drop("painted")
 
 
 func test_names_and_default() -> void:

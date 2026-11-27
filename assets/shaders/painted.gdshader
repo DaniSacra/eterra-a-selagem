@@ -7,7 +7,9 @@ render_mode ambient_light_disabled, specular_disabled, fog_disabled, cull_disabl
 uniform sampler2D painting : source_color, filter_linear_mipmap, repeat_disable;
 // world -> clip of the painter's camera (PaintedHall.projector)
 uniform mat4 projector;
-uniform float exposure = 1.0;
+// the share of the file's height the painter's frame takes (1: stretched to the file; less: scaled evenly, cliff below)
+uniform float v_span = 1.0;
+uniform float exposure = 0.52;  // Daniel 2026-11-27: the bright painting fought the fighters (too much contrast): darker (the tonemap eats part of it)
 uniform float shadow_strength = 0.15;
 uniform vec3 shade_tint = vec3(0.5, 0.6, 0.82);
 uniform float torch_boost = 0.15;
@@ -32,6 +34,7 @@ void vertex() {
 void fragment() {
 	vec4 c = projector * vec4(world_pos, 1.0);
 	vec2 uv = c.xy / c.w * vec2(0.5, -0.5) + 0.5;
+	uv.y *= v_span;
 	if (see_through > 0.0 && see_through_hole(VERTEX, FRAGCOORD.xy, VIEW_MATRIX, PROJECTION_MATRIX, see_through, see_radius, see_height, see_keep, see_gap)) {
 		discard;
 	}
@@ -46,6 +49,7 @@ void light() {
 	if (LIGHT_IS_DIRECTIONAL) {
 		DIFFUSE_LIGHT += ALBEDO * (shade_tint - 1.0) * shadow_strength * (1.0 - ATTENUATION);
 	} else {
-		DIFFUSE_LIGHT += ALBEDO * LIGHT_COLOR * ATTENUATION * torch_boost;
+		// LIGHT_COLOR carries the energy (x PI): clamp it, or a hero light or a brazier of energy 4 burns the painting white
+		DIFFUSE_LIGHT += ALBEDO * min(LIGHT_COLOR / PI * ATTENUATION, vec3(1.0)) * torch_boost;
 	}
 }

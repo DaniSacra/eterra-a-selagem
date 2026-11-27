@@ -1524,6 +1524,9 @@ func psalm_can_come() -> bool:
 
 func _open_doors() -> void:
 	phase = Phase.OPEN
+	if Dev.has("doors-shut"):
+		return  # GP-8 base captures: the room as before its doors open (shut, unlit, no signs); the robot would stay here
+
 	if room.kind == RunMap.Kind.COMBAT or room.kind == RunMap.Kind.MINIBOSS:
 		_roll_slab()
 	# a pomegranate behind a door when nothing can grow turns into a Blessing before its sign shows (Q-25 a); the

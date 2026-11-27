@@ -323,3 +323,14 @@ The first prototype (an old ChatGPT painting on proxy walls, 15 degree pitch) is
   the painting is shown 1.5 to 2.3 times larger than its pixels (35 px/m painted, 69 px/m on screen), so it is soft: the shader
   sharpens a little (`sharpen`). A 2x upscale of the files would help. Forward+ only measured; Compatibility untested.
 
+
+### GP-8 shipped (2026-11-27)
+- `PaintedHall.DEFAULT_ON = true`: the Salão (all `hall` rooms: combat, fountain, shop), the Sala 00 and the Antessala show
+  the gpt-image-2 paintings in the stylized look (F7 classic shows the old stone). `--painted=off` turns them off.
+- `painted.gdshader`: `exposure` 0.52 (Daniel: the bright painting fought the fighters' contrast); omni lights are clamped
+  (`LIGHT_COLOR / PI`, max 1) before `torch_boost`, otherwise the hero light and braziers burned the painting white.
+- Base captures for a repaint: `--doors-shut` keeps a room as before its doors open (no signs, leaves shut). Sala 01:
+  `--start=fountain --doors-shut --showcase --cam-at=2,1 --cam-dist=68 --no-hud --no-angels --no-hero`; tell the generator
+  to erase the fountain. Requests, poses and costs: `docs/art/painted_gpt/README.md`; agent `ai-art-producer`.
+- Approved direction (Daniel): warm, bright, hand-painted like Hades II, NO banners. The Sala 00 and Antessala
+  paintings in use are the first ("atual") ones, still with banners: to redo without them.

@@ -6,6 +6,14 @@ const STAGE := "res://data/stages/catacombs.tres"
 const FLOOR_INC := "res://assets/shaders/catacomb_floor.gdshaderinc"
 
 
+func before_all() -> void:
+	Dev.put("painted", "off")  # GP-8: the stone floor is what this checks (the painting covers it in the stylized look)
+
+
+func after_all() -> void:
+	Dev.drop("painted")
+
+
 func _hall() -> Arena:
 	var stage: StageDef = load(STAGE)
 	for l in stage.layouts:

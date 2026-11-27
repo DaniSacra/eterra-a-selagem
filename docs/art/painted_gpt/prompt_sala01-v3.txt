@@ -1,0 +1,14 @@
+---
+Repinte a imagem 1 (captura do meu jogo) como uma ilustração pintada à mão, no estilo da imagem 2 (arte aprovada), mantendo a GEOMETRIA e o ÂNGULO DA CÂMERA da imagem 1 sem nenhuma mudança.
+
+Estilo: pintura digital feita à mão, ilustrada, como a arte de cenário de um jogo de ação visto de cima no estilo do Hades II: pinceladas visíveis, contorno escuro suave e quebrado, formas simples e legíveis. Paleta QUENTE e CLARA: pedra cor de areia e mel iluminada por braseiros e velas, luz dourada generosa no piso, sombras quentes e suaves (não escuras demais), musgo e folhas vermelhas de outono, água azul no canal, névoa clara acinzentada e arcos em silhueta ao fundo no vazio. Não é 3D renderizado, nem foto, nem anime.
+
+Regras obrigatórias:
+1. Mesma câmera, mesmo enquadramento, mesma perspectiva da imagem 1. Cada canto do piso, cada mureta, as escadas, as estátuas, as portas, os braseiros e a borda da plataforma ficam exatamente no mesmo lugar em pixels. É uma repintura por cima, como um decalque.
+2. Sala VAZIA: nenhum personagem. As estátuas ficam.
+3. Na parede da direita há DUAS portas altas, cada uma num arco de pedra alto, com a estátua encapuzada no nicho entre elas: pinte exatamente duas portas, nos mesmos lugares, FECHADAS, de madeira escura com ferragens, sem símbolos brilhando. Não acrescente portas nem arcos.
+4. NENHUM estandarte, bandeira ou pano pendurado em lugar nenhum (troque os panos vermelhos da imagem 1 por parede de pedra).
+5. Apague todo texto e ícone (como "E Entrar") e apague a fonte redonda de água do lado esquerdo: ali é piso de pedra.
+6. Proibido: sol com raios, estrela de muitas pontas, cruz, qualquer símbolo. Nada violeta forte, nada verde-esmeralda brilhante.
+7. O centro do piso claro e limpo (é onde a luta acontece); detalhes e sujeira mais nas bordas.
+---

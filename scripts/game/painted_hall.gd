@@ -17,13 +17,15 @@ extends Node3D
 ## Switches: --painted forces it on, --painted=off turns it off (DEFAULT_ON decides without them).
 
 const SHADER := "res://assets/shaders/painted.gdshader"
-## The painting's frame is the 16:9 capture, stretched to the file's 3:2: the projection maps its UV 0..1 to this aspect.
-const ASPECT := 16.0 / 9.0
+## The painting's frame is the base capture (1924x1175: the window the GPU capture got, not 16:9), stretched to the file's
+## 3:2: the projection maps its UV 0..1 to this aspect. A painting the generator scaled evenly instead (the frame fills the
+## top of the file and a strip of cliff is added below) says so with "v_span" (the share of the file's height the frame takes).
+const ASPECT := 1924.0 / 1175.0
 ## Off until Daniel approves the paintings: --painted turns it on (flip this to ship it on).
-const DEFAULT_ON := false
+const DEFAULT_ON := true
 ## The painters' cameras, by room (layout id): the painting, and the game camera's flags it was made with.
 const ROOMS := {
-	&"hall": {&"painting": "res://assets/rooms/painted/sala01.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 68.0, &"at": Vector2(2.0, 1.0)},
+	&"hall": {&"painting": "res://assets/rooms/painted/sala01.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 68.0, &"at": Vector2(2.0, 1.0), &"v_span": 938.0 / 1024.0},
 	&"sala00": {&"painting": "res://assets/rooms/painted/sala00.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 52.0, &"at": Vector2(0.0, 0.0)},
 	&"ante": {&"painting": "res://assets/rooms/painted/antessala.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 80.0, &"at": Vector2(0.0, 0.0)},
 }
@@ -123,6 +125,7 @@ func _material(p: Dictionary, see: float, from: ShaderMaterial = null) -> Shader
 	mat.shader = load(SHADER)
 	mat.set_shader_parameter(&"painting", load(p[&"painting"]))
 	mat.set_shader_parameter(&"projector", projector(p))
+	mat.set_shader_parameter(&"v_span", float(p.get(&"v_span", 1.0)))
 	if see > 0.0:
 		mat.set_shader_parameter(&"see_through", see)
 		for k: StringName in [&"see_radius", &"see_height", &"see_keep", &"see_gap"]:
