@@ -1,0 +1,18 @@
+Repinte a imagem 1 (captura do meu jogo, sem personagens) por cima, como um decalque: mesma câmera, mesmo enquadramento, mesma perspectiva, cada borda no mesmo pixel. Não gire, não aproxime, não corte, não mude a inclinação, não acrescente nem remova paredes, muretas, pilares, degraus ou blocos da plataforma. O formato final é a imagem 1 inteira, de canto a canto.
+
+A imagem 2 é a arte aprovada desta sala: use dela SÓ o estilo de pintura, as cores e os materiais. Ignore o desenho de planta vista de cima, os textos, as setas, as legendas, os sóis, as estrelas e os símbolos dos estandartes dela.
+
+ESTILO (o mais importante): pintura digital feita à mão, ilustrada, como a arte de um jogo de ação visto de cima no estilo do Hades II. Pinceladas visíveis, contorno escuro suave e quebrado (não linha de vetor), formas simples e legíveis, detalhe concentrado nas bordas e o centro do piso limpo para a luta. Luz quente de tochas e velas contra sombras frias; contraste forte de valor; névoa lilás no vazio, arcos e torres em silhueta ao fundo; musgo e folhas vermelhas de outono; pedra quente. Não é 3D renderizado, não é foto, não é pixel art, não é anime. Nada de brilho plástico. A referência é só de estilo: nenhum personagem, lugar, símbolo, logotipo ou composição de outro jogo.
+
+REGRAS:
+- Sala VAZIA: nenhum personagem, herói, inimigo, pessoa ou animal.
+- Proibido: sol com raios, estrela de muitas pontas, cruz. Estandartes, se houver, são panos lisos vermelhos, no máximo com borda dourada, sem nenhum desenho no meio.
+- Nada violeta forte e nada verde-esmeralda (cores reservadas). A névoa do fundo é lilás acinzentado, suave.
+- Nenhum texto, letra, número ou marca em lugar nenhum.
+- Porta fechada, de madeira escura com ferragens, sem símbolo brilhando, sem luz saindo dela (o jogo coloca os ícones).
+
+ANTESSALA (corredor de treino). Fica tudo exatamente no lugar e no tamanho da imagem 1: o corredor longo em diagonal com as duas muretas laterais, a borda da plataforma flutuante e os blocos de pedra embaixo; a FAIXA DE ÁGUA azul que atravessa o corredor de mureta a mureta; a PLACA DE ESPINHOS quadrada no piso entre a água e a porta; a única porta em arco na parede do fundo, no alto à direita; os pilares baixos ao longo das muretas. Os vasos e caixotes soltos no piso podem sumir (o jogo coloca os dele). A faixa de luz que desce do alto pode virar um raio suave de luz quente.
+
+VARIANTE B: mais gráfica e dramática, mais perto da arte do Hades II. Contorno escuro mais marcado e quebrado, formas mais chapadas com poucas pinceladas grandes, sombras frias azul frio escuro bem profundas nas bordas e embaixo da plataforma, poças de luz laranja forte das tochas e velas, o centro do piso iluminado e limpo, o resto caindo para o escuro.
+
+ENCAIXE (conferido por sobreposição, refaça com cuidado): nas tentativas anteriores a faixa de água desceu e a plataforma encolheu. A plataforma ocupa exatamente a mesma área da imagem 1, com a ponta da frente encostando na borda esquerda e a parede da porta no alto à direita. Pontos exatos em fração da largura e da altura: faixa de água da ponta esquerda 47% x 37% até a ponta direita 67% x 46%, com a mesma largura; placa de espinhos centro em 66% x 32%; porta centro 72% x 18%. Os pilares baixos ficam exatamente onde estão na imagem 1, nenhum novo. A névoa do fundo é cinza-lilás clara e suave, não roxa nem anil.

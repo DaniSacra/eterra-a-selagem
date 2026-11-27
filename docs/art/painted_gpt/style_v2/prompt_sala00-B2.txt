@@ -1,0 +1,18 @@
+Repinte a imagem 1 (captura do meu jogo, sem personagens) por cima, como um decalque: mesma câmera, mesmo enquadramento, mesma perspectiva, cada borda no mesmo pixel. Não gire, não aproxime, não corte, não mude a inclinação, não acrescente nem remova paredes, muretas, pilares, degraus ou blocos da plataforma. O formato final é a imagem 1 inteira, de canto a canto.
+
+A imagem 2 é a arte aprovada desta sala: use dela SÓ o estilo de pintura, as cores e os materiais. Ignore o desenho de planta vista de cima, os textos, as setas, as legendas, os sóis, as estrelas e os símbolos dos estandartes dela.
+
+ESTILO (o mais importante): pintura digital feita à mão, ilustrada, como a arte de um jogo de ação visto de cima no estilo do Hades II. Pinceladas visíveis, contorno escuro suave e quebrado (não linha de vetor), formas simples e legíveis, detalhe concentrado nas bordas e o centro do piso limpo para a luta. Luz quente de tochas e velas contra sombras frias; contraste forte de valor; névoa lilás no vazio, arcos e torres em silhueta ao fundo; musgo e folhas vermelhas de outono; pedra quente. Não é 3D renderizado, não é foto, não é pixel art, não é anime. Nada de brilho plástico. A referência é só de estilo: nenhum personagem, lugar, símbolo, logotipo ou composição de outro jogo.
+
+REGRAS:
+- Sala VAZIA: nenhum personagem, herói, inimigo, pessoa ou animal.
+- Proibido: sol com raios, estrela de muitas pontas, cruz. Estandartes, se houver, são panos lisos vermelhos, no máximo com borda dourada, sem nenhum desenho no meio.
+- Nada violeta forte e nada verde-esmeralda (cores reservadas). A névoa do fundo é lilás acinzentado, suave.
+- Nenhum texto, letra, número ou marca em lugar nenhum.
+- Porta fechada, de madeira escura com ferragens, sem símbolo brilhando, sem luz saindo dela (o jogo coloca os ícones).
+
+SALA 00 (Câmara de Preparação). Fica tudo exatamente no lugar e no tamanho da imagem 1: as quatro muretas e a borda da plataforma flutuante com os blocos de pedra embaixo, os quatro pilares, a única porta em arco na parede do fundo à direita, e o altar baixo no centro com velas acesas em cima. O altar é só pedra com velas: nada de anjo, símbolo ou feixe de luz saindo dele. A faixa de luz que desce do alto à esquerda pode virar um raio suave de luz quente vindo de cima.
+
+VARIANTE B: mais gráfica e dramática, mais perto da arte do Hades II. Contorno escuro mais marcado e quebrado, formas mais chapadas com poucas pinceladas grandes, sombras frias azul frio escuro bem profundas nas bordas e embaixo da plataforma, poças de luz laranja forte das tochas e velas, o centro do piso iluminado e limpo, o resto caindo para o escuro.
+
+ENCAIXE (conferido por sobreposição, refaça com cuidado): nas tentativas anteriores os pilares e o altar escorregaram para a direita. Mantenha cada coisa no ponto exato da imagem 1, medido em fração da largura e da altura: altar centro em 50% x 46%; pilar do fundo 45% x 31%; pilar da esquerda 32% x 45%; pilar da direita 68% x 42%; pilar da frente 56% x 57%; porta centro 62% x 26%. Mesma altura e grossura dos pilares da imagem 1. A névoa do fundo é cinza-lilás clara e suave, não roxa nem anil.

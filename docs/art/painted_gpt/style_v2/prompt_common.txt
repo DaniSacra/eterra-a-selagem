@@ -1,0 +1,12 @@
+Repinte a imagem 1 (captura do meu jogo, sem personagens) por cima, como um decalque: mesma câmera, mesmo enquadramento, mesma perspectiva, cada borda no mesmo pixel. Não gire, não aproxime, não corte, não mude a inclinação, não acrescente nem remova paredes, muretas, pilares, degraus ou blocos da plataforma. O formato final é a imagem 1 inteira, de canto a canto.
+
+A imagem 2 é a arte aprovada desta sala: use dela SÓ o estilo de pintura, as cores e os materiais. Ignore o desenho de planta vista de cima, os textos, as setas, as legendas, os sóis, as estrelas e os símbolos dos estandartes dela.
+
+ESTILO (o mais importante): pintura digital feita à mão, ilustrada, como a arte de um jogo de ação visto de cima no estilo do Hades II. Pinceladas visíveis, contorno escuro suave e quebrado (não linha de vetor), formas simples e legíveis, detalhe concentrado nas bordas e o centro do piso limpo para a luta. Luz quente de tochas e velas contra sombras frias; contraste forte de valor; névoa lilás no vazio, arcos e torres em silhueta ao fundo; musgo e folhas vermelhas de outono; pedra quente. Não é 3D renderizado, não é foto, não é pixel art, não é anime. Nada de brilho plástico. A referência é só de estilo: nenhum personagem, lugar, símbolo, logotipo ou composição de outro jogo.
+
+REGRAS:
+- Sala VAZIA: nenhum personagem, herói, inimigo, pessoa ou animal.
+- Proibido: sol com raios, estrela de muitas pontas, cruz. Estandartes, se houver, são panos lisos vermelhos, no máximo com borda dourada, sem nenhum desenho no meio.
+- Nada violeta forte e nada verde-esmeralda (cores reservadas). A névoa do fundo é lilás acinzentado, suave.
+- Nenhum texto, letra, número ou marca em lugar nenhum.
+- Porta fechada, de madeira escura com ferragens, sem símbolo brilhando, sem luz saindo dela (o jogo coloca os ícones).
