@@ -1,0 +1,17 @@
+Edite a imagem 1 (pintura aprovada de uma sala do meu jogo). Mantenha EXATAMENTE a mesma pintura: mesma câmera, mesmo enquadramento, mesmo estilo de pintura digital feita à mão, mesmas cores, mesma luz, e cada parede, mureta, pilar, coluna, arco, degrau e borda da plataforma no mesmo pixel e do mesmo tamanho. Não gire, não aproxime, não afaste, não corte. O formato final é a imagem 1 inteira, de canto a canto.
+
+Esta é a versão de JOGO da mesma sala: o jogo vai pôr por cima, em 3D, tudo o que se mexe, muda de estado ou quebra. Por isso RETIRE só essas peças, listadas abaixo, e pinte no lugar delas o que estaria atrás (piso de lajes igual ao vizinho, ou a pedra do suporte). Nada mais muda. Uma luz ambiente quente muito leve pode ficar perto dos braseiros apagados, mas sem chama, sem brasa e sem brilho.
+
+Continua valendo: sala vazia, nenhum personagem, nenhum estandarte, nenhum sol com raios, estrela, cruz, símbolo, texto ou letra; nada violeta forte nem verde-esmeralda (salvo onde dito abaixo).
+
+As FOLHAS das portas de saída saem: fica o arco de pedra e o batente, e o vão vira uma passagem ESCURA e funda, preta por dentro (sem grade, sem parede, sem chão visível). A entrada da frente continua como está, escura por dentro.
+SEM LUZ PINTADA: o jogo faz a luz. Tire as poças de luz quente do piso e o brilho nas paredes perto das chamas: o piso fica em tom médio-escuro uniforme e neutro em toda a sala, como se a luz fosse difusa, com as mesmas lajes e juntas. O patamar e a escada da entrada da frente ficam como estão.
+
+RETIRE nesta sala (posições aproximadas em % da largura x altura da imagem 1):
+- a chama do braseiro em 69% x 57% (bacia apagada, escura) e qualquer vela da mesa do altar (apagada);
+- o raio de luz que desce no alto à esquerda e a poça clara que ele faz no chão: parede e piso normais;
+- os vasos e urnas de barro: piso e mureta limpos;
+- as folhas das duas portas (48% x 24% e 76% x 38%): fica o arco, e o vão vira passagem preta funda, sem grade.
+Ficam iguais: o pedestal frio, a mesa do altar no grande arco escuro, os bancos, as paredes, o arco em ruína, as muretas, o patamar com a escada da entrada e a torre.
+
+ATENÇÃO: a parede da ESQUERDA (onde o raio de luz batia, de 10% a 30% da largura) continua PAREDE DE PEDRA LISA e inteira: não abra porta, arco nem passagem nela. As únicas aberturas da sala são as duas portas que a imagem 1 já tem (48% x 24% e 76% x 38%) e o grande arco do altar no meio, no mesmo pixel. O raio de luz sai, mas a parede embaixo dele fica igual, só sem o brilho.

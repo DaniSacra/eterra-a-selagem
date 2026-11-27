@@ -1,0 +1,1 @@
+ATENÇÃO: a parede da ESQUERDA (onde o raio de luz batia, de 10% a 30% da largura) continua PAREDE DE PEDRA LISA e inteira: não abra porta, arco nem passagem nela. As únicas aberturas da sala são as duas portas que a imagem 1 já tem (48% x 24% e 76% x 38%) e o grande arco do altar no meio, no mesmo pixel. O raio de luz sai, mas a parede embaixo dele fica igual, só sem o brilho.

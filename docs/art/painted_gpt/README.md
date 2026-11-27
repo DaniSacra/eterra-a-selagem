@@ -39,6 +39,7 @@ Generation (curl; the key is read from the file, never printed):
 | 2026-11-27 | hub approval (`hub/aprovacao/`), edit of the approved hub art: Videira tree in the centre (no pavilion), Adventure Gate at top centre (Heroes' hall out), right becomes a lookout terrace, no text/legend | 1 | 5488 | 0.25 |
 | 2026-11-27 | hub game plate (`hub/jogo/`), edit of the approved `hub_aprovacao.png`: Videira, lights, water, Vigília fire and brazier out; open plaza luma 102 -> 76; overlay without double edges | 1 | 5488 | 0.25 |
 | 2026-11-27 | lote5 (`lote5/`), bases_v3 (new south entrance): 8 entrance edits of the approved plates (crypt0, rift0, rift1, garden0, sanctuary0, knight, elder, trial; trial discarded, wrong base); approvals crypt1/garden1/sanctuary1/bridge0/bridge1/runes0/runes1 a1 (bridges and runes off, rejected); game g1 crypt1/garden1/sanctuary1; bridge0 entrance edit; bridge1 a2 (edit of lote4 approval) + g1; runes0/1 a2c + g1c on a crop; runes1 g2c (g1c turned the lattice into a door) | 26 | 5488 | 6.50 |
+| 2026-11-27 | lote5 trial/altar on the recaptured bases: trial a1+g1, altar a1+g1 (opened a third doorway in the left wall), g2 (+`fix_g_altar.txt`, chosen) | 5 | 5488 | 1.25 |
 
 ## style_v2 (2026-11-27): style approval round
 `style_v2/` holds the variants Daniel is choosing from (Downloads\ASelagem-GP8\APROVAR-ESTILO). Request =
@@ -204,6 +205,9 @@ Finals in `lote5/final/<key>.png` (+ `_aprovacao.png`, `_lado_a_lado.jpg`, `_enc
 | bridge_1 | bridge1-a2 / g1 | platforms, portal, entrance few px; zigzag bridge 20 to 30 px (painted a bit wider) |
 | runes_0 | runes0-a2c / g1c | few px; brazier ~20 px right |
 | runes_1 | runes1-a2c / g2c | few px; floating stones out in the game plate |
-| trial, altar | none | bases_v3 trial.png and altar.png both show the stream hall, not these rooms: recapture |
+| trial | trial-a1 / g1 | few px (walls, doors, pedestal, stele, stairs); markers, violet cracks and lamps out in the game plate |
+| altar | altar-a1 / g2 | few px to ~15 px; marker and medallion painted out (cold pedestal), light beam and flame out in the game plate |
 Rules checked: no figures, banners, text, sun/star/cross; no violet (rift1 swirl out), no emerald (garden crystals out in game);
 doors apart with a piece between (runes: lattice, brazier; crypt1: statue and column; garden1: statue niche); doorways dark.
+
+Breakables check of the game plates (looked at the images): garden_1, sanctuary_1, bridge_1, runes_0, runes_1 show no urns, vases or crates.
