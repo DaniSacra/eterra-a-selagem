@@ -1,0 +1,35 @@
+Repinte a imagem 1 (captura do meu jogo, sem personagens) por cima, como um decalque: mesma câmera, mesmo enquadramento, mesma perspectiva, cada borda no mesmo pixel. Não gire, não aproxime, não afaste, não corte, não mude a inclinação, não acrescente nem remova paredes, muretas, pilares, degraus, portas, arcos, buracos ou blocos da plataforma. A plataforma ocupa exatamente a mesma área da imagem 1, do mesmo tamanho. O formato final é a imagem 1 inteira, de canto a canto.
+
+A imagem 2 é a pintura aprovada de OUTRA sala do mesmo jogo: use dela SÓ o estilo de pintura, a paleta escura do piso, os materiais e a luz. Não copie a planta, os objetos nem a composição dela.
+
+ESTILO: pintura digital feita à mão, ilustrada, como a arte de um jogo de ação visto de cima no estilo do Hades II. Pinceladas visíveis, contorno escuro suave e quebrado (não linha de vetor), formas simples e legíveis, detalhe concentrado nas bordas e o centro do piso calmo (escuro, pouco detalhe) para a luta. Luz quente de tochas, velas e braseiros contra meia-luz fria; névoa cinza-azulada no vazio, arcos e torres em silhueta ao fundo; musgo escuro e algumas folhas vermelhas de outono nas bordas. Acolhedor, aventura, não terror. Não é 3D renderizado, não é foto, não é pixel art, não é anime. Nada de brilho plástico. A referência é só de estilo: nenhum personagem, lugar, símbolo, logotipo ou composição de outro jogo.
+
+O CHÃO É O PALCO, NÃO A ESTRELA: o piso inteiro em tom MÉDIO-ESCURO (cerca de 35% de brilho) e pouco saturado, pedra cinza-esverdeada e ardósia azulada, como o chão das salas do Hades II e do SWORN e como o piso da imagem 2. Nenhuma área grande clara ou amarela no piso. As lajes e juntas ficam visíveis em toda a sala, com pouco contraste dentro do piso e textura discreta no centro. A luz quente laranja e mel fica só em POÇAS pequenas e suaves em volta de cada chama (cerca de uma a duas lajes de raio); o resto da sala em meia-luz fria azul-acinzentada, legível, não sombria. Paredes, muretas e estátuas um pouco mais claras que o piso para a sala ler bem. Os personagens e efeitos do jogo é que terão cor forte por cima.
+
+REGRAS:
+- Sala VAZIA: nenhum personagem, herói, inimigo, pessoa ou animal. Estátuas de pedra podem ficar.
+- NENHUM estandarte, bandeira, flâmula ou pano pendurado em lugar nenhum: onde a imagem 1 tem um estandarte, pinte parede de pedra lisa.
+- Proibido: sol com raios, estrela de muitas pontas, cruz, qualquer símbolo ou emblema.
+- Nada violeta forte e nada verde-esmeralda (cores reservadas). A névoa do fundo é cinza-azulada, não roxa nem anil.
+- Nenhum texto, letra, número, runa legível, ícone ou marca em lugar nenhum.
+- Portas fechadas, de madeira escura com ferragens, sem símbolo brilhando, sem luz saindo delas (o jogo coloca os ícones). Não acrescente portas, arcos ou nichos novos e não mude as portas de lugar.
+LUZ: o piso em tom MÉDIO como o piso da imagem 2 (cerca de 35% de brilho, nem claro nem escuro), pedra cinza-esverdeada e ardósia com um leve toque quente, lajes e juntas bem visíveis em toda a sala. Poças de luz quente laranja e mel em volta de cada chama um pouco maiores e suaves (cerca de duas lajes de raio). Paredes, muretas e estátuas em pedra mais clara, iluminadas pelas chamas. O centro do piso continua sem poça clara grande.
+
+ENTRADA E PORTAS:
+- Se a imagem 1 tiver inimigos, esqueletos, figuras ou barrinhas vermelhas de vida, REMOVA todos: no lugar, piso de lajes igual ao vizinho.
+- A ENTRADA por onde o herói chegou é a peça que a imagem 1 já tem na borda da frente: um PATAMAR de pedra (cerca de 3 por 2,5 metros) saindo da mureta, com uma ESCADA de cinco degraus descendo para fora da imagem. A mureta fica ABERTA ali, a escada leva para baixo e some na sombra escura. Pinte o patamar e a escada exatamente nesse lugar e tamanho, em pedra igual à da sala; nunca um arco fechado, nunca um buraco na mureta. Não acrescente outro arco de entrada.
+- As portas de saída ficam afastadas uma da outra, com a peça indicada entre elas; nunca as junte nem as aproxime. São portas altas e monumentais, de madeira escura com ferragens, fechadas.
+
+SANTUÁRIO B, NAVE PARTIDA (nave de igreja de catacumba cujo piso do meio desabou). Posições em % da largura x altura da imagem 1.
+- REMOVA os estandartes azuis (19% x 12%, 44% x 14%, 65% x 22% e outros): parede de pedra lisa. O musgo verde pendurado vira musgo escuro discreto.
+- Os retângulos escuros soltos na ponta esquerda (9% x 27% e 11% x 55%) são parede em sombra: pinte pedra escura em sombra no mesmo contorno. O azul forte dentro da fenda e embaixo da plataforma vira sombra e névoa cinza-azulada.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - a FENDA grande da nave: o buraco do meio do piso vai de 37% a 67% da largura e de 47% a 78% da altura e corta a mureta da frente entre 37% e 55% da largura, continuando para baixo até a borda de baixo da imagem; mesmo contorno com borda dourada gasta: escuro e fundo por dentro, com blocos de pedra caídos, sem brilho azul;
+  - os arcos de nervura quebrados que sobem do fundo (de 45% a 75% da largura, no alto da imagem), em pedra;
+  - as colunas, cada uma com a mesma base, altura e capitel (36% x 26%, 44% x 30%, 52% x 34%, 23% x 39%, 31% x 46%, 39% x 48%, 69% x 65%, 79% x 50%; as de pináculo continuam com pináculo);
+  - o canal de água rasa entre colunas em 38% x 42%, água azul-acinzentada escura, e as duas grades de ferro vermelhas no piso (32% x 38% e 45% x 41%);
+  - os quadrados escuros de quatro lajes no piso (31% x 56%, 42% x 63%, 48% x 48%, 76% x 48%), mesmo contorno;
+  - os dois sarcófagos com vela (47% x 26% e 61% x 33%), os bancos de pedra à esquerda, os dois braseiros acesos (27% x 22% e 73% x 36%);
+  - as muretas quebradas da frente e as paredes altas do fundo.
+- PORTAS: três arcos altos na parede do fundo à direita, centros em 56% x 24%, 68% x 29% e 79% x 34%, cada um BEM separado do outro: entre o primeiro e o segundo fica o sarcófago (61% x 33%), entre o segundo e o terceiro o braseiro (73% x 36%). Pinte as três portas fechadas, monumentais, no mesmo lugar.
+- ENTRADA: o patamar de pedra com a escada descendo para fora da imagem, na borda da frente embaixo à direita (de 59% a 71% da largura, de 86% a 100% da altura).

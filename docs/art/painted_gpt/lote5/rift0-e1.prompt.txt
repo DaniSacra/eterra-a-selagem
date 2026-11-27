@@ -1,0 +1,9 @@
+Edite a imagem 1 (a pintura aprovada, versão de jogo, de uma sala do meu jogo). Mantenha EXATAMENTE a mesma pintura: mesma câmera, mesmo enquadramento, mesmo estilo de pintura digital feita à mão, mesmas cores, mesma luz neutra, e cada parede, mureta, pilar, coluna, arco, porta, degrau, perigo e borda da plataforma no mesmo pixel e do mesmo tamanho. Não gire, não aproxime, não afaste, não corte. O formato final é a imagem 1 inteira, de canto a canto.
+
+A imagem 2 é uma captura nova da MESMA sala, alinhada pixel a pixel com a imagem 1 (mesma câmera). Nela a sala ganhou uma ENTRADA nova na borda da frente: um PATAMAR de pedra (cerca de 3 por 2,5 metros) saindo da mureta, com uma ESCADA de cinco degraus descendo para fora da plataforma, para baixo e para fora da imagem. A mureta fica ABERTA ali.
+
+MUDE SÓ A ENTRADA: pinte esse patamar e essa escada exatamente no lugar, no tamanho e no ângulo da imagem 2, em pedra igual à da sala, no estilo da imagem 1; a escada desce e some na sombra escura do vazio. A mureta se abre só nessa largura. Se a imagem 1 tinha um arco escuro de entrada ou um buraco na mureta da frente, troque-o pelo que a imagem 2 mostra naquele ponto (patamar e escada, ou mureta contínua). Não é um arco fechado nem um buraco no parapeito. Todo o resto da imagem 1 fica idêntico.
+
+Versão de jogo: nenhuma chama, nenhuma poça de luz pintada, nenhum personagem, estandarte, texto, sol, estrela ou cruz; nada violeta forte nem verde-esmeralda.
+
+POSIÇÃO DA ENTRADA NOVA (em % da largura x altura da imagem 1): o patamar e a escada ficam em torno de de 17% a 30% da largura e de 62% a 80% da altura, na borda da frente à esquerda.

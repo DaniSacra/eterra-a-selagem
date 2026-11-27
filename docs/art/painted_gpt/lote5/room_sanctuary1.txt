@@ -1,0 +1,13 @@
+SANTUÁRIO B, NAVE PARTIDA (nave de igreja de catacumba cujo piso do meio desabou). Posições em % da largura x altura da imagem 1.
+- REMOVA os estandartes azuis (19% x 12%, 44% x 14%, 65% x 22% e outros): parede de pedra lisa. O musgo verde pendurado vira musgo escuro discreto.
+- Os retângulos escuros soltos na ponta esquerda (9% x 27% e 11% x 55%) são parede em sombra: pinte pedra escura em sombra no mesmo contorno. O azul forte dentro da fenda e embaixo da plataforma vira sombra e névoa cinza-azulada.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - a FENDA grande da nave: o buraco do meio do piso vai de 37% a 67% da largura e de 47% a 78% da altura e corta a mureta da frente entre 37% e 55% da largura, continuando para baixo até a borda de baixo da imagem; mesmo contorno com borda dourada gasta: escuro e fundo por dentro, com blocos de pedra caídos, sem brilho azul;
+  - os arcos de nervura quebrados que sobem do fundo (de 45% a 75% da largura, no alto da imagem), em pedra;
+  - as colunas, cada uma com a mesma base, altura e capitel (36% x 26%, 44% x 30%, 52% x 34%, 23% x 39%, 31% x 46%, 39% x 48%, 69% x 65%, 79% x 50%; as de pináculo continuam com pináculo);
+  - o canal de água rasa entre colunas em 38% x 42%, água azul-acinzentada escura, e as duas grades de ferro vermelhas no piso (32% x 38% e 45% x 41%);
+  - os quadrados escuros de quatro lajes no piso (31% x 56%, 42% x 63%, 48% x 48%, 76% x 48%), mesmo contorno;
+  - os dois sarcófagos com vela (47% x 26% e 61% x 33%), os bancos de pedra à esquerda, os dois braseiros acesos (27% x 22% e 73% x 36%);
+  - as muretas quebradas da frente e as paredes altas do fundo.
+- PORTAS: três arcos altos na parede do fundo à direita, centros em 56% x 24%, 68% x 29% e 79% x 34%, cada um BEM separado do outro: entre o primeiro e o segundo fica o sarcófago (61% x 33%), entre o segundo e o terceiro o braseiro (73% x 36%). Pinte as três portas fechadas, monumentais, no mesmo lugar.
+- ENTRADA: o patamar de pedra com a escada descendo para fora da imagem, na borda da frente embaixo à direita (de 59% a 71% da largura, de 86% a 100% da altura).

@@ -1,0 +1,11 @@
+CRIPTA B (ossário de catacumba, com um POÇO no meio). Posições em % da largura x altura da imagem 1.
+- REMOVA o estandarte azul com leão em 54% x 13%: parede de pedra lisa. As plantas penduradas no alto viram musgo escuro discreto.
+- O POÇO: o buraco grande de oito lados no meio do piso (de 36% a 60% da largura, de 44% a 62% da altura), mesmo contorno, com borda de pedra gasta; por dentro ESCURO e fundo, paredes de pedra descendo para a sombra preta, sem água, sem brilho.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - os três túmulos de pedra com velas acesas: 23% x 47%, 55% x 67% e 52% x 27%;
+  - a parede divisória do ossário com nichos (de 55% a 64% da largura, de 28% a 42% da altura), a estátua encapuzada de pedra em cima dela em 63% x 14% e a coluna em 70% x 37%;
+  - as lajes de túmulo gravadas no piso e os quadrados escuros, mesmo contorno;
+  - as duas grades de ferro no piso com brilho vermelho de brasa por baixo (42% x 36% e 72% x 58%): mesmo contorno, são perigos do jogo;
+  - os vasos e urnas de barro (13% x 40%, 17% x 49%, 18% x 54%, 79% x 44%), as muretas e merlões da frente e os pilares de pedra embaixo da plataforma.
+- PORTAS: dois arcos de porta altos, BEM separados: porta 1 na parede do fundo em 59% x 21%, atrás e à esquerda da estátua; porta 2 na parede da direita em 76% x 30%. Entre elas ficam a estátua encapuzada e a coluna. Pinte as duas portas fechadas, monumentais, no mesmo lugar.
+- ENTRADA: o patamar de pedra com a escada descendo para fora da plataforma, na borda da frente à esquerda (de 17% a 35% da largura, de 65% a 92% da altura).

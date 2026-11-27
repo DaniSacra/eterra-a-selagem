@@ -1,0 +1,11 @@
+SALA DAS RUNAS B (salão quadrado de lajes grandes sobre uma torre, com pedras soltas flutuando em volta). Posições em % da largura x altura da imagem 1.
+- Os pontinhos de estrela e o risco roxo no vazio (embaixo à direita) somem: só névoa cinza-azulada, nada roxo.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - o piso de lajes grandes quadradas em grade, com juntas finas, todas do mesmo tom médio-escuro (o quadrado mais claro em 49% x 50% fica do mesmo tom das outras lajes); nenhuma runa legível, nenhum símbolo, nenhum brilho;
+  - o pilar quadrado de pedra em 58% x 61% e o pilar junto à parede em 39% x 31%;
+  - os dois obeliscos pequenos de pedra (55% x 33% e 76% x 42%);
+  - as pedras soltas de topo quadrado com borda dourada gasta que flutuam fora da plataforma, sobre pilares no vazio (24% x 69%, 34% x 83%, 48% x 85%, 75% x 84%, 83% x 77%, 82% x 65%), mesmo contorno;
+  - as muretas com merlões em volta, a caixa de madeira em 30% x 58% e a torre de pedra escura embaixo da plataforma;
+  - na parede do fundo: a treliça de ferro com teia em 55% x 26% e o braseiro aceso em 66% x 34%.
+- PORTAS: três arcos na parede do fundo, centros em 49% x 21%, 62% x 26% e 72% x 31%, cada um BEM separado do outro: entre o primeiro e o segundo fica a treliça de ferro, entre o segundo e o terceiro o braseiro. Pinte as três portas fechadas, altas, de madeira escura com ferragens, no mesmo lugar.
+- ENTRADA: o patamar de pedra com a escada descendo para fora, na borda da frente à esquerda (de 27% a 40% da largura, de 63% a 82% da altura).
