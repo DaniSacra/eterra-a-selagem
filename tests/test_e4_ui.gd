@@ -193,8 +193,8 @@ func test_the_pastors_lights_over_the_special() -> void:
 	game.hud._process(0.016)
 	var special: ActionSlot
 	for s in game.hud._slots:
-		if s.slot == Boon.Slot.SPECIAL:
-			special = s
+		if s.slot == Boon.Slot.SPECIAL and not s.hold and special == null:
+			special = s  # HUD v3: the right button's touch (Poder); the hold (Lança) has its own slot
 	assert_eq(special.lights, 2)
 	assert_eq(special.lights_max, game.psalms.find(&"pastor").count)
 	for s in game.hud._slots:

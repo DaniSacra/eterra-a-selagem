@@ -49,5 +49,9 @@ func test_the_warrior_keeps_his_body() -> void:
 
 func test_the_hud_shows_the_magas_own_face() -> void:
 	assert_ne(HeroCrest.portrait_of(&"maga"), HeroCrest.PORTRAIT, "her face, cut from the approved art")
-	assert_eq(HeroCrest.portrait_of(&"warrior"), HeroCrest.PORTRAIT)
-	assert_eq(HeroCrest.portrait_of(&""), HeroCrest.PORTRAIT)
+	var warrior: Texture2D = HudArt.tex(&"portrait_warrior")  # HUD v3: the kit's painted Warrior, when it has one
+	if warrior == null:
+		warrior = HeroCrest.PORTRAIT
+	assert_ne(HeroCrest.portrait_of(&"maga"), warrior)
+	assert_eq(HeroCrest.portrait_of(&"warrior"), warrior)
+	assert_eq(HeroCrest.portrait_of(&""), warrior)
