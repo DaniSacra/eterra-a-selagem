@@ -233,3 +233,12 @@ func test_no_objective_text_is_longer_than_three_lines() -> void:
 		await wait_frames(1)
 		var label := line.get_child(0) as RichTextLabel
 		assert_lte(label.get_content_height(), 3 * 24, "%s fits three lines" % key)
+
+
+func test_the_angel_seal_on_a_door_sign_is_winged_so_it_is_not_the_heart() -> void:
+	var plain := AngelSeal.new().setup(Boon.Family.CHAMA, 20.0)
+	var winged := AngelSeal.new().setup(Boon.Family.CHAMA, 20.0, true, true)
+	assert_gt(winged.custom_minimum_size.x, plain.custom_minimum_size.x, "another silhouette, not another colour")
+	assert_eq(winged.custom_minimum_size.y, plain.custom_minimum_size.y)
+	plain.free()
+	winged.free()

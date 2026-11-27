@@ -503,7 +503,7 @@ func _update_entrance(delta: float) -> void:
 	_entrance_veil.modulate.a *= _entrance.modulate.a
 
 
-## Bottom left: the portrait and, beside it, the three bars (life under Magia under the Supremo's charge) with the Ritmo de Batalha over them.
+## Bottom left: the portrait and, beside it, the three bars (life under Magia under the Supremo's charge) (the Ritmo de Batalha line is hidden, Daniel 2026-11-27).
 func _build_life() -> void:
 	_charge = StatBar.new().setup(StatBar.Kind.SUPREME, STAT)
 	_charge.name = "charge"
