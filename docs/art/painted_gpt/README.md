@@ -25,6 +25,7 @@ Generation (curl; the key is read from the file, never printed):
 | 2026-11-27 | dark_v3 sala00 e1 (too dark), e2 (chosen) | 2 | 5488 | 0.50 |
 | 2026-11-27 | dark_v3 antessala e1 (too dark), e2 (chosen) | 2 | 5488 | 0.50 |
 | 2026-11-27 | dark_v3: 3 calls cut by the network (no image; billing unknown, at most 0.75) | 0 | - | 0 to 0.75 |
+| 2026-11-27 | VFX lote 1 (generations, no ref): cut1 v1 (ellipse, drift), cut1 v2, cut2 v1, spin v1, smash v1 (radial stripes read as sun rays, rejected), smash v2, contact v1, hit_ring v1 | 8 | 5488 | 2.00 |
 
 ## style_v2 (2026-11-27): style approval round
 `style_v2/` holds the variants Daniel is choosing from (Downloads\ASelagem-GP8\APROVAR-ESTILO). Request =
@@ -51,3 +52,16 @@ Sala01: gpt-image-2 kept the base's aspect (1924x1175 is wider than 3:2): the pa
 1536x938 at the top plus ~86 px of extra cliff at the bottom, not the 3:2 stretch. With that mapping e3 fits within a few px
 (braziers, statues, doors, stairs, canal); with the stretch the lower half is 50 to 70 px off. The in-game v3 shows the same
 behaviour (~20 px off even uniformly), so PaintedHall's sala01 mapping should be checked before swapping.
+
+## VFX painted sheets, lote 1 (2026-11-27)
+Guide: `docs/art/vfx_painted_style.md`. Files in `docs/art/vfx_painted/`: `prompt_common.txt` + `<fx>.txt` + fix files,
+full sent text in `<fx>-<tag>.prompt.txt`, raw output `<fx>-<tag>.png`, generator `gen.sh <fx> <tag> [fix]`
+(`/v1/images/generations`, one call at a time, `--http1.1`). The final sheets (`cut1, cut2, spin (4x2 2048x1024),
+smash, contact, hit_ring .png`) are the raw output after a post pass: near-black (<=12) crushed to 0 and each cell moved
+(and for spin/smash scaled) so the pivot sits at the cell centre: `register.py` (circle fitted to the outer edge, arcs
+and rings), `fan.py` (smash: top of arc + half-width), `point.py` (spark core). gpt-image-2 drifts 15 to 50 px per cell;
+after the pass the outer edges fall within a few px (`<fx>_overlay.png`, the 6 frames tinted and stacked).
+Spin frames 7 and 8 are frame 6 at 55% and 25% (no extra call). Previews `<fx>_preview.gif` (`preview.py`): guide
+colours over a floor crop of sala01, real time then 4x slower. Plan B not needed. Deviations: the cut arcs span about
+210 to 240 degrees (asked 150) and the smash fan's inner edge sits ~25 px above the pivot. Sent to
+Downloads\ASelagem-GP8\APROVAR-EFEITOS (awaiting Daniel); `docs/steam-ia.md` gets them when they enter the game.

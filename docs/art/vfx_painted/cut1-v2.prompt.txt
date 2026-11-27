@@ -1,0 +1,23 @@
+A game VFX FLIPBOOK SPRITE SHEET, 1536x1024, exactly 3 columns x 2 rows of square 512x512 cells, frames read left to right, top row then bottom row (frame 1 top-left, frame 6 bottom-right). NO grid lines, NO borders, NO frame numbers: the cells are invisible, only implied by where each drawing sits.
+
+STYLE: hand-painted digital painting, illustrated, like the effects of a top-down action game in the style of Hades II: visible brush strokes, dry-brush edges, simple bold readable shapes, a soft broken painterly edge (not a vector line, not clean geometry). Each shape is a flat fill of one tone with one inner light, like a stroke of thick paint, the same painter's hand as a hand-painted fantasy dungeon. Not a 3D render, not a photo, not pixel art, not anime, no plastic shine, no lens flare, no camera blur, no soft particle fog or airbrush glow.
+
+COLOUR: the effect is painted in WARM GREYSCALE only (ivory to light ochre-grey, a near-white ivory core, no saturated colour at all), because a shader tints it later. BACKGROUND: pure flat black #000000 everywhere outside the strokes, no texture, no vignette, no gradient, no ground, no shadows.
+
+REGISTRATION (very important): every cell uses the same pivot at the exact CENTRE of the cell, the same scale, the same orientation. Seen from straight above, flat on the ground (no perspective). Nothing touches or crosses a cell edge; keep about 26 px of black margin inside each cell.
+
+FORBIDDEN: no sword, no hand, no character, no creature, no weapon; no text, letters, numbers, watermark, frame or grid; no many-pointed star, no sun with rays, no cross or any shape with four equal arms; no lion or any symbol or emblem inside the effect; no violet, no green, no red, no blood.
+
+THE EFFECT: a sword slash TRAIL (smear) seen from above, 6 frames. Shape: a 150-degree arc around the cell centre, the outer radius at 90% of half the cell (about 230 px from the centre), shaped like a teardrop crescent: a thick round HEAD (about 25% of the radius thick) at the leading end, which is at the TOP-LEFT end of the arc (the arc starts at the right, at 0 degrees / 3 o'clock, and sweeps counter-clockwise over the top to 150 degrees), and a TAIL that thins to a hair-fine thread back at the 3 o'clock start. Outer edge a clean straight-ish brush edge; inner edge ragged dry-brush. Hollow inside: the centre of the cell is empty black.
+Progression, same arc, same place, same outer radius in all 6 frames:
+frame 1: the full smear, widest and brightest, the whole 150-degree crescent filled;
+frame 2: the same crescent, head crisper and sharper;
+frame 3: the tail starts to thin and fade, the head still thick;
+frame 4: the outer edge breaks into separate brush streaks;
+frame 5: only the head and a few streaks remain;
+frame 6: two or three thin fading brush streaks along the arc.
+
+CORRECTIONS (a first try drifted): 
+- The arc is part of a PERFECT CIRCLE centred on the cell centre, not an ellipse and not tilted: seen exactly from above.
+- The arc covers ONLY the angles stated above. Everything else in the cell stays empty black: for a 150-degree arc, the whole LOWER HALF of every cell (below the horizontal line through the centre) is black except the tip of the tail at 3 o'clock.
+- In EVERY frame the outer edge lies on the SAME circle (radius 230 px around the cell centre). Frames differ only by the paint wearing away (thinning, breaking into streaks), never by moving, rotating, growing or shrinking. Imagine painting frame 1 and then erasing parts of it for the next frames.

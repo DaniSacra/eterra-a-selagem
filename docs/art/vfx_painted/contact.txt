@@ -1,0 +1,6 @@
+THE EFFECT: a small HIT SPARK, painted, seen in the cell centre, 4 frames in the first 4 cells; cells 5 and 6 (bottom-middle and bottom-right) are EMPTY pure black.
+Shape: a small round bright ivory core at the cell centre and THREE UNEQUAL painted splinters fanning out to the RIGHT (the direction the blade was going), within a 70-degree fan: one long (reaching about 200 px from the centre), one medium, one short (half the long one); thick wedge-like brush flicks tapering to points, never a symmetric star, never rays all round.
+frame 1: core and three splinters, brightest;
+frame 2: splinters longer and thinner, core smaller;
+frame 3: only the tips of the splinters, detached, no core;
+frame 4: two small fading dots.

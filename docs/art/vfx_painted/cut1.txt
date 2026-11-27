@@ -1,0 +1,8 @@
+THE EFFECT: a sword slash TRAIL (smear) seen from above, 6 frames. Shape: a 150-degree arc around the cell centre, the outer radius at 90% of half the cell (about 230 px from the centre), shaped like a teardrop crescent: a thick round HEAD (about 25% of the radius thick) at the leading end, which is at the TOP-LEFT end of the arc (the arc starts at the right, at 0 degrees / 3 o'clock, and sweeps counter-clockwise over the top to 150 degrees), and a TAIL that thins to a hair-fine thread back at the 3 o'clock start. Outer edge a clean straight-ish brush edge; inner edge ragged dry-brush. Hollow inside: the centre of the cell is empty black.
+Progression, same arc, same place, same outer radius in all 6 frames:
+frame 1: the full smear, widest and brightest, the whole 150-degree crescent filled;
+frame 2: the same crescent, head crisper and sharper;
+frame 3: the tail starts to thin and fade, the head still thick;
+frame 4: the outer edge breaks into separate brush streaks;
+frame 5: only the head and a few streaks remain;
+frame 6: two or three thin fading brush streaks along the arc.

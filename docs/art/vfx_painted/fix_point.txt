@@ -1,0 +1,1 @@
+CORRECTIONS: every drawing is anchored on the exact CENTRE of its cell (the point of the hit), same scale and same direction in every frame; frames differ only by the paint stretching thin and wearing away, never by moving. Keep the splinters chunky and painterly (thick brush flicks with dry ragged edges), not thin neon lines, not glowing particles.

@@ -1,0 +1,16 @@
+ETERRA: A SELAGEM — REFERÊNCIAS PARA MESHY
+
+Direção: fantasia sombria pintada à mão, pinceladas visíveis, contornos expressivos, sombras em blocos e materiais estilizados. Referências de linguagem: Hades II e Ravenswatch. Não copiar personagens desses jogos.
+
+01 Soldado (skeleton): silhueta militar, armadura envelhecida.
+02 Corredor (runner): magro, desengonçado, postura inclinada.
+03 Arqueiro (archer): capuz e besta, silhueta reconhecível.
+04 Guarda (guard): robusto, escudo grande.
+05 Mago inimigo (mage): baixinho, cabeça e chapéu grandes, expressão travessa; contraste caricatural deliberado.
+06 Sacerdote (priest): alto, solene, vestes cerimoniais e cajado.
+07 Guerreiro: jovem, sem barba, cabelo ruivo, cachecol azul-petróleo, Emeth verde. Conceito sujeito à conferência com o modelo existente.
+08 Maga: conceito novo, traços do leste asiático, vestes em camadas, cajado com fogo nas duas pontas. Pendente de aprovação.
+
+Premissas para produção 3D: preservar silhuetas e diferenças de proporção, priorizar leitura na câmera isométrica. Texturas pintadas, sem realismo fotográfico. Ossos envelhecidos, metais oxidados, magia dos mortos amarelo-esverdeada. Diferenciar a magia da Emeth. Evitar reproduzir sombras de chão, fundo de pergaminho ou efeitos mágicos como geometria. Separar armas e VFX dos corpos quando possível. Validar rig, escala, animações e desempenho no Godot antes de substituir assets existentes.
+
+As seis imagens de inimigos são recortes da prancha comparativa A/B: A para cinco inimigos, B para o mago. Não são renderizações isoladas novas; podem conter pequenas bordas de elementos vizinhos e têm resolução menor que os retratos dos heróis. A prancha cinematográfica aprovada segue como referência coletiva adicional. Este lote contém os seis inimigos discutidos, não todo o bestiário do repositório. Nenhum modelo 3D foi gerado ou crédito Meshy consumido.

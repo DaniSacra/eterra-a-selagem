@@ -1,0 +1,1 @@
+CORRECTIONS: every ring is centred on the exact CENTRE of its cell; the gaps between the 3 strokes stay at the same angles in every frame (the strokes only move outward as the ring grows, never rotate). Painterly dry-brush strokes, not a clean vector circle, not glowing.

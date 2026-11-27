@@ -1,0 +1,9 @@
+A game VFX FLIPBOOK SPRITE SHEET, 1536x1024, exactly 3 columns x 2 rows of square 512x512 cells, frames read left to right, top row then bottom row (frame 1 top-left, frame 6 bottom-right). NO grid lines, NO borders, NO frame numbers: the cells are invisible, only implied by where each drawing sits.
+
+STYLE: hand-painted digital painting, illustrated, like the effects of a top-down action game in the style of Hades II: visible brush strokes, dry-brush edges, simple bold readable shapes, a soft broken painterly edge (not a vector line, not clean geometry). Each shape is a flat fill of one tone with one inner light, like a stroke of thick paint, the same painter's hand as a hand-painted fantasy dungeon. Not a 3D render, not a photo, not pixel art, not anime, no plastic shine, no lens flare, no camera blur, no soft particle fog or airbrush glow.
+
+COLOUR: the effect is painted in WARM GREYSCALE only (ivory to light ochre-grey, a near-white ivory core, no saturated colour at all), because a shader tints it later. BACKGROUND: pure flat black #000000 everywhere outside the strokes, no texture, no vignette, no gradient, no ground, no shadows.
+
+REGISTRATION (very important): every cell uses the same pivot at the exact CENTRE of the cell, the same scale, the same orientation. Seen from straight above, flat on the ground (no perspective). Nothing touches or crosses a cell edge; keep about 26 px of black margin inside each cell.
+
+FORBIDDEN: no sword, no hand, no character, no creature, no weapon; no text, letters, numbers, watermark, frame or grid; no many-pointed star, no sun with rays, no cross or any shape with four equal arms; no lion or any symbol or emblem inside the effect; no violet, no green, no red, no blood.

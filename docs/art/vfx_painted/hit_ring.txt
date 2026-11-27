@@ -1,0 +1,8 @@
+THE EFFECT: a small IMPACT RING on the ground under a struck enemy, seen from above, 5 frames in the first 5 cells; cell 6 (bottom-right) is EMPTY pure black.
+Shape: a BROKEN painted ring around the cell centre, made of 3 separate curved brush strokes with gaps between them (it never closes into a full circle), slightly flattened (wider than tall, 1 : 0.75) as if lying on the ground. Thick dry-brush strokes, ragged ends.
+The ring GROWS from frame to frame: radius about 150 px in frame 1 up to about 210 px in frame 5, and gets thinner:
+frame 1: thick bright strokes, radius 150 px;
+frame 2: radius 165 px, still thick;
+frame 3: radius 180 px, thinner, edges breaking;
+frame 4: radius 195 px, thin broken streaks;
+frame 5: radius 210 px, faint thin wisps.

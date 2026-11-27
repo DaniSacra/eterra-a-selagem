@@ -1,0 +1,4 @@
+CORRECTIONS (a first try drifted): 
+- The arc is part of a PERFECT CIRCLE centred on the cell centre, not an ellipse and not tilted: seen exactly from above.
+- The arc covers ONLY the angles stated above. Everything else in the cell stays empty black: for a 150-degree arc, the whole LOWER HALF of every cell (below the horizontal line through the centre) is black except the tip of the tail at 3 o'clock.
+- In EVERY frame the outer edge lies on the SAME circle (radius 230 px around the cell centre). Frames differ only by the paint wearing away (thinning, breaking into streaks), never by moving, rotating, growing or shrinking. Imagine painting frame 1 and then erasing parts of it for the next frames.

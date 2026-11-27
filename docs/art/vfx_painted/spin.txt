@@ -1,0 +1,8 @@
+THE EFFECT: a spinning finisher slash seen from above: an OPEN RING sweep of 330 degrees around the cell centre (a gap of 30 degrees just below 3 o'clock, so it never closes), outer radius at 90% of half the cell (about 230 px from the centre), very thick (about 35% of the radius), with a fat round HEAD at the end of the turn (just below 3 o'clock, the sweep runs counter-clockwise from 3 o'clock all the way round). Outer edge clean brush edge, inner edge ragged dry-brush, centre of the cell empty black.
+This sheet holds frames 1 to 6 of an 8-frame effect. Same ring, same place, same outer radius in every frame:
+frame 1: the full thick 330-degree smear, widest and brightest;
+frame 2: the same, head crisper;
+frame 3: the start of the sweep (the tail, right after 3 o'clock) begins to thin;
+frame 4: the outer edge breaks into brush streaks, the ring thinner;
+frame 5: the ring thin and broken into long brush streaks, head still visible;
+frame 6: a few long thin streaks around the circle and a faint head.
