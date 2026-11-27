@@ -199,6 +199,10 @@ static func write(e: Environment, moon: DirectionalLight3D, values: Dictionary) 
 			e.set(k, values[k])
 
 
+## `--clear-air` (GP-8 base captures): where a room's depth fog begins and ends instead, far past the camera's reach.
+const CLEAR_AIR := Vector2(1000.0, 2000.0)
+
+
 ## An arena's air (ArenaRoom.air(): sky, fog, fog_depth, ambient, ambient_gain, moon, moon_energy, moon_shadow) as
 ## values of the air; empty when it has none. Its ambient is a share of the world's classic energy (ambient_gain, 1
 ## when not given), as the rooms always had it.
@@ -217,6 +221,11 @@ static func air_values(want: Dictionary) -> Dictionary:
 		var fd: Vector2 = want[&"fog_depth"]
 		d[&"fog_depth_begin"] = fd.x
 		d[&"fog_depth_end"] = fd.y
+		if Dev.has("clear-air"):
+			# GP-8 base captures: from a far painter's camera (84 m and more) the depth fog (fog_depth, ends at 85 to 100 m)
+			# swallows the far walls into the sky colour (they read as outlines); no depth fog keeps them solid
+			d[&"fog_depth_begin"] = CLEAR_AIR.x
+			d[&"fog_depth_end"] = CLEAR_AIR.y
 	return d
 
 
