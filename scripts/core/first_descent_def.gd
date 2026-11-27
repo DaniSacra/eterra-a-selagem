@@ -17,6 +17,8 @@ const PATH := "res://data/first_descent.tres"
 @export var arrival_control_at := 4.0
 @export var arrival_caption_at := 4.2
 @export var arrival_skip_after := 1.0
+## The angel whose cards the Sala 00 offers on the guided descent (the first Blessing of a new save: Sarael's; @export var arrival_skip_after := 1.0"": drawn as ever).
+@export var altar_angel: StringName = &"sarael"
 ## Morvath's short fight: his life (1.0: whole) and the last phase he fights (1: he never rises to the second).
 @export var boss_hp_scale := 0.6
 @export var boss_last_phase := 1

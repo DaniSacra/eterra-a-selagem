@@ -828,8 +828,12 @@ func _process(delta: float) -> void:
 		_xp_back.visible = false
 		_xp_fill.size.x = 0.0
 		var d: int = game.rooms.depth()
-		# the guided descent's Antessala is room 0: its name instead of "Sala 0 de 8"
-		_room.text = T.t(&"room_ante") if d <= 0 and game.first_run else T.t(&"hud_room", {"n": d, "of": game.rooms.stage.rooms + 1})
+		# the prologue's rooms (the Antessala, the Sala 00) are no rooms of the count: their name instead of "Sala 0 de 14"
+		var at_kind: RunMap.Kind = game.rooms.room.kind if game.rooms.room != null else RunMap.Kind.COMBAT
+		if Prologue.is_prologue(at_kind):
+			_room.text = T.t(RunMap.KIND_KEY[at_kind])
+		else:
+			_room.text = T.t(&"hud_room", {"n": d, "of": game.rooms.stage.rooms + 1})
 		ahead.text = game.rooms.ahead_text()
 		ahead.visible = not over and ahead.text != ""
 		_coins.show_counts(T.t(&"hud_gold_count", {"n": game.rooms.gold}), game.materials.total(MaterialPurse.SILVER),
@@ -933,9 +937,9 @@ func objective_context(r: Rooms) -> Dictionary:
 		"reward_waiting": r.phase == Rooms.Phase.REWARD, "doors_open": doors,
 		"first_choice": doors >= 2 and not _door_told, "near_plates": false, "near_breakable": false,
 		"crossed_plates": false, "broke_one": false}
-	if kind != &"ante":
+	if kind != &"ante" and kind != &"sala00":
 		return ctx
-	# PT-25-8: the Antessala's own state (the tip now, the stream near and crossed, a vase broken) is the room's
+	# PT-25-8: the Antessala's own state (the tip now, the stream near and crossed, a vase broken) is the room's; the Sala 00's, the altar
 	ctx.merge(r.ante_ctx(), true)
 	return ctx
 

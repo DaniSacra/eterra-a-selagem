@@ -41,6 +41,8 @@ static func pick(ctx: Dictionary) -> StringName:
 		return &"obj_take"
 	if kind == &"ante":
 		return _ante(ctx)
+	if kind == &"sala00":
+		return &"obj_find_way" if bool(ctx.get("altar_done", false)) else &"obj_altar"
 	var doors := int(ctx.get("doors_open", 0))
 	if doors >= 2 and bool(ctx.get("first_choice", false)):
 		return &"obj_door"

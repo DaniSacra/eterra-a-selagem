@@ -37,7 +37,7 @@ const FOUNTAIN_HEAL := 0.4
 const LEVEL_HEAL := 0.15
 ## --start= in the room mode: which room to begin in.
 const ROOM_STARTS := {"boss": RunMap.Kind.BOSS, "miniboss": RunMap.Kind.MINIBOSS, "shop": RunMap.Kind.SHOP, "fountain": RunMap.Kind.FOUNTAIN,
-	"trial": RunMap.Kind.TRIAL, "altar": RunMap.Kind.ALTAR}
+	"trial": RunMap.Kind.TRIAL, "altar": RunMap.Kind.ALTAR, "ante": RunMap.Kind.ANTE, "sala00": RunMap.Kind.SALA00}
 const SPAWN_MIN := 19.0
 const SPAWN_MAX := 25.0
 ## How far the point the camera looks at stays from the side walls and from the north and south ends (meters), with
@@ -621,6 +621,10 @@ func _step(dt: float) -> void:
 	player.cast_active = _circle_standing()
 	if mode == Mode.ENDING:
 		player.rest()
+		player.step(dt, Vector2.ZERO, Vector2.ZERO)
+	elif rooms != null and rooms.arriving():
+		# the hero is coming down as the comet (2026-11-26): no button reaches him, what was pressed is dropped, nothing moves, nothing is spent
+		Controls.clear_presses()
 		player.step(dt, Vector2.ZERO, Vector2.ZERO)
 	else:
 		player.step(dt, _move(), _aim())

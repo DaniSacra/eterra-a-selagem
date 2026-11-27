@@ -80,6 +80,10 @@ func _doors() -> Array[RunMap.Room]:
 		return none
 	if game.mode != Game.Mode.PLAY or game.rooms.phase != Rooms.Phase.OPEN:
 		return none
+	if game.rooms.room != null and Prologue.is_prologue(game.rooms.room.kind):
+		return none  # (the prologue's door promises nothing: no seal, no box of what lies behind it)
+	if game.rooms.next_rooms.size() > game.arena.exits.size():
+		return none  # (the next room's doors are drawn while the old room, with fewer, is still on screen)
 	return game.rooms.next_rooms
 
 

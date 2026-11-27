@@ -1,12 +1,12 @@
 extends GutTest
 ## SW-O3 and SW-O4 (docs/design/onboarding_sw_o.md): the guided first descent in data (rooms, waves, doors), when it is the
 ## one played (FirstDescent.active), what ends it (FirstDescent.finish), the save's `first` and its migration, the
-## graph RunMap.scripted draws from the data, the Antessala (the hall's variant "ante": its stream, its way) and that the
-## long descent does not feel any of it.
+## graph RunMap.scripted draws from the data, the Antessala (its own layout, the 2026-11-26 corridor: its stream, its way)
+## and that the long descent does not feel any of it.
 
 const STAGE := "res://data/stages/catacombs.tres"
-const CELL := 0.25
-const REACH := 31.0
+const CELL := 0.5
+const REACH := 50.0
 const EPS := 0.01
 
 var stage: StageDef
@@ -25,7 +25,7 @@ func _hall() -> RoomLayout:
 
 
 func _ante() -> RoomLayout:
-	return _hall().variant(1)
+	return stage.ante_layout
 
 
 func _room(id: StringName) -> FirstRoomDef:
@@ -76,10 +76,11 @@ func test_every_enemy_exists_and_the_kinds_come_one_part_at_a_time() -> void:
 			assert_false(String(id).ends_with("_elite") or String(id).ends_with("_big"), "%s: nothing bigger, no elite" % r.id)
 
 
-func test_the_first_blessing_is_in_the_antessala_with_a_fixed_angel() -> void:
-	# PT-25-8: the descent begins with a Blessing, asked for in the Antessala before the first room (Sarael's)
-	var a := _room(&"ante")
-	assert_eq(a.angel, &"sarael")
+func test_the_first_blessing_is_in_the_sala_00_with_a_fixed_angel() -> void:
+	# 2026-11-26: the descent begins with a Blessing, asked for at the altar of the Sala 00 before the first room (Sarael's); the
+	# Antessala gives none
+	assert_eq(_room(&"ante").angel, &"", "no Blessing in the Antessala")
+	assert_eq(def.altar_angel, &"sarael")
 	assert_eq(_room(&"crypt_a").reward, RunMap.Reward.GOLD, "room 1 gives gold, the Blessing came before")
 	assert_eq(_room(&"garden_boon").angel, &"nivael", "the second angel on the first choice")
 	assert_eq(_room(&"garden_pom").reward, RunMap.Reward.POM, "or a pomegranate")
@@ -108,6 +109,7 @@ func test_every_layout_is_in_the_stage_and_the_hazards_are_off_but_where_they_te
 		var found := false
 		for l in stage.layouts:
 			found = found or l.id == r.layout_id
+		found = found or (r.kind == RunMap.Kind.ANTE and stage.ante_layout.id == r.layout_id)  # (its own layout, no arena of a fight)
 		assert_true(found, "%s: the arena %s exists" % [r.id, r.layout_id])
 	assert_false(_room(&"crypt_a").hazards, "room 1: no slabs")
 	assert_false(_room(&"rift_a").hazards, "room 2: no falling floor")
@@ -156,7 +158,7 @@ func test_finish_writes_first_and_never_goes_back() -> void:
 
 func test_a_new_save_has_first_pending() -> void:
 	assert_eq(SaveData.defaults().first, 0)
-	assert_eq(SaveData.VERSION, 18)
+	assert_eq(SaveData.VERSION, 19)
 
 
 func test_version_15_with_descents_played_is_done_and_a_new_one_is_pending() -> void:
@@ -253,9 +255,9 @@ func test_the_long_descent_never_draws_an_antessala() -> void:
 		assert_false(m.is_scripted)
 		for r in m.nodes:
 			assert_ne(r.kind, RunMap.Kind.ANTE)
-			assert_eq(r.variant == 1 and r.layout == 0, false, "the hall's variant 1 is the Antessala's alone")
-	assert_false(1 in _hall().variants_at(0.0), "no share of the descent holds it")
-	assert_false(1 in _hall().variants_at(1.0))
+			assert_ne(r.kind, RunMap.Kind.SALA00, "the Sala 00 is no room of the graph either")
+	assert_false(stage.layouts.has(stage.ante_layout), "no fight is ever drawn in the Antessala")
+	assert_false(stage.layouts.has(stage.sala00_layout))
 
 
 func test_the_antessala_is_no_fight_room() -> void:
@@ -268,18 +270,25 @@ func test_the_antessala_is_no_fight_room() -> void:
 
 # ---------- the Antessala (SW-O3) ----------
 
-func test_the_variant_ante_exists_and_has_a_stream_across_the_hall() -> void:
-	assert_eq(_hall().variants.size(), 1)
+func test_the_antessala_is_a_corridor_with_a_stream_across_it_and_a_slab_to_go_round() -> void:
 	var l := _ante()
-	assert_null(l.hazard, "no slab: the stream teaches the dodge")
+	assert_eq(l.half, Vector2(7.0, 24.0), "14 x 48 m")
+	assert_not_null(l.hazard, "the trap's slab")
+	assert_eq(l.hazard.plates.size(), 1)
 	assert_eq(l.gaps.size(), 1, "one stream")
 	var g := l.gaps[0]
-	assert_gte(g.size.y, 2.0, "2 m or more across: walking does not hop it")
-	assert_lte(g.size.y, 4.0, "4 m or less: the dodge (5.6 m) crosses it")
-	assert_lte(g.position.x, -_hall().half.x, "from wall to wall: no way round")
-	assert_gte(g.end.x, _hall().half.x)
+	assert_almost_eq(g.size.y, 2.6, 0.001, "the canal of 2.6 m")
+	assert_lte(g.position.x, -l.half.x, "from wall to wall: no way round")
+	assert_gte(g.end.x, l.half.x)
 	assert_eq(l.gap_fall, 0.0, "it never hurts")
-	assert_eq(_hall().gaps.size(), 0, "the hall's other uses carry no stream")
+	assert_eq(_hall().gaps.size(), 0, "the hall's uses carry no stream")
+	var slab: Rect2 = l.hazard.plates[0]
+	assert_gte(slab.position.x - (-l.half.x), 4.0, "4.5 m of floor each side of it")
+	assert_gte(l.half.x - slab.end.x, 4.0)
+	assert_eq(l.exits.size(), 1, "one door")
+	assert_true(l.obstacles.size() >= 8, "the eight columns")
+	assert_eq(l.breakables.size(), 6, "six things to break")
+	assert_eq(stage.sala00_layout.half, Vector2(9.0, 8.0), "the Sala 00, 18 x 16 m")
 
 
 func test_the_stream_is_far_from_the_way_in_the_door_and_the_vases() -> void:
@@ -291,12 +300,12 @@ func test_the_stream_is_far_from_the_way_in_the_door_and_the_vases() -> void:
 	assert_gt(a.start.y, g.end.y + 6.0, "the way in 6 m or more south of it")
 	for z in a.exit_zones:
 		assert_lt(z.end.y, g.position.y - 1.5, "the door's mouth is 1.5 m and more north of it")
-	for b in _hall().breakables:
+	for b in _ante().breakables:
 		assert_false(g.grow(0.4).has_point(b.at), "no vase stands in the water (%s)" % b.at)
 	for p in a.pillars:
-		assert_false(g.grow(0.5).has_point(Vector2(p.x, p.y)), "off every piece of the hall")
+		assert_false(g.grow(0.5).has_point(Vector2(p.x, p.y)), "off every piece of the corridor")
 	for bx in a.boxes:
-		assert_false(g.grow(0.5).intersects(bx), "off every block of the hall")
+		assert_false(g.grow(0.5).intersects(bx), "off every block of the corridor")
 
 
 func test_the_way_in_reaches_the_door_and_only_the_dash_crosses_the_stream() -> void:

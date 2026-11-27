@@ -21,7 +21,9 @@ extends RefCounted
 ## 16 (SW-O4, the guided first descent): first (0 pending, 1 played, 2 skipped; FirstDescent). An older file with descents
 ## played has it done; one with none is still to play it.
 ## 18 (GP-5, the Maga's V1): her twelve provisional Dons of 2026-11-24 are gone; what she had opened gives its Memória back (GP5_REMOVED_DONS).
-const VERSION := 18
+## 19 (2026-11-26, the Antessala and the Sala 00): ante (0 pending, 1 crossed: the Antessala is never met again). An older file with a descent played
+## (or its guided descent done) has it crossed; a new one still has it ahead (Prologue).
+const VERSION := 19
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
@@ -56,6 +58,8 @@ static func defaults() -> Dictionary:
 		"runs": 0,
 		# since version 16: the guided first descent (FirstDescent: 0 pending, 1 played, 2 skipped)
 		"first": 0,
+		# since version 19: the Antessala was crossed (Prologue: 0 pending, 1 crossed)
+		"ante": 0,
 		"heroes": {FIRST_HERO: hero_defaults()},
 		# M1b: the hero picked at the Portal for the next descents (HEROES); a save from before has none: the Warrior
 		"hero": FIRST_HERO,
@@ -199,6 +203,10 @@ static func merged(loaded: Variant) -> Dictionary:
 	if version < 18:
 		migrate_removed_dons(out, GP5_REMOVED_DONS, ["maga"])
 	out["first"] = clampi(int(out.first), 0, 2)
+	# files before version 19: a save that played a descent never meets the Antessala; a new one still has it ahead
+	if version < 19:
+		out["ante"] = 1 if int(out.runs) > 0 or int(out.first) != FirstDescent.PENDING else 0
+	out["ante"] = clampi(int(out.ante), 0, 1)
 	# version 8 (Ofícios): nothing to move, an older file opens with the empty block (defaults)
 	out.version = VERSION
 	return out

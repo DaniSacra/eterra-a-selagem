@@ -638,7 +638,7 @@ func test_the_provisional_dons_give_their_memoria_back_once() -> void:
 	old.heroes["warrior"] = warrior
 	var m0 := MaterialPurse.amount(old, MaterialPurse.MEMORY)
 	var out := SaveData.merged(old)
-	assert_eq(out.version, 18)
+	assert_eq(out.version, 19)
 	assert_eq(MaterialPurse.amount(out, MaterialPurse.MEMORY) - m0, 8, "0, 4 and 4")
 	assert_eq(out.heroes.maga.opened, [])
 	assert_eq(out.heroes.maga.unlocked, [])
@@ -676,7 +676,7 @@ func test_a_save_from_version_13_goes_through_every_step() -> void:
 
 func test_the_antessala_teaches_the_maga_with_her_words() -> void:
 	var l := AnteLesson.new(true)
-	assert_eq(l.steps, AnteLesson.ORDER, "the same order as the Warrior's")
+	assert_eq(l.steps, AnteLesson.ORDER_MAGA, "the Warrior's order without the Golpe Esmagador")
 	assert_eq(l.key(), &"lesson_attack_maga")
 	l.feed(&"finisher")
 	assert_eq(l.key(), &"lesson_power_maga")

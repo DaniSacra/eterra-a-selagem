@@ -37,6 +37,10 @@ enum Tier { COMMON, HARD, SPECIAL }
 ## The two rooms of the events (E5): the Provação's chamber and the Altar Esquecido.
 @export var trial_layout: RoomLayout
 @export var altar_layout: RoomLayout
+## The two rooms before the first one (Prologue, 2026-11-26): the Antessala (a new save's, the lessons) and the Sala 00 (the Câmara de
+## Preparação, the Blessing of the descent). Neither is a room of the graph.
+@export var ante_layout: RoomLayout
+@export var sala00_layout: RoomLayout
 
 @export_group("Map")
 ## The first depth whose door may promise a pomegranate (Q-25 a: the hall gives a Blessing, the room after may still not

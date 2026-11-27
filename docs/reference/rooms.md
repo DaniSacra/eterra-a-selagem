@@ -692,8 +692,8 @@ Números de referência: `docs/design/sworn_rea_kingswood_2026-11-25.md` seçõe
 
 | # | Sala (arena, variante) | Ondas | Recompensa | Portas |
 |---|---|---|---|---|
-| 0 | Antessala (`hall`, 1; riacho) | nenhuma | a Bênção de Sarael, escolhida ali depois das dicas (PT-25-8) | 1: Ouro |
-| 1 | Cripta A (`crypt`, 1, sem perigo) | `[skeleton]`; `[skeleton x2]` | Ouro (a Bênção veio na Antessala) | 1: Ouro |
+| 0 | Antessala (layout `ante`, corredor 14 x 48; riacho, laje) | nenhuma | nada (a Bênção de Sarael é a do altar da Sala 00, 2026-11-26) | 1: Ouro |
+| 1 | Cripta A (`crypt`, 1, sem perigo) | `[skeleton]`; `[skeleton x2]` | Ouro (a Bênção veio da Sala 00) | 1: Ouro |
 | 2 | Fendas A (`rift`, sem quedas) | `[archer]`; `[archer x2, skeleton]` | Ouro | 2: Bênção (Nivael) ou Romã |
 | 3 | Jardim A (`garden`) | `[bone_rat x5]`; `[runner x2]` | a escolhida | 2: Fonte ou Cripta B (Bênção) |
 | 4 | Fonte (`hall`) ou Cripta B (`crypt`, 0, lajes de aprender) | `[skeleton, archer, bone_rat x3]`; `[guard, skeleton, archer]` | Bênção | 1: o guardião |
@@ -704,8 +704,8 @@ Números de referência: `docs/design/sworn_rea_kingswood_2026-11-25.md` seçõe
 
   Desvio do documento: a Cripta A é a variante 1 (Ossário, sem perigo) e a B a 0 (as lajes de aprender são as da variante 0), para as duas não serem iguais; a Fonte da 4 é uma das portas
   da 3 (o documento a punha "na 3 ou na 4").
-- **Antessala** (`RunMap.Kind.ANTE`): sem luta, sem recompensa, sem cura de sala nem Prata, sem aviso "Sala N" (`notice` não sai). Desde o PT-25-8/9 (2026-11-25) ensina e a
-  porta só acende no fim: `phase` OPEN desde a entrada, mas `_open_doors` só roda em `Rooms._open_ante`, quando `AnteLesson.done()`; antes disso `usable()` e a saída pela porta
+- **Antessala** (`RunMap.Kind.ANTE`; o parágrafo de 2026-11-25, valem as mudanças do bloco de 2026-11-26 logo abaixo: layout próprio, dicas novas, sem Bênção): sem luta, sem recompensa, sem cura de sala nem Prata, sem aviso "Sala N" (`notice` não sai). Desde o PT-25-8/9 (2026-11-25) ensina e a
+  porta só acende no fim: `phase` OPEN desde a entrada, mas `_open_doors` só roda em `Rooms._open_ante`, quando `AnteLesson.done()` (veja o bloco de 2026-11-26 abaixo); antes disso `usable()` e a saída pela porta
   ficam fechados (`_ante_open`).
   - **Dicas** (`scripts/core/ante_lesson.gd`, pura, `tests/test_ante_lesson.gd`): uma de cada vez, cada uma espera o gesto. Ordem em `AnteLesson.ORDER`: `attack` (3 golpes do
     ataque, ou o final), `special` (o botão `heavy_attack`), `dodge` (atravessar o riacho), `shout` (Q), `rush` (E), `blessing`. Um gesto fora de hora vale (cruzou o riacho antes do
@@ -723,6 +723,36 @@ Números de referência: `docs/design/sworn_rea_kingswood_2026-11-25.md` seçõe
     (andando ou empurrado fica na margem), atirador atira por cima (projétil não olha o riacho). Teste `tests/test_room_gaps.gd`. Desenho placeholder: `GapFloor` (água escura, espuma nas margens), no `Rooms._enter_with`. `Rooms.plates_crossed` agora diz "passou o riacho".
     As três lajes de aprender do SW-O3 saíram (o riacho ensina a esquiva no lugar delas).
   - `idle_blink` (25 s parado) e `broke_one` continuam; `Rooms.ante_ctx()` dá `near_plates` (perto do riacho), `near_breakable`, `crossed_plates`, `broke_one`, `lesson`.
+- **Antessala nova e Sala 00 (2026-11-26, pacote `docs/art/ref/antessala_sala00_2026-11-26`, só local; `tests/test_prologue.gd`)**. Substitui a Antessala do Salão (a variante 1 do `hall` saiu).
+  - **Fluxo** (`scripts/core/prologue.gd`, pura): save novo, descida guiada: Livro de Ahk, Antessala, Sala 00, sala 1. Toda outra descida (Santuário): Sala 00, sala 1. Nenhuma das duas é sala do
+    grafo: `RunMap.Kind.ANTE` = 7 e `SALA00` = 8 (no fim do enum), `Room` sem id (a Sala 00) ou de profundidade 0; `depth` fica 0, o HUD mostra o nome ("Câmara de Preparação") e "Sala 1 de 14" começa na
+    sala 1; `room_tally.enter` e `_log_leaving` não rodam nelas (o RESULT `rooms` começa na sala 1), guardiões, loja, contagens e profundidades não mudam. `Rooms.setup` guarda `_sala00` e `_after`
+    (a primeira sala do grafo, `layer(1)[0]` na guiada); `Rooms._opening()` escolhe a primeira (`Prologue.kinds(guiada, Save.data)`) e `_enter_with` põe `next_rooms` = [Sala 00] na Antessala e
+    [`_after`] na Sala 00 (a primeira sala não é "preparada": a luta dela sai como sempre saiu, na hora). Flag por save `ante` (SaveData v19: 0 pendente, 1 cruzada): escrita ao atravessar a porta da
+    Antessala (`Rooms._leave`), então fechar o jogo na Sala 00 não repete o tutorial; save velho com descida jogada (ou guiada feita/pulada) migra para 1 e nunca recebe a Antessala. `--start=ante` e
+    `--start=sala00` (`Game.ROOM_STARTS`, `Rooms.start_at`) abrem cada uma sozinha (o robô atravessa a Antessala e segue).
+  - **Antessala** (`stage.ante_layout`, `make_data` `_ante_room`; planta `02-planta-dados.json`): piso 14 x 48 (x ±7, z ±24), entrada (0, 20), oito colunas, riacho `Rect2(-7, -8,3, 14, 2,6)` (de parede a parede, a esquiva
+    de 5,6 m passa, andar não; `gap_fall` 0), laje de espetos `Rect2(-2,5, -18,5, 5, 3)` (o `PlateHazard` de sempre, ativa desde o início: `Rooms._start_one` põe progresso 1 na Antessala; 4,5 m livres de cada
+    lado), seis quebráveis (vaso, caixa, urna, duas barricadas `PLANK` e um vaso; quebrável nunca dá nada em sala nenhuma: sem ouro, XP, material, nem abate), porta monumental em (0, -24). Câmera:
+    `cam_bounds` de 4 x 42 m (acompanha o corredor). Proteção de morte só ali: `Player.guard_death` (o golpe nunca leva o último ponto de vida; `Rooms` liga na entrada e desliga na saída, e devolve a vida com que
+    ele entrou, então a laje não cura nem mata). Dicas (`AnteLesson`): combo, Golpe Esmagador (segurar o ataque, `heavy`), Corte Circular, Lança, esquiva (riacho), laje (`passed`: passar 0,5 m além dela pelo lado);
+    a Maga usa `ORDER_MAGA` (sem o Esmagador) e as chaves `_maga`; fora de ordem vale; o passo `blessing` saiu. A porta acende quando todos estão feitos (`Rooms._open_ante`).
+  - **Sala 00** (`stage.sala00_layout`, `_sala00_room`): 18 x 16 (x ±9, z ±8), entrada (0, 6), quatro colunas, altar `&"altar"` 2,2 x 2,2 x 1,35 no meio, porta em (0, -8), sem inimigo, perigo ou quebrável.
+    O altar (`Rooms._at_altar`, `ALTAR_REACH` 1,1 m de pedra, qualquer lado; o botão de usar paira em `_altar_front`) abre `_give(BOON, false, true)`: o sistema de anjos e cartas de sempre (na guiada o anjo
+    é `FirstDescentDef.altar_angel`, Sarael), uma vez por descida. `Prologue.Grant` é a máquina: READY, OFFERED (a escolha aberta; o altar não abre de novo), TAKEN (a tela sumiu por dois passos: a escolha é modal,
+    e as cartas saem de dados da run e da sala, então voltar ao par de anjos e reabrir mostra as mesmas). A porta (`_door_locked`) fica fechada (folhas de `HallDoor` e pedra na boca: `_lock_door`) até TAKEN; aí o
+    altar apaga as velas (`PreludeLook.spend`) e a porta acende e abre (`_unlock_door`), sem placa nem medalhão. Primeira vez de um save: uma linha curta (`altar_intro`, `FirstTips` id `altar`; nunca para o
+    robô, `--smoke` ou `--nosave`). O robô vai ao altar e depois à porta (`bot_goal`).
+  - **Visual** (`scripts/game/prelude_look.gd`, filho do `AltarLook`; looks `ante` e `sala00` em `ArenaRoom.LOOKS`): forma e colisão são o que vale (a arte final será uma pintura projetada, GP-8): fachada de 7 m ao norte
+    com a porta (`HallDoor.doorway`, 3 x 5,5 m, interior preto, sem escada), muretas de 1,3 m nos lados do corredor, paredes da capela na Sala 00, o altar do `AltarLook` (leão na frente, velas acesas até a Bênção),
+    sem sol nem cruz nem medalhão no piso. Violeta só de Morvath e esmeralda só da Emeth: nada disso aqui. Ar da Antessala um pouco mais claro (`OUTSIDE_*`); sem captura conferida na GPU.
+  - **Chegada** (`Prologue.arrival`): o cometa de `ArrivalScene` (`play(game, at, from_clock, with_caption)`) na Antessala (com a linha, só save novo), na Sala 00 vinda do Santuário (inteiro) e na Sala 00 vinda da
+    Antessala (curto: o relógio da cena começa em `Prologue.SHORT_FROM` = 1,6 s, sem estrela nem preto antes, sem linha). Nunca nas salas da descida. Só com tela (`hold_frames() > 0`) ou `--first`/`--arrival`; nunca em
+    `--smoke` nem nos testes sem tela (o RESULT não espera 5 s reais). `Rooms.arriving()`: `Game._step` solta os botões (`Controls.clear_presses()`) e não move o herói até a cena devolver o controle; a cena já o deixa
+    invulnerável e escondido, então sem dano, sem vaso quebrado, sem Magia gasta. Sair da sala no meio a limpa (`_restore`).
+  - **Diferenças da planta**: a porta tem os 3 m livres e 5,5 m de altura, as ombreiras de 0,3 m fazem o vão do muro de 3,6 m; as folhas são as do Salão (arco agudo). A laje é um retângulo só de 5 x 3. O espaço de
+    câmera da Antessala é uma caixa de 4 m de largura (o corredor tem 14); a da Sala 00 é fixa como as câmaras de evento. `RESULT` do `--smoke`: a descida passa pela Sala 00 (uma Bênção a mais, no começo), então
+    a semente 5 não repete a de antes.
 - **Travessias opcionais** (E4, PT-25-9, `make_data` `_ring`, `SANCTUARY_ISLAND`, `RIFT_ISLAND`, `GAP_BAND` 2 m): um canteiro de chão cercado por água ou fenda de 2 m que só a esquiva pega, com um grupo
   de 2 quebráveis em cima como prêmio (quebrável não dá ouro nem Magia; uma bolsa de ouro de verdade fica para o gameplay-engineer). Nunca no caminho: portas, nascimentos, laje, entrada e
   recompensa ficam na ilha do herói (`test_room_gaps.gd`). Santuário (A, B e C): ilha 3 x 2 m no meio da nave, a oeste (x -10 a -7), anel de x -12 a -5, z -3 a 3; na B as pedras da abóbada

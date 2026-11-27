@@ -666,6 +666,10 @@ livro (o livro não passa de 1,9 alturas de largura, `BookDesk.side_room`, ou se
   em 0,2 s, a nova entra em 0,3 s e um filete de ouro corre por baixo (0,5 s); `pulse()` pisca uma vez (herói parado 25 s na Antessala).
   `Hud._update_objective` lê o contexto a cada 0,2 s (`objective_context`) e esconde a linha sobre telas, pausa e para o robô.
   Lajes e vasos vêm de `Rooms.plates.nodes` e `Game.breaks.rules`; "atravessou" é a mudança de lado do centro das lajes.
+- **Antessala e Sala 00 (2026-11-26, `docs/reference/rooms.md`)**: a linha de objetivo na Antessala lê as dicas (`lesson_attack`, `lesson_heavy`, `lesson_power`, `lesson_special`, `lesson_dodge`, `lesson_trap`; a Maga
+  `_maga`); na Sala 00 diz `obj_altar` ("Receba a Bênção no altar") e, com a Bênção tomada, `obj_find_way`. O botão de usar sobre o altar é a `StationSign` `altar_bless` (verbo `hub_use_altar_bless`). A primeira
+  vez de um save aparece `altar_intro` (aviso de 7 s, `hud.show_notice`, uma vez: `FirstTips` id `altar`). O HUD mostra o nome da sala no lugar de "Sala N de M" na Antessala e na Sala 00 ("Caminho para Valmor" é o
+  nome do lugar, 2 s; "Câmara de Preparação" o da sala). A porta não leva placa nem medalhão. A chegada do cometa fecha o HUD (`ArrivalScene` esconde `game.ui`) e devolve os botões ao fim.
 - **Opção** "Mostrar objetivo" na página Conforto das Configurações (`opt_objective`, lê `options.objective` com `get` e padrão ligado).
 - **Dicas.** `FirstTips.pick` ganha `ctx.tutorial`: na descida guiada a dica `fight` não vem e a `hold` vem sem ela. Chaves das dicas
   próprias das salas: `first_tip_fight|archer|hold|armor|knight`.
