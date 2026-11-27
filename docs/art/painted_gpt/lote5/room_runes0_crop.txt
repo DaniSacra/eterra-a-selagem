@@ -1,0 +1,11 @@
+SALA DAS RUNAS (salão quadrado de lajes grandes, sobre uma torre). Posições em % da largura x altura da imagem 1.
+- Os pontinhos de estrela no vazio somem: só névoa cinza-azulada.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - o piso de lajes grandes quadradas em grade, com juntas finas (nenhuma runa legível, nenhum símbolo, nenhum brilho);
+  - os quatro pilares quadrados de pedra (50% x 28%, 33% x 42%, 71% x 37%, 56% x 56%), cada um com a mesma base e altura;
+  - as muretas com merlões em volta, a caixa de madeira em 26% x 56% e a torre de pedra escura embaixo da plataforma;
+  - na parede do fundo: a treliça de ferro com teia em 59% x 19% e o braseiro aceso em 73% x 28%.
+- PORTAS: três arcos na parede do fundo, centros em 51% x 13%, 68% x 19% e 80% x 24%, cada um BEM separado do outro: entre o primeiro e o segundo fica a treliça de ferro, entre o segundo e o terceiro o braseiro. Pinte as três portas fechadas, altas, de madeira escura com ferragens, no mesmo lugar.
+- ENTRADA: o patamar de pedra com a escada descendo para fora, na borda da frente à esquerda (de 23% a 39% da largura, de 62% a 84% da altura).
+
+ENCAIXE: a sala ocupa exatamente a mesma área da imagem 1, nem maior nem mais larga. A parede da direita termina no mesmo pixel, a treliça, o braseiro e as portas ficam exatamente onde a imagem 1 os tem. Não alargue a metade direita.

@@ -1,0 +1,13 @@
+SALA DAS RUNAS B (salão quadrado de lajes grandes sobre uma torre, com pedras soltas flutuando em volta). Posições em % da largura x altura da imagem 1.
+- Os pontinhos de estrela e o risco roxo no vazio (embaixo à direita) somem: só névoa cinza-azulada, nada roxo.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - o piso de lajes grandes quadradas em grade, com juntas finas, todas do mesmo tom médio-escuro (o quadrado mais claro em 51% x 47% fica do mesmo tom das outras lajes); nenhuma runa legível, nenhum símbolo, nenhum brilho;
+  - o pilar quadrado de pedra em 62% x 60% e o pilar junto à parede em 38% x 24%;
+  - os dois obeliscos pequenos de pedra (59% x 27% e 85% x 37%);
+  - as pedras soltas de topo quadrado com borda dourada gasta que flutuam fora da plataforma, sobre pilares no vazio (19% x 69%, 32% x 86%, 50% x 88%, 84% x 87%, 94% x 78%, 93% x 64%), mesmo contorno;
+  - as muretas com merlões em volta, a caixa de madeira em 26% x 56% e a torre de pedra escura embaixo da plataforma;
+  - na parede do fundo: a treliça de ferro com teia em 59% x 19% e o braseiro aceso em 73% x 28%.
+- PORTAS: três arcos na parede do fundo, centros em 51% x 13%, 68% x 19% e 80% x 24%, cada um BEM separado do outro: entre o primeiro e o segundo fica a treliça de ferro, entre o segundo e o terceiro o braseiro. Pinte as três portas fechadas, altas, de madeira escura com ferragens, no mesmo lugar.
+- ENTRADA: o patamar de pedra com a escada descendo para fora, na borda da frente à esquerda (de 23% a 39% da largura, de 62% a 84% da altura).
+
+ENCAIXE: a sala ocupa exatamente a mesma área da imagem 1, nem maior nem mais larga. A parede da direita termina no mesmo pixel, a treliça, o braseiro e as portas ficam exatamente onde a imagem 1 os tem. Não alargue a metade direita.

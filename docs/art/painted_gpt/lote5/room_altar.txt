@@ -1,0 +1,11 @@
+SALA DO ALTAR ESQUECIDO (capela pequena de pedra sobre uma torre no vazio). Posições em % da largura x altura da imagem 1.
+- REMOVA todo texto e marcador do jogo: o rótulo amarelo com as palavras em 56% x 28% e o medalhão redondo aceso em 56% x 36%. No lugar do medalhão fica o PEDESTAL de pedra baixo (56% x 41%), com o topo liso de pedra, frio, sem brilho. Nenhuma letra na imagem.
+- REMOVA os dois estandartes (52% x 17% e 70% x 20%): parede de pedra lisa. O musgo verde pendurado no arco vira musgo escuro discreto.
+- O piso, hoje marrom-claro e quente demais, vira pedra cinza-esverdeada média-escura pouco saturada; a luz quente fica só em poças pequenas em volta do braseiro e onde o raio de luz toca o chão.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - o pedestal baixo em 56% x 41% e a mesa de pedra do altar em 61% x 36%, dentro do grande arco pontudo da parede do fundo (de 56% a 66% da largura, de 12% a 26% da altura), escuro por dentro;
+  - os dois bancos de madeira (45% x 43% e 59% x 48%), o braseiro aceso de pé em 69% x 57%, as urnas e vasos de barro (22% x 43%, 27% x 42%, 32% x 43%);
+  - o raio de luz suave que desce no alto à esquerda (25% x 10%), sem raios em leque;
+  - as paredes de pedra da esquerda e do fundo, o arco em ruína da direita (81% x 25%), as muretas, os blocos grandes de pedra da borda e a base da torre embaixo da plataforma.
+- PORTAS: duas, BEM separadas, na parede do fundo: porta 1 em 48% x 24% (à esquerda do grande arco), porta 2 em 76% x 38% (à direita, junto ao arco em ruína). Entre elas fica o grande arco pontudo com a mesa do altar. Pinte as duas portas fechadas, altas e monumentais, de madeira escura com ferragens, no mesmo lugar.
+- ENTRADA: o patamar de pedra com a escada descendo para fora da plataforma, na borda da frente à esquerda (de 20% a 40% da largura, de 64% a 95% da altura).

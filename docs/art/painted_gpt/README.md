@@ -38,6 +38,7 @@ Generation (curl; the key is read from the file, never printed):
 | 2026-11-27 | hub (`hub/`), game plate over r9b_far: a1 (lower half squeezed, right side 60-80 px off), b1 (variant B, night slate, same drift, floor luma 42), a2 (A + `fix_fit.txt` fractions, chosen) | 3 | 5488 | 0.75 |
 | 2026-11-27 | hub approval (`hub/aprovacao/`), edit of the approved hub art: Videira tree in the centre (no pavilion), Adventure Gate at top centre (Heroes' hall out), right becomes a lookout terrace, no text/legend | 1 | 5488 | 0.25 |
 | 2026-11-27 | hub game plate (`hub/jogo/`), edit of the approved `hub_aprovacao.png`: Videira, lights, water, Vigília fire and brazier out; open plaza luma 102 -> 76; overlay without double edges | 1 | 5488 | 0.25 |
+| 2026-11-27 | lote5 (`lote5/`), bases_v3 (new south entrance): 8 entrance edits of the approved plates (crypt0, rift0, rift1, garden0, sanctuary0, knight, elder, trial; trial discarded, wrong base); approvals crypt1/garden1/sanctuary1/bridge0/bridge1/runes0/runes1 a1 (bridges and runes off, rejected); game g1 crypt1/garden1/sanctuary1; bridge0 entrance edit; bridge1 a2 (edit of lote4 approval) + g1; runes0/1 a2c + g1c on a crop; runes1 g2c (g1c turned the lattice into a door) | 26 | 5488 | 6.50 |
 
 ## style_v2 (2026-11-27): style approval round
 `style_v2/` holds the variants Daniel is choosing from (Downloads\ASelagem-GP8\APROVAR-ESTILO). Request =
@@ -180,3 +181,29 @@ Chosen: `hub_jogo_A.png` (a2): gates, front wall, red roof, pavilion steps and p
 awning, east planters) ~40 to 60 px to the right. `hub_jogo_B.png` (b1): lower half squeezed ~50 to 70 px, darker. Floor-centre
 luma: base 165, A 64, B 42. Rules checked: no figures, no banners, no text, no sun/star/cross, no strong violet, no emerald.
 Copies in Downloads\ASelagem-GP8\GPT-Hub. The hub scrolls with the hero, so one plate covers one view only.
+
+
+## Lote 5 (2026-11-27): bases_v3, the new south entrance (landing + 5 steps out of frame)
+bases_v3 are 2560x1408 (wider than v2): `lote5/bases/<room>.png` = v3 cropped to x 127..2432 and scaled to 1924x1175, which lies
+on the v2 framing pixel for pixel (checked on crypt0), so every plate keeps PaintedHall's UNIFORM mapping (v_span 938/1024).
+Entrance-only rooms: edit of the approved game plate (`assets/rooms/painted/<key>.png`), image 2 = `bases/<room>_al.png`
+(the cropped v3 scaled to 1536x938 on the plate's frame), request `entry_common.txt` + `entry_<room>.txt`.
+New-geometry rooms: approval = `prompt_common.txt` (entrance = landing and stairs) + `room_<room>.txt`, style `sala01.png`;
+game = `game_common.txt` (+ no painted light) + `game_<room>.txt`. Bridges: a1 rebuilt the layout, so bridge0 became an
+entrance edit and bridge1 an edit of `lote4/bridge1-a1.png` with the zigzag (`edit_bridge1.txt`). Runes: a1 widened the right
+half again (60 to 90 px), so a2c/g1c are painted on a 3:2 crop of the base (x 180, y 120, 1500x1000) and put back with
+`uncrop.sh` (crop scaled to 1198x798 at (144,96), margins = smeared and blurred border, 70 px feather).
+Finals in `lote5/final/<key>.png` (+ `_aprovacao.png`, `_lado_a_lado.jpg`, `_encaixe.jpg`); Downloads\ASelagem-GP8\LOTE5-SALAS.
+| key | chosen | fit (against the cropped v3) |
+|---|---|---|
+| crypt_0, rift_0, rift_1, garden_0, sanctuary_0, knight_hall, elder_hall | <base>-e1 | only the entrance changed (difference image); landing within ~10 px |
+| bridge_0 | bridge0-e1 | entrance few px; chains near the portal slightly retouched |
+| crypt_1 | crypt1-a1 / g1 | few px everywhere (pit, tombs, stairs, doors) |
+| garden_1 | garden1-a1 / g1 | few px (tree, terrace walls, doors, stairs) |
+| sanctuary_1 | sanctuary1-a1 / g1 | few px to ~10 px (fissure, columns, arches, stairs) |
+| bridge_1 | bridge1-a2 / g1 | platforms, portal, entrance few px; zigzag bridge 20 to 30 px (painted a bit wider) |
+| runes_0 | runes0-a2c / g1c | few px; brazier ~20 px right |
+| runes_1 | runes1-a2c / g2c | few px; floating stones out in the game plate |
+| trial, altar | none | bases_v3 trial.png and altar.png both show the stream hall, not these rooms: recapture |
+Rules checked: no figures, banners, text, sun/star/cross; no violet (rift1 swirl out), no emerald (garden crystals out in game);
+doors apart with a piece between (runes: lattice, brazier; crypt1: statue and column; garden1: statue niche); doorways dark.

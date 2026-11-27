@@ -48,6 +48,9 @@ const ROOMS := {
 	&"sanctuary:1": {&"painting": "res://assets/rooms/painted/sanctuary_1.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 82.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
 	&"bridge:0": {&"painting": "res://assets/rooms/painted/bridge_0.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 94.0, &"at": Vector2(-4.0, 3.0), &"v_span": UNIFORM},
 	&"bridge:1": {&"painting": "res://assets/rooms/painted/bridge_1.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 94.0, &"at": Vector2(-4.0, 3.0), &"v_span": UNIFORM},
+	# Lote 5 (2026-11-27): the Runas, painted on --clear-air bases (bases_v3)
+	&"runes:0": {&"painting": "res://assets/rooms/painted/runes_0.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 84.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
+	&"runes:1": {&"painting": "res://assets/rooms/painted/runes_1.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 84.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
 	&"trial": {&"painting": "res://assets/rooms/painted/trial.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 60.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
 	&"altar": {&"painting": "res://assets/rooms/painted/altar.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 50.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
 }

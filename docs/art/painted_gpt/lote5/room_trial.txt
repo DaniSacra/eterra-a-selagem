@@ -1,0 +1,12 @@
+SALA DA PROVAÇÃO (salinha de pedra em ruína, sobre uma torre no vazio). Posições em % da largura x altura da imagem 1.
+- REMOVA todo texto e ícone: o rótulo amarelo com as palavras em 45% x 38% e o medalhão redondo aceso com a carta em 45% x 44%; no lugar do medalhão, o topo liso do pedestal de pedra. Nenhuma letra na imagem.
+- REMOVA os estandartes com leão (30% x 30%, 60% x 26%): parede de pedra lisa.
+- A luz e a névoa roxas viram meia-luz fria cinza-azulada; nada violeta, nada roxo em lugar nenhum. As rachaduras roxas brilhantes do piso viram rachaduras finas ESCURAS na pedra, sem brilho. A estela escura em 50% x 46% fica, de pedra escura, com uma rachadura escura, sem brilho.
+- As paredes aparecem em parte só como contorno: pinte paredes de pedra sólidas no mesmo contorno, com o topo quebrado em ruína como na imagem 1.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - o pedestal de pedra baixo em 44% x 48% e a estela em 50% x 46%;
+  - a janela quebrada grande da parede da esquerda (38% x 23%), as lamparinas pequenas de parede (48% x 25%, 59% x 29%, 61% x 31%, 73% x 36%) com luz quente pequena, as duas urnas de pedra em pedestal ao lado das portas (57% x 27% e 64% x 29%);
+  - a mureta da frente, os blocos grandes de pedra da borda e a base da torre embaixo da plataforma;
+  - os vasos de barro (33% x 44% e 60% x 64%).
+- PORTAS: dois arcos na parede do fundo, centros em 54% x 21% e 68% x 28%, BEM separados, com as duas urnas em pedestal e o trecho de parede entre eles. Pinte as duas portas fechadas, altas, de madeira escura com ferragens, no mesmo lugar.
+- ENTRADA: o patamar de pedra com a escada descendo para fora da plataforma, na borda da frente à esquerda (de 25% a 43% da largura, de 58% a 90% da altura).
