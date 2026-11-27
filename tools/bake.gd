@@ -2,6 +2,8 @@ extends SceneTree
 ## Bakes the crowd's characters into still poses: ~/tools/godot/godot --headless --path . -s tools/bake.gd [-- ids]
 ## Writes assets/baked/<id>.res (BakedModel). Run again after changing a model, a weapon, a clip or the lists below.
 ##
+## 2026-11-27: the skeleton, runner and archer (and their variants) are the Meshy models made from the ChatGPT paintings
+## Daniel approved (enemy_<id>_gpt, same 24 bones and 15 thousand triangles); `-- old` bakes the earlier ones back.
 ## The enemies of the first region are the Meshy models Daniel approved (assets/models/meshy/enemy_<id>/, the same
 ## 24 bones as the hero, a painted texture each; docs/art/enemies_phase1.md). Per entry of MODELS:
 ## "meshy" (the model's id), "height" (meters to the top of its head, standing idle, at EnemyDef.size 1: what the
@@ -232,7 +234,7 @@ const KING_STRIDE := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, 
 ## instead (the library's Jog_Fwd), the feet locked, a third of the hop, the trunk leaning into the run. A-T5-2: it
 ## crouched (knees near square, the body 22 cm down): the body sinks half the way to each pose's own floor ("plant" 0.5,
 ## was 0.65) and stands 0.15 m taller over the same footprints ("stand"), its head at 99% of its idle's; 161 steps a minute.
-const SOLDIER_JOG := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.74, "lift": 0.3, "plant": 0.5, "stand": 0.15,
+const SOLDIER_JOG := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.74, "lift": 0.3, "plant": 0.3, "stand": 0.08,
 	"bend": {"Spine01": Vector3(-34, 0, 0)}}
 ## T5b P1-1 (docs/qa/t5b_boss_fight.md): the sorcerer and the crossbowman trotted as the soldier did before T5-11
 ## (Running_B with half its hop: 14 and 12 of 20 poses with the whole body over 0.1 m, up to 0.3 m), and the sorcerer
@@ -241,7 +243,11 @@ const SOLDIER_JOG := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, 
 ## arm close to the body (the guard of its old trot), the crossbow low beside the hip (CROSSBOW_LOW).
 const MAGE_JOG := {"guard": [[&"ual", "Idle_Torch", LEFT_ARM], [&"ual", "Idle", RIGHT_ARM]], "lock": true, "stride": 0.76,
 	"lift": 0.15, "plant": 0.35, "stand": 0.15, "bend": {"Spine01": Vector3(-22, 0, 0)}}
-const CROSSBOW_JOG := {"guard": CROSSBOW_LOW, "lock": true, "stride": 0.79, "lift": 0.2, "plant": 0.4, "stand": 0.15,
+## 2026-11-27: the sorcerer is 1.15 m now (the ChatGPT painting's short mage, Daniel's "baixinho"): short legs cover less
+## floor a step, so the feet are locked on a longer stride (fast small steps, 171 a minute) and the body sinks less.
+const MAGE_JOG_SHORT := {"guard": [[&"ual", "Idle_Torch", LEFT_ARM], [&"ual", "Idle", RIGHT_ARM]], "lock": true, "stride": 1.7,
+	"lift": 0.15, "plant": 0.15, "stand": 0.05, "bend": {"Spine01": Vector3(-22, 0, 0)}}
+const CROSSBOW_JOG := {"guard": CROSSBOW_LOW, "lock": true, "stride": 0.7, "lift": 0.7, "plant": 0.3, "stand": 0.15,
 	"bend": {"Spine01": Vector3(-34, 0, 0)}}
 ## T5b Corredor (PO, 2026-11-18: "ainda tem esqueleto que anda tremendo", the rust one): the runner hopped on
 ## KayKit's Running_B (the whole body over 0.1 m in 14 of 20 poses, up to 0.34 m, rising and falling 0.23 m, 131 steps
@@ -250,10 +256,10 @@ const CROSSBOW_JOG := {"guard": CROSSBOW_LOW, "lock": true, "stride": 0.79, "lif
 ## pose over 0.08 m), a sixth of the hop, standing taller. The Sprint slid 34 cm a step locked (its flight is too long).
 ## T5-19 (combat_cadence.md 6.5): the crossbow's recoil, the trunk 5 degrees back in 0.06 s and back in 0.2 s.
 const CROSSBOW_KICK := {"at": 0.0, "up": 0.06, "down": 0.2, "bend": {"Spine01": Vector3(-5, 0, 0), "Spine02": Vector3(-2, 0, 0)}}
-const RUNNER_JOG := {"lock": true, "stride": 1.2, "lift": 0.15, "plant": 0.6, "stand": 0.15, "bend": {"Spine01": Vector3(-20, 0, 0)}}
+const RUNNER_JOG := {"lock": true, "stride": 1.0, "lift": 0.15, "plant": 0.25, "stand": 0.15, "bend": {"Spine01": Vector3(-20, 0, 0)}}
 ## The elite runner's stride (2B): the same jog with its feet locked a longer way, about 200 steps a minute at its
 ## 7.4 m/s (tools/walk_probe.gd: Jog_Fwd at 1.55 slides 4.5 cm; the Sprint slid 6 to 13 cm and leaned 37 degrees).
-const RUNNER_ELITE_JOG := {"lock": true, "stride": 1.55, "lift": 0.15, "plant": 0.6, "stand": 0.15, "bend": {"Spine01": Vector3(-20, 0, 0)}}
+const RUNNER_ELITE_JOG := {"lock": true, "stride": 1.55, "lift": 0.15, "plant": 0.25, "stand": 0.15, "bend": {"Spine01": Vector3(-20, 0, 0)}}
 ## T5-02: the soldier's wind-up coils the trunk back and toward the blade (grown over the wind-up, "bend_in") and its
 ## blow uncoils it in its first 0.15 s ("bend_out").
 const SOLDIER_COIL := {"Spine01": Vector3(-18, 30, 0)}
@@ -283,6 +289,9 @@ const TRUNK: Array[StringName] = [&"Spine02", &"Spine01", &"Spine", &"neck", &"H
 ## shield aside), the brute's tower shield swung across as in the brace; the sword arm in guard.
 const RUSH_AT := 0.33
 const BRUTE_RUSH := {"time": 0.45, "hold": SHIELD_BRACE,
+	"guard": [[&"ual2", "Shield_Dash_RM", TRUNK, RUSH_AT], [&"ual", "Sword_Idle", RIGHT_ARM]]}
+## 2026-11-27: the painted guard (no shield of its own) charges leaning in as the Knight does.
+const GUARD_RUSH := {"time": 0.45, "hold": SHIELD_BRACE, "bend": {"Spine02": Vector3(20, 0, 0)},
 	"guard": [[&"ual2", "Shield_Dash_RM", TRUNK, RUSH_AT], [&"ual", "Sword_Idle", RIGHT_ARM]]}
 const KNIGHT_RUSH := {"time": 0.45, "bend": {"Spine02": Vector3(14, 0, 0)},
 	"guard": [[&"ual2", "Shield_Dash_RM", TRUNK + LEFT_ARM, RUSH_AT], [&"ual", "Sword_Idle", RIGHT_ARM]]}
@@ -340,7 +349,7 @@ const STAFF_CLIPS := {
 const MODELS := {
 	# 1. the soldier: bare bone, steel pauldrons and greaves, a torn red loincloth; the blade is the KayKit one
 	"skeleton": {
-		"meshy": "skeleton", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "skeleton_gpt", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "skeleton.png",
 		"held": [{"hand": "Right", "meshy": "w_cleaver", "triangles": 800, "slot": 0, "grip": Vector3(0.26, 0, 0), "scale": 1.35, "lift": 2.2, "turn": CLEAVER_TURN, "name": "sword"}],
 		"anims": {
@@ -360,7 +369,7 @@ const MODELS := {
 	# C5, the Trinca (CB-7): the soldier's bone with nothing in its hands, low and bent, arms hanging (the figure is drawn
 	# at size 0.85 by three at a time); its pounce is the soldier's blow without the blade
 	"trio": {
-		"meshy": "skeleton", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "skeleton_gpt", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"bend": {"Spine02": Vector3(24, 0, 0), "Head": Vector3(18, 0, 0)},
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 20, true, RUNNER_JOG], "idle": [&"ual2", "Zombie_Idle", 12, true],
@@ -372,7 +381,7 @@ const MODELS := {
 	# cleaver's blade on its tip (the bar of the floor and the pole are one line), leaning; the sweep is the library's
 	# spinning blow stretched over 1.6 s (the crowd draws an attack clip 1.4 times as fast as it runs: 2.24 s of clip)
 	"sweeper": {
-		"meshy": "archer", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "archer_gpt", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "archer.png",
 		"bend": {"Spine01": Vector3(14, 0, 0)},
 		"held": [
@@ -388,7 +397,7 @@ const MODELS := {
 	# C1e lote A, the Gritador: the sorcerer's body drawn upright (chest out, head up) with no staff, a tall banner in the left
 	# hand (a 2.1 m pole, a hanging amber cloth, a bone finial) so that it reads as a standard-bearer at 720p
 	"herald": {
-		"meshy": "mage", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "mage_gpt", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "mage.png",
 		"bend": {"Spine01": Vector3(-7, 0, 0), "Head": Vector3(-8, 0, 0)},
 		"held": [
@@ -406,7 +415,7 @@ const MODELS := {
 	# C1e lote A, the Coveiro: the priest's body stooped, a spade leaning in the right hand (the blade low) and a lantern
 	# hanging from the left (an ember in a dark cage), the two things a gravedigger carries
 	"gravedigger": {
-		"meshy": "priest", "height": 1.93, "triangles": BODY_TRIANGLES,
+		"meshy": "priest_gpt", "height": 1.93, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "priest.png",
 		"bend": {"Spine02": Vector3(18, 0, 0), "Head": Vector3(14, 0, 0)},
 		"marks": {"hands": ["LeftHand", "RightHand"], "hand_l": ["LeftHand"], "hand_r": ["RightHand"]},
@@ -426,7 +435,7 @@ const MODELS := {
 	# C1e lote C, the Armadilheiro: the crossbowman's hood and bone bent low over the floor, a flat spiked plate carried in the left hand
 	# instead of the crossbow (the thing it lays); it never shoots, so no crossbow clips
 	"trapper": {
-		"meshy": "archer", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "archer_gpt", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "archer.png",
 		"bend": {"Spine01": Vector3(12, 0, 0), "Spine02": Vector3(16, 0, 0), "Head": Vector3(18, 0, 0)},
 		"marks": {"hands": ["LeftHand", "RightHand"], "hand_l": ["LeftHand"], "hand_r": ["RightHand"]},
@@ -442,7 +451,7 @@ const MODELS := {
 	},
 	# 2. the runner: burnt bone and red rags, no weapon, stooped, an ember in the chest
 	"runner": {
-		"meshy": "runner", "height": 1.65, "triangles": BODY_TRIANGLES,
+		"meshy": "runner_gpt", "height": 1.65, "triangles": BODY_TRIANGLES,
 		"bend": {"Spine02": Vector3(14, 0, 0), "Head": Vector3(25, 0, 0)},
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 20, true, RUNNER_JOG], "idle": [&"ual2", "Zombie_Idle", 12, true],
@@ -457,7 +466,7 @@ const MODELS := {
 	# the elite runner (7.4 m/s): the same figure on its own stride (RUNNER_ELITE_JOG); on the common one it ran 259
 	# steps a minute (docs/qa/t5b_boss_fight.md), a frantic patter. Its EnemyDef.model is "runner_elite".
 	"runner_elite": {
-		"meshy": "runner", "height": 1.65, "triangles": BODY_TRIANGLES,
+		"meshy": "runner_gpt", "height": 1.65, "triangles": BODY_TRIANGLES,
 		"bend": {"Spine02": Vector3(14, 0, 0), "Head": Vector3(25, 0, 0)},
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 20, true, RUNNER_ELITE_JOG], "idle": [&"ual2", "Zombie_Idle", 12, true],
@@ -471,15 +480,15 @@ const MODELS := {
 	},
 	# 3. the sorcerer: dark hood and robe over the ribs, steel arms; the staff with the cold violet gem is KayKit's
 	"mage": {
-		"meshy": "mage", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "mage_gpt", "height": 1.15, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "mage.png",
 		"held": [
-			{"hand": "Left", "meshy": "w_staff", "triangles": 1000, "slot": 0, "grip": STAFF_GRIP, "scale": 2.0, "rot": THUMB_UP, "name": "staff"},
+			{"hand": "Left", "meshy": "w_staff", "triangles": 1000, "slot": 0, "grip": STAFF_GRIP, "scale": 1.3, "rot": THUMB_UP, "name": "staff"},
 			# the cold violet orb in the top of the staff: always lit, it swells as the bolt is conjured
-			{"hand": "Left", "shape": "sphere", "at": STAFF_RING, "size": Vector3(0.09, 0.09, 0), "cell": C_GLOW_COLD, "name": "orb", "mark": true},
+			{"hand": "Left", "shape": "sphere", "at": STAFF_RING * 0.65, "size": Vector3(0.09, 0.09, 0), "cell": C_GLOW_COLD, "name": "orb", "mark": true},
 		],
 		"anims": {
-			"walk": [&"ual", "Jog_Fwd", 20, true, MAGE_JOG], "idle": STAFF_CLIPS.idle,
+			"walk": [&"ual", "Jog_Fwd", 20, true, MAGE_JOG_SHORT], "idle": STAFF_CLIPS.idle,
 			"rise": STAFF_RISE,
 			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast_rise, "cast_hold": STAFF_CLIPS.cast_hold,
 			"shot": STAFF_CLIPS.shot, "exit": STAFF_CLIPS.exit,
@@ -489,7 +498,7 @@ const MODELS := {
 	# held up in the spell pose as the idle, a cold orb in each fist and a ring of cold light over the head, so that it
 	# reads as the one who holds a beam open (the Mago holds a staff and walks)
 	"channeler": {
-		"meshy": "mage", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "mage_gpt", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "mage.png",
 		"held": [
 			{"hand": "Left", "shape": "sphere", "at": Vector3(0, 0.12, 0), "size": Vector3(0.12, 0.12, 0), "cell": C_GLOW_COLD, "name": "orb", "mark": true},
@@ -504,7 +513,7 @@ const MODELS := {
 	},
 	# 4. the crossbowman: dark hood, red scarf; the crossbow is KayKit's
 	"archer": {
-		"meshy": "archer", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"meshy": "archer_gpt", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "archer.png",
 		# the crossbow in dark wood and iron, the size of a hand crossbow beside the figure (it was a white piece over
 		# its head)
@@ -517,15 +526,17 @@ const MODELS := {
 	},
 	# 5. the brute: dark plate, the tower shield with its emblem and the sword are the model's own
 	"guard": {
-		"meshy": "guard", "height": 2.03, "triangles": BODY_TRIANGLES,
-		# the tower shield follows the shoulder in one piece, the arm behind it as the model rests, swung in front of
-		# the body; charcoal on a dark floor, it takes a rim of worn light steel and scratches. The sword is one piece too.
-		"rigid": [
-			{"bone": "LeftShoulder", "seeds": ["LeftHand", "LeftForeArm"], "plate": 0.09, "worn": true, "name": "shield"},
-			{"bone": "RightHand", "seeds": ["RightHand"], "rod": 0.07, "name": "sword"},
+		"meshy": "guard_gpt", "height": 2.03, "triangles": BODY_TRIANGLES,
+		"palette": PALETTE + "knight.png",
+		# 2026-11-27: the painted guard (enemy_guard_gpt) carries no shield or sword of its own: it takes the Knight's Meshy
+		# pair (w_knight_sword, w_knight_shield) in the hands, the shield larger (a tower shield), named as the old rigid
+		# pieces were ("shield", "sword") for the measures of the blow and the charge. The arm stays behind the shield as it
+		# rests, swung in front of the body.
+		"held": [
+			{"hand": "Right", "meshy": "w_knight_sword", "triangles": 750, "slot": 0, "grip": Vector3(0, -0.33, 0), "scale": 1.2, "lift": 1.6, "rot": EDGE_OUT, "aim": KNIGHT_SWORD_AIM, "name": "sword"},
+			{"hand": "Left", "meshy": "w_knight_shield", "triangles": 750, "slot": 1, "scale": 1.3, "at": Vector3(0.046, 0, 0), "rot": Vector3(0, -90, 0), "name": "shield"},
 		],
 		"hold": {"bones": LEFT_ARM, "swing": SHIELD_FRONT},
-		"even_legs": true,
 		"anims": {
 			"walk": [&"kaykit", "Walking_A", 20, true, GUARD_WALK_CLOSED],
 			"idle": [&"ual2", "Idle_Shield", 12, true, GUARD_IDLE_CLOSED],
@@ -539,7 +550,7 @@ const MODELS := {
 			# T5-06: the charge is the shield's push that goes on from the brace (it was drawn with the middle of its
 			# sword blow), run behind the shield (A-T5-1, BRUTE_RUSH), and after it the body sags, spent (T5-12,
 			# Idle_Shield_Break: the shield lowered)
-			"charge": [&"ual", "Sprint", 12, true, BRUTE_RUSH],
+			"charge": [&"ual", "Sprint", 12, true, GUARD_RUSH],
 			"recover": [&"ual2", "Idle_Shield_Break", 10, false, {"guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
 			# QW-2: the Capitao calling its dead stood in the walk pose; as the knight's call, the arm raised (Cheer)
 			"summon": [&"kaykit", "Cheer", 12, false, {"from": 0.0, "to": 0.84, "lift": 0.2, "time": 1.0}],
@@ -547,7 +558,7 @@ const MODELS := {
 	},
 	# 6. the priest of the dead: dark purple hood and robes, no weapon
 	"priest": {
-		"meshy": "priest", "height": 1.93, "triangles": BODY_TRIANGLES,
+		"meshy": "priest_gpt", "height": 1.93, "triangles": BODY_TRIANGLES,
 		# LC-3: where its hands are in every pose (BakedModel.marks), for the light of the rite between them (EnemyFx)
 		"marks": {"hands": ["LeftHand", "RightHand"], "hand_l": ["LeftHand"], "hand_r": ["RightHand"]},
 		"anims": {
@@ -839,6 +850,8 @@ const NPCS := {
 
 
 var _done := false
+## `-- old`: the entries' "meshy" keys without "_gpt" (the earlier models, which stay in assets/models/meshy).
+var _old_models := false
 ## rig -> [model, AnimationPlayer, Skeleton3D], loaded when a figure first asks for it.
 var _rigs := {}
 ## The entry's "hold" while it is baked (see MODELS).
@@ -864,6 +877,10 @@ func _process(_delta: float) -> bool:
 	_done = true
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://assets/baked"))
 	var only := Array(OS.get_cmdline_user_args())
+	if only.has("old"):
+		# the first Meshy models (enemy_<id>, before the ChatGPT-painting ones of 2026-11-27), for comparison; bakes over the same files
+		only.erase("old")
+		_old_models = true
 	var models: Dictionary = MODELS
 	if only.has("kaykit"):
 		only.erase("kaykit")
@@ -898,7 +915,8 @@ func _process(_delta: float) -> bool:
 
 func _bake_meshy(spec: Dictionary) -> BakedModel:
 	_slots.clear()
-	var model := (load(MESHY % [spec.meshy, spec.meshy]) as PackedScene).instantiate() as Node3D
+	var key: String = String(spec.meshy).trim_suffix("_gpt") if _old_models else spec.meshy
+	var model := (load(MESHY % [key, key]) as PackedScene).instantiate() as Node3D
 	get_root().add_child(model)
 	var skeleton := PoseBaker.find_skeleton(model)
 	var mi := _first_mesh(model)

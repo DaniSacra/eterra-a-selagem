@@ -9,7 +9,7 @@ func test_drawn_taller_than_his_size_in_the_fight() -> void:
 
 
 func test_the_explorer_body_has_its_clips_and_grip() -> void:
-	assert_true(HeroBody.MODEL.contains("hero_explorer"), "the real explorer model, not the provisional Sombra")
+	assert_true(HeroBody.MODEL.contains("hero_warrior_gpt"), "the Meshy model of the approved painting, not the provisional Sombra")
 	var lib: AnimationLibrary = load(HeroBody.ANIMS)
 	for clip: StringName in [&"Idle", &"Run", &"Sprint", &"Roll", &"Slash_A", &"Slash_B", &"Slash_C", &"Death"]:
 		assert_true(lib.has_animation(clip), String(clip))

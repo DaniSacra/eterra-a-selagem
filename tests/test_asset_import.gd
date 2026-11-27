@@ -9,6 +9,8 @@ extends GutTest
 const VRAM := {
 	"res://assets/models/kaykit_palette.png": {"compress/high_quality": true},
 	"res://assets/models/meshy/hero_explorer/hero_explorer-rigged_Image_0.jpg": {"compress/high_quality": true},
+	"res://assets/models/meshy/hero_warrior_gpt/hero_warrior_gpt-rigged_Image_0.jpg": {"compress/high_quality": true},
+	"res://assets/models/meshy/hero_maga_gpt/hero_maga_gpt-rigged_Image_0.jpg": {"compress/high_quality": true},
 	"res://assets/models/meshy/emeth/emeth_0.jpg": {"compress/high_quality": true, "process/size_limit": 1024},
 	# the stone statue and lion are drawn by the rooms' stone material, their own painting is not used: 64 px
 	"res://assets/models/meshy/statue_hooded/statue_hooded_0.jpg": {"compress/high_quality": true, "process/size_limit": 64},
@@ -42,6 +44,7 @@ func test_3d_textures_are_vram_compressed_without_the_editor() -> void:
 func test_the_loaded_textures_are_block_compressed() -> void:
 	var want := {
 		"res://assets/models/meshy/hero_explorer/hero_explorer-rigged_Image_0.jpg": Image.FORMAT_BPTC_RGBA,
+		"res://assets/models/meshy/hero_warrior_gpt/hero_warrior_gpt-rigged_Image_0.jpg": Image.FORMAT_BPTC_RGBA,
 		"res://assets/models/meshy/emeth/emeth_0.jpg": Image.FORMAT_BPTC_RGBA,
 		"res://assets/models/kaykit_palette.png": Image.FORMAT_BPTC_RGBA,
 		"res://assets/textures/rock_surface/rock_surface_nor_gl_1k.jpg": Image.FORMAT_RGTC_RG,

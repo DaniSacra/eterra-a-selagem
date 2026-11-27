@@ -360,3 +360,27 @@ para o passe; a conferir na captura da GPU (tamanho e brilho das estrelas).
   Sem uso e já fora do pacote: as fontes Meshy `enemy_*`, armas de teste e `-preview.png`. Retratos `angel_*.jpg` e as faixas de música
   são carregados por nome montado (não são lixo).
 - Medalhões de UI (126 PNG, 38 MB, `compress/mode=0`) ficam: já registrados na TA-08; passar a VRAM/WebP muda pixel e fica para o `art-director` aprovar.
+
+## Personagens do ChatGPT pintado, Meshy, 2026-11-27
+
+Os oito modelos abaixo (`assets/models/meshy/<chave>/<chave>-rigged.glb`, 24 ossos do rig padrão do Meshy, textura 2048 px,
+cerca de 15,5 mil triângulos cada, 30,6 mil o do herói) foram gerados no Meshy (imagem para 3D) a partir da arte pintada
+que o Daniel aprovou no ChatGPT. IA declarada em `docs/steam-ia.md`. Os `.glb` com textura sem rig, andar e corrida não
+foram copiados para o repositório. Os modelos antigos ficam no repositório (`hero_explorer`, `hero_maga_img`, `enemy_<id>`).
+
+| Modelo | Substitui | Onde entra | Estado |
+|---|---|---|---|
+| `hero_warrior_gpt` | corpo do Guerreiro (`hero_explorer`) | `HeroBody.MODEL`, clipes `hero_warrior_gpt/hero_anims.res` (`tools/bake_hero.gd`) | definitivo; sem sombreador de armadura nem capa curta (a pintura já é a arte aprovada, `armor` 0); `--old-models` volta ao Explorador |
+| `hero_maga_gpt` | `hero_maga_img` | `HeroBody.BODIES[maga]`, `maga_anims.res` | definitivo no desenho; `--old-models` volta ao antigo; retrato da UI continua o `hero_maga_img.png` |
+| `enemy_skeleton_gpt` | esqueleto, Trinca | `tools/bake.gd` entradas `skeleton`, `trio` | definitivo |
+| `enemy_runner_gpt` | corredor e elite | `runner`, `runner_elite` | definitivo |
+| `enemy_archer_gpt` | besteiro, Varredor, Armadilheiro | `archer`, `sweeper`, `trapper` | definitivo |
+| `enemy_mage_gpt` | feiticeiro, Gritador, Canalizador | `mage` (1,15 m, baixinho), `herald`, `channeler` (1,92 m) | definitivo; cajado 1,3 vezes |
+| `enemy_priest_gpt` | sacerdote, Coveiro | `priest`, `gravedigger` | definitivo |
+| `enemy_guard_gpt` | guarda | `guard` | o modelo não traz escudo nem espada: leva o par do Cavaleiro (`w_knight_sword`, `w_knight_shield` 1,3 vezes) como peças presas; carga com `GUARD_RUSH` |
+
+Assados: 5,35 mil triângulos o guarda (3,9 mil de corpo mais as duas armas), 3,9 a 5,1 mil os outros; `assets/baked/` 72,9 MB
+no total (teto de 70 MB do `test_living_crowd` conta em MiB, 73,4 MB; folga de 0,5 MB). Cadência de passo reajustada às pernas novas
+(`SOLDIER_JOG`, `RUNNER_JOG`, `CROSSBOW_JOG`, `MAGE_JOG_SHORT`): escorregamento de 1,4 a 5,6 cm por passo. Os modelos antigos
+dos inimigos voltam com `tools/bake.gd -- old` (sobrescreve os assados; os valores de passo seguem os novos); só o herói e a Maga
+têm `--old-models` em tempo real. Nenhum sombreador ou material novo: `tools/make_warmup.sh` não mudou.

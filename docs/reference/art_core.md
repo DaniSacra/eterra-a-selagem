@@ -36,6 +36,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   lâmina em meia-lua: o cabo é um cilindro de madeira (1,1 m, 2,0 m com a lâmina) na mão direita. O arqueiro mantém a besta do KayKit.
   A estátua do Salão (`Masonry.meshy_stone`, a lathe antiga fica de reserva) e o leão do Santuário (`HubLook.LION_*`, plinto,
   leão a 2,5 m, o do oeste espelhado, virados 0,3 rad para a escada) usam só a malha, com a pedra `Masonry.carved`.
+- **Modelos `_gpt` (2026-11-27)**: Guerreiro, Maga e os inimigos agora são os modelos do Meshy feitos da arte pintada do ChatGPT (`hero_warrior_gpt`, `hero_maga_gpt`, `enemy_<id>_gpt`; ver `docs/art/asset_inventory.md`). `--old-models` volta ao Explorador e à Maga antiga em tempo real; os inimigos antigos voltam com `tools/bake.gd -- old`. O Guerreiro novo não usa `armor`/capa curta do `hero_paint` (`HeroBody._fill`); o guarda leva as armas do Cavaleiro; o feiticeiro tem 1,15 m.
 - **Corpo por herói (M1c, 2026-11-23)**: `HeroBody.BODIES` (por `HeroDef.id`: modelo com esqueleto do Meshy, clipes, peça na
   mão); `HeroBody.make(id)`. A Maga é `hero_maga_img-rigged.glb` (mesmos 24 ossos e orçamento do Guerreiro) com os clipes
   da Quaternius levados a ela por `tools/bake_hero.gd -- maga` (`MAGA_CLIPS`; todos os golpes tocam `Cast`, o Passo `Blink`;
