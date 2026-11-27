@@ -329,7 +329,7 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 				fx.ring_later(origin, reach, color, 0.08)
 				fx.shock(origin, reach * 0.8, color, 0.7)
 				# effects pass: the cry bursts light at his chest and flashes the screen once
-				fx.hit_star(Vector3(origin.x, 1.1, origin.y), color, 1.5, true)
+				fx.blast(Vector3(origin.x, 1.1, origin.y), color, 1.5)
 				fx.screen_flash(0.8)
 			elif not finisher:
 				# (a finisher's crescent is the ring flying out: one circle, not rings inside rings)
