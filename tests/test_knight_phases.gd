@@ -34,7 +34,7 @@ func test_rules_are_pure() -> void:
 
 func test_data_is_the_butchers() -> void:
 	var d := load("res://data/enemies/knight.tres") as EnemyDef
-	assert_eq(d.hp, 3000.0, "SWORN's Questing Beast")
+	assert_eq(d.hp, 4500.0, "SWORN Questing Beast 3000 x1.5 (PT-27b)")
 	assert_eq(d.armor, 0.0, "no yellow bar")
 	assert_almost_eq(d.speed, 6.0, 0.02)
 	assert_eq(d.attack_windup, 0.65)

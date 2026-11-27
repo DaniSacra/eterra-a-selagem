@@ -285,9 +285,9 @@ func test_apogeu_adds_one_and_a_half_times_the_sequence_to_the_last_blow() -> vo
 	assert_gt(sum, 0.0)
 	assert_eq(game.combat.apogee.total(e.get_instance_id()), sum, "the books hold what the sequence dealt")
 	var spin := _strike_loss(e, &"cut3")
-	assert_eq(spin, 40.0 + minf(roundf(sum * 1.5), 120.0), "the spin and the share, never past 400% of itself")
+	assert_eq(spin, 90.0 + minf(roundf(sum * 1.5), 270.0), "the spin and the share, never past 400% of itself")
 	assert_eq(game.combat.apogee.total(e.get_instance_id()), 0.0, "the Apogeu blow spends the books and is not added")
-	assert_eq(_strike_loss(e, &"cut3"), 40.0, "no second helping: no recursion")
+	assert_eq(_strike_loss(e, &"cut3"), 90.0, "no second helping: no recursion")
 
 
 func test_apogeu_is_a_share_of_the_sum_when_it_is_under_the_cap() -> void:
