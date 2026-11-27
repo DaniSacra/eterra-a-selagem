@@ -36,6 +36,8 @@ static func catalog() -> Array[HubGuideDef]:
 
 ## Whether a guide's condition holds in this save.
 static func due(data: Dictionary, def: HubGuideDef) -> bool:
+	if HubPlan.DISABLED.has(def.station):
+		return false  # a station that is off has nothing to show (hub art 2026-11-27)
 	match def.condition:
 		&"open":
 			return HubGate.is_open(data, def.station)

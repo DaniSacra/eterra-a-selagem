@@ -6,20 +6,19 @@ extends GutTest
 
 const YAW := 35.0
 ## The main way from the arrival to the gate by the Videira, as the points of the package's paths (u, v).
-const MAIN: Array[Vector2] = [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -5), Vector2(2, -6), Vector2(5, -13),
-	Vector2(25, -13), Vector2(32, -6)]
+const MAIN: Array[Vector2] = [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -5), Vector2(2, -6), Vector2(4, 0),
+	Vector2(4, 12), Vector2(4, 17), Vector2(-1, 19.4)]
 ## The walk from the arrival to each station, by the package's paths (u, v), the use point last (HubPlan.USE). The
 ## other hub tests walk these too.
 const ROUTES := {
 	&"vine": [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -5)],
-	&"portal": [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -5), Vector2(2, -6), Vector2(5, -13), Vector2(25, -13), Vector2(32, -6)],
+	&"portal": [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -5), Vector2(2, -6), Vector2(4, 0), Vector2(4, 12), Vector2(4, 17), Vector2(-1, 19.4)],
 	&"tree": [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -6), Vector2(2, -6), Vector2(4, 0), Vector2(7, -3), Vector2(10, -3)],
 	&"vendor": [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -6), Vector2(2, -6), Vector2(4, 0), Vector2(4, 8), Vector2(8, 6), Vector2(12, 6)],
-	&"heroes": [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -6), Vector2(2, -6), Vector2(4, 0), Vector2(4, 12), Vector2(4, 15), Vector2(-1, 19)],
 	&"book": [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -6), Vector2(2, -6), Vector2(4, 0), Vector2(4, 12), Vector2(10, 15), Vector2(19, 19)],
 	&"smith": [Vector2(-24, -7), Vector2(-15, -7), Vector2(-15, 1), Vector2(-18, 1), Vector2(-15, 7), Vector2(-15, 16), Vector2(-17.6, 16.2)],
 }
-const ALL: Array[StringName] = [&"smith", &"alchemist", &"heroes", &"book", &"vendor", &"tree", &"vine", &"future_a", &"future_b"]
+const ALL: Array[StringName] = [&"smith", &"alchemist", &"book", &"vendor", &"tree", &"vine", &"future_a", &"future_b"]
 
 
 func _arena(closed: Array[StringName]) -> Arena:
@@ -64,7 +63,7 @@ func test_the_arrival_and_every_station_stand_on_the_floor() -> void:
 
 
 func test_every_station_is_reached_on_foot_with_every_door_open_and_shut() -> void:
-	for closed: Array[StringName] in [[] as Array[StringName], [&"future_a", &"future_b", &"alchemist", &"smith", &"heroes",
+	for closed: Array[StringName] in [[] as Array[StringName], [&"future_a", &"future_b", &"alchemist", &"smith",
 			&"book", &"vendor", &"tree", &"vine"] as Array[StringName]]:
 		var a := _arena(closed)
 		var start := HubPlan.to_world(HubPlan.ARRIVAL, YAW)
@@ -101,7 +100,7 @@ func test_the_way_from_the_vigilia_to_the_videira_and_the_gate_is_short() -> voi
 	for i in MAIN.size() - 1:
 		total += MAIN[i].distance_to(MAIN[i + 1])
 	assert_lt(to_vine, 20.0, "the Videira is the first station, about 19 m from the Ponto de Vigilia")
-	assert_lt(total, 75.0, "the gate is about 11 s away at 6.5 m/s: the return to the adventure stays quick (%.0f m)" % total)
+	assert_lt(total, 75.0, "the Portao is about 8 s away at 6.5 m/s: the return to the adventure stays quick (%.0f m)" % total)
 
 
 func test_the_main_way_is_four_to_five_meters_wide() -> void:
@@ -162,7 +161,7 @@ func test_the_doors_stand_on_the_floor_and_each_has_its_building_or_mouth() -> v
 		var r := HubPlan.door_rect(id)
 		assert_true(HubPlan.layout(YAW).floor.covers(_w(r.get_center())), "%s's door is on the floor" % id)
 	for id in HubGate.GATED:
-		assert_true(HubPlan.DOORS.has(id), "%s has a physical door" % id)
+		assert_eq(HubPlan.DOORS.has(id), not HubPlan.DISABLED.has(id), "%s has a physical door (unless the station is off)" % id)
 	assert_true(HubPlan.DOORS.has(HubPlan.ALCHEMIST_ID))
 	assert_eq(HubGate.FLAGS.get(HubPlan.ALCHEMIST_ID), false, "the Alquimista's door follows the flag")
 
@@ -173,6 +172,6 @@ func test_the_hub_shuts_the_doors_of_what_the_save_has_not_opened() -> void:
 	var shut := hub.closed_doors()
 	assert_true(shut.has(HubPlan.FUTURE_A) and shut.has(HubPlan.FUTURE_B) and shut.has(HubPlan.ALCHEMIST_ID))
 	for id in HubGate.GATED:
-		assert_eq(shut.has(id), not hub.is_open(id), "%s's door shut exactly when HubGate says it is closed" % id)
+		assert_eq(shut.has(id), not hub.is_open(id) and not HubPlan.DISABLED.has(id), "%s's door shut exactly when HubGate says it is closed" % id)
 	var hard := hub.arena.layout.obstacles.filter(func(o: ArenaObstacle) -> bool: return o.piece == &"hub_door")
 	assert_eq(hard.size(), shut.size(), "one solid door a shut station")

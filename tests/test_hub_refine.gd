@@ -26,7 +26,7 @@ func test_the_pointed_panel_has_the_gates_height_and_width() -> void:
 
 func test_the_faces_reserve_rects_on_the_south_walls_of_their_buildings() -> void:
 	var rects := HubFacades.reserved()
-	assert_gt(rects.size(), 4, "arch, banners, glass, glasshouse")
+	assert_gt(rects.size(), 2, "glass, glass, glasshouse")
 	var in_building := 0
 	for r in rects:
 		for b in HubPlan.BUILDINGS:

@@ -28,7 +28,7 @@ func test_data_is_complete_and_valid() -> void:
 	var cat := HubGuide.catalog()
 	assert_gt(cat.size(), 5)
 	for d in cat:
-		assert_true(HubPlan.STATIONS.has(d.station), "%s station" % d.id)
+		assert_true(HubPlan.STATIONS.has(d.station) or HubPlan.DISABLED.has(d.station), "%s station" % d.id)
 		assert_true(HubGuide.CONDITIONS.has(d.condition), "%s condition" % d.id)
 		assert_true(T.table.entries.has(String(d.text_key)), "%s text" % d.id)
 		assert_false((T.t(d.text_key) as String).contains("—"), "%s: no dash" % d.id)
