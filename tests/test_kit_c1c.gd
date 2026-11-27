@@ -15,16 +15,17 @@ func before_each() -> void:
 	hero.cd_refund_hit = 0.3
 	hero.cd_refund_break = 1.5
 	hero.cd_floor = 8.0
+	hero.magick_on_break = 3.0  # (the Warrior's own is 0 since 2026-11-27; the rule holds for a hero that spends Magia)
 	feed = KitFeed.new(hero)
 
 
 func test_the_numbers_are_data() -> void:
 	var warrior: HeroDef = load("res://data/heroes/warrior.tres")
-	assert_eq(warrior.magick_on_break, 3.0)
+	assert_eq(warrior.magick_on_break, 0.0, "2026-11-27: no Magia for the Warrior")
 	assert_eq([warrior.cd_refund_hit, warrior.cd_refund_break, warrior.cd_floor], [0.0, 0.0, 0.0], "GP-1: no Brado, nothing to refund")
 	var tree: ComboTree = load(hero.combos)
 	for id: StringName in [&"cut1", &"cut2", &"cut3"]:
-		assert_eq(_node(tree, id).magick_per_hit, 0.5, str(id))
+		assert_eq(_node(tree, id).magick_per_hit, 0.0, str(id))
 
 
 func _node(tree: ComboTree, id: StringName) -> ComboNode:
@@ -131,7 +132,7 @@ func test_a_ready_move_gives_nothing() -> void:
 	assert_eq(runner.cooldown_refund(&"shout", 1.0, 8.0), 0.0)
 
 
-func test_in_the_game_hits_and_breaks_feed() -> void:
+func test_in_the_game_the_warriors_hits_and_breaks_give_no_magia() -> void:
 	var game := (load("res://scenes/game.tscn") as PackedScene).instantiate() as Game
 	add_child_autofree(game)
 	game.rooms.start_at(RunMap.Kind.FOUNTAIN)
@@ -140,8 +141,6 @@ func test_in_the_game_hits_and_breaks_feed() -> void:
 	p.magick.value = 10.0
 	var cut1 := ComboTree.find(p.tree.neutral, ComboNode.In.LIGHT)
 	game.combat.landed.emit(cut1, cut1.tags, 5)
-	assert_almost_eq(p.magick.value, 10.5, 0.001, "once a swing, not for each of the five")
+	assert_eq(p.magick.value, 10.0, "2026-11-27: no blow of the Warrior costs Magia, so none gives it back")
 	game.horde.poise_broken.emit(null, &"attack")
-	assert_almost_eq(p.magick.value, 13.0, 0.001, "the Quebra tops up to the cap of 3 a second: 0.5 + 2.5")
-	game.horde.poise_broken.emit(null, &"shout")
-	assert_almost_eq(p.magick.value, 13.0, 0.001, "not the Brado's")
+	assert_eq(p.magick.value, 10.0, "nor a Quebra")

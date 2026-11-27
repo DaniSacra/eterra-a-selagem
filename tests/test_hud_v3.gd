@@ -19,7 +19,7 @@ func test_every_block_stands_inside_the_safe_area_at_three_sizes() -> void:
 		get_window().size = size
 		await wait_process_frames(3)
 		var safe := hud.get_viewport_rect().grow(-6.0)
-		var blocks := {"head": hud._head, "cartouche": hud._cartouche, "crest": hud._crest, "life": hud._life, "magick": hud._magick,
+		var blocks := {"head": hud._head, "cartouche": hud._cartouche, "crest": hud._crest, "life": hud._life,
 			"charge": hud._charge, "rhythm": hud._rhythm, "row": hud._action_row, "column": hud._column, "coins": hud._coins}
 		for k: String in blocks:
 			var r: Rect2 = (blocks[k] as Control).get_global_rect()
@@ -40,7 +40,7 @@ func test_the_values_bind_to_the_game() -> void:
 	await wait_process_frames(2)
 	assert_eq(hud._life.bar._text, "32/40")
 	assert_almost_eq(hud._life.bar._ratio, 0.8, 0.001)
-	assert_eq(hud._magick.bar._text, "%d/%d" % [22, roundi(p.magick.max_value)])
+	assert_false(hud._magick.visible, "the Warrior spends no Magia: no bar (2026-11-27)")
 	assert_eq(hud._clock.text, SaveData.format_time(game.time))
 	assert_eq(hud._rhythm._text, T.t(&"hud_rhythm"))
 	assert_ne(hud._room.text, "", "the room's count")

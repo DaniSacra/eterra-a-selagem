@@ -209,7 +209,11 @@ func setup(g: Game, rng: RandomNumberGenerator) -> void:
 		stage = Vendor.stage_for(stage, Vendor.load_catalog(), g.oficios.works)  # Fatia 3: the Obras made
 	if first_def == null and g.juramentos:
 		stage = g.juramentos.stage_for(stage)  # E6: more elites, dearer shop
+	if not g.hero.uses_magick():
+		stage = stage.without_magick()  # 2026-11-27: the Warrior's blows cost no Magia; no door nor shelf sells it
 	trials = Trials.new(Trials.load_catalog())
+	if not g.hero.uses_magick():
+		trials.drop_magick()
 	sign_silver = stage.silver_elite
 	var forced := -1
 	if Dev.has("arena"):
@@ -2027,9 +2031,15 @@ const ALTAR_SPOT := Vector2(0.0, -3.8)
 const ALTAR_COLOR := Color(0.95, 0.85, 0.65)
 
 
+## The altar's two trades now; the candles give most life to a hero that spends no Magia (StageDef.altar_candle_life).
+func _altar_trades() -> Array[Dictionary]:
+	var life := 0.0 if game.hero.uses_magick() else stage.altar_candle_life
+	return Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow(), game.player.magick.max_value, life)
+
+
 ## The altar's trades (Altar.options) open from the worn slab before its step (EventChoice.open_altar).
 func _build_altar() -> void:
-	altar_options = Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow(), game.player.magick.max_value)
+	altar_options = _altar_trades()
 	_spots.append({"at": ALTAR_SPOT, "away": true, "node": _marker(ALTAR_SPOT, RunMap.Reward.NONE,
 		T.t(&"room_altar") + "\n" + T.t(&"altar_step"), RunMap.Kind.ALTAR, DoorGlyph.Kind.ALTAR)})
 
@@ -2038,7 +2048,7 @@ func _build_altar() -> void:
 func take_altar(option: int) -> bool:
 	if room == null or room.kind != RunMap.Kind.ALTAR or _spots.is_empty():
 		return false
-	altar_options = Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow(), game.player.magick.max_value)
+	altar_options = _altar_trades()
 	if option < 0 or option >= altar_options.size() or not altar_options[option].ok:
 		return false
 	var p := game.player
@@ -2050,9 +2060,12 @@ func take_altar(option: int) -> bool:
 			game.open_grow_choice()
 		Altar.Option.CANDLES:
 			gold -= stage.altar_gold_cost
-			p.magick.max_value += stage.altar_magick
-			p.magick.gain(stage.altar_magick)
-			game.fx.word(Vector3(p.pos.x, 3.0, p.pos.y), "+%d %s" % [int(stage.altar_magick), T.t(&"hud_magick")], Color(0.5, 0.75, 1.0))
+			if game.hero.uses_magick():
+				p.magick.max_value += stage.altar_magick
+				p.magick.gain(stage.altar_magick)
+				game.fx.word(Vector3(p.pos.x, 3.0, p.pos.y), "+%d %s" % [int(stage.altar_magick), T.t(&"hud_magick")], Color(0.5, 0.75, 1.0))
+			else:
+				game.add_max_life(stage.altar_candle_life)
 	game.room_tally.event("altar", game.time, {"choice": String(Altar.IDS[option]), "max_hp": p.max_hp, "gold": gold})
 	_clear_spots()
 	_to_look(&"kindle")
@@ -2101,7 +2114,7 @@ func _choose_trial() -> void:
 
 ## The altar's trades on their screen (a last card takes nothing); the robot and --autopick take Altar.bot_choice.
 func _choose_altar() -> void:
-	altar_options = Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow(), game.player.magick.max_value)
+	altar_options = _altar_trades()
 	if _no_screen():
 		var pick := Altar.bot_choice(altar_options, game.player.max_hp, gold)
 		if pick >= 0:
@@ -2398,7 +2411,7 @@ static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true, life:
 
 ## The altar's trade the robot would make now (Altar.bot_choice; -1: none).
 func _bot_altar_pick() -> int:
-	return Altar.bot_choice(Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow(), game.player.magick.max_value), game.player.max_hp, gold)
+	return Altar.bot_choice(_altar_trades(), game.player.max_hp, gold)
 
 
 ## Where the bot should walk when the room has no fight left (null: stay).

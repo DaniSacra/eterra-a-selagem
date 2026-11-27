@@ -34,6 +34,12 @@ static var _maga: HeroDef
 ## GP-5: Magia that comes back by itself every second, always (the Maga's 2; the Warrior's 0). The Dom Fluxo Arcano adds to it (stat regen_add).
 @export var magick_regen := 0.0
 
+
+## True when something of this hero spends Magia (the Maga's spells). The Warrior's blows cost none (Daniel 2026-11-27), so for him the
+## bar stays hidden and the rewards of Magia turn into other stats (Rooms, Altar, HUD).
+func uses_magick() -> bool:
+	return arcane != null
+
 ## C19-4 (Q-12, Hades II): walking while an Omega charges, times his speed. The attack's: 0.03 and the body turns at
 ## most charge_turn_light degrees a second (Swing5SelfSlowCharge 0.03, RotationMultiplier 1e-8); the special's: 0.6
 ## (an inference: the staff's special has no speed of its own while its Omega charges, the plain one's

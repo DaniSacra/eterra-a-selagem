@@ -116,7 +116,7 @@ func _tree(fifth: bool) -> ComboTree:
 	# cut2 0.13 / 13 / 19 (0.45 s), the spin 0.28 + 0.08 of glint = 0.36 / 18 / 30 (0.86 s).
 	var cut3 := _move(&"cut3", L, &"Slash_C", [&"light", &"spin", &"finisher"],
 		{"damage": 40.0, "shape": ComboNode.Shape.CIRCLE, "reach": 240.0 / U, "knockback": 16.0, "windup": 0.36 - FINISHER_GLINT,
-		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "magick_per_hit": 0.5, "step": STEP[2], "chain_window": 0.6, "hit_stop_ms": 100.0, "shake": 2.4, "move_scale": 0.0, "sound": &"blade_spin",
+		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "step": STEP[2], "chain_window": 0.6, "hit_stop_ms": 100.0, "shake": 2.4, "move_scale": 0.0, "sound": &"blade_spin",
 		# QW-103: the spin's swish (its samples peak 30 to 90 ms in) on the blade's frame, 0.36 s after the press; the
 		# press only gathers
 		"sound_at": 0.36 - SWISH_PEAK, "sound_press": &"spin_gather", "layers": LAYER_SPIN}, [], &"move_spin")
@@ -125,11 +125,11 @@ func _tree(fifth: bool) -> ComboTree:
 		after_cut2 = [_extra_blows(cut3)]
 	var cut2 := _move(&"cut2", L, &"Slash_B", [&"light"],
 		{"damage": 20.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[1], "windup": 0.13, "recovery": 13.0 / 60.0,
-		"move_hold": 19.0 / 60.0, "magick_per_hit": 0.5, "step": STEP[1],
+		"move_hold": 19.0 / 60.0, "step": STEP[1],
 		"chain_window": 0.4, "hit_stop_ms": 60.0, "shake": 1.1, "move_scale": 0.0, "sound": &"blade_heavy", "layers": LAYER_TURN}, after_cut2)
 	var cut1 := _move(&"cut1", L, &"Slash_A", [&"light"],
 		{"damage": 20.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.08, "recovery": 8.0 / 60.0,
-		"move_hold": 11.0 / 60.0, "magick_per_hit": 0.5, "step": STEP[0],
+		"move_hold": 11.0 / 60.0, "step": STEP[0],
 		"chain_window": 0.4, "hit_stop_ms": 35.0, "shake": 0.9, "move_scale": 0.0}, [cut2])
 	# GP-1 (docs/design/heroes/warrior_v1_2026-11-26.md 2): the blows on the two buttons. Left: a tap is the combo above, held
 	# 0.6 s the Golpe Esmagador (200 since 2026-11-27, was 75; 12 Magia, 2.6 m close, breaks a common's poise at once). Right: a tap is the Corte Circular
@@ -137,20 +137,20 @@ func _tree(fifth: bool) -> ComboTree:
 	# (Player), never when it is begun.
 	# Esmagador (CHARGE_LIGHT): its windup and glint play inside the charge (GF-08), so it lands when the charge fills.
 	var smash := _move(&"smash", CL, &"Slash_A", [&"light", &"omega", &"smash"],
-		{"magick_cost": 12.0, "charge_time": 0.6, "damage": 200.0, "reach": 2.6, "width": 120.0, "knockback": 12.0, "windup": 0.22,
+		{"charge_time": 0.6, "damage": 200.0, "reach": 2.6, "width": 120.0, "knockback": 12.0, "windup": 0.22,
 		"glint": FINISHER_GLINT, "recovery": 0.5, "move_hold": 0.5, "step": 0.4, "chain_window": 0.4, "hit_stop_ms": 90.0, "shake": 1.8,
 		"move_scale": 0.0, "sound": &"blade_heavy", "layers": LAYER_TURN}, [], &"move_smash")
 	# Corte Circular (HEAVY, a tap): the Poder. Tags shout and cast: the Blessings of the Poder slot count on it, the Quebra reads the
 	# `shout` weight. It is no Brado: no buff, no Effect.SHOUT. Legs held 0.35 s after it lands.
 	var sweep := _move(&"sweep", H, &"Slash_C", [&"shout", &"cast", &"sweep"],
-		{"magick_cost": 8.0, "damage": 40.0, "shape": ComboNode.Shape.CIRCLE, "reach": 3.4, "knockback": 14.0, "windup": 0.18,
+		{"damage": 40.0, "shape": ComboNode.Shape.CIRCLE, "reach": 3.4, "knockback": 14.0, "windup": 0.18,
 		"recovery": 0.30, "move_hold": 0.35, "chain_window": 0.4, "hit_stop_ms": 80.0, "shake": 1.6, "move_scale": 0.0,
 		"sound": &"blade_spin", "sound_at": 0.18 - SWISH_PEAK, "layers": LAYER_SPIN}, [], &"move_sweep")
-	# Lança da Emeth (CHARGE, held 0.8 s, 20 Magia): a long line of light to the front and to the back (the Omega attack of before,
+	# Lança da Emeth (CHARGE, held 0.8 s): a long line of light to the front and to the back (the Omega attack of before,
 	# kept whole; only its button and its tags changed: the Especial slot, `lance`). Its windup and glint play inside the charge
 	# (GF-08, Player._charge_lead). Hades II's Swing5: 0.78 s after it without walking or striking.
 	var lance := _move(&"lance", C, &"Sword_Attack", [&"heavy", &"omega", &"thrust", &"lance"],
-		{"magick_cost": 20.0, "charge_time": 0.8, "damage": 375.0, "shape": ComboNode.Shape.LINE, "reach": 1080.0 / U, "width": 1.8,
+		{"charge_time": 0.8, "damage": 375.0, "shape": ComboNode.Shape.LINE, "reach": 1080.0 / U, "width": 1.8,
 		"both_ways": true, "knockback": 18.0, "windup": 0.06, "recovery": 0.78, "move_hold": 0.78, "chain_window": 0.4, "hit_stop_ms": 50.0, "shake": 2.0,
 		"move_scale": 0.0, "sound": &"thrust", "sound_at": 0.06 - THRUST_PEAK, "layers": LAYER_STEP}, [], &"move_lance")
 	var tree := ComboTree.new()
@@ -178,10 +178,10 @@ const EXTRA := {"damage": 20.0, "windup": 0.14, "recovery": 12.0 / 60.0, "move_h
 func _extra_blows(spin: ComboNode) -> ComboNode:
 	var back := _move(&"cut4", L, &"Slash_A", [&"light"],
 		{"damage": EXTRA.damage, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.12, "recovery": 9.0 / 60.0,
-		"move_hold": 12.0 / 60.0, "magick_per_hit": 0.5, "step": STEP[0], "chain_window": 0.4, "hit_stop_ms": 85.0, "shake": 1.8, "move_scale": 0.0}, [spin])
+		"move_hold": 12.0 / 60.0, "step": STEP[0], "chain_window": 0.4, "hit_stop_ms": 85.0, "shake": 1.8, "move_scale": 0.0}, [spin])
 	return _move(&"thrust4", L, &"Sword_Attack", [&"light", &"thrust"],
 		{"damage": EXTRA.damage, "shape": ComboNode.Shape.LINE, "reach": 430.0 / U, "width": 1.6, "knockback": COMBO_PUSH[1],
-		"windup": EXTRA.windup, "recovery": EXTRA.recovery, "move_hold": EXTRA.move_hold, "magick_per_hit": 0.5, "step": STEP[1], "chain_window": 0.4,
+		"windup": EXTRA.windup, "recovery": EXTRA.recovery, "move_hold": EXTRA.move_hold, "step": STEP[1], "chain_window": 0.4,
 		"hit_stop_ms": 85.0, "shake": 1.8, "move_scale": 0.0, "sound": &"thrust", "sound_at": EXTRA.windup - THRUST_PEAK}, [back])
 
 
@@ -705,6 +705,8 @@ const RESERVE: Array[StringName] = [&"brasas", &"lamina_ardente", &"omega_brasa"
 
 ## Blessings that only work with a move shape some heroes lack (Boon.needs_tag; the Maga has no finisher nor spin).
 const NEEDS_TAG := {&"golpe_geada": &"spin", &"final_radiante": &"finisher", &"final_veu": &"finisher", &"golpe_certeiro": &"finisher"}
+## The Blessings V1 that give Magia back: only a hero with Magia spells (the `arcane` tag) is offered them (2026-11-27).
+const V1_NEEDS_TAG := {&"essencia_restauradora": &"arcane"}
 
 
 func _boon(n: int, id: StringName, family: Boon.Family, icon: int, mods: Array[BoonMod], skill: SkillDef = null, slot: Boon.Slot = Boon.Slot.NONE) -> void:
@@ -912,6 +914,7 @@ func _v(id: StringName, family: Boon.Family, icon: int, slot: Boon.Slot, mods: A
 	b.family = family
 	b.icon = icon
 	b.slot = slot
+	b.needs_tag = V1_NEEDS_TAG.get(id, &"")
 	b.mods = mods
 	b.skill = skill
 	b.grants = PackedStringArray(grants)
@@ -2465,14 +2468,14 @@ func _talents() -> void:
 	_talent(1, &"cadencia", B.COMBO, T.MIDDLE, 2, 4, {"needs": &"disciplina", "mods": [_fixed(&"cadence_pct", 0.08)] as Array[BoonMod]})
 	_talent(2, &"maestria_marcial", B.COMBO, T.MIDDLE, 3, 9, {"needs": &"disciplina", "combos": FIFTH_TREE})
 	_talent(3, &"apogeu", B.COMBO, T.APEX, 4, 16, {"needs": &"maestria_marcial", "mods": [_fixed(&"apogee_pct", 1.5, [], &"finisher")] as Array[BoonMod]})
-	# Ímpeto: the Golpe Carregado hits 40% harder; Magia from the attack doubles; it charges 30% faster; Força Titânica costs
-	# twice the Magia and hits x3 at the end (final_pct 2.0, after Força Concentrada's damage_pct)
+	# Ímpeto: the Golpe Carregado hits 40% harder; the Supremo charges 25% faster (Determinação, was Magia from the attack doubled:
+	# the Warrior has no Magia use since 2026-11-27); it charges 30% faster; Força Titânica hits x3 at the end (final_pct 2.0, after
+	# Força Concentrada's damage_pct)
 	_talent(4, &"forca_concentrada", B.IMPETO, T.ENTRY, 2, 2, {"mods": [_fixed(&"damage_pct", 0.4, [], &"omega")] as Array[BoonMod]})
-	_talent(5, &"determinacao", B.IMPETO, T.MIDDLE, 2, 6, {"needs": &"forca_concentrada", "mods": [_fixed(&"attack_magick_pct", 1.0)] as Array[BoonMod]})
+	_talent(5, &"determinacao", B.IMPETO, T.MIDDLE, 2, 6, {"needs": &"forca_concentrada", "mods": [_fixed(&"ult_charge_pct", 0.25)] as Array[BoonMod]})
 	_talent(6, &"concentracao", B.IMPETO, T.MIDDLE, 3, 11, {"needs": &"forca_concentrada", "mods": [_fixed(&"charge_time_pct", -0.3)] as Array[BoonMod]})
-	# GP-1 (D-14): the held blows cost twice and hit three times as hard; the Magia maximum rises by 10 (30 to 40) with it alone
-	_talent(7, &"forca_titanica", B.IMPETO, T.APEX, 4, 17, {"needs": &"forca_concentrada", "mods": [_fixed(&"omega_cost_pct", 1.0), _fixed(&"final_pct", 2.0, [], &"omega"),
-		_fixed(&"magick_max", 10.0)] as Array[BoonMod]})
+	# GP-1 (D-14): the held blows hit three times as hard (2026-11-27: no cost to double, no Magia maximum to raise: the blows are free)
+	_talent(7, &"forca_titanica", B.IMPETO, T.APEX, 4, 17, {"needs": &"forca_concentrada", "mods": [_fixed(&"final_pct", 2.0, [], &"omega")] as Array[BoonMod]})
 	# Domínio: the finisher wears 50% more Quebra; the Brado is wider, stronger and interrupts (the old Voz Larga's numbers);
 	# the stun of a blow lasts 50% longer; the Investida goes through and stuns whoever it hits for 2 s (B.4), Quebra wears 50% more
 	_talent(8, &"ruptura", B.DOMINIO, T.ENTRY, 2, 3, {"mods": [_fixed(&"poise_pct", 0.5, [], &"finisher"), _fixed(&"poise_pct", 0.5, [], &"smash")] as Array[BoonMod]})
@@ -2509,9 +2512,10 @@ func _hero() -> void:
 		"magick_max": 30.0, "circle": false,
 		"cast_charge": 0.25, "cast_slow": 0.6, "cast_cooldown": 6.0, "cast_attack_lock": 8.0 / 60.0, "cast_omega_time": 0.6,
 		"cast_omega_cost": 20.0, "cast_radius": 5.4, "cast_time": 3.0, "cast_burst": 375.0,
-		"magick_on_finisher": 2.0,
+		# 2026-11-27: no blow of the Warrior costs Magia, so nothing of his gives it back either (no finisher, no break, no hit)
+		"magick_on_finisher": 0.0,
 		# C1c (kit_c1c.md 1): the buttons feed each other
-		"magick_on_break": 3.0, "cd_refund_hit": 0.0, "cd_refund_break": 0.0, "cd_floor": 0.0, "gain_cap": 3.0, "gain_window": 1.0,
+		"magick_on_break": 0.0, "cd_refund_hit": 0.0, "cd_refund_break": 0.0, "cd_floor": 0.0, "gain_cap": 3.0, "gain_window": 1.0,
 		"wave_refund_cap": 8.0,
 		# GP-1 (warrior_v1 6): the Ritmo de Batalha, prototype numbers (balance-designer measures)
 		"rhythm_time": 3.0, "rhythm_smash_poise": 0.5, "rhythm_power_stun": 1.0, "rhythm_power_poise": 0.3, "rhythm_special_dmg": 0.5,
@@ -3604,7 +3608,7 @@ func _forge() -> void:
 	var A := Forge.AWAKEN
 	var wake := Forge.TOOL_AWAKEN
 	_forge_rank(20, &"awaken_sede", 1, 2, [_fixed(&"heal_on_kill", 0.5)] as Array[BoonMod], A, &"blade", wake, MaterialPurse.EMERALD)
-	_forge_rank(21, &"awaken_impeto", 1, 3, [_fixed(&"finisher_magick", 3)] as Array[BoonMod], A, &"blade", wake, MaterialPurse.EMERALD)
+	_forge_rank(21, &"awaken_impeto", 1, 3, [_fixed(&"ult_charge_pct", 0.15)] as Array[BoonMod], A, &"blade", wake, MaterialPurse.EMERALD)
 	_forge_rank(22, &"awaken_eco", 1, 4, [_fixed(&"echo_pct", 0.33, [], &"finisher"), _fixed(&"echo_delay", 0.25, [], &"finisher")] as Array[BoonMod],
 		A, &"blade", wake, MaterialPurse.EMERALD)
 	# Inscrever: each Encanto past the first three learned for 20 Prata (the rank's id is the Encanto's), opened by the

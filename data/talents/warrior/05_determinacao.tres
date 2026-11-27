@@ -5,8 +5,8 @@
 
 [sub_resource type="Resource" id="Resource_4ma6y"]
 script = ExtResource("1_07w12")
-stat = &"attack_magick_pct"
-base = 1.0
+stat = &"ult_charge_pct"
+base = 0.25
 per_level = PackedFloat32Array()
 by_rarity = false
 
