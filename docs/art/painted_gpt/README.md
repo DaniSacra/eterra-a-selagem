@@ -27,6 +27,7 @@ Generation (curl; the key is read from the file, never printed):
 | 2026-11-27 | dark_v3: 3 calls cut by the network (no image; billing unknown, at most 0.75) | 0 | - | 0 to 0.75 |
 | 2026-11-27 | VFX lote 1 (generations, no ref): cut1 v1 (ellipse, drift), cut1 v2, cut2 v1, spin v1, smash v1 (radial stripes read as sun rays, rejected), smash v2, contact v1, hit_ring v1 | 8 | 5488 | 2.00 |
 | 2026-11-27 | characters (edits 1024x1536, `docs/art/characters_gpt/`): 8 concepts A1, 8 Meshy fronts B1, 2 hero backs C1; redos: Warrior A2+B2 (chest lion read as a sun), Guard B2 (lost bulk), Maga C2 (staff on wrong side, spear tip) | 22 | 5488 | 5.50 |
+| 2026-11-27 | HUD v3 kit (`docs/art/hud_v3/`): icons_a (6 icons), icons_b (attack + smash redo: first smash fanned up like a burst, first attack read as an arrow), frames_a (slot, rings), frames_b (bar, cartouche, divider, medallions), portrait (1024x1024, 7024 tokens) | 5 | 5488 (portrait 7024) | 1.30 |
 
 ## style_v2 (2026-11-27): style approval round
 `style_v2/` holds the variants Daniel is choosing from (Downloads\ASelagem-GP8\APROVAR-ESTILO). Request =
