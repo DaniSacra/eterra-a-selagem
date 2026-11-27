@@ -7,7 +7,7 @@ const STAGE := "res://data/stages/catacombs.tres"
 ## Doors closer to the way in than this, and to each other.
 const FROM_WAY_IN := 8.0
 ## PT-6b (Daniel, 2026-11-25): the first two doors stand together in the corner, 4.2 m between centres.
-const APART := 4.0
+const APART := 5.5
 
 
 func test_the_doors_are_at_the_back() -> void:

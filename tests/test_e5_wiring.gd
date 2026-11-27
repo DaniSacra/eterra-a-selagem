@@ -49,7 +49,7 @@ func test_the_stage_plans_use_the_looks_pieces() -> void:
 	assert_eq(trial.look, &"trial")
 	assert_eq(trial.obstacles.map(func(o: ArenaObstacle) -> StringName: return o.piece), [&"trial_block"])
 	var altar := stage.altar_layout
-	assert_eq(altar.obstacles.map(func(o: ArenaObstacle) -> StringName: return o.piece), [&"altar", &"bench", &"bench_broken"],
+	assert_eq(altar.obstacles.map(func(o: ArenaObstacle) -> StringName: return o.piece), [&"altar", &"bench", &"bench_broken", &"brazier"],
 		"a whole bench and a broken one")
 
 

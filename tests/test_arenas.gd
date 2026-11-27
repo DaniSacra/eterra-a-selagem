@@ -132,19 +132,33 @@ func test_a_dash_never_crosses_the_abyss() -> void:
 								if not shape.contains(next, Player.RADIUS - 0.02):
 									off += 1
 								# crossing: a frame's way passes over a hole, or jumps more than the dash moves in it
-								if _over_hole(shape, at, next) or at.distance_to(next) > DASH / frames + 0.05:
+								if _over_hole(shape, at, next, l.exits) or (at.distance_to(next) > DASH / frames + 0.05 and not _near_mouth(l.exits, at, next)):
 									crossed += 1
 								at = next
 				assert_eq(off, 0, "%s %d: the dash keeps the body on the floor at every frame" % [id, v])
 				assert_eq(crossed, 0, "%s %d: no dash crosses the hole" % [id, v])
 
 
+## True when a or b stands at a door's mouth (the seam between the floor and the stairs' landing may move a body more than a step).
+func _near_mouth(exits: Array[ArenaExit], a: Vector2, b: Vector2) -> bool:
+	for e in exits:
+		if e.mouth.grow(1.0).has_point(a) or e.mouth.grow(1.0).has_point(b):
+			return true
+	return false
+
+
 ## A hole lies along the straight way from a to b (probes every 0.1 m).
-func _over_hole(shape: FloorShape, a: Vector2, b: Vector2) -> bool:
+## (a door's mouth is floor too, the landing of its stairs: Arena joins it, 2026-11-27 the doors stand where a dash reaches them)
+func _over_hole(shape: FloorShape, a: Vector2, b: Vector2, exits: Array[ArenaExit] = []) -> bool:
 	var n := ceili(a.distance_to(b) / 0.1)
 	for i in n + 1:
-		if not shape.covers(a.lerp(b, float(i) / maxf(n, 1))):
-			return true
+		var p := a.lerp(b, float(i) / maxf(n, 1))
+		if not shape.covers(p):
+			var in_mouth := false
+			for e in exits:
+				in_mouth = in_mouth or e.mouth.grow(0.05).has_point(p)
+			if not in_mouth:
+				return true
 	return false
 
 

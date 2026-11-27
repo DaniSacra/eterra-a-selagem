@@ -129,18 +129,18 @@ const LOZENGE_WORN := 0.18
 const LOZENGE_Y := 0.005
 ## T2: faded petrol banners with the lion, torn (the altar's fade): on the north wall (x) and the west wall (z), top,
 ## size.
-const BANNER_NORTH := -3.6
+const BANNER_NORTH := 0.25
 const BANNER_WEST := 2.6
 const BANNER_TOP := 5.6
 const BANNER_SIZE := Vector2(1.2, 2.8)
 ## T3: cold fire bowls high on corbels at the north wall's ends (x), the corbel's top, the bowl's scale; never lit.
-const COLD_BOWLS: Array[float] = [-5.4, -2.6]
+const COLD_BOWLS: Array[float] = [-0.9, 1.4]
 const CORBEL := Vector3(0.8, 0.22, 0.62)
 const CORBEL_TOP := 3.25
 const COLD_BOWL_SCALE := 0.5
 ## T4: broken urns on shelves at the foot of the back walls (north: from, to x; west: from, to z), the shelf's height,
 ## the urns' height range, the room between two.
-const SHELF_NORTH := Vector2(-6.2, -2.8)
+const SHELF_NORTH := Vector2(-1.0, 1.6)
 const SHELF_WEST := Vector2(1.2, 4.6)
 const SHELF_HEIGHT := 0.95
 const SHELF_URN := Vector2(0.2, 0.3)

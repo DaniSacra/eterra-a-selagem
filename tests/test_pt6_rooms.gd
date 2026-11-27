@@ -27,8 +27,8 @@ func test_the_way_in_is_south_and_the_doors_north() -> void:
 		assert_true(l.floor.contains(l.hero_spawn, Player.RADIUS), "%s: he comes in on the floor" % l.id)
 		assert_lt(l.hero_facing.y, -0.5, "%s: he looks north" % l.id)
 		assert_gte(l.exits.size(), 2, "%s has doors" % l.id)
-		# the Altar (a chapel with its altar across the north wall) has its two doors on its sides, in the north half
-		var limit := box.position.y + (box.size.y * 0.5 if l.id == &"altar" else third)
+		# the Altar (a chapel with its altar across the north wall) has its two doors on its east side, 5.5 m apart (2026-11-27)
+		var limit := box.position.y + (box.size.y * 0.6 if l.id == &"altar" else third)
 		for i in l.exits.size():
 			var e := l.exits[i]
 			assert_lt(e.edge().y, limit, "%s: door %d in the north third" % [l.id, i])

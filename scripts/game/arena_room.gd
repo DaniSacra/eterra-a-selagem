@@ -2191,6 +2191,7 @@ const WAY_IN_POST := 1.15
 const WAY_IN_MIN := 1.2  # nearer than this to the spawn there is no room for it
 const WAY_IN_MAX := 6.0  # the floor must end this close behind the spawn, or the room has no south edge to draw it on
 const WAY_IN_STEP := 0.25
+const WAY_IN_DARK_HEIGHT := 3.0
 
 
 func _way_in() -> void:
@@ -2205,6 +2206,15 @@ func _way_in() -> void:
 	for sd: float in [-1.0, 1.0]:
 		m.post(Vector3(x + sd * (half + 0.5), WAY_IN_SILL.y, z + 0.7), 0.0, WAY_IN_POST, mat)
 	tomb.grille(Vector3(x - half, WAY_IN_SILL.y, z + 0.3), Vector3(x + half, WAY_IN_SILL.y, z + 0.3))
+	# Daniel 2026-11-27: the entrance reads as an opening, dark inside (no reward sign, unlike the exits): a black face behind the grille
+	var dark := MeshInstance3D.new()
+	var quad := BoxMesh.new()
+	quad.size = Vector3(WAY_IN_WIDTH, WAY_IN_DARK_HEIGHT, 0.05)
+	dark.mesh = quad
+	dark.material_override = _door_black()
+	dark.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	dark.position = Vector3(x, WAY_IN_SILL.y + WAY_IN_DARK_HEIGHT * 0.5, z + 0.9)
+	add_child(dark)
 
 
 ## Where the south edge lies behind the spawn: (x, z) of the last floor point going south from it, or (INF, 0) when
@@ -2296,11 +2306,32 @@ func door_arch(edge_mid: Vector2, inward: Vector2, width: float, back := 0.5, he
 		var side := Vector2(-inward.y, inward.x) * sd * (w * 0.5 + JAMB * 0.5)
 		m.block(foot + Vector3(side.x, 0.0, side.y), Vector3(JAMB, spring, 0.9), atan2(inward.x, inward.y), mat)
 	m.voussoir_arch(foot, inward, w, spring, 0.5, 0.9, mat)
+	# Daniel 2026-11-27: the opening behind a door is just dark (a deep black passage), never grilles or wall: a black face, lit by nothing,
+	# fills the doorway under the arch
+	var dark := MeshInstance3D.new()
+	var quad := BoxMesh.new()
+	quad.size = Vector3(w, spring + DOOR_DARK_OVER, 0.05)
+	dark.mesh = quad
+	dark.material_override = _door_black()
+	dark.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	dark.position = foot + Vector3(0.0, (spring + DOOR_DARK_OVER) * 0.5, 0.0) + Vector3(inward.x, 0.0, inward.y) * 0.1
+	dark.rotation.y = atan2(inward.x, inward.y)
+	add_child(dark)
 
 
 ## True when p lies over (within OTHER_MOUTH_GROW of) the mouth of a door other than `skip` (PT-6b: the doors stand
 ## side by side, and what hangs beside one must not stand in the other).
 const OTHER_MOUTH_GROW := 0.5
+const DOOR_DARK_OVER := 0.35
+var _black_mat: StandardMaterial3D
+
+
+func _door_black() -> StandardMaterial3D:
+	if _black_mat == null:
+		_black_mat = StandardMaterial3D.new()
+		_black_mat.albedo_color = Color(0.01, 0.01, 0.012)
+		_black_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	return _black_mat
 
 
 func over_other_mouth(p: Vector2, skip: int) -> bool:
