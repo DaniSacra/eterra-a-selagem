@@ -1,5 +1,14 @@
 # Backlog de A Selagem
 
+## Teste do Daniel no exe 1497e18a (2026-11-26, 21h)
+
+- **PT-27a (bug, investigar):** "escolhi pegar um coração na sala 3 mas veio uma Bênção do Sarael com uma opção apenas". O registro
+  das partidas (`runs.jsonl`) não mostra o caso: nas partidas registradas o coração deu vida. Hipóteses: medalhão do Sarael
+  (vermelho) confundido com o coração, ou mão de 1 carta pela linhagem V2. Dono: gameplay-engineer e ui-ux-designer.
+- **PT-27b (depois de fechar o que temos):** jogo muito difícil; heróis dão pouco dano no capítulo 1. Repensar com o balance-designer.
+- **PT-27c (depois):** a Maga está chata de jogar, "vamos ter que repensar muito nela". HUD da Maga parado até lá.
+- Ordem do Daniel: finalizar tudo o que já temos e só depois pensar em dificuldade, dano e Maga.
+
 ## Backlog priorizado (2026-11-26 noite): tudo o que está aberto, numa lista só
 Junta o que ficou aberto nas rodadas até o exe `abcc4c89` (seções abaixo, revisões `qa_2026-11-26b.md` e `ART_REVIEW_2026-11-26b.md`)
 com os 3 pacotes do ChatGPT de 2026-11-26 (textos em `docs/design/packs_2026-11-26/`: `vfx` = PK-1, `herois_v1` = PK-2,
