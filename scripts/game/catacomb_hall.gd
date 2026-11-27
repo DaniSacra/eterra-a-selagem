@@ -39,16 +39,20 @@ const STATUE_OFF := 1.3
 ## how far the wall's face stands out of the floor's edge (the floor plate's margin), where the anchors of their signs
 ## hang (m in front of the edge, height) and where the paladin stands to use them (the zone: width, depth, inside the
 ## floor's walkable edge).
-const DOOR_X: Array[float] = [7.6, 11.8]
+const DOOR_X: Array[float] = [7.6, 14.0]
 const DOOR_CLEAR := Vector2(3.0, 5.2)
+## The hall's own doors are monumental (Daniel 2026-11-27, 1.5 times the old height; the crypt keeps DOOR_CLEAR, its wall is lower).
+const HALL_DOOR := Vector2(3.0, 7.8)
+## The tall statue in its niche on the wall between the two doors (x, how far it stands off the wall's face, its height).
+const MID_STATUE := Vector3(10.8, 0.9, 5.0)
 const DOOR_FRAME := 0.3
 const DOOR_ARC := 0.8
 const DOOR_WALL_Z := -HALF.y - 0.3
 ## PT-25-10: the medallion hangs IN the doorway (a hair in front of the closed leaves, over the floor's edge), at this height.
-const DOOR_SIGN := Vector2(0.05, 2.55)
+const DOOR_SIGN := Vector2(0.05, 3.3)
 ## The warm light on the doors' wall: where it hangs (between the two doors, in front of the wall), colour (#F3C47D
 ## leaning amber), energy and reach. No shadow, never on the crowd.
-const DOOR_TORCH_AT := Vector3(9.7, 3.4, -HALF.y + 1.6)
+const DOOR_TORCH_AT := Vector3(10.8, 3.4, -HALF.y + 1.6)
 const DOOR_TORCH := Color(1.0, 0.74, 0.42)
 const DOOR_TORCH_ENERGY := 2.4
 const DOOR_TORCH_RANGE := 7.5
@@ -148,20 +152,18 @@ const FACADE_FILL_CONE := 70.0
 ## back) behind the statues and the tall window of the doors' wall (width, height, over the floor) with a mullion.
 const PLINTH := Vector2(1.0, 0.25)
 const DAIS_CORNICES: Array[float] = [7.4]
-const DOOR_CORNICES: Array[float] = [6.5, 8.9]
+const DOOR_CORNICES: Array[float] = [9.2]
 const CORNICE := Vector2(0.25, 0.2)
 const NICHE := Vector3(2.0, 6.2, 0.4)
 const NICHE_DARK := 0.3
-const HIGH_WINDOW := Vector3(1.2, 2.6, 5.0)
 const MULLION := 0.1
 ## The buttresses along the dais wall (x) and the doors' wall (x), and the bay of the doors' wall that takes a window (x).
 const BUTTRESSES: Array[float] = [-5.9, -2.3, 1.6, 5.0]
-const DOOR_BUTTRESSES: Array[float] = [14.6, 19.0]
-const DOOR_BAY := 16.9
+const DOOR_BUTTRESSES: Array[float] = [19.4]
 ## The banners (worn crimson, no insignia: the lion is the allies'): x, height of the bar over the foot of their wall,
 ## width, length; how far in front of the facade's face they hang. The first hangs on the dais wall, the second on the
 ## doors' wall (its foot is the floor, not the dais).
-const BANNERS: Array[Vector4] = [Vector4(-2.3, 6.4, 1.9, 4.4), Vector4(14.6, 7.2, 2.3, 5.2)]
+const BANNERS: Array[Vector4] = [Vector4(-2.3, 6.4, 1.9, 4.4), Vector4(17.6, 7.2, 2.3, 5.2)]
 const BANNER_OUT := 1.5
 ## Their cloth: crimson worn dark (the kit's is brighter and lit it salmon).
 const BANNER_CLOTH := Color(0.17, 0.035, 0.04)
@@ -607,7 +609,7 @@ func build_steps(exit_count: int) -> Array[Callable]:
 		_detail,
 		func() -> void: HallLife.dress(kit.root, kit.styled()),
 		_stylize_rest,
-		# GP-8 prototype (--painted): the painting replaces the 3D pieces, the collision follows it
+		# GP-8: the hall's painting is projected on its finished stone (PaintedHall; collision untouched)
 		func() -> void:
 			if PaintedHall.wanted(arena):
 				PaintedHall.apply(arena),
@@ -1136,8 +1138,8 @@ func _door_wall() -> void:
 	var top := FACADE_HEIGHT
 	var wall := m.ashlar(0.0)
 	var order := m.ashlar(0.0, PORTAL_ORDER_TINT)
-	var hw := DOOR_CLEAR.x * 0.5
-	var spring := HallDoor.spring_of(DOOR_CLEAR.x, DOOR_CLEAR.y, DOOR_ARC)
+	var hw := HALL_DOOR.x * 0.5
+	var spring := HallDoor.spring_of(HALL_DOOR.x, HALL_DOOR.y, DOOR_ARC)
 	var edges: Array[float] = [DAIS_X.y]
 	for dx: float in DOOR_X:
 		edges.append(dx - hw - DOOR_FRAME)
@@ -1156,7 +1158,7 @@ func _door_wall() -> void:
 		# over the doorway: the wall from the springing line up, in front of the recess
 		m.block(Vector3((span_l + span_r) * 0.5, spring, zf - 1.6), Vector3(span_r - span_l, top - spring, 3.2), 0.0, wall)
 		# jambs, threshold, arch ring, the black and the leaves (PT-25-10: the big doors, the medallion hangs in them)
-		_doors_built.append(HallDoor.doorway(m, kit.root, order, Vector3(dx, 0.0, zf), DOOR_CLEAR, DOOR_ARC, DOOR_FRAME,
+		_doors_built.append(HallDoor.doorway(m, kit.root, order, Vector3(dx, 0.0, zf), HALL_DOOR, DOOR_ARC, DOOR_FRAME,
 			DOOR_DEPTH, DOOR_FACE_OUT))
 	# cornices across the whole wall (the arches' crowns stay under the first), buttresses and a window in its east bay
 	var mat := m.ashlar(0.0)
@@ -1167,7 +1169,9 @@ func _door_wall() -> void:
 		m.block(Vector3(bx, 0.0, zf + 0.6), Vector3(1.5, 2.2, 1.0), 0.0, mat)
 		m.point(Vector3(bx, 2.2, zf + 0.6), 1.5, 0.5, 0.0, 0.3, mat)
 		m.pinnacle(Vector3(bx, top - 1.5, zf + 0.2), PINNACLE.x, PINNACLE.y, mat)
-	_niche(Vector3(DOOR_BAY, HIGH_WINDOW.z, zf), HIGH_WINDOW.x, HIGH_WINDOW.y, mat, m.stone(0.0, Color.WHITE * NICHE_DARK), true)
+	# the tall blind niche between the two doors, with a hooded statue on a plinth standing in it
+	_niche(Vector3(MID_STATUE.x, NICHE.z, zf), NICHE.x + 0.2, NICHE.y + 1.0, mat, m.stone(0.0, Color.WHITE * NICHE_DARK), false)
+	kit.statue(Vector2(MID_STATUE.x, zf + MID_STATUE.y), 0.0, MID_STATUE.z, 0.0, STATUE_VALUE, false)
 
 
 ## The two doors' nodes (D1, D2), to open the one chosen.

@@ -9,3 +9,5 @@ Painter's cameras (game flags, all --showcase --no-hero --no-hud --seed=5):
 - sala01: --cam-at=2,1 --cam-dist=68 (yaw 35, pitch 30, fov 24: the "game" pose of painted_hall.gd), 1920x1080
 - sala00: --start=sala00 --no-arrival --cam-at=0,0 --cam-yaw=35 --cam-pitch=30 --cam-fov=24 --cam-dist=52, 2560x1440
 - antessala: --start=ante --no-arrival --cam-at=0,0 --cam-yaw=35 --cam-pitch=30 --cam-fov=24 --cam-dist=80, 2560x1440
+
+In the game: `PaintedHall.ROOMS` (scripts/game/painted_hall.gd) names each file and its pose; to swap a painting replace its png in assets/rooms/painted (same 3:2 stretch of the 16:9 base, same pose).

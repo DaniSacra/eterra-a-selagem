@@ -287,6 +287,10 @@ func build_steps(a: Arena, l: RoomLayout, exit_count: int, seed_: int) -> Array[
 		steps.append(_timed.bind(StringName("stylize%d" % k), step))
 		k += 1
 	steps.append(_timed.bind(&"shadows", func() -> void: shadowed = _count_shadows()))
+	# GP-8: the rooms with a painting (the Sala 00, the Antessala) wear it over their finished stone
+	steps.append(_timed.bind(&"painted", func() -> void:
+		if PaintedHall.wanted(arena):
+			PaintedHall.apply(arena)))
 	return steps
 
 
