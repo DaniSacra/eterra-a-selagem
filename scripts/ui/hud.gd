@@ -4,8 +4,8 @@ extends Control
 ## diamond mark, a thin gold rule and the objective under it (RoomHeader, ObjectiveLine); top middle the clock in a cartouche with an
 ## hourglass (Cartouche); bottom left the round portrait, "Ritmo de Batalha" with its thin gold line (RhythmMeter) and three bars with
 ## round medallions, the Supremo's charge in gold, Magia in blue, life in red, each with its value on its right end (StatBar); bottom
-## centre the four blows as square painted slots, left touch, left hold, right touch, right hold, the mouse under each and the Magia
-## cost as a drop in its corner, a gold divider, then the dodge with its key cap and the round Supremo with its ring (ActionSlot);
+## centre the four blows as square painted slots, left tap, right tap, left hold, right hold (the mouse under each: white = click, gold = hold)
+## and the Magia cost as a drop in its corner, then the Supremo (Shift cap), a gold divider and the dodge (Space bar cap) (ActionSlot);
 ## right edge a column of Blessing medallions in diamond frames, icons only, the name for a few seconds when gained or under the
 ## mouse (BuildColumn); bottom right the coins between two gold rules (CoinCorner). The art lives in assets/ui/hud_v3/ and every
 ## piece falls back to a drawn one (HudArt). Everything sits on the edges so the middle of the screen stays for the fight: the slots
@@ -51,12 +51,10 @@ const PASSIVE_GAP := 4
 ## The row of gifts that act alone ends at this share of the screen's width; past it the last place says "+N" (BUG-105).
 ## Those with a recharge go first: their timer is what is worth a glance in a fight.
 const PASSIVE_EDGE := 0.96
-## The row of slots at the foot (HUD v3): the four blows are ROW_SLOT squares, the dodge DODGE_SLOT, the Supremo's round slot SUPREME_SLOT;
+## The row of slots at the foot (HUD v3): the four blows, the Supremo and the dodge are all ROW_SLOT squares (the Supremo before the divider);
 ## the gap between two slots. The hit count stands on the row's line, right of the last slot, the move's name over the row's middle;
 ## the curse's badge and the Provação's seal (conditions, not always there) stand over the portrait and the bars.
 const ROW_SLOT := 48.0
-const DODGE_SLOT := 38.0
-const SUPREME_SLOT := 56.0
 const ROW_GAP := 6
 ## The ink plate under the row: its height (px at 720 lines, 150 at 1080) and its darkest opacity at the bottom edge.
 const FLOOR_VEIL_H := 100.0
@@ -179,8 +177,9 @@ const SLOTS: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.
 const MAGA_GLYPHS := {&"light_attack": BoonIcon.BOLT_GLYPH, &"heavy_attack": BoonIcon.BLAST_GLYPH, &"shout": BoonIcon.ACTION_GLYPH + Boon.Slot.CAST,
 	&"rush": BoonIcon.DOME_GLYPH}
 ## HUD v3: the four blows of the Warrior's two buttons, in the row's order: the button, whether it is the hold, the art of the slot.
-const BLOWS: Array[Array] = [[&"light_attack", false, &"icon_attack"], [&"light_attack", true, &"icon_smash"],
-	[&"heavy_attack", false, &"icon_power"], [&"heavy_attack", true, &"icon_lance"]]
+## (Daniel's mock: left tap, right tap, left hold, right hold; the mouse under each is lit white for a tap and gold for a hold.)
+const BLOWS: Array[Array] = [[&"light_attack", false, &"icon_attack"], [&"heavy_attack", false, &"icon_power"],
+	[&"light_attack", true, &"icon_smash"], [&"heavy_attack", true, &"icon_lance"]]
 ## Seconds the ultimate's caption shows after a refused press or when it fills (T5).
 const ULT_HINT_TIME := 1.8
 ## UI 10: with the charge full and life below this share the ready ring pulses harder.
@@ -561,7 +560,7 @@ func _build_actions() -> void:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(row)
 	var arcane := game != null and game.hero != null and game.hero.arcane != null
-	var tall := maxf(ROW_SLOT, maxf(DODGE_SLOT, SUPREME_SLOT))
+	var tall := ROW_SLOT
 	# the Warrior's two buttons split into touch and hold (four slots); the Maga's stay one slot each (her buttons are tap and hold too,
 	# but her Blessings and glyphs ride on the button)
 	var blows: Array[Array] = []
@@ -575,14 +574,14 @@ func _build_actions() -> void:
 		s.hold = spec[1]
 		row.add_child(s)
 		_slots.append(s)
+	_ult_slot = _new_slot(&"ultimate", Boon.Slot.NONE, ROW_SLOT, ActionSlot.Shape.SQUARE, tall)
+	_ult_slot.piece = &"icon_supreme"
+	row.add_child(_ult_slot)
 	row.add_child(HudDivider.new())
-	var dodge := _new_slot(&"dodge", Boon.Slot.DASH, DODGE_SLOT, ActionSlot.Shape.SQUARE, tall)
+	var dodge := _new_slot(&"dodge", Boon.Slot.DASH, ROW_SLOT, ActionSlot.Shape.SQUARE, tall)
 	dodge.piece = &"icon_dodge"
 	row.add_child(dodge)
 	_slots.append(dodge)
-	_ult_slot = _new_slot(&"ultimate", Boon.Slot.NONE, SUPREME_SLOT, ActionSlot.Shape.ROUND, tall)
-	_ult_slot.piece = &"icon_supreme"
-	row.add_child(_ult_slot)
 	# centred on the screen's middle whatever the number of slots (the row's own box is as wide as they are)
 	var height := row.get_combined_minimum_size().y
 	var width := row.get_combined_minimum_size().x
@@ -1306,7 +1305,7 @@ func _update_boss(b: Enemy) -> void:
 
 ## The count and the move's name stand right of the last diamond shown (the robot has no ultimate's).
 func _follow_row() -> void:
-	var last: Control = _ult_slot if _ult_slot.visible else _slots.back()  # (the Supremo, else the dodge: always there)
+	var last: Control = _slots.back()  # the dodge: the row's last, always there
 	var x := last.get_global_rect().end.x - get_global_rect().position.x + ROW_COUNT_GAP
 	if not is_equal_approx(_combo_row.offset_left, x):
 		_combo_row.offset_left = x

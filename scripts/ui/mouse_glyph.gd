@@ -6,6 +6,7 @@ extends RefCounted
 ## PNGs of assets/ui/keys/ so a RichTextLabel can show it with [img].
 ##   MouseGlyph.keyed("Aperte Clique esquerdo")   # BBCode with the icon where the name is
 ##   MouseGlyph.draw(self, centre, MOUSE_BUTTON_LEFT)
+## The HUD's slots use the styles TAP (button lit white: a click) and HOLD (lit gold: hold the button); the rest keep DEFAULT (gold).
 
 ## Size in the UI (pixels) and the sharpness of the PNG (the icon is saved at SCALE times that).
 const W := MouseGlyphArt.W
@@ -16,8 +17,9 @@ static var _cache := {}
 
 
 ## The path of the PNG of a button (assets/ui/keys/mouse_1.png).
-static func path(button: int) -> String:
-	return "res://assets/ui/keys/mouse_%d.png" % button
+static func path(button: int, style: MouseGlyphArt.Style = MouseGlyphArt.Style.DEFAULT) -> String:
+	var tail: String = ["", "_tap", "_hold"][style]
+	return "res://assets/ui/keys/mouse_%d%s.png" % [button, tail]
 
 
 ## The button a key label names ("Clique esquerdo": MOUSE_BUTTON_LEFT; 0 for anything else).
@@ -29,17 +31,18 @@ static func button_of(label: String) -> int:
 
 
 ## The icon of a button: the saved PNG, or the same drawing made now when the file is not imported yet.
-static func texture(button: int) -> Texture2D:
-	if not _cache.has(button):
-		var tex: Texture2D = load(path(button)) if ResourceLoader.exists(path(button)) else null
-		_cache[button] = tex if tex != null else ImageTexture.create_from_image(MouseGlyphArt.rasterize(button))
-	return _cache[button]
+static func texture(button: int, style: MouseGlyphArt.Style = MouseGlyphArt.Style.DEFAULT) -> Texture2D:
+	var key := button * 10 + style
+	if not _cache.has(key):
+		var tex: Texture2D = load(path(button, style)) if ResourceLoader.exists(path(button, style)) else null
+		_cache[key] = tex if tex != null else ImageTexture.create_from_image(MouseGlyphArt.rasterize(button, style))
+	return _cache[key]
 
 
 ## Draws the icon centred at `at` on a CanvasItem; `h` is its height (W:H kept).
-static func draw(ci: CanvasItem, at: Vector2, button: int, h: float = H) -> void:
+static func draw(ci: CanvasItem, at: Vector2, button: int, h: float = H, style: MouseGlyphArt.Style = MouseGlyphArt.Style.DEFAULT) -> void:
 	var size := Vector2(W, H) * (h / H)
-	ci.draw_texture_rect(texture(button), Rect2(at - size * 0.5, size), false)
+	ci.draw_texture_rect(texture(button, style), Rect2(at - size * 0.5, size), false)
 
 
 ## The icon as BBCode for a RichTextLabel (its height h in pixels).

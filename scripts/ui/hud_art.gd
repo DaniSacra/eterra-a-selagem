@@ -19,6 +19,7 @@ const ICON_COLORS := {&"icon_attack": Color(1.0, 0.8, 0.4), &"icon_smash": Color
 	&"icon_lance": Color(0.5, 0.95, 0.68), &"icon_dodge": Color(0.94, 0.9, 0.82), &"icon_supreme": Color(1.0, 0.82, 0.4)}
 
 static var _cache := {}
+static var _tile_fill: GradientTexture2D
 
 
 ## The picture of a piece, null while its file is not there (loaded once).
@@ -32,6 +33,26 @@ static func tex(piece: StringName) -> Texture2D:
 ## Forgets what was looked up (tests, and a kit that lands while the game runs).
 static func reload() -> void:
 	_cache.clear()
+
+
+## The warm dark radial fill under a slot's picture (centre c, half size r): `outline` is the slot's shape, uvs follow the square.
+static func fill_tile(ci: CanvasItem, outline: PackedVector2Array, c: Vector2, r: float, alpha: float = 1.0) -> void:
+	if _tile_fill == null:
+		var g := Gradient.new()
+		g.offsets = PackedFloat32Array([0.0, 1.0])
+		g.colors = PackedColorArray([Color(0.26, 0.13, 0.05), Color(0.045, 0.03, 0.035)])
+		var t := GradientTexture2D.new()
+		t.gradient = g
+		t.fill = GradientTexture2D.FILL_RADIAL
+		t.fill_from = Vector2(0.5, 0.5)
+		t.fill_to = Vector2(1.0, 0.5)
+		t.width = 64
+		t.height = 64
+		_tile_fill = t
+	var uvs := PackedVector2Array()
+	for p in outline:
+		uvs.append((p - c) / (r * 2.0) + Vector2(0.5, 0.5))
+	ci.draw_colored_polygon(outline, Color(1, 1, 1, alpha), uvs, _tile_fill)
 
 
 ## A picture centred at c filling a square of half size r.
