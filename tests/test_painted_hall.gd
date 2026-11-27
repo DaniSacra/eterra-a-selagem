@@ -68,8 +68,11 @@ func test_off_switch_and_default() -> void:
 	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
 	Dev.put("painted", "1")
 	assert_true(PaintedHall.wanted(a), "--painted forces it on")
-	a.layout = _stage().layouts[1]
-	assert_false(PaintedHall.wanted(a), "a room with no painting never is")
+	for l: RoomLayout in _stage().layouts:
+		if l.id == &"runes":
+			a.layout = l
+	assert_eq(a.layout.id, &"runes")
+	assert_false(PaintedHall.wanted(a), "a room with no painting (the runes, until its repaint) never is")
 
 
 func test_painted_hall_keeps_collision_and_doors() -> void:
@@ -148,9 +151,10 @@ func test_rooms_are_keyed_by_layout_and_variant() -> void:
 	assert_eq(PaintedHall.key_of(l), &"hall")
 	assert_eq(PaintedHall.key_of(null), &"")
 	var v := RoomLayout.new()
-	v.id = &"crypt"
+	v.id = &"runes"
 	v.variant_index = 1
 	assert_eq(PaintedHall.key_of(v), &"", "no entry: not painted")
+	v.id = &"crypt"
 	var table := {&"crypt": {}, &"crypt:1": {}}
 	assert_eq(PaintedHall.key_of(v, table), &"crypt:1", "a variant with its own entry")
 	v.variant_index = 2
@@ -172,3 +176,26 @@ func _under(n: Node, cls: Variant) -> bool:
 			return true
 		p = p.get_parent()
 	return false
+
+
+## Lote 4: every layout of the stage that has a game plate resolves to its own entry (variants 0 and 1 of the crypt, rift,
+## garden, sanctuary and bridge; the Knight's and the Elder's halls, the Provacao and the altar), and no entry is orphaned.
+func test_lote4_rooms_resolve_to_their_entries() -> void:
+	var st := _stage()
+	var layouts: Array[RoomLayout] = []
+	layouts.assign(st.layouts)
+	for l: RoomLayout in [st.altar_layout]:
+		if l != null:
+			layouts.append(l)
+	var seen := {}
+	for l in layouts:
+		for n in l.variant_count():
+			var k := PaintedHall.key_of(l.variant(n))
+			if k != &"":
+				seen[k] = true
+	for k: StringName in PaintedHall.ROOMS:
+		if k in [&"hall", &"sala00", &"ante"]:
+			continue
+		assert_true(seen.has(k) or k == &"trial" or k == &"knight_hall" or k == &"elder_hall", "%s: some layout of the stage uses it" % k)
+	for k: StringName in [&"crypt:0", &"crypt:1", &"rift:0", &"rift:1", &"garden:0", &"garden:1", &"sanctuary:0", &"sanctuary:1", &"bridge:0", &"bridge:1", &"altar"]:
+		assert_true(seen.has(k), "%s resolves" % k)

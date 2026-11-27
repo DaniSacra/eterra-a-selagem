@@ -367,3 +367,27 @@ The first prototype (an old ChatGPT painting on proxy walls, 15 degree pitch) is
 - New rooms are data: `ROOMS` keys are the layout id or `"id:variant"` (`PaintedHall.key_of`, `RoomLayout.variant_index` set by
   `variant()`); each entry has its pose and `v_span` (`STRETCH` 1.0 or `UNIFORM`). A hall (or any room) with a hazard is painted too.
 - Gameplay unchanged (`--smoke` seed 5 same RESULT). Tests: `test_painted_hall`, `test_painted_props`.
+
+### GP-8 lote 4 plates wired (2026-11-27, awaiting Daniel's approval of the paintings)
+- 14 game plates copied from `docs/art/painted_gpt/lote4/*_jogo.png` into `assets/rooms/painted/` (1536x1024 like sala01, about 2.3 MB each, +32 MB in the pack; `assets/baked` is untouched):
+  `crypt_0/1, rift_0/1, garden_0/1, sanctuary_0/1, bridge_0/1, knight_hall, elder_hall, trial, altar`. Each is a `PaintedHall.ROOMS` entry
+  (key `id:variant`, the base's pose of `bases_v2`, `v_span` UNIFORM); `key_of` now matches variant 0 too (`crypt:0`), a layout
+  or variant with no entry still falls back to its id. The Salao, Sala 00 and Antessala are unchanged. The runes (Sala 15/16) have no entry yet.
+- Check (CPU, rift:0 and garden:0 at the base pose, painted on): the plate sits on the 3D within a few px; the door arches and 3D door leaves
+  (black inside) land on the painted arches. Sala 03/04's door painted ~40 px right of the 3D one is NOT corrected: the projection shares one pose for
+  the whole plate, so moving the pose would shift every wall; it is within the door's black face. The other rooms were not captured (CPU capture budget).
+- Garden:0 third door (x -0.8, `_gate` third x): `Arena` builds only `next_rooms.size()` doors, so with two ways the 3rd door is absent in 3D and the
+  painted arch stays as a dark, closed recess in the wall (no leaf, no medallion, not walkable). Same for the rift's 3rd (7.2) and the bridge's 3rd (29.8,-5.5).
+  Fix if it bothers: a third-door stub in 3D or a plate without it (a repaint).
+- Garden rooms: the 3D `stone_tree` (and its canopy and crystals) is not in `PaintedHall.SOLID`, so it draws over the painted tree (the plate's tree is
+  smaller). Not changed (not verifiable in the capture budget): next step is `stone_tree` into SOLID or hide it, canopy hidden, crystals kept.
+- Runes bases (`bases_v2/runes0/1`): the walls were not transparent, they were swallowed by the room's DEPTH FOG (`fog_depth` 45..100 m in `RunesLook`,
+  the camera at 84 m puts the north and west walls at 90 to 100 m: sky colour with only the ink line left). The Cripta, Fendas, Jardim rooms have no tall far walls, so they
+  were not hurt. Proof: `--cam-dist=110` makes even the floor vanish. New option `--clear-air` (`RoomMood.CLEAR_AIR`, only in `air_values`): the
+  room's depth fog begins at 1000 m. Capture command (GPU, base for the runes), then the same with `--variant=1` for runes1:
+  `--start=combat --arena=runes --variant=0 --no-arrival --doors-shut --no-hero --no-hud --no-angels --showcase --cam-yaw=35 --cam-pitch=30 --cam-fov=24 --seed=5 --shot-at=2.5 --cam-at=0,0 --cam-dist=84 --clear-air` (RES=2560x1440).
+  Checked on CPU at 1280x720: solid walls, stelae, door arches, the whole room in frame. The base's framing matched `--cam-dist=84`.
+- Bridge (Sala 13/14): door 2 (x 25) sits at u 1.0 and the east door (29.8,-5.5) at u 1.06 with the old pose (-4,3) dist 94. Proposed pose `--cam-at=3,2 --cam-dist=94`
+  (all three doors at u 0.79, 0.90, 0.94, the bridge 0.10 to 0.95 wide, 0.23 to 0.81 high); the entries `bridge:0/1` keep the old pose until the plates are repainted there
+  (then set `at` Vector2(3, 2), `dist` 94).
+- `--smoke 150 --seed=5` RESULT equal with and without `--painted=off` (timings aside); tests `test_painted_*` (a lote 4 test added), `test_asset_budget`, `tools/check.gd` clean.

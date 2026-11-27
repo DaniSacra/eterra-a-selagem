@@ -142,7 +142,7 @@ arch at the base's black entrance quad, doors apart and monumental) + `room_<roo
 game = `game_common.txt` (+ door leaves out, doorway dark to the floor) + `game_<room>.txt`, image 1 = the chosen approval.
 Scripts: `gen.sh`, `overlay.sh`, `diff.sh`, `luma.sh`, `deliver.sh NN prefix base approval game leia`.
 Lesson: the old approved painting of the SAME room as image 2 makes the model copy its old door layout (crypt1 a1, rift0, garden0);
-use another room's painting (or none) as the style anchor. Transparent (outline) walls in a base (runes0/1) make it widen the room.
+use another room's painting (or none) as the style anchor. Transparent (outline) walls in a base (runes0/1) make it widen the room (cause: depth fog at 84 m, not a see-through; capture with `--clear-air`, see docs/reference/art_core.md, GP-8 lote 4 plates).
 Doors come from `tools/make_data.gd` `_gate(...)` xs (the third x is the optional third door: garden's 59% nook, rift's, guardians' 3 arches).
 Files: `salaNN[_v2]_aprovacao.png`, `_jogo.png`, `_lado_a_lado.jpg` (Downloads\ASelagem-GP8\GPT-SalaNN with LEIA[_v2].txt).
 | Sala | base | chosen | fit (uniform mapping) |
