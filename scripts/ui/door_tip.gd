@@ -45,6 +45,9 @@ static func describe(r: RunMap.Room, silver := 0, angel_family := -1) -> Diction
 	if r.reward != RunMap.Reward.NONE:
 		title = T.t(&"door_tip_reward", {"name": T.t(RunMap.REWARD_KEY[r.reward])})
 		glyph = DoorGlyph.of_reward(r.reward)
+	elif r.kind == RunMap.Kind.TRIAL:
+		# BG-2: the sign over the door already says "Provação": the box says what it gives instead of the same word
+		title = T.t(&"trial_slab_offer")
 	var mods: Array[Dictionary] = []
 	if r.kind == RunMap.Kind.MINIBOSS:
 		mods.append({"id": &"guardian", "text": T.t(&"door_mod_guardian")})
@@ -175,7 +178,8 @@ func _hide_all(delta: float) -> void:
 func _seal(i: int, r: RunMap.Room, at: Vector2, px: float, shown: bool) -> void:
 	var mods: Array = describe(r, Rooms.sign_silver, _family(r)).mods
 	var s: DoorSeal = _seals.get(i)
-	if mods.is_empty() or not shown:
+	# BG-2: the Provação's own medallion needs no badge (it was a dark dot with a tiny diamond beside it)
+	if mods.is_empty() or not shown or r.kind == RunMap.Kind.TRIAL:
 		if s != null:
 			s.visible = false
 		return

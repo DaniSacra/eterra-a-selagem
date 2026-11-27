@@ -160,7 +160,8 @@ func show_angel(text: String, angel: AngelDef) -> void:
 			for i in 2:
 				SealMedal.draw_seal(two, Vector2(ANGEL_SEAL * (0.5 + i * 0.5), ANGEL_SEAL * 0.5), ANGEL_SEAL * 0.42, 1.0))
 		angel_row.add_child(two)
-	var l := _label(text, col, DETAIL_SIZE)
+	# PT-27a: "Anjo Sarael", never the bare name (a warm seal and a name beside "Mais Vida" read as another reward)
+	var l := _label(T.t(&"door_angel_sign", {"name": text}) if angel != null else text, col, DETAIL_SIZE)
 	l.name = "angel_name"
 	angel_row.add_child(l)
 	_box.add_child(angel_row)

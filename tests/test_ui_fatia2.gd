@@ -84,6 +84,7 @@ func test_a_door_names_its_angel_with_its_seal() -> void:
 	assert_eq(sign.detail.text, T.t(&"door_hard"), "the angel out of the detail")
 	assert_not_null(sign.angel_row.find_children("*", "AngelSeal", true, false).front(), "its seal")
 	assert_eq(sign._box.get_child(1), sign.angel_row, "right under the reward")
+	assert_eq((sign.angel_row.find_child("angel_name", false, false) as Label).text, T.t(&"door_angel_sign", {"name": name_text}), "PT-27a: 'Anjo ...'")
 	var two := DoorSign.make(T.t(&"reward_boon"), T.t(&"door_angels_two"), DoorGlyph.Kind.NONE, DoorGlyph.Kind.BLESSING)
 	add_child_autofree(two)
 	two.show_angel(T.t(&"door_angels_two"), null)
