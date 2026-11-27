@@ -1499,9 +1499,16 @@ func _plates(rects: Array[Rect2], from := 0.0, tiled := true) -> HazardDef:
 ## altar of the Blessing at its middle and the same door in the north. The art of both is a painting to be projected on this form
 ## (GP-8): piece, wall, step, door, altar, stream and slab matter here, not the finish.
 const ANTE_HALF := Vector2(7.0, 24.0)
-const ANTE_STREAM := Rect2(-7.0, -8.3, 14.0, 2.6)
-const ANTE_SLAB := Rect2(-2.5, -18.5, 5.0, 3.0)
+## GP-8 (2026-11-27): the painted Antessala (assets/rooms/painted/antessala.png) has its stream, slab and posts where gpt-image-2 drew
+## them; the gameplay data sits exactly there (measured with PaintedHall.to_floor on the painting, see docs/art/painted_gpt/README.md):
+## the stream 2.3 m north of where the planta had it, the slab 5.2 x 4.4 m (was 5 x 3) 2 m north, the eight posts at the painted ones.
+const ANTE_STREAM := Rect2(-7.0, -10.7, 14.0, 2.6)
+const ANTE_SLAB := Rect2(-2.6, -21.3, 5.2, 4.4)
+## The posts of the Antessala, x, z (the painting's, clamped inside the mureta and the door wall).
+const ANTE_POSTS: Array[Vector2] = [Vector2(-6.4, 16.8), Vector2(4.9, 16.5), Vector2(-6.4, 1.9), Vector2(5.4, 2.4),
+	Vector2(-6.4, -15.6), Vector2(5.5, -15.8), Vector2(-6.2, -23.3), Vector2(6.2, -23.3)]
 const SALA00_HALF := Vector2(9.0, 8.0)
+const SALA00_PILLARS: Array[Vector2] = [Vector2(-5.1, -5.2), Vector2(5.2, -5.3), Vector2(-5.2, 2.9), Vector2(5.1, 2.8)]
 const PRELUDE_DOOR := 3.0
 
 
@@ -1518,9 +1525,8 @@ func _ante_room() -> RoomLayout:
 	l.half = l.floor.extent()
 	l.guardian = false
 	var cols: Array[ArenaObstacle] = []
-	for z: float in [19.0, 5.0, -12.0, -21.0]:
-		for x: float in [-6.0, 6.0]:
-			cols.append(_column(x, z, 3.2, 0.5))
+	for at in ANTE_POSTS:
+		cols.append(_column(at.x, at.y, 3.2, 0.5))
 	l.obstacles = cols
 	_gate(l, Vector2(0.0, 20.0), -ANTE_HALF.y, [0.0])
 	l.exits = _doors(-ANTE_HALF.y, [0.0], PRELUDE_DOOR)
@@ -1548,9 +1554,9 @@ func _sala00_room() -> RoomLayout:
 	l.half = l.floor.extent()
 	l.guardian = false
 	var cols: Array[ArenaObstacle] = []
-	for z: float in [-4.0, 4.0]:
-		for x: float in [-5.0, 5.0]:
-			cols.append(_column(x, z, 3.6, 0.6))
+	# GP-8: the four pillars where the painting has them (x, z), measured on the painting
+	for at in SALA00_PILLARS:
+		cols.append(_column(at.x, at.y, 3.6, 0.6))
 	# the altar of the Blessing: 2.2 m square, 1.35 m high, used from its south side at (0, 1.7) and reached from any side
 	cols.append(_piece(0.0, 0.0, 2.2, 2.2, 1.35, &"altar"))
 	l.obstacles = cols

@@ -33,7 +33,18 @@ const ROOMS := {
 ## (by the start of the file name: the stylized twins end in _paint or _fade).
 const SOLID: Array[String] = ["masonry", "catacomb_floor", "depth_stone", "abyss_ruins"]
 ## Shaders whose meshes are hidden (the painting has them): the floor's decals, the abyss's fog, mist and glow.
-const HIDDEN: Array[String] = ["floor_decal", "abyss_fog", "abyss_mist", "abyss_glow"]
+## The water too (the Antessala's stream, the Salao's canal and pools): the painting has the water, and the zone that matters
+## to play (the stream only the dash crosses) is moved in the data to sit where the painting has it (tools/make_data.gd ANTE_STREAM).
+const HIDDEN: Array[String] = ["floor_decal", "abyss_fog", "abyss_mist", "abyss_glow", "shallow_water"]
+## 3D props the painting also has painted, by room (applied only when the painting is on; the classic look and --painted=off keep
+## them). A flame or light burns twice (the painted one and the animated one) unless it lands within about 0.3 m of the painted
+## one: then it stays, snapped onto it ("to": where the painted one is; an entry without "to" hides). Entries: "at" (x, z of the
+## prop on the floor), "radius" (m round it), "kinds" (&"fire": the flame's particles and cards; &"light": the omni lights).
+## Hall: the brazier on the east pier of the doors' wall (17, -14.8) is not in the painting (the painter left a wall there), so its
+## fire and light go; the other four braziers fall within 2 px (0.06 m) of their painted flames and stay.
+const PROPS := {
+	&"hall": [{&"at": Vector2(17.0, -14.8), &"radius": 0.8, &"kinds": [&"fire", &"light"]}],
+}
 ## The far planes: the one under the room (depth below the floor) and the wall beyond it (how far behind the painter's
 ## point, along the camera's way, how high), both this wide.
 const UNDER_DEPTH := 34.0
@@ -106,6 +117,7 @@ func _dress(arena: Arena) -> void:
 	var p := pose_of(room)
 	_mat = _material(p, 0.0)
 	_walk(arena, arena)
+	apply_props(arena, room)
 	var at := Vector3(p[&"at"].x, 0.0, p[&"at"].y)
 	var away := -Feel.cam_offset_of(1.0, p[&"pitch"], p[&"yaw"])
 	away.y = 0.0
@@ -116,7 +128,37 @@ func _dress(arena: Arena) -> void:
 	_quad(far - side + Vector3(0, -UNDER_DEPTH, 0), far + side + Vector3(0, -UNDER_DEPTH, 0), far + side + Vector3(0, WALL_TOP, 0), far - side + Vector3(0, WALL_TOP, 0))
 
 
+## A piece added to the room after it was built (the Antessala's stream, Rooms): dressed as the rest was.
+func dress_late(piece: Node) -> void:
+	_walk(piece, null)
+
+
 ## One painted material, with the stone's see-through opening round the paladin when `see` is on (cached by its numbers).
+## What the painting already has: the room's PROPS entries hide (or move) the 3D flames and lights they name. Returns how many nodes.
+static func apply_props(arena: Node, id: StringName) -> int:
+	var done := 0
+	for e: Dictionary in PROPS.get(id, []):
+		var at: Vector2 = e[&"at"]
+		for n in arena.find_children("*", "", true, false):
+			var kind := &""
+			if n is CPUParticles3D or (n is MeshInstance3D and (n as MeshInstance3D).mesh is QuadMesh):
+				kind = &"fire"
+			elif n is Light3D:
+				kind = &"light"
+			if kind == &"" or not kind in e[&"kinds"] or not n is Node3D:
+				continue
+			var w := (n as Node3D).global_position
+			if Vector2(w.x, w.z).distance_to(at) > float(e[&"radius"]):
+				continue
+			if e.has(&"to"):
+				var d: Vector2 = e[&"to"] - at
+				VisualProfile.vary(n, {&"global_position": w + Vector3(d.x, 0.0, d.y)})
+			else:
+				VisualProfile.vary(n, {&"visible": false})
+			done += 1
+	return done
+
+
 func _material(p: Dictionary, see: float, from: ShaderMaterial = null) -> ShaderMaterial:
 	var key := [see, from.get_shader_parameter(&"see_radius") if from else 0.0, from.get_shader_parameter(&"see_height") if from else 0.0]
 	if _see.has(key):

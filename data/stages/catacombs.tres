@@ -173,7 +173,7 @@ script = ExtResource("7_gcpwj")
 kind = 1
 hero_damage = 10.0
 enemy_damage = 60.0
-plates = Array[Rect2]([Rect2(-2.5, -18.5, 5, 3)])
+plates = Array[Rect2]([Rect2(-2.6, -21.3, 5.2, 4.4)])
 plate_hero_damage = PackedFloat32Array()
 plate_push = PackedVector2Array()
 strips = PackedVector4Array()
@@ -188,7 +188,7 @@ urn_flows = PackedVector4Array()
 
 [sub_resource type="Resource" id="Resource_8a6mf"]
 script = ExtResource("4_wmys5")
-center = Vector2(-6, 19)
+center = Vector2(-6.4, 16.8)
 radius = 0.5
 see_through = true
 piece = &"column"
@@ -196,7 +196,7 @@ height = 3.2
 
 [sub_resource type="Resource" id="Resource_h7k8s"]
 script = ExtResource("4_wmys5")
-center = Vector2(6, 19)
+center = Vector2(4.9, 16.5)
 radius = 0.5
 see_through = true
 piece = &"column"
@@ -204,7 +204,7 @@ height = 3.2
 
 [sub_resource type="Resource" id="Resource_p8egx"]
 script = ExtResource("4_wmys5")
-center = Vector2(-6, 5)
+center = Vector2(-6.4, 1.9)
 radius = 0.5
 see_through = true
 piece = &"column"
@@ -212,7 +212,7 @@ height = 3.2
 
 [sub_resource type="Resource" id="Resource_v7yka"]
 script = ExtResource("4_wmys5")
-center = Vector2(6, 5)
+center = Vector2(5.4, 2.4)
 radius = 0.5
 see_through = true
 piece = &"column"
@@ -220,7 +220,7 @@ height = 3.2
 
 [sub_resource type="Resource" id="Resource_f4dbp"]
 script = ExtResource("4_wmys5")
-center = Vector2(-6, -12)
+center = Vector2(-6.4, -15.6)
 radius = 0.5
 see_through = true
 piece = &"column"
@@ -228,7 +228,7 @@ height = 3.2
 
 [sub_resource type="Resource" id="Resource_vk885"]
 script = ExtResource("4_wmys5")
-center = Vector2(6, -12)
+center = Vector2(5.5, -15.8)
 radius = 0.5
 see_through = true
 piece = &"column"
@@ -236,7 +236,7 @@ height = 3.2
 
 [sub_resource type="Resource" id="Resource_tt172"]
 script = ExtResource("4_wmys5")
-center = Vector2(-6, -21)
+center = Vector2(-6.2, -23.3)
 radius = 0.5
 see_through = true
 piece = &"column"
@@ -244,7 +244,7 @@ height = 3.2
 
 [sub_resource type="Resource" id="Resource_h4aqg"]
 script = ExtResource("4_wmys5")
-center = Vector2(6, -21)
+center = Vector2(6.2, -23.3)
 radius = 0.5
 see_through = true
 piece = &"column"
@@ -263,7 +263,7 @@ depth = Vector2(-1, -1)
 guardian = false
 hazard = SubResource("Resource_5a7yr")
 breakables = Array[ExtResource("1_63so8")]([SubResource("Resource_4au4r"), SubResource("Resource_060tc"), SubResource("Resource_gkrjh"), SubResource("Resource_yvyes"), SubResource("Resource_rgaty"), SubResource("Resource_scdup")])
-gaps = Array[Rect2]([Rect2(-7, -8.3, 14, 2.6)])
+gaps = Array[Rect2]([Rect2(-7, -10.7, 14, 2.6)])
 gather_spots = PackedVector2Array()
 relic_spots = PackedVector2Array()
 area_names = PackedStringArray()
@@ -3845,28 +3845,28 @@ polys = Array[PackedVector2Array]([PackedVector2Array(-9, -8, 9, -8, 9, 8, -9, 8
 
 [sub_resource type="Resource" id="Resource_dnv56"]
 script = ExtResource("4_wmys5")
-center = Vector2(-5, -4)
+center = Vector2(-5.1, -5.2)
 see_through = true
 piece = &"column"
 height = 3.6
 
 [sub_resource type="Resource" id="Resource_m3b3v"]
 script = ExtResource("4_wmys5")
-center = Vector2(5, -4)
+center = Vector2(5.2, -5.3)
 see_through = true
 piece = &"column"
 height = 3.6
 
 [sub_resource type="Resource" id="Resource_cbaj2"]
 script = ExtResource("4_wmys5")
-center = Vector2(-5, 4)
+center = Vector2(-5.2, 2.9)
 see_through = true
 piece = &"column"
 height = 3.6
 
 [sub_resource type="Resource" id="Resource_m65sp"]
 script = ExtResource("4_wmys5")
-center = Vector2(5, 4)
+center = Vector2(5.1, 2.8)
 see_through = true
 piece = &"column"
 height = 3.6

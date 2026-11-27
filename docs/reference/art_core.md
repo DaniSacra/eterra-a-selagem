@@ -336,3 +336,19 @@ The first prototype (an old ChatGPT painting on proxy walls, 15 degree pitch) is
   paintings in use are the first ("atual") ones, still with banners: to redo without them.
 - 2026-11-27 Daniel chose the dark floor for all three (dark_v3: sala01-e3, sala00-e2, antessala-e2): floor mid-dark
   grey-green, warmth only in light pools, no banners. This is the approved look for every painted room from now on.
+
+### GP-8 refinement (2026-11-27): what the painting has is shown once, gameplay sits where it is drawn
+- Water: `shallow_water` is in `PaintedHall.HIDDEN` (the Salao's canal and pools, the Antessala's stream). The stream is a `GapFloor` that
+  `Rooms` adds AFTER the build, so it was never dressed: `Rooms` now calls `PaintedHall.dress_late(stream)` (its water hides, its kerbs
+  wear the painting).
+- Flames and lights: `PaintedHall.PROPS` (per room: `at`, `radius`, `kinds` fire/light, optional `to`) hides or moves the 3D props the
+  painting also has, only while it is on. Measured on `sala01-e3` (crosses at the 3D flames' base): the four Salao braziers
+  (-8.2,-13.3), (-14.3,-3.6), (14.2,12.9), (14.2,2.7) fall within 2 px (0.06 m) of their painted flames and stay; the fifth, on the doors'
+  wall's east pier (17,-14.8), is a wall in the painting, so its fire and light are hidden. Candle flames and halos were already hidden
+  (`HIDE_CARDS`, their lights stay); the Sala 00 and Antessala have no 3D flames (their painted torches/candles are painted only).
+- Gameplay moved to the painting (`tools/make_data.gd`, `-- stage`; the painter's drift measured with `PaintedHall.to_floor` over the
+  painting's corners): Antessala stream z -8.3..-5.7 -> -10.7..-8.1, slab (-2.5,-18.5,5,3) -> (-2.6,-21.3,5.2,4.4), the eight posts
+  (`ANTE_POSTS`, were x +-6 at z 19, 5, -12, -21); Sala 00 pillars (+-5,+-4) -> `SALA00_PILLARS`. Tests: `tests/test_painted_props.gd`.
+- Still different: the Antessala painting keeps a few painted props (vases, a crate, a post stub) near the 3D breakables (the 3D ones break, the
+  painted ones stay: ask the next repaint to erase them); the Sala 00's painted altar candles stay lit after the Blessing.
+- CPU captures at the painter poses: `docs/gallery/gp8_refine_2026-11-27/` (one water, one flame per brazier, plate on the painted plate).

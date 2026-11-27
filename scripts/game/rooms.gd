@@ -578,7 +578,11 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 	_clear_props()
 	_arrival = null  # (the scene of the room before, if one was in play, went with its props)
 	if not game.arena.gaps.is_empty():
-		game.arena.add_child(GapFloor.new(game.arena.gaps))  # PT-25-9: the stream a dash crosses (placeholder until the art)
+		var stream := GapFloor.new(game.arena.gaps)
+		game.arena.add_child(stream)  # PT-25-9: the stream a dash crosses (placeholder until the art)
+		var painted := game.arena.get_node_or_null("PaintedHall") as PaintedHall
+		if painted != null:
+			painted.dress_late(stream)  # GP-8: built after the room, so it has to be dressed by the painting here (its water is painted)
 	game.player.place(game.arena.start)
 	game.player.facing = game.arena.start_facing
 	if Dev.has("hero-at"):
