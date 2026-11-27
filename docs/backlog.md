@@ -15,11 +15,20 @@ verdes.
 demais; robô: 5 de 12 chegam a Morvath, 0 vitórias).
 
 **Em andamento:**
-- **Mouse sem Magia** (gameplay-engineer): os 4 golpes do mouse custam 0; barra de Magia do Guerreiro some se nada
-  mais gastar; medir se a Lança domina. Entra no próximo exe.
+- **Mouse sem Magia: FEITO** (`53a0a04b`): 4 golpes a 0, barra de Magia escondida no Guerreiro; Lança com 14% do dano
+  no robô; se o Daniel achar spam, recarga de 2 s no nó `lance`.
 - **Entradas e ajustes de sala** (room-designer): peça de chegada de verdade em todas as salas (patamar ou passarela que
   sai da tela, nunca "buraco no parapeito"); Altar com as portas na parede do fundo e o túmulo entre elas; Ponte com a
   porta direita para a frente; Runas B sem o pilar na porta esquerda; variantes A e B visivelmente diferentes.
+
+**Prontos em ramos, esperando a próxima sessão juntar:**
+- `worktree-agent-af8f656c0f2f4cd06` (`dad5e194`): entrada nova em todas as salas (patamar de pedra 3,2 x 2,4 m pendurado na
+  borda sul com escada de 5 degraus saindo da tela; parapeito aberto); Altar com as portas na parede do fundo e o túmulo
+  entre elas; Ponte A e B com as portas lado a lado no fundo; Ponte B em zigue-zague; pilar da Runas B fora da porta; teste
+  novo `test_no_solid_piece_in_a_doors_approach`. Ainda parecidas: Cripta A/B e Jardim A/B; o Santuário B tem o buraco
+  no dado, mas a pintura perdeu (o pedido tem de nomear o buraco). Conflito esperado nos docs: ele editou
+  `rooms_progression.md` e `art_rooms.md`, que viraram índices; mover a seção nova para a pasta certa.
+- `worktree-agent-a8a4f94e23fde4ed7` (`c881136b`): 14 placas do lote 4 ligadas como dado, e a opção `--clear-air`.
 
 **Próximo, nesta ordem:**
 1. Exe com o mouse sem Magia e a redução de inimigos (testes, exe igual ao editor, cópia nas duas pastas).
