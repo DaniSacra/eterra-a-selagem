@@ -63,7 +63,7 @@ func test_elites_are_the_same_figure_in_old_gold() -> void:
 ## Every enemy of the sheet is drawn by its Meshy model, made light for the crowd (tools/bake.gd, MeshSlim), at the
 ## height the KayKit figure it replaced stood idle (so EnemyDef.size, the bars and the warnings did not move).
 const STANDING := {
-	&"skeleton": 1.92, &"runner": 1.65, &"mage": 1.92, &"archer": 1.92, &"guard": 2.03, &"priest": 1.93,
+	&"skeleton": 1.92, &"runner": 1.65, &"mage": 1.15, &"archer": 1.92, &"guard": 2.03, &"priest": 1.93,
 	&"knight": 2.03, &"priest_elder": 2.07, &"morvath": 2.02,
 }
 

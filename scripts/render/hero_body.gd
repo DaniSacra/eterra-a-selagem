@@ -5,13 +5,23 @@ extends RefCounted
 ## in his right hand. Shared by the game (Player), the title screen and tools/pose_lab.gd. The provisional "Sombra"
 ## body and the first paladin left the repository (DT-107, Q-19; the git history keeps them).
 
-const MODEL := "res://assets/models/meshy/hero_explorer/hero_explorer-rigged.glb"
-const ANIMS := "res://assets/models/meshy/hero_explorer/hero_anims.res"
+## 2026-11-27: the Warrior is the Meshy model made from the approved ChatGPT painting (hero_warrior_gpt, the same 24 bones).
+## The first Explorer model stays in the repository: `--old-models` plays him again (OLD_*), for comparison.
+const MODEL := "res://assets/models/meshy/hero_warrior_gpt/hero_warrior_gpt-rigged.glb"
+const ANIMS := "res://assets/models/meshy/hero_warrior_gpt/hero_anims.res"
+const OLD_MODEL := "res://assets/models/meshy/hero_explorer/hero_explorer-rigged.glb"
+const OLD_ANIMS := "res://assets/models/meshy/hero_explorer/hero_anims.res"
 ## Each playable hero's body (HeroDef.id): the rigged Meshy model, its clips (tools/bake_hero.gd -- <id>) and what its
 ## right hand holds. The Maga (M1c, 2026-11-23): the image-to-3D model of the pack's art 01, the same 24 bones as his,
 ## and her two-ended staff (MagaStaff). An id not here gets the Warrior's.
 const BODIES := {
 	&"warrior": {"model": MODEL, "anims": ANIMS, "held": &"sword"},
+	&"maga": {"model": "res://assets/models/meshy/hero_maga_gpt/hero_maga_gpt-rigged.glb",
+		"anims": "res://assets/models/meshy/hero_maga_gpt/maga_anims.res", "held": &"staff"},
+}
+## `--old-models`: the models before the ChatGPT-painting ones of 2026-11-27 (the Maga's image-to-3D one too).
+const OLD_BODIES := {
+	&"warrior": {"model": OLD_MODEL, "anims": OLD_ANIMS, "held": &"sword"},
 	&"maga": {"model": "res://assets/models/meshy/hero_maga_img/hero_maga_img-rigged.glb",
 		"anims": "res://assets/models/meshy/hero_maga_img/maga_anims.res", "held": &"staff"},
 }
@@ -59,7 +69,7 @@ const CAPE_NARROW := 0.8
 ## A hero's body (BODIES) at the game's size, playing its own clips. Returns [model, AnimationPlayer, held piece]
 ## (Emeth or the Maga's staff, both along +Y from the fist: Player.BLADE_TIP sits near the top of either).
 static func make(id: StringName = &"warrior") -> Array:
-	var body: Dictionary = BODIES.get(id, BODIES[&"warrior"])
+	var body: Dictionary = body_of(id)
 	var model := (load(body.model) as PackedScene).instantiate() as Node3D
 	model.scale = Vector3.ONE * (HEIGHT / MODEL_HEIGHT)
 	var anim := PoseBaker.find_player(model)
@@ -67,8 +77,21 @@ static func make(id: StringName = &"warrior") -> Array:
 	for lib in anim.get_animation_library_list():
 		anim.remove_animation_library(lib)
 	anim.add_animation_library(&"", load(body.anims))
-	_fill(model, id)
+	# the old texture is recoloured by the shader (armour, cape); the new painting is already the approved art
+	_fill(model, id, old_models() and body.model == OLD_MODEL)
 	return [model, anim, _arm(model, anim.get_animation_library(&""), body.held)]
+
+
+## `--old-models` (dev): the Warrior's first model (hero_explorer) and his clips, with the shader recolouring his old texture.
+static func old_models() -> bool:
+	return Dev.has("old-models")
+
+
+## The body entry of a hero (BODIES; the Warrior's first model under `--old-models`).
+static func body_of(id: StringName) -> Dictionary:
+	if old_models():
+		return OLD_BODIES.get(id, OLD_BODIES[&"warrior"])
+	return BODIES.get(id, BODIES[&"warrior"])
 
 
 ## The sword (or the staff) in the right hand, held where tools/bake_hero.gd found the grip (stored on the clips' library).
@@ -94,11 +117,11 @@ static func _arm(model: Node3D, clips: AnimationLibrary, held: StringName = &"sw
 ## His own painted texture, also a little as light (FILL), so he keeps his colours where the room's light does not
 ## reach. In the stylized look (VisualProfile, F7 flips it live) his own shader instead (painted(), with the same FILL)
 ## and the outline shell after it.
-static func _fill(model: Node3D, id: StringName = &"warrior") -> void:
+static func _fill(model: Node3D, _id: StringName = &"warrior", recolour: bool = false) -> void:
 	for n in model.find_children("*", "MeshInstance3D", true, false):
 		var mi := n as MeshInstance3D
 		var mat := (mi.get_active_material(0) as StandardMaterial3D).duplicate() as StandardMaterial3D
-		var paint := painted(mat, id == &"warrior")
+		var paint := painted(mat, recolour)
 		mat.emission_enabled = true
 		mat.emission = Color.WHITE
 		# multiply: the colour times the texture (the default, add, puts the full white on top of it)

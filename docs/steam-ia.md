@@ -46,6 +46,10 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
     vistas da prancha "Inimigos da Fase 1" e repintados no Meshy por texto; no jogo entram reduzidos e assados em
     `assets/baked/`, com animações CC0 da Quaternius e do KayKit) e a espada Emeth (`assets/models/meshy/emeth/`,
     gerada da imagem da Emeth enviada pelo Daniel, também feita por IA;
+  - no jogo desde 2026-11-27: os oito personagens `*_gpt` (`hero_warrior_gpt`, `hero_maga_gpt`, `enemy_skeleton_gpt`,
+    `enemy_runner_gpt`, `enemy_archer_gpt`, `enemy_guard_gpt`, `enemy_mage_gpt`, `enemy_priest_gpt`), imagem para 3D do Meshy a partir de arte
+    pintada feita por IA no ChatGPT e aprovada pelo Daniel; esqueleto do Meshy, animações CC0 da Quaternius e do KayKit. Substituem
+    o Explorador, a Maga de imagem e os nove inimigos anteriores (que ficam no repositório, fora do jogo por padrão).
   - no jogo desde 2026-11-23 (M1c): a Maga (`assets/models/meshy/hero_maga_img/`, imagem para 3D da arte 01 do pacote do
     Daniel, feita por IA no ChatGPT), com o esqueleto do Meshy (`hero_maga_img-rigged.glb`) e as mesmas animações CC0 da
     Quaternius levadas ao corpo dela (`maga_anims.res`, `tools/bake_hero.gd -- maga`; nenhuma animação gerada por IA), e o

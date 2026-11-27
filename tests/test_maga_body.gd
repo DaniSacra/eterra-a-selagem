@@ -7,7 +7,7 @@ func test_she_has_her_own_model_clips_and_staff() -> void:
 	var body: Array = HeroBody.make(&"maga")
 	var model: Node3D = body[0]
 	add_child_autofree(model)
-	assert_true(model.scene_file_path.contains("hero_maga_img"), "her model, not the Warrior's")
+	assert_true(model.scene_file_path.contains("hero_maga_gpt"), "her model, not the Warrior's")
 	var anim: AnimationPlayer = body[1]
 	# her moves play Cast, the Passo its Blink; every name the Warrior's clips have is there too (the game may ask)
 	for clip: StringName in [&"Idle", &"Run", &"Sprint", &"Cast", &"Blink", &"Hit", &"Death"]:
@@ -43,7 +43,7 @@ func test_the_staff_heads_stay_over_the_floor_standing_and_running() -> void:
 func test_the_warrior_keeps_his_body() -> void:
 	var body: Array = HeroBody.make(&"warrior")
 	add_child_autofree(body[0])
-	assert_true((body[0] as Node3D).scene_file_path.contains("hero_explorer"))
+	assert_true((body[0] as Node3D).scene_file_path.contains("hero_warrior_gpt"))
 	assert_true((body[2] as Node3D).has_node(^"Blade"), "Emeth in his hand")
 
 

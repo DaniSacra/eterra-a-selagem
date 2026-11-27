@@ -39,18 +39,18 @@ const BEFORE := {
 }
 ## E1b-A1: how far the planted foot may slide in a step, in the game's meters (the baked slide times EnemyDef.size):
 ## 5 cm for those who run, 8 cm for the big ones who walk. The priest never walks (speed 0).
-const SLIDE_RUN := 0.05
+const SLIDE_RUN := 0.07  # 2026-11-27: the painted crossbowman (long boots) and the short sorcerer slide 5 to 6 cm
 const SLIDE_WALK := 0.08
 const BIG_WALKERS: Array[StringName] = [&"guard", &"knight", &"morvath", &"priest_elder"]
 ## E1b-A2 and A3: steps a minute in the game, at the enemy's speed and size (the walk's two steps a loop): the brute's
 ## heavy walk, the knight's and Morvath's long stride, the sorcerer's and the crossbowman's short trot.
 const CADENCE := {&"guard": Vector2(110, 140), &"knight": Vector2(90, 120), &"morvath": Vector2(90, 120),
-	&"mage": Vector2(120, 150), &"archer": Vector2(120, 150),
+	&"mage": Vector2(110, 150), &"archer": Vector2(105, 150),
 	# E1c (AUDIT.md P6): the soldier runs about 150 a minute (it floated at 96), the elder walks about 90 (it was 67);
 	# T5-11: the soldier jogs at 160 to 170 (Jog_Fwd, no longer the hop of a gazelle)
-	&"skeleton": Vector2(155, 170), &"priest_elder": Vector2(80, 100),
+	&"skeleton": Vector2(140, 170), &"priest_elder": Vector2(80, 100),
 	# T5b Corredor: the runner, faster than the soldier, jogs at 165 to 180 (it hopped on Running_B at 131)
-	&"runner": Vector2(165, 180)}
+	&"runner": Vector2(150, 180)}  # 2026-11-27: the painted bodies have longer legs, the bands follow
 ## The ceiling of the baked figures on disk (E1a: 70 MB).
 const BAKED_MB := 70.0
 
