@@ -337,7 +337,11 @@
     ],
     "ai_model": "latest",
     "imageId": "01a21de3-19c2-7286-907f-ac42b1c7ace5",
-    "attempt": 1
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 5158200,
+    "rigId": "01a21de5-3048-7729-bb09-686ef785a30d",
+    "rigCredits": 5
   },
   "enemy_runner_gpt": {
     "mode": "image-to-3d",
@@ -346,6 +350,89 @@
     ],
     "ai_model": "latest",
     "imageId": "01a21de3-91bd-70d1-9424-d918fbeee6a7",
-    "attempt": 1
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4253544,
+    "rigId": "01a21de4-a305-706e-8a78-8eaf1e34a50f",
+    "rigCredits": 5
+  },
+  "enemy_archer_gpt": {
+    "mode": "image-to-3d",
+    "images": [
+      "tools/meshy/ref/gpt/archer_front.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a21de5-00ab-727d-9823-0c899f0e822e",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4161364,
+    "rigId": "01a21de6-91a3-73c3-b521-7d06aaeed03e",
+    "rigCredits": 5
+  },
+  "enemy_skeleton_gpt": {
+    "mode": "image-to-3d",
+    "images": [
+      "tools/meshy/ref/gpt/skeleton_front.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a21de5-8d2e-74a6-9be0-48054d93bcc6",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4174264,
+    "rigId": "01a21de6-ddc2-774e-b595-7c0d66f7762a",
+    "rigCredits": 5
+  },
+  "enemy_guard_gpt": {
+    "mode": "image-to-3d",
+    "images": [
+      "tools/meshy/ref/gpt/guard_front.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a21de6-ecba-774c-841a-43bdec5e8a22",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4058964,
+    "rigId": "01a21de8-6340-737a-8626-373ac214f072",
+    "rigCredits": 5
+  },
+  "enemy_mage_gpt": {
+    "mode": "image-to-3d",
+    "images": [
+      "tools/meshy/ref/gpt/mage_front.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a21de8-bd17-76a3-b3fe-2152a6193c64",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4064852,
+    "rigId": "01a21de9-d165-728b-b8d0-b4577a8bef2b",
+    "rigCredits": 5
+  },
+  "enemy_priest_gpt": {
+    "mode": "image-to-3d",
+    "images": [
+      "tools/meshy/ref/gpt/priest_front.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a21dea-29b2-7480-a929-109256fd58d3",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4452772,
+    "rigId": "01a21deb-f9d7-74bd-9385-8766f802cf79",
+    "rigCredits": 5
+  },
+  "hero_maga_gpt": {
+    "mode": "multi-image-to-3d",
+    "images": [
+      "tools/meshy/ref/gpt/maga_front.png",
+      "tools/meshy/ref/gpt/maga_back.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a21dec-57ba-7399-a975-1e0422684486",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 5738012,
+    "rigId": "01a21dee-71a0-710b-ae0d-810fc582293d",
+    "rigCredits": 5
   }
 }
