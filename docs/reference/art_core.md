@@ -303,35 +303,23 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 
 - **H-1/H-2 (2026-11-25)**: o Guerreiro estilizado: `hero_paint.gdshader` pinta como aço escuro tudo que não é pele, laranja, verde da capa nem ouro; ouro velho nos remendos dourados; couro marrom só na faixa do cinto (`belt_y0..belt_y1`) e nas botas (`boot_y`); a capa é cortada acima do joelho (`CAPE_CUT` 0,58 de 1,8) e fica 80% mais estreita (`CAPE_NARROW`), a casca de contorno (`hero_outline`) segue. Só o Guerreiro (`armor`, `painted(own, true)`); a Maga fica como estava. O espaço do vértice é em centímetros (esqueleto). Limite: os remendos de forro bege da capa não são verdes e não são cortados.
 
-## GP-8, technique A: the painting projected (prototype `--painted[=fit|game]`, 2026-11-26)
+## GP-8: the painted rooms (2026-11-27, `--painted`, OFF until Daniel approves the art)
 
-Code: `scripts/game/painted_hall.gd` (`PaintedHall`), `assets/shaders/painted.gdshader`, painting `assets/rooms/painted/sala01.jpg`
-(the approved ChatGPT art, 1672x941), test `tests/test_painted_hall.gd`. Only the opening Salao (`layout.id == hall`, not the
-Antessala); without the switch nothing changes (same `RESULT`).
-- How: the 3D pieces of the hall are hidden after the build; a floor, low walls, a tall north wall and a far backdrop carry a
-  shader that projects the painting from a "painter's camera" (world to clip matrix `PaintedHall.projector`): colour is the
-  painting's, no ambient or lights; the moon's shadows (the hero's, the fighters') tint it cold (`shadow_strength`,
-  `shade_tint`) and omni lights add a little warmth (`torch_boost`). Heroes, enemies, effects, door medals stay 3D.
-- Camera: while the node lives it puts `--cam-yaw/-pitch/-fov/-dist` (unless typed) so the game camera has the painter's
-  orientation and only pans. `--showcase` then frames the painter's point exactly.
-- Collision stays the truth but the painted floor is a sub-rectangle: x -7.5..14, z -15..15 (`FLOOR`, less `INSET`); two
-  invisible boxes close the rest, the hall's own colliders are replaced by the painted floor's (and a circle at the broken
-  column), the way in is at (0; 9). The two doors keep D1/D2 (7.6 and 11.8): the fit puts them on the painted doors.
-- **What calibration found: the approved painting is not a pinhole view.** Its north wall is near horizontal while its side
-  edges lean 0.3 to 0.6 and converge toward the bottom-left (reverse perspective, an oblique look). Least squares over the
-  floor corners and doors: with the game's 30 degrees pitch the corners miss by 100 to 200 px; only 15 degrees pitch (yaw 32,
-  fov 9.7, 80 m, looking at 6.3;-3.7) lands within 65 px (worst at the north-west corner; doors within 20 px). Pitch 15 is a
-  poor combat angle (the floor's depth is squashed). `--painted=game` uses the numbers of the request file (35/30/24, 68 m)
-  to compare. Conclusion: this painting can be a look test, not the shipped room; the shipped one must be made from a
-  capture at the painter's pose (the 02 request: Retexture over a `--showcase --cam-at` capture, overlay test at 1%).
-- Painted doors (glowing arrow, purple star) and the lone hero are in this painting: the prototype keeps them (not allowed in
-  a final). The 3D door leaves are hidden (their opening animation is lost; the medals still float).
-- How much the camera shows: at the fit pose the frame is 23.9 m wide at the centre (Perto of the game: 28 m). 1672 px over
-  23.9 m is 70 px/m; a 1080p screen shows 80 px/m: x1.15 upscale, soft but passable. For the game's Perto (28 m) with
-  margin for panning (the camera moves about +-6 m) a painting needs about 40 m of floor: ~3200x1800 px for 80 px/m. Ask
-  ChatGPT for the whole room at its largest size and upscale 2x (Subtle), or two or three overlapping tiles (north half, south
-  half, each ~1/2 of the floor, same camera, shifted with `--cam-at`) and blend them; each tile needs a 15% overlap and
-  the same overlay test.
-- Not done: vertical parallax correctness (walls are plain planes, only exact at the painter's point), the Compatibility
-  renderer (untested), the shop/fountain halls (they use the same layout and are painted too), door opening feedback.
-- Captures to take (main session): `tools/gpu.sh shot x.png --painted --bot --seed=5 --shot-at=3`, `tools/gpu.sh shot x.png --painted --showcase --seed=5 --shot-at=2`, and `--painted=game` for the comparison.
+Code: `scripts/game/painted_hall.gd` (`PaintedHall`), `assets/shaders/painted.gdshader`, paintings `assets/rooms/painted/{sala01,sala00,antessala}.png`
+(gpt-image-2 over game captures, sources and capture flags in `docs/art/painted_gpt/README.md`), tests `tests/test_painted_hall.gd`.
+The first prototype (an old ChatGPT painting on proxy walls, 15 degree pitch) is gone: the new paintings are made at game cameras.
+- How: after the room's look is built (hook: `ArenaRoom.build_steps` last step, `CatacombHall` last step) every visible solid mesh
+  (masonry*, catacomb_floor*, depth_stone*, abyss_ruins, opaque Standard materials: banners, doors) gets the projecting shader
+  through `VisualProfile.vary` (so it is the stylized look's stone; F7 brings the classic one back). The painting's UV 0..1 is the
+  16:9 capture frame (the file is stretched to 3:2). Decals and the abyss fog/mist/glow and translucent cards (`HIDE_CARDS`) are hidden;
+  lights, particles, water, hazards, the altar's lion stay. Two far planes (under the room, a wall beyond) carry the painting where no
+  mesh is. A shut door's leaves and black inside wear the painting and get their own look when `HallDoor.is_open` (`_process`).
+- Camera and collision are untouched: painters' yaw/pitch/fov are the game's (35/30/24); only distance (painted 68/52/80 m, the near
+  camera is 37 m) and pan differ, which a pinhole camera tolerates on the floor and on walls (the geometry is the real one).
+  Same seed, same `--smoke` RESULT.
+- Switch: `--painted` on, `--painted=off` off, `PaintedHall.DEFAULT_ON` (false) ships it. Swapping a painting is replacing its png.
+- Measured (CPU captures, `docs/gallery/gp8_gpt_2026-11-27/`): at the painter's pose it equals the painting; at the near camera with the
+  hero walking it reads well (stone, banners, door, candles), the pillars bend a little (the painting's pillar is not the mesh's) and
+  the painting is shown 1.5 to 2.3 times larger than its pixels (35 px/m painted, 69 px/m on screen), so it is soft: the shader
+  sharpens a little (`sharpen`). A 2x upscale of the files would help. Forward+ only measured; Compatibility untested.
+

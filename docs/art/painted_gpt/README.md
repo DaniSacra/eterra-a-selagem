@@ -31,3 +31,5 @@ colder shadows) + for the B2 redos `fit_<room>.txt` (positions as fractions of t
 Overlay test (`*_overlay.jpg`): walls, low walls, platform edge, door, water strip and spike plate fit within a few px in
 A and B2; the four Sala 00 pillars, the altar and the Antessala posts drift 25 to 50 px (1536 wide), same as v1.
 Giving positions as fractions (B2) fixed the Antessala water and platform but not the pillars.
+
+In the game: `PaintedHall.ROOMS` (scripts/game/painted_hall.gd) names each file and its pose; to swap a painting replace its png in assets/rooms/painted (same 3:2 stretch of the 16:9 base, same pose).

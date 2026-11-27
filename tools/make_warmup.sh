@@ -9,7 +9,7 @@ G=${GODOT:-$HOME/tools/godot/godot}
 RUNS=(
 	"--title"
 	"--hub"
-	"--bot --start=ante" "--bot --start=sala00" "--bot --painted"
+	"--bot --start=ante" "--bot --start=sala00" "--bot --painted" "--bot --start=ante --painted" "--bot --start=sala00 --painted"
 	"--bot --arena=hall"
 	"--bot --start=shop" "--bot --start=fountain" "--bot --start=trial" "--bot --start=altar" "--bot --start=miniboss"
 	"--bot --start=boss" "--bot --start=boss --boss-hp=0.66" "--bot --start=boss --boss-hp=0.3" "--bot --start=boss --boss-hp=0.14"
