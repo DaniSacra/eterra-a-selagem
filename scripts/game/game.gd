@@ -37,7 +37,8 @@ const FOUNTAIN_HEAL := 0.4
 const LEVEL_HEAL := 0.15
 ## --start= in the room mode: which room to begin in.
 const ROOM_STARTS := {"boss": RunMap.Kind.BOSS, "miniboss": RunMap.Kind.MINIBOSS, "shop": RunMap.Kind.SHOP, "fountain": RunMap.Kind.FOUNTAIN,
-	"trial": RunMap.Kind.TRIAL, "altar": RunMap.Kind.ALTAR, "ante": RunMap.Kind.ANTE, "sala00": RunMap.Kind.SALA00}
+	"trial": RunMap.Kind.TRIAL, "altar": RunMap.Kind.ALTAR, "ante": RunMap.Kind.ANTE, "sala00": RunMap.Kind.SALA00,
+	"combat": RunMap.Kind.COMBAT}  # combat: the first fight room (with --arena=id --variant=n: that arena, e.g. GP-8 base captures)
 const SPAWN_MIN := 19.0
 const SPAWN_MAX := 25.0
 ## How far the point the camera looks at stays from the side walls and from the north and south ends (meters), with

@@ -67,3 +67,11 @@ Spin frames 7 and 8 are frame 6 at 55% and 25% (no extra call). Previews `<fx>_p
 colours over a floor crop of sala01, real time then 4x slower. Plan B not needed. Deviations: the cut arcs span about
 210 to 240 degrees (asked 150) and the smash fan's inner edge sits ~25 px above the pivot. Sent to
 Downloads\ASelagem-GP8\APROVAR-EFEITOS (awaiting Daniel); `docs/steam-ia.md` gets them when they enter the game.
+
+## Base captures, lote 2 (2026-11-27): Cripta A, Fendas A, Jardim A
+All with `--start=combat --arena=<id> --variant=<n> --no-arrival --doors-shut --no-hero --no-hud --no-angels --showcase
+--cam-yaw=35 --cam-pitch=30 --cam-fov=24 --seed=5 --shot-at=0.5`, RES=2560x1440 (saved 1924x1175):
+- crypt variant 1 (Cripta A, Ossário): --cam-at=0,0 --cam-dist=60 -> base_crypt1.png
+- rift variant 0 (Fendas A): --cam-at=-7,-2 --cam-dist=84 -> base_rift.png
+- garden variant 0 (Jardim A): --cam-at=3,0 --cam-dist=82 -> base_garden.png
+`--start=combat` (new) enters the first fight room, so `--arena` takes effect outside the guided first descent.
