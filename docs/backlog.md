@@ -34,8 +34,10 @@ demais; robô: 5 de 12 chegam a Morvath, 0 vitórias).
 minuto contra 104 a 138; pé escorrega 0,10 m) e do Ancião (77 contra 92 a 115): ajustar o ritmo da caminhada no assado
 (technical-artist) e conferir na GPU.
 
+**Exe entregue às 17h16: `17569337`** (mouse sem Magia, menos inimigos, docs divididos; nas duas pastas).
+
 **Próximo, nesta ordem:**
-1. Exe com o mouse sem Magia e a redução de inimigos (testes, exe igual ao editor, cópia nas duas pastas).
+1. ~~Exe com o mouse sem Magia e a redução de inimigos~~ feito (`17569337`).
 2. Juntar as entradas novas; recapturar as bases na GPU (`--shot-at=2.5`; Runas com `--clear-air`; Ponte com
    `--cam-at=3,2 --cam-dist=94`).
 3. Repintar (ai-art-producer, regras novas no arquivo do agente: sem poças de luz pintadas na versão do jogo, peça de
