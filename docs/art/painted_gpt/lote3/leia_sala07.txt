@@ -6,3 +6,5 @@ sala07_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
 
 Encaixe: plataforma, balaustrada, círculo, escadaria e santuário a poucos pixels da captura (a primeira tentativa encolheu a arena e foi refeita). Os braseiros do santuário ficaram cerca de 20 pixels para a direita.
 Sala de uma saída: o portão do santuário é a única porta.
+
+Correção de 2026-11-27: na versão de jogo o portão do santuário perdeu as folhas da porta e a rachadura violeta; dentro do arco ficou uma passagem funda e escura, aberta, por onde o herói segue para os próximos capítulos. O jogo põe a porta em 3D e os efeitos violeta de Morvath por cima. Todo o resto ficou no mesmo pixel (só o recorte do portão foi trocado). A versão anterior ficou como sala07_jogo_v1.png.

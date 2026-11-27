@@ -31,6 +31,7 @@ Generation (curl; the key is read from the file, never printed):
 | 2026-11-27 | lote2 (`lote2/`): crypt1 e1 (floor too dark, luma 48), e2 (chosen, sala02); rift e1 (chosen, sala03), e2 (left side 35 to 50 px off); garden e1 (statue niche became a 3rd arch), e2 (platform grew), e3 (chosen, sala04) | 7 | 5488 | 1.75 |
 | 2026-11-27 | HUD icons v2 full tiles (`docs/art/hud_v3/raw/tiles_a.png`, `tiles_b.png`, prompts in `hud_v3/prompts/tiles_*.txt`): tiles_a (6 tiles; kept power, lance, lion; attack read as an arrow, smash fanned up, dodge too bright), tiles_b (attack/smash/dodge 2 variants each; kept crescent slash r1, smash r1, muted dodge r2; hammer variant unused). Crops 256x256 opaque to `assets/ui/hud_v3/icon_*.png`, old glyphs kept as `icon_*_glyph.png` | 2 | 5488 | 0.50 |
 | 2026-11-27 | lote3 (`lote3/`): knight a1 + g1 (sala05); elder a1 (chosen, right column ~20 px off), a2 (same offset, lost the void fog), g1 (sala06); seal a1 (arena shrank ~4%), a2 (chosen), g1 (sala07, gamma 1.08 after) | 9 | 5488 | 2.25 |
+| 2026-11-27 | lote3 fix (`lote3/seal-g2`, prompt `lote3/gate_open.txt`): Sala07 game plate, shrine gate leaf and violet crack removed, archway now a dark open passage; only a 120x140 crop at (1044,224) pasted onto the v1 plate so every other pixel is identical (old kept as `sala07_jogo_v1.png`) | 1 | 5488 | 0.25 |
 
 ## style_v2 (2026-11-27): style approval round
 `style_v2/` holds the variants Daniel is choosing from (Downloads\ASelagem-GP8\APROVAR-ESTILO). Request =
