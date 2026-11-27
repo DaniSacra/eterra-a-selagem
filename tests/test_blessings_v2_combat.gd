@@ -905,3 +905,21 @@ func test_the_maga_carries_the_new_blessings_without_an_error() -> void:
 	_run(2.0)
 	assert_gt(int(_cel().tally.size()), 0)
 	assert_eq(game.arcane.book.keys().size(), 0, "her own book of elements is untouched")
+
+
+# ---------- PM-5: the old states too stay off a blow the guard shut ----------
+
+func test_a_burning_blow_shut_by_the_guard_sets_nothing_alight_and_an_open_one_does() -> void:
+	_start()
+	_take(&"lamina_ardente")
+	var e := _enemy()
+	e.def = e.def.duplicate()
+	e.def.front_block = 0.5
+	e.face = Vector2.LEFT  # the paladin stands at the origin, in front of it
+	var tags: Array[StringName] = [&"light", &"finisher"]
+	assert_true(game.horde.blocks_front(e, game.horde.target), "the guard stands")
+	game.combat.hit_enemy(e, 10.0, tags, Vector2.RIGHT, 0.0)
+	assert_eq(e.burn_t, 0.0, "shut: no burn")
+	e.face = Vector2.RIGHT  # turned away: the blow lands open
+	game.combat.hit_enemy(e, 10.0, tags, Vector2.RIGHT, 0.0)
+	assert_gt(e.burn_t, 0.0, "open: it burns")
