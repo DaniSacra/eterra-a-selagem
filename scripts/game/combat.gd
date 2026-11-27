@@ -1011,6 +1011,8 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 		celestial.after_hit(e, tags, dmg, died, shut)  # V1: the statuses and the echo of the action's Blessings
 	if died:
 		return true
+	if shut:
+		return false  # PM-5: a state sticks only to a blow that hurts, not to one the guard shut (like celestial.after_hit)
 	var burn := _tag_stat(&"burn_dps", tags)
 	if burn > 0.0:
 		_burn(e, burn)

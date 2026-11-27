@@ -180,7 +180,7 @@ vale a regra do Daniel (sempre commit e push). As seções abaixo ficam como his
 |---|---|---|---|
 | BG-1 | Efeitos a confirmar no jogo de hoje e corrigir só se ainda acontecem: facho de recompensa (`RewardShaft`) ligado à sala vencida, loja e fonte; contato com miolo branco e pontas em cruz; traço branco vertical sobre a vítima; `glint` cobrindo o herói; lascas acesas acima da cabeça; clarão de Morvath perdendo o violeta; onda do especial acertando em cruz de 4 pontas; Círculo com disco branco chapado; preparo do Feiticeiro acima do teto | PK-1 fase B | technical-artist, art-director confere |
 | BG-2 | Bolinha escura ao lado do medalhão da Bênção; na Provação os dois medalhões se encostam e o título aparece duas vezes | sobras SW fase 1 | ui-ux-designer |
-| BG-3 | Retângulo (`Rect2`) negativo na Maga | PK-3 testes | gameplay-engineer |
+| BG-3 | Retângulo (`Rect2`) negativo na Maga | PK-3 testes | gameplay-engineer | **2026-11-27: não reproduz** (testes da Maga e `--smoke --hero=maga` sem erro); reabrir se aparecer o texto do erro |
 | BG-4 | `--smoke` ignora `--hub`: o robô não testa o Santuário | QA 26b | qa-performance |
 
 ### 2. Erros e dívidas técnicas
@@ -188,7 +188,7 @@ vale a regra do Daniel (sempre commit e push). As seções abaixo ficam como his
 |---|---|---|
 | DT-1 | Shaders sem uso: `dome_film`, `dome_clock`, `fury_ember`, `dark_water_matte` (apagar depois de conferir) | technical-artist |
 | DT-2 | O Guerreiro ainda referencia duas ultimates (`00_cleave`, `01_vortex`); a decisão de 2026-11-24 é Corte do Juízo único, Voragem guardada (conferir se a seleção já sumiu e limpar o dado) **Feito 2026-11-26:** `ult_for_weapon` já ignorava a reserva; faltava o anúncio do nível 10 (`unlocks_at`, `MasteryReport`, `first_ult_level`), agora sem a Voragem. | gameplay-engineer |
-| DT-3 | CSV das Bênçãos desatualizado (fonte é `make_data.gd`); regerar do dado | balance-designer |
+| DT-3 | CSV das Bênçãos desatualizado (fonte é `make_data.gd`); regerar do dado **Feito 2026-11-27:** `tools/boons_csv.gd` regera `docs/design/bencaos_v2/BALANCEAMENTO_V2.csv` | balance-designer |
 | DT-4 | Custo por golpe com 150+ inimigos ainda 25 a 35 ms no `--stress=300` | qa-performance |
 | DT-5 | Morvath assado acima de 60 MB (TA-07), medalhões acima de 512 px (TA-08), `disk_report.sh` (TA-02), `docs/steam-ia.md` em dia (TA-12) | technical-artist |
 
@@ -210,7 +210,7 @@ vale a regra do Daniel (sempre commit e push). As seções abaixo ficam como his
 | PM-2 | Santuário, o que falta da revisão 26b: fundo de falésias e montanhas no lugar do azul liso, hera só encostada em parede, nicho em arco atrás do fogo da Vigília, folhagem menos preta, Portão legível de lado, céu | environment-artist |
 | PM-3 | Fendas: o herói fica 77% do tempo no leste (ouro e quebráveis nos cantos) | room-designer |
 | PM-4 | Até 4 fontes por caminho: conferir a cura | balance-designer |
-| PM-5 | Estados das Bênçãos aplicam mesmo quando a guarda reduz o golpe (PK-3 propõe: só golpe que causa dano) | decisão do Daniel, depois gameplay-engineer |
+| PM-5 | Estados das Bênçãos aplicam mesmo quando a guarda reduz o golpe (PK-3 propõe: só golpe que causa dano) **Feito 2026-11-27:** o estado novo já não pegava (`Celestial.after_hit`); queimadura, gelo, fraqueza e marca dos dons antigos também param no golpe que a guarda fechou (`Combat.hit_enemy`). | decisão do Daniel, depois gameplay-engineer |
 
 ### 5. Grandes projetos (cada um um lote com exe)
 | id | o quê | depende de | donos |
