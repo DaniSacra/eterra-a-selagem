@@ -1,0 +1,9 @@
+Character concept art for an original dark-fantasy action game. Keep EXACTLY the art style of the attached image: hand-painted digital illustration in the style of the art of a top-down action game like Hades II, visible brush strokes, soft broken dark outline (not a vector line), blocky painted shadows, simple readable shapes, stylized painted materials. Not 3D render, not a photo, not pixel art, not anime, no plastic shine. The reference is style only: do not use any character, symbol or logo from any existing game.
+Hard rules for this world (must be respected everywhere in the image):
+- No sun with rays, no many-pointed star, no cross, no radiating spiked ring or halo anywhere (shields, staffs, clothing, background).
+- No violet or purple anywhere (violet belongs to another character). No bright emerald green, except on the hero's sword when asked.
+- Undead magic and undead eye glow are YELLOW-GREEN (sickly chartreuse, lime-yellow), never emerald.
+- No text, no letters, no runes, no signature, no watermark.
+- One single character, full body, head to feet fully inside the frame with margin.
+
+TASK: repaint the attached heroine, the Mage, as a clean finished concept, portrait. Keep the same pose, face and design: young woman from the north with East Asian features, black hair in a messy bun with a hairpin and red tassel, layered robes with wide sleeves, sash knot, bracers, potion flask at the belt, laced boots, holding a long staff with an ornate hooked head at both ends, each end with an orange fire flame. FIX COLOURS: absolutely no violet or purple: replace every violet/purple area (skirt layers, sash, sleeve linings, flying ribbon) with deep red, rust and dark amber-brown; keep cream/bone robe with amber and ochre patterns. Her palette is warm amber, ochre, deep red. Background: plain warm parchment wash.

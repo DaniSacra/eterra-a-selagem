@@ -1,0 +1,9 @@
+Character concept art for an original dark-fantasy action game. Keep EXACTLY the art style of the attached image: hand-painted digital illustration in the style of the art of a top-down action game like Hades II, visible brush strokes, soft broken dark outline (not a vector line), blocky painted shadows, simple readable shapes, stylized painted materials. Not 3D render, not a photo, not pixel art, not anime, no plastic shine. The reference is style only: do not use any character, symbol or logo from any existing game.
+Hard rules for this world (must be respected everywhere in the image):
+- No sun with rays, no many-pointed star, no cross, no radiating spiked ring or halo anywhere (shields, staffs, clothing, background).
+- No violet or purple anywhere (violet belongs to another character). No bright emerald green, except on the hero's sword when asked.
+- Undead magic and undead eye glow are YELLOW-GREEN (sickly chartreuse, lime-yellow), never emerald.
+- No text, no letters, no runes, no signature, no watermark.
+- One single character, full body, head to feet fully inside the frame with margin.
+
+TASK: repaint the attached hero, the Warrior, as a clean finished concept, portrait. Keep the same heroic low-angle pose, face and design: young man, beardless, messy red hair, teal-petrol (dark blue-green) scarf, dented steel pauldrons and bracers, leather belts and pouches, brown boots and knee guards, standing on a rock. His sword is a sacred blade with a glowing green blade and a green gem at the hilt (this green sword glow is allowed and must stay). FIXES: the tattered cape and the trousers must have NO violet or purple: cape in deep red and rust with ochre patches, trousers dark brown. The cream tabard must have no rune or symbol on it (plain, or a small simple golden lion head emblem on the chest). Rock in dark grey-brown, not purple. Background: plain warm parchment wash.

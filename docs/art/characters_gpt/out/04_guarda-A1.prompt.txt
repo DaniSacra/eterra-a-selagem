@@ -1,0 +1,9 @@
+Character concept art for an original dark-fantasy action game. Keep EXACTLY the art style of the attached image: hand-painted digital illustration in the style of the art of a top-down action game like Hades II, visible brush strokes, soft broken dark outline (not a vector line), blocky painted shadows, simple readable shapes, stylized painted materials. Not 3D render, not a photo, not pixel art, not anime, no plastic shine. The reference is style only: do not use any character, symbol or logo from any existing game.
+Hard rules for this world (must be respected everywhere in the image):
+- No sun with rays, no many-pointed star, no cross, no radiating spiked ring or halo anywhere (shields, staffs, clothing, background).
+- No violet or purple anywhere (violet belongs to another character). No bright emerald green, except on the hero's sword when asked.
+- Undead magic and undead eye glow are YELLOW-GREEN (sickly chartreuse, lime-yellow), never emerald.
+- No text, no letters, no runes, no signature, no watermark.
+- One single character, full body, head to feet fully inside the frame with margin.
+
+TASK: repaint the attached skeleton guard as a larger, clean, finished concept, portrait. Keep the same pose and design: big heavy skeleton in rusty plate armour and helmet, bulky pauldrons, tattered red and ochre cloth, huge kite shield held in front. FIX: the shield must NOT have any sun, star or rays: make it a plain dark weathered wooden kite shield with simple riveted iron rim and two plain horizontal metal bands (optionally a small round iron boss in the centre, no spikes, no rays). Yellow-green glowing eyes. Background: plain warm parchment wash with soft brush texture, no scenery. Remove any piece of neighbouring characters at the edges.

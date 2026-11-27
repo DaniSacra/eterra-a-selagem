@@ -1,0 +1,9 @@
+Character concept art for an original dark-fantasy action game. Keep EXACTLY the art style of the attached image: hand-painted digital illustration in the style of the art of a top-down action game like Hades II, visible brush strokes, soft broken dark outline (not a vector line), blocky painted shadows, simple readable shapes, stylized painted materials. Not 3D render, not a photo, not pixel art, not anime, no plastic shine. The reference is style only: do not use any character, symbol or logo from any existing game.
+Hard rules for this world (must be respected everywhere in the image):
+- No sun with rays, no many-pointed star, no cross, no radiating spiked ring or halo anywhere (shields, staffs, clothing, background).
+- No violet or purple anywhere (violet belongs to another character). No bright emerald green, except on the hero's sword when asked.
+- Undead magic and undead eye glow are YELLOW-GREEN (sickly chartreuse, lime-yellow), never emerald.
+- No text, no letters, no runes, no signature, no watermark.
+- One single character, full body, head to feet fully inside the frame with margin.
+
+TASK: small correction of the attached finished concept. Keep EVERYTHING identical (pose, face, hair, scarf, cape, armour, sword with its green glow, rock, background, composition, brushwork). Only change: REMOVE the small golden emblem on the chest (it reads as a sun); that spot becomes plain cream cloth of the tabard and the leather strap. No emblem, no symbol anywhere on him.

@@ -1,0 +1,30 @@
+A SELAGEM: PERSONAGENS PARA APROVAR (2026-11-27)
+
+O que é
+Para cada um dos 8 personagens do seu pacote do ChatGPT há duas imagens:
+- NN_nome-conceito.png: o mesmo desenho e a mesma pose, maior (1024x1536), já com as correções abaixo.
+- NN_nome-meshy-frente.png: o mesmo personagem de frente, em pose neutra (braços um pouco abertos), fundo cinza claro,
+  sem sombra e sem efeito mágico. É a imagem que vai para o Meshy.
+- Os dois heróis têm também NN_nome-meshy-costas.png (vista de trás).
+- todos.jpg: a folha com tudo junto.
+Nenhum crédito do Meshy foi gasto.
+
+O que mudou (regras de Eterra)
+- 04 Guarda: o escudo tinha um sol com raios. Agora é um escudo liso de madeira com borda de ferro, duas faixas e um
+  cravo redondo no meio.
+- 06 Sacerdote: sem auréola de espinhos (só o capuz) e o cajado perdeu o anel de pontas; agora é um gancho de ferro com
+  uma lanterna de chama amarelo-esverdeada.
+- 04 Guarda, vista Meshy: refeita uma vez para manter o corpo largo e pesado do conceito.
+- 05 Mago inimigo: chapéu e manto sem violeta (agora marrom-ferrugem e vermelho escuro com barra ocre).
+- 07 Guerreiro: capa e calça sem violeta (capa vermelho escuro e ferrugem, calça marrom); a runa do tabardo saiu e o peito ficou liso
+  (testei um leão dourado pequeno, mas de longe parecia um sol). A espada Emeth continua verde.
+- 08 Maga: todo o violeta das saias, faixa e fita virou vermelho escuro, ferrugem e âmbar.
+- Magia e olhos dos mortos em amarelo-esverdeado, diferente do verde-esmeralda da Emeth.
+- 01 Soldado, 02 Corredor e 03 Arqueiro: só ficaram maiores e limpos, sem mudar o desenho.
+
+Como responder
+Para cada número diga "ok" ou o que mudar, por exemplo:
+  04 ok
+  07 pôr um leão pequeno no peito
+  08 frente ok, costas refazer
+Com o seu ok, a próxima etapa é mandar as vistas de frente para o Meshy (com estimativa de créditos antes).
