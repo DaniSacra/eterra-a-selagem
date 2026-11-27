@@ -80,3 +80,10 @@ que queremos ao gerador de imagem, **gerar** e **analisar** o resultado antes de
 ## Relatório
 Curto: o que gerou, quantas imagens e o custo, o encaixe (bom ou o que desviou), as regras conferidas, os caminhos em
 Downloads, e o que falta (capturas a pedir, refazer).
+
+## Luz e entradas (Daniel, 2026-11-27)
+- A versão do jogo não leva poças de luz pintadas: o chão fica neutro e o jogo faz a luz (luzes 3D das chamas). Só a
+  versão de aprovação mostra a luz.
+- A entrada do herói nunca é um buraco no parapeito ("entrada voando"): pinta-se a peça de chegada que a sala tem
+  (patamar, passarela ou escada que sai da tela), com a abertura escura levando a ela.
+- Variantes A e B da mesma sala precisam parecer diferentes; nunca repintar B como cópia de A.
