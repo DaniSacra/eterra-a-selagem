@@ -21,6 +21,8 @@ const SPREAD := &"spread"
 const ULT := &"ult"
 ## The embers Manifestação keeps alive at once (the oldest goes), and how often Confluência looks (s).
 const EMBER_MAX := 3
+## Hit stop of a Choque Térmico, ms (maga_v2 7).
+const THERMAL_STOP_MS := 50.0
 const CONFLUENCE_STEP := 0.5
 const FROST_TAGS: Array[StringName] = [&"cast", &"arcane", &"ice"]
 ## Queimadura damage is dealt in steps of at least this much (not one number a frame).
@@ -261,7 +263,7 @@ func _react(r: Reaction, source: StringName) -> void:
 	if source == ULT:
 		return
 	var cj := _cj_of(_conj)
-	var back := _stat(&"reaction_magick")
+	var back := kit.reaction_magick + _stat(&"reaction_magick")  # (Ressonância and the Reciprocidade)
 	if back > 0.0 and not cj["recip"]:
 		cj["recip"] = true
 		game.player.magick.gain(back)  # (not a hit: no KitFeed cap, no Supremo charge: the charge reads the Magia spent)
@@ -360,6 +362,8 @@ func _play(r: Reaction) -> void:
 	if book.now - _react_sound_t >= kit.react_gap:
 		_react_sound_t = book.now
 		Audio.play(CombatSounds.EVENTS[sound])
+		if r.kind == Reaction.Kind.THERMAL:
+			fx.blow_stop(THERMAL_STOP_MS * Feel.live().hit_stop_scale)  # (V2: the Choque Térmico stops the world a beat)
 	var word_key := &"word_react_thermal" if r.kind == Reaction.Kind.THERMAL else &"word_react_overload" if r.kind == Reaction.Kind.OVERLOAD else &"word_react_crystal"
 	if words.admit(book.now):
 		fx.word(at + Vector3(0.0, 0.8, 0.0), T.t(word_key) if words.named(word_key) else "", color)
@@ -721,6 +725,7 @@ func _release(d: Dome) -> void:
 
 ## Rastro: embers where she left and where she came out (a Blessing's, stat dodge_ember_dps).
 func _on_dodged(_dir: Vector2) -> void:
+	_lay_embers(game.player.last_blink_from)  # (V2: the Passo leaves an ember where she left; EMBER_MAX caps them)
 	var trail := _stat(&"dodge_ember_dps")
 	if trail > 0.0:
 		game.ground.add_zone(Ground.Kind.EMBER, game.player.last_blink_from, STEP_TRAIL.x, STEP_TRAIL.y, trail, Combat.EMBER_CEL_TAGS)

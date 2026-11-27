@@ -91,10 +91,10 @@ func test_the_tree_has_the_four_moves_of_the_kit() -> void:
 	var shard := ComboTree.find(tree.neutral, N.HEAVY)
 	var frost := ComboTree.find(tree.neutral, N.CHARGE)
 	assert_eq(tree.neutral.size(), 4, "no Combustão, no Suspensão, no Q or E move")
-	assert_true(spark.has_tag(&"fire") and spark.next.is_empty(), "the Centelha has no chain")
-	assert_eq([arc.magick_cost, arc.charge_time, arc.effect], [10.0, 0.6, ComboNode.Effect.ARC])
-	assert_eq([shard.magick_cost, shard.cooldown, shard.wave_stops], [5.0, 0.0, false])
-	assert_eq([frost.magick_cost, frost.effect], [20.0, ComboNode.Effect.FROST])
+	assert_true(spark.has_tag(&"fire") and spark.next.size() == 1, "the Centelha is a chain of three")
+	assert_eq([arc.magick_cost, arc.charge_time, arc.effect], [8.0, 0.35, ComboNode.Effect.ARC])
+	assert_eq([shard.magick_cost, shard.cooldown, shard.wave_stops], [4.0, 0.0, false])
+	assert_eq([frost.magick_cost, frost.effect], [15.0, ComboNode.Effect.FROST])
 	assert_eq(tree.dodge_window, 0.0)
 
 
@@ -103,34 +103,77 @@ func test_one_ultimate_the_convergence_at_mastery_2() -> void:
 	assert_eq(hero.ultimates.size(), 1)
 	var u := hero.ultimates[0]
 	assert_eq([u.id, u.kind, u.mastery_level, u.weapon], [&"converge", UltDef.Kind.CONVERGE, 2, &"bastao"])
-	assert_eq(u.charge, 60.0, "the reactions fill it too (GP-5)")
+	assert_eq(u.charge, 50.0, "the reactions fill it too (GP-5)")
 	assert_eq(hero.arcane.converge_plan().count(), 9)
 
 
 # ---------- the elements in play ----------
 
-func test_three_sparks_in_four_seconds_set_the_target_alight_and_it_burns() -> void:
+func test_every_spark_hit_lights_the_target_and_it_burns() -> void:
 	_start()
 	var e := _dummy(Vector2(4, 0))
-	for i in 2:
-		game.arcane.shot_landed(e, _shot(SPARK))
-	assert_false(game.arcane.book.has_fire(e))
 	game.arcane.shot_landed(e, _shot(SPARK))
-	assert_true(game.arcane.book.has_fire(e), "the third hit lights it")
+	assert_true(game.arcane.book.has_fire(e), "the first hit lights it (V2)")
 	var hp := e.hp
 	_step(150)
 	assert_lt(e.hp, hp, "Queimadura hurts")
 	assert_gt(float(game.horde.dealt.by.get("elemental", 0.0)), 0.0, "counted as elemental")
 
 
-func test_the_hits_of_the_window_start_over_when_it_runs_out() -> void:
+func test_the_spark_is_a_chain_of_three_11_11_22() -> void:
+	var tree := load(HeroDef.maga().combos) as ComboTree
+	var one := ComboTree.find(tree.neutral, ComboNode.In.LIGHT)
+	var two: ComboNode = one.next[0]
+	var three: ComboNode = two.next[0]
+	assert_eq([one.effect_power, two.effect_power, three.effect_power], [11.0, 11.0, 22.0])
+	assert_eq([one.id, two.id, three.id], [&"spark", &"spark2", &"spark3"])
+	assert_true(three.has_tag(&"finisher") and three.has_tag(&"fire"))
+	assert_false(three.wave_stops, "the Lança de Brasa goes through the crowd")
+	assert_eq([three.knockback, three.hit_stop_ms, three.magick_cost], [5.0, 40.0, 0.0])
+	assert_true(three.next.is_empty())
+
+
+func test_fire_then_ice_on_one_enemy_is_a_thermal_shock_of_45() -> void:
 	_start()
 	var e := _dummy(Vector2(4, 0))
 	game.arcane.shot_landed(e, _shot(SPARK))
-	game.arcane.shot_landed(e, _shot(SPARK))
-	game.arcane.book.tick(5.0)
-	game.arcane.shot_landed(e, _shot(SPARK))
-	assert_false(game.arcane.book.has_fire(e))
+	var hp := e.hp
+	game.arcane.shot_landed(e, _shot(SHARD))
+	assert_eq(game.arcane.tally.thermal, 1)
+	assert_gte(hp - e.hp, 45.0, "the shock of 45 (and no less)")
+
+
+func test_a_reaction_gives_back_three_magick_once_a_cast_with_no_gift() -> void:
+	_start()
+	game.player.magick.value = 10.0
+	game.arcane._conj = 1
+	for i in 3:
+		var e := _dummy(Vector2(4 + i * 0.5, 0))
+		game.arcane.apply_element(e, ElementBook.FIRE)
+		game.arcane.apply_element(e, ElementBook.ICE)
+	assert_eq(game.arcane.tally.thermal, 3)
+	assert_almost_eq(game.player.magick.value, 10.0 + 3.0, 0.1, "three reactions of one cast: 3 of Magia once")
+	game.arcane._conj = 2
+	var f := _dummy(Vector2(8, 0))
+	game.arcane.apply_element(f, ElementBook.FIRE)
+	game.arcane.apply_element(f, ElementBook.ICE)
+	assert_almost_eq(game.player.magick.value, 10.0 + 6.0, 0.1, "another cast pays again")
+
+
+func test_the_passo_leaves_an_ember_where_she_left_and_never_more_than_three() -> void:
+	_start()
+	assert_eq(game.arcane._embers.size(), 0)
+	var from := game.player.pos
+	pad.move = Vector2.RIGHT
+	pad.press(&"dodge")
+	_step()
+	assert_eq(game.arcane._embers.size(), 1)
+	assert_eq(game.arcane._embers[0].at, from)
+	for i in 4:
+		pad.press(&"dodge")
+		_step(70)
+	assert_lte(game.arcane._embers.size(), 3)
+	assert_gt(game.arcane._embers.size(), 1)
 
 
 func test_the_combustion_burns_everyone_in_its_burst_and_not_those_outside() -> void:
@@ -286,3 +329,9 @@ func test_the_boss_takes_a_quarter_of_the_convergence() -> void:
 	assert_eq(def.converge_share(false, true, false), def.guardian_share)
 	assert_eq(def.converge_share(false, false, true), def.elite_share)
 	assert_eq(def.converge_share(false, false, false), 1.0)
+
+
+func test_the_hud_pin_shows_the_step_of_the_chain_0_1_2() -> void:
+	var tree := load(HeroDef.maga().combos) as ComboTree
+	var one := ComboTree.find(tree.neutral, ComboNode.In.LIGHT)
+	assert_eq([Hud.chain_step(null), Hud.chain_step(one), Hud.chain_step(one.next[0]), Hud.chain_step(one.next[0].next[0])], [0, 1, 2, 0])

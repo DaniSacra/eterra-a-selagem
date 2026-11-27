@@ -8,9 +8,9 @@ extends Resource
 @export_group("Centelha")
 ## Damage of the bolt, how far it flies, hits on one target within `window` seconds that put Queimadura on it, Magia a hit
 ## (KitFeed.take caps it by HeroDef.gain_cap). GP-5: the Centelha gives no Magia (0).
-@export var spark_damage := 8.0
+@export var spark_damage := 11.0
 @export var spark_range := 11.0
-@export var spark_hits := 3
+@export var spark_hits := 1
 @export var spark_window := 4.0
 @export var shot_magick := 0.0
 
@@ -23,7 +23,7 @@ extends Resource
 @export var ember_radius := 2.0
 
 @export_group("Estilhaço")
-@export var shard_damage := 6.0
+@export var shard_damage := 10.0
 @export var shard_slow_time := 2.0
 
 @export_group("Geada")
@@ -31,26 +31,27 @@ extends Resource
 @export var frost_range := 8.0
 @export var frost_radius := 2.5
 @export var frost_time := 4.0
-@export var frost_dps := 5.0
+@export var frost_dps := 6.0
 @export var frost_step := 1.0
 
 @export_group("Arco Voltaico")
-@export var arc_damage := 12.0
+@export var arc_damage := 20.0
 @export var arc_targets := 3
 @export var arc_range := 9.0
 @export var arc_jump := 5.0
 
 @export_group("Elementos")
 ## The numbers of ElementBook (these are its defaults).
-@export var burn_time := 3.0
+## V2 (Ressonância, maga_v2 4): the three states last 4 s (1 s more than the book's own 3).
+@export var burn_time := 4.0
 @export var burn_dps := 4.0
-@export var volt_time := 3.0
-@export var cold_time := 3.0
+@export var volt_time := 4.0
+@export var cold_time := 4.0
 @export var cold_freeze_at := 3
 @export var slow_pct := 0.3
 @export var react_gap := 0.5
-@export var thermal := 35.0
-@export var overload := 25.0
+@export var thermal := 45.0
+@export var overload := 30.0
 @export var overload_radius := 1.8
 @export var crystal_freeze := 0.8
 @export var crystal_boss_poise := 25.0
@@ -60,6 +61,8 @@ extends Resource
 @export_group("Supremo e Dons")
 ## Charge of the Convergência a reaction gives, and the most one cast may give (GP-5 7; never while the Convergência runs).
 @export var react_charge := 5.0
+## Ressonância (V2 passive, always on): the Magia a reaction gives back, once a conjuration (the Reciprocidade adds its own on top).
+@export var reaction_magick := 3.0
 @export var react_charge_cap := 10.0
 
 @export_group("Convergência Elemental")

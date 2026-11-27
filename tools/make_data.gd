@@ -2604,21 +2604,28 @@ func _maga_tree() -> ComboTree:
 	var shot := {"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "chain_window": 0.4, "hit_stop_ms": 0.0,
 		"shake": 0.2, "move_scale": 0.0, "sound": &"dart", "effect": ComboNode.Effect.WAVE, "effect_radius": 11.0, "wave_bolt": true,
 		"wave_speed": 30.0, "wave_stops": true, "wave_color": ElementLook.FIRE, "knockback": 2.0}
+	# Maga V2 (docs/design/heroes/maga_v2_2026-11-27.md 3): the Centelha is a chain of three (11, 11, then the Lança de Brasa, 22: bigger, through
+	# the crowd, a push of 5, a stop of 40 ms and the `finisher` tag); every hit lights the target (ArcaneKit.spark_hits 1)
+	var spark3 := _move(&"spark3", L, &"Cast", [&"light", &"bolt", &"arcane", &"fire", &"finisher"],
+		shot.merged({"effect_power": 22.0, "effect_size": 1.1, "windup": 0.16, "recovery": 0.26, "move_hold": 0.30, "wave_stops": false,
+		"knockback": 5.0, "hit_stop_ms": 40.0}, true), [], &"move_spark")
+	var spark2 := _move(&"spark2", L, &"Cast", [&"light", &"bolt", &"arcane", &"fire"],
+		shot.merged({"effect_power": 11.0, "effect_size": 0.7, "windup": 0.08, "recovery": 0.12, "move_hold": 0.15}, true), [spark3], &"move_spark")
 	var spark := _move(&"spark", L, &"Cast", [&"light", &"bolt", &"arcane", &"fire"],
-		shot.merged({"effect_power": 8.0, "effect_size": 0.7, "windup": 0.10, "recovery": 0.15, "move_hold": 0.20}), [], &"move_spark")
-	# left held: the Arco Voltaico, to up to three, 10 Magia, 0.6 s of charge from the press
+		shot.merged({"effect_power": 11.0, "effect_size": 0.7, "windup": 0.08, "recovery": 0.12, "move_hold": 0.15}, true), [spark2], &"move_spark")
+	# left held: the Arco Voltaico, to up to three, 8 Magia, 0.35 s of charge from the press
 	var arc := _move(&"arc", CL, &"Cast", [&"omega", &"light", &"arcane", &"volt"],
-		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.20, "recovery": 0.15, "move_hold": 0.25,
-		"chain_window": 0.4, "magick_cost": 10.0, "charge_time": 0.6, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0,
+		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.10, "recovery": 0.15, "move_hold": 0.20,
+		"chain_window": 0.4, "magick_cost": 8.0, "charge_time": 0.35, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0,
 		"sound": &"wave_omega", "effect": ComboNode.Effect.ARC}, [], &"move_arc")
-	# right tap: the Estilhaço through everyone on its way, 5 Magia, no recharge
+	# right tap: the Estilhaço through everyone on its way, 4 Magia, no recharge
 	var shard := _move(&"shard", H, &"Cast", [&"shout", &"cast", &"bolt", &"arcane", &"ice"],
-		shot.merged({"effect_power": 6.0, "effect_size": 0.8, "windup": 0.16, "recovery": 0.22, "move_hold": 0.30, "magick_cost": 5.0,
+		shot.merged({"effect_power": 10.0, "effect_size": 0.8, "windup": 0.12, "recovery": 0.20, "move_hold": 0.25, "magick_cost": 4.0,
 		"wave_stops": false, "wave_color": ElementLook.COLD, "wave_speed": 26.0, "hit_stop_ms": 25.0}, true), [], &"move_shard")
-	# right held: the Geada at the cursor, 20 Magia
+	# right held: the Geada at the cursor, 15 Magia, 0.45 s
 	var frost := _move(&"frost", C, &"Cast", [&"omega", &"heavy", &"cast", &"arcane", &"ice"],
-		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.18, "recovery": 0.25, "move_hold": 0.35,
-		"chain_window": 0.2, "magick_cost": 20.0, "charge_time": 0.6, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0,
+		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.14, "recovery": 0.22, "move_hold": 0.30,
+		"chain_window": 0.2, "magick_cost": 15.0, "charge_time": 0.45, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0,
 		"sound": &"wave_omega", "effect": ComboNode.Effect.FROST}, [], &"move_frost")
 	var tree := ComboTree.new()
 	tree.neutral = [spark, arc, shard, frost]
@@ -2663,7 +2670,7 @@ func _maga_talents() -> void:
 	# reactions make the next held spell free and quick
 	_talent(8, &"fluxo_arcano", B.FEITICARIA, T.ENTRY, 2, 3, {"mods": [_raw(&"regen_add", 1.0)] as Array[BoonMod]})
 	_talent(9, &"agilidade_arcana", B.FEITICARIA, T.MIDDLE, 2, 8, {"needs": &"fluxo_arcano", "mods": [_raw(&"charge_time_pct", -0.3)] as Array[BoonMod]})
-	_talent(10, &"reciprocidade", B.FEITICARIA, T.MIDDLE, 3, 13, {"needs": &"fluxo_arcano", "mods": [_raw(&"reaction_magick", 2.0)] as Array[BoonMod]})
+	_talent(10, &"reciprocidade", B.FEITICARIA, T.MIDDLE, 3, 13, {"needs": &"fluxo_arcano", "mods": [_raw(&"reaction_magick", 3.0)] as Array[BoonMod]})
 	_talent(11, &"transcendencia", B.FEITICARIA, T.APEX, 4, 19, {"needs": &"reciprocidade", "mods": [_raw(&"transcend_at", 3.0)] as Array[BoonMod]})
 	_talent_dir = TALENT_DIR
 
@@ -2681,7 +2688,7 @@ func _maga() -> void:
 	u.kind = UltDef.Kind.CONVERGE
 	u.name_key = &"ult_converge"
 	u.desc_key = &"ult_converge_desc"
-	var numbers := {"charge": 60.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 2, "gesture": 0.3, "weapon": &"bastao",
+	var numbers := {"charge": 50.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 2, "gesture": 0.3, "weapon": &"bastao",
 		"anim": &"Cast", "anim_peak": PEAK[&"Cast"], "knockback": 0.0, "ahead": 4.0, "aim_max": 9.0, "radius": 5.0, "radius_cap": 6.5,
 		"duration": 4.5, "tick": 0.5, "elite_share": 0.5, "guardian_share": 0.25}
 	for k: String in numbers:
@@ -2697,7 +2704,7 @@ func _maga() -> void:
 	# life 30 as the others (maga.md 13); the Passo has 2 charges of 1 s; 50 of Magia that comes back 2 a second (GP-5); no Magia from a
 	# finisher or a Quebra, no recharge to refund; she walks (half speed) and turns (90 degrees a second) while a held spell charges
 	var body := {"max_hp": 30.0, "hurt_time": 0.18, "hurt_invuln": 0.7, "dodge_charges": 2, "dodge_recharge": 1.0, "magick_max": 50.0,
-		"magick_regen": 2.0, "circle": false, "magick_on_finisher": 0.0, "magick_on_break": 0.0, "cd_floor": 0.0, "gain_cap": 3.0, "gain_window": 1.0,
+		"magick_regen": 3.0, "circle": false, "magick_on_finisher": 0.0, "magick_on_break": 0.0, "cd_floor": 0.0, "gain_cap": 3.0, "gain_window": 1.0,
 		"charge_move_light": 0.5, "charge_move_heavy": 0.5, "charge_turn_light": 90.0}
 	for k: String in body:
 		h.set(k, body[k])
