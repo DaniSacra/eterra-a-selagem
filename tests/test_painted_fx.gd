@@ -127,3 +127,15 @@ func test_without_the_ribbon_the_ink_stays() -> void:
 	fx.slash(Vector2.ZERO, Vector2(0, 1), 2.4, 150.0, Combat.EMETH, 0.12, false, 0.9, true, Fx.BLADE_REACH, false)
 	assert_eq(_lit(fx._slashes), 0, "no ribbon")
 	assert_eq(_lit(fx._inks), 1, "the ink under the cut stays")
+
+
+func test_the_shock_and_the_blast_draw_no_star_in_the_ink_look() -> void:
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	var fx := _fx()
+	fx.shock(Vector2(3, 3), 1.5, Combat.EMETH, 1.0)
+	assert_eq(_lit(fx._stars), 0, "BG-1: no four-point star under the shock")
+	assert_gt(_lit(fx._painted_cards), 0, "the paint answers: a ring card")
+	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
+	var old := _fx()
+	old.blast(Vector3(1, 1, 1), Combat.EMETH, 1.0)
+	assert_eq(_lit(old._stars), 1, "the classic look keeps its star")

@@ -260,7 +260,7 @@ func _cleave(origin: Vector2, dir: Vector2) -> void:
 	fx.kick(dir, Combat.KICK_FINISHER)
 	fx.punch(1.5)
 	fx.screen_flash(1.3)
-	fx.hit_star(Vector3(origin.x, 1.2, origin.y), Combat.EMETH, 2.0, true)
+	fx.blast(Vector3(origin.x, 1.2, origin.y), Combat.EMETH, 2.0)
 	fx.shake(3.0)
 	fx.buzz(Combat.RUMBLE_OMEGA.x, Combat.RUMBLE_OMEGA.y, Combat.RUMBLE_OMEGA.z)
 	for k in 5:

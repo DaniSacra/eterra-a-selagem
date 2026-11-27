@@ -116,6 +116,11 @@ const PAINTED_SPARK_GROW := 1.25
 const PAINTED_RING_SIZE := Vector2(0.9, 1.4)
 const PAINTED_RING_GROW := 1.4
 const PAINTED_WAVE_TIME := 0.34
+## Fx.blast: seconds, floor ring meters per hit_star scale, its ceiling, and the spark's share of the ring.
+const BLAST_TIME := 0.2
+const BLAST_RING_PER_SCALE := 1.6
+const BLAST_RING_MAX := 5.0
+const BLAST_SPARK_SHARE := 0.7
 const PAINTED_WAVE_OPACITY := 0.7
 const PUFF_POOL := 12
 const SCORCH_POOL := 6
@@ -811,7 +816,9 @@ func burst(kind: StringName, pos: Vector3, dir: Vector3 = Vector3.ZERO) -> void:
 		# bone splinters flying out of it, pale and warm, falling back
 		var n_chips := budget.take(&"motes", DEATH_CHIPS)
 		_spray(at, Vector3.UP, DEATH_CHIP_COLOR, n_chips, 6.5, 0.2, 0.55, 1.2, MOTE_GRAVITY, false)
-		hit_star(at, Color(1.0, 0.9, 0.7), DEATH_STAR_SIZE / STAR_SIZE.x, false)
+		# (the ink look has no hot star at the death: the lit puff is its flash, no cross, no flat white disc)
+		if not VisualProfile.stylized():
+			hit_star(at, Color(1.0, 0.9, 0.7), DEATH_STAR_SIZE / STAR_SIZE.x, false)
 
 
 ## Smoke wisps (vfx_pass_spec.md 5.6, wisp.gdshader): soft torn cards that rise (rise m/s2 up), widen and come apart,
@@ -1105,6 +1112,40 @@ func hit_star(pos: Vector3, color: Color, scale_: float = 1.0, heavy: bool = fal
 	mat.set_shader_parameter(&"intensity", STAR_LIGHT[k] if not _compat else STAR_LIGHT_COMPAT)
 
 
+## The flash of a strong blow (the shock, the Brado, the Corte do Juízo): the classic look keeps the white-hot star; the
+## ink look paints it instead (never a 4-point cross, never a flat disc): a dark-cored ring opening on the floor under
+## the point (anticipation is the ring's first frames, dissipation its last) and a billboard spark of broken slivers in
+## the hero's colour at the point. scale_ as for hit_star (1 is a blow's star). Drawn only.
+func blast(pos: Vector3, color: Color, scale_: float = 1.0) -> void:
+	if not VisualProfile.stylized():
+		hit_star(pos, color, scale_, true)
+		return
+	if not painted_on() or not budget.allows(&"contacts"):
+		return
+	var cols := painted_colors(color)
+	var diameter := clampf(scale_ * BLAST_RING_PER_SCALE, PAINTED_RING_SIZE.y, BLAST_RING_MAX)
+	var r: Dictionary = _take(_painted_cards)
+	_painted_dress(r, &"hit_ring", cols[0], cols[1])
+	r.time = BLAST_TIME
+	(r.node as Node3D).position = Vector3(pos.x, 0.06, pos.z)
+	(r.node as Node3D).rotation = Vector3(0.0, _rng.randf() * TAU, 0.0)
+	r.size = diameter * 0.5 / float(PAINTED_SHEETS[&"hit_ring"].outer)
+	r.grow = PAINTED_RING_GROW
+	var rmat: ShaderMaterial = r.mat
+	rmat.set_shader_parameter(&"billboard", 0.0)
+	rmat.set_shader_parameter(&"mode", 0.0)
+	rmat.set_shader_parameter(&"flip", 0.0)
+	rmat.set_shader_parameter(&"core_amt", 0.0)
+	(r.node as Node3D).scale = Vector3(r.size, 1.0, r.size)
+	var e: Dictionary = _take(_painted_sparks)
+	_painted_dress(e, &"contact", cols[0], cols[1])
+	e.time = BLAST_TIME
+	(e.node as Node3D).position = pos
+	e.size = diameter * 0.5 * BLAST_SPARK_SHARE / float(PAINTED_SHEETS[&"contact"].outer)
+	e.grow = PAINTED_SPARK_GROW
+	(e.mat as ShaderMaterial).set_shader_parameter(&"aim", _rng.randf() * TAU)
+
+
 ## A puff of bone dust that opens, curls and comes apart in a flipbook of 8 painted frames; lit: its first frames burst
 ## with warm light (a death). Drawn only. size is meters across.
 func puff(pos: Vector3, size: float = PUFF_SIZE, tint: Color = BONE_DUST, lit: float = 0.0, time: float = PUFF_TIME) -> void:
@@ -1304,6 +1345,9 @@ func thrust(origin: Vector2, dir: Vector2, reach: float, width: float, color: Co
 	mat.set_shader_parameter(&"sweep", clampf(THRUST_IN / time, 0.05, 0.9))
 	mat.set_shader_parameter(&"leave", clampf(THRUST_OUT / time, 0.1, 0.95))
 	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(color.lerp(Color.WHITE, 0.45)))
+	if band and painted_on():
+		# the Lança's start: a small painted burst where it leaves the blade (ink look: the same hand as the cuts)
+		blast(Vector3(origin.x + dir.x * 0.8, height, origin.y + dir.y * 0.8), color, 0.7)
 	if band:
 		# the wave's wake: sparks flung back and up along the path, dust kicked off the floor where it passed
 		var n_sparks := budget.take(&"motes", WAVE_SPARKS)
@@ -1315,6 +1359,8 @@ func thrust(origin: Vector2, dir: Vector2, reach: float, width: float, color: Co
 			var at2 := origin + dir * reach * (0.25 + 0.3 * k)
 			wisps(Vector3(at2.x, 0.2, at2.y), Vector3.UP, BONE_DUST, 1, 0.7, 0.5, 0.5, 1.0, 0.4)
 	if omega:
+		if painted_on():
+			blast(Vector3(origin.x + dir.x * reach, height, origin.y + dir.y * reach), color, 1.0)
 		# crystal spikes from the point to the sides (V-04): long slivers, flying out a moment
 		var tip := Vector3(origin.x + dir.x * reach, height, origin.y + dir.y * reach)
 		var fwd := Vector3(dir.x, 0.0, dir.y)
@@ -1590,7 +1636,8 @@ func shock(center: Vector2, radius: float, color: Color, power: float = 1.0) -> 
 	# effects pass: the floor darkens under it, a puff of dust rolls out and a wide star bursts at the centre
 	scorch(center, radius, SCORCH_OPACITY * clampf(0.6 + power * 0.4, 0.6, 1.2))
 	puff(at + Vector3.UP * 0.3, radius * 1.8 + 1.2, BONE_DUST, 0.0, 0.6)
-	hit_star(at + Vector3.UP * 0.6, color, radius * 0.9 + 0.5, true)
+	# BG-1: the ink look has no 4-point star (the blast must not leave in a cross): a painted brush burst instead
+	blast(at + Vector3.UP * 0.6, color, radius * 0.9 + 0.5)
 
 
 ## The Investida's trail: dust kicked up along the line it runs and a few slivers of its colour (the thrust is drawn by `thrust`).
