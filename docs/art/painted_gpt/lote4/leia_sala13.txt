@@ -1,0 +1,9 @@
+Sala 13, Pontes (GP-8, gpt-image-2, 2026-11-27)
+
+sala13_aprovacao.png: a sala completa para você aprovar. Saíram os inimigos; as formas lisas azul-claras da captura (pilares e torres sem textura) viraram pedra escura com névoa. Ficaram as três plataformas, as duas pontes com chamas, o portal com frontão no fundo, o pilar com correntes, as colunas, o túmulo, a lanterna e o losango gravado no chão.
+Portas: a porta 1 no fundo da plataforma da direita, com a lanterna e o túmulo ao lado. A porta 2 fica na borda direita da tela, quase fora do quadro da captura: o jogo precisa mostrar mais à direita (ou trazer a porta para dentro) para ela aparecer na pintura.
+Entrada: arco baixo escuro na mureta da plataforma da esquerda, por onde o herói chega.
+sala13_jogo.png: a mesma pintura para o jogo. Saíram as chamas, a luz da lanterna, o losango do chão (pedra lisa) e a folha da porta (o vão ficou escuro).
+sala13_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: plataformas, pontes e balaustradas a poucos pixels; a porta 1 uns 30 pixels abaixo da grade da captura.

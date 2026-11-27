@@ -1,0 +1,11 @@
+PONTES (três plataformas de pedra sobre o abismo, ligadas por pontes com balaustradas). Posições em % da largura x altura da imagem 1.
+- REMOVA as figuras/inimigos com barrinha vermelha e o vulto rosado (79% x 63%, 81% x 67%): no lugar, piso de lajes.
+- As formas lisas azul-claras sem textura (o pilar enorme embaixo da plataforma da esquerda, de 15% a 45% da largura, e os pilares e lajes pálidos do fundo) são torres e ruínas de pedra escura: pinte pedra escura cinza-azulada com névoa, no mesmo contorno, nada claro.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - as três plataformas (esquerda, de 18% a 45%; meio, de 43% a 72%; direita, de 70% a 100%) e as duas pontes com balaustradas que as ligam, com as chamas nos pilaretes (45% x 33%, 39% x 39%, 44% x 43%, 51% x 38%, 72% x 46%, 73% x 58%, 78% x 53%);
+  - o portal de pedra com frontão no fundo do meio (53% x 25%), escuro por dentro, e o bloco de pilar com as correntes em 64% x 36%;
+  - os tocos de coluna e blocos (37% x 30%, 51% x 47%, 59% x 51%, 84% x 63%), o túmulo baixo em 91% x 59%, a lanterna no pilar em 92% x 52%;
+  - o losango gravado no piso da plataforma da direita (89% x 66%), linhas finas;
+  - as correntes que descem das plataformas no abismo.
+- PORTAS: a porta 1 fica no fundo da plataforma da direita em 90% x 46%, onde a imagem 1 tem o portão de grade: pinte uma porta alta e monumental de madeira escura com ferragens, fechada, num batente de pedra, no mesmo lugar. A porta 2 fica na borda direita da imagem (98% x 50%), quase fora do quadro: pinte só o começo do batente dela. Entre as duas, a lanterna no pilar e o túmulo baixo.
+- ENTRADA: na mureta da frente da plataforma da esquerda, em torno de 22% x 40%, pinte um arco de pedra baixo com vão PRETO e fundo, a passagem por onde o herói chegou.

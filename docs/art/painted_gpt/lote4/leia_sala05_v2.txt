@@ -1,0 +1,8 @@
+Sala 05, Casa do Cavaleiro, repintura com a captura nova (GP-8, gpt-image-2, 2026-11-27)
+
+sala05_v2_aprovacao.png: a sala completa para você aprovar. Saíram o Cavaleiro e os estandartes. Ficaram os três arcos do fundo (escuros por dentro, com grade baixa), o nicho pequeno com uma armadura vazia entre o primeiro e o segundo arco, a janelinha gradeada, os três braseiros acesos, as quatro grades de brasa no chão (nas pontas de cima e de baixo e nos cantos) e os vasos.
+Entrada: arco baixo escuro na mureta da frente à esquerda, por onde o herói chega.
+sala05_v2_jogo.png: a mesma pintura para o jogo. Saíram as chamas (braseiros apagados), as quatro grades do chão (pedra lisa), os vasos e as grades dentro dos três arcos: os três arcos são as portas da sala, e no jogo o vão fica escuro até o chão (o jogo põe as portas por cima). A armadura vazia do nicho fica.
+sala05_v2_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: paredes, arcos, braseiros, grades, muretas e borda da plataforma a poucos pixels da captura.

@@ -1,0 +1,9 @@
+Sala 02, Cripta, repintura com as portas novas (GP-8, gpt-image-2, 2026-11-27)
+
+sala02_v2_aprovacao.png: a sala completa para você aprovar. Saíram os inimigos e os estandartes. Ficaram as colunas, os quatro túmulos com velas, o candelabro redondo pendurado, os dois braseiros do fundo, as duas grades de brasa no chão e os vasos.
+Portas: duas portas altas na parede do fundo à direita, bem separadas, com um trecho de parede e um braseiro entre elas.
+Entrada: arco baixo escuro na borda da frente à esquerda, por onde o herói chega.
+sala02_v2_jogo.png: a mesma pintura para o jogo. Saíram as chamas (velas, candelabro e braseiros apagados), as grades do chão (pedra lisa), os vasos e as folhas das portas (o vão ficou escuro).
+sala02_v2_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: paredes, portas e borda da plataforma batem com a captura; colunas e túmulos a uns 10 a 20 pixels.

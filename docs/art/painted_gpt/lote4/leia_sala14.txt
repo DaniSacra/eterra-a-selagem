@@ -1,0 +1,9 @@
+Sala 14, Ponte longa (GP-8, gpt-image-2, 2026-11-27)
+
+sala14_aprovacao.png: a sala completa para você aprovar. Saíram os inimigos; as formas lisas azul-claras da captura viraram pedra escura com névoa. Ficaram as duas plataformas, a ponte comprida com balaustradas e chamas, a lanterna pendurada na corrente, a coluna, o túmulo, a lanterna no pilar e o losango gravado no chão.
+Portas: a porta 1 no fundo da plataforma da direita, com a lanterna e o túmulo ao lado. A porta 2 fica na borda direita da tela, quase fora do quadro da captura: o jogo precisa mostrar mais à direita (ou trazer a porta para dentro) para ela aparecer na pintura.
+Entrada: arco baixo escuro na mureta da plataforma da esquerda, por onde o herói chega.
+sala14_jogo.png: a mesma pintura para o jogo. Saíram as chamas, a luz das lanternas, o losango e a grade de brasa do chão (pedra lisa) e a folha da porta (o vão ficou escuro).
+sala14_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: plataformas, ponte e balaustradas a poucos pixels da captura.

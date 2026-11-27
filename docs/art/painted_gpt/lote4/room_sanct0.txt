@@ -1,0 +1,13 @@
+SANTUÁRIO (nave de igreja de catacumba com duas fileiras de colunas). Posições em % da largura x altura da imagem 1.
+- REMOVA as figuras/inimigos com barrinha vermelha e o vulto rosado (50% x 33%, 58% x 36%): no lugar, piso de lajes.
+- REMOVA os estandartes azuis (19% x 12%, 44% x 14%, 65% x 22% e outros): parede de pedra lisa. O musgo verde pendurado no alto da parede vira musgo escuro discreto.
+- Os retângulos escuros soltos na ponta esquerda (9% x 27% e 11% x 55%) são parede em sombra: pinte pedra escura em sombra no mesmo contorno.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - as duas fileiras de colunas, cada uma com a mesma base, altura e capitel (36% x 26%, 44% x 30%, 52% x 34%, 23% x 39%, 31% x 46%, 39% x 48%, 48% x 53%, 58% x 59%, 69% x 65%, 69% x 42%, 79% x 50%; as de pináculo continuam com pináculo);
+  - os tambores de coluna caídos em 62% x 42%;
+  - o canal de água rasa entre colunas em 38% x 42%, água azul-acinzentada escura;
+  - os quadrados escuros de quatro lajes no piso (20% x 42%, 31% x 56%, 39% x 36%, 42% x 63%, 53% x 55%, 76% x 48%), mesmo contorno;
+  - os dois sarcófagos com vela (47% x 26% e 61% x 33%), os bancos de pedra à esquerda, os dois braseiros acesos (27% x 22% e 73% x 36%);
+  - as muretas quebradas da frente (25% x 66%, 46% x 81%) e as paredes altas do fundo.
+- PORTAS: três arcos altos na parede do fundo à direita, centros em 57% x 25%, 69% x 30% e 78% x 34%, cada um BEM separado do outro: entre o primeiro e o segundo fica o sarcófago (61% x 33%), entre o segundo e o terceiro o braseiro (73% x 36%). Pinte as três portas fechadas, monumentais, no mesmo lugar.
+- ENTRADA: onde a imagem 1 tem o retângulo preto em pé na borda da frente à direita (em torno de 68% x 87%), pinte um arco de pedra baixo na mureta com vão PRETO e fundo, a passagem por onde o herói chegou.

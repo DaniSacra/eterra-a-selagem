@@ -1,0 +1,11 @@
+FENDAS (pontes sobre abismos). Posições em % da largura x altura da imagem 1.
+- REMOVA as três figuras/inimigos com barrinha vermelha e o monte de ossos rosado (58% x 78%, 87% x 66%, 78% x 47%): no lugar, piso de lajes.
+- Apague as setinhas e marcas amarelas do piso (o piso fica só pedra; a borda dos abismos pode ter uma linha fina dourada gasta). O piso, que na imagem 1 está azul-arroxeado, vira ardósia cinza-azulada pouco saturada. O vazio continua escuro, névoa cinza-azulada, nada violeta nem roxo.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - as duas pontes de pedra com balaustradas sobre os dois abismos (ponte de cima centro em 63% x 44%, ponte de baixo centro em 52% x 59%), com as lanternas e chamas nos pilaretes; os abismos debaixo delas continuam buracos escuros e fundos, mesmo contorno;
+  - o buraco octogonal em 81% x 62%, escuro por dentro, mesmo contorno;
+  - os tocos de coluna (36% x 47%, 47% x 43%, 68% x 64%, 78% x 70%) e o túmulo baixo em 44% x 39%;
+  - os dois canais de água rasa à esquerda (em torno de 27% x 48%), água azul-acinzentada escura;
+  - as muretas com merlões em volta, a torre alta ao fundo, as correntes, o arco em ruína no fundo e os arcos em ruína à esquerda em silhueta.
+- PORTAS: na muralha da direita, dois arcos altos, centros em 82% x 38% e 93% x 42%, BEM separados; ENTRE eles, em 87% x 44%, um candelabro alto de ferro com chama acesa (onde a imagem 1 tem o braseiro), e outro braseiro aceso em 96% x 51%. A gradinha baixa de ferro na frente do primeiro arco fica. Pinte as duas portas fechadas, monumentais, no mesmo lugar.
+- ENTRADA: onde a imagem 1 tem o retângulo preto em pé na borda da frente à esquerda (em torno de 26% x 66%), pinte um arco de pedra baixo com vão PRETO e fundo, a passagem por onde o herói chegou.

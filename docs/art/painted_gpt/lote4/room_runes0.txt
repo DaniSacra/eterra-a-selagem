@@ -1,0 +1,10 @@
+SALA DAS RUNAS (salão quadrado de lajes grandes, sobre uma torre). Posições em % da largura x altura da imagem 1.
+- REMOVA as figuras/inimigos com barrinha vermelha e o vulto rosado (31% x 38%, 62% x 57%, 66% x 57%): no lugar, piso de lajes.
+- As paredes da esquerda e do fundo aparecem só como contorno transparente na imagem 1: pinte-as como paredes de pedra de verdade, sólidas, exatamente nesse contorno e nessa altura. Os pontinhos de estrela no vazio somem: só névoa cinza-azulada.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - o piso de lajes grandes quadradas em grade, com juntas finas (nenhuma runa legível, nenhum símbolo, nenhum brilho);
+  - os quatro pilares quadrados de pedra (48% x 34%, 35% x 46%, 65% x 42%, 53% x 58%), cada um com a mesma base e altura;
+  - as muretas com merlões em volta, a caixa de madeira em 30% x 58% e a torre de pedra escura embaixo da plataforma;
+  - na parede do fundo: a treliça de ferro com teia em 55% x 26% e o braseiro aceso em 66% x 34%.
+- PORTAS: três arcos na parede do fundo, centros em 49% x 21%, 62% x 26% e 72% x 31%, cada um BEM separado do outro: entre o primeiro e o segundo fica a treliça de ferro, entre o segundo e o terceiro o braseiro. Pinte as três portas fechadas, altas, de madeira escura com ferragens, no mesmo lugar.
+- ENTRADA: onde a imagem 1 tem o retângulo preto em pé na mureta da frente à esquerda (em torno de 35% x 62%), pinte um arco de pedra baixo com vão PRETO e fundo, a passagem por onde o herói chegou.

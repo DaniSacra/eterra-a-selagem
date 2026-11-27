@@ -1,0 +1,9 @@
+Sala 18, Altar Esquecido (GP-8, gpt-image-2, 2026-11-27)
+
+sala18_aprovacao.png: a sala completa para você aprovar. Saíram o texto e o medalhão (o jogo põe por cima) e os estandartes; o chão marrom-claro virou pedra média-escura. Ficaram o altar de pedra com pano liso sob o arco pontudo escuro, os bancos, o braseiro, as escadas da direita, o raio de luz e os vasos.
+Esta sala não tem porta de madeira na captura: a saída é o arco pontudo escuro do fundo e as escadas da direita.
+Entrada: arco baixo escuro na mureta da frente à esquerda, por onde o herói chega.
+sala18_jogo.png: a mesma pintura para o jogo. Saíram a chama do braseiro, as velinhas e os vasos.
+sala18_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: paredes, arco, escadas e borda a poucos pixels; o pedestal pequeno onde fica o medalhão juntou-se à mesa do altar (o jogo põe o altar dele por cima).

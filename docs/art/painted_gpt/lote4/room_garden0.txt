@@ -1,0 +1,12 @@
+JARDIM (pátio da árvore). Posições em % da largura x altura da imagem 1.
+- REMOVA as figuras/inimigos com barrinha vermelha (31% x 58%, 47% x 29%, 50% x 31%): no lugar, piso de lajes.
+- REMOVA o estandarte azul em 21% x 27%: parede de pedra lisa. As heras penduradas viram musgo escuro.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - a árvore grande no meio, tronco nascendo do piso em 41% x 38%, com as raízes EXATAMENTE pelos mesmos caminhos sobre o piso; copa de outono âmbar e cobre;
+  - os cristais na base do tronco (37% x 39% e 43% x 39%) em azul-gelo pálido, não verdes;
+  - a coluna em 45% x 55%, os dois altares pequenos com vela (26% x 33% e 62% x 46%), os blocos baixos de pedra, o quadrado gravado no piso;
+  - o raio de luz que desce no alto à esquerda (24% x 12%), quente e suave, sem raios em leque;
+  - as muretas com merlões, a muralha cilíndrica de pedra embaixo da plataforma e os vasos em 15% x 43%.
+- PAREDE DO FUNDO À DIREITA, da esquerda para a direita: um nicho escuro em 59% x 27% atrás da gradinha baixa de ferro (fica nicho escuro, sem porta); o braseiro aceso em 63% x 31%; a PORTA 1 em 68% x 30%; a ESTÁTUA de pedra no seu nicho em 71% x 33%; a PORTA 2 em 81% x 34%. Pinte as duas portas fechadas, altas, no mesmo lugar, com a estátua bem visível entre elas.
+- ENTRADA: onde a imagem 1 tem o retângulo preto em pé na borda da frente à esquerda (em torno de 14% x 53%), pinte um arco de pedra baixo com vão PRETO e fundo, a passagem por onde o herói chegou.
+Piso de lajes cinza-esverdeadas escuras com musgo nas juntas e algumas folhas vermelhas e âmbar caídas nas bordas; o centro calmo.

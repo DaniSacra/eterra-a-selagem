@@ -1,0 +1,14 @@
+SALA DO ALTAR ESQUECIDO (capela pequena de pedra, sobre uma torre no vazio). Posições em % da largura x altura da imagem 1.
+- REMOVA todo texto e ícone: o rótulo amarelo com as palavras em 57% x 30% e o medalhão redondo brilhante em 56% x 35%; no lugar do medalhão, o topo de pedra do altar com um pano liso simples. Nenhuma letra na imagem.
+- REMOVA os dois estandartes com leão (48% x 15% e 76% x 24%): parede de pedra lisa. O musgo verde pendurado no arco vira musgo escuro discreto.
+- O piso, que na imagem 1 está marrom-claro e quente demais, vira pedra cinza-esverdeada média-escura pouco saturada; a luz quente fica só em poças pequenas em volta do braseiro e do raio de luz.
+- O painel transparente no alto à esquerda (25% x 20%) é parede: pinte pedra sólida.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - o altar de pedra baixo em 56% x 41% e a mesa de pedra em 61% x 37%;
+  - o arco pontudo grande no fundo (61% x 25%), escuro por dentro, uma passagem preta funda;
+  - os dois bancos de madeira (45% x 42% e 60% x 49%), o braseiro aceso em 75% x 48%, as escadas que descem à direita (88% x 64% e 90% x 50%) com o corrimão;
+  - o raio de luz suave que desce no alto à esquerda (24% x 12%), sem raios em leque;
+  - as muretas, os blocos grandes de pedra da borda e a base da torre embaixo da plataforma;
+  - os vasos de barro (27% x 42%, 62% x 70%, 58% x 75%).
+- ENTRADA: onde a imagem 1 tem o retângulo preto em pé na mureta da frente à esquerda (em torno de 35% x 59%), pinte um arco de pedra baixo com vão PRETO e fundo, a passagem por onde o herói chegou.
+- Sem portas de madeira nesta sala: não acrescente portas.

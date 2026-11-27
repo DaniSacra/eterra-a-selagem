@@ -1,0 +1,11 @@
+CRIPTA B (ossário de catacumba). Posições em % da largura x altura da imagem 1.
+- REMOVA as três figuras/inimigos com barrinha vermelha e o monte de ossos rosado (44% x 26%, 66% x 53% e 72% x 55%): no lugar, piso de lajes.
+- REMOVA o estandarte azul com leão em 54% x 14%: parede de pedra lisa. As plantas penduradas no alto viram musgo escuro discreto.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - os três túmulos de pedra com velas acesas: 38% x 48%, 52% x 55% e 52% x 29%;
+  - a parede divisória do ossário com nichos (de 55% x 42% a 64% x 30%), a estátua encapuzada de pedra em cima dela em 63% x 17% e a coluna em 72% x 37%;
+  - as lajes de túmulo gravadas no piso e os quadrados escuros (40% x 30%, 52% x 41%, 61% x 45%), mesmo contorno;
+  - as duas grades de ferro no piso com brilho vermelho de brasa por baixo (45% x 45% e 58% x 52%): mesmo contorno, são perigos do jogo;
+  - os vasos e urnas de barro (24% x 42%, 18% x 54%, 79% x 44%), a bacia quebrada em 75% x 55%, as muretas e merlões da frente e os pilares de pedra embaixo da plataforma.
+- PORTAS: dois arcos de porta altos, BEM separados: porta 1 na parede do fundo em 59% x 23%, atrás e à esquerda da estátua; porta 2 na parede da direita em 76% x 31%. Entre elas ficam a estátua encapuzada e a coluna. Pinte as duas portas fechadas, monumentais, no mesmo lugar.
+- ENTRADA: onde a imagem 1 tem o retângulo preto em pé na borda da frente à esquerda (em torno de 30% x 62%), pinte um arco de pedra baixo com vão PRETO e fundo, a passagem por onde o herói chegou.

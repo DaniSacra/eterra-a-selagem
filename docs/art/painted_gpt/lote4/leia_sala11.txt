@@ -1,0 +1,9 @@
+Sala 11, Santuário (GP-8, gpt-image-2, 2026-11-27)
+
+sala11_aprovacao.png: a sala completa para você aprovar. Saíram os inimigos e os estandartes. Ficaram as duas fileiras de colunas, os tambores de coluna caídos, o canal de água, os quadrados de lajes no chão (as lajes que disparam), os dois sarcófagos com vela, os bancos e os dois braseiros.
+Portas: três portas altas no fundo à direita, bem separadas: um sarcófago entre a primeira e a segunda, um braseiro entre a segunda e a terceira.
+Entrada: arco baixo escuro na mureta da frente à direita, por onde o herói chega.
+sala11_jogo.png: a mesma pintura para o jogo. Saíram as chamas, a água do canal (leito seco), os quadrados de lajes (pedra lisa) e as folhas das portas (o vão ficou escuro).
+sala11_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: paredes, portas e borda a poucos pixels; as colunas da frente de 20 a 30 pixels ao lado.

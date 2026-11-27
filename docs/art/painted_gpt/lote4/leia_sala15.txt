@@ -1,0 +1,9 @@
+Sala 15, Sala das Runas (GP-8, gpt-image-2, 2026-11-27)
+
+sala15_aprovacao.png: a sala completa para você aprovar. Saíram os inimigos; as paredes, que na captura aparecem só como contorno transparente, viraram pedra sólida. Ficaram o piso de lajes grandes em grade (sem runa legível), os quatro pilares, a treliça de ferro, o braseiro e a caixa.
+Portas: três portas no fundo, bem separadas: a treliça entre a primeira e a segunda, o braseiro entre a segunda e a terceira.
+Entrada: arco baixo escuro na mureta da frente à esquerda, por onde o herói chega.
+sala15_jogo.png: a mesma pintura para o jogo. Saíram a chama, a caixa e as folhas das portas (o vão ficou escuro).
+sala15_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+ENCAIXE RUIM, não usar no jogo ainda: nas três tentativas o gerador alargou a metade direita da sala; dois pilares e as portas da direita ficaram de 40 a 75 pixels fora da captura. As paredes transparentes da captura confundem o gerador: a captura precisa ser refeita com as paredes sólidas antes de repintar.

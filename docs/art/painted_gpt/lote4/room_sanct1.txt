@@ -1,0 +1,14 @@
+SANTUÁRIO B, NAVE PARTIDA (nave de igreja de catacumba cujo piso do meio desabou). Posições em % da largura x altura da imagem 1.
+- REMOVA as figuras/inimigos com barrinha vermelha e o vulto rosado (50% x 33%, 58% x 36%): no lugar, piso de lajes.
+- REMOVA os estandartes azuis (19% x 12%, 44% x 14%, 65% x 22% e outros): parede de pedra lisa. O musgo verde pendurado vira musgo escuro discreto.
+- Os retângulos escuros soltos na ponta esquerda (9% x 27% e 11% x 55%) são parede em sombra: pinte pedra escura em sombra no mesmo contorno. O azul forte embaixo da plataforma (50% x 93%) vira sombra e névoa cinza-azulada.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - o BURACO grande no meio do piso (de 50% a 66% da largura, de 47% a 62% da altura), mesmo contorno com borda dourada gasta: escuro e fundo por dentro, com blocos de pedra caídos, sem brilho azul;
+  - os arcos de nervura quebrados que sobem do fundo (de 45% a 75% da largura, no alto da imagem), em pedra;
+  - as colunas, cada uma com a mesma base, altura e capitel (36% x 26%, 44% x 30%, 52% x 34%, 23% x 39%, 31% x 46%, 39% x 48%, 69% x 65%, 79% x 50%; as de pináculo continuam com pináculo);
+  - o canal de água rasa entre colunas em 38% x 42%, água azul-acinzentada escura, e as duas grades de ferro vermelhas no piso (32% x 38% e 45% x 41%);
+  - os quadrados escuros de quatro lajes no piso (31% x 56%, 42% x 63%, 48% x 48%, 76% x 48%), mesmo contorno;
+  - os dois sarcófagos com vela (47% x 26% e 61% x 33%), os bancos de pedra à esquerda, os dois braseiros acesos (27% x 22% e 73% x 36%);
+  - as muretas quebradas da frente e as paredes altas do fundo.
+- PORTAS: três arcos altos na parede do fundo à direita, centros em 56% x 24%, 68% x 29% e 79% x 34%, cada um BEM separado do outro: entre o primeiro e o segundo fica o sarcófago (61% x 33%), entre o segundo e o terceiro o braseiro (73% x 36%). Pinte as três portas fechadas, monumentais, no mesmo lugar.
+- ENTRADA: onde a imagem 1 tem o retângulo preto em pé na borda da frente à direita (em torno de 68% x 87%), pinte um arco de pedra baixo na mureta com vão PRETO e fundo, a passagem por onde o herói chegou.

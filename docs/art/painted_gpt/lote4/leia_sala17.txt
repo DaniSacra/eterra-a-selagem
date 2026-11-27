@@ -1,0 +1,10 @@
+Sala 17, Provação (GP-8, gpt-image-2, 2026-11-27)
+
+sala17_aprovacao.png: a sala completa para você aprovar. Saíram o texto e o medalhão da carta (o jogo põe por cima), os estandartes e toda a luz roxa (roxo é só de Morvath): a névoa ficou cinza-azulada e as rachaduras roxas do chão saíram. Ficaram o pedestal de pedra, a estela, a janela quebrada, as lamparinas de parede, as urnas em pedestal e os vasos.
+Portas: duas portas altas no fundo, separadas por um trecho de parede com duas urnas em pedestal e uma lamparina.
+Entrada: arco baixo escuro na mureta da frente à esquerda, por onde o herói chega.
+sala17_jogo.png: a mesma pintura para o jogo. Saíram as chamas das lamparinas, os vasos e as folhas das portas (o vão ficou escuro).
+sala17_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: paredes, portas, janela e borda a poucos pixels; pedestal e estela uns 20 pixels à esquerda.
+Para decidir: as rachaduras roxas da captura podem ser um efeito do jogo (a Provação); se forem de Morvath, o jogo as põe por cima.

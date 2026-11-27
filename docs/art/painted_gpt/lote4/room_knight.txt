@@ -1,0 +1,12 @@
+CASA DO CAVALEIRO (salão de guarda de uma catacumba). Posições em % da largura x altura da imagem 1.
+- REMOVA a figura de armadura com escudo em 55% x 37%: no lugar, piso de lajes. A sala fica vazia.
+- REMOVA os cinco estandartes azuis com leão (23% x 21%, 34% x 13%, 55% x 9%, 69% x 15% e o de 83% x 14% se houver): parede de pedra lisa.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - as paredes altas da esquerda e do fundo, o canto cortado à direita, as muretas baixas da frente e da direita, os pilaretes da frente e a base de pedra embaixo da plataforma;
+  - os TRÊS arcos do fundo (centros em 49% x 13%, 62% x 18% e 76% x 24%), cada um com a sua gradinha baixa de ferro na frente: por dentro de cada arco, só ESCURIDÃO funda (passagem preta), sem porta, sem parede no fundo;
+  - entre o primeiro e o segundo arco, o pequeno nicho em 56% x 24% com uma armadura vazia de ferro escuro num suporte (só armadura, sem ninguém dentro, sem brilho);
+  - a janelinha gradeada de madeira na parede esquerda em 16% x 45%;
+  - os três braseiros de pedra com chama acesa: 24% x 36%, 35% x 26% e 68% x 29%;
+  - as quatro grades de ferro no piso com brilho laranja de brasa por baixo (51% x 32%, 20% x 56%, 76% x 52% e 53% x 79%): mesmo contorno e tamanho, quatro barras cada (são perigos do jogo, nas pontas de cima e de baixo);
+  - os vasos de barro (38% x 31%, 25% x 61% e 67% x 70%).
+- ENTRADA: onde a imagem 1 tem o retângulo preto em pé na borda da frente à esquerda (em torno de 30% x 66%), pinte um arco de pedra baixo com vão PRETO e fundo, a passagem por onde o herói chegou.

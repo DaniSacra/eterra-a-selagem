@@ -1,0 +1,9 @@
+Sala 09, Fendas B, a ponte quebrada (GP-8, gpt-image-2, 2026-11-27)
+
+sala09_aprovacao.png: a sala completa para você aprovar. Saíram os inimigos, o estandarte, as setinhas amarelas e o redemoinho roxo do céu (roxo só para Morvath); o piso virou ardósia cinza-azulada. Ficaram a ponte com lanternas, a ponte desabada atrás dela, o buraco octogonal, os canais de água, as colunas e as ruínas.
+Portas: duas portas altas na muralha da direita com um candelabro aceso entre elas.
+Entrada: arco baixo escuro na mureta da frente à esquerda, por onde o herói chega.
+sala09_jogo.png: a mesma pintura para o jogo. Saíram as chamas (lanternas, candelabro e braseiro apagados), a água dos canais (leito seco) e as folhas das portas (o vão ficou escuro).
+sala09_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: pontes, buracos, colunas, portas e borda a poucos pixels da captura.

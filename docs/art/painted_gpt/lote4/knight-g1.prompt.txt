@@ -1,0 +1,14 @@
+Edite a imagem 1 (pintura aprovada de uma sala do meu jogo). Mantenha EXATAMENTE a mesma pintura: mesma câmera, mesmo enquadramento, mesmo estilo de pintura digital feita à mão, mesmas cores, mesma luz, e cada parede, mureta, pilar, coluna, arco, degrau e borda da plataforma no mesmo pixel e do mesmo tamanho. Não gire, não aproxime, não afaste, não corte. O formato final é a imagem 1 inteira, de canto a canto.
+
+Esta é a versão de JOGO da mesma sala: o jogo vai pôr por cima, em 3D, tudo o que se mexe, muda de estado ou quebra. Por isso RETIRE só essas peças, listadas abaixo, e pinte no lugar delas o que estaria atrás (piso de lajes igual ao vizinho, ou a pedra do suporte). Nada mais muda. Uma luz ambiente quente muito leve pode ficar perto dos braseiros apagados, mas sem chama, sem brasa e sem brilho.
+
+Continua valendo: sala vazia, nenhum personagem, nenhum estandarte, nenhum sol com raios, estrela, cruz, símbolo, texto ou letra; nada violeta forte nem verde-esmeralda (salvo onde dito abaixo).
+
+As FOLHAS das portas de saída saem: fica o arco de pedra e o batente, e o vão vira uma passagem ESCURA e funda, preta por dentro (sem grade, sem parede, sem chão visível). A entrada da frente continua como está, escura por dentro.
+
+RETIRE nesta sala (posições aproximadas em % da largura x altura da imagem 1):
+- as chamas dos três braseiros (24% x 36%, 35% x 26% e 68% x 29%): ficam as bacias e pedestais APAGADOS, sem fogo e sem brilho;
+- as quatro grades de ferro do piso com brasa (51% x 32%, 20% x 56%, 76% x 52% e 53% x 79%): no lugar de cada uma, lajes de pedra lisas iguais ao piso em volta, sem buraco, sem moldura, sem brilho;
+- os vasos de barro: piso e mureta limpos.
+Ficam iguais: os três arcos escuros do fundo com as gradinhas baixas, o nicho com a armadura vazia, a janelinha gradeada, as paredes, muretas, pilaretes, a entrada escura da frente e o abismo com névoa.
+- dentro dos três arcos do fundo: retire as barras de ferro altas; cada arco fica uma passagem PRETA funda, só com uma gradinha baixa de ferro no pé (da altura de um joelho).

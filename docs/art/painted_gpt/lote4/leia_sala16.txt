@@ -1,0 +1,9 @@
+Sala 16, Sala das Runas B (GP-8, gpt-image-2, 2026-11-27)
+
+sala16_aprovacao.png: a sala completa para você aprovar. Saíram os inimigos e o risco roxo do vazio; as paredes transparentes da captura viraram pedra sólida. Ficaram o piso de lajes em grade, os pilares, os dois obeliscos, a treliça, o braseiro, a caixa e as pedras soltas de borda dourada flutuando em volta.
+Portas: três portas no fundo, separadas pela treliça e pelo braseiro.
+Entrada: arco baixo escuro na mureta da frente à esquerda, por onde o herói chega.
+sala16_jogo.png: a mesma pintura para o jogo. Saíram a chama, a caixa, as pedras flutuantes (o jogo as põe por cima) e as folhas das portas (o vão ficou escuro).
+sala16_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+ENCAIXE RUIM, não usar no jogo ainda: o pilar da frente e a borda da frente batem, mas a parede do fundo, as portas e as pedras flutuantes saíram fora da captura (as paredes transparentes da captura confundem o gerador). A captura precisa ser refeita com as paredes sólidas antes de repintar.

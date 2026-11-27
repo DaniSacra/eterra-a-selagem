@@ -1,0 +1,9 @@
+Sala 08, Cripta B, o ossário (GP-8, gpt-image-2, 2026-11-27)
+
+sala08_aprovacao.png: a sala completa para você aprovar. Saíram os inimigos e o estandarte. Ficaram os três túmulos com velas, a parede do ossário com a estátua encapuzada, a coluna, as lajes de túmulo, as duas grades de brasa no chão e os vasos.
+Portas: uma porta no fundo à esquerda da estátua e outra na parede da direita depois da coluna, bem separadas (entre elas a estátua, o ossário e a coluna).
+Entrada: arco baixo escuro na borda da frente à esquerda, por onde o herói chega.
+sala08_jogo.png: a mesma pintura para o jogo. Saíram as chamas (velas apagadas), as grades do chão (pedra lisa), os vasos e as folhas das portas (o vão ficou escuro).
+sala08_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: paredes, portas, estátua, coluna e borda a 10 a 25 pixels da captura.

@@ -1,0 +1,9 @@
+Sala 12, Santuário B, a nave partida (GP-8, gpt-image-2, 2026-11-27)
+
+sala12_aprovacao.png: a sala completa para você aprovar. Saíram os inimigos e os estandartes. Ficaram o buraco grande no meio do piso (escuro, com pedras caídas), os arcos de nervura quebrados, as colunas, o canal de água, as grades vermelhas e os quadrados de lajes, os sarcófagos, os bancos e os braseiros.
+Portas: três portas altas no fundo à direita, bem separadas: um sarcófago entre a primeira e a segunda, um braseiro entre a segunda e a terceira.
+Entrada: arco baixo escuro na mureta da frente à direita, por onde o herói chega.
+sala12_jogo.png: a mesma pintura para o jogo. Saíram as chamas, a água do canal (leito seco), as grades e os quadrados do chão (pedra lisa) e as folhas das portas (o vão ficou escuro).
+sala12_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: paredes, portas, buraco, colunas e borda a poucos pixels da captura.

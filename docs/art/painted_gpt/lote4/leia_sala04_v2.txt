@@ -1,0 +1,9 @@
+Sala 04, Jardim, repintura com as portas novas (GP-8, gpt-image-2, 2026-11-27)
+
+sala04_v2_aprovacao.png: a sala completa para você aprovar. Saíram os inimigos e o estandarte; os cristais da árvore ficaram azul-gelo (não verdes). Ficaram a árvore com as raízes, a coluna, os dois altares com vela, o raio de luz e os braseiros.
+Portas: duas portas altas no fundo à direita com a ESTÁTUA entre elas; um braseiro aceso na frente de cada lado. Há também uma porta menor no fundo à esquerda e um nicho escuro com grade baixa: na captura há uma terceira abertura ali (o jogo usa uma terceira porta nessa posição quando a sala tem três saídas).
+Entrada: arco baixo escuro na mureta da frente à esquerda, por onde o herói chega.
+sala04_v2_jogo.png: a mesma pintura para o jogo. Saíram as chamas, os cristais, os vasos e as folhas das portas (o vão ficou escuro).
+sala04_v2_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: árvore, raízes, muros e borda a poucos pixels; a primeira porta e a estátua uns 35 pixels à direita da captura (três tentativas; a terceira encolheu menos as portas mas aumentou a plataforma, ficou a segunda).

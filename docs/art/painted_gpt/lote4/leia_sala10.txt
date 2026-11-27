@@ -1,0 +1,9 @@
+Sala 10, Jardim B, o lado aberto (GP-8, gpt-image-2, 2026-11-27)
+
+sala10_aprovacao.png: a sala completa para você aprovar. Saíram os inimigos; os cristais da árvore ficaram azul-gelo (não verdes). Ficaram a árvore com as raízes, as duas colunas, os dois altares com velas, o raio de luz, a queda d'água no vazio ao fundo e o braseiro.
+Portas: duas portas altas no fundo à direita com a ESTÁTUA entre elas; à esquerda delas um nicho escuro com grade baixa (o lugar da terceira porta, quando a sala tem três saídas).
+Entrada: arco baixo escuro na mureta da frente à esquerda, por onde o herói chega.
+sala10_jogo.png: a mesma pintura para o jogo. Saíram as chamas, os cristais, a queda d'água, os vasos e as folhas das portas (o vão ficou escuro).
+sala10_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: árvore, raízes, muros, portas, estátua e borda a poucos pixels (segunda tentativa; a primeira tinha perdido um altar e a queda d'água).

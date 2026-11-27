@@ -1,0 +1,15 @@
+Edite a imagem 1 (pintura aprovada de uma sala do meu jogo). Mantenha EXATAMENTE a mesma pintura: mesma câmera, mesmo enquadramento, mesmo estilo de pintura digital feita à mão, mesmas cores, mesma luz, e cada parede, mureta, pilar, coluna, arco, degrau e borda da plataforma no mesmo pixel e do mesmo tamanho. Não gire, não aproxime, não afaste, não corte. O formato final é a imagem 1 inteira, de canto a canto.
+
+Esta é a versão de JOGO da mesma sala: o jogo vai pôr por cima, em 3D, tudo o que se mexe, muda de estado ou quebra. Por isso RETIRE só essas peças, listadas abaixo, e pinte no lugar delas o que estaria atrás (piso de lajes igual ao vizinho, ou a pedra do suporte). Nada mais muda. Uma luz ambiente quente muito leve pode ficar perto dos braseiros apagados, mas sem chama, sem brasa e sem brilho.
+
+Continua valendo: sala vazia, nenhum personagem, nenhum estandarte, nenhum sol com raios, estrela, cruz, símbolo, texto ou letra; nada violeta forte nem verde-esmeralda (salvo onde dito abaixo).
+
+As FOLHAS das portas de saída saem: fica o arco de pedra e o batente, e o vão vira uma passagem ESCURA e funda, preta por dentro (sem grade, sem parede, sem chão visível). A entrada da frente continua como está, escura por dentro.
+
+RETIRE nesta sala (posições aproximadas em % da largura x altura da imagem 1):
+- as chamas: do braseiro do fundo (63%: bacia apagada, escura) e das velas dos dois altares (velas apagadas);
+- os cristais azul-gelo na base do tronco: no lugar, raiz e piso com musgo;
+- a queda d'água no vazio ao fundo à esquerda: no lugar, névoa e ruínas escuras;
+- os vasos de barro: mureta e piso limpos;
+- as folhas das duas portas (71% e 81%), e a gradinha baixa do nicho escuro do fundo (59%), que vira passagem escura: fica o arco, e o vão vira passagem preta funda.
+Ficam iguais: a árvore e as raízes, a estátua entre as portas, o nicho com a gradinha, as colunas, os altares, o raio de luz suave, as muretas e a entrada escura da frente.

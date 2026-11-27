@@ -1,0 +1,36 @@
+Repinte a imagem 1 (captura do meu jogo, sem personagens) por cima, como um decalque: mesma câmera, mesmo enquadramento, mesma perspectiva, cada borda no mesmo pixel. Não gire, não aproxime, não afaste, não corte, não mude a inclinação, não acrescente nem remova paredes, muretas, pilares, degraus, portas, arcos, buracos ou blocos da plataforma. A plataforma ocupa exatamente a mesma área da imagem 1, do mesmo tamanho. O formato final é a imagem 1 inteira, de canto a canto.
+
+A imagem 2 é a pintura aprovada de OUTRA sala do mesmo jogo: use dela SÓ o estilo de pintura, a paleta escura do piso, os materiais e a luz. Não copie a planta, os objetos nem a composição dela.
+
+ESTILO: pintura digital feita à mão, ilustrada, como a arte de um jogo de ação visto de cima no estilo do Hades II. Pinceladas visíveis, contorno escuro suave e quebrado (não linha de vetor), formas simples e legíveis, detalhe concentrado nas bordas e o centro do piso calmo (escuro, pouco detalhe) para a luta. Luz quente de tochas, velas e braseiros contra meia-luz fria; névoa cinza-azulada no vazio, arcos e torres em silhueta ao fundo; musgo escuro e algumas folhas vermelhas de outono nas bordas. Acolhedor, aventura, não terror. Não é 3D renderizado, não é foto, não é pixel art, não é anime. Nada de brilho plástico. A referência é só de estilo: nenhum personagem, lugar, símbolo, logotipo ou composição de outro jogo.
+
+O CHÃO É O PALCO, NÃO A ESTRELA: o piso inteiro em tom MÉDIO-ESCURO (cerca de 35% de brilho) e pouco saturado, pedra cinza-esverdeada e ardósia azulada, como o chão das salas do Hades II e do SWORN e como o piso da imagem 2. Nenhuma área grande clara ou amarela no piso. As lajes e juntas ficam visíveis em toda a sala, com pouco contraste dentro do piso e textura discreta no centro. A luz quente laranja e mel fica só em POÇAS pequenas e suaves em volta de cada chama (cerca de uma a duas lajes de raio); o resto da sala em meia-luz fria azul-acinzentada, legível, não sombria. Paredes, muretas e estátuas um pouco mais claras que o piso para a sala ler bem. Os personagens e efeitos do jogo é que terão cor forte por cima.
+
+REGRAS:
+- Sala VAZIA: nenhum personagem, herói, inimigo, pessoa ou animal. Estátuas de pedra podem ficar.
+- NENHUM estandarte, bandeira, flâmula ou pano pendurado em lugar nenhum: onde a imagem 1 tem um estandarte, pinte parede de pedra lisa.
+- Proibido: sol com raios, estrela de muitas pontas, cruz, qualquer símbolo ou emblema.
+- Nada violeta forte e nada verde-esmeralda (cores reservadas). A névoa do fundo é cinza-azulada, não roxa nem anil.
+- Nenhum texto, letra, número, runa legível, ícone ou marca em lugar nenhum.
+- Portas fechadas, de madeira escura com ferragens, sem símbolo brilhando, sem luz saindo delas (o jogo coloca os ícones). Não acrescente portas, arcos ou nichos novos e não mude as portas de lugar.
+LUZ: o piso em tom MÉDIO como o piso da imagem 2 (cerca de 35% de brilho, nem claro nem escuro), pedra cinza-esverdeada e ardósia com um leve toque quente, lajes e juntas bem visíveis em toda a sala. Poças de luz quente laranja e mel em volta de cada chama um pouco maiores e suaves (cerca de duas lajes de raio). Paredes, muretas e estátuas em pedra mais clara, iluminadas pelas chamas. O centro do piso continua sem poça clara grande.
+
+ENTRADA E PORTAS:
+- Se a imagem 1 tiver inimigos, esqueletos, figuras ou barrinhas vermelhas de vida, REMOVA todos: no lugar, piso de lajes igual ao vizinho.
+- A ENTRADA por onde o herói chegou tem de se ler bem: na borda da frente (mais perto da câmera) indicada abaixo, pinte uma abertura ou arco de pedra visível na mureta ou na borda, com um vão ESCURO e fundo por dentro (passagem preta, sem porta, sem grade, sem luz). Ela fica no lugar indicado, sem mudar a plataforma.
+- As portas de saída ficam afastadas uma da outra, com a peça indicada entre elas; nunca as junte nem as aproxime. São portas altas e monumentais, de madeira escura com ferragens, fechadas.
+
+CRIPTA (salão de túmulos de catacumba). Posições em % da largura x altura da imagem 1.
+- REMOVA as três figuras/inimigos com barrinha vermelha (44% x 26%, 66% x 53% e 72% x 55%, incluindo o monte de ossos rosado): no lugar, piso de lajes.
+- REMOVA os dois estandartes azuis com leão (54% x 14% e 70% x 21%): parede de pedra lisa. As plantas penduradas no alto viram musgo escuro discreto.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - as paredes altas da esquerda e do fundo, as muretas e merlões da frente e a base de pilares de pedra embaixo da plataforma;
+  - as três colunas (30% x 45%, 47% x 30% e 72% x 40%);
+  - os quatro túmulos de pedra: 37% x 28% (com velas), 58% x 41%, o grande do meio 51% x 50% e 50% x 63% (com velas acesas);
+  - o candelabro de ferro redondo pendurado com velas acesas em 51% x 28%;
+  - os dois braseiros acesos junto à parede do fundo (54% x 24% e 69% x 32%);
+  - as duas grades de ferro no piso com brilho vermelho de brasa (49% x 42% e 55% x 61%): mesmo contorno, são perigos do jogo;
+  - os quadrados escuros de quatro lajes no piso (25% x 44%, 41% x 41%, 76% x 52%, 66% x 68%, 38% x 66%), as fileiras de blocos baixos (43% x 55% e 69% x 61%), a bacia redonda em 75% x 57%;
+  - os vasos e urnas de barro (18% x 54%, 34% x 33%, 64% x 34%, 76% x 59%, 80% x 43%).
+- PORTAS: dois arcos de porta altos na parede do fundo à direita, centros em 59% x 25% e 76% x 29%, BEM separados, com o trecho de parede de pedra e o braseiro de 69% x 32% entre eles. Pinte as duas portas fechadas, monumentais, no mesmo lugar.
+- ENTRADA: onde a imagem 1 tem o retângulo preto em pé (de 26% a 33% da largura, de 55% a 66% da altura, na borda da frente à esquerda), pinte um arco de pedra baixo com vão PRETO e fundo, a passagem por onde o herói chegou.

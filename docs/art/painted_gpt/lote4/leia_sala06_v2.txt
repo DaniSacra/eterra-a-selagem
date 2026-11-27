@@ -1,0 +1,8 @@
+Sala 06, Sala do Ancião, repintura com a captura nova (GP-8, gpt-image-2, 2026-11-27)
+
+sala06_v2_aprovacao.png: a sala completa para você aprovar. Saiu o Ancião (e o orbe verde). Ficaram as quatro colunas, os três arcos do fundo (as portas da sala) com grade baixa, o nicho pequeno pontudo entre o segundo e o terceiro arco, o braseiro aceso, as velas e os vasos.
+Entrada: arco baixo escuro na mureta da frente à esquerda, por onde o herói chega.
+sala06_v2_jogo.png: a mesma pintura para o jogo. Saíram as chamas (braseiro e velas apagados), os vasos e as grades dos arcos (o vão ficou escuro até o chão; o jogo põe as portas por cima).
+sala06_v2_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: paredes, colunas e borda a poucos pixels; os três arcos de 15 a 30 pixels à direita da captura.

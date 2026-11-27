@@ -1,0 +1,9 @@
+Sala 03, Fendas, repintura com as portas novas (GP-8, gpt-image-2, 2026-11-27)
+
+sala03_v2_aprovacao.png: a sala completa para você aprovar. Saíram os inimigos, o estandarte e as setinhas amarelas do chão; o piso azul-arroxeado virou ardósia cinza-azulada. Ficaram as duas pontes com lanternas, os abismos, o buraco octogonal, os tocos de coluna, os canais de água e as ruínas no vazio.
+Portas: duas portas altas na muralha da direita, separadas por um pilar com braseiro aceso na frente; um candelabro alto aceso à esquerda da primeira porta.
+Entrada: arco baixo escuro na mureta da frente à esquerda, por onde o herói chega.
+sala03_v2_jogo.png: a mesma pintura para o jogo. Saíram as chamas (lanternas, candelabro e braseiros apagados), a água dos canais (leito seco) e as folhas das portas (o vão ficou escuro).
+sala03_v2_lado_a_lado.jpg: captura do jogo, aprovação e jogo, nessa ordem.
+
+Encaixe: pontes, abismos, colunas e borda a poucos pixels; a primeira porta saiu uns 45 pixels à direita da captura (três tentativas, o gerador sempre alarga as portas). Na captura as duas portas desta sala ficam perto uma da outra, só com um pilar estreito entre elas: se quiser mais espaço, o jogo precisa afastar as portas e refazemos a pintura.

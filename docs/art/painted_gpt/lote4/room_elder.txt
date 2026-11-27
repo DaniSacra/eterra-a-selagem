@@ -1,0 +1,10 @@
+SALA DO ANCIÃO (capela de catacumba, sala quadrada com quatro colunas). Posições em % da largura x altura da imagem 1.
+- REMOVA a figura encapuzada com cajado e orbe verde em 58% x 33% (e as partículas em volta dela): no lugar, piso de lajes. A sala fica vazia, sem nada verde.
+- Fica tudo exatamente no lugar e no tamanho da imagem 1:
+  - as quatro colunas altas de pedra, cada uma com a mesma base, o mesmo capitel quadrado e a mesma altura: coluna do fundo 40% x 21% a 40% x 38%, coluna da esquerda 34% x 34% a 35% x 53%, coluna da frente 53% x 44% a 53% x 65%, coluna da direita 69% x 35% a 69% x 55%;
+  - as paredes altas da esquerda e do fundo, as muretas baixas da frente e da direita, os dois pilaretes da frente (24% x 67% e 34% x 74%) e a base de pedra embaixo da plataforma;
+  - os TRÊS arcos do fundo (54% x 16%, 67% x 19% e 81% x 25%), cada um com a sua gradinha baixa de ferro: por dentro de cada arco, só ESCURIDÃO funda (passagem preta), sem porta, sem parede no fundo;
+  - o braseiro de pedra com chama acesa em 59% x 22%;
+  - as velas acesas nos mesmos pontos (11% x 52%, 17% x 46%, 23% x 36%, 33% x 27%, 47% x 23%, 54% x 17%, 64% x 31%, 83% x 40% e as outras da imagem 1);
+  - os vasos de barro (37% x 30%, 20% x 46% e 62% x 83%).
+- ENTRADA: onde a imagem 1 tem o retângulo preto em pé na borda da frente à esquerda (em torno de 28% x 66%), pinte um arco de pedra baixo com vão PRETO e fundo, a passagem por onde o herói chegou.

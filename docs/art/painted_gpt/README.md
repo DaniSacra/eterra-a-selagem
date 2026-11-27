@@ -34,6 +34,7 @@ Generation (curl; the key is read from the file, never printed):
 | 2026-11-27 | lote3 fix (`lote3/seal-g2`, prompt `lote3/gate_open.txt`): Sala07 game plate, shrine gate leaf and violet crack removed, archway now a dark open passage; only a 120x140 crop at (1044,224) pasted onto the v1 plate so every other pixel is identical (old kept as `sala07_jogo_v1.png`) | 1 | 5488 | 0.25 |
 | 2026-11-27 | game_v1 (`game_v1/`): game plates of the three rooms in the game, edits of the current paintings: sala01-g1, sala00-g1 (gamma 1.05 after), antessala-g1 | 3 | 5488 | 0.75 |
 | 2026-11-27 | characters part 2 (`docs/art/characters_gpt/`, 09 Knight, 10 Elder, 11 Morvath; image 1 = approved concept as style ref, image 2 = old Meshy threequarter ref): concepts A1 x3, Meshy fronts B1 x3, Morvath back C1; no redos | 7 | 5488 | 1.75 |
+| 2026-11-27 | lote4 (`lote4/`), bases_v2: crypt0 a1+g1; rift0 a1 (third door), a2 (doors touching), a3 (chosen) + g1; garden0 a1 (extra door, platform shrank), a2 (chosen), a3 (platform grew) + g1; knight a1+g1+g2 (arch railings out; armour niche pasted back from g1); elder a1 (4 arches), a2 + g1 + g2 (railings out); crypt1 a1 (copied old door pair), a2 + g1; rift1 a1+g1; garden1 a1 (lost altar, waterfall), a2 + g1; sanct0 a1+g1; sanct1 a1+g1; bridge0 a1+g1; bridge1 a1+g1; trial a1+g1; altar a1+g1; runes0 a1, a2, a3 (all widen the right half) + g1; runes1 a1+g1 | 43 | 5488 | 10.75 |
 
 ## style_v2 (2026-11-27): style approval round
 `style_v2/` holds the variants Daniel is choosing from (Downloads\ASelagem-GP8\APROVAR-ESTILO). Request =
@@ -133,3 +134,34 @@ Sala01: the model also opened the statue niche between the two doors into a thir
 (1230,150) was pasted back from the current painting (slightly darkened) so only two openings remain.
 Files: `<room>_jogo.png` (to swap in at integration), `<room>-g1.png` raw, `_diff.jpg`, `_overlay.jpg`, `_lado_a_lado.jpg`.
 Not done: no visible entrance was added (the rooms have none today; adding one changes fixed geometry and needs a new base).
+
+
+## Lote 4 (2026-11-27): repaints on bases_v2 (doors apart, dark doorways) and the new rooms
+Approval = `lote4/prompt_common.txt` (lote3 common + light + "entrance and doors": paint out enemies and their bars, a dark
+arch at the base's black entrance quad, doors apart and monumental) + `room_<room>.txt` (+ `fix_<room>.txt` on retries);
+game = `game_common.txt` (+ door leaves out, doorway dark to the floor) + `game_<room>.txt`, image 1 = the chosen approval.
+Scripts: `gen.sh`, `overlay.sh`, `diff.sh`, `luma.sh`, `deliver.sh NN prefix base approval game leia`.
+Lesson: the old approved painting of the SAME room as image 2 makes the model copy its old door layout (crypt1 a1, rift0, garden0);
+use another room's painting (or none) as the style anchor. Transparent (outline) walls in a base (runes0/1) make it widen the room.
+Doors come from `tools/make_data.gd` `_gate(...)` xs (the third x is the optional third door: garden's 59% nook, rift's, guardians' 3 arches).
+Files: `salaNN[_v2]_aprovacao.png`, `_jogo.png`, `_lado_a_lado.jpg` (Downloads\ASelagem-GP8\GPT-SalaNN with LEIA[_v2].txt).
+| Sala | base | chosen | fit (uniform mapping) |
+|---|---|---|---|
+| 02 v2 | crypt0 | a1/g1 | walls, doors, edge few px; columns, tombs 10-20 px |
+| 03 v2 | rift0 | a3/g1 | bridges, holes few px; door 1 ~45 px right (base doors only a pier apart) |
+| 04 v2 | garden0 | a2/g1 | tree, walls, edge few px; door 1 + statue ~35 px right; third door painted at the 59% nook |
+| 05 v2 | knight_hall | a1/g2+niche | few px everywhere |
+| 06 v2 | elder_hall | a2/g2 | few px; arches 15-30 px right |
+| 08 | crypt1 | a2/g1 | 10-25 px |
+| 09 | rift1 | a1/g1 | few px |
+| 10 | garden1 | a2/g1 | few px |
+| 11 | sanctuary0 | a1/g1 | walls, doors few px; front columns 20-30 px |
+| 12 | sanctuary1 | a1/g1 | few px |
+| 13 | bridge0 | a1/g1 | few px; door 2 off-frame at the right edge |
+| 14 | bridge1 | a1/g1 | few px; door 2 off-frame |
+| 15 | runes0 | a3/g1 | BAD: right pillars and doors 40-75 px off; recapture with solid walls |
+| 16 | runes1 | a1/g1 | BAD: back wall, doors, stones off; front pillar fits; recapture |
+| 17 | trial | a1/g1 | few px; pedestal/stele ~20 px left; violet cracks and fog removed |
+| 18 | altar | a1/g1 | few px; the medallion's small pedestal merged into the altar table |
+Rules checked on all: no figures, no banners, no text/labels/medallions, no sun/star/cross, no violet (rift1 swirl, trial light
+removed), no emerald (garden crystals ice blue), doors never touching, entrance a dark arch at the near edge.
