@@ -63,7 +63,7 @@ Subagentes em `.claude/agents/` (protocolo em `docs/development/agent_workflow.m
   (e `"Linux"` em `build/linux/ASelagem.x86_64`). Web para ver no navegador: `tools/web.sh` e abrir `http://localhost:8070`.
   Android fica para depois (sem preset ainda).
 
-## Onde está o detalhe (`docs/reference/`, ler só a seção que a tarefa pede, por grep)
+## Onde está o detalhe (`docs/reference/`, ler só a seção que a tarefa pede, por grep; os arquivos grandes (`gameplay`, `rooms`, `ui`, `art_rooms`, `hub`, `art_fx`, e `docs/design/` `balance`, `combat_cadence`, `rooms_progression`) são índices que apontam para a pasta de mesmo nome)
 - `engine.md`: arquitetura (simulação no plano, `Game` dono do relógio, `Horde`/`CrowdRenderer`, assados, entrada por
   `Controls`, save em três espaços, registro de partidas, som e música), aquecimento de shaders, sala montada no preto,
   pausa sozinha, pendências conhecidas.
