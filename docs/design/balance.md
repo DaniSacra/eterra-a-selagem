@@ -991,7 +991,7 @@ Meta relativa proposta (equivale à antiga): Zerael e Saarael entre Lumael e Vel
 | | Antes do GP-1 | Hoje (V1) | Variante A (abaixo) |
 |---|---|---|---|
 | Dano por segundo nos primeiros 200 s | **50,9** | **37,1** (-27%) | 38,6 |
-| Mortes por segundo... dano sofrido por segundo | 0,10 | 0,14 (+40%) | 0,12 |
+| Dano sofrido por segundo | 0,10 | 0,14 (+40%) | 0,12 |
 | Sala alcançada em 200 s (média) | 7,0 | 5,9 | 5,8 |
 | Morvath sem Bênção (410 s hoje; 306 s antes) | 306 | 410 | 362 (-12%) |
 | Fontes do dano | combo 34%, Raio (especial) 18%, Investida 10%, Brado 9% | combo 72%, Esmagador/Lança 11%, Corte Circular 2% | combo 74% |
@@ -1002,7 +1002,7 @@ Meta relativa proposta (equivale à antiga): Zerael e Saarael entre Lumael e Vel
 2. **Combo (P1)**: `cut1` e `cut2` 15 para **18**, `cut3` 30 para **36**, `EXTRA` (5º golpe) 15 para 18. Soma +20% em toda a partida, e todos os Dons de dano em porcentagem escalam. Preferir só se o Daniel sentir "demoro para matar" mesmo com a proposta 1.
 3. **Magia (P1)**: `magick_per_hit` do combo 0,5 para **1,0** e `magick_on_finisher` 2 para 3, `gain_cap` 3,0 para 4,5 (hoje o laço do Esmagador fecha a cada 4 combos, uns 5 s). Com 1 e 3, a cada 2 combos. Sozinha ela não muda o dano por segundo da sala (o robô não gasta Magia), muda a frequência da resposta.
 4. **Ritmo de Batalha (P2)**: `rhythm_time` 3,0 para **4,0** s e `rhythm_special_dmg` 0,5 para **0,75**: o golpe forte depois do finalizador passa a valer a pena em alvo único. Medir em partida com o robô forçado a usar Esmagador depois do finalizador.
-5. **Vida dos inimigos das salas 1 a 5 (P1, `room-designer` confere)**: Esqueleto `hp` 95 para **75** (-21%), Arqueiro 180 para **140**, Runner 70 para **60**, Soldado de guarda (`guard`) e Mago proporcionais (-20%). O combo de 60 passa a abater o Esqueleto em 2 combos de 1,3 hoje para 1,3 combos efetivos com o Esmagador. Vai contra a regra antiga "proibido inflar a vida" só no sentido de baixar, e preserva elites e guardiões. Risco: as salas ficam mais curtas e dão menos Bênção por tempo; como o robô é limitado pelas ondas, o efeito medido deve ser pequeno.
+5. **Vida dos inimigos das salas 1 a 5 (P1, `room-designer` confere)**: Esqueleto `hp` 95 para **75** (-21%), Arqueiro 180 para **140**, Runner 70 para **60**, Soldado de guarda (`guard`) e Mago proporcionais (-20%). O Esqueleto cai de 1,6 combo (60 de dano) para 1,25. Vai contra a regra antiga "proibido inflar a vida" só no sentido de baixar, e preserva elites e guardiões. Risco: as salas ficam mais curtas e dão menos Bênção por tempo; como o robô é limitado pelas ondas, o efeito medido deve ser pequeno.
 6. **Dano sofrido (P1)**: se o objetivo é "difícil demais" e não "dano baixo", cortar o dano base dos comuns das salas 1 a 5 em **-20%** (Esqueleto `attack_damage` 5 para 4, Runner 8 para 6, Arqueiro e Mago 4 para 3) é mais barato que dar dano: o herói tem 40 de vida e hoje leva 0,14 por segundo contra 0,10 antes. Medir de novo o "morre nas salas 1 a 5" (hoje 1 de 12 no natural, sala 5).
 7. **Não fazer agora**: mexer em Maestria ou Dons (a leitura é de M1 sem Dons; os Dons completos já dobram o ganho no R8.3) e nos números do Zerael. Ordem recomendada: 1, depois 6, e o Daniel testa; 2 e 5 só se ainda faltar.
 **Como medir de novo:** 12 sementes, `smoke.sh 200` (dano por segundo, sala em 200 s, dano sofrido por segundo) e `--start=boss --hero-hp=500` (410 s sem Bênção hoje), natural 900 s; depois, o `runs.jsonl` do Daniel.
