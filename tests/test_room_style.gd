@@ -10,6 +10,14 @@ var _env: Environment
 var _moon: DirectionalLight3D
 
 
+func before_all() -> void:
+	Dev.put("painted", "off")  # GP-8: these check the stone look the painted rooms replace (test_painted_hall has the painting)
+
+
+func after_all() -> void:
+	Dev.drop("painted")
+
+
 func before_each() -> void:
 	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
 

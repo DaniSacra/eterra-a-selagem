@@ -165,11 +165,11 @@ const STY_GRAVE_VALUE := 1.06
 ## of the floor's value, the frame a step lighter as the new ones' lip, the dark border a groove, not a pit; w: the
 ## worn inscription's (A7) a step under the slab.
 const STY_OLD_SLAB := Vector4(0.22, 0.1, 0.03, 0.2)
-## SW-G3: a pair of raised frames (RAISED) on the great tomb's axis in A, and between B's two south sarcophagi:
+## SW-G3: a pair of raised frames (RAISED) on the great tomb's axis in A, and south of B's pit (it fell in 2026-11-27):
 ## middles and side (m).
 const STY_FRAMES_A: Array[Vector2] = [Vector2(-3.4, 0.0), Vector2(4.4, 0.0)]
 const STY_FRAME_A := 2.2
-const STY_FRAMES_B: Array[Vector2] = [Vector2(-1.45, 3.0), Vector2(0.55, 3.0)]
+const STY_FRAMES_B: Array[Vector2] = [Vector2(-1.45, 5.8), Vector2(0.55, 5.8)]
 const STY_FRAME_B := 1.9
 ## Art pack 2026-11-23 (the Cripta B painting's lion emblem, as a square frame like the Salao's, never a disc): in
 ## variant B the first of the pair is a lion slab (GRAVE with its mark) and the second stays a plain raised frame.

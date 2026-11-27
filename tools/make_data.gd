@@ -1879,7 +1879,7 @@ func _crypt() -> RoomLayout:
 		Vector4(SLIT_WEST, -10.4, SLIT_WEST, 2.4)])
 	# AT-H2: the niche's skeleton on the west wall, beside the slabs and the slits (from the 4th room)
 	l.variants[0].hazard.also = _niche()
-	l.variants[0].hazard.also.also = _spikes([Vector2(-4.5, -2.0), Vector2(2.0, -2.0)], TEACH_FROM)
+	l.variants[0].hazard.also.also = _spikes([Vector2(-8.0, -5.5), Vector2(8.5, -3.0)], TEACH_FROM)
 	return l
 
 
@@ -1978,13 +1978,15 @@ func _place_breakables(st: StageDef) -> void:
 			&"bridge":
 				var bridge := [
 					[[F.CRATE, 27.5, 6.75, 0.7], [F.PLANK, 26.7, 6.75, 0.35], [F.CRATE, 27.5, 5.95, 0.6]],
-					[[F.PLANK, -27.5, 3.0, 0.35], [F.CRATE, -27.5, 3.8, 0.7]],  # AT-PA3: off the bridges' line and the late spawn
 				]
-				l.breakables = _breakable_groups(bridge + [
+				var bridge_a := [[[F.PLANK, -27.5, 3.0, 0.35], [F.CRATE, -27.5, 3.8, 0.7]]]  # AT-PA3: off the bridges' line and the late spawn
+				l.breakables = _breakable_groups(bridge + bridge_a + [
 					[[F.CRATE, 2.0, -7.5, 0.6], [F.PLANK, 2.8, -7.5, 0.35], [F.PLANK, 2.0, -6.7, 0.35]],
 					[[F.PLANK, -4.75, 7.5, 0.35], [F.CRATE, -3.95, 7.5, 0.7]]])
+				# B (the zigzag, 2026-11-27): the decks lie on z 3 and z -3, so the groups stand 2.5 m off both lines: the north wall of
+				# the west platform, in place of the landing's and of the west end's
 				l.variants[0].breakables = _breakable_groups(bridge + [
-					[[F.CRATE, 1.0, -4.0, 0.6], [F.PLANK, 1.8, -4.0, 0.35], [F.PLANK, 0.2, -4.0, 0.35]],
+					[[F.CRATE, -16.0, -8.3, 0.6], [F.PLANK, -15.2, -8.3, 0.35], [F.PLANK, -16.8, -8.3, 0.35]],
 					[[F.PLANK, -13.0, 7.25, 0.35], [F.CRATE, -13.8, 7.25, 0.7]]])
 			&"runes":
 				# low boxes and bowls only (the runes are straight, D-29); AT-RA3, AT-RB3: never on a tile that arms, so
@@ -2082,7 +2084,7 @@ func _rift() -> RoomLayout:
 	# nobody rises on a bridge or in the south way; the first wave across the rift, the west zone from the second
 	# PM-3: the paladin stood 71% of the time in the east (he comes in at the south-west, but the early zones were all east and
 	# the far side drew the packs to him there): the packs rise in the west (two zones) and the east (three, the small south-east bridge head among them); the whole bridge head and the west wall for the late ones; no far-side draw (the pack rises where the fight is)
-	l.spawns = [_rect(-17, -11, -13, -9), _rect(-20, -15, 8.5, 12), _rect(5, 11, -13.5, -10.5), _rect(16, 19.5, -8, -2), _rect(6, 10, 8, 12)]
+	l.spawns = [_rect(-17, -11, -13, -9), _rect(-18, -13.5, 10, 12.5), _rect(5, 11, -13.5, -10.5), _rect(16, 19.5, -8, -2), _rect(6, 10, 8, 12)]
 	l.late_spawns = [_rect(5, 11, 7, 12)]  # integration: the west wall zones sat on the stream gaps and on unreached floor (test_arenas, test_room_gaps)
 	l.far_spawn = 0.0
 	l.cam_bounds = _rect(-6, 7, -4, 5)
@@ -2882,11 +2884,11 @@ func _sanctuary() -> RoomLayout:
 	# RP-13 (B): the edge that crumbles, the slabs at the two ends of the hole (the nave is 1.85 m wide along its long
 	# sides, no room for a slab there): 7 to him (not 10, A1) and everyone on them thrown 2.5 m away from the hole, to the
 	# firm floor (nobody falls, D-28); the same hazard as the aisles' (one hazard that hurts per room)
-	var edge_slabs: Array[Rect2] = [aisle_slabs[0], aisle_slabs[1], aisle_slabs[2]]  # (the south-east slab stood over the chasm)
+	var edge_slabs: Array[Rect2] = [aisle_slabs[0], aisle_slabs[1], aisle_slabs[2], _rect(6.0, 9.0, -11.0, -8.0)]  # (the south-east slab stood over the chasm: moved to the north aisle)
 	edge_slabs.append_array([_rect(-2.6, 0.4, -1.5, 1.5), _rect(9.6, 12.6, -1.5, 1.5)])
 	var crumble := _plates(edge_slabs, PLATES_FROM)
-	crumble.plate_hero_damage = PackedFloat32Array([0, 0, 0, CRUMBLE_HERO, CRUMBLE_HERO])
-	crumble.plate_push = PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2(-2.5, 0),
+	crumble.plate_hero_damage = PackedFloat32Array([0, 0, 0, 0, CRUMBLE_HERO, CRUMBLE_HERO])
+	crumble.plate_push = PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2(-2.5, 0),
 		Vector2(2.5, 0)])
 	l.variants[0].hazard = crumble
 	# A1, RP-20: stones from the torn vault over the nave round the hole (the rent above it), 6.5 m and more from the

@@ -57,7 +57,7 @@ func test_what_a_blow_reaches() -> void:
 
 func test_where_the_columns_crack() -> void:
 	var want := {&"sanctuary": [[Vector2(15, -6), Vector2(-9, 6)], [Vector2(15, -6), Vector2(-9, 6)]],
-		&"garden": [[Vector2(4.5, 7)], []], &"crypt": [[], [Vector2(6.5, -6)]]}
+		&"garden": [[Vector2(4.5, 7)], []], &"crypt": [[], [Vector2(6.5, -5.2)]]}
 	for id: StringName in want:
 		var base := _layout(id)
 		for v in 2:

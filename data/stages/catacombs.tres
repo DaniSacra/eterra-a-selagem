@@ -786,7 +786,7 @@ plate_hero_damage = PackedFloat32Array()
 plate_push = PackedVector2Array()
 strips = PackedVector4Array()
 aims = PackedVector4Array()
-bands = Array[Rect2]([Rect2(-4.5, -2, 2.4, 2.4), Rect2(2, -2, 2.4, 2.4)])
+bands = Array[Rect2]([Rect2(-8, -5.5, 2.4, 2.4), Rect2(8.5, -3, 2.4, 2.4)])
 band_push = PackedVector2Array()
 cycle = 3.5
 band_source = &"spikes"
@@ -1297,7 +1297,7 @@ relic_spots = PackedVector2Array(-18, -11)
 areas = Array[Rect2]([Rect2(-7, -12, 9, 5), Rect2(-7, -1, 9, 5), Rect2(-8, 9, 11, 6), Rect2(-21, -15, 14, 30), Rect2(2, -15, 19, 30)])
 area_names = PackedStringArray("bridge_n", "bridge_s", "south_way", "west", "east")
 obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_1lccg"), SubResource("Resource_pm300"), SubResource("Resource_row08"), SubResource("Resource_6ewq0"), SubResource("Resource_3dn1a"), SubResource("Resource_aaj57"), SubResource("Resource_pxvga"), SubResource("Resource_vbkt7"), SubResource("Resource_tcefp")])
-spawns = Array[Rect2]([Rect2(-17, -13, 6, 4), Rect2(-20, 8.5, 5, 3.5), Rect2(5, -13.5, 6, 3), Rect2(16, -8, 3.5, 6), Rect2(6, 8, 4, 4)])
+spawns = Array[Rect2]([Rect2(-17, -13, 6, 4), Rect2(-18, 10, 4.5, 2.5), Rect2(5, -13.5, 6, 3), Rect2(16, -8, 3.5, 6), Rect2(6, 8, 4, 4)])
 late_spawns = Array[Rect2]([Rect2(5, 7, 6, 5)])
 exits = Array[ExtResource("2_kin83")]([SubResource("Resource_sonfj"), SubResource("Resource_psbln"), SubResource("Resource_8vf53")])
 cam_bounds = Rect2(-6, -4, 13, 9)
@@ -2336,10 +2336,10 @@ script = ExtResource("7_gcpwj")
 kind = 1
 hero_damage = 10.0
 enemy_damage = 60.0
-plates = Array[Rect2]([Rect2(-13.25, -10.75, 2.5, 2.5), Rect2(10.75, -10.75, 2.5, 2.5), Rect2(-7.25, 8.25, 2.5, 2.5), Rect2(-2.35, -1.25, 2.5, 2.5), Rect2(9.85, -1.25, 2.5, 2.5)])
+plates = Array[Rect2]([Rect2(-13.25, -10.75, 2.5, 2.5), Rect2(10.75, -10.75, 2.5, 2.5), Rect2(-7.25, 8.25, 2.5, 2.5), Rect2(6.25, -10.75, 2.5, 2.5), Rect2(-2.35, -1.25, 2.5, 2.5), Rect2(9.85, -1.25, 2.5, 2.5)])
 from_progress = 0.34
-plate_hero_damage = PackedFloat32Array(0, 0, 0, 7, 7)
-plate_push = PackedVector2Array(0, 0, 0, 0, 0, 0, -2.5, 0, 2.5, 0)
+plate_hero_damage = PackedFloat32Array(0, 0, 0, 0, 7, 7)
+plate_push = PackedVector2Array(0, 0, 0, 0, 0, 0, 0, 0, -2.5, 0, 2.5, 0)
 strips = PackedVector4Array()
 aims = PackedVector4Array()
 band_push = PackedVector2Array()
@@ -2886,65 +2886,49 @@ radius = 0.4
 
 [sub_resource type="Resource" id="Resource_o4p06"]
 script = ExtResource("1_63so8")
-form = 5
-at = Vector2(-27.5, 3)
-radius = 0.32000000000000006
-height = 0.35
+form = 4
+at = Vector2(-16, -8.3)
+radius = 0.4
 group = 1
 
 [sub_resource type="Resource" id="Resource_vmd07"]
 script = ExtResource("1_63so8")
-form = 4
-at = Vector2(-27.5, 3.8)
-radius = 0.45
-height = 0.7
+form = 5
+at = Vector2(-15.2, -8.3)
+radius = 0.32000000000000006
+height = 0.35
 group = 1
 
 [sub_resource type="Resource" id="Resource_dg00c"]
 script = ExtResource("1_63so8")
-form = 4
-at = Vector2(1, -4)
-radius = 0.4
-group = 2
+form = 5
+at = Vector2(-16.8, -8.3)
+radius = 0.32000000000000006
+height = 0.35
+group = 1
 
 [sub_resource type="Resource" id="Resource_3k8pw"]
 script = ExtResource("1_63so8")
 form = 5
-at = Vector2(1.8, -4)
+at = Vector2(-13, 7.25)
 radius = 0.32000000000000006
 height = 0.35
 group = 2
 
 [sub_resource type="Resource" id="Resource_yc6wa"]
 script = ExtResource("1_63so8")
-form = 5
-at = Vector2(0.2, -4)
-radius = 0.32000000000000006
-height = 0.35
-group = 2
-
-[sub_resource type="Resource" id="Resource_kb1gv"]
-script = ExtResource("1_63so8")
-form = 5
-at = Vector2(-13, 7.25)
-radius = 0.32000000000000006
-height = 0.35
-group = 3
-
-[sub_resource type="Resource" id="Resource_kg5rg"]
-script = ExtResource("1_63so8")
 form = 4
 at = Vector2(-13.8, 7.25)
 radius = 0.45
 height = 0.7
-group = 3
+group = 2
 
-[sub_resource type="Resource" id="Resource_857nu"]
+[sub_resource type="Resource" id="Resource_kb1gv"]
 script = ExtResource("3_8ur2y")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-28, -6, -25, -9, -13, -9, -12, -7, -12, 7, -14, 9, -26, 9, -28, 7), PackedVector2Array(-12.05, 0.5, -2.9499998, 0.5, -2.9499998, 5.5, -12.05, 5.5), PackedVector2Array(-3, -5.5, 3, -5.5, 3, 5.5, -3, 5.5), PackedVector2Array(2.95, -5.5, 12.05, -5.5, 12.05, -0.5, 2.95, -0.5), PackedVector2Array(12, -7, 13, -9, 28, -9, 28, 7, 26, 9, 14, 9, 12, 7)])
 
-[sub_resource type="Resource" id="Resource_pn62m"]
+[sub_resource type="Resource" id="Resource_kg5rg"]
 script = ExtResource("7_gcpwj")
 kind = 2
 hero_damage = 10.0
@@ -2962,19 +2946,19 @@ crystal_cols = PackedInt32Array()
 urns = PackedVector2Array()
 urn_flows = PackedVector4Array()
 
-[sub_resource type="Resource" id="Resource_sp3lc"]
+[sub_resource type="Resource" id="Resource_857nu"]
 script = ExtResource("6_0uifc")
 depth = Vector2(0.67, 1)
 obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_e5fqs"), SubResource("Resource_8qhm5"), SubResource("Resource_84rv8"), SubResource("Resource_ukmj2")])
 spawns = Array[Rect2]([Rect2(17, -7.5, 7, 6.5), Rect2(17, 1, 7, 6.5)])
-floor = SubResource("Resource_857nu")
-hazard = SubResource("Resource_pn62m")
-breakables = Array[ExtResource("1_63so8")]([SubResource("Resource_jfekh"), SubResource("Resource_8edqe"), SubResource("Resource_0wgpu"), SubResource("Resource_o4p06"), SubResource("Resource_vmd07"), SubResource("Resource_dg00c"), SubResource("Resource_3k8pw"), SubResource("Resource_yc6wa"), SubResource("Resource_kb1gv"), SubResource("Resource_kg5rg")])
+floor = SubResource("Resource_kb1gv")
+hazard = SubResource("Resource_kg5rg")
+breakables = Array[ExtResource("1_63so8")]([SubResource("Resource_jfekh"), SubResource("Resource_8edqe"), SubResource("Resource_0wgpu"), SubResource("Resource_o4p06"), SubResource("Resource_vmd07"), SubResource("Resource_dg00c"), SubResource("Resource_3k8pw"), SubResource("Resource_yc6wa")])
 gather_spots = PackedVector2Array()
 areas = Array[Rect2]([Rect2(-28, -9, 16, 18), Rect2(-3, -5.5, 6, 11), Rect2(-12, 0.5, 9, 5), Rect2(3, -5.5, 9, 5), Rect2(12, -9, 16, 18)])
 area_names = PackedStringArray("west", "landing", "bridge", "bridge", "east")
 
-[sub_resource type="Resource" id="Resource_yryi1"]
+[sub_resource type="Resource" id="Resource_pn62m"]
 script = ExtResource("5_51rpt")
 half = Vector2(28, 9)
 floor = SubResource("Resource_14s4n")
@@ -3001,29 +2985,29 @@ spawns = Array[Rect2]([Rect2(17, -7.5, 7, 6.5), Rect2(17, 1, 7, 6.5)])
 late_spawns = Array[Rect2]([Rect2(-26, -7, 6, 3)])
 exits = Array[ExtResource("2_kin83")]([SubResource("Resource_o7pap"), SubResource("Resource_p0blu"), SubResource("Resource_od8g3")])
 cam_bounds = Rect2(-14, -1, 28, 4)
-variants = Array[ExtResource("6_0uifc")]([SubResource("Resource_sp3lc")])
+variants = Array[ExtResource("6_0uifc")]([SubResource("Resource_857nu")])
 
-[sub_resource type="Resource" id="Resource_axpi5"]
+[sub_resource type="Resource" id="Resource_sp3lc"]
 script = ExtResource("1_63so8")
 form = 4
 at = Vector2(-5.5, 11.3)
 radius = 0.4
 
-[sub_resource type="Resource" id="Resource_vtt2t"]
+[sub_resource type="Resource" id="Resource_yryi1"]
 script = ExtResource("1_63so8")
 form = 2
 at = Vector2(-4.7, 11.3)
 radius = 0.2
 height = 0.35
 
-[sub_resource type="Resource" id="Resource_53wau"]
+[sub_resource type="Resource" id="Resource_axpi5"]
 script = ExtResource("1_63so8")
 form = 4
 at = Vector2(-5.5, 10.5)
 radius = 0.33333333333333337
 height = 0.5
 
-[sub_resource type="Resource" id="Resource_bla8a"]
+[sub_resource type="Resource" id="Resource_vtt2t"]
 script = ExtResource("1_63so8")
 form = 2
 at = Vector2(4.7, 11.3)
@@ -3031,14 +3015,14 @@ radius = 0.2
 height = 0.4
 group = 1
 
-[sub_resource type="Resource" id="Resource_qaow4"]
+[sub_resource type="Resource" id="Resource_53wau"]
 script = ExtResource("1_63so8")
 form = 4
 at = Vector2(5.5, 11.3)
 radius = 0.4
 group = 1
 
-[sub_resource type="Resource" id="Resource_x23s1"]
+[sub_resource type="Resource" id="Resource_bla8a"]
 script = ExtResource("1_63so8")
 form = 2
 at = Vector2(5.5, 10.5)
@@ -3046,7 +3030,7 @@ radius = 0.2
 height = 0.35
 group = 1
 
-[sub_resource type="Resource" id="Resource_8jbjk"]
+[sub_resource type="Resource" id="Resource_qaow4"]
 script = ExtResource("1_63so8")
 form = 4
 at = Vector2(-3.8, 11.5)
@@ -3054,7 +3038,7 @@ radius = 0.33333333333333337
 height = 0.5
 group = 2
 
-[sub_resource type="Resource" id="Resource_oft4f"]
+[sub_resource type="Resource" id="Resource_x23s1"]
 script = ExtResource("1_63so8")
 form = 2
 at = Vector2(-3, 11.5)
@@ -3062,30 +3046,30 @@ radius = 0.2
 height = 0.35
 group = 2
 
-[sub_resource type="Resource" id="Resource_4e6bu"]
+[sub_resource type="Resource" id="Resource_8jbjk"]
 script = ExtResource("2_kin83")
 at = Vector2(-0.5, -13.8)
 zone = Rect2(-2.5, -14.4, 4, 1.1999998)
 mouth = Rect2(-2.5, -14.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_m3eui"]
+[sub_resource type="Resource" id="Resource_oft4f"]
 script = ExtResource("2_kin83")
 at = Vector2(7.3, -13.8)
 zone = Rect2(5.3, -14.4, 4, 1.1999998)
 mouth = Rect2(5.3, -14.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_r6kte"]
+[sub_resource type="Resource" id="Resource_4e6bu"]
 script = ExtResource("2_kin83")
 at = Vector2(-8.8, -13.8)
 zone = Rect2(-10.8, -14.4, 4, 1.1999998)
 mouth = Rect2(-10.8, -14.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_sxjqq"]
+[sub_resource type="Resource" id="Resource_m3eui"]
 script = ExtResource("3_8ur2y")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-15, -9, -12, -12, 12, -12, 15, -9, 15, 9, 12, 12, -12, 12, -15, 9)])
 
-[sub_resource type="Resource" id="Resource_sue28"]
+[sub_resource type="Resource" id="Resource_r6kte"]
 script = ExtResource("7_gcpwj")
 warn = 1.5
 max_share = 0.3
@@ -3105,7 +3089,7 @@ crystal_cols = PackedInt32Array()
 urns = PackedVector2Array()
 urn_flows = PackedVector4Array()
 
-[sub_resource type="Resource" id="Resource_4k57e"]
+[sub_resource type="Resource" id="Resource_sxjqq"]
 script = ExtResource("4_wmys5")
 shape = 1
 center = Vector2(-6, -6)
@@ -3114,7 +3098,7 @@ see_through = true
 piece = &"rune_pillar"
 height = 4.0
 
-[sub_resource type="Resource" id="Resource_eoxm6"]
+[sub_resource type="Resource" id="Resource_sue28"]
 script = ExtResource("4_wmys5")
 shape = 1
 center = Vector2(6, -6)
@@ -3123,7 +3107,7 @@ see_through = true
 piece = &"rune_pillar"
 height = 4.0
 
-[sub_resource type="Resource" id="Resource_1els6"]
+[sub_resource type="Resource" id="Resource_4k57e"]
 script = ExtResource("4_wmys5")
 shape = 1
 center = Vector2(-6, 6)
@@ -3132,7 +3116,7 @@ see_through = true
 piece = &"rune_pillar"
 height = 4.0
 
-[sub_resource type="Resource" id="Resource_wlpco"]
+[sub_resource type="Resource" id="Resource_eoxm6"]
 script = ExtResource("4_wmys5")
 shape = 1
 center = Vector2(6, 6)
@@ -3141,7 +3125,7 @@ see_through = true
 piece = &"rune_pillar"
 height = 4.0
 
-[sub_resource type="Resource" id="Resource_ugd87"]
+[sub_resource type="Resource" id="Resource_1els6"]
 script = ExtResource("4_wmys5")
 center = Vector2(3.4, -12.9)
 radius = 0.45
@@ -3150,7 +3134,7 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_e8ome"]
+[sub_resource type="Resource" id="Resource_wlpco"]
 script = ExtResource("4_wmys5")
 center = Vector2(-4.65, -12.9)
 radius = 0.45
@@ -3159,7 +3143,7 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_umnp0"]
+[sub_resource type="Resource" id="Resource_ugd87"]
 script = ExtResource("7_gcpwj")
 warn = 1.5
 max_share = 0.3
@@ -3180,7 +3164,7 @@ crystal_from = 0.5
 urns = PackedVector2Array()
 urn_flows = PackedVector4Array()
 
-[sub_resource type="Resource" id="Resource_hn8lt"]
+[sub_resource type="Resource" id="Resource_e8ome"]
 script = ExtResource("4_wmys5")
 shape = 1
 center = Vector2(-12.2, -6)
@@ -3189,7 +3173,7 @@ see_through = true
 piece = &"rune_pillar"
 height = 4.0
 
-[sub_resource type="Resource" id="Resource_sqdgv"]
+[sub_resource type="Resource" id="Resource_umnp0"]
 script = ExtResource("4_wmys5")
 shape = 1
 center = Vector2(9, 6)
@@ -3198,7 +3182,7 @@ see_through = true
 piece = &"rune_pillar"
 height = 4.0
 
-[sub_resource type="Resource" id="Resource_8sxs4"]
+[sub_resource type="Resource" id="Resource_hn8lt"]
 script = ExtResource("4_wmys5")
 shape = 1
 half = Vector2(3, 3)
@@ -3207,18 +3191,18 @@ blocks_shots = false
 piece = &"quiet"
 height = 0.0
 
-[sub_resource type="Resource" id="Resource_ic86h"]
+[sub_resource type="Resource" id="Resource_sqdgv"]
 script = ExtResource("6_0uifc")
 depth = Vector2(0.5, 0.8)
-obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_hn8lt"), SubResource("Resource_sqdgv"), SubResource("Resource_8sxs4"), SubResource("Resource_ugd87"), SubResource("Resource_e8ome")])
-hazard = SubResource("Resource_umnp0")
+obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_e8ome"), SubResource("Resource_umnp0"), SubResource("Resource_hn8lt"), SubResource("Resource_1els6"), SubResource("Resource_wlpco")])
+hazard = SubResource("Resource_ugd87")
 gather_spots = PackedVector2Array()
 areas = Array[Rect2]([Rect2(-3, -3, 6, 6), Rect2(-9, -9, 18, 18), Rect2(-15, -12, 30, 24)])
 area_names = PackedStringArray("quiet", "middle", "edge")
 
-[sub_resource type="Resource" id="Resource_cxobr"]
+[sub_resource type="Resource" id="Resource_8sxs4"]
 script = ExtResource("5_51rpt")
-floor = SubResource("Resource_sxjqq")
+floor = SubResource("Resource_m3eui")
 hero_spawn = Vector2(0, 9.5)
 cam_target = Vector2(0.5, 1)
 cam_reach = 3.5
@@ -3232,30 +3216,30 @@ max_alive = Vector2i(4, 6)
 max_ranged = 2
 banned_roles = Array[StringName]([&"area"])
 guardian = false
-hazard = SubResource("Resource_sue28")
-breakables = Array[ExtResource("1_63so8")]([SubResource("Resource_axpi5"), SubResource("Resource_vtt2t"), SubResource("Resource_53wau"), SubResource("Resource_bla8a"), SubResource("Resource_qaow4"), SubResource("Resource_x23s1"), SubResource("Resource_8jbjk"), SubResource("Resource_oft4f")])
+hazard = SubResource("Resource_r6kte")
+breakables = Array[ExtResource("1_63so8")]([SubResource("Resource_sp3lc"), SubResource("Resource_yryi1"), SubResource("Resource_axpi5"), SubResource("Resource_vtt2t"), SubResource("Resource_53wau"), SubResource("Resource_bla8a"), SubResource("Resource_qaow4"), SubResource("Resource_x23s1")])
 gather_spots = PackedVector2Array(-5, -9.5)
 relic_spots = PackedVector2Array()
 areas = Array[Rect2]([Rect2(-9, -9, 6, 6), Rect2(3, -9, 6, 6), Rect2(-9, 3, 6, 6), Rect2(3, 3, 6, 6), Rect2(-9, -9, 18, 18), Rect2(-15, -12, 30, 24)])
 area_names = PackedStringArray("pillars", "pillars", "pillars", "pillars", "middle", "edge")
-obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_4k57e"), SubResource("Resource_eoxm6"), SubResource("Resource_1els6"), SubResource("Resource_wlpco"), SubResource("Resource_ugd87"), SubResource("Resource_e8ome")])
+obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_sxjqq"), SubResource("Resource_sue28"), SubResource("Resource_4k57e"), SubResource("Resource_eoxm6"), SubResource("Resource_1els6"), SubResource("Resource_wlpco")])
 spawns = Array[Rect2]([Rect2(-4, -11, 7, 3), Rect2(10, -4, 3.5, 8), Rect2(-13, -4, 3, 8)])
 late_spawns = Array[Rect2]([Rect2(-13, -9.5, 4, 3.5)])
-exits = Array[ExtResource("2_kin83")]([SubResource("Resource_4e6bu"), SubResource("Resource_m3eui"), SubResource("Resource_r6kte")])
-variants = Array[ExtResource("6_0uifc")]([SubResource("Resource_ic86h")])
+exits = Array[ExtResource("2_kin83")]([SubResource("Resource_8jbjk"), SubResource("Resource_oft4f"), SubResource("Resource_4e6bu")])
+variants = Array[ExtResource("6_0uifc")]([SubResource("Resource_sqdgv")])
 
-[sub_resource type="Resource" id="Resource_pav3m"]
+[sub_resource type="Resource" id="Resource_ic86h"]
 script = ExtResource("1_63so8")
 at = Vector2(-10.4, -4.4)
 
-[sub_resource type="Resource" id="Resource_cfmym"]
+[sub_resource type="Resource" id="Resource_cxobr"]
 script = ExtResource("1_63so8")
 form = 1
 at = Vector2(-10.4, -3.6)
 radius = 0.384
 height = 0.8
 
-[sub_resource type="Resource" id="Resource_5dtry"]
+[sub_resource type="Resource" id="Resource_pav3m"]
 script = ExtResource("1_63so8")
 form = 2
 at = Vector2(10.4, 3.6)
@@ -3263,12 +3247,12 @@ radius = 0.2
 height = 0.4
 group = 1
 
-[sub_resource type="Resource" id="Resource_r21q0"]
+[sub_resource type="Resource" id="Resource_cfmym"]
 script = ExtResource("1_63so8")
 at = Vector2(10.4, 4.4)
 group = 1
 
-[sub_resource type="Resource" id="Resource_t2vq5"]
+[sub_resource type="Resource" id="Resource_5dtry"]
 script = ExtResource("1_63so8")
 form = 1
 at = Vector2(-4.4, 10.4)
@@ -3276,7 +3260,7 @@ radius = 0.384
 height = 0.8
 group = 2
 
-[sub_resource type="Resource" id="Resource_qlogr"]
+[sub_resource type="Resource" id="Resource_r21q0"]
 script = ExtResource("1_63so8")
 form = 2
 at = Vector2(-4.4, 9.6)
@@ -3284,30 +3268,30 @@ radius = 0.2
 height = 0.4
 group = 2
 
-[sub_resource type="Resource" id="Resource_2chck"]
+[sub_resource type="Resource" id="Resource_t2vq5"]
 script = ExtResource("2_kin83")
 at = Vector2(-1.4, -12.8)
 zone = Rect2(-3.4, -13.4, 4, 1.1999998)
 mouth = Rect2(-3.4, -13.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_jebxi"]
+[sub_resource type="Resource" id="Resource_qlogr"]
 script = ExtResource("2_kin83")
 at = Vector2(6, -12.8)
 zone = Rect2(4, -13.4, 4, 1.1999998)
 mouth = Rect2(4, -13.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_i2rtf"]
+[sub_resource type="Resource" id="Resource_2chck"]
 script = ExtResource("2_kin83")
 at = Vector2(-8.2, -12.8)
 zone = Rect2(-10.2, -13.4, 4, 1.1999998)
 mouth = Rect2(-10.2, -13.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_00qcs"]
+[sub_resource type="Resource" id="Resource_jebxi"]
 script = ExtResource("3_8ur2y")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-11, -11, 8.5, -11, 11, -8.5, 11, 11, -11, 11)])
 
-[sub_resource type="Resource" id="Resource_mx6xy"]
+[sub_resource type="Resource" id="Resource_i2rtf"]
 script = ExtResource("7_gcpwj")
 kind = 3
 hero_damage = 10.0
@@ -3329,7 +3313,7 @@ drop_aim = 0.4
 urns = PackedVector2Array()
 urn_flows = PackedVector4Array()
 
-[sub_resource type="Resource" id="Resource_ng4fo"]
+[sub_resource type="Resource" id="Resource_00qcs"]
 script = ExtResource("7_gcpwj")
 kind = 1
 fire = 0.6
@@ -3346,14 +3330,14 @@ plate_source = &"spikeplate"
 aims = PackedVector4Array()
 band_push = PackedVector2Array()
 band_dir = PackedVector2Array()
-also = SubResource("Resource_mx6xy")
+also = SubResource("Resource_i2rtf")
 sparks = PackedVector2Array()
 crystals = PackedVector2Array()
 crystal_cols = PackedInt32Array()
 urns = PackedVector2Array()
 urn_flows = PackedVector4Array()
 
-[sub_resource type="Resource" id="Resource_s26mc"]
+[sub_resource type="Resource" id="Resource_mx6xy"]
 script = ExtResource("4_wmys5")
 center = Vector2(2.3, -11.5)
 radius = 0.45
@@ -3362,10 +3346,10 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_xp0ck"]
+[sub_resource type="Resource" id="Resource_ng4fo"]
 script = ExtResource("5_51rpt")
 half = Vector2(11, 11)
-floor = SubResource("Resource_00qcs")
+floor = SubResource("Resource_jebxi")
 hero_spawn = Vector2(0, 9.5)
 boss_spawn = Vector2(0, -7)
 cam_reach = 2.5
@@ -3378,29 +3362,29 @@ max_alive = Vector2i(6, 8)
 max_ranged = 3
 guardian_home = true
 guardian_id = &"knight"
-hazard = SubResource("Resource_ng4fo")
-breakables = Array[ExtResource("1_63so8")]([SubResource("Resource_pav3m"), SubResource("Resource_cfmym"), SubResource("Resource_5dtry"), SubResource("Resource_r21q0"), SubResource("Resource_t2vq5"), SubResource("Resource_qlogr")])
+hazard = SubResource("Resource_00qcs")
+breakables = Array[ExtResource("1_63so8")]([SubResource("Resource_ic86h"), SubResource("Resource_cxobr"), SubResource("Resource_pav3m"), SubResource("Resource_cfmym"), SubResource("Resource_5dtry"), SubResource("Resource_r21q0")])
 gather_spots = PackedVector2Array()
 relic_spots = PackedVector2Array()
 areas = Array[Rect2]([Rect2(-11, -11, 7, 7), Rect2(-11, 4, 7, 7), Rect2(4, 4, 7, 7), Rect2(4, -11, 7, 7), Rect2(-11, -11, 22, 22)])
 area_names = PackedStringArray("corner_nw", "corner_sw", "corner_se", "corner_ne", "middle")
-obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_s26mc")])
+obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_mx6xy")])
 spawns = Array[Rect2]([Rect2(-5, -7.5, 10, 4.5)])
 late_spawns = Array[Rect2]([Rect2(-5, -7.5, 10, 4.5)])
-exits = Array[ExtResource("2_kin83")]([SubResource("Resource_2chck"), SubResource("Resource_jebxi"), SubResource("Resource_i2rtf")])
+exits = Array[ExtResource("2_kin83")]([SubResource("Resource_t2vq5"), SubResource("Resource_qlogr"), SubResource("Resource_2chck")])
 
-[sub_resource type="Resource" id="Resource_vql4w"]
+[sub_resource type="Resource" id="Resource_s26mc"]
 script = ExtResource("1_63so8")
 at = Vector2(-11.4, -5.6)
 
-[sub_resource type="Resource" id="Resource_shb6m"]
+[sub_resource type="Resource" id="Resource_xp0ck"]
 script = ExtResource("1_63so8")
 form = 1
 at = Vector2(-11.4, -4.8)
 radius = 0.384
 height = 0.8
 
-[sub_resource type="Resource" id="Resource_ny7te"]
+[sub_resource type="Resource" id="Resource_vql4w"]
 script = ExtResource("1_63so8")
 form = 2
 at = Vector2(-11.4, 5)
@@ -3408,12 +3392,12 @@ radius = 0.2
 height = 0.4
 group = 1
 
-[sub_resource type="Resource" id="Resource_cs4yg"]
+[sub_resource type="Resource" id="Resource_shb6m"]
 script = ExtResource("1_63so8")
 at = Vector2(-11.4, 5.8)
 group = 1
 
-[sub_resource type="Resource" id="Resource_y46rs"]
+[sub_resource type="Resource" id="Resource_ny7te"]
 script = ExtResource("1_63so8")
 form = 1
 at = Vector2(11.4, 9)
@@ -3421,7 +3405,7 @@ radius = 0.384
 height = 0.8
 group = 2
 
-[sub_resource type="Resource" id="Resource_0xstb"]
+[sub_resource type="Resource" id="Resource_cs4yg"]
 script = ExtResource("1_63so8")
 form = 2
 at = Vector2(11.4, 9.8)
@@ -3429,30 +3413,30 @@ radius = 0.2
 height = 0.4
 group = 2
 
-[sub_resource type="Resource" id="Resource_21pvg"]
+[sub_resource type="Resource" id="Resource_y46rs"]
 script = ExtResource("2_kin83")
 at = Vector2(0.1, -13.8)
 zone = Rect2(-1.9, -14.4, 4, 1.1999998)
 mouth = Rect2(-1.9, -14.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_m63gs"]
+[sub_resource type="Resource" id="Resource_0xstb"]
 script = ExtResource("2_kin83")
 at = Vector2(7.5, -13.8)
 zone = Rect2(5.5, -14.4, 4, 1.1999998)
 mouth = Rect2(5.5, -14.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_u5i2a"]
+[sub_resource type="Resource" id="Resource_21pvg"]
 script = ExtResource("2_kin83")
 at = Vector2(-6.7, -13.8)
 zone = Rect2(-8.7, -14.4, 4, 1.1999998)
 mouth = Rect2(-8.7, -14.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_vvay1"]
+[sub_resource type="Resource" id="Resource_m63gs"]
 script = ExtResource("3_8ur2y")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-12, -12, 9.5, -12, 12, -9.5, 12, 12, -12, 12)])
 
-[sub_resource type="Resource" id="Resource_c7m72"]
+[sub_resource type="Resource" id="Resource_u5i2a"]
 script = ExtResource("4_wmys5")
 center = Vector2(3.8, -11.1)
 radius = 0.75
@@ -3460,7 +3444,7 @@ blocks_shots = false
 piece = &"statue"
 height = 3.2
 
-[sub_resource type="Resource" id="Resource_3ba3k"]
+[sub_resource type="Resource" id="Resource_vvay1"]
 script = ExtResource("4_wmys5")
 center = Vector2(-3.3, -12.5)
 radius = 0.45
@@ -3469,7 +3453,7 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_bqax2"]
+[sub_resource type="Resource" id="Resource_c7m72"]
 script = ExtResource("4_wmys5")
 center = Vector2(-7.5, -2.5)
 radius = 0.9
@@ -3477,7 +3461,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_rqkun"]
+[sub_resource type="Resource" id="Resource_3ba3k"]
 script = ExtResource("4_wmys5")
 center = Vector2(7.5, -2.5)
 radius = 0.9
@@ -3485,7 +3469,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_j3syo"]
+[sub_resource type="Resource" id="Resource_bqax2"]
 script = ExtResource("4_wmys5")
 center = Vector2(-4.5, 4.5)
 radius = 0.9
@@ -3493,7 +3477,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_nt5bl"]
+[sub_resource type="Resource" id="Resource_rqkun"]
 script = ExtResource("4_wmys5")
 center = Vector2(4.5, 4.5)
 radius = 0.9
@@ -3501,10 +3485,10 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_vjf33"]
+[sub_resource type="Resource" id="Resource_j3syo"]
 script = ExtResource("5_51rpt")
 half = Vector2(12, 12)
-floor = SubResource("Resource_vvay1")
+floor = SubResource("Resource_m63gs")
 hero_spawn = Vector2(0, 10.5)
 boss_spawn = Vector2(0, -7)
 cam_reach = 2.5
@@ -3517,61 +3501,61 @@ max_alive = Vector2i(6, 8)
 max_ranged = 3
 guardian_home = true
 guardian_id = &"priest_elder"
-breakables = Array[ExtResource("1_63so8")]([SubResource("Resource_vql4w"), SubResource("Resource_shb6m"), SubResource("Resource_ny7te"), SubResource("Resource_cs4yg"), SubResource("Resource_y46rs"), SubResource("Resource_0xstb")])
+breakables = Array[ExtResource("1_63so8")]([SubResource("Resource_s26mc"), SubResource("Resource_xp0ck"), SubResource("Resource_vql4w"), SubResource("Resource_shb6m"), SubResource("Resource_ny7te"), SubResource("Resource_cs4yg")])
 gather_spots = PackedVector2Array()
 relic_spots = PackedVector2Array()
 areas = Array[Rect2]([Rect2(-8, -8, 16, 16), Rect2(-12, -12, 24, 24)])
 area_names = PackedStringArray("columns", "walls")
-obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_c7m72"), SubResource("Resource_3ba3k"), SubResource("Resource_bqax2"), SubResource("Resource_rqkun"), SubResource("Resource_j3syo"), SubResource("Resource_nt5bl")])
+obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_u5i2a"), SubResource("Resource_vvay1"), SubResource("Resource_c7m72"), SubResource("Resource_3ba3k"), SubResource("Resource_bqax2"), SubResource("Resource_rqkun")])
 spawns = Array[Rect2]([Rect2(-9, -9, 18, 8)])
 late_spawns = Array[Rect2]([Rect2(-9, -9, 18, 8)])
-exits = Array[ExtResource("2_kin83")]([SubResource("Resource_21pvg"), SubResource("Resource_m63gs"), SubResource("Resource_u5i2a")])
+exits = Array[ExtResource("2_kin83")]([SubResource("Resource_y46rs"), SubResource("Resource_0xstb"), SubResource("Resource_21pvg")])
 
-[sub_resource type="Resource" id="Resource_ewiav"]
+[sub_resource type="Resource" id="Resource_nt5bl"]
 script = ExtResource("8_otjkh")
 until = 0.05
 roles = Array[StringName]([&"pressure"])
 
-[sub_resource type="Resource" id="Resource_gvr0o"]
+[sub_resource type="Resource" id="Resource_vjf33"]
 script = ExtResource("8_otjkh")
 from = 0.05
 until = 0.13
 roles = Array[StringName]([&"pressure", &"react"])
 
-[sub_resource type="Resource" id="Resource_53ux3"]
+[sub_resource type="Resource" id="Resource_ewiav"]
 script = ExtResource("8_otjkh")
 from = 0.13
 until = 0.22
 roles = Array[StringName]([&"pressure", &"flank"])
 
-[sub_resource type="Resource" id="Resource_pungu"]
+[sub_resource type="Resource" id="Resource_gvr0o"]
 script = ExtResource("8_otjkh")
 from = 0.22
 until = 0.3
 roles = Array[StringName]([&"block", &"pressure"])
 
-[sub_resource type="Resource" id="Resource_im4cu"]
+[sub_resource type="Resource" id="Resource_53ux3"]
 script = ExtResource("8_otjkh")
 from = 0.3
 until = 0.6
 weight = 3.0
 roles = Array[StringName]([&"block", &"pressure", &"control"])
 
-[sub_resource type="Resource" id="Resource_oxkdo"]
+[sub_resource type="Resource" id="Resource_pungu"]
 script = ExtResource("8_otjkh")
 from = 0.3
 until = 0.6
 weight = 2.0
 roles = Array[StringName]([&"react", &"flank", &"pressure"])
 
-[sub_resource type="Resource" id="Resource_t2m83"]
+[sub_resource type="Resource" id="Resource_im4cu"]
 script = ExtResource("8_otjkh")
 from = 0.4
 until = 0.6
 weight = 2.0
 roles = Array[StringName]([&"block", &"flank"])
 
-[sub_resource type="Resource" id="Resource_jrwff"]
+[sub_resource type="Resource" id="Resource_oxkdo"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.4
@@ -3579,14 +3563,14 @@ until = 0.6
 roles = Array[StringName]([&"pressure", &"react", &"control"])
 elite_chance = 0.5
 
-[sub_resource type="Resource" id="Resource_3vdl5"]
+[sub_resource type="Resource" id="Resource_t2m83"]
 script = ExtResource("8_otjkh")
 from = 0.6
 until = 0.8
 weight = 2.0
 roles = Array[StringName]([&"block", &"area", &"pressure"])
 
-[sub_resource type="Resource" id="Resource_5lfwt"]
+[sub_resource type="Resource" id="Resource_jrwff"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.6
@@ -3595,7 +3579,7 @@ weight = 3.0
 roles = Array[StringName]([&"block", &"flank", &"control"])
 elite_chance = 0.5
 
-[sub_resource type="Resource" id="Resource_jg0s0"]
+[sub_resource type="Resource" id="Resource_3vdl5"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.6
@@ -3604,7 +3588,7 @@ weight = 2.0
 roles = Array[StringName]([&"react", &"area", &"flank"])
 elite_chance = 0.5
 
-[sub_resource type="Resource" id="Resource_vxcd8"]
+[sub_resource type="Resource" id="Resource_5lfwt"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.8
@@ -3612,7 +3596,7 @@ weight = 3.0
 roles = Array[StringName]([&"block", &"area", &"control"])
 elite_chance = 0.7
 
-[sub_resource type="Resource" id="Resource_k8wtp"]
+[sub_resource type="Resource" id="Resource_jg0s0"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.8
@@ -3620,21 +3604,21 @@ weight = 3.0
 roles = Array[StringName]([&"react", &"flank", &"area", &"pressure"])
 elite_chance = 0.7
 
-[sub_resource type="Resource" id="Resource_ehiul"]
+[sub_resource type="Resource" id="Resource_vxcd8"]
 script = ExtResource("8_otjkh")
 tier = 2
 from = 0.8
 roles = Array[StringName]([&"block", &"area", &"control", &"flank"])
 elite_chance = 0.7
 
-[sub_resource type="Resource" id="Resource_5i08a"]
+[sub_resource type="Resource" id="Resource_k8wtp"]
 script = ExtResource("8_otjkh")
 from = 0.46
 until = 0.8
 weight = 2.0
 roles = Array[StringName]([&"pressure", &"swarm", &"flank"])
 
-[sub_resource type="Resource" id="Resource_gck54"]
+[sub_resource type="Resource" id="Resource_ehiul"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.46
@@ -3643,7 +3627,7 @@ weight = 2.0
 roles = Array[StringName]([&"block", &"swarm", &"control"])
 elite_chance = 0.5
 
-[sub_resource type="Resource" id="Resource_obdwm"]
+[sub_resource type="Resource" id="Resource_5i08a"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.46
@@ -3651,7 +3635,7 @@ weight = 2.0
 roles = Array[StringName]([&"pressure", &"sweep", &"control"])
 elite_chance = 0.5
 
-[sub_resource type="Resource" id="Resource_au1mj"]
+[sub_resource type="Resource" id="Resource_gck54"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.7
@@ -3659,27 +3643,27 @@ weight = 2.0
 roles = Array[StringName]([&"swarm", &"sweep", &"flank"])
 elite_chance = 0.7
 
-[sub_resource type="Resource" id="Resource_w43o0"]
+[sub_resource type="Resource" id="Resource_obdwm"]
 script = ExtResource("8_otjkh")
 tier = 2
 from = 0.8
 roles = Array[StringName]([&"block", &"sweep", &"control", &"swarm"])
 elite_chance = 0.7
 
-[sub_resource type="Resource" id="Resource_7cdwf"]
+[sub_resource type="Resource" id="Resource_au1mj"]
 script = ExtResource("8_otjkh")
 from = 0.4
 until = 0.8
 weight = 2.0
 roles = Array[StringName]([&"pressure", &"rally", &"react"])
 
-[sub_resource type="Resource" id="Resource_bnpyn"]
+[sub_resource type="Resource" id="Resource_w43o0"]
 script = ExtResource("8_otjkh")
 from = 0.4
 weight = 2.0
 roles = Array[StringName]([&"block", &"rally", &"pressure"])
 
-[sub_resource type="Resource" id="Resource_e7cgp"]
+[sub_resource type="Resource" id="Resource_7cdwf"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.6
@@ -3687,13 +3671,13 @@ weight = 2.0
 roles = Array[StringName]([&"react", &"rally", &"flank"])
 elite_chance = 0.5
 
-[sub_resource type="Resource" id="Resource_pr65e"]
+[sub_resource type="Resource" id="Resource_bnpyn"]
 script = ExtResource("8_otjkh")
 from = 0.6
 weight = 2.0
 roles = Array[StringName]([&"control", &"grave", &"pressure"])
 
-[sub_resource type="Resource" id="Resource_ei4x5"]
+[sub_resource type="Resource" id="Resource_e7cgp"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.6
@@ -3701,40 +3685,40 @@ weight = 2.0
 roles = Array[StringName]([&"block", &"grave", &"flank"])
 elite_chance = 0.5
 
-[sub_resource type="Resource" id="Resource_y0aro"]
+[sub_resource type="Resource" id="Resource_pr65e"]
 script = ExtResource("8_otjkh")
 from = 0.18
 until = 0.46
 weight = 2.0
 roles = Array[StringName]([&"pressure", &"leap"])
 
-[sub_resource type="Resource" id="Resource_ix4ih"]
+[sub_resource type="Resource" id="Resource_ei4x5"]
 script = ExtResource("8_otjkh")
 from = 0.3
 until = 0.8
 weight = 2.0
 roles = Array[StringName]([&"flank", &"leap", &"pressure"])
 
-[sub_resource type="Resource" id="Resource_rfcn7"]
+[sub_resource type="Resource" id="Resource_y0aro"]
 script = ExtResource("8_otjkh")
 from = 0.3
 until = 0.6
 roles = Array[StringName]([&"block", &"leap"])
 
-[sub_resource type="Resource" id="Resource_x525w"]
+[sub_resource type="Resource" id="Resource_ix4ih"]
 script = ExtResource("8_otjkh")
 from = 0.27
 until = 0.6
 weight = 2.0
 roles = Array[StringName]([&"pressure", &"throw"])
 
-[sub_resource type="Resource" id="Resource_2ky2n"]
+[sub_resource type="Resource" id="Resource_rfcn7"]
 script = ExtResource("8_otjkh")
 from = 0.46
 weight = 2.0
 roles = Array[StringName]([&"swarm", &"throw", &"pressure"])
 
-[sub_resource type="Resource" id="Resource_mx0ad"]
+[sub_resource type="Resource" id="Resource_x525w"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.8
@@ -3742,20 +3726,20 @@ weight = 2.0
 roles = Array[StringName]([&"leap", &"throw", &"block"])
 elite_chance = 0.5
 
-[sub_resource type="Resource" id="Resource_0uilh"]
+[sub_resource type="Resource" id="Resource_2ky2n"]
 script = ExtResource("8_otjkh")
 from = 0.4
 until = 0.7
 weight = 2.0
 roles = Array[StringName]([&"pressure", &"beam"])
 
-[sub_resource type="Resource" id="Resource_og3yh"]
+[sub_resource type="Resource" id="Resource_mx0ad"]
 script = ExtResource("8_otjkh")
 from = 0.46
 weight = 2.0
 roles = Array[StringName]([&"block", &"beam", &"pressure"])
 
-[sub_resource type="Resource" id="Resource_gb6xk"]
+[sub_resource type="Resource" id="Resource_0uilh"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.7
@@ -3763,19 +3747,19 @@ weight = 2.0
 roles = Array[StringName]([&"pressure", &"beam", &"flank"])
 elite_chance = 0.5
 
-[sub_resource type="Resource" id="Resource_56i6s"]
+[sub_resource type="Resource" id="Resource_og3yh"]
 script = ExtResource("8_otjkh")
 from = 0.64
 weight = 2.0
 roles = Array[StringName]([&"pressure", &"trap", &"flank"])
 
-[sub_resource type="Resource" id="Resource_tw1y6"]
+[sub_resource type="Resource" id="Resource_gb6xk"]
 script = ExtResource("8_otjkh")
 from = 0.64
 weight = 2.0
 roles = Array[StringName]([&"leap", &"trap", &"pressure"])
 
-[sub_resource type="Resource" id="Resource_nnqgu"]
+[sub_resource type="Resource" id="Resource_56i6s"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.7
@@ -3783,20 +3767,20 @@ weight = 2.0
 roles = Array[StringName]([&"block", &"trap", &"flank"])
 elite_chance = 0.5
 
-[sub_resource type="Resource" id="Resource_byiry"]
+[sub_resource type="Resource" id="Resource_tw1y6"]
 script = ExtResource("8_otjkh")
 from = 0.18
 until = 0.6
 weight = 2.0
 roles = Array[StringName]([&"scurry", &"pressure"])
 
-[sub_resource type="Resource" id="Resource_a4uel"]
+[sub_resource type="Resource" id="Resource_nnqgu"]
 script = ExtResource("8_otjkh")
 from = 0.46
 weight = 1.5
 roles = Array[StringName]([&"scurry", &"flank", &"block"])
 
-[sub_resource type="Resource" id="Resource_ldeic"]
+[sub_resource type="Resource" id="Resource_byiry"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.27
@@ -3804,7 +3788,7 @@ until = 0.6
 weight = 2.0
 roles = Array[StringName]([&"pressure", &"captain"])
 
-[sub_resource type="Resource" id="Resource_mkvfc"]
+[sub_resource type="Resource" id="Resource_a4uel"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.46
@@ -3812,7 +3796,7 @@ weight = 1.5
 roles = Array[StringName]([&"control", &"captain", &"scurry"])
 elite_chance = 0.5
 
-[sub_resource type="Resource" id="Resource_1oiml"]
+[sub_resource type="Resource" id="Resource_ldeic"]
 script = ExtResource("8_otjkh")
 tier = 1
 from = 0.6
@@ -3820,56 +3804,56 @@ weight = 1.5
 roles = Array[StringName]([&"block", &"captain", &"flank"])
 elite_chance = 0.5
 
-[sub_resource type="Resource" id="Resource_dr6sy"]
+[sub_resource type="Resource" id="Resource_mkvfc"]
 script = ExtResource("2_kin83")
 at = Vector2(0, -9.8)
 zone = Rect2(-1.5, -10.4, 3, 1.1999998)
 mouth = Rect2(-1.5, -10.4, 3, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_xmdtp"]
+[sub_resource type="Resource" id="Resource_1oiml"]
 script = ExtResource("3_8ur2y")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-9, -8, 9, -8, 9, 8, -9, 8)])
 
-[sub_resource type="Resource" id="Resource_f6ifb"]
+[sub_resource type="Resource" id="Resource_dr6sy"]
 script = ExtResource("4_wmys5")
 center = Vector2(-5.1, -5.2)
 see_through = true
 piece = &"column"
 height = 3.6
 
-[sub_resource type="Resource" id="Resource_dnv56"]
+[sub_resource type="Resource" id="Resource_xmdtp"]
 script = ExtResource("4_wmys5")
 center = Vector2(5.2, -5.3)
 see_through = true
 piece = &"column"
 height = 3.6
 
-[sub_resource type="Resource" id="Resource_m3b3v"]
+[sub_resource type="Resource" id="Resource_f6ifb"]
 script = ExtResource("4_wmys5")
 center = Vector2(-5.2, 2.9)
 see_through = true
 piece = &"column"
 height = 3.6
 
-[sub_resource type="Resource" id="Resource_cbaj2"]
+[sub_resource type="Resource" id="Resource_dnv56"]
 script = ExtResource("4_wmys5")
 center = Vector2(5.1, 2.8)
 see_through = true
 piece = &"column"
 height = 3.6
 
-[sub_resource type="Resource" id="Resource_m65sp"]
+[sub_resource type="Resource" id="Resource_m3b3v"]
 script = ExtResource("4_wmys5")
 shape = 1
 half = Vector2(1.1, 1.1)
 piece = &"altar"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_3ias7"]
+[sub_resource type="Resource" id="Resource_cbaj2"]
 script = ExtResource("5_51rpt")
 half = Vector2(9, 8)
-floor = SubResource("Resource_xmdtp")
+floor = SubResource("Resource_1oiml")
 hero_spawn = Vector2(0, 6)
 cam_target = Vector2(0, 0.5)
 cam_reach = 1.5
@@ -3882,47 +3866,47 @@ guardian = false
 gather_spots = PackedVector2Array()
 relic_spots = PackedVector2Array()
 area_names = PackedStringArray()
-obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_f6ifb"), SubResource("Resource_dnv56"), SubResource("Resource_m3b3v"), SubResource("Resource_cbaj2"), SubResource("Resource_m65sp")])
-exits = Array[ExtResource("2_kin83")]([SubResource("Resource_dr6sy")])
+obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_dr6sy"), SubResource("Resource_xmdtp"), SubResource("Resource_f6ifb"), SubResource("Resource_dnv56"), SubResource("Resource_m3b3v")])
+exits = Array[ExtResource("2_kin83")]([SubResource("Resource_mkvfc")])
 
-[sub_resource type="Resource" id="Resource_1mf0j"]
+[sub_resource type="Resource" id="Resource_m65sp"]
 script = ExtResource("10_le80d")
 items = PackedInt32Array(1)
 prices = PackedInt32Array(150)
 weights = PackedFloat32Array(1)
 
-[sub_resource type="Resource" id="Resource_kxdle"]
+[sub_resource type="Resource" id="Resource_3ias7"]
 script = ExtResource("10_le80d")
 items = PackedInt32Array(6, 3)
 prices = PackedInt32Array(50, 125)
 weights = PackedFloat32Array(1, 1)
 count = 2
 
-[sub_resource type="Resource" id="Resource_w7bh7"]
+[sub_resource type="Resource" id="Resource_1mf0j"]
 script = ExtResource("10_le80d")
 items = PackedInt32Array(4, 2, 7, 10)
 prices = PackedInt32Array(100, 100, 50, 200)
 weights = PackedFloat32Array(1, 1, 1, 1)
 count = 2
 
-[sub_resource type="Resource" id="Resource_dctcb"]
+[sub_resource type="Resource" id="Resource_kxdle"]
 script = ExtResource("1_63so8")
 at = Vector2(7.5, 3.25)
 
-[sub_resource type="Resource" id="Resource_ydsij"]
+[sub_resource type="Resource" id="Resource_w7bh7"]
 script = ExtResource("1_63so8")
 form = 2
 at = Vector2(6.7, 3.25)
 radius = 0.2
 height = 0.4
 
-[sub_resource type="Resource" id="Resource_r4h43"]
+[sub_resource type="Resource" id="Resource_dctcb"]
 script = ExtResource("1_63so8")
 at = Vector2(7.5, 4.05)
 radius = 0.25
 height = 0.5
 
-[sub_resource type="Resource" id="Resource_pvv0f"]
+[sub_resource type="Resource" id="Resource_ydsij"]
 script = ExtResource("1_63so8")
 form = 2
 at = Vector2(-7.5, 3)
@@ -3930,19 +3914,19 @@ radius = 0.2
 height = 0.4
 group = 1
 
-[sub_resource type="Resource" id="Resource_kngsc"]
+[sub_resource type="Resource" id="Resource_r4h43"]
 script = ExtResource("1_63so8")
 at = Vector2(-7.5, 2.2)
 group = 1
 
-[sub_resource type="Resource" id="Resource_6ftd5"]
+[sub_resource type="Resource" id="Resource_pvv0f"]
 script = ExtResource("1_63so8")
 at = Vector2(4.25, 6.5)
 radius = 0.275
 height = 0.55
 group = 2
 
-[sub_resource type="Resource" id="Resource_f1us0"]
+[sub_resource type="Resource" id="Resource_kngsc"]
 script = ExtResource("1_63so8")
 form = 2
 at = Vector2(5.05, 6.5)
@@ -3950,7 +3934,7 @@ radius = 0.2
 height = 0.4
 group = 2
 
-[sub_resource type="Resource" id="Resource_02m1m"]
+[sub_resource type="Resource" id="Resource_6ftd5"]
 script = ExtResource("1_63so8")
 form = 2
 at = Vector2(3.45, 6.5)
@@ -3958,31 +3942,31 @@ radius = 0.2
 height = 0.35
 group = 2
 
-[sub_resource type="Resource" id="Resource_rsose"]
+[sub_resource type="Resource" id="Resource_f1us0"]
 script = ExtResource("2_kin83")
 at = Vector2(-3.4, -8.8)
 zone = Rect2(-5.4, -9.4, 4, 1.1999998)
 mouth = Rect2(-5.4, -9.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_fyvfw"]
+[sub_resource type="Resource" id="Resource_02m1m"]
 script = ExtResource("2_kin83")
 at = Vector2(3.8, -8.8)
 zone = Rect2(1.8, -9.4, 4, 1.1999998)
 mouth = Rect2(1.8, -9.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_hy060"]
+[sub_resource type="Resource" id="Resource_rsose"]
 script = ExtResource("2_kin83")
 at = Vector2(-9.8, -3)
 inward = Vector2(1, 0)
 zone = Rect2(-10.4, -5, 1.1999998, 4)
 mouth = Rect2(-10.4, -5, 2.3999996, 4)
 
-[sub_resource type="Resource" id="Resource_6qpph"]
+[sub_resource type="Resource" id="Resource_fyvfw"]
 script = ExtResource("3_8ur2y")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-8, -5.5, -6.5, -7, 6.5, -7, 8, -5.5, 8, 5.5, 6.5, 7, -6.5, 7, -8, 5.5)])
 
-[sub_resource type="Resource" id="Resource_sr20c"]
+[sub_resource type="Resource" id="Resource_hy060"]
 script = ExtResource("4_wmys5")
 shape = 1
 half = Vector2(0.6, 0.6)
@@ -3990,10 +3974,10 @@ blocks_shots = false
 piece = &"trial_block"
 height = 1.1
 
-[sub_resource type="Resource" id="Resource_ryecm"]
+[sub_resource type="Resource" id="Resource_6qpph"]
 script = ExtResource("5_51rpt")
 half = Vector2(8, 7)
-floor = SubResource("Resource_6qpph")
+floor = SubResource("Resource_fyvfw")
 hero_spawn = Vector2(0, 5.2)
 cam_target = Vector2(0, 0.5)
 cam_reach = 1.5
@@ -4003,12 +3987,12 @@ look = &"trial"
 size_class = 0
 depth = Vector2(0, 0)
 guardian = false
-breakables = Array[ExtResource("1_63so8")]([SubResource("Resource_dctcb"), SubResource("Resource_ydsij"), SubResource("Resource_r4h43"), SubResource("Resource_pvv0f"), SubResource("Resource_kngsc"), SubResource("Resource_6ftd5"), SubResource("Resource_f1us0"), SubResource("Resource_02m1m")])
+breakables = Array[ExtResource("1_63so8")]([SubResource("Resource_kxdle"), SubResource("Resource_w7bh7"), SubResource("Resource_dctcb"), SubResource("Resource_ydsij"), SubResource("Resource_r4h43"), SubResource("Resource_pvv0f"), SubResource("Resource_kngsc"), SubResource("Resource_6ftd5")])
 gather_spots = PackedVector2Array()
 relic_spots = PackedVector2Array()
 area_names = PackedStringArray()
-obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_sr20c")])
-exits = Array[ExtResource("2_kin83")]([SubResource("Resource_rsose"), SubResource("Resource_fyvfw"), SubResource("Resource_hy060")])
+obstacles = Array[ExtResource("4_wmys5")]([SubResource("Resource_hy060")])
+exits = Array[ExtResource("2_kin83")]([SubResource("Resource_f1us0"), SubResource("Resource_02m1m"), SubResource("Resource_rsose")])
 
 [resource]
 script = ExtResource("9_6lsx0")
@@ -4025,13 +4009,13 @@ fountain_depth_max = 11
 fountain_more_chance = 0.0
 fountains_per_path = 3
 boss = &"morvath"
-layouts = Array[ExtResource("5_51rpt")]([SubResource("Resource_vbe0e"), SubResource("Resource_bxin2"), SubResource("Resource_1xlks"), SubResource("Resource_5i63d"), SubResource("Resource_fw60v"), SubResource("Resource_yryi1"), SubResource("Resource_cxobr"), SubResource("Resource_xp0ck"), SubResource("Resource_vjf33")])
+layouts = Array[ExtResource("5_51rpt")]([SubResource("Resource_vbe0e"), SubResource("Resource_bxin2"), SubResource("Resource_1xlks"), SubResource("Resource_5i63d"), SubResource("Resource_fw60v"), SubResource("Resource_pn62m"), SubResource("Resource_8sxs4"), SubResource("Resource_ng4fo"), SubResource("Resource_j3syo")])
 boss_layout = SubResource("Resource_6sy2k")
 shop_layout = SubResource("Resource_vbe0e")
-trial_layout = SubResource("Resource_ryecm")
+trial_layout = SubResource("Resource_6qpph")
 altar_layout = SubResource("Resource_4au4r")
 ante_layout = SubResource("Resource_lk2yf")
-sala00_layout = SubResource("Resource_3ias7")
+sala00_layout = SubResource("Resource_cbaj2")
 pom_from_depth = 3
 silver_from_depth = 4
 memory_after_guardian = true
@@ -4054,7 +4038,7 @@ elite_from_depth = 3
 wave_split = Array[PackedFloat32Array]([PackedFloat32Array(1), PackedFloat32Array(0.5, 0.5), PackedFloat32Array(0.3, 0.15, 0.55)])
 alive_cap = 20
 tier_alive = Array[Vector2i]([Vector2i(3, 6), Vector2i(7, 11), Vector2i(11, 15)])
-pools = Array[ExtResource("8_otjkh")]([SubResource("Resource_ewiav"), SubResource("Resource_gvr0o"), SubResource("Resource_53ux3"), SubResource("Resource_pungu"), SubResource("Resource_im4cu"), SubResource("Resource_oxkdo"), SubResource("Resource_t2m83"), SubResource("Resource_jrwff"), SubResource("Resource_3vdl5"), SubResource("Resource_5lfwt"), SubResource("Resource_jg0s0"), SubResource("Resource_vxcd8"), SubResource("Resource_k8wtp"), SubResource("Resource_ehiul"), SubResource("Resource_5i08a"), SubResource("Resource_gck54"), SubResource("Resource_obdwm"), SubResource("Resource_au1mj"), SubResource("Resource_w43o0"), SubResource("Resource_7cdwf"), SubResource("Resource_bnpyn"), SubResource("Resource_e7cgp"), SubResource("Resource_pr65e"), SubResource("Resource_ei4x5"), SubResource("Resource_y0aro"), SubResource("Resource_ix4ih"), SubResource("Resource_rfcn7"), SubResource("Resource_x525w"), SubResource("Resource_2ky2n"), SubResource("Resource_mx0ad"), SubResource("Resource_0uilh"), SubResource("Resource_og3yh"), SubResource("Resource_gb6xk"), SubResource("Resource_56i6s"), SubResource("Resource_tw1y6"), SubResource("Resource_nnqgu"), SubResource("Resource_byiry"), SubResource("Resource_a4uel"), SubResource("Resource_ldeic"), SubResource("Resource_mkvfc"), SubResource("Resource_1oiml")])
+pools = Array[ExtResource("8_otjkh")]([SubResource("Resource_nt5bl"), SubResource("Resource_vjf33"), SubResource("Resource_ewiav"), SubResource("Resource_gvr0o"), SubResource("Resource_53ux3"), SubResource("Resource_pungu"), SubResource("Resource_im4cu"), SubResource("Resource_oxkdo"), SubResource("Resource_t2m83"), SubResource("Resource_jrwff"), SubResource("Resource_3vdl5"), SubResource("Resource_5lfwt"), SubResource("Resource_jg0s0"), SubResource("Resource_vxcd8"), SubResource("Resource_k8wtp"), SubResource("Resource_ehiul"), SubResource("Resource_5i08a"), SubResource("Resource_gck54"), SubResource("Resource_obdwm"), SubResource("Resource_au1mj"), SubResource("Resource_w43o0"), SubResource("Resource_7cdwf"), SubResource("Resource_bnpyn"), SubResource("Resource_e7cgp"), SubResource("Resource_pr65e"), SubResource("Resource_ei4x5"), SubResource("Resource_y0aro"), SubResource("Resource_ix4ih"), SubResource("Resource_rfcn7"), SubResource("Resource_x525w"), SubResource("Resource_2ky2n"), SubResource("Resource_mx0ad"), SubResource("Resource_0uilh"), SubResource("Resource_og3yh"), SubResource("Resource_gb6xk"), SubResource("Resource_56i6s"), SubResource("Resource_tw1y6"), SubResource("Resource_nnqgu"), SubResource("Resource_byiry"), SubResource("Resource_a4uel"), SubResource("Resource_ldeic")])
 miniboss_tier = 1
 spawn_interval_min = 0.2
 spawn_interval_max = 0.4
@@ -4127,7 +4111,7 @@ elo_ramp = Array[float]([0.0, 0.0, 0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.
 trade_chance = 0.1
 psalm_chance = 0.1
 guardian_psalm_chance = 0.05
-shop_groups = Array[ExtResource("10_le80d")]([SubResource("Resource_1mf0j"), SubResource("Resource_kxdle"), SubResource("Resource_w7bh7")])
+shop_groups = Array[ExtResource("10_le80d")]([SubResource("Resource_m65sp"), SubResource("Resource_3ias7"), SubResource("Resource_1mf0j")])
 shop_heal = 0.4
 trial_chance = 0.2
 trial_depth_min = 2

@@ -280,3 +280,13 @@ ganha o muro divisor e o Jardim B troca raízes e o altarzinho). Santuário A e 
 pinturas perderam o buraco: o prompt da B precisa nomeá-lo. Fendas (buraco no meio e ilhas) e Runas (pedra quieta e ilhas soltas na B) já se leem
 diferentes; a Ponte B agora é o ziguezague. Próximo lote: Jardim B com o terreno em desnível, Cripta B com um poço rebaixado, Santuário B com o
 buraco aberto até a borda sul.
+
+## Pares A e B mais diferentes, árvore pintada, Fendas (room-designer, 2026-11-27)
+
+Cada B passa a mudar como se luta (dado em `_crypt`, `_garden`, `_sanctuary`; trava em `tests/test_variant_b_shapes.gd`):
+- **Cripta B**: poço de 9 x 6 m (x -4,5 a 4,5, z -1,5 a 4,5) no meio da metade sul, à frente do fim do muro divisor: duas pistas de 7 m, oeste e leste; tiro cruza o poço, a horda não. Sarcófagos do sul foram para (-8,5; 6,5) e (7; 6,5); espinhos para (-8; -5,5) e (8,5; -3); molduras de laje da arte (`STY_FRAMES_B`) para z 5,8. A entrada ao sul segue livre.
+- **Jardim B**: terraço leste: muro de contenção baixo (0,9 m) no x 8 de z -9 a 11 com duas escadas (z -4,5 a -1,5 e 3 a 6); sarcófago do sul foi para (4,5; 8,5). Largura das escadas 3 m; folga estreita 1,3 m entre o muro e outras peças.
+- **Santuário B**: o buraco da nave corre até z 13,9 (aro de 0,1 m que ninguém pisa): a nave fica cortada e só o corredor norte liga leste (entrada) e oeste. Banco leste e laje sudeste saíram (a laje foi para o corredor norte, x 6 a 9, z -11 a -8); zonas de nascimento da B próprias (sem a do sul do buraco). Arte: `SanctuaryLook` lê `floor.holes` e centra poeira e bocas no meio do buraco, que agora é mais comprido.
+- **Árvore pintada**: `StoneTree` marca suas malhas com a meta `painted_hide`; `PaintedHall._walk` as esconde nas salas pintadas (colisão intacta).
+- **Fendas (PM-3)**: nascimentos cedo: duas zonas oeste (nordeste do oeste e (-18 a -13,5; 10 a 12,5)) e três leste. Robô: o lado do herói oscila muito por semente (com 1 zona oeste, 85% leste; agora cerca de 30 a 90% oeste conforme a semente).
+- **Testes de salas ajustados** (entradas novas e placas pintadas): `test_room_style` desliga as placas pintadas (`Dev.put("painted","off")`, como `test_hall_artpack`), `test_columns` espera a coluna rachada da Cripta B em (6,5; -5,2), Ponte B: quebráveis em 2,5 m das duas linhas do zigue-zague (z 3 e -3), grupo do oeste agora na parede norte da plataforma oeste (-16; -8,3).
