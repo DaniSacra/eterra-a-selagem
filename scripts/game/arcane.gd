@@ -519,6 +519,7 @@ func _arc(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		var at := Vector3(best.pos.x, 1.0 + best.y, best.pos.y)
 		fx.burst(&"spark", at)
 		fx.ring(best.pos, 0.8, ElementLook.VOLT, 0.2, 0.1, true)
+		fx.arc_leap(from, best.pos)
 		hit.append(best)
 		var away := (best.pos - from).normalized() if best.pos.distance_to(from) > 0.01 else dir
 		if not game.combat.hit_enemy(best, kit.arc_damage * mult, node.tags, away, 0.0, false):

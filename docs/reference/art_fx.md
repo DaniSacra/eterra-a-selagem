@@ -511,3 +511,19 @@ A cena da primeira descida: só o que já existe (preto, uma estrela, a luz de E
 - Linhas tocadas em `fx.gd` (outro agente mexe no orçamento): constantes `FORM_BY_NAME/SCREEN/TIME`, `STONE_DUST`, `TICK_VEIL`, `FAMILY_NUMBER_OUTLINE`,
   `_family_white` (antes de `slash`), as 3 linhas de `body_clear_m`/`style_peak` em `slash`, `_form_extras` caso 8, `_family_hit_new` caso 8, `number`, `tick_color`,
   o laço de `_marks` no passo.
+
+## Efeitos das Bênçãos V2 (GP-2) (technical-artist; só VFX, `RESULT` de `smoke.sh 30 --seed=5` e de `--boons=25` iguais; sem captura)
+- Sem shader novo: `Fx.form_mark` (formas 7, 8, 9) e `_spray`/`wisps`/`puff`, tudo sob os orçamentos `motes`, `wisps` e `marks` do `FxBudget`.
+  Funções novas em `fx.gd`: `poison_rise` (bolhas de enxofre e semente de líquen subindo, até 3 por tique, uma por carga),
+  `bleed_drop` (duas gotas e fiapo de pó de osso escuro `BLEED_DUST`; nada de vermelho), `shock_spark` (faísca ardósia e um fio amarelo `TROVAO_FLASH`),
+  `thunder_fall` (forma 8 caindo no alvo da Descarga, com pó de pedra), `conduction` (faíscas pelo salto e um Trovão pequeno no segundo alvo; não usa a
+  forma 9 para não confundir com a Maga), `arc_leap` (forma 9 em `ElementLook.VOLT` entre dois alvos), `plague_ground` (forma 7 em enxofre mais semente de líquen),
+  `opening_flash` (puff e anel marfim pálido, sem cruz nem sol).
+- Chamadas (só visual, nenhuma regra): `celestial.gd` no `_tick` (veneno e sangramento, a cada 0,5 s por inimigo), `apply_shock`, `_discharge`
+  (Descarga e Condução) e `_meter` (clarão quando a Abertura abre); `arcane.gd::_arc` chama `arc_leap`; `ground.gd` redesenha o chão `PLAGUE` a cada
+  `Fx.PLAGUE_REDRAW` (0,8 s) e deixa a área comum só como mancha (`PLAGUE_STAIN` 0,3).
+- **Gancho de HUD** (a tela é do ui-ux-designer): `Celestial.meters_of(enemy)` devolve `{cold, cold_need, impact, impact_need, open}` para os pontinhos de Frio e
+  Impacto sob a barra do chefe; ainda não há nada na UI.
+- Capturas a rodar pela sessão principal (uma por vez, `tools/gpu.sh shot`): `x.png --bot --boons=25 --shot-at=14` (famílias e efeitos),
+  `x.png --lab-form=7`, `--lab-form=8`, `--lab-form=9` (as três formas), `x.png --bot --angels=zerael --boons=25 --shot-at=12`
+  (veneno e chão da Peste), `--angels=saarael` (Eletrificação e Descarga), `--angels=qeshael` (sangramento), `--start=boss --boons=25 --shot-at=14` (Abertura).

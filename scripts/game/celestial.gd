@@ -591,6 +591,7 @@ func apply_shock(e: Enemy, charges: int, key: int, zap: float, source: StringNam
 	if not st.once(&"shock", key):
 		return
 	st.add_shock(charges)
+	combat.fx.shock_spark(Vector3(e.pos.x, e.y + 1.0, e.pos.y), charges)
 	_count(&"shock")
 	if zap > 0.0:
 		_secondary(e, zap * charges, &"faisca", Combat.VOLT)
@@ -620,6 +621,7 @@ func _discharge(e: Enemy, chain: CelChain) -> void:
 				charged += 1
 	var dmg := CelRules.discharge_dmg(per, n, reson, charged)
 	combat.fx.burst(&"light", Vector3(e.pos.x, 1.0, e.pos.y))
+	combat.fx.thunder_fall(e.pos)
 	_secondary(e, dmg, &"descarga", Combat.VOLT)
 	_count(&"discharge")
 	var jumps := clampi(roundi(_glob(&"cel_conduct")), 0, CelRules.RESON_MAX)
@@ -628,6 +630,7 @@ func _discharge(e: Enemy, chain: CelChain) -> void:
 		if j != null:
 			for o in _neighbours(e, CelRules.CONDUCT_RADIUS, jumps):
 				_secondary(o, dmg * CelRules.CONDUCT_SHARE, &"conducao", Combat.VOLT)
+				combat.fx.conduction(e.pos, o.pos)
 			_count(&"conduct")
 
 
@@ -648,12 +651,14 @@ func _tick(e: Enemy, st: CelState) -> void:
 	if st.poison > 0:
 		var hurt := CelRules.poison_tick(st.poison, st.poison_dps * scale, grow)
 		_dot(e, hurt, &"veneno", Combat.PLAGUE)
+		combat.fx.poison_rise(Vector3(e.pos.x, e.y, e.pos.y), st.poison)
 		var slow := 0.5 if (_glob(&"cel_poison_cold") > 0.0 and (st.cold > 0 or e.frozen_t > 0.0)) else 1.0
 		st.poison_t -= step * slow
 		if st.poison_t <= 0.0:
 			st.clear_poison()
 	if st.bleed_t > 0.0:
 		_dot(e, st.bleed_tick(step) * scale, &"sangramento", Combat.BLEED)
+		combat.fx.bleed_drop(Vector3(e.pos.x, e.y + 1.0, e.pos.y))
 	if e.alive and st.shock > 0 and (e.burn_t > 0.0 or st.poison > 0 or st.bleed_t > 0.0):
 		var rate := _glob(&"cel_overload")
 		if rate > 0.0:
@@ -688,7 +693,18 @@ func _meter(e: Enemy, kind: StringName, points: int) -> void:
 	var need := CelRules.METER_COLD if kind == &"c" else maxi(1, CelRules.METER_IMPACT + 2 * roundi(_glob(&"cel_impact_need")))
 	if st.add_meter(kind, points, need):
 		combat.fx.burst(&"dust", Vector3(e.pos.x, 1.6, e.pos.y))
+		combat.fx.opening_flash(Vector3(e.pos.x, 1.6, e.pos.y))
 		_count(&"window")
+
+
+## HUD hook (read only, for the dots under a boss's bar): the Frio and Impacto points, what each needs and the seconds of the
+## Abertura left. Empty when nothing of the Blessings is on `e`.
+func meters_of(e: Enemy) -> Dictionary:
+	var st := e.cel
+	if st == null:
+		return {}
+	return {"cold": st.meter_c, "cold_need": CelRules.METER_COLD, "impact": st.meter_i,
+		"impact_need": maxi(1, CelRules.METER_IMPACT + 2 * roundi(_glob(&"cel_impact_need"))), "open": st.window_t}
 
 
 # ---------- anticipation and propagation ----------

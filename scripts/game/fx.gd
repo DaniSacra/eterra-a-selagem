@@ -1746,6 +1746,76 @@ func _family_hit_new(form: int, pos: Vector3, dir: Vector3, color: Color, heavy:
 			form_mark(8, at2, size * 1.2, color, 0.3)
 
 
+## GP-2 Blessings V2 marks on the enemy, all from `form_mark` and `_spray` under the `motes`, `wisps` and `marks` budgets
+## (no shader of their own). Called by Celestial at each half second tick, so a crowd costs only what FxBudget lets by.
+const BLEED_DUST := Color(0.22, 0.19, 0.16)
+const SPARK_SLATE := Color("7d8590")
+const OPENING_PALE := Color(0.92, 0.88, 0.72)
+## The poisoned floor (Kind.PLAGUE, the Passo da Peste and the Epidemia) is drawn again this often by its zone.
+const PLAGUE_REDRAW := 0.8
+
+
+## Veneno on an enemy: sulphur bubbles and a seed of lichen rising off it, one more bubble for each stack (up to 3).
+func poison_rise(pos: Vector3, stacks: int = 1) -> void:
+	var n := clampi(stacks, 1, 3)
+	var at := Vector3(pos.x + _rng.randf_range(-0.25, 0.25), maxf(pos.y, 0.4), pos.z + _rng.randf_range(-0.25, 0.25))
+	_spray(at, Vector3.UP, PESTE_SULFUR * 0.95, budget.take(&"motes", n), 1.1, 0.14, 0.7, 0.35, -0.8, false, 0, SHAPE_LENS)
+	_spray(at, Vector3.UP, PESTE_LICHEN, budget.take(&"motes", 1), 0.8, 0.1, 0.9, 0.3, -1.0, false, 0, SHAPE_LENS)
+	wisps(at, Vector3.UP, PESTE_SULFUR * 0.5, budget.take(&"wisps", 1), 0.6, 0.4, 0.8, 0.3, 0.8)
+
+
+## Sangramento: two dark drops of bone dust falling off the wound (never red: no blood in this game).
+func bleed_drop(pos: Vector3) -> void:
+	var at := Vector3(pos.x, maxf(pos.y, 0.9), pos.z)
+	_spray(at, Vector3.DOWN * 0.2, BLEED_DUST, budget.take(&"motes", 2), 0.7, 0.16, 0.45, 0.5, 9.0, false, 0, SHAPE_LENS)
+	wisps(at, Vector3.UP, BLEED_DUST * 0.8, budget.take(&"wisps", 1), 0.5, 0.35, 0.6, 0.4, 0.4)
+
+
+## Eletrificação: a short spark of slate with one thread of flash yellow, over the charged one.
+func shock_spark(pos: Vector3, charges: int = 1) -> void:
+	var at := Vector3(pos.x, maxf(pos.y, 1.0), pos.z)
+	_spray(at, Vector3.UP * 0.5, SPARK_SLATE, budget.take(&"motes", clampi(charges + 1, 2, 4)), 3.5, 0.12, 0.18, 1.2, 5.0, false, 0, SHAPE_BARB)
+	_spray(at, Vector3.UP, TROVAO_FLASH, budget.take(&"motes", 1), 4.0, 0.1, 0.1, 0.9, 3.0, false, 0, SHAPE_BARB)
+
+
+## Descarga: the Trovão (form 8) falls from above onto the target.
+func thunder_fall(at: Vector2, radius: float = 1.5) -> void:
+	form_mark(8, at, radius, TROVAO_SLATE, FORM_TIME[8])
+	_spray(Vector3(at.x, 0.3, at.y), Vector3.UP, STONE_DUST, budget.take(&"motes", 3), 3.0, 0.18, 0.4, 0.8, 5.0, false, 0, SHAPE_LENS)
+
+
+## Condução: slate sparks thrown along the jump from one charged enemy to the next and a small bolt falling on the second.
+func conduction(from: Vector2, to: Vector2) -> void:
+	var way := to - from
+	if way.length_squared() > 0.0001:
+		var d := Vector3(way.x, 0.0, way.y).normalized()
+		_spray(Vector3(from.x, 1.0, from.y), d + Vector3.UP * 0.2, SPARK_SLATE, budget.take(&"motes", 3), clampf(way.length() * 3.0, 3.0, 9.0), 0.1, 0.22, 0.15, 0.0, false, 0, SHAPE_BARB)
+	thunder_fall(to, 1.0)
+
+
+## The Arco Voltaico of the Maga (form 9): the thin line leaps from `from` to `to`.
+func arc_leap(from: Vector2, to: Vector2) -> void:
+	var way := to - from
+	var dist := way.length()
+	if dist < 0.05:
+		return
+	form_mark(9, (from + to) * 0.5, dist * 0.5 + 0.1, ElementLook.VOLT, FORM_TIME[9], way, 360.0)
+
+
+## The ground of a poisoned zone: lichen and sulphur strands over a charcoal stain (Peste form), redrawn by the zone.
+func plague_ground(center: Vector2, radius: float) -> void:
+	form_mark(7, center, radius, PESTE_SULFUR, PLAGUE_REDRAW * 1.4)
+	var a := _rng.randf() * TAU
+	var at := Vector3(center.x + cos(a) * radius * 0.6, 0.15, center.y + sin(a) * radius * 0.6)
+	_spray(at, Vector3.UP, PESTE_LICHEN, budget.take(&"motes", 1), 0.8, 0.1, 0.9, 0.3, -1.0, false, 0, SHAPE_LENS)
+
+
+## The Abertura of a boss opens: a short pale flash over it and a ring on the floor (bone ivory, no cross, no sun).
+func opening_flash(pos: Vector3) -> void:
+	puff(Vector3(pos.x, 1.3, pos.z), 2.4, OPENING_PALE, 0.6, 0.25)
+	ring(Vector2(pos.x, pos.z), 1.8, OPENING_PALE, 0.25, 0.1, true)
+
+
 ## A pillar of light (or shadow) at a point on the floor. intensity: its light (beam.gdshader's; BEAM_INTENSITY
 ## is the usual one, less where it must not cover someone).
 ## cap: how bright its light may get, a share of what keeps its colour at ScreenTone.SAFE on the screen (BEAM_CORE_CAP;

@@ -113,7 +113,13 @@ const COLORS := {
 	Kind.PLAGUE: Color(0.62, 0.68, 0.48),
 }
 
+## How much of the plain area stays under the poisoned floor's own drawing.
+const PLAGUE_STAIN := 0.3
+
+
 class Zone:
+	## Seconds to the next redraw of the plague floor (Fx.plague_ground).
+	var fx_t := 0.0
 	var kind := Kind.WARNING
 	var shape := Shape.CIRCLE
 	var pos := Vector2.ZERO
@@ -546,7 +552,14 @@ func step(dt: float) -> void:
 				horde.in_circle(z.pos, z.radius, _found)
 				for e in _found.duplicate():
 					on_zone_hit.call(e, z)
-			GroundLook.put(z.mat, &"fade", clampf(z.life / 0.4, 0.0, 1.0) * clampf((z.total - z.life) / 0.2, 0.0, 1.0))
+			var plague := z.kind == Kind.PLAGUE and fx != null
+			if plague:
+				# the poisoned floor has its own drawing (Fx.plague_ground), so the plain area stays only a faint stain
+				z.fx_t -= dt
+				if z.fx_t <= 0.0:
+					z.fx_t = Fx.PLAGUE_REDRAW
+					fx.plague_ground(z.pos, z.radius)
+			GroundLook.put(z.mat, &"fade", clampf(z.life / 0.4, 0.0, 1.0) * clampf((z.total - z.life) / 0.2, 0.0, 1.0) * (PLAGUE_STAIN if plague else 1.0))
 			if z.life <= 0.0 and zones.has(z):
 				_release(z)
 				zones.erase(z)
