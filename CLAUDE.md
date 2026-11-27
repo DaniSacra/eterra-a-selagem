@@ -29,7 +29,7 @@ Regra central: Dom define o herói, Bênção define a partida, Salmo transforma
 A sessão principal é o Game Director / Tech Lead: planeja, delega, integra, valida e é a única que faz commit e push.
 Subagentes em `.claude/agents/` (protocolo em `docs/development/agent_workflow.md`): `art-director`, `environment-artist`,
 `gameplay-engineer`, `ui-ux-designer`, `qa-performance`, `combat-feel-director`, `technical-artist`, `room-designer`,
-`balance-designer`, `hero-designer` (os 4 heróis jogáveis e suas 5 habilidades), `game-director` (backlog em `docs/backlog.md`). Cada arquivo tem um dono por tarefa.
+`balance-designer`, `hero-designer` (os 4 heróis jogáveis e suas 5 habilidades), `ai-art-producer` (pedidos de arte por IA: escreve, gera pela API, testa o encaixe e analisa), `game-director` (backlog em `docs/backlog.md`). Cada arquivo tem um dono por tarefa.
 - **Tarefa pequena ou média a sessão principal faz direto.** Agente só para frente grande e separada.
 - **No máximo 2 agentes ao mesmo tempo.** Nada de "todos os agentes"; nada de rodar a noite inteira "até o fim".
 - Agentes rodam no Sonnet (frontmatter `model: sonnet`); art-director e game-director no Opus. Nunca passar `fable`.
