@@ -262,3 +262,21 @@ Números em `tools/make_data.gd` (`_gate`, `_guardian_doors`, `CRYPT_DOORS`); tr
 | Casa do Cavaleiro e do Ancião | 4,2 m | 7,4 m | tigelas de fogo na parede entre as portas |
 
 Rastreio: o teste dos buracos (`test_a_dash_never_crosses_the_abyss`) passou a aceitar a boca da porta como chão.
+
+
+## Ajustes depois da revisão das salas pintadas (Daniel, 2026-11-27, segunda leva)
+
+| Item | O que mudou | Teste |
+|---|---|---|
+| Entrada (todas as salas de `ArenaRoom`) | patamar de pedra colado à borda sul, meios-fios, lance de 5 degraus descendo para fora do quadro e abertura no parapeito ou no muro baixo; no lugar do arco preto solto (`art_rooms.md`, "Entrada ao sul") | `test_room_style` (nada sobre o piso aberto), `test_pt6_rooms` |
+| Altar (Sala 18) | as duas portas na parede do fundo (x -6,2 e 6,2, 12,4 m), o túmulo com o arco cego entre elas; estandartes em x +-3,7 e prateleiras do norte fora (as portas ocupam a parede); braseiro foi para (8,1; 1,6) | `test_door_corner`, `test_altar`, `test_e5_wiring` |
+| Ponte A e B (Salas 13 e 14) | as duas portas na parede norte da plataforma leste em x 17,0 e 22,6 (5,6 m), estátua entre elas em 19,8; o túmulo saiu da aproximação para (25,6; -0,9). Dentro do quadro `--cam-at=-4,3 --cam-dist=94` (a porta de fora a cerca de 96% da largura). Terceira porta continua na parede leste | `test_door_corner` |
+| Runas B (Sala 16) | o pilar de (-9,-6) ficava diante da terceira porta (x -8,8): foi para (-12,2; -6) | `test_no_solid_piece_in_a_doors_approach` (novo; nenhuma peça sólida na faixa de 4 m diante de nenhuma boca) |
+| Ponte B | ziguezague: o primeiro lance sai da plataforma oeste pelo lado sul (z 0,5 a 5,5), o patamar passa a 6 x 11 m, o segundo lance sai dele pelo lado norte (z -5,5 a -0,5) para a plataforma leste; a corrente varre cada lance (bandas no lugar). A é reta, com três plataformas. `BridgeLook` entende patamar entre decks desalinhados (`_landing_zigzag`) | `test_room_style` (RS-C7) |
+| Cripta B, Santuário | coluna rachada da B em (6,5; -5,2) e tambores caídos até z -9,3: fora da aproximação da porta 0 da Cripta e da porta 1 do Santuário | `test_door_corner` |
+
+Pares A e B (leitura das capturas): Cripta e Jardim ainda se parecem demais (mesma planta e mesma árvore ou sala, só a mobília muda; a Cripta B
+ganha o muro divisor e o Jardim B troca raízes e o altarzinho). Santuário A e B já diferem nos dados (a B tem o buraco da nave de 8,4 x 7 m), mas as
+pinturas perderam o buraco: o prompt da B precisa nomeá-lo. Fendas (buraco no meio e ilhas) e Runas (pedra quieta e ilhas soltas na B) já se leem
+diferentes; a Ponte B agora é o ziguezague. Próximo lote: Jardim B com o terreno em desnível, Cripta B com um poço rebaixado, Santuário B com o
+buraco aberto até a borda sul.

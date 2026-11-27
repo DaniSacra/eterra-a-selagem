@@ -59,6 +59,10 @@ const STY_CROWN_RAGGED := 0.05  # PM-2: a thinner edge (was 0.08)
 const SHRUB_TALL := Vector2(1.0, 1.7)
 const SHRUB_WIDE := 1.5
 const SHRUB_EVERY := 1.4
+const BED_FOOT := 0.25  # the planter's footing: how far it stands out, how high
+const BED_FOOT_H := 0.14
+const BED_COPING := 0.1
+const BED_WALL := 0.35  # the wall's thickness (the earth is inside it)
 const VINE_PLINTH := Vector2(0.9, 0.2)  # the vase's round plinth: radius, height
 
 # ---------- the stations ----------
@@ -240,8 +244,7 @@ const STY_POOLS: Array[Array] = [
 	[HubPlan.TREE, Vector3(14.6, 1.0, -4.2), Vector3(12.8, 9.0, -8.6), 5.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
 	# V2 and PT-9: the Videira's vase and the heroes' standards
 	[HubPlan.VINE, Vector3(-7.0, 1.0, -2.7), Vector3(-8.8, 9.0, -7.2), 5.0, 28.0, 13.0, Color(0.9, 1.0, 0.62)],
-	[HubPlan.HEROES, Vector3(-1.0, 1.4, 21.1), Vector3(-2.8, 9.0, 16.7), 5.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
-	[HubPlan.PORTAL, Vector3(34.5, 0.0, -6.0), Vector3(26.5, 8.0, -6.0), 14.0, 38.0, 13.0, Color(1.0, 0.78, 0.4)],
+	[HubPlan.PORTAL, Vector3(-1.0, 0.9, 21.4), Vector3(-1.0, 8.0, 14.6), 14.0, 38.0, 13.0, Color(1.0, 0.78, 0.4)],
 ]
 ## P1-A2 of the cycle's art review: the portal's pool (the last row) green and wide enough to read at the top of the
 ## screen on arriving with the near camera. P2-A7: the floor's outer ring (past the stations, from the fountain at the
@@ -293,7 +296,6 @@ var fm: Masonry
 ## V2 and PT-9: the Videira's planting and the heroes' standards (null before dress; Hub.evolve gives them the save).
 var blockout: HubBlockout
 var vine_station: VineStation
-var hero_station: HeroStation
 var station_lights := {}
 var _lion_mats := {}
 var _plain_mats := {}
@@ -445,10 +447,8 @@ func dress() -> void:
 				_alchemist(c, o)
 			&"hub_vine":
 				_vine_arch(c, o)
-			&"hub_heroes":
-				_hero_stand(c, o)
-			&"hub_heroes_steps":
-				_hero_steps(c, o)
+			&"hub_gate_steps":
+				_gate_steps(c, o)
 	add_crowns(_cypress_spots, _cypress_tall, CYPRESS_A, CYPRESS_B, CYPRESS_WIDE.x, "Cypresses")
 	add_crowns(_shrub_spots, _shrub_tall, SHRUB_A, SHRUB_B, SHRUB_WIDE, "Shrubs")
 	_forge()
@@ -839,25 +839,17 @@ func grow_vine(growth: Dictionary) -> void:
 		vine_station.grown(growth)
 
 
-## PT-9: the heroes' stand on its footprint (a low plinth of stone) with the two standards (HeroStation).
-func _hero_stand(c: Vector2, o: ArenaObstacle) -> void:
-	# round 2: on a plinth against the chapel's face, the steps in front of it (_hero_steps)
-	fm.block(at(c.x, 0.0, c.y), Vector3(o.half.x * 2.0, HubPlan.HERO_PLINTH, o.half.y * 2.0), 0.0, stone())
-	fm.block(at(c.x, HubPlan.HERO_PLINTH, c.y), Vector3(o.half.x * 2.0 + 0.12, 0.1, o.half.y * 2.0 + 0.1), 0.0, facade_stone(), false)
-	hero_station = HeroStation.make(frame, at(c.x, HubPlan.HERO_PLINTH + 0.1, c.y))
-
-
-## The Aposento's stair (the art's: a flight with a red carpet down to the gallery): HERO_STEP_COUNT cream treads rising
-## north to the plinth's height, the carpet over them with gold edges, a stone cheek on each side. Solid on its footprint.
-func _hero_steps(c: Vector2, o: ArenaObstacle) -> void:
-	var n := HubPlan.HERO_STEP_COUNT
-	var rise := HubPlan.HERO_PLINTH / n
+## The Portão's stair (the art's: a flight with a red carpet up from the gallery): GATE_STEP_COUNT cream treads rising
+## north to the terrace's height, the carpet over them with gold edges, a stone cheek on each side. Solid on its footprint.
+func _gate_steps(c: Vector2, o: ArenaObstacle) -> void:
+	var n := HubPlan.GATE_STEP_COUNT
+	var rise := HubPlan.GATE_TERRACE / n
 	var run := o.half.y * 2.0 / n
 	var v0 := c.y - o.half.y
 	var wide := o.half.x * 2.0
 	var cloth := _plain(HubFacades.CARPET, 1.0)
 	var gold := _plain(HubFacades.BANNER_GOLD, 0.6)
-	var carpet := HubFacades.CARPET_RUN.y
+	var carpet := HubFacades.CARPET_WIDTH
 	for k in n:
 		var top := rise * (k + 1)
 		var vc := v0 + run * (k + 0.5)
@@ -874,21 +866,15 @@ func _hero_steps(c: Vector2, o: ArenaObstacle) -> void:
 			fm.block(at(x, 0.0, v0 + run * (k + 0.5)), Vector3(0.28, top, run), 0.0, facade_stone(), false)
 
 
-## The standards as the save has it (the picked hero's whole, the locked Maga grey).
-func show_heroes(data: Dictionary) -> void:
-	if hero_station != null:
-		hero_station.refresh(data)
-
-
-## A raised bed (HUB-D): a box of stone with its coping, dark earth, copper shrubs along it (drawn in _crowns), a few
-## pale flowers at their feet.
+## The Videira's planter (hub art 2026-11-27): a low round wall of stone (HubPlan.VINE_BED radius) with its coping, dark earth
+## inside; HubScenery plants the tree, the little fountain and the flowers on it.
 func _bed(c: Vector2, _o: ArenaObstacle) -> void:
-	# round 3: the Videira's floor is a round dais of stone (the fountain's), a round step round it, no dark soil
 	var h := HubPlan.BED_HEIGHT
-	var r := HubScenery.GAZEBO_DAIS
-	fm.shaft(at(c.x, 0.0, c.y), r.x + 0.5, r.y, stone())
-	fm.shaft(at(c.x, 0.0, c.y), r.x, h - 0.08, stone())
-	fm.shaft(at(c.x, h - 0.08, c.y), r.x + 0.1, 0.08, stone())
+	var r := HubPlan.VINE_BED.z
+	fm.shaft(at(c.x, 0.0, c.y), r + BED_FOOT, BED_FOOT_H, stone())
+	fm.shaft(at(c.x, 0.0, c.y), r, h - BED_COPING, stone())
+	fm.shaft(at(c.x, h - BED_COPING, c.y), r + BED_COPING, BED_COPING, stone())
+	fm.shaft(at(c.x, h - BED_COPING - 0.02, c.y), r - BED_WALL, BED_COPING * 0.5, _plain(HubScenery.GARDEN_SOIL, 1.0))
 
 
 ## HV-C, the Alquimista's space (hv_santuario_vigilia_art.md 4; reserved, Q-OF7, no figure, no use): on the footprint

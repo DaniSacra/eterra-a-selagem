@@ -150,7 +150,7 @@ func show_angel(text: String, angel: AngelDef) -> void:
 	var col := DETAIL_COLOR
 	if angel != null:
 		col = AngelSeal.tint(angel.family).lightened(0.35)
-		angel_row.add_child(AngelSeal.new().setup(angel.family, ANGEL_SEAL))
+		angel_row.add_child(AngelSeal.new().setup(angel.family, ANGEL_SEAL, true, true))
 	else:
 		var two := Control.new()
 		two.name = "two"

@@ -24,18 +24,14 @@ const CARPET := Color(0.46, 0.08, 0.12)
 const VISTA_SHADER := preload("res://assets/shaders/hub_vista.gdshader")
 
 # ---------- the features (centre u, span, spring, ring; the wall's south face is the building's v0) ----------
-const HERO_ARCH := Vector4(-1.0, 3.2, 1.8, 0.45)
-const HERO_SILL := 0.15
-const HERO_BANNERS: Array[float] = [-4.0, 4.7]
 const LIBRARY_GLASS := Vector4(23.2, 1.8, 1.8, 0.35)
 const DONS_GLASS := Vector4(19.7, 1.4, 1.7, 0.3)
 const GLASS_SILL := 0.7
 const GLASS_DEEP := 0.3
 const BANNER := Vector2(0.95, 2.6)  # width, length
 const BANNER_TOP := 4.1
-## The red carpet from the Aposento's arch toward the south (u of its middle, width, v from, v to): it runs under the
-## standards and stops short of the basin's lip (v 17).
-const CARPET_RUN := Vector4(-1.0, 1.9, 20.0, 17.5)  # round 2: from the foot of the steps (the carpet climbs them in HubLook._hero_steps)
+## The red carpet's width on the Portao's flight (HubLook._gate_steps).
+const CARPET_WIDTH := 1.9
 ## The Alquimista's glasshouse against its south wall (u0, u1, v0, v1), the eaves' height and the ridge's.
 const GLASSHOUSE := Vector4(-27.6, -22.6, 0.6, 3.0)
 const GLASSHOUSE_EAVES := 2.4
@@ -80,10 +76,6 @@ func _init(owner_look: HubLook, owner_scenery: HubScenery) -> void:
 ## Rects (local u, v) of what the faces take of the south walls, for the windows and plants to keep clear of.
 static func reserved() -> Array[Rect2]:
 	var out: Array[Rect2] = []
-	var h := HERO_ARCH
-	out.append(Rect2(h.x - h.y * 0.5 - h.w - 0.4, 21.3, h.y + h.w * 2.0 + 0.8, 1.4))
-	for u in HERO_BANNERS:
-		out.append(Rect2(u - BANNER.x * 0.5 - 0.3, 21.3, BANNER.x + 0.6, 1.4))
 	var g := LIBRARY_GLASS
 	out.append(Rect2(g.x - g.y * 0.5 - g.w - 0.3, 21.3, g.y + g.w * 2.0 + 0.6, 1.5))
 	var d := DONS_GLASS
@@ -97,7 +89,6 @@ func _at(u: float, y: float, v: float) -> Vector3:
 
 
 func build() -> void:
-	_hero_hall()
 	_library()
 	_dons()
 	_glasshouse()
@@ -230,29 +221,6 @@ func light(p: Vector3, color: Color, energy: float, reach: float) -> void:
 	l.light_cull_mask = ~Arena.CROWD_LAYER
 	l.set_meta(ArenaKit.NOT_FIRE, true)
 	look.add_child(l)
-
-
-# ---------- the Aposento dos Herois ----------
-
-## The great arch of the chapel on the south face (a wide ogive of amber glass with leading), the two wine banners, the red
-## carpet with its gold borders running south, a lit glow on the carpet's head.
-func _hero_hall() -> void:
-	var r := _rect(&"heroes")
-	var v := r.y
-	var spec := HERO_ARCH
-	_arched_window(spec, v, false, HERO_SILL)
-	for u in HERO_BANNERS:
-		banner(u, BANNER_TOP, v, BANNER.x, BANNER.y)
-	var c := CARPET_RUN
-	var mid := (c.z + c.w) * 0.5
-	var run := absf(c.z - c.w)
-	var cloth := look._plain(CARPET, 1.0)
-	var gold := look._plain(BANNER_GOLD, 0.6)
-	look._bar(_at(c.x, 0.03, mid), Vector3(c.y, 0.02, run), cloth)
-	for s: float in [-1.0, 1.0]:
-		look._bar(_at(c.x + s * (c.y * 0.5 - 0.07), 0.035, mid), Vector3(0.08, 0.02, run), gold)
-	look._bar(_at(c.x, 0.035, c.w), Vector3(c.y, 0.02, 0.08), gold)
-	light(Vector3(spec.x, 3.0, v - 1.6), AMBER, 2.4, 7.0)
 
 
 # ---------- the Biblioteca de Ahk and the Capela dos Dons ----------

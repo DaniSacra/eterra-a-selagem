@@ -35,6 +35,21 @@ const ROOMS := {
 	&"hall": {&"painting": "res://assets/rooms/painted/sala01.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 68.0, &"at": Vector2(2.0, 1.0), &"v_span": UNIFORM},
 	&"sala00": {&"painting": "res://assets/rooms/painted/sala00.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 52.0, &"at": Vector2(0.0, 0.0), &"v_span": STRETCH},
 	&"ante": {&"painting": "res://assets/rooms/painted/antessala.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 80.0, &"at": Vector2(0.0, 0.0), &"v_span": STRETCH},
+	# Lote 4 game plates (docs/art/painted_gpt/lote4, base poses of bases_v2, uniform mapping)
+	&"crypt:0": {&"painting": "res://assets/rooms/painted/crypt_0.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 60.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
+	&"rift:0": {&"painting": "res://assets/rooms/painted/rift_0.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 84.0, &"at": Vector2(-7.0, -2.0), &"v_span": UNIFORM},
+	&"garden:0": {&"painting": "res://assets/rooms/painted/garden_0.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 82.0, &"at": Vector2(3.0, 0.0), &"v_span": UNIFORM},
+	&"knight_hall": {&"painting": "res://assets/rooms/painted/knight_hall.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 60.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
+	&"elder_hall": {&"painting": "res://assets/rooms/painted/elder_hall.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 60.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
+	&"crypt:1": {&"painting": "res://assets/rooms/painted/crypt_1.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 60.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
+	&"rift:1": {&"painting": "res://assets/rooms/painted/rift_1.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 84.0, &"at": Vector2(-7.0, -2.0), &"v_span": UNIFORM},
+	&"garden:1": {&"painting": "res://assets/rooms/painted/garden_1.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 82.0, &"at": Vector2(3.0, 0.0), &"v_span": UNIFORM},
+	&"sanctuary:0": {&"painting": "res://assets/rooms/painted/sanctuary_0.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 82.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
+	&"sanctuary:1": {&"painting": "res://assets/rooms/painted/sanctuary_1.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 82.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
+	&"bridge:0": {&"painting": "res://assets/rooms/painted/bridge_0.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 94.0, &"at": Vector2(-4.0, 3.0), &"v_span": UNIFORM},
+	&"bridge:1": {&"painting": "res://assets/rooms/painted/bridge_1.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 94.0, &"at": Vector2(-4.0, 3.0), &"v_span": UNIFORM},
+	&"trial": {&"painting": "res://assets/rooms/painted/trial.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 60.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
+	&"altar": {&"painting": "res://assets/rooms/painted/altar.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 50.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
 }
 ## A node (and its subtree) the painting never dresses: set this meta to true.
 const KEEP_3D := &"keep_3d"
@@ -68,12 +83,12 @@ var _see: Dictionary = {}
 var _doors: Array[HallDoor] = []
 
 
-## The ROOMS key of a layout: "id:variant" when that variant has its own entry, else the id (&"" when none is painted).
+## The ROOMS key of a layout: "id:variant" (variant 0 too) when that variant has its own entry, else the id (&"" when none is painted).
 static func key_of(layout: RoomLayout, rooms: Dictionary = ROOMS) -> StringName:
 	if layout == null:
 		return &""
 	var k := StringName("%s:%d" % [layout.id, layout.variant_index])
-	if layout.variant_index > 0 and rooms.has(k):
+	if rooms.has(k):
 		return k
 	return layout.id if rooms.has(layout.id) else &""
 

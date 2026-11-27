@@ -223,10 +223,10 @@ const KNIGHT_STRIDE := {"guard": [[&"ual2", "Idle_Shield", LEFT_ARM], [&"ual", "
 ## Sweep 2026-11-25: the knight moves at 6 m/s (Butcher batch); the formal Walk at that pace was 231 steps a minute, a
 ## shuffle. It jogs now (Jog_Fwd, as the soldier does) on a stride that gives 103 to 138 steps a minute, shield arm up,
 ## sword arm in guard, the feet locked.
-const KNIGHT_JOG := {"guard": [[&"ual2", "Idle_Shield", LEFT_ARM], [&"ual", "Sword_Idle", RIGHT_ARM]], "lock": true, "stride": 0.66,
+const KNIGHT_JOG := {"guard": [[&"ual2", "Idle_Shield", LEFT_ARM], [&"ual", "Sword_Idle", RIGHT_ARM]], "lock": true, "stride": 0.8,
 	"lift": 0.3, "plant": 0.5, "stand": 0.15, "bend": {"Spine01": Vector3(-14, 0, 0)}}
-## E1c (AUDIT.md P6): the elder on a shorter stride, 91 steps a minute (1.2 gave 67, a slow motion).
-const ELDER_STRIDE := {"guard": [&"ual", "Idle_Torch", LEFT_ARM], "lock": true, "stride": 0.9}
+## E1c (AUDIT.md P6): the elder on a shorter stride (1.2 gave 67, a slow motion); 2026-11-27 the painted body walks slower, 0.7 gives 99 a minute.
+const ELDER_STRIDE := {"guard": [&"ual", "Idle_Torch", LEFT_ARM], "lock": true, "stride": 0.7}
 ## E1c (AUDIT.md P6): the soldier's run with the feet locked as the sorcerer's, on a short stride with half the hop: 149
 ## steps a minute at its 3.75 m/s (it ran 96, floating, with two feet in the air in 3 of 5 frames); the blade in guard.
 const SOLDIER_RUN := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.68, "lift": 0.5}

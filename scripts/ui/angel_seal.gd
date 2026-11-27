@@ -30,12 +30,17 @@ const MARK := 0.74
 var family := Boon.Family.LUZ
 ## Unlit: the closed seal of an angel not met yet (dim ring, the mark at a fifth).
 var lit := true
+## PT-27a: on a door's sign the seal carries two folded wings, so an angel's mark never reads as the heart's (another
+## silhouette, not another colour). The control is WING_SPAN times as wide as it is tall.
+var winged := false
+const WING_SPAN := 1.9
 
 
-func setup(f: Boon.Family, size_px: float, lit_ := true) -> AngelSeal:
+func setup(f: Boon.Family, size_px: float, lit_ := true, winged_ := false) -> AngelSeal:
 	family = f
 	lit = lit_
-	custom_minimum_size = Vector2(size_px, size_px)
+	winged = winged_
+	custom_minimum_size = Vector2(size_px * (WING_SPAN if winged else 1.0), size_px)
 	size = custom_minimum_size
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return self
@@ -49,6 +54,8 @@ static func tint(f: Boon.Family) -> Color:
 func _draw() -> void:
 	var c := size * 0.5
 	var r := minf(size.x, size.y) * 0.46
+	if winged:
+		draw_wings(self, c, r, lit)
 	var w := SealMedal.draw_seal(self, c, r, lit)
 	if family == Boon.Family.DUO:
 		return
@@ -56,6 +63,18 @@ func _draw() -> void:
 	if not lit:
 		col = Color(col, 0.2)
 	mark(self, family, c, r * MARK, maxf(1.2, w * 0.9), col, IVORY if lit else Color(IVORY, 0.2))
+
+
+## Two wings of three feathers each, swept out from the seal's sides (drawn under it): old gold lines on ink.
+static func draw_wings(ci: CanvasItem, c: Vector2, r: float, lit_ := true) -> void:
+	var col := Color(UiKit.OLD_GOLD, 1.0 if lit_ else 0.4)
+	var w := maxf(1.2, r * 0.12)
+	for side in [-1.0, 1.0]:
+		for k in 3:
+			var root := c + Vector2(side * r * 0.9, (k - 1) * r * 0.22)
+			var tip := c + Vector2(side * r * (1.9 - k * 0.14), -r * 0.75 + k * r * 0.55)
+			ci.draw_line(root, tip, SealMedal.INK_EDGE, w + 1.5, true)
+			ci.draw_line(root, tip, col, w, true)
 
 
 ## The family's mark about 2 r across at c: ivory lines w wide, col for the lit part.

@@ -52,17 +52,15 @@ group = 2
 
 [sub_resource type="Resource" id="Resource_ek1qt"]
 script = ExtResource("2_kin83")
-at = Vector2(10.8, -5.5)
-inward = Vector2(-1, 0)
-zone = Rect2(10.2, -7.5, 1.1999998, 4)
-mouth = Rect2(9, -7.5, 2.3999996, 4)
+at = Vector2(-6.2, -8.8)
+zone = Rect2(-8.2, -9.4, 4, 1.1999998)
+mouth = Rect2(-8.2, -9.4, 4, 2.3999996)
 
 [sub_resource type="Resource" id="Resource_m1xgu"]
 script = ExtResource("2_kin83")
-at = Vector2(10.8, 0.2)
-inward = Vector2(-1, 0)
-zone = Rect2(10.2, -1.8, 1.1999998, 4)
-mouth = Rect2(9, -1.8, 2.3999996, 4)
+at = Vector2(6.2, -8.8)
+zone = Rect2(4.2, -9.4, 4, 1.1999998)
+mouth = Rect2(4.2, -9.4, 4, 2.3999996)
 
 [sub_resource type="Resource" id="Resource_tk2fo"]
 script = ExtResource("3_8ur2y")
@@ -97,7 +95,7 @@ height = 0.9
 
 [sub_resource type="Resource" id="Resource_vbyah"]
 script = ExtResource("4_wmys5")
-center = Vector2(8.1, -2.65)
+center = Vector2(8.1, 1.6)
 radius = 0.5
 blocks_shots = false
 piece = &"brazier"
@@ -864,7 +862,7 @@ height = 1.35
 
 [sub_resource type="Resource" id="Resource_pm87n"]
 script = ExtResource("4_wmys5")
-center = Vector2(6.5, -6)
+center = Vector2(6.5, -5.2)
 radius = 0.65
 see_through = true
 piece = &"column"
@@ -2206,8 +2204,8 @@ height = 0.6
 [sub_resource type="Resource" id="Resource_43ws3"]
 script = ExtResource("4_wmys5")
 shape = 1
-center = Vector2(3, -8.35)
-half = Vector2(2, 0.55)
+center = Vector2(3, -8.1)
+half = Vector2(1.75, 0.55)
 yaw = -1.5707964
 blocks_shots = false
 piece = &"drums"
@@ -2761,15 +2759,15 @@ group = 3
 
 [sub_resource type="Resource" id="Resource_o7pap"]
 script = ExtResource("2_kin83")
-at = Vector2(17.5, -10.8)
-zone = Rect2(15.5, -11.4, 4, 1.1999998)
-mouth = Rect2(15.5, -11.4, 4, 2.3999996)
+at = Vector2(17, -10.8)
+zone = Rect2(15, -11.4, 4, 1.1999998)
+mouth = Rect2(15, -11.4, 4, 2.3999996)
 
 [sub_resource type="Resource" id="Resource_p0blu"]
 script = ExtResource("2_kin83")
-at = Vector2(25, -10.8)
-zone = Rect2(23, -11.4, 4, 1.1999998)
-mouth = Rect2(23, -11.4, 4, 2.3999996)
+at = Vector2(22.6, -10.8)
+zone = Rect2(20.6, -11.4, 4, 1.1999998)
+mouth = Rect2(20.6, -11.4, 4, 2.3999996)
 
 [sub_resource type="Resource" id="Resource_od8g3"]
 script = ExtResource("2_kin83")
@@ -2812,7 +2810,7 @@ height = 3.0
 [sub_resource type="Resource" id="Resource_8qhm5"]
 script = ExtResource("4_wmys5")
 shape = 1
-center = Vector2(21, -4.8)
+center = Vector2(25.6, -0.9)
 half = Vector2(1.25, 0.6)
 piece = &"sarcophagus"
 height = 1.35
@@ -2827,7 +2825,7 @@ height = 3.6
 
 [sub_resource type="Resource" id="Resource_ukmj2"]
 script = ExtResource("4_wmys5")
-center = Vector2(21.25, -8.1)
+center = Vector2(19.8, -8.1)
 radius = 0.75
 blocks_shots = false
 piece = &"statue"
@@ -2944,7 +2942,7 @@ group = 3
 [sub_resource type="Resource" id="Resource_857nu"]
 script = ExtResource("3_8ur2y")
 kind = 2
-polys = Array[PackedVector2Array]([PackedVector2Array(-28, -6, -25, -9, -13, -9, -12, -7, -12, 7, -14, 9, -26, 9, -28, 7), PackedVector2Array(-12.05, -2.5, 12.05, -2.5, 12.05, 2.5, -12.05, 2.5), PackedVector2Array(-3, -4.5, 3, -4.5, 3, 4.5, -3, 4.5), PackedVector2Array(12, -7, 13, -9, 28, -9, 28, 7, 26, 9, 14, 9, 12, 7)])
+polys = Array[PackedVector2Array]([PackedVector2Array(-28, -6, -25, -9, -13, -9, -12, -7, -12, 7, -14, 9, -26, 9, -28, 7), PackedVector2Array(-12.05, 0.5, -2.9499998, 0.5, -2.9499998, 5.5, -12.05, 5.5), PackedVector2Array(-3, -5.5, 3, -5.5, 3, 5.5, -3, 5.5), PackedVector2Array(2.95, -5.5, 12.05, -5.5, 12.05, -0.5, 2.95, -0.5), PackedVector2Array(12, -7, 13, -9, 28, -9, 28, 7, 26, 9, 14, 9, 12, 7)])
 
 [sub_resource type="Resource" id="Resource_pn62m"]
 script = ExtResource("7_gcpwj")
@@ -2955,7 +2953,7 @@ plate_hero_damage = PackedFloat32Array()
 plate_push = PackedVector2Array()
 strips = PackedVector4Array()
 aims = PackedVector4Array()
-bands = Array[Rect2]([Rect2(-11, -2.5, 2, 5), Rect2(9, -2.5, 2, 5)])
+bands = Array[Rect2]([Rect2(-11, 0.5, 2, 5), Rect2(9, -5.5, 2, 5)])
 band_push = PackedVector2Array(-2.5, 0, 2.5, 0)
 band_dir = PackedVector2Array()
 sparks = PackedVector2Array()
@@ -2973,8 +2971,8 @@ floor = SubResource("Resource_857nu")
 hazard = SubResource("Resource_pn62m")
 breakables = Array[ExtResource("1_63so8")]([SubResource("Resource_jfekh"), SubResource("Resource_8edqe"), SubResource("Resource_0wgpu"), SubResource("Resource_o4p06"), SubResource("Resource_vmd07"), SubResource("Resource_dg00c"), SubResource("Resource_3k8pw"), SubResource("Resource_yc6wa"), SubResource("Resource_kb1gv"), SubResource("Resource_kg5rg")])
 gather_spots = PackedVector2Array()
-areas = Array[Rect2]([Rect2(-28, -9, 16, 18), Rect2(-3, -4.5, 6, 9), Rect2(-12, -3, 24, 6), Rect2(12, -9, 16, 18)])
-area_names = PackedStringArray("west", "landing", "bridge", "east")
+areas = Array[Rect2]([Rect2(-28, -9, 16, 18), Rect2(-3, -5.5, 6, 11), Rect2(-12, 0.5, 9, 5), Rect2(3, -5.5, 9, 5), Rect2(12, -9, 16, 18)])
+area_names = PackedStringArray("west", "landing", "bridge", "bridge", "east")
 
 [sub_resource type="Resource" id="Resource_yryi1"]
 script = ExtResource("5_51rpt")
@@ -3185,7 +3183,7 @@ urn_flows = PackedVector4Array()
 [sub_resource type="Resource" id="Resource_hn8lt"]
 script = ExtResource("4_wmys5")
 shape = 1
-center = Vector2(-9, -6)
+center = Vector2(-12.2, -6)
 half = Vector2(0.6, 0.6)
 see_through = true
 piece = &"rune_pillar"

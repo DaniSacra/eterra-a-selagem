@@ -912,6 +912,8 @@ func test_rs_c7_bridge_rails_off_the_decks() -> void:
 						# a piece's own drawing may pass its outline by a hand (tools/fit_probe.gd's SLACK)
 						if w.y > 0.3 and w.y < 2.6 and a.shape().contains(Vector2(w.x, w.z), 0.2) and not a.overlaps(Vector2(w.x, w.z), 0.2):
 							bad += 1
+							if bad < 4:
+								gut.p("bridge %d: %s under %s at %s" % [v, mi.name, mi.get_parent().name, w])
 			assert_eq(bad, 0, "bridge %d (%s): nothing drawn over the open floor" % [v, look])
 	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
 

@@ -230,6 +230,10 @@ func _read_floor() -> void:
 				east = i
 		if west >= 0 and east >= 0:
 			_landings.append(w)
+			_long = true
+			# 2026-11-27: a zigzag (B's decks on different sides of the landing) stays two decks; a straight one is one long deck
+			if absf(_decks[west].position.y - _decks[east].position.y) > 0.2:
+				continue
 			var joined := _decks[west].merge(_decks[east])
 			var keep: Array[Rect2] = []
 			for i in _decks.size():
@@ -237,7 +241,6 @@ func _read_floor() -> void:
 					keep.append(_decks[i])
 			keep.append(joined)
 			_decks = keep
-			_long = true
 	# C18 (ENV P1-2, Q-10 (a)): a wide rect lying across one deck (the B's long bridge is one deck through its landing)
 	# is a landing too: the deck's parapets open along it and the landing's own go round its outer sides
 	for w in wide:
@@ -339,7 +342,7 @@ func _bridges() -> void:
 		var arches := maxi(1, roundi(r.size.x / BAY))
 		# the bridge that leads to the battle (the east one) lights its heads with shadows (spec 2.5); B: its east end
 		if _long:
-			bridge(r, false, true, arches, open)
+			bridge(r, false, i == east_most, arches, open)
 		else:
 			bridge(r, i == east_most, i == east_most, arches, open)
 		_head_statues(r)
@@ -370,6 +373,13 @@ func _head_statues(r: Rect2) -> void:
 ## round its outer sides, a hooded statue on each outer corner (outside the floor).
 func _landing(w: Rect2) -> void:
 	var mat := ashlar()
+	var through := false
+	for d in _decks:
+		if d.position.x < w.position.x - 0.2 and d.end.x > w.end.x + 0.2:
+			through = true
+	if not through:
+		_landing_zigzag(w)
+		return
 	for z: Vector2 in [Vector2(w.position.y, w.position.y + (w.size.y - 5.0) * 0.5), Vector2(w.end.y - (w.size.y - 5.0) * 0.5, w.end.y)]:
 		var wing := Rect2(w.position.x, z.x, w.size.x, z.y - z.x)
 		deck(wing)
@@ -385,6 +395,35 @@ func _landing(w: Rect2) -> void:
 		var at := c + out * 0.9
 		m.block(Vector3(at.x, -0.4, at.y), Vector3(HEAD_PLINTH.x, HEAD_PLINTH.y + 0.4, HEAD_PLINTH.x), 0.0, mat)
 		var look := w.get_center() - at
+		kit.statue(at, atan2(look.x, look.y), LANDING_STATUE, HEAD_PLINTH.y, ArenaKit.STATUE_VALUE, false)
+
+
+## A landing between two decks that meet it on different sides (B's zigzag): paved whole, the cornice under it, a parapet
+## round its outer sides (the sides where a deck arrives stop short of its mouth), a hooded statue on each outer corner.
+func _landing_zigzag(w: Rect2) -> void:
+	var mat := ashlar()
+	deck(w)
+	m.box(Vector3(w.get_center().x, -DECK * 0.5 - 0.02, w.get_center().y), Vector3(w.size.x + 0.6, DECK, w.size.y + DECK_OUT), 0.0, mat, false)
+	var mid := w.get_center()
+	for z: float in [w.position.y - PARAPET.z, w.end.y + PARAPET.z]:
+		parapet(Vector2(w.position.x - 0.1, z), Vector2(w.end.x + 0.1, z), Vector2(0.0, signf(z - mid.y)))
+	for x: float in [w.position.x - PARAPET.z, w.end.x + PARAPET.z]:
+		var arrives: Array[Vector2] = []
+		for d in _decks:
+			if absf(d.end.x - w.position.x) < 0.2 and x < mid.x or absf(d.position.x - w.end.x) < 0.2 and x > mid.x:
+				arrives.append(Vector2(d.position.y - PARAPET.z, d.end.y + PARAPET.z))
+		var from := w.position.y
+		arrives.sort_custom(func(p: Vector2, q: Vector2) -> bool: return p.x < q.x)
+		arrives.append(Vector2(w.end.y, w.end.y))
+		for g in arrives:
+			if g.x - from > 0.4:
+				parapet(Vector2(x, from), Vector2(x, g.x), Vector2(signf(x - mid.x), 0.0))
+			from = maxf(from, g.y)
+	for c: Vector2 in [Vector2(w.position.x, w.position.y), Vector2(w.end.x, w.position.y), Vector2(w.position.x, w.end.y), Vector2(w.end.x, w.end.y)]:
+		var out := Vector2(signf(c.x - mid.x), signf(c.y - mid.y))
+		var at := c + out * 0.9
+		m.block(Vector3(at.x, -0.4, at.y), Vector3(HEAD_PLINTH.x, HEAD_PLINTH.y + 0.4, HEAD_PLINTH.x), 0.0, mat)
+		var look := mid - at
 		kit.statue(at, atan2(look.x, look.y), LANDING_STATUE, HEAD_PLINTH.y, ArenaKit.STATUE_VALUE, false)
 
 

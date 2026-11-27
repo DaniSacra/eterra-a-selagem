@@ -99,26 +99,28 @@ const RAILS: Array[Vector4] = [
 	Vector4(30.4, -11.75, 36.4, -11.75),
 ]
 
-# ---------- pergola (the Videira) ----------
-## Round 3: the Videira is a round gazebo, not a rectangular pergola: a ring of GAZEBO_COLUMNS cream columns (GAZEBO_RADIUS from
-## the fountain, PERGOLA_HEIGHT tall) round the fountain, a stone cornice joining them, a wreath of leaves on it (open over
-## the fountain: WREATH_HOLE m from the middle, thinner toward the camera by PERGOLA_GAP) with grapes and tassels hanging
-## between the columns, on a round stone dais (GAZEBO_DAIS) with a round step.
-const GAZEBO_RADIUS := 3.4
-const GAZEBO_COLUMNS := 8
-const GAZEBO_DAIS := Vector2(4.3, 0.28)  # radius of the floor's stone and of its round step beyond the dais
-const PERGOLA_HEIGHT := 2.9
-const WREATH_HOLE := 1.9
-const RAFTER := Vector2(0.9, 0.12)  # every, thickness
-const RAFTER_WOOD := Color(0.3, 0.19, 0.11)
-## Round 3: the pergola's roof closed in vine leaves (crown width and height; a leaf crown every PERGOLA_LEAF_EVERY m, the south
-## half thinner by up to PERGOLA_GAP so the fountain under it is seen), and grape clusters hanging from the beams.
-const PERGOLA_LEAF := Vector2(2.0, 0.9)
-const PERGOLA_LEAF_EVERY := 1.05
-const PERGOLA_GAP := 0.55
+# ---------- the Videira (the great tree) ----------
+## Hub art 2026-11-27: the centre is the Videira alone, a great tree with grapes in a low round stone planter (HubPlan.VINE_BED;
+## HubLook._bed draws the wall). Trunk: three stacked shafts (base radius, top radius, height) leaning a little, VINE_ROOTS roots
+## flaring out of it (length, thickness). Crown: leaf crowns (card width, crown height) in rings of VINE_CROWN_RINGS (radius,
+## height of the crown's foot, count), grapes hanging under the rings (VINE_GRAPES of them, reaching VINE_GRAPE_REACH out
+## from the trunk), flowers on the planter's rim (VINE_RIM_FLOWERS, in from the wall by VINE_RIM_IN).
+const VINE_TRUNK := Vector3(0.62, 0.36, 3.2)
+const VINE_LEAN := Vector2(0.14, 0.1)  # how far each upper segment steps sideways (u, v)
+const VINE_BARK := Color(0.2, 0.14, 0.1)
+const VINE_ROOTS := 7
+const VINE_ROOT := Vector2(1.5, 0.3)
+const VINE_CROWN := Vector2(3.4, 2.2)
+const VINE_CROWN_RINGS: Array[Vector3] = [Vector3(0.0, 4.4, 1.0), Vector3(1.7, 4.0, 5.0), Vector3(3.2, 3.5, 8.0)]
+const VINE_LEAF_A := Color(0.26, 0.38, 0.14)
+const VINE_LEAF_B := Color(0.5, 0.58, 0.2)
+const VINE_GRAPES := 26
+const VINE_GRAPE_REACH := Vector2(0.9, 3.0)
+const VINE_GRAPE_TOP := 3.7
+const VINE_RIM_FLOWERS := 18
+const VINE_RIM_IN := 0.55
 const GRAPE_A := Color(0.2, 0.06, 0.3)
 const GRAPE_B := Color(0.46, 0.2, 0.56)
-const GRAPE_PER_RAFTER := 3
 const GRAPE_HANG := Vector2(0.55, 1.0)
 ## The fountain's clear water (the basin's own, brighter than the hub's pools).
 const FOUNTAIN_DEEP := Color(0.34, 0.62, 0.7)
@@ -126,7 +128,6 @@ const FOUNTAIN_SHALLOW := Color(0.62, 0.9, 0.94)
 const FOUNTAIN_SPARKLE := 0.4
 
 # ---------- the Ponto de Vigília and the future rooms ----------
-const VIGIL_FLAME := Vector3(-22.6, 0.0, -10.2)
 ## Round 3: the Vigilia's mass is a raised garden bed (a soil bed on top inside a balustrade, flowers, two cypresses,
 ## wisteria down its faces) with a low niche of voussoirs in its south face holding a standard, and the fire's dais is
 ## cream stone (the bowl reads as the arrival's centre).
@@ -140,7 +141,11 @@ const VIGIL_WALL := Vector3(0.3, 0.5, 0.08)
 const VIGIL_ARCH_OPENING := Vector4(2.4, 3.0, 0.62, 0.4)
 const VIGIL_ARCH_WALL_TALL := 3.5
 const VIGIL_PLANT_EVERY := 0.95
-const VIGIL_STEP := 0.2  # the dais' second step: its radius share over the third
+## The landing (no fire): rings of paving, each this share of the one outside it, thick (m over the floor) from the outer one
+## in, and the gold medallion at the middle (radius, height).
+const VIGIL_RINGS: Array[Vector2] = [Vector2(1.0, 0.1), Vector2(0.86, 0.13), Vector2(0.64, 0.16), Vector2(0.42, 0.19)]
+const VIGIL_MEDAL := Vector2(0.26, 0.2)
+const VIGIL_LIGHT := Vector3(2.8, 1.5, 7.0)  # height of the soft lamp over the landing, energy, reach
 const FUTURE_YARDS: Array[Vector4] = [Vector4(-21.0, -26.0, -8.0, -17.0), Vector4(-1.0, -26.0, 12.0, -17.0)]
 const YARD_DROP := 1.2
 const YARD_STEPS := 5
@@ -190,7 +195,9 @@ const GARDEN_MAGENTA := 0.2
 const GARDEN_BARE := 0.8
 const GARDEN_CYPRESS_EDGE := 1.3
 ## The fountain on the Videira's bed (the middle of the pergola): basin radius, rim height, water radius, pedestal radius.
-const FOUNTAIN_BASIN := Vector4(1.9, 0.28, 1.7, 0.3)  # round 3: wider, the light water is the gazebo's centre
+const FOUNTAIN_BASIN := Vector4(0.85, 0.2, 0.74, 0.2)  # hub art 2026-11-27: a small one at the tree's foot
+const FOUNTAIN_AT := Vector2(1.2, -1.7)  # from the planter's centre
+const FOUNTAIN_PEDESTAL := 0.55
 const FOUNTAIN_RIM_BLOCKS := 18
 const FOUNTAIN_FALLS := 8
 ## Low balustrades along the outer edges that look at the camera or the sides (the art's low creamy wall with its
@@ -251,6 +258,11 @@ const ROCK_TALL_SHARE := 0.35
 const ROCK_STEP_OUT := 0.65  # how much further out each step down stands
 const ROCK_STEP_DROP := Vector2(0.9, 1.7)
 const IVY_EVERY := 4.0  # round 3: was 2.6 (curtains only on the cliff faces, never a column on the paving)
+## The Mirante: its dais's rings (share of the dais's radius, height), the benches' seat and back heights and the wood.
+const MIRADOR_RINGS: Array[Vector2] = [Vector2(1.0, 0.07), Vector2(0.85, 0.1), Vector2(0.55, 0.13), Vector2(0.3, 0.16)]
+const BENCH_SEAT := 0.42
+const BENCH_BACK := 0.42
+const BENCH_WOOD := Color(0.32, 0.2, 0.11)
 const PATH_CLEAR := 3.0  # no cypress nearer than this to a way (PATH_MAIN, PATH_GATE)
 const IVY_TALL := Vector2(2.0, 5.5)
 ## Round 3: the rock behind the west and north edges: every BACKDROP_EVERY m, blocks (wide, tall over the floor, deep) sunk
@@ -264,7 +276,7 @@ const BACKDROP_SINK := 3.0
 const IVY_A := Color(0.3, 0.42, 0.17)  # PM-2: olive shadow (was 0.2, 0.32, 0.14)
 const IVY_B := Color(0.34, 0.46, 0.2)
 const WALL_WISTERIA_EVERY := Vector2(1.7, 2.7)  # round 2: denser than 2.4 to 3.6
-const CASCADE_ON: Array[StringName] = [&"book", &"heroes", &"smith", &"tree", &"vendor"]
+const CASCADE_ON: Array[StringName] = [&"book", &"smith", &"tree", &"vendor"]
 const CASCADE_COUNT := 3
 const CASCADE_TALL := Vector2(2.2, 3.4)
 const HANG_WIDTH := 0.95  # a wisteria tassel's width at the top
@@ -285,7 +297,7 @@ const PATH_STEP := 0.6
 ## in HubLook._pave_way); the polylines stay as the way's description.
 const PATH_MAIN: Array[Vector2] = [Vector2(-23.0, -7.0), Vector2(-14.0, -7.0), Vector2(-7.0, -6.0), Vector2(2.0, -6.0),
 	Vector2(4.0, 0.0), Vector2(4.0, 12.0), Vector2(1.0, 17.5)]
-const PATH_GATE: Array[Vector2] = [Vector2(2.0, -6.0), Vector2(5.0, -13.0), Vector2(25.0, -13.0), Vector2(32.0, -6.0), Vector2(36.0, -6.0)]
+const PATH_GATE: Array[Vector2] = [Vector2(1.0, 17.5), Vector2(-1.0, 19.4), Vector2(-1.0, 22.6)]
 ## The red tree on a shelf at the north-west corner (the art's), its shelf, crown and trunk.
 const RED_TREE_AT := Vector2(-30.4, 21.5)
 const RED_TREE := Vector3(5.2, 5.0, 3.2)  # crown width, crown tall, trunk tall
@@ -386,7 +398,8 @@ func build(layout: RoomLayout) -> void:
 	facades.build()
 	_water()
 	_bridge()
-	_pergola()
+	_vine_tree()
+	_mirador()
 	_fountain()
 	_vigil_post()
 	_future_yards()
@@ -407,7 +420,7 @@ func build(layout: RoomLayout) -> void:
 	look.add_blooms(_cream_spots, _cream_tall, CREAM_A, CREAM_B, HubLook.BLOOM_CLUMP, "Creams")
 	look.add_blooms(_wisteria_spots, _wisteria_tall, WISTERIA_A, WISTERIA_B, HANG_WIDTH, "Wisteria", true)
 	look.add_crowns(_ivy_spots, _ivy_tall, IVY_A, IVY_B, 0.8, "Ivy", false, true, 0.7)
-	look.add_crowns(_roof_spots, _roof_tall, LEAF_DARK, LEAF_LIGHT, PERGOLA_LEAF.x, "PergolaRoof", true)
+	look.add_crowns(_roof_spots, _roof_tall, VINE_LEAF_A, VINE_LEAF_B, VINE_CROWN.x, "VineCrown", true)
 	look.add_crowns(_grape_spots, _grape_tall, GRAPE_A, GRAPE_B, 0.42, "Grapes", false, true, 0.4)
 	_clear_cypresses()
 	look.add_crowns(_cypress_spots, _cypress_tall, CYPRESS_GREEN * CYPRESS_SHADE, CYPRESS_GREEN * 1.35, 1.25, "Cypresses", false)
@@ -892,10 +905,10 @@ func _lantern_meshes() -> void:
 
 # ---------- the Videira's fountain ----------
 
-## A round stone basin in the middle of the pergola (on the bed's top): the rim in blocks, water, a pedestal with a bowl
-## over it, a column of water falling into the bowl and a curtain over its lip.
+## The little fountain at the tree's foot (on the planter's earth, FOUNTAIN_AT from its centre): the rim in blocks, clear water,
+## a pedestal with a bowl over it and a column of water falling into the bowl; a soft warm light under the crown.
 func _fountain() -> void:
-	var c := Vector2(HubPlan.VINE_BED.x, HubPlan.VINE_BED.y)
+	var c := Vector2(HubPlan.VINE_BED.x, HubPlan.VINE_BED.y) + FOUNTAIN_AT
 	var y := HubPlan.BED_HEIGHT
 	var f := FOUNTAIN_BASIN
 	var stone := look.stone()
@@ -903,8 +916,8 @@ func _fountain() -> void:
 	fm.shaft(_at(c.x, y, c.y), f.x, f.y, stone)
 	for i in FOUNTAIN_RIM_BLOCKS:
 		var a := TAU * i / FOUNTAIN_RIM_BLOCKS
-		var p := c + Vector2(cos(a), sin(a)) * (f.x - 0.1)
-		fm.block(_at(p.x, y + f.y, p.y), Vector3(TAU * f.x / FOUNTAIN_RIM_BLOCKS + 0.04, 0.2, 0.32), a + PI * 0.5, stone, false)
+		var p := c + Vector2(cos(a), sin(a)) * (f.x - 0.06)
+		fm.block(_at(p.x, y + f.y, p.y), Vector3(TAU * f.x / FOUNTAIN_RIM_BLOCKS + 0.04, 0.12, 0.2), a + PI * 0.5, stone, false)
 	var clear := _water_mat.duplicate() as ShaderMaterial
 	clear.set_shader_parameter(&"deep", FOUNTAIN_DEEP)
 	clear.set_shader_parameter(&"shallow", FOUNTAIN_SHALLOW)
@@ -922,48 +935,22 @@ func _fountain() -> void:
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	look.frame.add_child(water)
 	var top := y + f.y
-	fm.shaft(_at(c.x, top, c.y), f.w, 1.0, stone)
-	fm.shaft(_at(c.x, top + 0.95, c.y), 0.66, 0.14, stone)
-	fm.shaft(_at(c.x, top + 1.07, c.y), 0.56, 0.1, stone)
+	fm.shaft(_at(c.x, top, c.y), f.w, FOUNTAIN_PEDESTAL, stone)
+	fm.shaft(_at(c.x, top + FOUNTAIN_PEDESTAL - 0.05, c.y), 0.4, 0.1, stone)
 	var bowl := MeshInstance3D.new()
 	var bd := CylinderMesh.new()
-	bd.top_radius = 0.5
-	bd.bottom_radius = 0.5
+	bd.top_radius = 0.34
+	bd.bottom_radius = 0.34
 	bd.height = 0.02
 	bd.radial_segments = 14
 	bowl.mesh = bd
 	bowl.material_override = clear
-	bowl.position = _at(c.x, top + 1.18, c.y)
+	bowl.position = _at(c.x, top + FOUNTAIN_PEDESTAL + 0.07, c.y)
 	bowl.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	look.frame.add_child(bowl)
-	fm.shaft(_at(c.x, top + 1.18, c.y), 0.1, 0.5, stone)
-	facades.light(Vector3(c.x, 2.4, c.y), Color(1.0, 0.86, 0.6), 2.0, 7.0)
-	# the falling water: three crossed strips from the finial into the bowl, a curtain from the bowl's lip to the basin
-	for k in 3:
-		_fall_strip(_at(c.x, top + 1.19, c.y), Vector2(0.34, 0.5), PI * k / 3.0, 0.7)
-	var lip := 0.62
-	for k in FOUNTAIN_FALLS:
-		var a := TAU * k / FOUNTAIN_FALLS
-		var p := c + Vector2(cos(a), sin(a)) * lip
-		_fall_strip(_at(p.x, top + 0.3, p.y), Vector2(TAU * lip / FOUNTAIN_FALLS + 0.05, 0.85), a + PI * 0.5, 0.55)
-
-
-## A strip of falling water: its foot at `foot`, size (width, drop), facing yaw.
-func _fall_strip(foot: Vector3, size: Vector2, yaw: float, alpha: float) -> void:
-	var mi := MeshInstance3D.new()
-	var q := QuadMesh.new()
-	q.size = size
-	mi.mesh = q
-	var mat := ShaderMaterial.new()
-	mat.shader = FALL_SHADER
-	mat.set_shader_parameter(&"color", Color(WATER_BLUE.r, WATER_BLUE.g, WATER_BLUE.b).lightened(0.4))
-	mat.set_shader_parameter(&"alpha", alpha)
-	mat.set_shader_parameter(&"streaks", 3.0)
-	mi.material_override = mat
-	mi.position = foot + Vector3(0, size.y * 0.5, 0)
-	mi.basis = Basis(Vector3.UP, yaw)
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	look.frame.add_child(mi)
+	fm.shaft(_at(c.x, top + FOUNTAIN_PEDESTAL + 0.07, c.y), 0.07, 0.3, stone)
+	var tree := Vector2(HubPlan.VINE_BED.x, HubPlan.VINE_BED.y)
+	facades.light(Vector3(tree.x, 2.6, tree.y - 1.0), Color(1.0, 0.86, 0.6), 2.0, 7.0)
 
 
 # ---------- bridge ----------
@@ -1067,72 +1054,83 @@ func _fall(f: Vector4) -> void:
 	look.fk.mist_bank(_at(f.x, -0.4 - f.w * 0.85, f.y - 0.6), Vector2(f.z * 3.0, 2.2), FALL_MIST, 0.35, 0.3, 0.2)
 
 
-# ---------- the Videira's pergola ----------
+# ---------- the Videira's tree ----------
 
-## The round gazebo over the fountain (see GAZEBO_*): columns, a cornice of stone between them, a wreath of leaves and grapes on it,
-## tassels of wisteria and bunches of grapes hanging between the columns; no wall, so the water shows from every side.
-func _pergola() -> void:
+## The great tree on the planter (see VINE_*): roots, a leaning trunk in three shafts, rings of leaf crowns, grapes hanging under
+## them and flowers along the planter's rim. The crowns and the grapes are added at the end of build (the lists below).
+func _vine_tree() -> void:
 	var c := Vector2(HubPlan.VINE_BED.x, HubPlan.VINE_BED.y)
-	var stone := look.stone()
+	var bark := look._plain(VINE_BARK, 0.95)
 	var fm := look.fm
-	for k in GAZEBO_COLUMNS:
-		var a := TAU * (k + 0.5) / GAZEBO_COLUMNS
-		var p := c + Vector2(cos(a), sin(a)) * GAZEBO_RADIUS
-		var y := HubPlan.BED_HEIGHT
-		fm.shaft(_at(p.x, y, p.y), 0.34, 0.18, stone)
-		fm.shaft(_at(p.x, y + 0.18, p.y), 0.22, PERGOLA_HEIGHT - 0.18 - y, stone)
-		fm.shaft(_at(p.x, PERGOLA_HEIGHT, p.y), 0.32, 0.16, stone)
-		# the cornice: a beam to the next column
-		var q := c + Vector2(cos(a + TAU / GAZEBO_COLUMNS), sin(a + TAU / GAZEBO_COLUMNS)) * GAZEBO_RADIUS
-		var mid := (p + q) * 0.5
-		var yaw := atan2((q - p).y, (q - p).x)
-		fm.block(_at(mid.x, PERGOLA_HEIGHT + 0.16, mid.y), Vector3(p.distance_to(q), 0.22, 0.34), yaw, stone, false)
-		fm.block(_at(mid.x, PERGOLA_HEIGHT + 0.38, mid.y), Vector3(p.distance_to(q) + 0.1, 0.08, 0.42), yaw, stone, false)
-		# between this column and the next: a cluster of wisteria and grapes hanging from the beam
-		var m := (a + TAU / GAZEBO_COLUMNS * 0.5)
-		for j in 3:
-			var aa := a + TAU / GAZEBO_COLUMNS * (0.2 + 0.3 * j)
-			var h := c + Vector2(cos(aa), sin(aa)) * (GAZEBO_RADIUS - 0.05)
-			var hang := _rng.randf_range(1.0, 1.7)
-			_wisteria_spots.append(Vector3(h.x, PERGOLA_HEIGHT - hang, h.y))
-			_wisteria_tall.append(hang)
-			var g := _rng.randf_range(GRAPE_HANG.x, GRAPE_HANG.y)
-			_grape_spots.append(Vector3(h.x + cos(m) * 0.15, PERGOLA_HEIGHT - g, h.y + sin(m) * 0.15))
-			_grape_tall.append(g)
-	# the wreath of vine leaves on the cornice, open over the fountain and thinner on the camera's side (south, -v)
-	var r := WREATH_HOLE
-	while r <= GAZEBO_RADIUS + 0.6:
-		var n := maxi(6, roundi(TAU * r / PERGOLA_LEAF_EVERY))
+	var y := HubPlan.BED_HEIGHT
+	for k in VINE_ROOTS:
+		var a := TAU * (k + _rng.randf_range(-0.15, 0.15)) / VINE_ROOTS
+		var p := c + Vector2(cos(a), sin(a)) * VINE_ROOT.x * 0.45
+		fm.block(_at(p.x, y - 0.04, p.y), Vector3(VINE_ROOT.x, VINE_ROOT.y, VINE_ROOT.y * 1.2), atan2(sin(a), cos(a)), bark, false)
+	var at := c
+	var h := VINE_TRUNK.z / 3.0
+	for i in 3:
+		var r0 := lerpf(VINE_TRUNK.x, VINE_TRUNK.y, float(i) / 3.0)
+		var r1 := lerpf(VINE_TRUNK.x, VINE_TRUNK.y, float(i + 1) / 3.0)
+		fm.shaft(_at(at.x, y + h * i, at.y), (r0 + r1) * 0.5, h, bark)
+		at += VINE_LEAN * (1.0 if i % 2 == 0 else -1.0)
+	for ring: Vector3 in VINE_CROWN_RINGS:
+		var n := int(ring.z)
 		for i in n:
 			var a := TAU * (i + _rng.randf_range(-0.2, 0.2)) / n
-			var south := clampf(-sin(a) * 0.5 + 0.5, 0.0, 1.0)
-			if _rng.randf() > PERGOLA_GAP * south:
-				var p := c + Vector2(cos(a), sin(a)) * r
-				_roof_spots.append(Vector3(p.x, PERGOLA_HEIGHT + 0.2, p.y))
-				_roof_tall.append(PERGOLA_LEAF.y * _rng.randf_range(0.8, 1.1))
-		r += PERGOLA_LEAF_EVERY * 0.9
+			var p := c + Vector2(cos(a), sin(a)) * ring.x
+			_roof_spots.append(Vector3(p.x, ring.y + _rng.randf_range(-0.2, 0.2), p.y))
+			_roof_tall.append(VINE_CROWN.y * _rng.randf_range(0.85, 1.1))
+	for i in VINE_GRAPES:
+		var a := TAU * (i + _rng.randf_range(-0.3, 0.3)) / VINE_GRAPES
+		var p := c + Vector2(cos(a), sin(a)) * _rng.randf_range(VINE_GRAPE_REACH.x, VINE_GRAPE_REACH.y)
+		var g := _rng.randf_range(GRAPE_HANG.x, GRAPE_HANG.y)
+		_grape_spots.append(Vector3(p.x, VINE_GRAPE_TOP - g, p.y))
+		_grape_tall.append(g)
+	var rim := HubPlan.VINE_BED.z - VINE_RIM_IN
+	for i in VINE_RIM_FLOWERS:
+		var a := TAU * (i + _rng.randf_range(-0.25, 0.25)) / VINE_RIM_FLOWERS
+		var p := c + Vector2(cos(a), sin(a)) * rim
+		plant(1 if i % 3 == 0 else 0, Vector3(p.x, y - 0.06, p.y), _rng.randf_range(0.5, 0.9))
 
 
 # ---------- the Ponto de Vigília ----------
 
-## The arrival's post: a stone bowl on a round dais south-east of its wall (out from under the roof, in sight on
-## arriving), a lit flame (the plan's one lit fire here) and a lion standard on a pole beside it.
+## The arrival's landing (2026-11-27: no flame nor brazier where the hero stands): a round floor of paving in rings (VIGIL_RINGS,
+## HubPlan.VIGIL_LANDING), a gold medallion at its middle and a soft lamp over it; the stone niche stands behind it.
 func _vigil_post() -> void:
-	var f := VIGIL_FLAME
-	var stone := look.stone()
+	var f := HubPlan.VIGIL_LANDING
 	var wall: Material = look.facade_stone()
-	# the dais: two round steps of cream stone, then the pedestal of the bowl
-	look.fm.shaft(_at(f.x, 0.0, f.z), 1.75, 0.16, wall)
-	look.fm.shaft(_at(f.x, 0.16, f.z), 1.35, VIGIL_STEP, wall)
-	look.fm.shaft(_at(f.x, 0.16 + VIGIL_STEP, f.z), 0.62, 0.2, wall)
-	look.fk.brazier(Vector2(f.x, -f.z), 0.75, false, 1.6, true)
-	var iron := look._plain(IRON, 0.6)
-	var pole := _at(f.x + 1.5, 0.0, f.z)
-	look._bar(pole + Vector3(0, 1.6, 0), Vector3(0.09, 3.2, 0.09), iron)
-	look._bar(pole + Vector3(0, 3.15, 0), Vector3(1.0, 0.07, 0.07), iron)
-	facades.banner(f.x + 1.5, 3.1, f.z, 0.85, 1.9)
+	var stone := look.stone()
+	for i in VIGIL_RINGS.size():
+		var ring := VIGIL_RINGS[i]
+		look.fm.shaft(_at(f.x, 0.0, f.y), (f.z + 0.3) * ring.x, ring.y, wall if i % 2 == 0 else stone)
+	look.fm.shaft(_at(f.x, 0.0, f.y), VIGIL_MEDAL.x, VIGIL_MEDAL.y, look._plain(HubLook.MEDALLION_GOLD, 0.5))
+	facades.light(Vector3(f.x, VIGIL_LIGHT.x, f.y), Color(1.0, 0.86, 0.6), VIGIL_LIGHT.y, VIGIL_LIGHT.z)
 	_vigil_bed(stone)
 	_vigil_niche()
+
+
+# ---------- the Mirante ----------
+
+## The round belvedere at the east end (HubPlan.MIRADOR: the floor's outline is its arc, the balustrade along it is the edge rail's):
+## a round dais of paving in its middle (rings, as the landing's) and two stone benches with a wooden seat and back along the
+## north rail (HubPlan.MIRADOR_BENCHES, solid). No station.
+func _mirador() -> void:
+	var m := HubPlan.MIRADOR
+	var wall: Material = look.facade_stone()
+	var stone := look.stone()
+	for i in MIRADOR_RINGS.size():
+		var ring := MIRADOR_RINGS[i]
+		look.fm.shaft(_at(m.x, 0.0, m.y), HubPlan.MIRADOR_DAIS * ring.x, ring.y, wall if i % 2 == 0 else stone)
+	var wood := look._plain(BENCH_WOOD, 0.85)
+	for b in HubPlan.MIRADOR_BENCHES:
+		var u := b.x
+		var v := b.y
+		for s: float in [-1.0, 1.0]:
+			look.fm.block(_at(u + s * (b.z - 0.15), 0.0, v), Vector3(0.3, BENCH_SEAT, b.w * 2.0), 0.0, stone, false)
+		look.fm.block(_at(u, BENCH_SEAT, v - 0.04), Vector3(b.z * 2.0, 0.07, b.w * 2.0 - 0.06), 0.0, wood, false)
+		look.fm.block(_at(u, BENCH_SEAT + 0.07, v + b.w - 0.05), Vector3(b.z * 2.0 - 0.3, BENCH_BACK, 0.07), 0.0, wood, false)
 
 
 ## The mass of the Vigilia as a raised bed: soil inside a cream balustrade on top, flowers, two cypresses, wisteria hanging
