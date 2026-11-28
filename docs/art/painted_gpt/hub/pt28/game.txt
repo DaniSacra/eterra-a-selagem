@@ -1,0 +1,11 @@
+Edite a imagem 1 (a pintura do hub do meu jogo, o Santuário). Mantenha EXATAMENTE a mesma pintura: mesmo estilo, mesmo ângulo, mesmo enquadramento de canto a canto, e cada prédio, telhado, parede, mureta, balaústre, escada, ponte, arco, canteiro, árvore, penhasco e laje no mesmo pixel e do mesmo tamanho. Não gire, não aproxime, não afaste, não corte, não encolha nada.
+
+Esta é a VERSÃO DE JOGO: o jogo põe por cima, em 3D, as luzes, a água, a Videira e tudo que se mexe. A imagem 2 mostra como ficou a versão de jogo aprovada (só como exemplo do que sai; as posições são as da imagem 1). RETIRE só isto e pinte no lugar o que estaria atrás:
+1. A VIDEIRA do centro sai inteira (tronco, copa, folhas, cachos, vaso). O canteiro redondo baixo de pedra fica, com terra escura por dentro, vazio.
+2. TODA LUZ sai: forja fria e escura sem fogo, lanternas, lampiões, velas e tochas APAGADOS (o suporte fica, sem chama e sem brilho), janelas com vidro escuro, o Portão no alto sem luz saindo (passagem escura e funda, preta por dentro). Iluminação neutra e uniforme de fim de tarde nublado: sem poças de luz, sem halos, sem chão iluminado, sem raios de luz.
+3. TODA ÁGUA sai: as cachoeiras viram leitos de pedra secos e escuros descendo pelo penhasco (sem água, espuma ou névoa de água); sem fonte, sem poças.
+4. O Ponto de Vigília continua um patamar circular de pedra simples, sem chama e sem braseiro.
+5. Nada que se mexe: sem fumaça, pássaros, folhas voando ou panos esvoaçando.
+
+O piso da praça fica MÉDIO-ESCURO (cerca de 35% de brilho), pouco saturado, uniforme. Muretas e parapeitos de pedra cinza clara, não madeira. Telhados, árvores, glicínias e penhascos com as mesmas cores, só sem o brilho quente.
+REGRAS: nenhum texto, letra, número ou ícone; nenhum personagem ou animal; nenhum estandarte; nenhum sol com raios, estrela, cruz ou emblema; nada violeta forte nem verde-esmeralda. Não é 3D renderizado, não é foto, não é anime.

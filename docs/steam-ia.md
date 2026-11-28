@@ -118,3 +118,9 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   `puff_sheet.png` (8 quadros de poeira de osso) e `brush_streaks.png` (riscos de pincel seco) são desenhadas por código
   (`tools/make_fx_textures.gd`, ruído e gradientes em `Image`), escritas por um assistente de IA (Claude), como a música; nenhum
   gerador de imagem, nenhuma imagem de origem, nenhum pacote externo.
+
+- **Santuário pintado e conceitos do Capítulo II (gpt-image-2, API da OpenAI, 2026-11-28)**: a placa do Santuário
+  (`assets/rooms/painted/hub.png`, PT28-11) é pintura por IA sobre uma captura do próprio jogo, com a arte aprovada do hub como
+  estilo; entra no jogo quando a entrada `hub` do `PaintedHall` for ligada. Conceitos do Capítulo II só para aprovação, fora do
+  jogo (`docs/art/painted_gpt/cap2/`: Átrio, Portões do Bosque e os quatro inimigos da fatia). Pedidos e custos em
+  `docs/art/painted_gpt/README.md`.

@@ -1,0 +1,9 @@
+ENCAIXE (o mais importante): a pintura vai ficar por cima do jogo, então cada peça tem de cair no MESMO lugar da imagem 1, em frações da largura (x) e da altura (y) da imagem inteira. A tentativa anterior subiu e comprimiu tudo (o Portão e a praça subiram cerca de 4% da altura): NÃO suba, NÃO comprima a metade de baixo, NÃO acrescente céu no alto. Posições certas:
+- Prédio do Portão no alto: x de 34% a 49%, y de 18% a 30%; o arco do Portão centrado em x = 42%, y = 24%.
+- Forja (telhado vermelho, alto à esquerda): x de 9% a 24%, telhado de y = 21% a 28%. Estufa de vidro: x de 4% a 17%, y de 40% a 57%.
+- Prédio do Livro (telhado vermelho, alto à direita): x de 56% a 72%, telhado de y = 18% a 25%. Toldo listrado: x de 52% a 60%, y de 37% a 43%.
+- Canteiro redondo da Videira: centro em x = 39%, y = 48%. Medalhão redondo: centro em x = 61%, y = 57%.
+- Patamar circular da Vigília à esquerda: centro x = 9%, y = 68%. Mirante circular à direita: centro x = 89%, y = 65%.
+- Borda da frente da praça (mureta de baixo): y = 82%. Arcos dos dois portões de baixo: x de 16% a 22% e de 44% a 51%, topo em y = 76%, base em y = 83%; as escadas descem deles até y = 85%.
+- Três arcos grandes do muro com cachoeiras: x de 53% a 76%, y de 82% a 93%.
+- Muros de contenção da borda de baixo: x de 3% a 27% e de 37% a 59%, de y = 85% até a borda da imagem.

@@ -41,6 +41,8 @@ Generation (curl; the key is read from the file, never printed):
 | 2026-11-27 | lote5 (`lote5/`), bases_v3 (new south entrance): 8 entrance edits of the approved plates (crypt0, rift0, rift1, garden0, sanctuary0, knight, elder, trial; trial discarded, wrong base); approvals crypt1/garden1/sanctuary1/bridge0/bridge1/runes0/runes1 a1 (bridges and runes off, rejected); game g1 crypt1/garden1/sanctuary1; bridge0 entrance edit; bridge1 a2 (edit of lote4 approval) + g1; runes0/1 a2c + g1c on a crop; runes1 g2c (g1c turned the lattice into a door) | 26 | 5488 | 6.50 |
 | 2026-11-27 | lote5 trial/altar on the recaptured bases: trial a1+g1, altar a1+g1 (opened a third doorway in the left wall), g2 (+`fix_g_altar.txt`, chosen) | 5 | 5488 | 1.25 |
 | 2026-11-27 | PT28-4 icons (`icons_pt28/`): 27 sheets of 6 medallions (all 132 Blessings + 18 door/shop rewards and rooms + 9 angel wings) over `template.png`, s00 as style ref for the rest; fix00 redid 6 (Bastião read as a sun, Mira Clara as a cross/star, Peso Velado sword too upright, Flocos Errantes like mines, both eyes reptilian) | 28 | 5488 | 7.00 |
+| 2026-11-28 | A-7 Cap II concepts (`cap2/`, for approval only, nothing in game): enemies 1024x1536 (image 1 = `characters_gpt/final/05_mago_inimigo-conceito.png` style, image 2 = crop of the pack bestiary): esporinho a1, retorcido a1, flor a1 (hot magenta/pink, no violet), sapo a1; rooms (image 1 = approved painting for camera and style): portoes a1 (image 2 = pack crop), atrio a1 (hanging teal cloths with lozenge, rejected), a2 (+`fix_atrio.txt`, chosen) | 7 | 5488 | 1.75 |
+| 2026-11-28 | hub PT28-11 step 4 (`hub/pt28/`, base `hub_base.png` 2560x1408, dist 105): approval a1 (whole frame ~60 px up, ~36 px right), a2 (+`fix_fit.txt` fractions; same translation, corrected after by a shift of (-36,+60) with mirrored borders = `hub_aprovacao.png`, fit within ~6-12 px), game g1 (edit of the shifted a2, zero drift; gamma 1.2 + warm balance after, plaza luma 47 -> 79 = `hub_jogo.png` = `assets/rooms/painted/hub.png`) | 3 | 5488 | 0.75 |
 
 ## style_v2 (2026-11-27): style approval round
 `style_v2/` holds the variants Daniel is choosing from (Downloads\ASelagem-GP8\APROVAR-ESTILO). Request =
@@ -237,3 +239,18 @@ No new generation: the lote 3 plates already fit (UNIFORM overlay rechecked: pla
 Game plate `lote3/sala07_jogo.png` copied to `assets/rooms/painted/seal_chamber.png`; it needs a ROOMS entry in PaintedHall:
 `&"seal_chamber": {painting: seal_chamber.png, yaw 35, pitch 30, fov 24, dist 86, at (-5, -2), v_span UNIFORM}` (base pose of lote 3).
 Approval copy in Downloads\ASelagem-sala-morvath.
+
+## Hub PT28-11 placa (2026-11-28)
+`hub/pt28/`: request = `approval.txt` + `fix_base.txt` (the base still had the floating names and the counter, a lilac
+void and brown boxes) + `fix_fit.txt` (positions as fractions); game = `game.txt` + `game_fix.txt` over the approval, image 2 =
+`hub/jogo/hub_jogo.png`. Both tries of the approval came out TRANSLATED by about (+36, -60) px in 1536x1024 (not squeezed);
+`tools/drift.py painting base` (block matching, pure Python) measures it, and the fix is a plain ffmpeg shift
+(`crop=1500:964:36:0,pad=1536:1024:0:60,fillborders=top=60:right=36:mode=mirror`). After it the drift table is 0 to 6 px on the
+platform. The game edit of the shifted approval kept every pixel in place (drift 0). The game plate drops the vendor's striped
+awning and counter (3D state) and paints the waterfall arches as dark empty arches; the cliff faces carry no water bed.
+Pose for `PaintedHall` hub: --showcase --cam-at=1.6,-9.1 --cam-dist=105 --cam-yaw=35 --cam-pitch=30 --cam-fov=24.
+
+## Cap II concepts A-7 (2026-11-28)
+`cap2/`: `gen.sh`, prompts in `cap2/prompts/` (`enemy_common.txt` + one per creature; `room_common.txt` + `portoes.txt`,
+`atrio.txt`, `fix_atrio.txt`), crops of the pack in `cap2/in/`, results in `cap2/out/`, side by side `cap2/inimigos_lado_a_lado.jpg`.
+Copies in Downloads\ASelagem-GP8\GPT-Cap2. Concepts only: the rooms are on the camera of an approved painting, not on a capture.
