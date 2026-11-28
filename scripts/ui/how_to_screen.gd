@@ -20,6 +20,7 @@ const ROWS: Array[Dictionary] = [
 	{"id": "ultimate", "actions": [&"ultimate"]},
 	{"id": "dodge", "actions": [&"dodge"]},
 	{"id": "interact", "actions": [&"interact"]},
+	{"id": "show_blessings", "actions": [&"show_blessings"]},
 	{"id": "pause", "actions": [&"pause"]},
 ]
 ## Controls actions that are not for the player (the live tuning panel of debug builds; the circle of light, which has

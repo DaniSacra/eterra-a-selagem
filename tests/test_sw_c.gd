@@ -169,7 +169,7 @@ func test_pack_bodies_count_half() -> void:
 func test_captain_data() -> void:
 	var d := _def("capitao")
 	var base := _def("skeleton").hp
-	assert_between(d.hp / base, 10.0, 11.0, "5 to 6 times a common life, x1.8 (PT-27b)")
+	assert_between(d.hp / base, 7.0, 7.5, "6 times a common life, x1.2 (PT28-7: elites back from x1.8)")
 	assert_true(d.no_push)
 	assert_eq(d.attack_windup, 1.2)
 	assert_between(d.raise_count, 4, 5)

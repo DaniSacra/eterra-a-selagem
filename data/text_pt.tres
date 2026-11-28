@@ -486,6 +486,8 @@ entries = {
 "howto_dodge": "Esquiva",
 "howto_dodge_desc": "Um passo rápido que protege dos golpes. Segure para correr. Só esquiva: não ataca.",
 "howto_pause": "Pausa",
+"howto_show_blessings": "Bênçãos",
+"howto_show_blessings_desc": "Segure para ver todas as Bênçãos da descida, agrupadas por anjo. Passe o mouse para ler e clique para fixar até três.",
 "howto_pause_desc": "Para a partida. Na pausa estão as Bênçãos, o Compêndio e as Configurações.",
 "howto_tip": "A Magia enche em cada sala e volta um pouco a cada inimigo derrotado. Todo ataque inimigo avisa antes de acertar: golpes de área marcam o chão, os outros acendem um sinal de exclamação sobre a cabeça de quem ataca na hora de esquivar. O escudo barra o ataque de frente: dê a volta ou use um golpe forte, que abala a postura.",
 "pad_stick_left": "Analógico esquerdo",

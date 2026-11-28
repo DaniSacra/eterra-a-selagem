@@ -93,7 +93,7 @@ func test_the_whole_combo_steps_forward_a_little_each_blow() -> void:
 	pad.move = Vector2.ZERO
 	for i in 30:
 		_frame(p)  # (the last step's tail fades)
-	assert_almost_eq(at.y - p.pos.y, 1.4, 0.15, "0.3 + 0.3 + 0.8 m along the aim")
+	assert_almost_eq(at.y - p.pos.y, 2.4, 0.15, "0.5 + 0.5 + 1.4 m along the aim (PT28-1)")
 	assert_almost_eq(p.pos.x, at.x, 0.001, "and none sideways")
 
 
