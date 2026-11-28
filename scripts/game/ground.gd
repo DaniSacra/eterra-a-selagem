@@ -55,7 +55,10 @@ const GAP_SOURCE := &"gap"
 ## (the paladin's, hurting only them) and the rift's breath (no harm) do not.
 const ROOM_SOURCES: Array[StringName] = [HAZARD_SOURCE, PLATE_SOURCE, CHAIN_SOURCE, ROOT_SOURCE, SLIT_SOURCE, TRAP_SOURCE,
 	CRYSTAL_SOURCE, ROCKS_SOURCE, URN_SOURCE, OIL_SOURCE, NICHE_SOURCE, PLANT_SOURCE, SAG_SOURCE, SPIKES_SOURCE,
-	SPIKE_PLATE_SOURCE]
+	SPIKE_PLATE_SOURCE, SPORE_SOURCE]
+## Chapter II, A-5: the garden's cloud of spores (SporeFloor): the Esporinho's burst (add_warning) as a floor's own warning.
+const SPORE_SOURCE := &"spore"
+const SPORE_COLOR := Color(0.85, 0.42, 0.55)
 const POOL := 48
 ## C1e, the Armadilheiro's plates (Zone.tags): the zone's own fill is hidden; C1eMarks draws the X and Ground the dust where one lands.
 const PLATE_TAG := &"trap_plate"
@@ -314,6 +317,18 @@ func add_band(from: Vector2, dir: Vector2, length: float, width: float, time: fl
 	if source == BREATH_SOURCE:
 		GroundLook.gust(z.mat)
 	z.node.visible = drawn
+	return z
+
+
+## A-5: the PULSE's cloud (add_warning) of the floor itself: it strikes the paladin hero_damage as it lands and every
+## enemy in it enemy_damage (hazard_landed), `source` SPORE_SOURCE.
+func add_cloud(at: Vector2, radius: float, time: float, hero_damage: float, enemy_damage: float, burst := SPORE_COLOR) -> Zone:
+	var z := add_warning(at, radius, time, hero_damage, burst)
+	z.hazard = enemy_damage
+	z.floor_own = true
+	z.source = SPORE_SOURCE
+	z.by = &""
+	z.offscreen = 0
 	return z
 
 

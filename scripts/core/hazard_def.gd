@@ -16,7 +16,7 @@ extends Resource
 ## DROPS (RP-20): stones falling from a torn vault; DropHazard runs it, DropFloor. URNS (RP-12): oil urns the paladin's
 ## blow lights, the blast and the oil running down a channel; UrnHazard runs it, UrnFloor. A GRID may carry crystals
 ## (RP-14) the paladin charges, that discharge along a column of tiles (ArenaHazard.discharge, RuneFloor).
-enum Kind { GRID, PLATES, LINE, DROPS, URNS }
+enum Kind { GRID, PLATES, LINE, DROPS, URNS, SPORES }
 @export var kind := Kind.GRID
 
 ## The grid: the north-west corner of tile (0, 0), the side of a tile (m), how many columns (west to east) and rows
@@ -52,6 +52,15 @@ enum Kind { GRID, PLATES, LINE, DROPS, URNS }
 @export var plates: Array[Rect2] = []
 @export var rearm := 5.0
 @export var from_progress := 0.0
+## Chapter II, A-5 (Pulso do Bosque, docs/design/cap2/docs/02_FATIA_JOGAVEL.md). GRID as the roots: the pattern never lights the
+## tile the paladin stands on (spare_hero) and never leaves him without a way to a door over unlit floor (keep_route; a door
+## lies in the grid's reach). SPORES: the clouds burst over `spots` (the mushrooms), `clouds` at a time, `cloud_radius` m round,
+## never on a spot the paladin is within cloud_radius + 1 m of; warn, fire, rest and start_delay are the cycle's as the grid's.
+@export var spare_hero := false
+@export var keep_route := false
+@export var spots := PackedVector2Array()
+@export var clouds := 2
+@export var cloud_radius := 2.4
 ## PLATES, RP-13 (the edge that crumbles): per slab, life lost by the paladin instead of hero_damage (0 or missing:
 ## hero_damage) and a push given on the strike to everyone on it, in meters along the floor (zero: none), toward the
 ## firm floor; nobody falls (D-28), the push is swept as any body pushed.

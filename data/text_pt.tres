@@ -359,6 +359,7 @@ entries = {
 "killer_spikeplate": "Laje de Espinhos",
 "killer_breath": "Fôlego da Fenda",
 "killer_gap": "Queda na Fenda",
+"killer_spore": "Nuvem de Esporos",
 "door_hard": "Difícil",
 "trial_cost": "Pisar custa {n} de vida",
 "trial_slab_offer": "Uma Bênção forte, com uma maldição",

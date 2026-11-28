@@ -146,6 +146,8 @@ var trial_cards: Array[Trials.Card] = []
 var altar_options: Array[Dictionary] = []
 ## The floor of the runes in a fight there (null: none).
 var runes: RuneFloor
+## A-5: the clouds of spores of a Bosque garden in a fight (null: none).
+var spores: SporeFloor
 ## RP-06: the slabs that strike when stepped on in a fight there (null: none).
 var plates: PlateFloor
 ## RP-11: the bands that strike in turn (the chain of the bridge), or null.
@@ -1108,6 +1110,8 @@ func _step_fight(dt: float) -> void:
 		_tally_thirds(dt)
 	if runes != null:
 		runes.step(dt)
+	if spores != null:
+		spores.step(dt)
 	if plates != null:
 		plates.step(dt)
 	if bands != null:
@@ -2387,6 +2391,8 @@ func _start_one(def: HazardDef) -> void:
 			drops = DropFloor.new(game, def, hash([room.fight_seed, room.depth, 2071]), progress >= def.from_progress)
 		HazardDef.Kind.URNS:
 			urns = UrnFloor.new(game, def, progress >= def.from_progress)
+		HazardDef.Kind.SPORES:
+			spores = SporeFloor.new(game, def, _rng, progress >= def.from_progress)
 		_:
 			runes = RuneFloor.new(game, def, _rng, progress >= def.crystal_from)
 
@@ -2426,6 +2432,10 @@ func _stop_runes() -> void:
 		t["oil_hero_damage"] = game.room_tally.hurt_in_room(String(Ground.OIL_SOURCE))
 		game.room_tally.hazard(urns.enemy_damage, urns.kills, urns.hazard.blasts, String(Ground.URN_SOURCE), t)
 		urns = null
+	if spores != null:
+		spores.stop()
+		game.room_tally.hazard(spores.enemy_damage, spores.kills, spores.hazard.fired, String(Ground.SPORE_SOURCE), spores.tally())
+		spores = null
 	if runes == null:
 		return
 	runes.stop()
