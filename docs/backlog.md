@@ -186,11 +186,11 @@ vale a regra do Daniel (sempre commit e push). As seções abaixo ficam como his
 ### 2. Erros e dívidas técnicas
 | id | o quê | dono |
 |---|---|---|
-| DT-1 | Shaders sem uso: `dome_film`, `dome_clock`, `fury_ember`, `dark_water_matte` (apagar depois de conferir) | technical-artist |
-| DT-2 | O Guerreiro ainda referencia duas ultimates (`00_cleave`, `01_vortex`); a decisão de 2026-11-24 é Corte do Juízo único, Voragem guardada (conferir se a seleção já sumiu e limpar o dado) **Feito 2026-11-26:** `ult_for_weapon` já ignorava a reserva; faltava o anúncio do nível 10 (`unlocks_at`, `MasteryReport`, `first_ult_level`), agora sem a Voragem. | gameplay-engineer |
+| DT-1 | Shaders sem uso: `dome_film`, `dome_clock`, `fury_ember`, `dark_water_matte` (apagar depois de conferir) **Feito 2026-11-27:** os quatro já estavam apagados (2802f22c); conferido sem referência; inventário corrigido. | technical-artist |
+| DT-2 | O Guerreiro ainda referencia duas ultimates (`00_cleave`, `01_vortex`); a decisão de 2026-11-24 é Corte do Juízo único, Voragem guardada (conferir se a seleção já sumiu e limpar o dado) **Feito 2026-11-26:** `ult_for_weapon` já ignorava a reserva; faltava o anúncio do nível 10 (`unlocks_at`, `MasteryReport`, `first_ult_level`), agora sem a Voragem. **Feito 2026-11-27:** a Voragem (`01_vortex`, `reserve`) fica de propósito no dado e nos testes, e nunca é escolhida (`ult_for_weapon`); nada a limpar sem quebrar testes. | gameplay-engineer |
 | DT-3 | CSV das Bênçãos desatualizado (fonte é `make_data.gd`); regerar do dado **Feito 2026-11-27:** `tools/boons_csv.gd` regera `docs/design/bencaos_v2/BALANCEAMENTO_V2.csv` | balance-designer |
 | DT-4 | Custo por golpe com 150+ inimigos ainda 25 a 35 ms no `--stress=300` | qa-performance |
-| DT-5 | Morvath assado acima de 60 MB (TA-07), medalhões acima de 512 px (TA-08), `disk_report.sh` (TA-02), `docs/steam-ia.md` em dia (TA-12) | technical-artist |
+| DT-5 | Morvath assado acima de 60 MB (TA-07), medalhões acima de 512 px (TA-08), `disk_report.sh` (TA-02), `docs/steam-ia.md` em dia (TA-12) **Feito 2026-11-27 (parcial):** `assets/baked` soma 72,8 MB (69,5 MiB, no teto de 70); Morvath 10,8 MB, o maior; reduzir pede reassar com menos triângulos (muda o visual, fica para o art-director); medalhões já em até 512 px (só `title/` passa); `steam-ia.md` em dia (18h18). | technical-artist |
 
 ### 3. Quickwins (horas)
 | id | o quê | dono |

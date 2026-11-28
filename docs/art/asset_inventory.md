@@ -184,7 +184,7 @@ cruz, leão, escudo nem olho. Estado: provisório até a revisão do art-directo
 abyss_fog, abyss_glow, abyss_mist, abyss_ruins, altar_lion, banner_lion, beam, book_page, boss_scythe, boss_shield,
 boss_wake, candle_wax_see, catacomb_floor (+ `.gdshaderinc`), chamber_door, chamber_floor, chamber_seal (inc),
 chamber_veil, chip, crescent, crowd, crowd_outline, crowd_pose (inc), curse_aura, depth_stone, door_breath, dry_grass,
-emeth, emeth_thrust, emeth_wave, enemy_orb, enemy_orb_halo, enemy_tell, flame_see, flash, floor_detail, fury_ember,
+emeth, emeth_thrust, emeth_wave, enemy_orb, enemy_orb_halo, enemy_tell, flame_see, flash, floor_detail,
 garden_inscription, glint, ground (+ inc), ground_fill, hero_ring (+ inc), hero_ring_through, impact, life_bar,
 masonry, portal, rift_haze, ring, ritual_rune, room_air (inc), root_moss, rune_flash, rune_floor, rune_glyph (inc),
 rune_tiles (inc), screen, see_through (inc), slash, slash_ink, soul_crescent, spectral_column, spectral_motes,
@@ -354,9 +354,7 @@ para o passe; a conferir na captura da GPU (tamanho e brilho das estrelas).
 - `shallow_water.gdshader` (riacho do Salão, usado por `Canal` e `GapFloor`): brilho e contraste baixados para a faixa ler como fundo e
   não competir com os avisos do chão (`sheen` 0,16 para 0,07, `reflect_amount` 0,42 para 0,26, `glint` 0,12 para 0,08, `moss` 0,35 para 0,22,
   `roughness` 0,14 para 0,4, `SPECULAR` 0,35 para 0,2). Só valores; sem custo novo. Conferir na captura da sala de combate.
-- Sem referência no código, nos dados nem nos testes e ainda no repositório (nada apagado, só registrado): shaders `dome_film`, `dome_clock`
-  (a película da Tempestade da Maga, parada), `fury_ember` (Fúria saiu) e `dark_water_matte` (citado só em documento do Santuário; arquivos do
-  hub não foram tocados nesta varredura); o conjunto de aquecimento cobre todos (`test_warmup`), então apagar pede regerar `tools/make_warmup.sh`.
+- Shaders `dome_film`, `dome_clock`, `fury_ember` e `dark_water_matte` já foram apagados (commit 2802f22c); conferido em 2026-11-27: nenhuma referência em cenas, scripts, `.tres` ou `tests/`.
   Sem uso e já fora do pacote: as fontes Meshy `enemy_*`, armas de teste e `-preview.png`. Retratos `angel_*.jpg` e as faixas de música
   são carregados por nome montado (não são lixo).
 - Medalhões de UI (126 PNG, 38 MB, `compress/mode=0`) ficam: já registrados na TA-08; passar a VRAM/WebP muda pixel e fica para o `art-director` aprovar.
