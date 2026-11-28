@@ -84,6 +84,24 @@ jogo; luz feita pelo jogo; mouse sem Magia; poucos inimigos nas 4 primeiras sala
 **Pastas do Daniel:** `Downloads\ASelagem-GP8\GPT-SalaNN` (uma por sala), `APROVAR-SALAS-LOTE4`, `APROVAR-TUDO`;
 exes em `Downloads\ASelagem-3D` e `ASelagem-teste`.
 
+## Maga Redesign V1 (pacote do Daniel de 2026-11-27, `docs/design/heroes/maga_redesign_v1_pack/`) — NO BACKLOG, NÃO FAZER AINDA
+
+Pacote do ChatGPT que substitui o kit da Maga (não o do Guerreiro); esperar o "pode fazer" do Daniel.
+- **Kit:** M1 toque Centelha (3 projéteis juntos em leque, 0 Mana); M2 toque Sopro Glacial (cone 90°, 5 m, lentidão);
+  M1 segurar Combustão (bola de fogo que cresce com a carga, 15 a 25 Mana); M2 segurar Inverno Eterno (chão congelado na
+  mira, raio cresce, 10 a 30 Mana); Shift Tempestade Celestial (raio que salta até 6 alvos); Espaço Passo Etéreo (2 cargas).
+  Vida 30, Mana 50, regeneração 3/s também andando; sem Mana por ataque. Custo cobrado ao soltar; esquiva cancela sem custo.
+- **Reações:** Fogo + Frio = Choque Térmico; Fogo + Eletrização = Sobrecarga; Frio + Eletrização = Cristalização. Sem
+  reação tripla no kit básico; chefes não congelam (usam a Quebra). Toques preparam, carregados resolvem.
+- **Arte e efeitos:** fogo âmbar, gelo azul claro e marfim, eletricidade dourada; vermelho só para perigo inimigo;
+  tabela de preparação, execução e dissipação por feitiço; SVG de geometria em `arte/`.
+- **Integração:** sai Arco Voltaico, Estilhaço, Geada e Convergência do kit ativo (sem quebrar saves); um Supremo por
+  arma; Dons novos (Elementalismo, Conjuração, Feitiçaria) só com aprovação.
+- **Conflitos a resolver antes:** o HUD do pacote (5 quadrados ofensivos, esquiva à direita, "Bênçãos em losangos") difere
+  da coluna de Bênçãos à esquerda aprovada hoje (opção A, PT28-6); o pacote diz "não fazer push", vale a regra do Daniel
+  (sempre commit e push); a Maga V2 de hoje (`5f09feda`, Centelha em corrente de três) será substituída.
+- **Donos:** hero-designer (revisão e números), gameplay-engineer, technical-artist (VFX), ui-ux-designer (HUD), balance-designer.
+
 ## Capítulo II: O Bosque Submerso (pacote do Daniel de 2026-11-27, `docs/design/cap2/`) — NO BACKLOG, começa depois de fechar as salas do Capítulo I
 
 Pacote: `docs/design/cap2/docs/01_MASTER_PLAN.md`, `02_FATIA_JOGAVEL.md`, `03_BIBLIA_ARTISTICA.md`, ordem em

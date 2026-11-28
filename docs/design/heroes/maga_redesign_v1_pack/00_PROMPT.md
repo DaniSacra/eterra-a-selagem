@@ -1,0 +1,4 @@
+# Eterra — Maga V1: redesign do combate
+Leia todos os arquivos deste pacote antes de implementar. Trabalhe sobre a branch arpg-3d e confira HEAD, git status e configurações reais. Esta especificação substitui o kit anterior da Maga, não o do Guerreiro. Preserve modelo, bastão de duas pontas, câmera, estética pintada à mão, controles universais e assets aprovados. Não altere salas ou outros heróis. Reaproveite ArcaneKit, Arcane, ElementBook, HeroDef, ComboTree e infraestrutura existente quando compatíveis. Não faça push nem use serviços pagos sem autorização.
+
+Ordem: inventário → habilidades e economia → reações → VFX/SFX → HUD e integração → testes e sessão jogável. Priorize impacto, posicionamento e decisões de Mana. Não implemente os novos 12 Dons sem aprovação; adapte referências quebradas e sinalize conflitos. Consulte os SVGs como diagramas de VFX, não como sprites finais. Entregue relatório de alterações, parâmetros, testes, problemas e decisões pendentes.
