@@ -1510,7 +1510,7 @@ func _bosque_stage(base: StageDef) -> void:
 
 ## The Bosque's rooms: shape, pieces, shallow-water MARKS (RoomLayout.water: walkable, A-5 gives them the -15%), spawn zones. Same
 ## rules as Chapter I: the way in at the south edge, two doors in the north wall far apart with a piece between, no solid piece in
-## a door's approach (4 m), no hazard yet (A-5: roots, spores; they will stand at the screen ends). Look &"bosque" is the plain
+## a door's approach (4 m), one hazard family per room (A-5, _bosque_roots, _bosque_spores). Look &"bosque" is the plain
 ## ArenaRoom until the painted plates (GP-8) come.
 const BOSQUE_DOOR := 6.0
 
@@ -1536,6 +1536,45 @@ func _mirror_water(rects: Array) -> Array[Rect2]:
 		out.append(r)
 		out.append(Rect2(-r.end.x, r.position.y, r.size.x, r.size.y))
 	return out
+
+
+## A-5, the Pulso do Bosque (docs/design/cap2/docs/02_FATIA_JOGAVEL.md): ONE hazard family per room. The shallow water is terrain of every
+## room (RoomLayout.water: -15% of pace for whoever stands in it, WaterRules, never damage; every room keeps a dry route). The Portões
+## teach the water alone; the Jardim has the clouds of spores over its mushrooms; the Templo has the roots.
+## The roots: a grid of tiles of 2 m over the room, 4 x 4 m blocks (islands) or where the pack stands (herd), warned 1.0 s, struck
+## 0.25 s, 4 s of rest, never in the first 4 s, never on the tile the paladin stands on (spare_hero), never leaving him without a way
+## to a door over unlit floor (keep_route); the way in (south) stays quiet. Chapter I's damage rule: 10 to the paladin, 60 to an enemy.
+func _bosque_roots() -> HazardDef:
+	var h := _hazard([&"islands", &"herd"], [_rect(-6, 6, 8, 14)])
+	h.origin = Vector2(-18, -14)
+	h.tile = 2.0
+	h.cols = 18
+	h.rows = 14
+	h.warn = 1.0
+	h.rest = 4.0
+	h.start_delay = 4.0
+	h.max_share = 0.2
+	h.islands = 2
+	h.spare_hero = true
+	h.keep_route = true
+	return h
+
+
+## The spores: a cloud of 2.4 m (the Esporinho's burst) over `spots` (the mushrooms), two at a time, warned 1.2 s, 4 s of rest, never over
+## the paladin; 10 to the paladin and 60 to an enemy as the roots (they affect the creatures too).
+func _bosque_spores(spots: Array[Vector2]) -> HazardDef:
+	var h := HazardDef.new()
+	h.kind = HazardDef.Kind.SPORES
+	h.spots = PackedVector2Array(spots)
+	h.clouds = 2
+	h.cloud_radius = 2.4
+	h.warn = 1.2
+	h.fire = 0.25
+	h.rest = 4.0
+	h.start_delay = 4.0
+	h.hero_damage = HAZARD_HERO
+	h.enemy_damage = 60.0
+	return h
 
 
 ## 01 Portões do Bosque (A): a dry clearing, a double arch (the two doors) and a yard of statues; the teaching room (one silhouette
@@ -1574,6 +1613,10 @@ func _bosque_garden() -> RoomLayout:
 	_gate(l, Vector2(0.0, 10.6), -13.0, [-BOSQUE_DOOR - 0.2, BOSQUE_DOOR + 0.2])
 	l.spawns = [_rect(-16, -13, -9, -4), _rect(13, 16, -9, -4), _rect(13.5, 16.5, 2, 6), _rect(-16.5, -13.5, 2, 6)]
 	l.late_spawns = [_rect(-4, 4, -12, -10)]
+	var caps: Array[Vector2] = []
+	for k in 8:
+		caps.append(c + Vector2.from_angle(deg_to_rad(22.5 + 45.0 * k)) * 7.2)
+	l.hazard = _bosque_spores(caps)
 	_areas(l, ["island", _rect(-3, 3, -4, 2), "ring", _rect(-9, 9, -9, 7), "terrace", _rect(-18, -12, -13, 13),
 		"terrace", _rect(12, 18, -13, 13)])
 	return l
@@ -1595,6 +1638,7 @@ func _bosque_temple() -> RoomLayout:
 	_gate(l, Vector2(0.0, 10.6), -13.0, [-BOSQUE_DOOR, BOSQUE_DOOR])
 	l.spawns = [_rect(12.5, 16, -6.5, -2), _rect(-16, -12.5, -6.5, -2), _rect(12.5, 16, 2, 7), _rect(-16, -12.5, 2, 7)]
 	l.late_spawns = [_rect(-4, 4, -9.5, -7)]
+	l.hazard = _bosque_roots()
 	_areas(l, ["platform", _rect(-4.5, 4.5, -4.5, 4.5), "bridge", _rect(-11.5, 11.5, -3.5, 0.5), "bridge", _rect(-11.5, 11.5, 6.0, 12.0),
 		"wing", _rect(-17, -11.5, -13, 13), "wing", _rect(11.5, 17, -13, 13)])
 	return l

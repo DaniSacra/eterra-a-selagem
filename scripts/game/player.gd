@@ -653,7 +653,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 			runner.glint_scale = Feel.live().glint_scale
 			runner.step(dt)
 			ran = true
-			var sp := Feel.live().speed * (1.0 + speed_bonus) * curse.speed_scale()
+			var sp := Feel.live().speed * (1.0 + speed_bonus) * curse.speed_scale() * arena.water_scale(pos)
 			if sprinting and (runner.is_attacking() or charging or move.length() < 0.1 or not Controls.held(&"dodge")):
 				sprinting = false
 			if sprinting:
@@ -1401,7 +1401,7 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 			_play(held.anim, 0.0, held.anim_from)
 		return
 	if move.length() > 0.1:
-		var pace := Feel.live().speed * (1.0 + speed_bonus) * curse.speed_scale() * (Feel.live().sprint_scale if sprinting else 1.0) * charge_move_scale()
+		var pace := Feel.live().speed * (1.0 + speed_bonus) * curse.speed_scale() * arena.water_scale(pos) * (Feel.live().sprint_scale if sprinting else 1.0) * charge_move_scale()
 		# (GF-15: from the guard into the run in RunLean.BLEND; run and sprint into each other as before)
 		var blend := -1.0 if _current_anim == &"Run" or _current_anim == &"Sprint" else RunLean.BLEND
 		if sprinting:

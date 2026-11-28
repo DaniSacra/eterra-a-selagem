@@ -395,6 +395,12 @@ func shot_reach(from: Vector2, dir: Vector2, length: float, r: float = 0.0) -> f
 const RESOLVE_PASSES := 4
 
 
+## A-5: how much of his pace whoever stands at p keeps (WaterRules: -15% in the room's shallow water, 1 on dry floor and in every
+## room without water).
+func water_scale(p: Vector2) -> float:
+	return 1.0 if layout == null or layout.water.is_empty() else WaterRules.speed_scale(layout.water, p)
+
+
 ## Keeps a circle of this radius on the floor (the room's FloorShape and walk) and out of the pillars and solid boxes.
 func resolve(pos: Vector2, radius: float) -> Vector2:
 	for i in RESOLVE_PASSES:

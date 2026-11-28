@@ -39,6 +39,8 @@ var chevron := Vector2.ZERO
 ## added to the ember the floor shows, one step brighter than rest.
 var hint := PackedFloat32Array()
 var _rng: RandomNumberGenerator
+## The mouths of the doors (HazardDef.keep_route keeps a way to one over unlit floor).
+var _doors: Array[Rect2] = []
 ## RD2-07: where the enemies stand (the owner sets it each step): the herd pattern lights where the pack is.
 var bodies := PackedVector2Array()
 ## The sweep's row and way, the comb's and the checker's parity, the frame's ring.
@@ -52,6 +54,7 @@ var _ring := 0
 func _init(hazard: HazardDef, floor: FloorShape, doors: Array[Rect2], rng: RandomNumberGenerator) -> void:
 	def = hazard
 	_rng = rng
+	_doors = doors
 	var n := def.cols * def.rows
 	live.resize(n)
 	floor_tile.resize(n)
@@ -273,6 +276,10 @@ func _draw(hero: Vector2, standing: int) -> void:
 		&"herd":
 			_herd(hero)
 	_fit(def.dense_share if DENSE.has(pattern) else def.max_share)
+	if def.spare_hero:
+		_spare(hero)
+	if def.keep_route:
+		_keep_route(hero)
 
 
 func _rows(list: Array) -> void:
@@ -400,3 +407,49 @@ func _has_safe_side(c: int, r: int) -> bool:
 static func _probes(box: Rect2) -> PackedVector2Array:
 	var g := box.grow(-0.1)
 	return PackedVector2Array([box.get_center(), g.position, Vector2(g.end.x, g.position.y), g.end, Vector2(g.position.x, g.end.y)])
+
+
+## HazardDef.spare_hero: the tile under the paladin never lights (what is warned is never where he stands as it warns).
+func _spare(hero: Vector2) -> void:
+	var t := tile_at(hero)
+	if t.x >= 0:
+		lit[t.y * def.cols + t.x] = 0
+
+
+## True when the paladin's tile reaches a tile of a door over floor tiles that are not lit (4 neighbours).
+func route_open(hero: Vector2) -> bool:
+	var start := tile_at(hero)
+	if start.x < 0:
+		return true
+	var seen := PackedByteArray()
+	seen.resize(lit.size())
+	var queue: Array[Vector2i] = [start]
+	seen[start.y * def.cols + start.x] = 1
+	while not queue.is_empty():
+		var t: Vector2i = queue.pop_back()
+		var box := tile_rect(t.x, t.y)
+		for d in _doors:
+			if d.grow(0.5).intersects(box):
+				return true
+		for dd: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var n := t + dd
+			if n.x < 0 or n.y < 0 or n.x >= def.cols or n.y >= def.rows:
+				continue
+			var i := n.y * def.cols + n.x
+			if seen[i] == 1 or floor_tile[i] == 0 or lit[i] == 1:
+				continue
+			seen[i] = 1
+			queue.append(n)
+	return false
+
+
+## HazardDef.keep_route: lit tiles come off, at random, until the paladin has a way to a door (never every exit shut).
+func _keep_route(hero: Vector2) -> void:
+	var on: Array[int] = []
+	for i in lit.size():
+		if lit[i] == 1:
+			on.append(i)
+	while not route_open(hero) and not on.is_empty():
+		var k := _rng.randi() % on.size()
+		lit[on[k]] = 0
+		on.remove_at(k)
