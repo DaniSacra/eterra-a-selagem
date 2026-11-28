@@ -3,6 +3,82 @@
 
 > Este arquivo guarda só o que está aberto. O histórico até 2026-11-26 está em `docs/backlog/historico_ate_2026-11-26.md`.
 
+## Plano 2026-11-28: fechar o Capítulo I e começar o II (game-director, commit lido `f5ed4045`)
+
+Pedido do Daniel (fora por 8 h): "faz tudo... finalizar o capítulo 1... e depois já faz o começo do capítulo 2". Estado em 5 linhas:
+1. Capítulo I jogável de ponta a ponta (13 salas, 2 guardiões, Morvath em 4 fases), todas as salas pintadas (GP-8), 11 personagens Meshy, HUD v3, Bênçãos V2 com 159 medalhões novos.
+2. Números do SWORN no capítulo, menos inimigos nas 4 primeiras salas; última régua do robô: 5 de 12 chegam a Morvath, 0 vitórias (antes dos ajustes PT-28; falta medir de novo).
+3. Rodando agora (fora deste plano): Maga Redesign V1 (gameplay-engineer), Santuário placa pintada passos 1 e 2 (technical-artist, environment-artist), PT28-12 escorrido das salas pintadas (sessão principal capturando). Isso já ocupa 3 dos 4 lugares.
+4. O último relatório de QA completo é de 2026-11-21 (`docs/qa/latest_report.md`, HEAD `343d251`): está velho; o P1 de shader frio na iGPU (DT-RS3) nunca foi remedido depois do conjunto de aquecimento.
+5. Assados em 72,8 MB contra o teto de 70 (DT-5): o Capítulo II (4 inimigos e o Ancião) não cabe sem mudar o formato do assado. É a dívida que bloqueia o II.
+
+### 1. Fechar o Capítulo I
+
+Lugares: 4 agentes no máximo. O Lote 1 começa com **1 lugar livre** e vai enchendo conforme Maga, Santuário 1 e 2 e PT28-12 terminam. Um processo pesado por vez (robô, suíte, exportação); capturas só a sessão principal.
+
+**Lote 1 (já, enche os lugares que forem liberando)**
+| id | o quê | evidência | dono | tam. | pronto quando |
+|---|---|---|---|---|---|
+| F1 | Medir e acertar a dificuldade do Capítulo I com os números do SWORN e PT-28 (elites x1,0, passos +67%), incluindo QW-7 (Passos Leves) e PM-4 (fontes por caminho) | robô 5/12 e 0 vitórias (linha 49); `docs/design/balance/pt28-elites.md`; metas em `targets-and-lote-b.md` B.3 | balance-designer (números), gameplay-engineer aplica em `make_data.gd` | M | 12 sementes, `--bot-reaction=0.25`: Morvath alcançado 6 a 9 de 12, vitórias 1 a 4 de 12, nenhuma sala comum acima de 45 de dano máximo; Passos Leves e fontes com veredito escrito no doc de equilíbrio. Primeiro lugar livre agora |
+| F2 | Formato do assado menor (posição quantizada, TA-07) e reassar tudo, sem mudar o visual | `docs/qa/qa_2026-11-26c.md` DT-5; 72,8 MB | technical-artist (depois do passo 1 do Santuário) | M | `assets/baked` abaixo de 55 MB; captura lado a lado de 3 inimigos e Morvath sem diferença visível (sessão principal); `test_living_crowd` e `test_enemy_look` verdes; mesmo `RESULT` seed 5 |
+| F3 | Variantes A e B parecidas (Cripta A/B, Jardim A/B) e o buraco do Santuário B que a pintura perdeu: plano de layout que muda a forma, repintura nomeando a diferença | linha 62 (worktree `af8f656c`) | room-designer (layout), ai-art-producer (repintura, depois do room-designer) | M | Captura das duas variantes lado a lado: forma do piso diferente à primeira vista; `test_no_solid_piece_in_a_doors_approach` verde |
+| F4 | Fendas: herói 77% do tempo no leste (PM-3); aviso da pedra que cai chapado e xadrez das Runas (QW-3); brilho da água e musgo competindo com avisos (QW-4), conferir o que ainda vale depois das placas pintadas | itens PM-3, QW-3, QW-4 abaixo | room-designer (PM-3), environment-artist (QW-3/4, depois do passo 2 do Santuário e do PT28-12) | S | Robô 12 sementes nas Fendas: nenhum lado acima de 60% do tempo; captura das Runas e da pedra com o aviso lido em 720p |
+| F5 | PT-27a: medalhão do coração e o do Sarael não podem se confundir (conferir com os ícones Rev. 04) | linha 198 (PT-27a) | ui-ux-designer | S | Captura de uma porta de coração ao lado de uma do Sarael: formas diferentes, não só a cor |
+
+**Lote 2 (quando a Maga V1 entrar no ramo)**
+| id | o quê | evidência | dono | tam. | pronto quando |
+|---|---|---|---|---|---|
+| F6 | HUD da Maga no layout aprovado (coluna de Bênçãos à esquerda, opção A), não o do pacote; lição da Maga na Antessala com os 4 toques e segurar | conflito na linha 103 | ui-ux-designer | M | Partida da Maga sem texto cortado em 720p e 1080p; Antessala completa com a Maga sem travar (teste GUT como o do Esmagador) |
+| F7 | VFX da Maga pela tabela do pacote (fogo âmbar, gelo marfim e azul claro, raio dourado; preparação, execução, dissipação), sem violeta e sem ler como o Trovão do Saarael | `maga_redesign_v1_pack/`; ART_REVIEW 26c P1-5 | technical-artist | M | Captura de cada feitiço e das 3 reações; art-director aprova por escrito |
+| F8 | Equilíbrio da Maga nova contra o Guerreiro na mesma descida | regra do pacote | balance-designer | S | 12 sementes cada herói: diferença de vitórias de no máximo 2; tempo médio de sala dentro de 20% |
+| F9 | Santuário passos 4 e 6 do `docs/art/hub_pt28_plan.md` (placa de jogo pela API e ligar), depois da captura-base da sessão principal (passo 3) | plano PT28-11 | ai-art-producer (4), technical-artist (6) | M | Critérios dos passos 4 e 6 do plano; placa ligada por dado e desligável, o Daniel aprova no exe (passo 5 vira "aprova jogando") |
+
+**Lote 3 (fechamento, um exe)**
+| id | o quê | evidência | dono | tam. | pronto quando |
+|---|---|---|---|---|---|
+| F10 | Santuário passos 7 e 8 (vivo em 3D sobre a placa: Videira nova, água, fogo, luzes; nomes das estações só perto) | plano PT28-11 | environment-artist (7), ui-ux-designer (8) | M | Critérios dos passos 7 e 8; `--hub --smoke` com `reached` de todas as estações e `stuck` 0 |
+| F11 | Varredura de texto: nenhuma chave sem uso nem faltando, nada de travessão, pt-BR, telas da Maga e Como Jogar atualizados, 720p sem corte | `data/text_pt.tres` (0 travessões hoje) | ui-ux-designer | S | Script de chaves sem órfãs; captura das telas de texto longo em 720p |
+| F12 | QA do Capítulo I no HEAD do fim do Lote 2: suíte inteira, 12 sementes cada herói, exe Linux contra o editor, controle em todas as telas, saves antigos, e **remedir o DT-RS3** (entrada fria na iGPU) com o conjunto de aquecimento | `latest_report.md` de 2026-11-21 | qa-performance | M | `docs/qa/latest_report.md` novo com o commit; 0 P0; entrada de sala na iGPU fria abaixo de 1 s e quente abaixo de 100 ms, ou o P1 aberto com número e dono |
+| F13 | Revisão de arte final do capítulo (salas depois do PT28-12, Santuário, Maga) | capturas da sessão principal | art-director | S | `docs/art/visual_review.md` com veredito por sala; P1 corrigidos antes do exe |
+
+Fora do fechamento (decisão consciente, opinião minha): DT-4 (pico de 25 a 37 ms só no `--stress=300`; partidas normais ficam em 9 a 12 ms), GP-6 (Meshy sem créditos autorizados), GP-7 (heróis novos). O que só o Daniel jogando responde: se os passos maiores do Guerreiro (PT28-1) e a dificuldade nova estão bons, e a sala 8 do PT28-3.
+
+### 2. Capítulo II, decisões (regra do Daniel fora: seguir a recomendação do game-director)
+| id | decisão | opções | recomendação (adotada até ele responder) |
+|---|---|---|---|
+| D2-1 | Violeta na prancha (cogumelos, Lumífago, Flor Adormecida, Jardim) | rosa, magenta quente, âmbar | Rosa e magenta quente nos cogumelos e na Flor; âmbar dourado no Lumífago; violeta só em Morvath. A paleta do pacote (`#75464C` corrupção) já basta |
+| D2-2 | Nome para o jogador do "Ancião Retorcido" (confunde com o Sacerdote Ancião) | manter, trocar | Manter "Ancião Retorcido" (é o nome que o pacote dá), numa chave só de `text_pt.tres`, id técnico `elder_treant`. **Confirmar com o Daniel** |
+| D2-3 | Lore nova (Rainha, Coroa Partida, Guardião, civilização do Bosque) | usar, adiar | Adiar: nada disso entra no primeiro marco. O cânone já tem rainhas de Imladrin (Mishná, Lara); uma "Rainha" do Bosque pode colidir. **Confirmar com o Daniel** antes do C2 chefe |
+| D2-4 | Qual Malahym recebe no Átrio ("da Maré") | Galael, outro | Galael (anjo da Maré, já no jogo com retrato e família `MARE`); fala só a frase que o pacote sugere, sem travessão. **Confirmar com o Daniel** |
+| D2-5 | Portas "altas e próximas" do pacote | pacote, regra do Daniel | Regra do Daniel de 2026-11-27: portas afastadas com uma peça entre elas, altas como no SWORN |
+| D2-6 | Agentes ao mesmo tempo (pacote diz 2) | 2, 4 | 4 (regra atual) |
+| D2-7 | "Punho de Elun" na prancha | | O jogo mostra só "O Guerreiro" (D-64) |
+| D2-8 | Fatia com 5 salas antes do minichefe e escolha por portas, mas só o Ancião existe | esperar o segundo, porta única | Primeiro marco: a sala 5 abre só a porta do Ancião; a escolha por portas já fica como dado (`minibosses` do `StageDef`) para o Rei do Brejo entrar depois sem código |
+| D2-9 | Quais são as 5 salas | só as 3 do pacote, mais variantes | As 3 famílias do pacote (Portões, Jardim, Templo) em A e B, sorteadas com `arena_max_uses`; sala 1 sempre Portões A (ensina Esporinho e Retorcido isolados) |
+| D2-10 | Chave do Capítulo II no exe do Daniel | ligada, desligada | Ligada no exe de teste; a vitória sobre Morvath é registrada ao selar (Santuário e Livro contam como hoje), então sair no Átrio não perde nada |
+| D2-11 | Técnica das salas do II | pintura projetada (GP-8 A), kit 3D | GP-8 A, como o Capítulo I inteiro |
+| D2-12 | Gastos | API de imagem, Meshy | API de imagem só para conceitos (cerca de US$ 3 a 5, registrar em `steam-ia.md`); Meshy nada até o Daniel ver os conceitos e a estimativa de créditos |
+
+### 3. Capítulo II, primeiro marco: C2-A Transição e Átrio (um exe jogável)
+Objetivo: selar Morvath, entrar no Átrio, curar e escolher a Graça, atravessar o portal, ver a chegada e o título "O Bosque Submerso", jogar uma sala de esboço e ver "Fim da prévia do Capítulo II", voltando ao Santuário sem marcar vitória completa.
+
+**Pode começar hoje à noite (sem arte aprovada)**
+| id | tarefa | dono | tam. | pronto quando |
+|---|---|---|---|---|
+| A-1 | Vários `StageDef` por dado (`data/stages/bosque.tres` em `make_data.gd`), índice da região separado da profundidade, passagem idempotente que guarda tudo da partida, save antigo carrega, `RunLog` com região, chave `chapter2` desligada igual a hoje | gameplay-engineer (segunda instância em worktree própria se a Maga ainda estiver rodando; arquivos sem cruzamento: `stage_def`, `run_map`, `game`, `save`) | L | GUT do aceite do pacote: chave off preserva o final; chave on abre o Átrio; portal preserva build, recursos e estatísticas; mesma semente, mesma sequência; nada vaza entre partidas; save v-atual e antigos abrem; `RESULT` seed 5 igual com a chave off |
+| A-2 | Átrio em esboço: sala sem inimigos, fonte (40% de cura, uma vez), Graça (35% a mais, ou raridade de uma Bênção, ou +1 nível em duas, com alternativa se inelegível), mercador (o `Vendor` de hoje), portal no E só depois da escolha | gameplay-engineer (regras), ui-ux-designer (carta da Graça, diálogo do Galael com o retrato existente) | M | GUT: cura e Graça uma vez, tetos respeitados; navegação por controle e mouse; texto só em `text_pt.tres` |
+| A-3 | Chegada: reusar o `ArrivalScene` (cometa) com o título da região, sem dano nem consumo | technical-artist | S | Captura da chegada; HUD volta ao fim; nenhum dano no `RunLog` |
+| A-4 | Inimigos da fatia como dado com comportamento existente e modelo provisório reaproveitado: Esporinho `PULSE`, Retorcido `SWEEP` ou `CONE`, Flor Espinhosa `ARCHER` em leque com `keep_away`, Sapo do Brejo `LEAP` | gameplay-engineer (dado), balance-designer (vida e dano provisórios a partir dos comuns do Capítulo I) | M | Nenhum código novo de comportamento; `make_data.gd enemies` regera; cada um com aviso legível na captura |
+| A-5 | Pulso do Bosque em protótipo isolado: raízes pelo `ArenaHazard` (CALM, ARM, FIRE, REST), água rasa com -15% de movimento e rota seca, nuvem de esporos (a do `PULSE`) | gameplay-engineer | M | GUT: raiz nunca sobre o herói nem fechando todas as saídas; água sem dano; rota seca existe em todo layout |
+| A-6 | Salas de esboço: Portões, Jardim, Templo (A) em greybox com as regras de portas e entrada do Capítulo I, e "Fim da prévia" com volta ao hub | room-designer (layouts), ui-ux-designer (tela) | M | `test_no_solid_piece_in_a_doors_approach` e testes de layout verdes; tela não marca vitória completa (GUT) |
+| A-7 | Conceitos pela API para aprovar: Átrio, 4 inimigos (imagem neutra de corpo inteiro), Portões; regra sem violeta (D2-1) | ai-art-producer | S | Imagens em `Downloads\ASelagem-GP8\GPT-Cap2`, custo registrado; nada aplicado no jogo |
+
+**Espera arte aprovada (C2-B em diante):** placa pintada do Átrio e das 3 salas (GP-8 A, captura-base da câmera real pela sessão principal); modelos Meshy dos 4 inimigos e do Ancião (estimar créditos e pedir); música do bosque; o Ancião Retorcido inteiro (C2-C) e o nome final (D2-2).
+
+**Riscos:** A-1 mexe no coração da partida (`game`, `save`): só com a chave off provando `RESULT` idêntico; o F2 precisa entrar antes de qualquer modelo novo; a Maga e o A-1 em paralelo no `gameplay-engineer` pedem worktrees separadas e a sessão principal juntando.
+
+**Ordem dos lugares (opinião minha):** agora F1; ao sair o technical-artist do passo 1, F2; ao sair a Maga, A-1 (e F6 a F8); ao sair o environment-artist, F3 e F4; Lote 3 e o exe só com F1 a F9 dentro; C2-A vai no mesmo exe se A-1 a A-6 passarem, senão no seguinte.
+
 ## Hoje, 2026-11-27 (LER PRIMEIRO na conversa nova)
 
 **Exe `6f2fa22a` entregue (PT-28):** itens 1 a 10 feitos; coluna de Bênçãos opção A à esquerda; 159 ícones novos (US$ 7); sala do Morvath pintada. Aberto: PT28-11 Santuário (plano em `docs/art/hub_pt28_plan.md`, espera o sim do Daniel), sala 8 a confirmar com ele.
