@@ -15,28 +15,29 @@ extends RefCounted
 ## the Golpe Esmagador (the attack held), the Poder (the Corte Circular), the Especial (the Lança), the dodge (over the stream)
 ## and the trap (its slab passed by the side).
 const ORDER: Array[StringName] = [&"attack", &"heavy", &"power", &"special", &"dodge", &"trap"]
-## The Maga has no Esmagador: her held attack is the Arco Voltaico, her Geada the special (GP-5: the same order, told her way).
-const ORDER_MAGA: Array[StringName] = [&"attack", &"power", &"special", &"dodge", &"trap"]
-## The steps whose tip is told another way for the Maga (GP-5: her keys end in _maga).
-const OF_THE_MAGA: Array[StringName] = [&"attack", &"power", &"special"]
+## Maga Redesign V1 (F6): her four blows are the four steps, tap then hold, each told with her own words (KEYS_MAGA).
+const ORDER_MAGA: Array[StringName] = [&"spark", &"breath", &"combust", &"winter", &"dodge", &"trap"]
 ## The text key of each step (Objective's line).
 const KEYS := {&"attack": &"lesson_attack", &"heavy": &"lesson_heavy", &"special": &"lesson_special", &"power": &"lesson_power",
 		&"dodge": &"lesson_dodge", &"trap": &"lesson_trap"}
+## The Maga's own tips (the dodge and the trap are told as the Warrior's).
+const KEYS_MAGA := {&"spark": &"lesson_spark_maga", &"breath": &"lesson_breath_maga", &"combust": &"lesson_combust_maga",
+		&"winter": &"lesson_winter_maga", &"dodge": &"lesson_dodge", &"trap": &"lesson_trap"}
 ## Clicks of the attack that make the step (the chain's three blows; the finisher alone counts as the third).
 const CLICKS := 3
 ## The events fed: &"light" (a blow of the attack's chain), &"finisher", &"heavy" (the Golpe Esmagador), &"special" (the Lança),
 ## &"power" (the Corte Circular), &"crossed" (over the stream), &"passed" (beyond the trap's slab). The Maga's Estilhaço is the
-## power, her Geada the special.
-const EVENT_OF := {&"heavy": &"heavy", &"special": &"special", &"power": &"power", &"crossed": &"dodge", &"passed": &"trap"}
+## power, her Geada the special. The Maga's are the id of the blow struck: spark, breath, combust, winter.
+const EVENT_OF := {&"spark": &"spark", &"breath": &"breath", &"combust": &"combust", &"winter": &"winter", &"heavy": &"heavy", &"special": &"special", &"power": &"power", &"crossed": &"dodge", &"passed": &"trap"}
 
 var steps: Array[StringName] = []
-## The Maga's tips (the keys of OF_THE_MAGA end in _maga).
+## The Maga's tips (KEYS_MAGA).
 var arcane := false
 var _done := {}
 var _clicks := 0
 
 
-## is_arcane: the Maga's tips (the same steps as the Warrior's but the Esmagador, told with her moves).
+## is_arcane: the Maga's tips (her four blows, then the dodge and the trap).
 func _init(is_arcane := false) -> void:
 	arcane = is_arcane
 	steps.assign(ORDER_MAGA if is_arcane else ORDER)
@@ -76,7 +77,7 @@ func key() -> StringName:
 	var s := current()
 	if s == &"":
 		return &""
-	return StringName("%s_maga" % KEYS[s]) if arcane and OF_THE_MAGA.has(s) else KEYS[s]
+	return KEYS_MAGA[s] if arcane else KEYS[s]
 
 
 ## Every step done: the door may open.

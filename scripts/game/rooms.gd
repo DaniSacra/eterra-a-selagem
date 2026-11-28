@@ -1009,6 +1009,9 @@ func _wire_player() -> void:
 func _on_struck(node: ComboNode, _o: Vector2, _d: Vector2) -> void:
 	if lesson == null:
 		return
+	if lesson.arcane:
+		lesson.feed(node.id)  # the Maga's four blows are the steps (spark, breath, combust, winter)
+		return
 	if node.has_tag(&"smash"):
 		lesson.feed(&"heavy")  # the Golpe Esmagador (an Omega by its tag, held on the left: never the Lança's step)
 		return

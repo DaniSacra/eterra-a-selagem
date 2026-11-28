@@ -46,8 +46,10 @@ const NAME_SIZE := 30
 const CAP_SIZE := 38
 const FOLIO_SIZE := 14
 const FOLIO_ROOM := 10.0
-## The action the Maga's marks on the HUD (Hud.MAGA_GLYPHS) stand for, by slot.
-const MAGA_ACTION := {Boon.Slot.ATTACK: &"light_attack", Boon.Slot.SPECIAL: &"heavy_attack", Boon.Slot.CAST: &"shout"}
+## Maga Redesign V1 (F6): her rows in the order of the buttons: text key (hero_skill_name_<id>_maga, hero_skill_<id>_maga), the HUD's
+## button for the mark (Hud.MAGA_BLOW_GLYPHS, &"" = the dodge's) and 0 for the touch or 1 for the hold.
+const MAGA_ROWS := [["attack", &"light_attack", 0], ["special", &"heavy_attack", 0], ["cast", &"light_attack", 1],
+	["rush", &"heavy_attack", 1], ["dash", &"", 0]]
 ## The hero painted on the hero page (art pack board 04, made by AI, cut by hand; docs/steam-ia.md), its edges feathered
 ## into the paper. The final art, when it comes: assets/ui/book/warrior_ink.png and maga_ink.png.
 const PORTRAIT: Texture2D = preload("res://assets/ui/hero/warrior_page.png")
@@ -540,22 +542,15 @@ func _hero_right() -> Control:
 ## The five actions, the ultimate the descent plays and the passive, with the HUD's marks.
 func _skills(grid: GridContainer) -> void:
 	var maga := GiftArt.is_maga(loadout.hero)
-	# GP-1: the Warrior's order is Ataque, Poder (the right touch), Especial (the right hold), Esquiva; the Maga's keeps her own
-	var order: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.CAST, Boon.Slot.SPECIAL, Boon.Slot.DASH]
 	if maga:
-		order = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.DASH]
-	for slot: Boon.Slot in order:
-		var key := String(Boon.Slot.keys()[slot]).to_lower()
-		var mark: Control = ActionSlot.mark(slot, MARK) if maga else ActionSlot.glyph_mark(BoonIcon.ACTION_GLYPH + slot, MARK)
-		if maga and MAGA_ACTION.has(slot):
-			mark = ActionSlot.glyph_mark(int(Hud.MAGA_GLYPHS[MAGA_ACTION[slot]]), MARK)
-		var title := T.t(_hk("hero_skill_name_" + key)) if maga else T.t("slot_" + key)
-		_skill(grid, mark, title, T.t(_hk("hero_skill_" + key)))
-		if slot == Boon.Slot.CAST and maga:
-			# the Investida (E) has no Blessing slot: its row follows the Brado's (the Maga's Suspensão)
-			var rush: int = int(Hud.MAGA_GLYPHS[&"rush"])
-			_skill(grid, ActionSlot.glyph_mark(rush, MARK), T.t(&"hero_skill_name_rush_maga"),
-				T.t(_hk("hero_skill_rush")))
+		for row: Array in MAGA_ROWS:
+			var glyph: int = int(Hud.MAGA_BLOW_GLYPHS[row[1]][int(row[2])]) if row[1] != &"" else BoonIcon.ACTION_GLYPH + Boon.Slot.DASH
+			_skill(grid, ActionSlot.glyph_mark(glyph, MARK), T.t(_hk("hero_skill_name_" + String(row[0]))), T.t(_hk("hero_skill_" + String(row[0]))))
+	else:
+		# GP-1: the Warrior's order is Ataque, Poder (the right touch), Especial (the right hold), Esquiva
+		for slot: Boon.Slot in [Boon.Slot.ATTACK, Boon.Slot.CAST, Boon.Slot.SPECIAL, Boon.Slot.DASH]:
+			var key := String(Boon.Slot.keys()[slot]).to_lower()
+			_skill(grid, ActionSlot.glyph_mark(BoonIcon.ACTION_GLYPH + slot, MARK), T.t("slot_" + key), T.t("hero_skill_" + key))
 	if not Milestones.ult_open(_data):
 		pass  # (sweep 2026-11-25, P1-4: the Golpe Supremo is not announced before its milestone opens)
 	elif MedallionView.has_fixed_ult(loadout.hero):

@@ -52,6 +52,18 @@ var _moves_button: Button
 var _from: Button
 
 
+## F6: the Maga's page says her own lines where the row has them (howto_<id>_desc_maga: her blows, her Supremo); the others are the same.
+static func desc_key(id: String, maga: bool) -> StringName:
+	var own := StringName("howto_%s_desc_maga" % id)
+	return own if maga and T.table.entries.has(String(own)) else StringName("howto_%s_desc" % id)
+
+
+## Whether the hero picked in this save is the Maga (the page follows the hero the player takes down).
+func _is_maga() -> bool:
+	var id := Dev.arg("hero") if Dev.has("hero") else SaveData.picked_hero(Save.data)
+	return id == "maga"
+
+
 func open() -> void:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -188,7 +200,7 @@ func _controls() -> Control:
 		var pad := Plates.new().setup(pad_parts(actions) if not actions.is_empty() else [T.t(&"pad_stick_right")], true, 160.0)
 		pad.name = "pad_" + id
 		grid.add_child(pad)
-		var desc := _cell(T.t("howto_%s_desc" % id), UiKit.PALE, 17, null, 540.0)
+		var desc := _cell(T.t(desc_key(id, _is_maga())), UiKit.PALE, 17, null, 540.0)
 		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		grid.add_child(desc)
@@ -198,6 +210,7 @@ func _controls() -> Control:
 	page.add_child(tip)
 	var maga := UiKit.label(T.t(&"howto_maga"), UiKit.DIM, 15)
 	maga.name = "maga_note"
+	maga.visible = not _is_maga()  # (the note is for the Warrior's page: hers already reads her own lines)
 	maga.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	maga.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	page.add_child(maga)

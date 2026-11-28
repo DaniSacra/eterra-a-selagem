@@ -73,3 +73,12 @@ func test_compendio_opens_the_codex_and_comes_back() -> void:
 	(codex[0] as CodexScreen).closed.emit()
 	await wait_process_frames(1)
 	assert_eq(s.find_children("*", "CodexScreen", true, false).size(), 0)
+
+
+## F6: the Maga's controls page uses her own lines where they exist and the common one elsewhere.
+func test_the_maga_page_reads_her_lines_and_falls_back_to_the_common_ones() -> void:
+	assert_eq(HowToScreen.desc_key("light_attack", true), &"howto_light_attack_desc_maga")
+	assert_eq(HowToScreen.desc_key("ultimate", true), &"howto_ultimate_desc_maga")
+	assert_eq(HowToScreen.desc_key("interact", true), &"howto_interact_desc", "no line of hers: the common one")
+	assert_eq(HowToScreen.desc_key("light_attack", false), &"howto_light_attack_desc", "the Warrior keeps his own")
+	assert_false(T.t(&"howto_ultimate_desc_maga").contains("—"))
