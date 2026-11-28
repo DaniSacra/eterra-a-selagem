@@ -53,10 +53,10 @@ func test_no_hero_has_a_brado_or_investida_step_and_the_maga_is_told_with_her_ow
 	var m := AnteLesson.new(true)
 	assert_false(m.steps.has(&"shout") or m.steps.has(&"rush"), "GP-5: nothing on Q or E for her either")
 	assert_eq(m.steps, AnteLesson.ORDER_MAGA)
-	assert_false(m.steps.has(&"heavy"), "her held attack is the Arco Voltaico, told in the tip of the hold")
-	assert_eq(m.key(), &"lesson_attack_maga")
-	m.feed(&"finisher")
-	assert_eq(m.key(), &"lesson_power_maga", "her words, her order")
+	assert_false(m.steps.has(&"heavy"), "no Esmagador for her: her holds are the Combustão and the Inverno")
+	assert_eq(m.key(), &"lesson_spark_maga")
+	m.feed(&"spark")
+	assert_eq(m.key(), &"lesson_breath_maga", "her words, her order")
 
 
 func test_the_robot_skips_every_tip_but_the_stream() -> void:
@@ -112,3 +112,36 @@ func test_the_robots_hop_starts_on_the_bank_toward_the_goal() -> void:
 func test_a_stream_the_dash_crosses_is_between_2_and_4_m() -> void:
 	assert_gte(STREAM.size.y, 2.0)
 	assert_lte(STREAM.size.y, 4.0)
+
+
+# ---------- the Maga's lesson (F6) ----------
+
+func test_the_maga_lesson_walks_her_four_blows_in_order() -> void:
+	var m := AnteLesson.new(true)
+	assert_eq(m.steps.size(), 6)
+	var want: Array[StringName] = [&"lesson_spark_maga", &"lesson_breath_maga", &"lesson_combust_maga", &"lesson_winter_maga", &"lesson_dodge", &"lesson_trap"]
+	for e: StringName in [&"spark", &"breath", &"combust", &"winter", &"crossed", &"passed"]:
+		assert_eq(m.key(), want.pop_front(), "the tip before %s" % e)
+		m.feed(e)
+	assert_true(m.done(), "the door opens after her four blows, the stream and the slab")
+
+
+func test_a_maga_blow_out_of_turn_counts_and_the_warriors_gestures_do_not() -> void:
+	var m := AnteLesson.new(true)
+	m.feed(&"winter")
+	m.feed(&"finisher")  # (the Warrior's: no step of hers)
+	assert_eq(m.current(), &"spark", "the first not done")
+	assert_true(m.is_done(&"winter"))
+	for s in [&"spark", &"breath", &"combust"]:
+		m.feed(s)
+	assert_eq(m.current(), &"dodge")
+
+
+func test_the_maga_tips_say_tap_or_hold_and_have_no_hole_and_no_dash() -> void:
+	for k: StringName in AnteLesson.KEYS_MAGA.values():
+		var t := Objective.text(k)
+		assert_false(t.contains("{"), "%s has no hole left" % k)
+		assert_false(t.contains("—"))
+	assert_true(T.t(&"lesson_combust_maga").begins_with("Segure"))
+	assert_true(T.t(&"lesson_winter_maga").begins_with("Segure"))
+	assert_true(T.t(&"lesson_spark_maga").begins_with("Aperte"))

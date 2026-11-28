@@ -692,11 +692,11 @@ func test_a_save_from_version_13_goes_through_every_step() -> void:
 
 func test_the_antessala_teaches_the_maga_with_her_words() -> void:
 	var l := AnteLesson.new(true)
-	assert_eq(l.steps, AnteLesson.ORDER_MAGA, "the Warrior's order without the Golpe Esmagador")
-	assert_eq(l.key(), &"lesson_attack_maga")
-	l.feed(&"finisher")
-	assert_eq(l.key(), &"lesson_power_maga")
-	for key: StringName in [&"lesson_attack_maga", &"lesson_power_maga", &"lesson_special_maga"]:
+	assert_eq(l.steps, AnteLesson.ORDER_MAGA, "her four blows, the dodge and the trap")
+	assert_eq(l.key(), &"lesson_spark_maga")
+	l.feed(&"spark")
+	assert_eq(l.key(), &"lesson_breath_maga")
+	for key: StringName in AnteLesson.KEYS_MAGA.values():
 		assert_ne(T.t(key), String(key), "%s is in the table" % key)
 	assert_eq(AnteLesson.new(false).key(), &"lesson_attack", "the Warrior's tips are as they were")
 

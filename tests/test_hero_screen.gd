@@ -283,3 +283,25 @@ func test_the_warriors_page_fits_at_1280() -> void:
 
 func test_the_warriors_page_fits_at_1672() -> void:
 	await _check_hero_page_fits(Vector2(1672, 941))
+
+
+## F6: the Maga's page lists her blows in the order of the buttons (touch left, touch right, hold left, hold right, dodge), not on Q and E.
+func test_the_magas_page_lists_her_abilities_in_the_new_order() -> void:
+	var d := _data(0)
+	d["wins"] = 1
+	d["hero"] = "maga"
+	var s := _screen(d)
+	await wait_process_frames(2)
+	var grid: Control = s.find_child("skills", true, false)
+	assert_not_null(grid)
+	var words: Array[String] = []
+	for row: Node in grid.get_children():
+		for l: Node in row.find_children("*", "Label", true, false):
+			words.append((l as Label).text)
+	var order: Array[String] = ["Centelha", "Sopro Glacial", "Combustão", "Inverno Eterno", "Passo Etéreo"]
+	var at := -1
+	for n in order:
+		var i := words.find(n)
+		assert_gt(i, at, "%s after the one before" % n)
+		at = i
+	assert_eq(HeroScreen.MAGA_ROWS.size(), 5)
