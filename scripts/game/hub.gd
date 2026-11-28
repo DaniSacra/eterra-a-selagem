@@ -14,7 +14,7 @@ extends Node3D
 ## Compêndio, Configurações, Voltar ao título). Its music is its own place in Músicas (MusicCatalog.HUB).
 ## Every screen is hosted by a ScreenHost (shared with the title), and nothing pressed to close one reaches the hub.
 ## No HUD of the fight. Nothing here writes the save (the Livro saves its own Gifts, as on the title).
-## Run straight into it: ~/tools/godot/godot --path . -- --hub [--hero-at=x,z|<station>] [--hub-use=portal|vendor|tree|smith|book]
+## Run straight into it: ~/tools/godot/godot --path . -- --hub [--hero-at=x,z|<station>] [--hub-use=portal|vendor|tree|smith|book] [--no-hero --no-hud --clear-air: clean base captures]
 ## [--hub-menu] [--pad] [--shot=f.png --shot-at=s]
 
 ## The station in focus changed (&"": none) and a station was used.
@@ -85,6 +85,8 @@ func _ready() -> void:
 		arrived = -1.0
 	add_child(player)
 	_show_forge()
+	if Dev.has("no-hero"):
+		player.visible = false  # scenery-only captures (the painted plate's base, as in the rooms); the simulation is untouched
 	camera = Camera3D.new()
 	add_child(camera)
 	camera.make_current()
@@ -103,6 +105,7 @@ func _ready() -> void:
 	ui.layer = 5
 	add_child(ui)
 	host.layer = ui
+	ui.visible = not Dev.has("no-hud")  # base captures: no screens, no guide, no station names (the sign below too)
 	# a screen closed (the menu's Configurações may have changed the quality)
 	host.closed.connect(func(_s: Control) -> void:
 		apply_options()
@@ -239,6 +242,8 @@ func _show_focus() -> void:
 	station_sign = null
 	var id := focus.current
 	focus_changed.emit(id)
+	if Dev.has("no-hud"):
+		return  # no name floating over the station in a clean capture
 	# its light a step brighter and a thread of gold round its slab (HubLook.focus)
 	if arena.look is HubLook:
 		(arena.look as HubLook).focus(id)

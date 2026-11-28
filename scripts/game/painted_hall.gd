@@ -28,6 +28,12 @@ const DEFAULT_ON := true
 ## top of the file with a strip of cliff added below (v_span = the share of the file's height the frame takes).
 const STRETCH := 1.0
 const UNIFORM := 938.0 / 1024.0
+## A room's own scenery by node name (the start of it), for pieces the build gives no meta: "keep" nodes (and subtree) are never
+## dressed (what moves, changes state or glows: the Videira's bed and crown, the water, the lanterns, the station pools and rims,
+## the sky), "hide" nodes are what the painting replaces (the static foliage cards: cypresses, shrubs, flowers, wisteria, ivy).
+## Windows, fires, NPCs, interactables and doors are not opaque stone or stand outside the arena's stone, so they stay as they are.
+const HUB_KEEP: Array[String] = ["BasinWater", "Garden", "VineCrown", "Lanterns", "LanternCaps", "LanternHalos", "Pool_", "FocusRim_", "StationPools", "Sky", "CloudSea"]
+const HUB_HIDE: Array[String] = ["Cypresses", "Shrubs", "Flowers", "Magentas", "Creams", "Wisteria", "Ivy"]
 ## The painters' cameras, by room: the key is the layout id, or "id:variant" for a variant of it (key_of; a variant without
 ## its own entry uses its layout's). Each entry: the painting, the pose it was made at (yaw, pitch, fov, dist, at) and the
 ## mapping (v_span). A new painted room is only an entry here.
@@ -54,7 +60,13 @@ const ROOMS := {
 	&"trial": {&"painting": "res://assets/rooms/painted/trial.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 60.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
 	&"altar": {&"painting": "res://assets/rooms/painted/altar.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 50.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
 	&"seal_chamber": {&"painting": "res://assets/rooms/painted/seal_chamber.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 86.0, &"at": Vector2(-5.0, -2.0), &"v_span": UNIFORM},
+	# PT28-11 (docs/art/hub_pt28_plan.md): the Santuario. Pose = the plan's base capture (centre of the hub, 95 m). Waits for its
+	# painting (AWAITING): until the file exists key_of skips it and the hub is the game's own 3D, untouched.
+	&"hub": {&"painting": "res://assets/rooms/painted/hub.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 95.0, &"at": Vector2(1.6, -9.1), &"v_span": STRETCH,
+		&"keep": HUB_KEEP, &"hide": HUB_HIDE},
 }
+## Entries whose painting is not delivered yet: they are only used once their file exists (delivered, key_of).
+const AWAITING: Array[StringName] = [&"hub"]
 ## A node (and its subtree) the painting never dresses: set this meta to true.
 const KEEP_3D := &"keep_3d"
 ## A node the painting replaces (the painted tree of the Jardim): hidden when the room is painted, its collision stays.
@@ -84,6 +96,8 @@ const WALL_TOP := 120.0
 const SPAN := 160.0
 
 var room: StringName = &"hall"
+## The painters' table this node reads (ROOMS; the tests give their own).
+var table: Dictionary = ROOMS
 var _mat: ShaderMaterial
 var _see: Dictionary = {}
 ## The doors (their leaves and black faces keep their own look).
@@ -96,8 +110,23 @@ static func key_of(layout: RoomLayout, rooms: Dictionary = ROOMS) -> StringName:
 		return &""
 	var k := StringName("%s:%d" % [layout.id, layout.variant_index])
 	if rooms.has(k):
-		return k
-	return layout.id if rooms.has(layout.id) else &""
+		return k if delivered(k, rooms) else &""
+	return layout.id if delivered(layout.id, rooms) else &""
+
+
+## Whether a ROOMS entry's painting can be used: the entry exists and, if it is still AWAITING, so does its file.
+static func delivered(key: StringName, rooms: Dictionary = ROOMS) -> bool:
+	if not rooms.has(key):
+		return false
+	return not key in AWAITING or ResourceLoader.exists((rooms[key] as Dictionary)[&"painting"])
+
+
+## Whether a node's name starts with one of `list` (a room's "keep" or "hide" names).
+static func named(n: Node, list: Array) -> bool:
+	for pre: String in list:
+		if String(n.name).begins_with(pre):
+			return true
+	return false
 
 
 ## True for a room that has a painting in the stylized look (the painting is that look's stone), unless --painted=off. A room
@@ -108,6 +137,11 @@ static func wanted(arena: Arena) -> bool:
 	if Dev.arg("painted") == "off" or not VisualProfile.stylized():
 		return false
 	return DEFAULT_ON or Dev.has("painted")
+
+
+## This node's room pose (its table's).
+func _pose() -> Dictionary:
+	return (table[room] as Dictionary).duplicate() if table.has(room) else {}
 
 
 ## The painter's pose of a room (a copy), or an empty dictionary.
@@ -151,7 +185,7 @@ static func apply(arena: Arena) -> void:
 
 
 func _dress(arena: Arena) -> void:
-	var p := pose_of(room)
+	var p := _pose()
 	_mat = _material(p, 0.0)
 	_walk(arena, arena)
 	apply_props(arena, room)
@@ -221,11 +255,12 @@ func _walk(n: Node, arena: Arena) -> void:
 			continue
 		if c is HallDoor:
 			_doors.append(c)
-		if c is Node3D and c.get_meta(PAINTED_HIDE, false):
+		var own := table.get(room, {}) as Dictionary
+		if c is Node3D and (c.get_meta(PAINTED_HIDE, false) or named(c, own.get(&"hide", []))):
 			VisualProfile.vary(c, {&"visible": false})
 			continue
 		# what moves or changes is the game's own: hazards, and anything marked
-		if c is HazardPiece or c.get_meta(KEEP_3D, false):
+		if c is HazardPiece or c.get_meta(KEEP_3D, false) or named(c, own.get(&"keep", [])):
 			continue
 		# a piece the look hides (the classic-only ones) is left alone; the room itself may still be hidden while it is built
 		if c is Node3D and not (c as Node3D).visible:
@@ -253,11 +288,11 @@ func _one(g: GeometryInstance3D) -> void:
 		if file in HIDDEN:
 			VisualProfile.vary(g, {&"visible": false})
 		elif SOLID.any(func(k: String) -> bool: return file.begins_with(k)):
-			_wear(g, _material(pose_of(room), float(sm.get_shader_parameter(&"see_through") if sm.get_shader_parameter(&"see_through") != null else 0.0), sm))
+			_wear(g, _material(_pose(), float(sm.get_shader_parameter(&"see_through") if sm.get_shader_parameter(&"see_through") != null else 0.0), sm))
 	elif m is StandardMaterial3D:
 		var sm := m as StandardMaterial3D
 		if sm.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED and sm.blend_mode == BaseMaterial3D.BLEND_MODE_MIX:
-			_wear(g, _material(pose_of(room), 0.0))
+			_wear(g, _material(_pose(), 0.0))
 
 
 func _wear(g: GeometryInstance3D, mat: ShaderMaterial) -> void:
