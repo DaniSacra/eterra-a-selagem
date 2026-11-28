@@ -855,7 +855,7 @@ func _heap() -> void:
 func _entry() -> void:
 	var mid := Vector2(_west, (entry.x + entry.y) * 0.5)
 	var w := entry.y - entry.x
-	door_arch(mid, Vector2(1, 0), w, WALL_SET + 0.45)
+	door_arch(mid, Vector2(1, 0), w, WALL_SET + 0.45, WALL_DOOR.y, false)
 	m.stairs(Vector3(_west - 0.05, 0.0, mid.y), Vector2(-1, 0), w, ENTRY_STEPS, 0.2, 0.45, _stair_stone(0.0))
 	tomb.bar(Vector3(_west + 0.04, 0.004, mid.y), Vector3(0.05, 0.008, w), 0.0, tomb.gold())
 

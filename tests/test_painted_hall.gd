@@ -199,3 +199,31 @@ func test_lote4_rooms_resolve_to_their_entries() -> void:
 		assert_true(seen.has(k) or k == &"trial" or k == &"knight_hall" or k == &"elder_hall", "%s: some layout of the stage uses it" % k)
 	for k: StringName in [&"crypt:0", &"crypt:1", &"rift:0", &"rift:1", &"garden:0", &"garden:1", &"sanctuary:0", &"sanctuary:1", &"bridge:0", &"bridge:1", &"altar"]:
 		assert_true(seen.has(k), "%s resolves" % k)
+
+
+## PT28-2: every painted room's exit stands closed behind real leaves (not just a dark hole), they stay the game's own over
+## the plate, and clearing the room opens the one of the exit he takes.
+func test_every_painted_exit_has_closed_leaves_that_open() -> void:
+	Dev.put("painted", "1")
+	var st := _stage()
+	for l: RoomLayout in st.layouts:
+		for v in l.variant_count():
+			var lv := l.variant(v)
+			# (the bridge's exits are stairs going down over the abyss, no doorway to close)
+			if PaintedHall.key_of(lv) == &"" or lv.id == &"bridge":
+				continue
+			var a := Arena.new()
+			add_child_autofree(a)
+			a.build(lv, 2, 1406)
+			var doors := a.find_children("*", "HallDoor", true, false)
+			assert_gt(doors.size(), 0, "%s %d: the exit has leaves" % [lv.id, v])
+			for d in doors:
+				assert_false((d as HallDoor).is_open, "closed in the fight")
+				for g in d.find_children("*", "GeometryInstance3D", true, false):
+					assert_false(_wears_painting(g), "the leaves are the game's own over the plate")
+			a.open_exit(0)
+			var open := 0
+			for d in doors:
+				if (d as HallDoor).is_open:
+					open += 1
+			assert_eq(open, 1, "%s %d: exactly the door taken opens" % [lv.id, v])
