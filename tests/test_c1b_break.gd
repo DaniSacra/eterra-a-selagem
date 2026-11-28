@@ -55,7 +55,7 @@ func test_common_life_and_warnings() -> void:
 	# (2026-11-23, ENEMY_WINDUP 0.8: it was 0.75 and 0.85)
 	assert_almost_eq(_def("skeleton").attack_windup, 0.6, 0.001)
 	assert_almost_eq(_def("runner").attack_windup, 0.68, 0.001)
-	assert_eq([_def("skeleton_elite").hp, _def("archer_elite").hp], [2700.0, 2250.0])  # the Major Hammer and the Major Axe x1.8 (PT-27b)
+	assert_eq([_def("skeleton_elite").hp, _def("archer_elite").hp], [1500.0, 875.0])  # the Major Hammer x1.0 and the Major Axe x0.7, a ranged one kites (PT-28-7)
 	assert_eq(HeroDef.warrior().hurt_invuln, 0.7)
 
 

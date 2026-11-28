@@ -9,4 +9,5 @@
 | [balance/sworn-lots.md](balance/sworn-lots.md) | M-3, M-4, SW-C4 a C8, SW-B2, SW-REA, revisão 2026-11-26 e PM-4 | 2026-11-25 M-3; SW-C4 a C8; SW-B2: sorteio das Bênçãos; SW-REA; ... |
 | [balance/blessings-and-chapter1.md](balance/blessings-and-chapter1.md) | Bênçãos V1 e V2 e retorno, Capítulo 1 = SWORN Kingswood, SW-R1b | Bênçãos V1; Bênçãos V2 e retorno 2026-11-26; Capítulo 1 = SWORN Kingswood; SW-R1b: menos inimigos por sala, as quatro primeiras es |
 | [balance/pt27b-hero-damage.md](balance/pt27b-hero-damage.md) | PT-27b: dano do herói x2,25, vida dos fortes e de Morvath, tabela antes e depois | PT-27b |
+| [balance/pt28-elites.md](balance/pt28-elites.md) | PT-28-7: elites de volta a x1,0 (a distância x0,7, Capitão x1,2), tempo para matar | PT-28 |
 | [balance/historico-measure-2026-11-19.md](balance/historico-measure-2026-11-19.md) | Histórico: medição de 2026-11-19 (seções 1 a 8, com 3.1 a 3.7 e 6; metas substituídas pelo Lote B) | Medição de 2026-11-19; 1. Direção do PO; 2. Como medi; 3. Estado medido; ... |

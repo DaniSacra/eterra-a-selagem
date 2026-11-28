@@ -1131,8 +1131,10 @@ func _step_in(node: ComboNode) -> void:
 	if node.step <= 0.0:
 		return
 	var traps: Array[Rect2] = ground.room_rects() if ground != null else []
-	if not StepRules.into_trap(pos, facing, node.step, traps, RADIUS):
-		_step += facing * StepRules.speed(node.step)  # (adds: the last blow's tail is still fading when the next lands)
+	var seek := horde.nearest_ahead(pos, facing, StepRules.SEEK_RANGE, StepRules.SEEK_HALF_ARC) if horde else null
+	var dir := StepRules.steer(pos, facing, seek.pos if seek else Vector2.INF)
+	if not StepRules.into_trap(pos, dir, node.step, traps, RADIUS):
+		_step += dir * StepRules.speed(node.step)  # (adds: the last blow's tail is still fading when the next lands)
 
 
 func _follow_through(node: ComboNode) -> void:

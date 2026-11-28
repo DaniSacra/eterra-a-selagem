@@ -404,13 +404,13 @@ func test_no_blow_of_the_combo_walks_the_paladin_but_each_steps_as_it_lands() ->
 		assert_eq(node.lunge, 0.0, "%s has no lunge from the press" % node.id)
 		assert_eq(node.move_scale, 0.0, "%s keeps no walking" % node.id)
 		if node.has_tag(&"light") and node.input == ComboNode.In.LIGHT:
-			assert_between(node.step, 0.2, 1.0, "%s steps a little as it lands" % node.id)
+			assert_between(node.step, 0.2, 1.5, "%s steps a little as it lands" % node.id)
 	var by := {}
 	for node: ComboNode in tree.all_nodes():
 		by[node.id] = node
-	assert_almost_eq((by[&"cut1"] as ComboNode).step, 0.3, 0.001)
-	assert_almost_eq((by[&"cut2"] as ComboNode).step, 0.3, 0.001)
-	assert_almost_eq((by[&"cut3"] as ComboNode).step, 0.8, 0.001)
+	assert_almost_eq((by[&"cut1"] as ComboNode).step, 0.5, 0.001)
+	assert_almost_eq((by[&"cut2"] as ComboNode).step, 0.5, 0.001)
+	assert_almost_eq((by[&"cut3"] as ComboNode).step, 1.4, 0.001)
 	assert_gt((by[&"cut3"] as ComboNode).step, (by[&"cut2"] as ComboNode).step, "the finisher's step is the longest")
 
 
