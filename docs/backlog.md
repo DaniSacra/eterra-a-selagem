@@ -179,7 +179,7 @@ vale a regra do Daniel (sempre commit e push). As seções abaixo ficam como his
 | id | o quê | origem | dono |
 |---|---|---|---|
 | BG-1 | Efeitos a confirmar no jogo de hoje e corrigir só se ainda acontecem: facho de recompensa (`RewardShaft`) ligado à sala vencida, loja e fonte; contato com miolo branco e pontas em cruz; traço branco vertical sobre a vítima; `glint` cobrindo o herói; lascas acesas acima da cabeça; clarão de Morvath perdendo o violeta; onda do especial acertando em cruz de 4 pontas; Círculo com disco branco chapado; preparo do Feiticeiro acima do teto | PK-1 fase B | technical-artist, art-director confere |
-| BG-2 | Bolinha escura ao lado do medalhão da Bênção; na Provação os dois medalhões se encostam e o título aparece duas vezes | sobras SW fase 1 | ui-ux-designer |
+| BG-2 | Bolinha escura ao lado do medalhão da Bênção; na Provação os dois medalhões se encostam e o título aparece duas vezes | sobras SW fase 1 | ui-ux-designer **Feito 2026-11-27:** medalhões da Provação menores e título uma vez (63f52a50); varredura: miolo branco do facho de recompensa apagado (traço fino no HUD 1080p) |
 | BG-3 | Retângulo (`Rect2`) negativo na Maga | PK-3 testes | gameplay-engineer | **2026-11-27: não reproduz** (testes da Maga e `--smoke --hero=maga` sem erro); reabrir se aparecer o texto do erro |
 | BG-4 | `--smoke` ignora `--hub`: o robô não testa o Santuário | QA 26b | qa-performance |
 
@@ -195,12 +195,12 @@ vale a regra do Daniel (sempre commit e push). As seções abaixo ficam como his
 ### 3. Quickwins (horas)
 | id | o quê | dono |
 |---|---|---|
-| QW-1 | Números de dano empilhados (`fx.gd`) | technical-artist |
+| QW-1 | Números de dano empilhados (`fx.gd`) | technical-artist **Feito 2026-11-27:** espalha para o lado (NUMBER_SIDE_TRIES, 2802f22c) |
 | QW-2 | Capitão chama ajudantes na pose de andar (falta pose de chamado) | gameplay-engineer |
 | QW-3 | Aviso da pedra que cai (`DropFloor`) chapado; xadrez claro das Runas; torres de ruína chapadas da ponte | environment-artist |
 | QW-4 | Faixa de água e musgo da sala com brilho forte que compete com os avisos no chão | environment-artist |
-| QW-5 | Linha de objetivo no Santuário: ligar ou apagar as chaves | ui-ux-designer |
-| QW-6 | Dicas longas na linha de objetivo em 720p | ui-ux-designer |
+| QW-5 | Linha de objetivo no Santuário: ligar ou apagar as chaves | ui-ux-designer **Feito 2026-11-27:** linha apagada no Santuário e chaves removidas (63f52a50) |
+| QW-6 | Dicas longas na linha de objetivo em 720p | ui-ux-designer **Feito 2026-11-27:** largura fixa 420 com quebra de linha (63f52a50) |
 | QW-7 | Passos Leves (Galael) talvez fraco: medir fora do robô | balance-designer |
 
 ### 4. Pequenas melhorias (até 1 dia)
