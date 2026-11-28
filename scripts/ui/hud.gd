@@ -81,6 +81,8 @@ func _layout_bars() -> void:
 ## The build column on the right edge: where its middle stands (share of the height) and the room it keeps (the edge
 ## chevrons stay out of it). The coins' corner and the gifts over it.
 const COLUMN_MID := 0.46
+## The room under the left column's five places for its live-state chips and the Tab hint.
+const SLOTS_FOOT := 80.0
 const EDGE_RIGHT := BuildColumn.WIDTH + BuildColumn.MARGIN + 12.0
 const PASSIVE_LIFT := 40.0
 ## The Brado's buff beside the life bar: the gap right of it.
@@ -166,7 +168,7 @@ const SHOOTER_COLOR := Color(1.0, 0.78, 0.4)
 const POINTER_SIZE := 18.0
 const VIEW_INSET := 16.0
 ## (The bottom clears the caption over the ultimate's diamond, "Maestria 2", BUG-111.)
-const EDGE_INSET := Vector4(30.0, 96.0, EDGE_RIGHT, 148.0)
+const EDGE_INSET := Vector4(MARGIN + SlotColumn.WIDTH + 14.0, 96.0, EDGE_RIGHT, 148.0)
 ## The actions in the order of the diamonds (left button, right button, Q the Brado, E the Investida, then the ultimate's
 ## diamond on Shift, then the dodge on Space: docs/design/heroes/guerreiro.md 3), with the gift slot that changes each.
 ## The Brado takes the circle's Blessing slot (CAST); the Investida has none (Boon.Slot.NONE). A diamond of a move the
@@ -224,7 +226,8 @@ var _oficios_seen := {}
 var _coins: CoinCorner
 var _column: BuildColumn
 ## PT28-6: the Blessings by angel, shown while Tab is held.
-var _groups: BlessingGroups
+var _slot_col: SlotColumn
+var _tab: BlessingTab
 var _column_hidden := false
 var _vignette: LifeVignette
 var _buff: BuffMark
@@ -283,6 +286,8 @@ var _veil_t := 0.0
 var _veiled := false
 var _passives_veiled := false
 var _column_veiled := false
+var _slot_col_veiled := false
+var _slot_col_alpha := 0.0
 var _column_alpha := 0.0
 ## The diamonds' body opacity (they fade only their bodies, ActionSlot.veil).
 var _slot_alpha := 1.0
@@ -546,12 +551,26 @@ func _build_column() -> void:
 	_column.offset_left = -BuildColumn.WIDTH - BuildColumn.MARGIN
 	_column.offset_top = -BuildColumn.height_for(0) * 0.5
 	_column.offset_bottom = BuildColumn.height_for(0) * 0.5
-	_groups = BlessingGroups.new().setup()
-	add_child(_groups)
-	_groups.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
-	_groups.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	_groups.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_groups.offset_right = -BuildColumn.MARGIN
+	# PT28-6 option A: the five places of the buttons' Blessings on the LEFT edge (top fixed, so a place never moves), and the Tab
+	# panel beside it
+	_slot_col = SlotColumn.new().setup()
+	add_child(_slot_col)
+	_slot_col.anchor_top = COLUMN_MID
+	_slot_col.anchor_bottom = COLUMN_MID
+	_slot_col.offset_left = MARGIN
+	_slot_col.offset_right = MARGIN + SlotColumn.WIDTH
+	_slot_col.offset_top = -SlotColumn.ROW_H * SlotColumn.SLOTS.size() * 0.5
+	_slot_col.offset_bottom = _slot_col.offset_top + SlotColumn.ROW_H * SlotColumn.SLOTS.size() + SLOTS_FOOT
+	_tab = BlessingTab.new().setup()
+	add_child(_tab)
+	_tab.anchor_top = COLUMN_MID
+	_tab.anchor_bottom = COLUMN_MID
+	_tab.offset_left = MARGIN + SlotColumn.WIDTH + 12.0
+	_tab.offset_top = _slot_col.offset_top
+	_tab.offset_bottom = _slot_col.offset_top
+	_tab.grow_vertical = Control.GROW_DIRECTION_END
+	_slot_col.inspected.connect(_tab.inspect)
+	_slot_col.picked.connect(_tab.pin)
 
 
 ## Bottom centre: the action diamonds, centred; the gifts that act alone sit in the bottom right corner over the coins.
@@ -844,12 +863,16 @@ func _process(delta: float) -> void:
 	# diamonds: the pile of Blessings and the diamonds wait under it (art review 2026-11-25 sweep)
 	var picking := game._screen is BoonChoice
 	_action_row.visible = not picking
-	_groups.visible = Controls.held(&"show_blessings") and _groups.has_content() and not meeting and not picking
+	var tabbing := Controls.held(&"show_blessings") and _slot_col.has_content() and not meeting and not picking and game.mode != Game.Mode.PAUSE
+	_tab.set_open(tabbing)
+	_slot_col.set_interactive(tabbing)
 	if meeting or picking:
 		_column.visible = false
+		_slot_col.visible = false
 		_column_hidden = true
 	else:
-		_column.visible = _column.has_content() and game.mode == Game.Mode.PAUSE  # PT28-6: in play only the Tab panel
+		_column.visible = _column.has_content() and game.mode == Game.Mode.PAUSE  # the pause lists everything on the right
+		_slot_col.visible = game.mode != Game.Mode.PAUSE
 		if _column_hidden:
 			_column_hidden = false
 			_build_key = ""
@@ -1067,6 +1090,7 @@ func _update_buff(p: Player) -> void:
 func _update_column() -> void:
 	_column.names_all = game.mode == Game.Mode.PAUSE  # the pause reads the whole build; in play a name shows when gained or hovered
 	_column.tick(game.skills)
+	_slot_col.tick(game.skills)
 	var psalm: PsalmDef = game.psalms.taken.back() if game.psalms != null and not game.psalms.taken.is_empty() else null
 	var kind := game.ults.def.kind if game.ults != null and game.ults.def != null else -1
 	var key := "%s|%s|%d" % [",".join(game.boons.owned().map(func(b: Boon) -> String: return "%s:%d:%d" % [b.id, game.boons.level(b.id), game.boons.rarity(b.id)])),
@@ -1075,12 +1099,13 @@ func _update_column() -> void:
 		return
 	_build_key = key
 	_column.show_build(game.boons, BoonIcon.ULT_GLYPH + kind if kind >= 0 else -1, psalm)
-	_groups.show_boons(game.boons.owned())
+	_slot_col.show_build(game.boons, BoonIcon.ULT_GLYPH + kind if kind >= 0 else -1)
+	_tab.show_build(game.boons)
 	# UI 15: only the Blessings gained; the banner is as tall as they are, around the same middle
 	var h := _column.custom_minimum_size.y
 	_column.offset_top = -h * 0.5
 	_column.offset_bottom = h * 0.5
-	_column.visible = _column.has_content() and game.mode == Game.Mode.PAUSE  # PT28-6: in play only the Tab panel
+	_column.visible = _column.has_content() and game.mode == Game.Mode.PAUSE
 
 
 ## The ultimate's diamond (T5): sealed with the Mastery level it needs, or its charge; a refused press shows why for
@@ -1452,9 +1477,12 @@ func _update_veil(delta: float) -> void:
 		_veiled = _someone_behind(_action_row.get_global_rect(), true)
 		_passives_veiled = _someone_behind(_passives_rect())
 		_column_veiled = _someone_behind(_column.get_global_rect())
+		_slot_col_veiled = _someone_behind(_slot_col.get_global_rect())
 	_passives.modulate.a = move_toward(_passives.modulate.a, VEIL_ALPHA if _passives_veiled else 1.0, delta * VEIL_SPEED)
 	_column_alpha = move_toward(_column_alpha, 1.0 if _column_veiled else 0.0, delta * VEIL_SPEED)
 	_column.veil(_column_alpha)
+	_slot_col_alpha = move_toward(_slot_col_alpha, 1.0 if _slot_col_veiled else 0.0, delta * VEIL_SPEED)
+	_slot_col.veil(_slot_col_alpha)
 	var a := move_toward(_slot_alpha, VEIL_ALPHA if _veiled else 1.0, delta * VEIL_SPEED)
 	_slot_alpha = a
 	# the diamonds fade only their bodies: what they say (glyph, recharge, key) stays whole
