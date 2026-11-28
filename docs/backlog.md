@@ -3,6 +3,25 @@
 
 > Este arquivo guarda só o que está aberto. O histórico até 2026-11-26 está em `docs/backlog/historico_ate_2026-11-26.md`.
 
+## Para o Daniel ao voltar (2026-11-28, exe `b434eaf4` nas 3 pastas)
+
+**Entrou nesta rodada**
+- Capítulo II, começo (C2-A): Átrio depois de Morvath (fonte, mercador, Graça de Galael, portal), chegada de cometa "O Bosque Submerso", 3 salas próprias do Bosque em greybox (Portões com água rasa -15%, Jardim dos Esporos com nuvens nos cogumelos, Templo Inundado com raízes que sobem), 4 inimigos (Esporinho, Retorcido, Flor Espinhosa, Sapo do Brejo) e a tela "Fim da prévia". Testar: `Teste - Capitulo II (Bosque).bat`.
+- Maga Redesign V1 jogável: kit novo, efeitos próprios de cada feitiço, tela do herói na ordem nova, lição dela na Antessala, Como Jogar dela.
+- Salas pintadas (PT28-12): faces de lado (paredes, degraus, pilares) mostram pedra com a cor local da pintura em vez de esticar; a árvore do Jardim vira 3D quando a câmera sai da pose. 73 capturas de 4 cantos em `docs/gallery/pt28_angles/`.
+- Santuário: Videira grande no meio, cachoeiras, Vigília sem poça branca, luz de fim de tarde, nomes das estações só de perto. A placa pintada (`hub.png`) está pronta mas DESLIGADA (perto da chegada ainda escorre; penhasco lilás destoa).
+- Dificuldade do Capítulo I (F1, robô 12 sementes): 6 de 12 chegavam a Morvath e 0 venciam; Morvath com 12% menos vida (12600) e o Ancião chama mais devagar (4,6 s). Ainda não remedido.
+- HUD de Bênçãos à esquerda (opção A), passos maiores nos golpes, portas fechadas, 159 ícones, sala de Morvath pintada, assados 72,8 para 48,5 MB.
+
+**Para você decidir ou conferir**
+1. Piso da praça do Santuário ficou laranja e claro demais (contra a regra de chão médio escuro): escureço na próxima rodada.
+2. Ligar a placa pintada do Santuário só depois de repintar a borda oeste e a base dos penhascos (~US$ 0,25)?
+3. Arte por IA do Capítulo II (4 inimigos, Portões, Átrio) em `Downloads\ASelagem-GP8\GPT-Cap2`: aprovar para virar modelo e placa.
+4. D2-2 nome "Ancião Retorcido"; D2-4 fala de Galael no Átrio (escrita pelo agente, sem cânone); D2-3 lore da Rainha adiada.
+5. Árvore 3D do Jardim de perto ficou grande e cobre parte da sala: aceitar ou reduzir?
+6. Passos maiores nos golpes do Guerreiro: o toque ficou bom?
+
+
 ## Plano 2026-11-28: fechar o Capítulo I e começar o II (game-director, commit lido `f5ed4045`)
 
 Pedido do Daniel (fora por 8 h): "faz tudo... finalizar o capítulo 1... e depois já faz o começo do capítulo 2". Estado em 5 linhas:
