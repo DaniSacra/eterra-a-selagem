@@ -69,6 +69,8 @@ var dome: Dome
 var frost: Patch
 var _embers: Array[Patch] = []
 var pips: StatePips
+## F7: her own spell effects (maga_fx.gd), a child of this node.
+var vfx: MagaFx
 ## How many reaction names the screen takes (UX-08): the first three of each, six words a second.
 var words := WordBudget.new()
 ## What the kit did in this run (RESULT arcane).
@@ -104,6 +106,8 @@ func setup(g: Game) -> void:
 	book = kit.make_book()
 	pips = StatePips.new()
 	add_child(pips)
+	vfx = MagaFx.new()
+	add_child(vfx)
 	g.player.dodged.connect(_on_dodged)
 
 
@@ -112,6 +116,7 @@ func clear() -> void:
 	book.clear_all()
 	_burn_acc.clear()
 	_end_frost()
+	vfx.clear()
 	for p in _embers:
 		p.node.queue_free()
 	_embers.clear()
@@ -147,6 +152,7 @@ func _configure() -> void:
 
 func step(dt: float) -> void:
 	_configure()
+	vfx.step(dt)
 	for k in book.keys():
 		if not (k as Enemy).alive:
 			book.clear(k)
@@ -361,6 +367,13 @@ func _play(r: Reaction) -> void:
 			burst = &"frost"
 			sound = &"react_crystal"
 	# one burst a reaction (CF-07): one ring and one puff, in the reaction's color; the sound once a react_gap however many pop
+	match r.kind:
+		Reaction.Kind.THERMAL:
+			vfx.thermal(e.pos)
+		Reaction.Kind.OVERLOAD:
+			vfx.overload(e.pos, r.radius)
+		_:
+			vfx.crystallize(e.pos)
 	fx.ring(e.pos, r.radius if r.kind == Reaction.Kind.OVERLOAD else REACT_RING, color, REACT_TIME, 0.15, true)
 	fx.burst(burst, at)
 	if book.now - _react_sound_t >= kit.react_gap:
@@ -431,6 +444,7 @@ func _combust(first: Enemy, shot: Projectiles.Shot) -> void:
 		if not game.combat.hit_enemy(n, shot.damage * mult, shot.tags, away, kit.combust_knockback, false, true):
 			apply_element(n, ElementBook.FIRE)
 	var fx := game.fx
+	vfx.impact(at, radius)
 	fx.ring(at, radius, ElementLook.FIRE, 0.35, 0.15, true)
 	fx.burst(&"fire", Vector3(at.x, 0.6, at.y))
 	fx.shake(1.8 if radius >= 2.5 else 0.8)  # (a subtle shake, and only for the big ones)
@@ -473,7 +487,11 @@ func _share_of(node: ComboNode) -> float:
 func throw_spell(node: ComboNode, origin: Vector2, dir: Vector2, color: Color, tags: Array[StringName]) -> void:
 	var share := _share_of(node)
 	var group := _new_conj()
-	for way in ArcaneKit.fan(dir, node.effect_fan, node.effect_fan_deg):
+	var ways := ArcaneKit.fan(dir, node.effect_fan, node.effect_fan_deg)
+	if not node.is_release():
+		vfx.tip_flare(origin, dir, MagaFx.AMBER)
+		vfx.trails(origin, ways)
+	for way in ways:
 		var shot := game.combat.throw_wave(node, origin, way, color, tags, share)
 		shot.group = group
 	thrown(node)
@@ -494,6 +512,8 @@ func _breath(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		if not game.combat.hit_enemy(e, kit.breath_damage * mult, node.tags, away, kit.breath_knockback, false):
 			apply_element(e, ElementBook.ICE)
 	tally.breaths += 1
+	vfx.tip_flare(origin, dir, MagaFx.ICE, 0.5)
+	vfx.cone(origin, dir, reach, kit.breath_deg)
 	# the cone's edge reads (a pale ribbon), crystals along it and a thin mist at the tip (no blood, no neon)
 	fx.slash(origin, dir, reach, kit.breath_deg, ElementLook.COLD, 0.22, false, 0.9, false, Fx.BLADE_REACH, true)
 	for k in [-0.5, 0.0, 0.5]:
@@ -531,13 +551,16 @@ func _step_preview() -> void:
 		_preview = _disc(1.0, ElementLook.COLD, 0.16)
 	var m := _preview.material_override as StandardMaterial3D
 	var c := ElementLook.COLD if cold else ElementLook.FIRE
-	m.albedo_color = Color(c.r, c.g, c.b, 0.12 + 0.12 * share)
+	m.albedo_color = Color(c.r, c.g, c.b, 0.07 + 0.09 * share)  # (faint: a warning under it keeps reading)
+	vfx.hold_orb(true, p.pos, p.facing, share, not cold)
 	_preview.visible = true
 	_preview.position = Vector3(spot.x, 0.06, spot.y)
 	_preview.scale = Vector3(radius, 1.0, radius)
 
 
 func _hide_preview() -> void:
+	if vfx != null:
+		vfx.hold_orb(false, Vector2.ZERO, Vector2.RIGHT, 0.0, true)
 	if _preview != null:
 		_preview.visible = false
 
@@ -553,7 +576,8 @@ func _frost(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	p.life = (kit.frost_time + _stat(&"geada_time_add")) * (1.0 + _stat(&"area_time_pct"))
 	p.tick = 0.0
 	p.conj = _new_conj()
-	p.node = _disc(p.radius, ElementLook.COLD, 0.28)
+	p.node = _disc(p.radius, ElementLook.COLD, 0.1)  # (a faint base: the painted frost of MagaFx is the ground)
+	vfx.frost(p.at, p.radius, p.life)
 	p.node.position = Vector3(p.at.x, 0.05, p.at.y)
 	frost = p
 	tally.frosts += 1
@@ -585,6 +609,8 @@ func _step_frost(dt: float) -> void:
 
 
 func _end_frost() -> void:
+	if vfx != null:
+		vfx.end_frost()
 	if frost != null:
 		frost.node.queue_free()
 		frost = null

@@ -570,7 +570,8 @@ func _storm_start(dir: Vector2) -> void:
 		wait += kit.storm_step
 		from = e.pos
 	if route.is_empty():  # nothing in reach: the bolt goes out ahead all the same (it is spent)
-		game.fx.arc_leap(origin, origin + dir * 4.0)
+		game.arcane.vfx.bolt(origin, origin + dir * 4.0)
+	game.arcane.vfx.tip_flare(origin, dir, MagaFx.GOLD, 0.9, 0.3)  # (the staff trembles and shines before the first leap)
 	game.fx.shake(1.2)
 	Audio.play(CombatSounds.EVENTS[&"ult_implode"])
 
@@ -590,7 +591,7 @@ func _storm_strike(s: Dictionary) -> void:
 	var from: Vector2 = s.from
 	var at := Vector3(e.pos.x, 1.0 + e.y, e.pos.y)
 	var fx := game.fx
-	fx.arc_leap(from, e.pos)
+	game.arcane.vfx.bolt(from, e.pos)
 	fx.burst(&"spark", at)
 	fx.ring(e.pos, 1.0, ElementLook.VOLT, 0.25, 0.1, true)
 	if not e.alive or e.invulnerable:
