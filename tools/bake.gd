@@ -1143,7 +1143,7 @@ func _pack(out: BakedModel, clips: Dictionary) -> void:
 		var ground := BakedModel.ground_of(walk, dt)
 		out.ground_speed["walk"] = ground
 		print("  walk: the floor runs %.2f m/s under the planted foot, it slides %.3f m a step" % [ground, BakedModel.slide_per_step(walk, dt, ground)])
-	print("  %d vertices, %d poses, pose images %dx%d" % [out.vertices, out.positions.get_height() * BakedModel.WIDTH / maxi(out.vertices, 1), BakedModel.WIDTH, out.positions.get_height()])
+	print("  %d vertices (%d points), %d poses, pose images %dx%d" % [out.vertices, out.uniques, out.normals.get_height() * BakedModel.WIDTH / maxi(out.vertices, 1), BakedModel.WIDTH, out.positions.get_height()])
 
 
 ## The figure's skeleton in the pose of a clip at t seconds (see MODELS for the clip's fields).

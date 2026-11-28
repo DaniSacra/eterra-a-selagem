@@ -102,7 +102,7 @@ func test_a_walking_soldier_never_repeats_a_pose_at_30_fps() -> void:
 		last = shown
 
 
-## The poses kept in the images are the ones baked (half floats: a millimeter or two; normals to a degree or two).
+## The poses kept in the images are the ones baked (10 bits inside each vertex's box: a millimeter or three; normals to a degree or two).
 func test_the_pose_images_keep_the_poses() -> void:
 	var a := PackedVector3Array([Vector3(0.1, 1.9, -0.3), Vector3(-0.5, 0.02, 0.7), Vector3(0, 0, 0)])
 	var b := PackedVector3Array([Vector3(0.12, 1.85, -0.2), Vector3(-0.4, 0.0, 0.6), Vector3(2, 1, 0)])
@@ -112,7 +112,7 @@ func test_the_pose_images_keep_the_poses() -> void:
 	m.pack(mesh, {"walk": [[a, n], [b, n]], "idle": [[b, n]]})
 	assert_eq(m.vertices, 3)
 	assert_eq(m.first, {"walk": 0, "idle": 2})
-	assert_eq(m.positions.get_format(), Image.FORMAT_RGBAH)
+	assert_eq(m.positions.get_format(), Image.FORMAT_RGBA8)
 	for v in 3:
 		assert_almost_eq(m.position(&"walk", 0, v), a[v], Vector3.ONE * 0.002)
 		assert_almost_eq(m.position(&"walk", 1, v), b[v], Vector3.ONE * 0.002)
@@ -131,8 +131,9 @@ func test_every_figure_is_one_mesh_and_its_poses() -> void:
 		var rows := 0
 		for anim: StringName in m.frames:
 			rows += m.frame_count(anim)
-		assert_eq(m.positions.get_height(), ceili(float(rows * m.vertices) / BakedModel.WIDTH), String(id))
-		assert_eq(m.normals.get_height(), m.positions.get_height())
+		assert_eq(m.normals.get_height(), ceili(float(rows * m.vertices) / BakedModel.WIDTH), String(id))
+		assert_eq(m.positions.get_height(), ceili(float(rows * m.uniques) / BakedModel.WIDTH), String(id))
+		assert_lt(m.uniques, m.vertices, "%s keeps one point for the vertices that stand together" % id)
 		var verts: PackedVector3Array = m.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 		for v in [0, m.vertices / 2, m.vertices - 1]:
 			assert_almost_eq(m.position(&"idle", 0, v), verts[v], Vector3.ONE * 0.004, "%s vertex %d" % [id, v])

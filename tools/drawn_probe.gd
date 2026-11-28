@@ -40,11 +40,10 @@ func _row_stats(model: BakedModel, row: int) -> Array:
 	var n := 0
 	var img: Image = model.positions
 	for v in range(0, model.vertices, 5):
-		var i := row * model.vertices + v
-		var p := img.get_pixel(i % BakedModel.WIDTH, i / BakedModel.WIDTH)
-		sum += Vector3(p.r, p.g, p.b)
-		lo = minf(lo, p.g)
-		hi = maxf(hi, p.g)
+		var p := model.position_at(row, v)
+		sum += p
+		lo = minf(lo, p.y)
+		hi = maxf(hi, p.y)
 		n += 1
 	var s := sum / maxf(n, 1)
 	var r := [s, lo, hi]

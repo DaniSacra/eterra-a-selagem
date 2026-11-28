@@ -169,9 +169,7 @@ func _mean(m: BakedModel, row: int) -> Vector3:
 		var sum := Vector3.ZERO
 		var n := 0
 		for v in range(0, m.vertices, 5):
-			var i := row * m.vertices + v
-			var c := m.positions.get_pixel(i % BakedModel.WIDTH, i / BakedModel.WIDTH)
-			sum += Vector3(c.r, c.g, c.b)
+			sum += m.position_at(row, v)
 			n += 1
 		_means[row] = sum / n
 	return _means[row]

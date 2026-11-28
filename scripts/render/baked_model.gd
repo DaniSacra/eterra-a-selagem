@@ -5,7 +5,7 @@ extends Resource
 ##
 ## E1a (VX-04): the poses are a vertex animation. One mesh (the figure's triangles and texture coordinates) and, for
 ## every pose of every clip, where each of its vertices stands and which way it faces, in two images: `positions`
-## (half floats, RGBA) and `normals` (octahedral, RG8). The texel of vertex v in pose p (the pose's row over all the
+## (10 bits a axis inside the box each vertex travels, 4 bytes RGBA8, see `bounds`) and `normals` (octahedral, RG8). The texel of vertex v in pose p (the pose's row over all the
 ## clips: first[anim] + its frame) is p * vertices + v, laid in rows of WIDTH. crowd_pose.gdshaderinc reads two poses
 ## and blends them by the instance's colour (CrowdRenderer.add_kind), so a figure moves between its poses, never
 ## jumps (until E1a it showed int(t * fps) of one mesh per pose: 4 to 10 poses a clip, a stop motion beside the hero).
@@ -16,8 +16,18 @@ const WIDTH := 2048
 ## The figure's triangles and texture coordinates (and, as plain vertices, its first idle pose: what a lab or a test
 ## that only wants the shape reads).
 @export var mesh: Mesh
-## Every pose's vertex positions (Image.FORMAT_RGBAH) and normals (Image.FORMAT_RG8, octahedral), see above.
+## Every pose's vertex positions and normals (Image.FORMAT_RG8, octahedral), see above. A position is 3 x 10 bits in the
+## 4 bytes of an RGBA8 texel (x low, then y, then z; the top 2 bits are free), each a share 0..1023 of the box that
+## point travels over all its poses (F2: the bake kept half floats at 8 bytes a texel; this is 4, the step is
+## 1 to 3 mm, what a half float has at 1 to 2 m). Vertices that stand on the same point in every pose (the copies a
+## texture seam or a hard edge makes: 60% of them) share one texel: `uniques` points a pose, the texel of point u in
+## pose p (its row over all the clips) is p * uniques + u. Normals stay one per vertex (p * vertices + v).
 @export var positions: Image
+## Per vertex (F2): RGBAF, WIDTH wide, `bound_rows()` rows of (the minimum of its point's box, its point's number in the
+## alpha) then as many of the box's size, vertex v at texel (v % WIDTH, v / WIDTH) of each.
+@export var bounds: Image
+## Points the poses keep (see positions).
+@export var uniques := 0
 @export var normals: Image
 ## Vertices of the mesh (each pose has this many texels).
 @export var vertices := 0
@@ -54,6 +64,7 @@ var _pos_tex: ImageTexture
 ## LC-1 to LC-3: point() measured once per (part, animation): the mean of the part in each pose of the clip.
 var _tracks := {}
 var _normal_tex: ImageTexture
+var _bound_tex: ImageTexture
 
 
 func frame_count(anim: StringName) -> int:
@@ -102,14 +113,30 @@ func pose_textures() -> Array[Texture2D]:
 	if _pos_tex == null and positions != null:
 		_pos_tex = ImageTexture.create_from_image(positions)
 		_normal_tex = ImageTexture.create_from_image(normals)
-	return [_pos_tex, _normal_tex]
+		_bound_tex = ImageTexture.create_from_image(bounds)
+	return [_pos_tex, _normal_tex, _bound_tex]
+
+
+## Rows of the bounds image holding the boxes' minimums (the sizes follow).
+func bound_rows() -> int:
+	return ceili(float(vertices) / WIDTH)
+
+
+## Where vertex v stands in the pose at row `row` (first[anim] + frame), decoded.
+func position_at(row: int, v: int) -> Vector3:
+	var rows := bound_rows()
+	var lo := bounds.get_pixel(v % WIDTH, v / WIDTH)
+	var size := bounds.get_pixel(v % WIDTH, v / WIDTH + rows)
+	var i := row * uniques + roundi(lo.a)
+	var c := positions.get_pixel(i % WIDTH, i / WIDTH)
+	var bits := roundi(c.r * 255.0) | (roundi(c.g * 255.0) << 8) | (roundi(c.b * 255.0) << 16) | (roundi(c.a * 255.0) << 24)
+	var q := Vector3(bits & 1023, (bits >> 10) & 1023, (bits >> 20) & 1023) / 1023.0
+	return Vector3(lo.r + q.x * size.r, lo.g + q.y * size.g, lo.b + q.z * size.b)
 
 
 ## Where vertex v stands in pose `frame` of an animation (read from the image, for tests and measures).
 func position(anim: StringName, frame: int, v: int) -> Vector3:
-	var i := (int(first.get(anim, 0)) + frame) * vertices + v
-	var c := positions.get_pixel(i % WIDTH, i / WIDTH)
-	return Vector3(c.r, c.g, c.b)
+	return position_at(int(first.get(anim, 0)) + frame, v)
 
 
 ## Every vertex of one pose (see position()).
@@ -268,8 +295,67 @@ func pack(shape: Mesh, clips: Dictionary) -> void:
 		frames[anim] = (clips[anim] as Array).size()
 		total += frames[anim]
 	var rows := ceili(float(total * vertices) / WIDTH)
-	var floats := PackedFloat32Array()
-	floats.resize(rows * WIDTH * 4)
+	# the points: vertices that stand on the same spot in every pose share one
+	var slot_of := PackedInt32Array()
+	slot_of.resize(vertices)
+	var leads := PackedInt32Array()
+	var by_spot := {}
+	var tracks: Array = []
+	for anim: String in clips:
+		for p: Array in clips[anim]:
+			tracks.append(p[0])
+	var lead_pose: PackedVector3Array = tracks[0]
+	for v in vertices:
+		var key := Vector3i((lead_pose[v] * 10000.0).round())
+		var found := -1
+		for s: int in by_spot.get(key, []):
+			var l := leads[s]
+			var same := true
+			for pv: PackedVector3Array in tracks:
+				if pv[v].distance_squared_to(pv[l]) > 0.0000005:
+					same = false
+					break
+			if same:
+				found = s
+				break
+		if found < 0:
+			found = leads.size()
+			leads.append(v)
+			by_spot[key] = by_spot.get(key, []) + [found]
+		slot_of[v] = found
+	uniques = leads.size()
+	var prows := ceili(float(total * uniques) / WIDTH)
+	# the box each point travels over all its poses
+	var lo := PackedVector3Array()
+	var hi := PackedVector3Array()
+	lo.resize(uniques)
+	hi.resize(uniques)
+	lo.fill(Vector3.INF)
+	hi.fill(-Vector3.INF)
+	for pv: PackedVector3Array in tracks:
+		assert(pv.size() == vertices, "every pose has the same vertices")
+		for u in uniques:
+			var at := pv[leads[u]]
+			lo[u] = lo[u].min(at)
+			hi[u] = hi[u].max(at)
+	var size := PackedVector3Array()
+	size.resize(uniques)
+	for u in uniques:
+		size[u] = (hi[u] - lo[u]).max(Vector3.ONE * 0.0001)
+	var brows := ceili(float(vertices) / WIDTH)
+	var box := PackedFloat32Array()
+	box.resize(brows * 2 * WIDTH * 4)
+	for v in vertices:
+		var u := slot_of[v]
+		var at := v * 4
+		var at2 := at + brows * WIDTH * 4
+		for k in 3:
+			box[at + k] = lo[u][k]
+			box[at2 + k] = size[u][k]
+		box[at + 3] = u
+	bounds = Image.create_from_data(WIDTH, brows * 2, false, Image.FORMAT_RGBAF, box.to_byte_array())
+	var quads := PackedByteArray()
+	quads.resize(prows * WIDTH * 4)
 	var octs := PackedByteArray()
 	octs.resize(rows * WIDTH * 2)
 	for anim: String in clips:
@@ -277,19 +363,16 @@ func pack(shape: Mesh, clips: Dictionary) -> void:
 		for p: Array in clips[anim]:
 			var pv: PackedVector3Array = p[0]
 			var pn: PackedVector3Array = p[1]
-			assert(pv.size() == vertices, "every pose has the same vertices")
 			var o := k * vertices
+			for u in uniques:
+				var q := ((pv[leads[u]] - lo[u]) / size[u] * 1023.0).round().clamp(Vector3.ZERO, Vector3.ONE * 1023.0)
+				quads.encode_u32((k * uniques + u) * 4, int(q.x) | (int(q.y) << 10) | (int(q.z) << 20))
 			for v in vertices:
-				var at := pv[v]
-				floats[(o + v) * 4] = at.x
-				floats[(o + v) * 4 + 1] = at.y
-				floats[(o + v) * 4 + 2] = at.z
 				var e := oct_encode(pn[v])
 				octs[(o + v) * 2] = clampi(roundi(e.x * 255.0), 0, 255)
 				octs[(o + v) * 2 + 1] = clampi(roundi(e.y * 255.0), 0, 255)
 			k += 1
-	positions = Image.create_from_data(WIDTH, rows, false, Image.FORMAT_RGBAF, floats.to_byte_array())
-	positions.convert(Image.FORMAT_RGBAH)
+	positions = Image.create_from_data(WIDTH, prows, false, Image.FORMAT_RGBA8, quads)
 	normals = Image.create_from_data(WIDTH, rows, false, Image.FORMAT_RG8, octs)
 
 

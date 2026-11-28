@@ -323,7 +323,9 @@ static func _set_poses(mat: ShaderMaterial, baked: BakedModel) -> void:
 	var tex := baked.pose_textures()
 	mat.set_shader_parameter(&"pose_positions", tex[0])
 	mat.set_shader_parameter(&"pose_normals", tex[1])
+	mat.set_shader_parameter(&"pose_bounds", tex[2])
 	mat.set_shader_parameter(&"pose_vertices", baked.vertices)
+	mat.set_shader_parameter(&"pose_uniques", baked.uniques)
 	mat.set_shader_parameter(&"pose_width", BakedModel.WIDTH)
 	# a thrown piece (the knight's shield) is hidden by its vertex run while the instance says it is away
 	var run := throwable_run(baked)

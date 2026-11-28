@@ -316,13 +316,15 @@ acima de 512 px são `title/title_bg.png` (1672 x 941, fundo da tela de título,
 `title/title_screen_reference.png` (referência do PO, 2,6 MB, já no `exclude_filter`, só lida por `tools/make_title_bg.gd` e
 `tools/title_menu_lab.gd`).
 
-**Assados (TA-07):** `assets/baked` 69 MB (teto 70). `morvath.res` 11,0 MB com 214 poses de 16 clipes (cerca de 51 KB por
-pose; cada pose guarda posição em meia precisão RGBAH, 8 bytes, e normal RG8, 2 bytes, por vértice). Cortar quadros nos
-clipes dele rende pouco: tirar 25 % dos quadros dá cerca de 2,7 MB, longe dos 9 MB que levariam o total a 60 MB.
-Proposta, não feita (muda o `BakedModel` em `scripts/render/` e reassa tudo): guardar a posição em 3 x 16 bits (RGB sem o
-canal alfa, 6 bytes) ou quantizada pela caixa do modelo (RGBA8 + 2 bytes), que corta 25 a 45 % de todos os assados
-(17 a 30 MB no total) sem tocar nos clipes; reassar só o `morvath` com `BODY_TRIANGLES` menor (3 900 para 3 000, cerca de
--2,5 MB) é a opção barata, com risco visual no rosto.
+**Assados (TA-07, F2 feito 2026-11-28):** `assets/baked` 72,8 MB antes, **48,5 MB** depois (teto 70, meta do F2 55); `morvath.res`
+10,8 para 8,4 MB, `guard` 6,9 para 5,6. Formato novo do `BakedModel`: (1) a posição é 3 x 10 bits em um texel RGBA8 (4 bytes, era
+RGBAH, 8) dentro da caixa que aquele ponto percorre em todas as poses (`bounds`, por vértice; passo de 1 a 3 mm, o que a
+meia precisão dava a 1 a 2 m); (2) os vértices que ficam no mesmo ponto em todas as poses (as cópias de costura de UV e de aresta
+dura, 60 % deles) dividem um texel só (`uniques`); a normal continua uma por vértice (RG8). Medido contra o assado antigo, todas as
+poses de todos os 18 modelos: erro máximo 0,3 a 3,0 mm (Morvath 3,0; média abaixo de 0,9 mm), normais idênticas byte a byte,
+clipes, quadros e partes iguais. Os arquivos atuais foram convertidos pelo `tools/repack_baked.gd` (sem reassar, para não mexer
+em nada além do formato); `tools/bake.gd` já grava no formato novo. Cortar quadros ou triângulos não foi preciso. Sobram
+21,5 MB de folga para os 4 inimigos do Capítulo II e o Ancião.
 
 **Origens sem uso no jogo e fora do pacote (TA-05, TA-06; só a lista, nada movido):**
 - Cópias soltas da textura que o GLB já carrega embutida: `assets/models/meshy/*/*_0.jpg` e `*-rigged_Image_0.jpg`, 32 arquivos,
