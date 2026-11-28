@@ -68,11 +68,11 @@ func test_off_switch_and_default() -> void:
 	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
 	Dev.put("painted", "1")
 	assert_true(PaintedHall.wanted(a), "--painted forces it on")
-	for l: RoomLayout in _stage().layouts:
-		if l.id == &"runes":
-			a.layout = l
-	assert_eq(a.layout.id, &"runes")
-	assert_false(PaintedHall.wanted(a), "a room with no painting (the runes, until its repaint) never is")
+	# Every room of the stage is painted since lote 5 (2026-11-27): a made-up layout stands for a room with no plate.
+	var bare := RoomLayout.new()
+	bare.id = &"unpainted"
+	a.layout = bare
+	assert_false(PaintedHall.wanted(a), "a room with no painting never is")
 
 
 func test_painted_hall_keeps_collision_and_doors() -> void:
@@ -151,7 +151,7 @@ func test_rooms_are_keyed_by_layout_and_variant() -> void:
 	assert_eq(PaintedHall.key_of(l), &"hall")
 	assert_eq(PaintedHall.key_of(null), &"")
 	var v := RoomLayout.new()
-	v.id = &"runes"
+	v.id = &"unpainted"
 	v.variant_index = 1
 	assert_eq(PaintedHall.key_of(v), &"", "no entry: not painted")
 	v.id = &"crypt"
