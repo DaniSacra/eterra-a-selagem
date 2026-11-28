@@ -9,7 +9,7 @@ extends RefCounted
 ##   FirstTips.pick(Save.data, ctx) -> the tip due now (&"" none); ctx: {fighting, fight_t, poised, boons, elos, tutorial}
 ##   FirstTips.mark(Save.data, id)
 
-const IDS: Array[StringName] = [&"poise", &"fight", &"hold", &"elo", &"rhythm", &"controls_v1", &"maga_v1", &"regen"]
+const IDS: Array[StringName] = [&"poise", &"fight", &"hold", &"elo", &"rhythm", &"controls_v1", &"maga_v1", &"maga_rd", &"regen"]
 ## The tips the Maga reads in her own words (tip_<id>_maga), GP-5.
 const OF_THE_MAGA: Array[StringName] = [&"hold"]
 ## A save with this many descents or more has no tips (it knows the game).
@@ -58,8 +58,8 @@ static func key_of(id: StringName, maga: bool) -> StringName:
 static func pick(data: Dictionary, ctx: Dictionary) -> StringName:
 	var fighting: bool = ctx.get("fighting", false)
 	var t: float = ctx.get("fight_t", 0.0)
-	if bool(ctx.get("maga", false)) and fighting and t >= FIGHT_AFTER and not shown(data).has("maga_v1"):
-		return &"maga_v1"
+	if bool(ctx.get("maga", false)) and fighting and t >= FIGHT_AFTER and not shown(data).has("maga_rd"):
+		return &"maga_rd"
 	if bool(ctx.get("maga", false)) and fighting and bool(ctx.get("magick_empty", false)) and open(data, &"regen"):
 		return &"regen"
 	if fighting and bool(ctx.get("poised", false)) and open(data, &"poise"):

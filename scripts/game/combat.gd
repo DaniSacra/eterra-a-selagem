@@ -417,10 +417,13 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		ComboNode.Effect.GROUND_MARK:
 			ground.add_zone(Ground.Kind.MARK, origin + dir * reach * 0.55, node.effect_radius, node.effect_time, node.effect_power, MARK_TAGS)
 		ComboNode.Effect.WAVE:
-			throw_wave(node, origin, dir, color, tags)
-			if arcane != null:
-				arcane.thrown(node)
-		ComboNode.Effect.FROST, ComboNode.Effect.ARC, ComboNode.Effect.DOME:
+			if arcane != null and (node.effect_fan > 1 or node.is_release()):
+				arcane.throw_spell(node, origin, dir, color, tags)  # (the Centelha's fan, the Combustão's charged ball)
+			else:
+				throw_wave(node, origin, dir, color, tags)
+				if arcane != null:
+					arcane.thrown(node)
+		ComboNode.Effect.FROST, ComboNode.Effect.ARC, ComboNode.Effect.DOME, ComboNode.Effect.CONE:
 			if arcane != null:
 				arcane.cast(node, origin, dir)
 		ComboNode.Effect.SHOUT:
@@ -477,9 +480,13 @@ const DODGE_BODY := 0.5
 var dash_crossed := 0
 
 
+## How much wider a release-charged ball flies at its full charge than at its least (Maga Redesign V1).
+const CHARGED_GROWTH := 1.7
+
+
 ## The wave of a move with Effect.WAVE (the special and its Omega; the Pastor's flock throws more of them, E4): its
 ## look, reach and width grown by the Blessings (wave_size_pct), through the crowd with Onda Atravessante.
-func throw_wave(node: ComboNode, origin: Vector2, dir: Vector2, color: Color, tags: Array[StringName]) -> Projectiles.Shot:
+func throw_wave(node: ComboNode, origin: Vector2, dir: Vector2, color: Color, tags: Array[StringName], share := 0.0) -> Projectiles.Shot:
 	var size := 1.0 + boons.stat(&"wave_size_pct", tags)
 	var width := node.effect_size if node.effect_size > 0.0 else 3.2
 	# the Maga's shots fly as far as the Blessings of reach say (the Warrior's reach is his blade's)
@@ -487,7 +494,10 @@ func throw_wave(node: ComboNode, origin: Vector2, dir: Vector2, color: Color, ta
 	var look := Projectiles.Kind.SPARK if node.wave_bolt else Projectiles.Kind.WAVE
 	if node.wave_color.a > 0.0:
 		color = node.wave_color
-	var shot := projectiles.fire_wave(look, origin + dir * 0.8, dir, node.effect_power, node.effect_radius * length, width * size, color, tags)
+	# a release-charged ball (the Combustão) is bigger the more it grew; `share` is how much of its growth the hold reached (0..1)
+	width *= lerpf(1.0, CHARGED_GROWTH, share) if node.is_release() else 1.0
+	var shot := projectiles.fire_wave(look, origin + dir * 0.8, dir, node.power_at(share), node.effect_radius * length, width * size, color, tags)
+	shot.blast = node.area_at(share)
 	shot.stop_ms = shot_stop_ms(node)
 	shot.through = boons.stat(&"wave_through", tags) > 0.0
 	if node.wave_speed > 0.0:

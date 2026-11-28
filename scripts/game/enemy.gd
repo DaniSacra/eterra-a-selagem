@@ -54,6 +54,9 @@ var shove_t := 0.0
 ## Blessings V1: what the Blessings put on it (CelState, null until one does) and the share of its speed the Frio takes.
 var cel: CelState
 var cold_slow := 0.0
+## The share of its speed it keeps while `slow_t` runs (0.45 for every slow but the Maga's Frio, which keeps 0.7: Maga Redesign V1, 30%).
+const SLOW_KEEP := 0.45
+var slow_keep := SLOW_KEEP
 var burn_t := 0.0
 var burn_dps := 0.0
 var burn_tick := 0.0
@@ -248,3 +251,9 @@ func height() -> float:
 func yaw() -> float:
 	var f := face if face != Vector2.ZERO else dir
 	return atan2(f.x, f.y)
+
+
+## A slow of `seconds` that leaves it `keep` of its speed: the stronger of two at once rules, the longer time stays.
+func slow_for(seconds: float, keep: float = SLOW_KEEP) -> void:
+	slow_keep = keep if slow_t <= 0.0 else minf(slow_keep, keep)
+	slow_t = maxf(slow_t, seconds)

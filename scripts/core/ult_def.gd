@@ -8,8 +8,9 @@ extends Resource
 ## CLEAVE: a band in front of the hero (U-1). VORTEX: an area thrown ahead that pulls the pack in a spiral and
 ## implodes (U-2, the Voragem, in reserve). CONVERGE: the Maga's Convergência Elemental (04_PLANO C.3): an area at the cursor
 ## where ice, fire and volt fall in phases (the plan is ConvergePlan; read from the Vortex fields: ahead, aim_max, radius,
-## duration, tick; the damage is ArcaneKit.converge_damage).
-enum Kind { CLEAVE, VORTEX, CONVERGE }
+## duration, tick; the damage is ArcaneKit.converge_damage). CHAIN: the Maga's Tempestade Celestial (Maga Redesign V1): a bolt that jumps from body to
+## body (ChainPlan; the numbers are ArcaneKit.storm_*), volt on each; the Maga's one Supremo.
+enum Kind { CLEAVE, VORTEX, CONVERGE, CHAIN }
 
 @export var id: StringName
 @export var name_key: StringName

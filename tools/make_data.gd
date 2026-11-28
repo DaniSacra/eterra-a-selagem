@@ -2684,46 +2684,45 @@ func _hero() -> void:
 # ---------- the Maga (docs/design/heroes/maga.md, M1a) ----------
 
 const MAGA_COMBOS := "res://data/combos/maga.tres"
-const MAGA_ULT := "res://data/ultimates/maga/00_converge.tres"
+const MAGA_ULT := "res://data/ultimates/maga/00_storm.tres"
 const MAGA_TALENTS := "res://data/talents/maga/"
 const MAGA_AMBER := Color(1.0, 0.62, 0.18)
 
 
-## The Maga's tree (GP-5, docs/design/heroes/maga_v1_2026-11-26.md 1): left tap the Centelha (a fire bolt, free), left hold the Arco Voltaico
-## (10 Magia); right tap the Estilhaço (an ice bolt through the crowd, 5 Magia), right hold the Geada (an area at the cursor, 20 Magia). No
-## button of Q or E and no recharge: the Magia (2 a second back) regulates her. No blow here is struck by a blade: damage 0 and the effect
-## does it (as the Warrior's bolt). The elements are Arcane's (ElementBook). The Combustão and the Suspensão Arcana left the tree.
-## Tags decide where the Blessings and the Skills read each one (DealtBy, CelRules.slot_of): the Arco is an omega of the attack, the
-## Estilhaço the Poder (shout, cast: no heavy), the Geada the Especial.
+## The Maga's tree (Maga Redesign V1, docs/design/heroes/maga_redesign_v1_pack/01_KIT.md; it replaces GP-5's and V2's): left tap the
+## Centelha (THREE fire bolts at once in a fan, free), right tap the Sopro Glacial (a cone of ice, free), left hold the Combustão (a fire ball
+## that grows with the hold and bursts, 15 to 25 Magia), right hold the Inverno Eterno (a cold ground at the aim that grows with the hold,
+## 10 to 30 Magia). The held ones strike when the button is LET GO (ComboNode.charge_max: the least hold, the full hold), the Magia is paid when
+## they land, a dodge in the windup is free. No button of Q or E and no recharge; the Magia (3 a second back, walking too) regulates her. No
+## blow here is struck by a blade: damage 0 and the effect does it. The elements are Arcane's (ElementBook). The Estilhaço, the Arco Voltaico
+## and the Geada left the tree (their ids stay readable: moves discovered in old saves, the text keys).
+## Tags decide where the Blessings and the Skills read each one (DealtBy, CelRules.slot_of): the Combustão is an omega of the attack, the
+## Sopro the Poder (shout, cast: no heavy), the Inverno the Especial.
 func _maga_tree() -> ComboTree:
+	var kit := ArcaneKit.new()  # (the fan and the numbers of the kit are written into the nodes)
 	var shot := {"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "chain_window": 0.4, "hit_stop_ms": 0.0,
 		"shake": 0.2, "move_scale": 0.0, "sound": &"dart", "effect": ComboNode.Effect.WAVE, "effect_radius": 11.0, "wave_bolt": true,
 		"wave_speed": 30.0, "wave_stops": true, "wave_color": ElementLook.FIRE, "knockback": 2.0}
-	# Maga V2 (docs/design/heroes/maga_v2_2026-11-27.md 3): the Centelha is a chain of three (11, 11, then the Lança de Brasa, 22: bigger, through
-	# the crowd, a push of 5, a stop of 40 ms and the `finisher` tag); every hit lights the target (ArcaneKit.spark_hits 1)
-	var spark3 := _move(&"spark3", L, &"Cast", [&"light", &"bolt", &"arcane", &"fire", &"finisher"],
-		shot.merged({"effect_power": 22.0, "effect_size": 1.1, "windup": 0.16, "recovery": 0.26, "move_hold": 0.30, "wave_stops": false,
-		"knockback": 5.0, "hit_stop_ms": 40.0}, true), [], &"move_spark")
-	var spark2 := _move(&"spark2", L, &"Cast", [&"light", &"bolt", &"arcane", &"fire"],
-		shot.merged({"effect_power": 11.0, "effect_size": 0.7, "windup": 0.08, "recovery": 0.12, "move_hold": 0.15}, true), [spark3], &"move_spark")
+	# left tap: the Centelha, 8 each, a fan of three, 24 degrees in all, 11 m, one cast; every hit lights the target (ArcaneKit.spark_hits 1)
 	var spark := _move(&"spark", L, &"Cast", [&"light", &"bolt", &"arcane", &"fire"],
-		shot.merged({"effect_power": 11.0, "effect_size": 0.7, "windup": 0.08, "recovery": 0.12, "move_hold": 0.15}, true), [spark2], &"move_spark")
-	# left held: the Arco Voltaico, to up to three, 8 Magia, 0.35 s of charge from the press
-	var arc := _move(&"arc", CL, &"Cast", [&"omega", &"light", &"arcane", &"volt"],
-		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.10, "recovery": 0.15, "move_hold": 0.20,
-		"chain_window": 0.4, "magick_cost": 8.0, "charge_time": 0.35, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0,
-		"sound": &"wave_omega", "effect": ComboNode.Effect.ARC}, [], &"move_arc")
-	# right tap: the Estilhaço through everyone on its way, 4 Magia, no recharge
-	var shard := _move(&"shard", H, &"Cast", [&"shout", &"cast", &"bolt", &"arcane", &"ice"],
-		shot.merged({"effect_power": 10.0, "effect_size": 0.8, "windup": 0.12, "recovery": 0.20, "move_hold": 0.25, "magick_cost": 4.0,
-		"wave_stops": false, "wave_color": ElementLook.COLD, "wave_speed": 26.0, "hit_stop_ms": 25.0}, true), [], &"move_shard")
-	# right held: the Geada at the cursor, 15 Magia, 0.45 s
-	var frost := _move(&"frost", C, &"Cast", [&"omega", &"heavy", &"cast", &"arcane", &"ice"],
+		shot.merged({"effect_power": 8.0, "effect_size": 0.7, "windup": 0.08, "recovery": 0.16, "move_hold": 0.2, "effect_fan": kit.spark_fan,
+		"effect_fan_deg": kit.spark_fan_deg, "wave_stops": true}, true), [], &"move_spark")
+	# left hold: the Combustao, a ball of 50 to 150 that bursts 1.5 to 3.5 m wide where it lands, charge 0.6 to 1.5 s, 15 to 25 Magia
+	var combust := _move(&"combust", CL, &"Cast", [&"omega", &"light", &"arcane", &"fire"],
+		shot.merged({"effect_power": 50.0, "power_max": 150.0, "area": 1.5, "area_max": 3.5, "effect_size": 1.0, "wave_speed": 17.0,
+		"windup": 0.10, "recovery": 0.20, "move_hold": 0.25, "chain_window": 0.4, "magick_cost": 15.0, "magick_cost_max": 25.0,
+		"charge_time": 0.6, "charge_max": 1.5, "hit_stop_ms": 60.0, "shake": 0.5, "knockback": 4.0, "sound": &"wave_omega", "wave_bolt": true}, true), [], &"move_combust")
+	# right tap: the Sopro Glacial, a cone of ice (ArcaneKit.breath_*: 12, 5 m, 90 degrees), free
+	var breath := _move(&"breath", H, &"Cast", [&"shout", &"cast", &"arcane", &"ice"],
+		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.12, "recovery": 0.22, "move_hold": 0.26,
+		"chain_window": 0.4, "hit_stop_ms": 25.0, "shake": 0.3, "move_scale": 0.0, "sound": &"dart", "effect": ComboNode.Effect.CONE}, [], &"move_breath")
+	# right hold: the Inverno Eterno, the ground at the aim (2 to 6 m, 5 s, 6 a second, Frio every second), charge 0.6 to 1.8 s, 10 to 30 Magia
+	var winter := _move(&"winter", C, &"Cast", [&"omega", &"heavy", &"cast", &"arcane", &"ice"],
 		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.14, "recovery": 0.22, "move_hold": 0.30,
-		"chain_window": 0.2, "magick_cost": 15.0, "charge_time": 0.45, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0,
-		"sound": &"wave_omega", "effect": ComboNode.Effect.FROST}, [], &"move_frost")
+		"chain_window": 0.2, "magick_cost": 10.0, "magick_cost_max": 30.0, "charge_time": 0.6, "charge_max": 1.8, "area": 2.0, "area_max": 6.0,
+		"hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "sound": &"wave_omega", "effect": ComboNode.Effect.FROST}, [], &"move_winter")
 	var tree := ComboTree.new()
-	tree.neutral = [spark, arc, shard, frost]
+	tree.neutral = [spark, combust, breath, winter]
 	tree.dodge_window = 0.0
 	return tree
 
@@ -2776,13 +2775,14 @@ func _maga() -> void:
 	DirAccess.make_dir_recursive_absolute(MAGA_ULT.get_base_dir())
 	for f in DirAccess.get_files_at(MAGA_ULT.get_base_dir()):
 		DirAccess.remove_absolute(MAGA_ULT.get_base_dir() + "/" + f)
-	# the Convergência Elemental (04_PLANO C.3): 5 m at the cursor (up to 9) for 4.5 s, ice then fire then volt, a tick every
-	# 0.5 s, 90 of damage in all (ArcaneKit.converge_*); 60 charge (Magia spent, damage dealt, life lost and, GP-5, her reactions), Mastery 2
+	# the Tempestade Celestial (Maga Redesign V1; it replaces the Convergência Elemental, the one Supremo of her weapon): a bolt of 90 that jumps
+	# up to 6 bodies within 5 m of each other, each jump 10% weaker, volt on each (ArcaneKit.storm_*, ChainPlan); the charge rule is kept
+	# (50: Magia spent, damage dealt, life lost and her reactions), Mastery 2
 	var u := UltDef.new()
-	u.id = &"converge"
-	u.kind = UltDef.Kind.CONVERGE
-	u.name_key = &"ult_converge"
-	u.desc_key = &"ult_converge_desc"
+	u.id = &"storm"
+	u.kind = UltDef.Kind.CHAIN
+	u.name_key = &"ult_storm"
+	u.desc_key = &"ult_storm_desc"
 	var numbers := {"charge": 50.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 2, "gesture": 0.3, "weapon": &"bastao",
 		"anim": &"Cast", "anim_peak": PEAK[&"Cast"], "knockback": 0.0, "ahead": 4.0, "aim_max": 9.0, "radius": 5.0, "radius_cap": 6.5,
 		"duration": 4.5, "tick": 0.5, "elite_share": 0.5, "guardian_share": 0.25}

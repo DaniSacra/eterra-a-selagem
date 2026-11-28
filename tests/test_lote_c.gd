@@ -37,7 +37,7 @@ func test_the_special_and_the_explosion_weigh_the_light_shots_do_not() -> void:
 	var warrior := HeroDef.warrior()
 	var maga := HeroDef.maga()
 	assert_gt(Combat.shot_stop_ms(_node(warrior, &"lance")), 0.0, "the Lança (GP-1: no wave, its own hit stop)")
-	assert_eq(Combat.shot_stop_ms(_node(maga, &"shard")), Combat.SHOT_STOP_MS, "the Explosão")
+	assert_eq(Combat.shot_stop_ms(_node(maga, &"combust")), 60.0, "the Combustão")
 	assert_eq(Combat.shot_stop_ms(_node(maga, &"spark")), 0.0, "the Centelha")
 	assert_almost_eq(Combat.SHOT_STOP_MS, 25.0, 0.01, "2 frames")
 
@@ -48,7 +48,7 @@ func test_the_explosion_wave_calls_the_hit_stop_and_shot_1_does_not() -> void:
 	game.rooms.start_at(RunMap.Kind.FOUNTAIN)
 	var e := game.horde.spawn(game.horde.def(&"skeleton"), game.player.pos + Vector2(3, 0), false)
 	var tags: Array[StringName] = [&"heavy", &"wave"]
-	var special := game.combat.throw_wave(_node(HeroDef.maga(), &"shard"), game.player.pos, Vector2.RIGHT, Color.WHITE, tags)
+	var special := game.combat.throw_wave(_node(HeroDef.maga(), &"combust"), game.player.pos, Vector2.RIGHT, Color.WHITE, tags)
 	assert_gt(special.stop_ms, 0.0)
 	game.fx.hits.clear()
 	game.combat.on_shot_hit(e, special)

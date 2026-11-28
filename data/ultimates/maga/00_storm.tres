@@ -1,13 +1,13 @@
 [gd_resource type="Resource" script_class="UltDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/ult_def.gd" id="1_jscro"]
+[ext_resource type="Script" path="res://scripts/core/ult_def.gd" id="1_x4g5g"]
 
 [resource]
-script = ExtResource("1_jscro")
-id = &"converge"
-name_key = &"ult_converge"
-desc_key = &"ult_converge_desc"
-kind = 2
+script = ExtResource("1_x4g5g")
+id = &"storm"
+name_key = &"ult_storm"
+desc_key = &"ult_storm_desc"
+kind = 3
 charge = 50.0
 damage_charge = 0.03
 hurt_charge = 1.0

@@ -165,9 +165,9 @@ jogo; luz feita pelo jogo; mouse sem Magia; poucos inimigos nas 4 primeiras sala
 **Pastas do Daniel:** `Downloads\ASelagem-GP8\GPT-SalaNN` (uma por sala), `APROVAR-SALAS-LOTE4`, `APROVAR-TUDO`;
 exes em `Downloads\ASelagem-3D` e `ASelagem-teste`.
 
-## Maga Redesign V1 (pacote do Daniel de 2026-11-27, `docs/design/heroes/maga_redesign_v1_pack/`) — NO BACKLOG, NÃO FAZER AINDA
+## Maga Redesign V1 (pacote do Daniel de 2026-11-27, `docs/design/heroes/maga_redesign_v1_pack/`) — FEITO em 2026-11-28 (`docs/design/heroes/maga_redesign_v1.md`; sobra: balanceamento, arte pintada do cone, do chão de gelo e do arco, os 12 Dons novos com aprovação)
 
-Pacote do ChatGPT que substitui o kit da Maga (não o do Guerreiro); esperar o "pode fazer" do Daniel.
+Pacote do ChatGPT que substitui o kit da Maga (não o do Guerreiro). **Implementado em 2026-11-28 a pedido do Daniel ("faz tudo, depois a gente refina")**; os conflitos abaixo foram resolvidos assim: HUD com a coluna de Bênçãos à esquerda mantida (opção A) e os quatro quadrados de golpe do Guerreiro também para a Maga; a regra de push do Daniel vale.
 - **Kit:** M1 toque Centelha (3 projéteis juntos em leque, 0 Mana); M2 toque Sopro Glacial (cone 90°, 5 m, lentidão);
   M1 segurar Combustão (bola de fogo que cresce com a carga, 15 a 25 Mana); M2 segurar Inverno Eterno (chão congelado na
   mira, raio cresce, 10 a 30 Mana); Shift Tempestade Celestial (raio que salta até 6 alvos); Espaço Passo Etéreo (2 cargas).

@@ -197,6 +197,10 @@ var charging := false
 var charges_started := 0
 var charges_filled := 0
 var charge_t := 0.0
+## Maga Redesign V1: the share (0..1) of a release-charged spell's growth the last release reached, already capped by what her Magia could pay
+## (Arcane reads it for the spell's size; _on_move_hit for its price), and whether the full-charge chime played in this hold.
+var strike_share := 0.0
+var _full_chime := false
 ## The button being held for an Omega move, and what it plays when let go early or late.
 var _charge_action := &""
 var _charge_tap := ComboNode.In.HEAVY
@@ -729,7 +733,10 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 		if charge_t >= CHARGE_SOUND_AT and charge_t - dt < CHARGE_SOUND_AT:
 			Audio.play(&"charge_up")
 			charges_started += 1
-		if not Controls.held(_charge_action):
+		var grown := ComboTree.find(tree.neutral, _charge_held)
+		if grown != null and grown.is_release():
+			_step_release_charge(grown)
+		elif not Controls.held(_charge_action):
 			_end_charge()  # let go before the charge filled: nothing more comes
 			intents[_charge_action].cancel(false)
 		elif charge_t >= _charge_time() - _charge_lead() and not runner.is_attacking():
@@ -743,6 +750,58 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 			fx.hero_burst(&"light", Vector3(pos.x, 1.4, pos.y))
 			Audio.play(&"charged")
 	_read_cast(dt)
+
+
+## Maga Redesign V1: a spell that grows while the button is down and strikes on the release (ComboNode.is_release). Let go before its least
+## charge: nothing strikes and nothing is paid (the intent rests). Let go after it: the share reached, capped by what the Magia can pay
+## now, is kept (strike_share) and the spell's windup begins; the price is taken when it lands (_on_move_hit), so a dodge in the windup is
+## free. The charge never grows past its full: it waits, full, for the release. Her Magia running out under a charge caps the share, never cancels.
+func _step_release_charge(node: ComboNode) -> void:
+	var share := charge_share_now()
+	if not _full_chime and share >= 1.0 - 0.0001 and charge_t >= node.charge_time:
+		_full_chime = true
+		Audio.play(&"charged")
+	if Controls.held(_charge_action):
+		return
+	var ready := charge_t >= _charge_time() - 0.0001
+	_end_charge()
+	if not ready or runner.is_attacking():
+		intents[_charge_action].cancel(false)  # (let go too soon, or his hands are busy: nothing comes, nothing is paid)
+		return
+	strike_share = share
+	charges_filled += 1
+	if charge_t < CHARGE_SOUND_AT:
+		charges_started += 1
+	intents[_charge_action].fire()
+	runner.press(_charge_held)
+	fx.hero_burst(&"light", Vector3(pos.x, 1.4, pos.y))
+	Audio.play(&"charged")
+
+
+## The share (0..1) of the growth of the release-charged spell held now: what the hold has reached, capped by what her Magia pays (a
+## spell that is free from the Transcendência is capped by nothing). 0 when none is held.
+func charge_share_now() -> float:
+	var node := ComboTree.find(tree.neutral, _charge_held)
+	if not charging or node == null or not node.is_release():
+		return 0.0
+	var share := node.charge_share(charge_t / maxf(0.1, 1.0 + charge_time_pct))  # (Agilidade Arcana shortens the whole growth)
+	if _transcends(node):
+		return share
+	return minf(share, node.afford_share(magick.value, cost_scale_of(node)))
+
+
+## The release-charged spell being held now (null: none): the Arcane's preview reads it.
+func charging_release_node() -> ComboNode:
+	var node := ComboTree.find(tree.neutral, _charge_held)
+	return node if charging and node != null and node.is_release() else null
+
+
+## The price the release-charged spell held now would have if it were let go now (0 when none is held).
+func charge_cost_now() -> float:
+	var node := ComboTree.find(tree.neutral, _charge_held)
+	if not charging or node == null or not node.is_release():
+		return 0.0
+	return cost_of(node, omega_discount if node.has_tag(&"omega") else 0.0, charge_share_now())
 
 
 ## GP-1: tap or hold on the left and right buttons. A tap plays its blow when the button is let go (or at the threshold, never
@@ -780,6 +839,7 @@ func _read_intents(dt: float, locked: bool) -> void:
 			_charge_tap = moves[0]
 			_charge_held = held_in
 			_charge_discount = omega_discount
+			_full_chime = false
 
 
 ## A tap's blow goes to the runner; one that costs Magia (the Corte Circular) is refused, once, when the Magia is not there.
@@ -881,6 +941,13 @@ func _affordable(held: ComboNode.In) -> bool:
 	return node != null and magick.can_pay(cost_of(node, omega_discount))
 
 
+## The share of its base price the Blessings leave on an Omega (Força Titânica more, Lâmina Faminta less); 1 on any other move.
+func cost_scale_of(node: ComboNode) -> float:
+	if not node.has_tag(&"omega"):
+		return 1.0
+	return (1.0 + omega_cost_pct) * (1.0 - omega_discount)
+
+
 ## What an Omega costing base Magia costs: more by `more` (Força Titânica: 1.0 is twice), less by `discount` (an Encanto or
 ## Blessing), never under 0 (B.3: Magia never goes negative).
 static func omega_cost(base: float, discount: float, more: float = 0.0) -> float:
@@ -888,10 +955,10 @@ static func omega_cost(base: float, discount: float, more: float = 0.0) -> float
 
 
 ## What the move costs now: omega_cost with Força Titânica's share when it is a Golpe Carregado (tag omega).
-func cost_of(node: ComboNode, discount: float) -> float:
+func cost_of(node: ComboNode, discount: float, share := 0.0) -> float:
 	if _transcends(node):
 		return 0.0
-	return omega_cost(node.magick_cost, discount, omega_cost_pct if node.has_tag(&"omega") else 0.0)
+	return omega_cost(node.cost_at(share), discount, omega_cost_pct if node.has_tag(&"omega") else 0.0)
 
 
 ## Plays this combo tree from now on (a Gift that changes the attack's chain: TalentDef.combos).
@@ -903,6 +970,9 @@ func use_tree(path: String) -> void:
 
 ## How far an Omega's charge has got (0..1; 0 when nothing charges).
 func charge_progress() -> float:
+	var node := ComboTree.find(tree.neutral, _charge_held)
+	if charging and node != null and node.is_release():
+		return clampf(charge_t / node.charge_max, 0.0, 1.0)  # (a release charge's ring fills to its FULL, not to its least)
 	return clampf(charge_t / maxf(_charge_time(), 0.01), 0.0, 1.0) if charging else 0.0
 
 
@@ -1112,7 +1182,7 @@ func _on_move_started(node: ComboNode) -> void:
 ## the Magia for it (two presses queued) it is refused: no strike, nothing spent.
 func _on_move_hit(node: ComboNode) -> void:
 	var free := _transcends(node)
-	if node.magick_cost > 0.0 and not magick.spend(cost_of(node, _charge_discount if node.has_tag(&"omega") else 0.0)):
+	if node.magick_cost > 0.0 and not magick.spend(cost_of(node, _charge_discount if node.has_tag(&"omega") else 0.0, strike_share if node.is_release() else 0.0)):
 		_refuse()
 		return
 	if free:

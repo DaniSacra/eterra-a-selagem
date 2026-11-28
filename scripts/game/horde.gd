@@ -424,6 +424,8 @@ func _timers(e: Enemy, dt: float) -> void:
 	e.air_t = maxf(0.0, e.air_t - dt)
 	e.blind_t = maxf(0.0, e.blind_t - dt)
 	e.slow_t = maxf(0.0, e.slow_t - dt)
+	if e.slow_t <= 0.0:
+		e.slow_keep = Enemy.SLOW_KEEP
 	e.weak_t = maxf(0.0, e.weak_t - dt)
 	e.mark_t = maxf(0.0, e.mark_t - dt)
 	e.shove_t = maxf(0.0, e.shove_t - dt)
@@ -563,7 +565,7 @@ static func status_pips(e: Enemy) -> PackedInt32Array:
 
 
 func _speed(e: Enemy) -> float:
-	return e.def.speed * speed_scale * (0.45 if e.slow_t > 0.0 else 1.0) * (1.0 - e.cold_slow) * (1.0 + e.haste_pace if e.haste_t > 0.0 else 1.0)
+	return e.def.speed * speed_scale * (e.slow_keep if e.slow_t > 0.0 else 1.0) * (1.0 - e.cold_slow) * (1.0 + e.haste_pace if e.haste_t > 0.0 else 1.0)
 
 
 ## C1e: how much faster than its own its attacks come back (a Gritador's shout, a Furioso): SupportRules.pace.
@@ -1530,6 +1532,7 @@ func _lie_down(e: Enemy) -> void:
 	e.frozen_t = 0.0
 	e.burn_t = 0.0
 	e.slow_t = 0.0
+	e.slow_keep = Enemy.SLOW_KEEP
 	e.rearm = false
 	_cutting = true
 	_set_state(e, Enemy.State.DOWN, &"death")

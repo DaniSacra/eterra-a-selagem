@@ -424,15 +424,19 @@ func step(dt: float, game: Game) -> void:
 
 ## The Maga's robot (04_PLANO C): it keeps ARC_NEAR to ARC_FAR m from the nearest enemy and plays the loop below; the
 ## Convergência goes by `_ult_now`. The Passo is the danger code's.
-const ARC_NEAR := 5.5
-const ARC_FAR := 9.0
-## Enemies close enough for the Arco and the Geada to be worth their Magia, and how long their button is held (s: past the charge, the
-## blow lets itself go when it fills). GP-5: the Estilhaço is spent while the Magia is above ARC_SHARD_FROM, so the Arco and the Geada
-## stay in reach.
+const ARC_NEAR := 3.5
+const ARC_FAR := 5.0
+## Enemies close enough for the Combustão and the Inverno Eterno to be worth their Magia, and how long their button is held (s: from the
+## press, past the least charge, then let go: Maga Redesign V1, the held spells strike on the release). The Sopro Glacial (free) is
+## breathed on whoever is within ARC_BREATH of her, so the Combustão that follows is a Choque Térmico.
 const ARC_VOLT_PACK := 2
 const ARC_FROST_PACK := 3
 const ARC_CHARGE_HOLD := 0.9
-const ARC_SHARD_FROM := 25.0
+## With the Mana for it, the Combustão is held to its full (1.5 s from the press) and costs the most.
+const ARC_BURN_HOLD := 1.55
+const ARC_BURN_FULL := 25.0
+const ARC_BURN_RANGE := 9.0
+const ARC_BREATH := 5.0
 
 
 ## The Maga's loop (GP-5): keep her distance; the Arco (hold the left) on two or more, the Geada (hold the right) on a pack, the Estilhaço
@@ -478,19 +482,19 @@ func _arcane_step(game: Game, p: Vector2, target: Vector2, dt: float) -> void:
 		_hold = ARC_CHARGE_HOLD
 		_wait = 0.6
 		return
-	# the Arco on two or more within its reach (held on the left)
+	# the Combustão on two or more within reach (held on the left, let go to throw)
 	if not busy and can_hold(game, ComboNode.In.CHARGE_LIGHT):
 		var close: Array[Enemy] = []
-		game.horde.in_circle(p, a.kit.arc_range, close)
+		game.horde.in_circle(p, ARC_BURN_RANGE, close)
 		if close.size() >= ARC_VOLT_PACK:
 			pad.press(&"light_attack")
 			_held = &"light_attack"
-			_hold = ARC_CHARGE_HOLD
+			_hold = ARC_BURN_HOLD if player.magick.value >= ARC_BURN_FULL else ARC_CHARGE_HOLD
 			_wait = 0.6
 			return
-	# the Estilhaço (a tap on the right) while the Magia is there, the Centelha (a tap on the left, free) otherwise
+	# the Sopro Glacial (a tap on the right, free) on whoever is close, the Centelha (a tap on the left, free) otherwise
 	if in_range:
-		if not busy and player.magick.value >= ARC_SHARD_FROM:
+		if not busy and dist <= ARC_BREATH:
 			pad.press(&"heavy_attack")
 			_hold = 0.06
 			_held = &"heavy_attack"

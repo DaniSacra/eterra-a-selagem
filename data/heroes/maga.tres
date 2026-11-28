@@ -4,7 +4,7 @@
 [ext_resource type="Resource" path="res://data/heroes/maga_mastery.tres" id="2_1is15"]
 [ext_resource type="Script" path="res://scripts/core/hero_def.gd" id="3_yanfv"]
 [ext_resource type="Script" path="res://scripts/core/ult_def.gd" id="4_6ewxc"]
-[ext_resource type="Resource" path="res://data/ultimates/maga/00_converge.tres" id="5_ittxu"]
+[ext_resource type="Resource" path="res://data/ultimates/maga/00_storm.tres" id="5_ittxu"]
 
 [sub_resource type="Resource" id="Resource_0l3wl"]
 script = ExtResource("1_d6o6b")
