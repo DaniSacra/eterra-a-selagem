@@ -5,6 +5,12 @@
 
 ## Hoje, 2026-11-27 (LER PRIMEIRO na conversa nova)
 
+**Exe `bf27962f` entregue (22h20), fecha as Etapas 1 a 5:** depois do crash do WSL (C: cheio; limpo para 118 GB livres), tudo das
+Etapas já estava no ramo; a varredura final juntou o robô do Santuário (BG-4, `--hub --smoke`), o clipe de chamado do Capitão
+(QW-2), o facho de recompensa sem o traço branco (conferir na GPU), BG-2, QW-1, QW-5, QW-6 e DT-1, DT-2, DT-5 (parcial: Morvath
+assado de 10,8 MB, reduzir só com o art-director). Robô: 21 partidas sem erro nem travamento. Suíte 2805 testes verde.
+Abertos: QW-3, QW-4, QW-7, PM-2 a PM-4, DT-4; Capítulo II espera as decisões do Daniel.
+
 **Teste do Daniel no exe 17569337 (noite) e o que foi feito:**
 - Antessala travava no "Segure {attack}": o Golpe Esmagador não alimentava o passo `heavy` (é Omega pela tag). Corrigido em
   `Rooms._on_struck` (tag `smash`), teste `test_each_mouse_blow_of_the_warrior_closes_its_own_step`.
