@@ -28,7 +28,11 @@ func test_the_right_button() -> void:
 	_says(&"howto_heavy_attack_desc", "%d de dano" % int(lance.damage))
 	_says(&"howto_heavy_attack_desc", "%d de dano" % int(sweep.damage))
 	_says(&"howto_heavy_attack_desc", "%d de Magia" % int(lance.magick_cost))
-	_says(&"howto_heavy_attack_desc", "%d de Magia" % int(sweep.magick_cost))
+	# 2026-11-27: the Corte Circular is free ("0 de Magia" would also match "20 de Magia"); every text must say so.
+	assert_eq(sweep.magick_cost, 0.0)
+	_says(&"howto_heavy_attack_desc", "não gasta Magia")
+	_says(&"hero_skill_cast", "sem gastar Magia")
+	_says(&"lesson_power", "sem gastar Magia")
 	_says(&"hero_skill_special", "%d de Magia" % int(lance.magick_cost))
 
 

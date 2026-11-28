@@ -1803,7 +1803,7 @@ entries = {
 "tap_hold_hint": "toque ou segurar",
 "howto_rhythm": "Ritmo de Batalha",
 "howto_rhythm_desc": "Terminar o combo acertando prepara o Ritmo por 3 segundos. O próximo golpe que gasta Magia sai reforçado: o Esmagador quebra mais, o Corte Circular atordoa os comuns e a Lança causa mais dano e vai mais longe.",
-"lesson_power": "Aperte {power}: o Corte Circular gira a espada, empurra quem está perto e gasta Magia",
+"lesson_power": "Aperte {power}: o Corte Circular gira a espada, empurra quem está perto, sem gastar Magia",
 "tip_controls_v1": "Os botões mudaram: toque e segure o esquerdo e o direito, Espaço esquiva, Shift é o Golpe Supremo e {interact} interage.",
 "tip_rhythm": "Termine o combo para preparar o Ritmo: o próximo golpe forte sai reforçado.",
 "talent_alcance_marcial": "Alcance Marcial",
