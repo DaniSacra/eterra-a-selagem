@@ -5,6 +5,21 @@
 
 ## Hoje, 2026-11-27 (LER PRIMEIRO na conversa nova)
 
+**Teste do Daniel no exe `bf27962f` (2026-11-27 noite), lote PT-28:**
+| id | o quê | dono |
+|---|---|---|
+| PT28-1 | Golpes do Guerreiro avançam um pouco mais (o inimigo foge antes do golpe); substitui o "golpe plantado" de 2026-11-16 | gameplay-engineer |
+| PT28-2 | Portas fechadas de verdade de novo (hoje só o vão escuro); abrem ao vencer a sala | environment-artist |
+| PT28-3 | Sala 8: peças 3D por cima da pintura (postes) parecem sobrepostas | environment-artist |
+| PT28-4 | Pedir ao ChatGPT o desenho de TODOS os ícones de Bênção, e os símbolos das portas e da loja (hoje estranhos) | ai-art-producer |
+| PT28-5 | Cartas de Bênção com tamanho fixo (todas iguais, com pouco ou muito texto) | ui-ux-designer |
+| PT28-6 | Ícones das Bênçãos à direita: agrupados por anjo (semelhantes juntas), só aparecem segurando TAB, como o SWORN | ui-ux-designer |
+| PT28-7 | Esqueleto mago (elite) na sala 12 não morria: elites x1,8 exagerou (mago elite ~2300 de vida) | balance-designer, gameplay-engineer |
+| PT28-8 | Habilidade em recarga fica cinza e "enche" de cor de baixo para cima (como um copo), sem o círculo | ui-ux-designer |
+| PT28-9 | Tirar a barra amarela (armadura) dos chefes, só vida | ui-ux-designer |
+| PT28-10 | Sala do Morvath (Câmara do Selo) sem pintura | ai-art-producer, environment-artist |
+| PT28-11 | Santuário muito feio: melhorar bastante (a gente passa muito tempo lá) | art-director, environment-artist |
+
 **Exe `bf27962f` entregue (22h20), fecha as Etapas 1 a 5:** depois do crash do WSL (C: cheio; limpo para 118 GB livres), tudo das
 Etapas já estava no ramo; a varredura final juntou o robô do Santuário (BG-4, `--hub --smoke`), o clipe de chamado do Capitão
 (QW-2), o facho de recompensa sem o traço branco (conferir na GPU), BG-2, QW-1, QW-5, QW-6 e DT-1, DT-2, DT-5 (parcial: Morvath
