@@ -92,6 +92,9 @@ enum Size { SMALL, MEDIUM, LARGE, LONG }
 ## SW-R3 (the dead zones): how much more a spawn zone far from the paladin weighs than one beside him (its distance over 8 m, to this
 ## power; 0: by area only, as before). With zones on both sides of the room the next enemy rises on the side he is not standing on.
 @export var far_spawn := 0.0
+## Chapter II (A-6): shallow water on the floor, a DATA MARK for now (walkable, never a hole, never damage; the -15% of walking in it
+## and the dry route are the gameplay-engineer's A-5; docs/design/cap2/docs/02_FATIA_JOGAVEL.md). Mirrored with the room.
+@export var water: Array[Rect2] = []
 ## Its doors, in order (empty: the look places them, as the catacomb hall does).
 @export var exits: Array[ArenaExit] = []
 ## The box the point the camera looks at stays inside (zero size: the room's rectangle less Game.CAM_MARGIN).
@@ -175,6 +178,10 @@ func _mirror() -> void:
 	late_spawns = late
 	if cam_bounds.has_area():
 		cam_bounds = mirror_rect(cam_bounds)
+	var wt: Array[Rect2] = []
+	for r in water:
+		wt.append(mirror_rect(r))
+	water = wt
 	var gp: Array[Rect2] = []
 	for r in gaps:
 		gp.append(mirror_rect(r))

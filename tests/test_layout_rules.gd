@@ -17,6 +17,9 @@ func _cases() -> Array[Dictionary]:
 			continue
 		for v in l.variant_count():
 			out.append({"layout": l.variant(v), "name": "%s v%d" % [l.id, v], "exits": 2})
+	for l in (load("res://data/stages/bosque.tres") as StageDef).layouts:
+		if l.look == &"bosque":
+			out.append({"layout": l, "name": String(l.id), "exits": 2})
 	out.append({"layout": stage.trial_layout, "name": "trial", "exits": 2})
 	out.append({"layout": stage.altar_layout, "name": "altar", "exits": 2})
 	return out

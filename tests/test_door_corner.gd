@@ -12,6 +12,10 @@ func _layouts() -> Array[RoomLayout]:
 			continue
 		for v in l.variant_count():
 			out.append(l.variant(v))
+	# Chapter II (A-6): the Bosque's own rooms keep the same door rules
+	for l in (load("res://data/stages/bosque.tres") as StageDef).layouts:
+		if l.look == &"bosque":
+			out.append(l)
 	out.append(stage.trial_layout)
 	out.append(stage.altar_layout)
 	return out

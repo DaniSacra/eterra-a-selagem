@@ -1457,6 +1457,13 @@ func _bosque_stage(base: StageDef) -> void:
 	var st: StageDef = base.duplicate()
 	st.rooms = 6
 	st.arena_max_uses = 3
+	# A-6: the Bosque's own rooms (Portões, Jardim, Templo); the hall (fountain, shop) and the guardians' houses stay Chapter I's
+	var keep: Array[RoomLayout] = []
+	for l: RoomLayout in base.layouts:
+		if l.id == &"hall" or l.guardian_home:
+			keep.append(l)
+	keep.append_array([_bosque_gates(), _bosque_garden(), _bosque_temple()])
+	st.layouts = keep
 	st.miniboss_depth_min = 5
 	st.miniboss_depth_max = 5
 	st.minibosses = [&"priest_elder"]  # (placeholder for the Ancião Retorcido, C2-C; D2-8: a list so the Rei do Brejo joins by data)
@@ -1497,6 +1504,100 @@ func _bosque_stage(base: StageDef) -> void:
 	st.psalm_from_depth = 3
 	st.enchant_second_from = 4
 	_save(st, "res://data/stages/bosque.tres")
+
+
+# ---------- Chapter II rooms (A-6, docs/design/cap2/docs/02_FATIA_JOGAVEL.md): the Bosque's own greybox layouts ----------
+
+## The Bosque's rooms: shape, pieces, shallow-water MARKS (RoomLayout.water: walkable, A-5 gives them the -15%), spawn zones. Same
+## rules as Chapter I: the way in at the south edge, two doors in the north wall far apart with a piece between, no solid piece in
+## a door's approach (4 m), no hazard yet (A-5: roots, spores; they will stand at the screen ends). Look &"bosque" is the plain
+## ArenaRoom until the painted plates (GP-8) come.
+const BOSQUE_DOOR := 6.0
+
+
+func _bosque_arena(id: StringName, size: RoomLayout.Size, difficulty: int, depth: Vector2, floor_xz: Array) -> RoomLayout:
+	var l := RoomLayout.new()
+	_arena(l, id, size, difficulty, depth)
+	l.look = &"bosque"
+	l.floor = FloorShape.poly([_poly(floor_xz)])
+	l.half = l.floor.extent()
+	l.guardian = false
+	l.cam_bounds = _rect(-3, 3, -2, 3)
+	return l
+
+
+func _mushroom(x: float, z: float) -> ArenaObstacle:
+	return ArenaObstacle.circle(Vector2(x, z), 0.6, &"block", 0.9, false)
+
+
+func _mirror_water(rects: Array) -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	for r: Rect2 in rects:
+		out.append(r)
+		out.append(Rect2(-r.end.x, r.position.y, r.size.x, r.size.y))
+	return out
+
+
+## 01 Portões do Bosque (A): a dry clearing, a double arch (the two doors) and a yard of statues; the teaching room (one silhouette
+## at a time), few enemies, the middle open. Water in the two south corners, decorative.
+func _bosque_gates() -> RoomLayout:
+	var l := _bosque_arena(&"bosque_gates", RoomLayout.Size.MEDIUM, 0, Vector2(0.0, 0.3),
+		[-17, -10, -14, -13, 14, -13, 17, -10, 17, 10, 14, 13, -14, 13, -17, 10])
+	l.max_alive = Vector2i(3, 5)
+	var a: Array[ArenaObstacle] = [_statue(0.0, -12.2), _statue(-10.5, -3.5), _statue(10.5, -3.5), _statue(-10.5, 3.5),
+		_statue(10.5, 3.5), _capsule(Vector2(-8.0, -1.5), Vector2(-8.0, 1.5), 0.6, 0.9), _capsule(Vector2(8.0, -1.5), Vector2(8.0, 1.5), 0.6, 0.9)]
+	l.obstacles = a
+	l.water = _mirror_water([_rect(-16.0, -12.0, 5.5, 9.5)])
+	_gate(l, Vector2(0.0, 10.6), -13.0, [-BOSQUE_DOOR, BOSQUE_DOOR])
+	l.spawns = [_rect(-15, -11, -9.5, -5.5), _rect(11, 15, -9.5, -5.5), _rect(-4, 4, -5, -2.5)]
+	l.late_spawns = [_rect(-15, -13, 0.0, 3.0)]
+	_areas(l, ["arch", _rect(-17, 17, -13, -7), "yard", _rect(-17, 17, -7, 6), "south", _rect(-17, 17, 6, 13)])
+	return l
+
+
+## 02 Jardim dos Esporos (A): a ring of mushrooms (eight low caps, gaps of 5 m, the south one the way in) round a raised central island,
+## a terrace wall each side with a 4 m stair, a pond in each south corner. Esporinho, Retorcido and the Flor Espinhosa.
+func _bosque_garden() -> RoomLayout:
+	var l := _bosque_arena(&"bosque_garden", RoomLayout.Size.MEDIUM, 1, Vector2(0.15, 0.85),
+		[-18, -9, -14, -13, 14, -13, 18, -9, 18, 9, 14, 13, -14, 13, -18, 9])
+	l.max_alive = Vector2i(4, 6)
+	var c := Vector2(0.0, -1.0)
+	var a: Array[ArenaObstacle] = [_statue(0.0, -12.2), ArenaObstacle.circle(c, 2.8, &"block", 1.0, false)]
+	for k in 8:
+		var at := c + Vector2.from_angle(deg_to_rad(22.5 + 45.0 * k)) * 7.2
+		a.append(_mushroom(at.x, at.y))
+	for sx: float in [-1.0, 1.0]:
+		a.append(_capsule(Vector2(12.0 * sx, -7.0), Vector2(12.0 * sx, -2.0), 0.6, 0.9))
+		a.append(_capsule(Vector2(12.0 * sx, 2.0), Vector2(12.0 * sx, 8.0), 0.6, 0.9))
+	l.obstacles = a
+	l.water = _mirror_water([_rect(-16.0, -12.5, 6.5, 10.0)])
+	_gate(l, Vector2(0.0, 10.6), -13.0, [-BOSQUE_DOOR - 0.2, BOSQUE_DOOR + 0.2])
+	l.spawns = [_rect(-16, -13, -9, -4), _rect(13, 16, -9, -4), _rect(13.5, 16.5, 2, 6), _rect(-16.5, -13.5, 2, 6)]
+	l.late_spawns = [_rect(-4, 4, -12, -10)]
+	_areas(l, ["island", _rect(-3, 3, -4, 2), "ring", _rect(-9, 9, -9, 7), "terrace", _rect(-18, -12, -13, 13),
+		"terrace", _rect(12, 18, -13, 13)])
+	return l
+
+
+## 03 Templo Inundado (A): two shallow canals run south from the north wings (water marks, never a hole), crossed by two dry bridges
+## 4 m wide (the dry route), a round platform of four columns in the middle, the wings beyond the canals to fight in. Flor, Sapo and Retorcido.
+func _bosque_temple() -> RoomLayout:
+	var l := _bosque_arena(&"bosque_temple", RoomLayout.Size.MEDIUM, 1, Vector2(0.4, 1.0),
+		[-17, -10, -14, -13, 14, -13, 17, -10, 17, 10, 14, 13, -14, 13, -17, 10])
+	l.max_alive = Vector2i(5, 7)
+	l.max_ranged = 2
+	var a: Array[ArenaObstacle] = [_statue(0.0, -12.2)]
+	for p: Vector2 in [Vector2(-3.4, -3.4), Vector2(3.4, -3.4), Vector2(-3.4, 3.4), Vector2(3.4, 3.4)]:
+		a.append(_column(p.x, p.y, 3.4))
+	a.append_array([_sarcophagus(-14.2, -8.5, 1.2, 2.5), _sarcophagus(14.2, -8.5, 1.2, 2.5)])
+	l.obstacles = a
+	l.water = _mirror_water([_rect(-11.5, -8.5, -8.0, -3.5), _rect(-11.5, -8.5, 0.5, 6.0)])
+	_gate(l, Vector2(0.0, 10.6), -13.0, [-BOSQUE_DOOR, BOSQUE_DOOR])
+	l.spawns = [_rect(12.5, 16, -6.5, -2), _rect(-16, -12.5, -6.5, -2), _rect(12.5, 16, 2, 7), _rect(-16, -12.5, 2, 7)]
+	l.late_spawns = [_rect(-4, 4, -9.5, -7)]
+	_areas(l, ["platform", _rect(-4.5, 4.5, -4.5, 4.5), "bridge", _rect(-11.5, 11.5, -3.5, 0.5), "bridge", _rect(-11.5, 11.5, 6.0, 12.0),
+		"wing", _rect(-17, -11.5, -13, 13), "wing", _rect(11.5, 17, -13, 13)])
+	return l
 
 
 # ---------- arenas (cycle C12) ----------
