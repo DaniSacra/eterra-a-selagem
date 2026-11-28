@@ -307,7 +307,10 @@ func test_the_hub_names_its_place_and_its_stations() -> void:
 	assert_not_null(labels)
 	assert_gt(labels.place.modulate.a, 0.5, "the place's name on arriving")
 	assert_eq(labels.place.text, T.t(&"hub_name"))
-	assert_gt(labels.shown().size(), 0, "some station named from the arrival")
+	hub.player.pos = HubPlan.use_point(HubPlan.SMITH) + Vector2(3.0, 0.0)
+	for i in 3:
+		await get_tree().process_frame
+	assert_gt(labels.shown().size(), 0, "a station named as he nears it")
 	hub.player.pos = HubPlan.use_point(HubPlan.BOOK)
 	hub.cam.snap()
 	for i in 3:
