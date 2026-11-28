@@ -40,6 +40,7 @@ Generation (curl; the key is read from the file, never printed):
 | 2026-11-27 | hub game plate (`hub/jogo/`), edit of the approved `hub_aprovacao.png`: Videira, lights, water, Vigília fire and brazier out; open plaza luma 102 -> 76; overlay without double edges | 1 | 5488 | 0.25 |
 | 2026-11-27 | lote5 (`lote5/`), bases_v3 (new south entrance): 8 entrance edits of the approved plates (crypt0, rift0, rift1, garden0, sanctuary0, knight, elder, trial; trial discarded, wrong base); approvals crypt1/garden1/sanctuary1/bridge0/bridge1/runes0/runes1 a1 (bridges and runes off, rejected); game g1 crypt1/garden1/sanctuary1; bridge0 entrance edit; bridge1 a2 (edit of lote4 approval) + g1; runes0/1 a2c + g1c on a crop; runes1 g2c (g1c turned the lattice into a door) | 26 | 5488 | 6.50 |
 | 2026-11-27 | lote5 trial/altar on the recaptured bases: trial a1+g1, altar a1+g1 (opened a third doorway in the left wall), g2 (+`fix_g_altar.txt`, chosen) | 5 | 5488 | 1.25 |
+| 2026-11-27 | PT28-4 icons (`icons_pt28/`): 27 sheets of 6 medallions (all 132 Blessings + 18 door/shop rewards and rooms + 9 angel wings) over `template.png`, s00 as style ref for the rest; fix00 redid 6 (Bastião read as a sun, Mira Clara as a cross/star, Peso Velado sword too upright, Flocos Errantes like mines, both eyes reptilian) | 28 | 5488 | 7.00 |
 
 ## style_v2 (2026-11-27): style approval round
 `style_v2/` holds the variants Daniel is choosing from (Downloads\ASelagem-GP8\APROVAR-ESTILO). Request =
@@ -211,3 +212,28 @@ Rules checked: no figures, banners, text, sun/star/cross; no violet (rift1 swirl
 doors apart with a piece between (runes: lattice, brazier; crypt1: statue and column; garden1: statue niche); doorways dark.
 
 Breakables check of the game plates (looked at the images): garden_1, sanctuary_1, bridge_1, runes_0, runes_1 show no urns, vases or crates.
+
+
+## PT28-4 icons (2026-11-27): every Blessing, door and shop medallion
+Inventory: `icons_pt28/subjects.tsv` (path under `assets/ui/`, family, subject in Portuguese): the 132 Boons of `data/boons`, the 18
+ids of `RewardIcon` (rewards and room kinds, the in-run shop shows the same reward icons) and 9 angels (`angel_peste`,
+`angel_trovao` new, read by `RewardIcon.of_angel`). Shape language: angels = one wing of their element; Golpe = diagonal sword with
+the element; Peso = heavy sword striking the ground; Poder = ring on the ground; Passo = boot with a trail; Golpe Supremo = something
+falling from above; family colour and a dark tinted disc (Chama ember red, Luz pale gold on night blue, Geada ice blue, Vigília
+bronze/olive, Véu pearl grey/sepia, Maré sea blue, Marca ochre, Peste olive/mustard, Trovão steel/white-blue). Changed subjects:
+Fortalecer Bênção is a chalice of light (no pomegranate), Mais Vida a ruby heart (not anatomical), Provação an iron gate with embers
+(no flag), Mais Magia a sapphire, Fragmento de Memória a stained-glass shard; violet only on Morvath's door.
+Pipeline: `frame.gd -- frame` extracts the shared rim (pixels equal in four Rev. 03 reward PNGs) into `frame.png` and lays six on
+`template.png`; `gen.sh <sheet> a [ref]` sends template (+ `sheets/s00-a.png` as style ref) with `common.txt` + six lines from
+`build.py`; `cut_all.sh` cuts each 512 cell, keeps the painted disc (r 202) and puts the canonical rim back on top, so every medallion
+has the identical frame. Redo sheet: `SUBJ=subjects_fix.tsv gen.sh 0 a sheets/s00-a.png`. New imports with mipmaps (test_painted_medallions).
+Contact sheets `contato_64px.png`, `contato_128px.png` (order of subjects.tsv); delivered in Downloads\ASelagem-icones-bencaos.
+Rules checked: no text, no sun with rays, no star, no cross (swords tilted), no violet outside Morvath, no emerald (Peste and
+Vigília olive), no figures (one pair of hands, Consolo), no blood (Sombra Revelada has dark red scratches). Watch: Bastião's shield
+face has faint quarter lines.
+
+## Sala07 Câmara do Selo in the game (PT28-10, 2026-11-27)
+No new generation: the lote 3 plates already fit (UNIFORM overlay rechecked: platform, balustrade, seal circle, stairs, shrine).
+Game plate `lote3/sala07_jogo.png` copied to `assets/rooms/painted/seal_chamber.png`; it needs a ROOMS entry in PaintedHall:
+`&"seal_chamber": {painting: seal_chamber.png, yaw 35, pitch 30, fov 24, dist 86, at (-5, -2), v_span UNIFORM}` (base pose of lote 3).
+Approval copy in Downloads\ASelagem-sala-morvath.

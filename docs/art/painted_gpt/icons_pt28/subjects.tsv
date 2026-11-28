@@ -1,0 +1,159 @@
+rewards/boon	BENCAO	uma única pena de asa de anjo, dourada e luminosa, inclinada, com uma luz quente suave em volta; fundo azul-noite
+rewards/pom	BENCAO	um cálice de bronze simples transbordando luz dourada líquida que escorre pela borda; fundo azul-noite
+rewards/pom_slice	BENCAO	um saquinho de couro amarrado, entreaberto, deixando escapar três gotas de luz dourada; fundo azul-noite
+rewards/heart	VIDA	um coração em forma simples de coração (não anatômico), lapidado como uma grande gema vermelho-rubi polida, com reflexo quente; fundo vermelho-escuro
+rewards/magick	MAGIA	um cristal lapidado azul-safira, alongado e inclinado, com uma luz azul-clara correndo pelo meio; fundo azul-escuro
+rewards/gold	OURO	uma pilha de três moedas de ouro grossas e lisas, com brilho quente; fundo marrom-escuro
+rewards/heal	CURA	um frasco redondo de vidro com rolha de cortiça e líquido vermelho-rosado brilhando por dentro; fundo vermelho-escuro
+rewards/silver	PRATA	um lingote de prata antiga, gasto nas bordas, com duas moedas de prata ao lado; fundo cinza-azulado escuro
+rewards/memory	MEMORIA	um caco de vitral antigo de bordas quebradas, em âmbar e azul-pálido, com luz passando por ele (sem figuras desenhadas no vidro); fundo azul-escuro
+rewards/enchant	ENCANTO	uma gema âmbar engastada numa garra de bronze trabalhada, brilhando por dentro; fundo marrom-escuro
+rewards/psalm	SALMO	um livro antigo aberto com capa de couro, as páginas brilhando em luz dourada suave, páginas em branco sem nenhuma letra; fundo azul-noite
+rewards/combat	LUTA	duas espadas curtas cruzadas em X, lâminas de aço e cabos de couro; fundo cinza-escuro
+rewards/miniboss	GUARDIAO	um elmo de cavaleiro de ferro escuro com viseira fechada, visto de frente, com detalhes de bronze; fundo vermelho-escuro
+rewards/fountain	FONTE	uma pequena fonte de pedra de uma taça, com água azul-clara jorrando e caindo; fundo azul-escuro
+rewards/shop	LOJA	uma balança de mercador de bronze com dois pratos, um saquinho de moedas num deles; fundo marrom-escuro
+rewards/boss	MORVATH	um selo redondo de pedra escura, rachado ao meio, com luz violeta escapando pela rachadura (só aqui o violeta é permitido); fundo quase preto
+rewards/trial	PROVACAO	um portão de grade de ferro fechado, com brasas vermelhas brilhando por trás das barras; fundo vermelho-escuro
+rewards/altar	ALTAR	um pequeno altar de pedra com duas velas acesas em cima e uma toalha lisa sem desenho; fundo marrom-escuro
+rewards/angel_chama	CHAMA	uma asa de anjo aberta feita de chamas laranja e vermelhas; fundo vermelho-escuro
+rewards/angel_luz	LUZ	uma asa de anjo aberta feita de luz dourada-clara suave, penas brilhando; fundo azul-noite
+rewards/angel_geada	GEADA	uma asa de anjo aberta feita de lascas de gelo azul-pálido translúcido; fundo azul-escuro
+rewards/angel_vigilia	VIGILIA	uma asa de anjo aberta com penas de bronze e verde-oliva, firmes como placas de escudo; fundo verde-oliva escuro
+rewards/angel_veu	VEU	uma asa de anjo aberta feita de névoa cinza-pérola e sépia, se desfazendo nas pontas; fundo cinza-escuro
+rewards/angel_mare	MARE	uma asa de anjo aberta feita de água azul-mar e espuma branca, como uma onda; fundo azul-marinho escuro
+rewards/angel_marca	MARCA	uma asa de anjo aberta com penas ocre-douradas cujas pontas são pontas de flecha; fundo marrom-escuro
+rewards/angel_peste	PESTE	uma asa de anjo aberta feita de folhas secas e murchas verde-oliva amareladas e mostarda; fundo oliva escuro
+rewards/angel_trovao	TROVAO	uma asa de anjo aberta de penas cinza-aço com pequenos raios branco-azulados entre as penas; fundo cinza-azulado escuro
+boons/golpe_brasa	CHAMA	espada inclinada em golpe diagonal, a lâmina em brasa e um arco de corte feito de chamas laranja
+boons/circulo_brasa	CHAMA	um anel de fogo no chão, visto de cima em perspectiva, com chamas laranja baixas dentro
+boons/passo_brasa	CHAMA	uma bota de couro em passo rápido deixando um rastro de chamas no chão
+boons/brasas	CHAMA	três bolas de fogo caindo do alto em diagonal, com caudas de chama
+boons/lamina_ardente	CHAMA	uma lâmina de espada inclinada inteiramente envolta em chamas fortes
+boons/omega_brasa	CHAMA	espada inclinada com uma espiral de fogo se acumulando em volta da lâmina, carregando força
+boons/combustao	CHAMA	uma explosão de fogo redonda, laranja e vermelha, com pedaços de brasa voando
+boons/chama_contagiosa	CHAMA	três pequenas chamas ligadas por arcos de fogo, a chama saltando de uma para a outra
+boons/brasa_persistente	CHAMA	um pedaço de carvão em brasa ardendo devagar, com uma chama baixa e constante
+boons/fogo_crescente	CHAMA	três chamas lado a lado, da menor para a maior
+boons/redemoinho	CHAMA	três chamas girando juntas em círculo, um redemoinho de fogo
+boons/pesado_brasa	CHAMA	espada pesada batendo no chão em diagonal, com uma onda de fogo em meia-lua saindo do impacto
+boons/ultimo_brasa	CHAMA	uma chuva de brasas grandes caindo do alto sobre um círculo no chão
+boons/chuva_brasas	CHAMA	uma nuvem escura de fumaça da qual caem muitas brasas em linhas diagonais
+boons/golpe_radiante	LUZ	espada inclinada em golpe diagonal, o fio da lâmina brilhando em dourado-claro intenso no ponto do acerto
+boons/circulo_radiante	LUZ	um anel de luz dourada no chão, visto em perspectiva, com um brilho forte e redondo no meio (sem raios)
+boons/passo_claro	LUZ	uma bota em passo com um anel de luz dourada se abrindo em volta dela
+boons/clarao	LUZ	um lampejo redondo e súbito de luz branca-dourada, macio, como um clarão (sem raios)
+boons/consolo	LUZ	duas mãos em concha segurando uma pequena chama dourada em forma de coração
+boons/onda_maior	LUZ	três lâminas curvas de luz dourada voando juntas para a frente
+boons/flagelo	LUZ	três colunas de luz dourada descendo do alto e batendo no chão
+boons/final_radiante	LUZ	três cortes curvos em sequência, o último bem maior e brilhando dourado
+boons/onda_clara	LUZ	uma grande meia-lua de luz dourada se espalhando para a frente, como uma onda
+boons/luz_crescente	LUZ	três chamas de vela douradas, da menor para a maior, em degrau
+boons/prosperidade	LUZ	moedas de ouro caindo dentro de uma bolsa de couro aberta, com brilho dourado
+boons/fortuna_celestial	LUZ	uma moeda de ouro girando no ar, de lado, com um brilho no fio
+boons/esplendor	LUZ	uma gema dourada-clara lapidada brilhando forte por dentro
+boons/passo_radiante	LUZ	uma bota em passo largo com um rastro de luz dourada e linhas de velocidade
+boons/pesado_radiante	LUZ	espada pesada batendo no chão em diagonal com um brilho dourado redondo no ponto do impacto
+boons/ultimo_radiante	LUZ	várias colunas retas de luz dourada caindo do céu sobre o chão
+boons/golpe_geada	GEADA	espada inclinada em golpe diagonal, a lâmina coberta de gelo e um arco de corte azul-gelo
+boons/circulo_geada	GEADA	um anel de cristais de gelo pontudos brotando do chão, visto em perspectiva
+boons/floco_errante	GEADA	três pequenas bolinhas de neve com cristais curtos flutuando no ar (não estrelas)
+boons/geada_final	GEADA	três cortes curvos em sequência, o último bem maior e se transformando em gelo azul
+boons/omega_geada	GEADA	espada inclinada com uma espiral de gelo se acumulando em volta da lâmina
+boons/estilhaco	GEADA	um bloco de gelo rachado se partindo ao meio em cacos grandes
+boons/inverno_prolongado	GEADA	uma ampulheta de bronze com areia de gelo azul-clara
+boons/geada_profunda	GEADA	um grilhão de ferro pesado coberto de gelo espesso
+boons/cristais_errantes	GEADA	pequenos cristais de gelo soltos espalhando-se em arco a partir de um ponto
+boons/passo_geada	GEADA	uma bota em passo largo lançando três lâminas de gelo à frente
+boons/toque_geada	GEADA	espada pesada batendo no chão em diagonal com gelo espesso subindo do impacto
+boons/ultimo_geada	GEADA	um enorme bloco de gelo caindo do alto sobre o chão
+boons/peso_inverno	GEADA	granizo grande de gelo caindo do alto sobre um círculo gelado no chão
+boons/golpe_firme	VIGILIA	espada inclinada em golpe com um anel de impacto de poeira e bronze no ponto do acerto
+boons/circulo_firme	VIGILIA	uma onda de choque redonda de poeira e pedra saindo do chão, visto em perspectiva
+boons/passos	VIGILIA	duas botas em passo, uma atrás da outra, com rastro verde-oliva
+boons/passo_firme	VIGILIA	uma bota em passo com um pequeno escudo redondo de bronze à frente dela
+boons/escudo	VIGILIA	um escudo redondo de bronze com borda de ferro e uma cabeça de leão em relevo
+boons/firmeza	VIGILIA	uma laje grossa de pedra com uma luz quente subindo pelas juntas, como chão consagrado
+boons/vigia_firme	VIGILIA	um elmo de ferro amassado com três pequenos círculos de tontura girando em volta
+boons/vigilia_longa	VIGILIA	uma lamparina de bronze com uma chama azul-clara alta e firme
+boons/guarda_atenta	VIGILIA	uma lança longa inclinada com linhas de alcance à frente da ponta
+boons/ruptura	VIGILIA	um escudo de ferro rachado ao meio
+boons/forca_inabalavel	VIGILIA	um martelo de guerra batendo no chão e rachando a pedra
+boons/peso_vigilia	VIGILIA	três pedras pesadas empilhadas, com musgo verde-oliva
+boons/amparo	VIGILIA	um escudo de bronze segurado por uma mão aberta atrás dele
+boons/investida_firme	VIGILIA	uma bota em passo largo deixando lajes de pedra erguidas no chão atrás dela
+boons/pesado_firme	VIGILIA	espada pesada batendo no chão em diagonal com uma onda de impacto de pedra e poeira
+boons/ultimo_firme	VIGILIA	uma grande onda de choque redonda rachando o chão em volta de um ponto de impacto
+boons/golpe_veu	VEU	espada inclinada em golpe diagonal deixando um rastro de névoa cinza-pérola
+boons/circulo_veu	VEU	um anel de névoa cinza girando no chão, visto em perspectiva
+boons/fios_cinza	VEU	uma bota em passo soltando fios de névoa cinza que se enrolam
+boons/omega_veu	VEU	espada inclinada com névoa cinza se acumulando em espiral em volta da lâmina
+boons/final_veu	VEU	três cortes curvos em sequência, o último bem maior e se desfazendo em névoa cinza
+boons/nevoa	VEU	uma nuvem redonda de névoa se abrindo, em cinza e sépia de entardecer
+boons/vulnerabilidade	VEU	um peitoral de armadura de ferro com uma rachadura por onde passa névoa cinza
+boons/essencia_restauradora	VEU	uma gota azul-clara de Magia subindo de dentro de uma névoa cinza
+boons/veu_persistente	VEU	um véu de tecido cinza transparente caindo suavemente, solto no ar
+boons/entardecer	VEU	uma espada inimiga enferrujada e baixada, meio coberta por névoa cinza densa
+boons/passo_veu	VEU	uma bota em passo largo atravessando uma névoa cinza e rasgando-a
+boons/pesado_veu	VEU	espada pesada batendo no chão em diagonal soltando uma onda de névoa cinza
+boons/crepusculo	VEU	uma lua crescente cinza-pérola atrás de faixas de névoa de entardecer
+boons/golpe_mare	MARE	espada inclinada em golpe diagonal envolta em linhas de vento azul e gotas de espuma
+boons/circulo_mare	MARE	um anel de vento azul girando em espiral no chão, visto em perspectiva
+boons/passos_leves	MARE	duas penas azul-claras levadas por um rastro de vento
+boons/omega_mare	MARE	espada inclinada com uma espiral de água azul se acumulando em volta da lâmina
+boons/arrebentacao	MARE	uma onda azul quebrando com força contra uma rocha, espuma branca
+boons/brisa_favoravel	MARE	três linhas curvas de vento azul-claro soprando para a frente
+boons/cadencia	MARE	três traços curvos de vento em sequência, cada um maior que o anterior
+boons/espuma	MARE	três bolhas de espuma do mar girando em círculo
+boons/fluxo_continuo	MARE	um laço de água corrente azul fechado em círculo, sem começo nem fim
+boons/mare_cheia	MARE	uma onda alta e cheia avançando para a frente
+boons/turbilhao	MARE	um redemoinho de vento azul-mar em forma de funil
+boons/vaga	MARE	uma onda circular se abrindo em anel na água, vista em perspectiva
+boons/passo_mare	MARE	uma bota em passo largo com uma onda azul quebrando à frente dela
+boons/pesado_mare	MARE	espada pesada batendo no chão em diagonal com uma rajada de vento e água saindo reta para a frente
+boons/vendaval	MARE	três redemoinhos de vento fortes carregando folhas
+boons/golpe_marca	MARCA	espada inclinada em golpe diagonal com um anel de mira ocre no ponto do acerto
+boons/circulo_marca	MARCA	um anel no chão, visto em perspectiva, com uma cópia fantasma translúcida dele um pouco deslocada (um eco)
+boons/olhar_rapido	MARCA	um olho ocre estilizado aberto com linhas de velocidade dos lados
+boons/omega_marca	MARCA	espada inclinada com um anel de mira ocre brilhando na ponta
+boons/golpe_certeiro	MARCA	uma lâmina acertando em cheio o centro de um alvo redondo de madeira
+boons/olho_atento	MARCA	um olho ocre atento, bem aberto, de pupila fina
+boons/flechas	MARCA	três flechas cravadas no chão, vindas do alto
+boons/chuva_flechas	MARCA	muitas flechas voando juntas em diagonal para a frente
+boons/eco_crescente	MARCA	uma espada com duas cópias fantasma ocre translúcidas, cada uma maior, atrás dela
+boons/marca_persistente	MARCA	dois anéis de mira ocre ligados por uma linha, a marca passando de um para o outro
+boons/sombra_revelada	MARCA	uma silhueta de sombra com um anel de mira ocre brilhando no meio e três riscos de corte vermelho-escuros (sem sangue)
+boons/ressonancia	MARCA	um sino de bronze com ondas de som em arco saindo dele
+boons/passo_marca	MARCA	uma bota em passo largo com um anel de mira ocre à frente
+boons/pesado_marca	MARCA	espada pesada batendo em diagonal sobre um anel de mira, com uma cópia fantasma do golpe logo atrás
+boons/exercito_ecos	MARCA	uma fileira de várias espadas fantasma ocre translúcidas, inclinadas lado a lado
+boons/golpe_peste	PESTE	espada inclinada em golpe diagonal, a lâmina pingando veneno verde-oliva amarelado
+boons/circulo_peste	PESTE	uma poça redonda de veneno verde-amarelado borbulhando no chão, vista em perspectiva
+boons/passo_peste	PESTE	uma bota em passo deixando um rastro de veneno borbulhante
+boons/saturacao	PESTE	uma bolha grande de veneno estourando em respingos
+boons/peste_persistente	PESTE	um frasco de vidro rachado com veneno verde-amarelado escorrendo
+boons/deterioracao	PESTE	uma folha murcha se desfazendo em pó amarelado
+boons/contagio	PESTE	três gotas de veneno ligadas, o veneno saltando de uma para outra
+boons/pesado_peste	PESTE	espada pesada batendo no chão em diagonal espalhando gotas de veneno
+boons/epidemia_celestial	PESTE	uma nuvem de esporos verde-amarelados caindo do alto sobre um círculo no chão
+boons/golpe_trovao	TROVAO	espada inclinada em golpe diagonal com faíscas elétricas branco-azuladas correndo pela lâmina
+boons/circulo_trovao	TROVAO	um anel no chão, visto em perspectiva, estalando com pequenos raios
+boons/passo_trovao	TROVAO	uma bota em passo soltando faíscas elétricas em volta
+boons/descarga	TROVAO	um raio branco-azulado em zigue-zague atingindo o chão
+boons/conducao	TROVAO	um raio saltando em arco entre três pontos
+boons/sobrecarga	TROVAO	uma esfera de ferro carregada transbordando faíscas
+boons/ressonancia_eletrica	TROVAO	dois pontos ligados por arcos elétricos que se repetem lado a lado
+boons/pesado_trovao	TROVAO	espada pesada batendo no chão em diagonal com uma explosão de faíscas
+boons/tempestade_celestial	TROVAO	uma nuvem de tempestade cinza com três raios caindo
+boons/vapor	CHAMA+GEADA	uma nuvem de vapor branco subindo entre uma chama laranja à esquerda e um cristal de gelo azul à direita
+boons/aurora	LUZ+GEADA	um cristal de gelo azul brilhando por dentro com luz dourada
+boons/chama_viva	LUZ+CHAMA	uma chama em forma de gota, dourada no meio e laranja nas bordas
+boons/bastiao	VIGILIA+LUZ	um escudo redondo de bronze com uma explosão de luz dourada em volta dele
+boons/rastro	CHAMA	uma fileira de pegadas no chão feitas de brasas acesas
+boons/passo_frio	GEADA	uma bota em passo deixando pegadas de gelo azul no chão
+boons/nevoa_gelida	VEU+GEADA	uma névoa cinza com cristais de gelo azul suspensos dentro
+boons/cinza_viva	VEU+CHAMA	cinzas cinzentas soltas com brasas laranja acesas entre elas
+boons/mare_ardente	MARE+CHAMA	uma onda azul com a crista em chamas laranja
+boons/correnteza	MARE	uma corrente de água azul em linha reta empurrando uma folha
+boons/mira_clara	LUZ+MARCA	um anel de mira dourado-claro brilhando
+boons/olho_firme	MARCA+VIGILIA	um olho ocre pintado sobre um escudo redondo de bronze

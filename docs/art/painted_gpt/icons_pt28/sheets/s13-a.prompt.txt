@@ -1,0 +1,21 @@
+A imagem 1 é uma folha com 6 molduras redondas de medalhão (aro de bronze com quatro pontas douradas), em 3 colunas e 2 linhas, com o miolo escuro vazio. Pinte DENTRO de cada moldura um ícone de habilidade do meu jogo, conforme a lista abaixo. Mantenha as 6 molduras exatamente no mesmo lugar, do mesmo tamanho e com o mesmo aro; o fundo fora delas continua liso, escuro e sem nada. Cada ícone fica inteiro dentro do seu círculo, centrado, ocupando cerca de 70% do miolo, sem encostar nem passar por cima do aro.
+
+LEITURA: estes ícones aparecem pequenos no jogo (48 a 64 pixels, nas portas, na loja e na tela). Por isso cada um tem UM objeto principal grande, de silhueta simples e clara, forte contraste de luz contra o fundo escuro do miolo, poucos detalhes, nada de cena ou paisagem, nada de enfeite pequeno. O fundo do miolo é um tom escuro e liso da cor indicada, com uma leve vinheta. Os seis ícones da folha têm o mesmo tamanho de objeto, a mesma luz vinda do alto à esquerda e o mesmo acabamento, como uma coleção.
+
+ESTILO: pintura digital feita à mão, ilustrada, como os ícones de um jogo de ação no estilo do Hades II: pinceladas visíveis, contorno escuro suave e quebrado (não linha de vetor), formas simples e legíveis, cores ricas, luz quente. Não é 3D renderizado, não é foto, não é pixel art, não é anime, não é ícone plano de vetor. Nada de brilho plástico. A referência é só de estilo: nenhum personagem, símbolo, logotipo ou ícone de outro jogo.
+
+REGRAS (valem para todos):
+- Nenhum texto, letra, número, runa ou marca escrita.
+- Proibido: sol com raios, estrela de muitas pontas, brilho em forma de estrela, floco de neve em estrela, cruz. Espadas e lanças sempre INCLINADAS na diagonal, nunca na vertical (para não parecer uma cruz). Luz sempre em forma redonda ou em colunas, nunca em raios em leque.
+- Nada violeta nem lilás, e nada verde-esmeralda, salvo onde a lista disser.
+- Nenhuma pessoa, rosto, anjo de corpo inteiro ou deus; no máximo uma mão. Sem sangue.
+- Tom de aventura, acolhedor, não de terror.
+
+LISTA (posição na folha: ícone, cores):
+- Medalhão 1 (em cima, à esquerda): uma lança longa inclinada com linhas de alcance à frente da ponta. Cores: bronze e verde-oliva (nunca esmeralda); fundo do miolo verde-oliva escuro.
+- Medalhão 2 (em cima, no meio): um escudo de ferro rachado ao meio. Cores: bronze e verde-oliva (nunca esmeralda); fundo do miolo verde-oliva escuro.
+- Medalhão 3 (em cima, à direita): um martelo de guerra batendo no chão e rachando a pedra. Cores: bronze e verde-oliva (nunca esmeralda); fundo do miolo verde-oliva escuro.
+- Medalhão 4 (embaixo, à esquerda): três pedras pesadas empilhadas, com musgo verde-oliva. Cores: bronze e verde-oliva (nunca esmeralda); fundo do miolo verde-oliva escuro.
+- Medalhão 5 (embaixo, no meio): um escudo de bronze segurado por uma mão aberta atrás dele. Cores: bronze e verde-oliva (nunca esmeralda); fundo do miolo verde-oliva escuro.
+- Medalhão 6 (embaixo, à direita): uma bota em passo largo deixando lajes de pedra erguidas no chão atrás dela. Cores: bronze e verde-oliva (nunca esmeralda); fundo do miolo verde-oliva escuro.
+A imagem 2 é uma folha de ícones já aprovada deste mesmo jogo: siga o MESMO estilo de pintura, a mesma espessura de pincel, a mesma luz e o mesmo tamanho de objeto dentro do miolo. Não copie os objetos dela.

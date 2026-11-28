@@ -97,6 +97,12 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   `assets/ui/boons/`, pintados por IA pelo diretor de arte do PO no ChatGPT, quadrados e sem moldura
   (`Eterra_REV03_01..04`); o recorte redondo e a moldura única são nossos (`tools/art/frame_borderless.gd`).
 
+- **Ícones pintados, Rev. 04 (gpt-image-2, API da OpenAI, 2026-11-27; PT28-4; vão no jogo, substituem a Rev. 03)**: os 132
+  medalhões das Bênçãos em `assets/ui/boons/` e os 27 de `assets/ui/rewards/` (recompensas das portas e da loja, tipos de sala e os
+  9 anjos), pintados por IA em folhas de seis sobre um molde nosso; o recorte e a moldura única são nossos
+  (`docs/art/painted_gpt/icons_pt28/`). A placa da Câmara do Selo (`assets/rooms/painted/seal_chamber.png`, lote 3 do GP-8) também
+  entra no jogo.
+
 ## Sem IA
 - Modelos KayKit (Kay Lousberg, CC0), animações da Quaternius (CC0), fontes Cinzel e Alegreya Sans (OFL), textura
   Rock Surface (Amal Kumar, Poly Haven, CC0).
