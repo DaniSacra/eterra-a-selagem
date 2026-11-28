@@ -5,6 +5,8 @@
 
 ## Hoje, 2026-11-27 (LER PRIMEIRO na conversa nova)
 
+**Exe `6f2fa22a` entregue (PT-28):** itens 1 a 10 feitos; coluna de Bênçãos opção A à esquerda; 159 ícones novos (US$ 7); sala do Morvath pintada. Aberto: PT28-11 Santuário (plano em `docs/art/hub_pt28_plan.md`, espera o sim do Daniel), sala 8 a confirmar com ele.
+
 **Teste do Daniel no exe `bf27962f` (2026-11-27 noite), lote PT-28:**
 | id | o quê | dono |
 |---|---|---|
