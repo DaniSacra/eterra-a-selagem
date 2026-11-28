@@ -51,7 +51,7 @@ const FIRST_FIELDS := {"first": false}
 const REGION_FIELDS := {"region": 0, "passages": 0}
 ## What strikes from the floor or the walls (DefeatCause keys): a blow from one of these is a hazard's.
 const HAZARD_SOURCES: Array[String] = ["runes", "plates", "chain", "roots", "slit", "trap", "crystal", "rocks", "urn", "oil", "niche",
-	"plant", "sag", "spikes", "spikeplate", "gap"]
+	"plant", "sag", "spikes", "spikeplate", "gap", "rootgrid"]
 ## Who played a run (source).
 ## A "quit" before any room was won and within this many seconds is someone passing through the Portal: not logged.
 const EMPTY_QUIT_S := 10.0

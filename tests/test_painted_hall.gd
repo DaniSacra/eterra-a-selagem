@@ -256,3 +256,36 @@ func test_the_painted_object_gives_way_to_its_3d_away_from_the_pose() -> void:
 	var near := Vector3(m.x, 0.0, m.y) + Feel.cam_offset_of(37.0, p[&"pitch"], p[&"yaw"] + 90.0)
 	assert_eq(PaintedHall.mask_amount(p, m, near), 1.0, "from the side the 3D object shows")
 	assert_true(PaintedHall.masks_of(&"hall").is_empty(), "a room without footprints has none")
+
+
+func test_the_showcase_frame_shows_the_3d_tree() -> void:
+	# PT28-12 bug: --showcase --cam-dist=37 --cam-at=-9.4,-7.7 keeps the painter's yaw and pitch, only 0.11 rad from the pose at the
+	# tree's foot; the old, wider SWAP_ANGLE left the trunk flat on the floor with no 3D tree
+	var p := PaintedHall.pose_of(&"garden:0")
+	var m := PaintedHall.masks_of(&"garden:0")[0]
+	var cam := Vector3(-9.4, 0.0, -7.7) + Feel.cam_offset_of(37.0, p[&"pitch"], p[&"yaw"])
+	assert_eq(PaintedHall.mask_amount(p, m, cam), 1.0, "close-up with the pose's direction: the 3D tree")
+
+
+func test_process_swaps_the_painted_tree_for_the_3d_one() -> void:
+	var p := PaintedHall.pose_of(&"garden:0")
+	var node := PaintedHall.new()
+	node.room = &"garden:0"
+	add_child_autofree(node)
+	var mat: ShaderMaterial = node._material(p, 0.0)
+	var tree := Node3D.new()
+	tree.visible = false
+	add_child_autofree(tree)
+	node._swap.append(tree)
+	var cam := Camera3D.new()
+	add_child_autofree(cam)
+	cam.current = true
+	cam.global_position = Vector3(-9.4, 0.0, -7.7) + Feel.cam_offset_of(37.0, p[&"pitch"], p[&"yaw"])
+	node.set_process(true)
+	node._process(0.0)
+	assert_eq(mat.get_shader_parameter(&"mask_amount"), 1.0, "the shader hears the amount")
+	assert_true(tree.visible, "the 3D tree shows")
+	cam.global_position = PaintedHall.eye_of(p)
+	node._process(0.0)
+	assert_eq(mat.get_shader_parameter(&"mask_amount"), 0.0)
+	assert_false(tree.visible, "back at the painter's eye the painted one is back")

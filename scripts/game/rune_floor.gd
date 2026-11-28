@@ -85,7 +85,7 @@ func step(dt: float) -> void:
 				patterns.append([snappedf(_t, 0.01), String(hazard.pattern), lit])
 			for r in hazard.rects():
 				zones.append(game.ground.add_hazard(r, hazard.def.warn, hazard.def.hero_damage, hazard.def.enemy_damage,
-					look == null))
+					look == null, hazard.def.rune_source))
 			Audio.play(CombatSounds.EVENTS[&"rune_arm"])  # one per pattern, however many tiles it lights
 		ArenaHazard.Event.FIRED:
 			Audio.play(CombatSounds.EVENTS[&"crystal_fire" if hazard.pattern == &"discharge" else &"rune_fire"])

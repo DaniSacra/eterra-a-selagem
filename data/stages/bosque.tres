@@ -1022,6 +1022,7 @@ band_dir = PackedVector2Array()
 sparks = PackedVector2Array()
 crystals = PackedVector2Array()
 crystal_cols = PackedInt32Array()
+rune_source = &"rootgrid"
 urns = PackedVector2Array()
 urn_flows = PackedVector4Array()
 
