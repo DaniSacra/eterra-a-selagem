@@ -77,16 +77,16 @@ const FALLS: Array[Vector4] = [Vector4(16.4, -15.7, 2.6, 15.0), Vector4(22.0, -1
 	Vector4(35.5, -12.2, 2.6, 17.0)]
 const FALL_TURN := 0.0
 ## Round 3: the falls are white-blue and thin out to nothing in the mist before the foot (FALL_VANISH: the share of the drop).
-const FALL_COLOR := Color(0.5, 0.72, 0.84)
+const FALL_COLOR := Color(0.58, 0.8, 0.92)
 const FALL_VANISH := 0.55
 ## Round 4: the falls are narrow ribbons of pale blue water (FALL_NARROW times the width they had), with see-through gaps between
 ## the stripes (FALL_GAP), a band of foam at the lip (FALL_LIP, the share of the drop), never a white plate; and only where
 ## the drop below is open void (FALL_OPEN: how far out, how far to each side, in metres), never a pit or trench in the floor.
 const FALL_FOAM := Color(0.8, 0.9, 0.96)
-const FALL_ALPHA := 0.6
+const FALL_ALPHA := 0.85
 const FALL_GAP := 0.85
 const FALL_LIP := 0.06
-const FALL_NARROW := 0.55
+const FALL_NARROW := 0.75
 const FALL_OPEN := Vector2(12.0, 2.0)
 const EXTRA_FALLS := 0  # round 3: the falls are only FALLS (the east, under the Portão's bridge); none in the middle
 const EXTRA_FALL_APART := 9.0
@@ -105,18 +105,18 @@ const RAILS: Array[Vector4] = [
 ## flaring out of it (length, thickness). Crown: leaf crowns (card width, crown height) in rings of VINE_CROWN_RINGS (radius,
 ## height of the crown's foot, count), grapes hanging under the rings (VINE_GRAPES of them, reaching VINE_GRAPE_REACH out
 ## from the trunk), flowers on the planter's rim (VINE_RIM_FLOWERS, in from the wall by VINE_RIM_IN).
-const VINE_TRUNK := Vector3(0.62, 0.36, 3.2)
-const VINE_LEAN := Vector2(0.14, 0.1)  # how far each upper segment steps sideways (u, v)
+const VINE_TRUNK := Vector3(0.85, 0.48, 4.2)
+const VINE_LEAN := Vector2(0.24, 0.17)  # how far each upper segment steps sideways (u, v)
 const VINE_BARK := Color(0.2, 0.14, 0.1)
-const VINE_ROOTS := 7
-const VINE_ROOT := Vector2(1.5, 0.3)
-const VINE_CROWN := Vector2(3.4, 2.2)
-const VINE_CROWN_RINGS: Array[Vector3] = [Vector3(0.0, 4.4, 1.0), Vector3(1.7, 4.0, 5.0), Vector3(3.2, 3.5, 8.0)]
+const VINE_ROOTS := 9
+const VINE_ROOT := Vector2(2.0, 0.42)
+const VINE_CROWN := Vector2(4.4, 2.8)
+const VINE_CROWN_RINGS: Array[Vector3] = [Vector3(0.0, 5.7, 2.0), Vector3(2.0, 5.1, 6.0), Vector3(3.9, 4.4, 10.0)]
 const VINE_LEAF_A := Color(0.26, 0.38, 0.14)
 const VINE_LEAF_B := Color(0.5, 0.58, 0.2)
-const VINE_GRAPES := 26
-const VINE_GRAPE_REACH := Vector2(0.9, 3.0)
-const VINE_GRAPE_TOP := 3.7
+const VINE_GRAPES := 34
+const VINE_GRAPE_REACH := Vector2(1.2, 3.9)
+const VINE_GRAPE_TOP := 4.6
 const VINE_RIM_FLOWERS := 18
 const VINE_RIM_IN := 0.55
 const GRAPE_A := Color(0.2, 0.06, 0.3)
@@ -145,7 +145,8 @@ const VIGIL_PLANT_EVERY := 0.95
 ## in, and the gold medallion at the middle (radius, height).
 const VIGIL_RINGS: Array[Vector2] = [Vector2(1.0, 0.1), Vector2(0.86, 0.13), Vector2(0.64, 0.16), Vector2(0.42, 0.19)]
 const VIGIL_MEDAL := Vector2(0.26, 0.2)
-const VIGIL_LIGHT := Vector3(2.8, 1.5, 7.0)  # height of the soft lamp over the landing, energy, reach
+const VIGIL_LIGHT := Vector3(2.8, 0.7, 5.0)  # height of the soft lamp over the landing, energy, reach
+const VIGIL_LIGHT_COLOR := Color(1.0, 0.66, 0.36)  # amber, never a white pool on the landing
 const FUTURE_YARDS: Array[Vector4] = [Vector4(-21.0, -26.0, -8.0, -17.0), Vector4(-1.0, -26.0, 12.0, -17.0)]
 const YARD_DROP := 1.2
 const YARD_STEPS := 5
@@ -1037,7 +1038,7 @@ func _vigil_post() -> void:
 		var ring := VIGIL_RINGS[i]
 		look.fm.shaft(_at(f.x, 0.0, f.y), (f.z + 0.3) * ring.x, ring.y, wall if i % 2 == 0 else stone)
 	look.fm.shaft(_at(f.x, 0.0, f.y), VIGIL_MEDAL.x, VIGIL_MEDAL.y, look._plain(HubLook.MEDALLION_GOLD, 0.5))
-	facades.light(Vector3(f.x, VIGIL_LIGHT.x, f.y), Color(1.0, 0.86, 0.6), VIGIL_LIGHT.y, VIGIL_LIGHT.z)
+	facades.light(Vector3(f.x, VIGIL_LIGHT.x, f.y), VIGIL_LIGHT_COLOR, VIGIL_LIGHT.y, VIGIL_LIGHT.z)
 	_vigil_bed(stone)
 	_vigil_niche()
 

@@ -183,7 +183,7 @@ const CLIFF_FADE := Vector2(8.0, 36.0)
 const CLIFF_SHADE := Color(0.17, 0.17, 0.3)
 const CLIFF_DEEP_DARK := 0.65
 ## The hub's air (spec 4.1: lighter and warmer than any room, the cold in the sky and the vista) and its stylized look.
-const DUSK_GOLD := Color(1.0, 0.76, 0.56)
+const DUSK_GOLD := Color(1.0, 0.7, 0.44)  # late-afternoon sun: warm and low (the shade stays cool: DUSK_AMBIENT)
 ## Round 2: the air is dusk, not noon: a cold violet ambient and a dark indigo fog; the warm lights are what shine.
 ## Round 4: the fog (the colour of everything below the floor) is night blue, not violet. The height fog under the floor
 ## (WorldAir FOG_HEIGHT_DENSITY 0.6: opaque a few metres down, so the void was this one flat colour and the planes' gradient
@@ -232,7 +232,7 @@ const STYLE := {
 ## arriving, where the camera holds the portal itself out of the frame) points the way. Each pool: station, aim (u, height, v), from (u, height, v), energy, cone
 ## (degrees), reach, colour.
 const STY_AMBIENT_GAIN := 0.72
-const STY_MOON := 0.85
+const STY_MOON := 0.95
 const STY_KEY_SHARE := 0.8
 const STY_FORGE_GAIN := 1.5
 const STY_POOLS: Array[Array] = [
@@ -243,7 +243,7 @@ const STY_POOLS: Array[Array] = [
 	[HubPlan.VENDOR, Vector3(11.5, 0.8, 7.8), Vector3(12.9, 8.0, 3.6), 9.0, 28.0, 12.0, Color(1.0, 0.8, 0.55)],
 	[HubPlan.TREE, Vector3(14.6, 1.0, -4.2), Vector3(12.8, 9.0, -8.6), 5.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
 	# V2 and PT-9: the Videira's vase and the heroes' standards
-	[HubPlan.VINE, Vector3(-2.5, 1.0, 4.8), Vector3(-4.3, 9.0, 0.3), 5.0, 28.0, 13.0, Color(0.9, 1.0, 0.62)],
+	[HubPlan.VINE, Vector3(-2.5, 1.0, 4.8), Vector3(-4.3, 9.0, 0.3), 2.5, 28.0, 13.0, Color(1.0, 0.82, 0.5)],
 	[HubPlan.PORTAL, Vector3(-1.0, 0.9, 21.4), Vector3(-1.0, 8.0, 14.6), 14.0, 38.0, 13.0, Color(1.0, 0.78, 0.4)],
 ]
 ## P1-A2 of the cycle's art review: the portal's pool (the last row) green and wide enough to read at the top of the
@@ -262,8 +262,10 @@ const STY_COMPAT_AMBIENT := 0.3
 const STY_COMPAT_MOON := 0.3
 const STY_COMPAT_KEY := 0.5
 ## A soft fill over the square (no shadow), so the floor reads as the lightest of the game (spec 4.2).
-const KEY := Color(1.0, 0.9, 0.78)
-const KEY_ENERGY := 0.5
+const KEY := Color(1.0, 0.84, 0.64)
+const KEY_ENERGY := 0.7
+## The key lamp hangs high so its hotspot on the middle of the square flattens into an even warm wash (no white pool).
+const KEY_HIGH := 30.0
 const LION_SHADER := preload("res://assets/shaders/altar_lion.gdshader")
 const PAGE_SHADER := preload("res://assets/shaders/hub_page.gdshader")
 const CANOPY_SHADER := preload("res://assets/shaders/canopy.gdshader")
@@ -413,7 +415,7 @@ func _abyss() -> void:
 
 
 func _light() -> void:
-	var key := key_light(KEY, KEY_ENERGY * (STY_COMPAT_KEY if compat() else 1.0))
+	var key := key_light(KEY, KEY_ENERGY * (STY_COMPAT_KEY if compat() else 1.0), KEY_HIGH)
 	VisualProfile.vary(key, {&"light_energy": key.light_energy * STY_KEY_SHARE})
 
 
