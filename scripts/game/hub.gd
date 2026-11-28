@@ -518,37 +518,77 @@ func descend() -> void:
 	SceneGo.to(get_tree(), SceneGo.GAME)
 
 
-## BG-4, --hub --smoke=N: N seconds in the Santuário without a screen (with --bot the robot walks the use points of the
-## open stations in turn, with no interact), then the RESULT line and out.
+## BG-4, --hub --smoke=N: up to N seconds in the Santuário without a screen. With --bot the robot walks the use points
+## of the open stations in turn (the Portal last), counting one it cannot reach in TOUR_PATIENCE seconds as stuck, and
+## takes the Adventure gate at the Portal (`descend`); then the RESULT line and out.
+const TOUR_PATIENCE := 25.0
+const TOUR_REACH := 1.0
 var _tour: Array[Vector2] = [] as Array[Vector2]
+var _tour_ids: Array[StringName] = [] as Array[StringName]
 var _tour_i := 0
+var _tour_time := 0.0
+var _field: FlowField
 var smoke_walked := 0.0
+var smoke_reached := 0
+var smoke_stuck: Array[StringName] = [] as Array[StringName]
+var smoke_gate := false
 
 
 func _tour_dir() -> Vector2:
-	if _tour.is_empty():
+	if _tour_i >= _tour.size():
 		return Vector2.ZERO
 	var d := _tour[_tour_i] - player.pos
-	if d.length() < 1.0:
-		_tour_i = (_tour_i + 1) % _tour.size()
+	if d.length() < TOUR_REACH:
+		_tour_next(true)
 		return Vector2.ZERO
-	return d.normalized()
+	# its way round the walls: the arena's NavGrid, a FlowField toward the use point (as the run's bot)
+	if _field == null:
+		_field = FlowField.new(arena.nav)
+	_field.aim(_tour[_tour_i], 1.0 / 60.0)
+	var w := _field.next_step(player.pos)
+	return w if w != Vector2.ZERO else d.normalized()
+
+
+func _tour_next(reached: bool) -> void:
+	if reached:
+		smoke_reached += 1
+		if _tour_ids[_tour_i] == HubPlan.PORTAL:
+			descend()
+			smoke_gate = leaving or host.is_open()
+	else:
+		smoke_stuck.append(_tour_ids[_tour_i])
+	_tour_i += 1
+	_tour_time = 0.0
+	_field = null
+
+
+func _tour_tick(dt: float) -> void:
+	if _tour_i >= _tour.size():
+		return
+	_tour_time += dt
+	if _tour_time > TOUR_PATIENCE:
+		_tour_next(false)
 
 
 func _smoke() -> void:
 	if Dev.has("bot"):
 		for id in HubPlan.STATIONS:
-			if is_open(id):
-				_tour.append(HubPlan.use_point(id))
+			if is_open(id) and id != HubPlan.PORTAL:
+				_tour_ids.append(id)
+		if is_open(HubPlan.PORTAL):
+			_tour_ids.append(HubPlan.PORTAL)
+		for id in _tour_ids:
+			_tour.append(HubPlan.use_point(id))
 	var limit := Dev.num("smoke", 60.0)
 	var t := 0.0
 	var last := player.pos
-	while t < limit:
+	while t < limit and (_tour.is_empty() or _tour_i < _tour.size()):
 		await get_tree().process_frame
 		t += 1.0 / 60.0
+		_tour_tick(1.0 / 60.0)
 		smoke_walked += player.pos.distance_to(last)
 		last = player.pos
-	print("RESULT hub secs=%.0f stations=%d walked=%.1f at=(%.1f,%.1f) focus=%s" % [limit, _tour.size(), smoke_walked, player.pos.x, player.pos.y, focus.current])
+	print("RESULT hub secs=%.0f stations=%d reached=%d stuck=%s gate=%d walked=%.1f at=(%.1f,%.1f)" % [t, _tour.size(), smoke_reached, smoke_stuck, int(smoke_gate), smoke_walked, player.pos.x, player.pos.y])
 	get_tree().quit()
 
 
