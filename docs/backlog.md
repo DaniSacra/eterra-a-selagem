@@ -13,13 +13,13 @@
 | PT28-1 | Golpes do Guerreiro avançam um pouco mais (o inimigo foge antes do golpe); substitui o "golpe plantado" de 2026-11-16 | gameplay-engineer **Feito 2026-11-27:** passos 0,3/0,3/0,8 para 0,5/0,5/1,4 m, Esmagador 0,4 para 0,7, Corte Circular 0 para 0,5, e o passo segue o inimigo à frente (até 3,5 m, cone de 40 graus, `StepRules.steer`); colisão e armadilhas como antes, `DECAY` 6 para 4,5 (pico abaixo da corrida) |
 | PT28-2 | Portas fechadas de verdade de novo (hoje só o vão escuro); abrem ao vencer a sala | environment-artist | **FEITO (worktree): `ArenaRoom.door_arch` põe as folhas fechadas (`HallDoor`) no vão de cada porta em parede, abrem em `open_door_leaves(i)`; pontes (escada sobre o abismo) não têm vão; `tests/test_painted_hall.gd`** |
 | PT28-3 | Sala 8: peças 3D por cima da pintura (postes) parecem sobrepostas | environment-artist | **FEITO em parte: a chama e a luz da bacia do Jardim (2,9, -14,6) sobre a grade da pintura saem (`PaintedHall.PROPS`); sala 8 exata não identificada, demais salas conferidas por lista de chamas/luzes, sem outra sobreposição certa; ver `docs/gallery/pt28/`** |
-| PT28-4 | Pedir ao ChatGPT o desenho de TODOS os ícones de Bênção, e os símbolos das portas e da loja (hoje estranhos) | ai-art-producer |
+| PT28-4 | Pedir ao ChatGPT o desenho de TODOS os ícones de Bênção, e os símbolos das portas e da loja (hoje estranhos) | ai-art-producer | Feito (5d4e0499, dff108a3) |
 | PT28-5 | Cartas de Bênção com tamanho fixo (todas iguais, com pouco ou muito texto) | ui-ux-designer | Feito |
 | PT28-6 | Ícones das Bênçãos à direita: agrupados por anjo (semelhantes juntas), só aparecem segurando TAB, como o SWORN | ui-ux-designer | Feito; Feito (opção A, esquerda): coluna de 5 lugares fixos (`SlotColumn`), Tab abre as demais por anjo com cartões e 3 fixados (`BlessingTab`), passivas fora da coluna |
 | PT28-7 | Esqueleto mago (elite) na sala 12 não morria: elites x1,8 exagerou (mago elite ~2300 de vida) | balance-designer, gameplay-engineer **Feito 2026-11-27:** elites x1,8 para x1,0 (corpo a corpo 1350 a 1500), à distância (mago, arqueiro, sacerdote) x0,7 (910, 875, 910), Capitão x1,2 (1800); ver `docs/design/balance/pt28-elites.md` |
 | PT28-8 | Habilidade em recarga fica cinza e "enche" de cor de baixo para cima (como um copo), sem o círculo | ui-ux-designer | Feito |
 | PT28-9 | Tirar a barra amarela (armadura) dos chefes, só vida | ui-ux-designer | Feito |
-| PT28-10 | Sala do Morvath (Câmara do Selo) sem pintura | ai-art-producer, environment-artist |
+| PT28-10 | Sala do Morvath (Câmara do Selo) sem pintura | ai-art-producer, environment-artist | Feito (5d4e0499, dff108a3) |
 | PT28-11 | Santuário muito feio: melhorar bastante (a gente passa muito tempo lá) | art-director, environment-artist |
 | PT28-12 | Salas pintadas: pilares e peças altas "escorrem" quando a câmera sai da pose da pintura. Capturar cada sala de vários ângulos (cantos, centro, portas) na GPU e corrigir (peças altas em 3D por cima, esconder a parte pintada). Modelo: a loja (Salão) e a sala 6, que o Daniel adorou (coisas acontecendo fora da tela e atrás) | sessão principal (capturas), environment-artist |
 
