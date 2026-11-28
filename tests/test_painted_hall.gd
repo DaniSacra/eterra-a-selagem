@@ -235,3 +235,24 @@ func test_every_painted_exit_has_closed_leaves_that_open() -> void:
 				if (d as HallDoor).is_open:
 					open += 1
 			assert_eq(open, 1, "%s %d: exactly the door taken opens" % [lv.id, v])
+
+
+func test_painted_shader_carries_the_trust_and_footprint_params() -> void:
+	# PT28-12: every painted material knows the painter's eye (steep faces fall back to the stone), garden materials the footprints
+	var p := PaintedHall.pose_of(&"garden:0")
+	var node := PaintedHall.new()
+	node.room = &"garden:0"
+	var mat: ShaderMaterial = node._material(p, 0.0)
+	assert_eq(mat.get_shader_parameter(&"plate_eye"), PaintedHall.eye_of(p), "the painter's eye")
+	assert_eq(mat.get_shader_parameter(&"mask_count"), 1, "the Jardim's tree footprint")
+	assert_eq((mat.get_shader_parameter(&"masks") as PackedVector4Array).size(), 4, "padded to the shader's four")
+	node.free()
+
+
+func test_the_painted_object_gives_way_to_its_3d_away_from_the_pose() -> void:
+	var p := PaintedHall.pose_of(&"garden:0")
+	var m := PaintedHall.masks_of(&"garden:0")[0]
+	assert_eq(PaintedHall.mask_amount(p, m, PaintedHall.eye_of(p)), 0.0, "at the painter's eye the painting is as it is")
+	var near := Vector3(m.x, 0.0, m.y) + Feel.cam_offset_of(37.0, p[&"pitch"], p[&"yaw"] + 90.0)
+	assert_eq(PaintedHall.mask_amount(p, m, near), 1.0, "from the side the 3D object shows")
+	assert_true(PaintedHall.masks_of(&"hall").is_empty(), "a room without footprints has none")

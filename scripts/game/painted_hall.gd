@@ -67,6 +67,8 @@ const ROOMS := {
 }
 ## Entries whose painting is not delivered yet: they are only used once their file exists (delivered, key_of).
 const AWAITING: Array[StringName] = [&"hub"]
+## Entries switched off by data (PT28-12: the Santuario if its arrival cannot look right yet): put the key here and the room is the game's own 3D.
+const DISABLED: Array[StringName] = []
 ## A node (and its subtree) the painting never dresses: set this meta to true.
 const KEEP_3D := &"keep_3d"
 ## A node the painting replaces (the painted tree of the Jardim): hidden when the room is painted, its collision stays.
@@ -88,6 +90,15 @@ const PROPS := {
 	&"garden:0": [{&"at": Vector2(2.9, -14.6), &"radius": 0.8, &"kinds": [&"fire", &"light"]}],
 	&"garden:1": [{&"at": Vector2(2.9, -14.6), &"radius": 0.8, &"kinds": [&"fire", &"light"]}],
 }
+## Painted 3D objects whose silhouette the painting lays on the floor (PT28-12), by room: "at" (x, z of the foot), "radius" (m), "reach"
+## (m the painted body falls away from the painter's camera). The painted floor there fades to the mask colour as the game's camera
+## leaves the painter's pose (SWAP_ANGLE), and the room's PAINTED_HIDE pieces (the object's own 3D) show instead of hiding.
+const MASKS := {
+	&"garden:0": [{&"at": Vector2(-8.0, -5.0), &"radius": 5.5, &"reach": 10.0}],
+	&"garden:1": [{&"at": Vector2(-8.0, -5.0), &"radius": 5.5, &"reach": 10.0}],
+}
+## The angle (radians, painter's ray against the game camera's, to the object) where the painted object gives way to its 3D: from, to.
+const SWAP_ANGLE := Vector2(0.08, 0.2)
 ## The far planes: the one under the room (depth below the floor) and the wall beyond it (how far behind the painter's
 ## point, along the camera's way, how high), both this wide.
 const UNDER_DEPTH := 34.0
@@ -99,6 +110,10 @@ var room: StringName = &"hall"
 ## The painters' table this node reads (ROOMS; the tests give their own).
 var table: Dictionary = ROOMS
 var _mat: ShaderMaterial
+var _mats: Array[ShaderMaterial] = []
+## The room's PAINTED_HIDE pieces, shown while the game's 3D object replaces the painted one (only in a room with MASKS).
+var _swap: Array[Node3D] = []
+var _swapped := false
 var _see: Dictionary = {}
 ## The doors (their leaves and black faces keep their own look).
 var _doors: Array[HallDoor] = []
@@ -116,7 +131,7 @@ static func key_of(layout: RoomLayout, rooms: Dictionary = ROOMS) -> StringName:
 
 ## Whether a ROOMS entry's painting can be used: the entry exists and, if it is still AWAITING, so does its file.
 static func delivered(key: StringName, rooms: Dictionary = ROOMS) -> bool:
-	if not rooms.has(key):
+	if not rooms.has(key) or key in DISABLED:
 		return false
 	return not key in AWAITING or ResourceLoader.exists((rooms[key] as Dictionary)[&"painting"])
 
@@ -157,6 +172,27 @@ static func projector(p: Dictionary) -> Projection:
 	return Projection.create_perspective(p[&"fov"], ASPECT, 1.0, 400.0) * Projection(view)
 
 
+## The painter's eye in the world (what painted.gdshader reads as plate_eye).
+static func eye_of(p: Dictionary) -> Vector3:
+	return Vector3(p[&"at"].x, 0.0, p[&"at"].y) + Feel.cam_offset_of(p[&"dist"], p[&"pitch"], p[&"yaw"])
+
+
+## The shader's footprint table of a room: up to four (x, z, radius, reach), or an empty array.
+static func masks_of(id: StringName) -> PackedVector4Array:
+	var out := PackedVector4Array()
+	for e: Dictionary in MASKS.get(id, []):
+		if out.size() < 4:
+			out.append(Vector4(e[&"at"].x, e[&"at"].y, e[&"radius"], e[&"reach"]))
+	return out
+
+
+## How much of the painted objects shows now (0 at the painter's pose, 1 far from it) for a game camera at `cam`.
+static func mask_amount(p: Dictionary, mask: Vector4, cam: Vector3) -> float:
+	var foot := Vector3(mask.x, 0.0, mask.y)
+	var ang := (eye_of(p) - foot).angle_to(cam - foot)
+	return smoothstep(SWAP_ANGLE.x, SWAP_ANGLE.y, ang)
+
+
 ## Where a world point falls in the painting, as UV 0..1.
 static func to_uv(p: Dictionary, world: Vector3) -> Vector2:
 	var c := projector(p) * Vector4(world.x, world.y, world.z, 1.0)
@@ -188,6 +224,7 @@ func _dress(arena: Arena) -> void:
 	var p := _pose()
 	_mat = _material(p, 0.0)
 	_walk(arena, arena)
+	set_process(MASKS.has(room))
 	apply_props(arena, room)
 	var at := Vector3(p[&"at"].x, 0.0, p[&"at"].y)
 	var away := -Feel.cam_offset_of(1.0, p[&"pitch"], p[&"yaw"])
@@ -197,6 +234,22 @@ func _dress(arena: Arena) -> void:
 	var far := at + away * WALL_DISTANCE
 	_quad(at + Vector3(-SPAN, -UNDER_DEPTH, -SPAN), at + Vector3(SPAN, -UNDER_DEPTH, -SPAN), at + Vector3(SPAN, -UNDER_DEPTH, SPAN), at + Vector3(-SPAN, -UNDER_DEPTH, SPAN))
 	_quad(far - side + Vector3(0, -UNDER_DEPTH, 0), far + side + Vector3(0, -UNDER_DEPTH, 0), far + side + Vector3(0, WALL_TOP, 0), far - side + Vector3(0, WALL_TOP, 0))
+
+
+func _process(_dt: float) -> void:
+	var cam := get_viewport().get_camera_3d()
+	var ms := masks_of(room)
+	if cam == null or ms.is_empty() or _mats.is_empty():
+		return
+	var amount := mask_amount(_pose(), ms[0], cam.global_position)
+	for m in _mats:
+		m.set_shader_parameter(&"mask_amount", amount)
+	var now := amount > (0.4 if _swapped else 0.6)
+	if now != _swapped:
+		_swapped = now
+		for n in _swap:
+			if is_instance_valid(n):
+				VisualProfile.vary(n, {&"visible": now})
 
 
 ## A piece added to the room after it was built (the Antessala's stream, Rooms): dressed as the rest was.
@@ -239,6 +292,14 @@ func _material(p: Dictionary, see: float, from: ShaderMaterial = null) -> Shader
 	mat.set_shader_parameter(&"painting", load(p[&"painting"]))
 	mat.set_shader_parameter(&"projector", projector(p))
 	mat.set_shader_parameter(&"v_span", float(p.get(&"v_span", 1.0)))
+	mat.set_shader_parameter(&"plate_eye", eye_of(p))
+	var ms := masks_of(room)
+	if not ms.is_empty():
+		var padded := ms.duplicate()
+		padded.resize(4)
+		mat.set_shader_parameter(&"masks", padded)
+		mat.set_shader_parameter(&"mask_count", ms.size())
+	_mats.append(mat)
 	if see > 0.0:
 		mat.set_shader_parameter(&"see_through", see)
 		for k: StringName in [&"see_radius", &"see_height", &"see_keep", &"see_gap"]:
@@ -258,6 +319,8 @@ func _walk(n: Node, arena: Arena) -> void:
 		var own := table.get(room, {}) as Dictionary
 		if c is Node3D and (c.get_meta(PAINTED_HIDE, false) or named(c, own.get(&"hide", []))):
 			VisualProfile.vary(c, {&"visible": false})
+			if MASKS.has(room) and c.get_meta(PAINTED_HIDE, false):
+				_swap.append(c as Node3D)
 			continue
 		# what moves or changes is the game's own: hazards, and anything marked
 		if c is HazardPiece or c.get_meta(KEEP_3D, false) or named(c, own.get(&"keep", [])):
