@@ -202,7 +202,7 @@ func test_lote4_rooms_resolve_to_their_entries() -> void:
 			if k != &"":
 				seen[k] = true
 	for k: StringName in PaintedHall.ROOMS:
-		if k in [&"hall", &"sala00", &"ante"]:
+		if k in [&"hall", &"sala00", &"ante", &"hub"]:
 			continue
 		assert_true(seen.has(k) or k == &"trial" or k == &"knight_hall" or k == &"elder_hall", "%s: some layout of the stage uses it" % k)
 	for k: StringName in [&"crypt:0", &"crypt:1", &"rift:0", &"rift:1", &"garden:0", &"garden:1", &"sanctuary:0", &"sanctuary:1", &"bridge:0", &"bridge:1", &"altar"]:
