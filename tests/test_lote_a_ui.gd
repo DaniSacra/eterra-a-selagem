@@ -186,6 +186,7 @@ func test_the_hub_signs_hang_at_the_foot_off_the_hero() -> void:
 
 func test_the_faint_names_keep_off_the_hero() -> void:
 	var hub := _hub()
+	hub.player.pos = hub.arena.resolve(HubPlan.use_point(HubPlan.SMITH) + Vector2(3.0, 0.0), Player.RADIUS)
 	await wait_process_frames(3)
 	var labels := hub.find_child("HubLabels", true, false) as HubLabels
 	var cam := hub.get_viewport().get_camera_3d()
@@ -203,8 +204,7 @@ func test_the_faint_names_stay_whole_inside_the_screen() -> void:
 	var labels := hub.find_child("HubLabels", true, false) as HubLabels
 	var seen := 0
 	for id: StringName in HubPlan.STATIONS:
-		var a := HubPlan.anchor(id)
-		hub.player.pos = Vector2(a.x, a.z) * 0.55
+		hub.player.pos = hub.arena.resolve(HubPlan.use_point(id) + Vector2(3.0, 0.0), Player.RADIUS)
 		await wait_process_frames(20)
 		var view := hub.get_viewport().get_visible_rect().grow(-HubLabels.EDGE + 0.5)
 		for shown_id in labels.shown():

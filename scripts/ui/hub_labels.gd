@@ -20,6 +20,10 @@ const NAME_COLOR := Color(UiKit.PALE, 0.55)
 const NAME_LIFT := 6.0
 ## How far inside the screen's edge a name has to be to show.
 const EDGE := 24.0
+## A name fades in as the hero nears the station's use point: whole inside FOCUS_IN + NAME_FULL (a little before the
+## sign and the interaction), gone past FOCUS_IN + NAME_REACH (meters on the plan).
+const NAME_FULL := 1.0
+const NAME_REACH := 4.0
 ## The purse's corner: from the right and the top (px at 720 lines).
 const PURSE_MARGIN := Vector2(16, 12)
 
@@ -77,13 +81,23 @@ func setup(p_hub: Hub) -> HubLabels:
 	return self
 
 
+## The opacity of a station's name with the hero this far (m) from its use point.
+static func name_alpha(dist: float) -> float:
+	return clampf(inverse_lerp(HubPlan.FOCUS_IN + NAME_REACH, HubPlan.FOCUS_IN + NAME_FULL, dist), 0.0, 1.0)
+
+
+## --no-hud: no names, no purse (the place's name is hidden with them).
+func _clean() -> bool:
+	return Dev.has("no-hud")
+
+
 func announce(lines: Array[String]) -> void:
 	_notes = lines
 
 
 func _process(delta: float) -> void:
 	_t += delta
-	var quiet := hub == null or hub.host.is_open() or hub.leaving
+	var quiet := hub == null or hub.host.is_open() or hub.leaving or _clean()
 	purse.visible = not quiet
 	if purse.visible:
 		MaterialCount.refresh(_counts, Save.data)
@@ -111,7 +125,9 @@ func _process(delta: float) -> void:
 	for id: StringName in names:
 		var l := names[id] as Label
 		var at := HubPlan.anchor(id)
-		var show := not quiet and cam != null and hub.is_open(id) and id != hub.focus.current and not cam.is_position_behind(at)
+		var a := 0.0 if quiet or hub.player == null else name_alpha(hub.player.pos.distance_to(HubPlan.use_point(id)))
+		l.modulate.a = a
+		var show := a > 0.0 and cam != null and hub.is_open(id) and id != hub.focus.current and not cam.is_position_behind(at)
 		if show:
 			var sp := cam.unproject_position(at)
 			show = view.has_point(sp)
