@@ -343,7 +343,8 @@ const POISE_WEIGHTS := {"attack": 0.15, "special": 0.6, "dash": 0.5, "omega_atta
 const ENEMY_COST := {"bone_rat": 1, "skeleton": 3, "runner": 3, "saltador": 3, "lancador": 3, "gritador": 3, "coveiro": 3, "armadilheiro": 3,
 	"mage": 4, "archer": 4, "guard": 5, "priest": 5, "trinca": 5, "varredor": 5, "canalizador": 5,
 	"skeleton_elite": 6, "runner_elite": 7, "mage_elite": 9, "archer_elite": 9, "guard_elite": 11, "priest_elite": 12, "trinca_elite": 10,
-	"varredor_elite": 11, "skeleton_big": 8, "runner_big": 9, "capitao": 12}
+	"varredor_elite": 11, "skeleton_big": 8, "runner_big": 9, "capitao": 12,
+	"esporinho": 2, "retorcido": 5, "flor_espinhosa": 4, "sapo_brejo": 3}
 
 
 func _enemies() -> void:
@@ -444,6 +445,7 @@ func _enemies() -> void:
 	_support_ones()
 	_leap_and_throw()
 	_beam_and_trap()
+	_bosque_ones()
 	# guardians (SWORN Questing Beast and Bane of Crows, 2026-11-27): life only
 	# 2026-11-21 night (the guardian a wall for a new hero): it killed a new hero 1 time in 5, the Ancião 3 in 4; charges
 	# every 2.4 s (was 3.2) and hits 18 (was 16)
@@ -565,6 +567,39 @@ func _leap_and_throw() -> void:
 ## C1e, lote C (docs/design/inimigos_c1e.md): the Canalizador (BEAM) and the Armadilheiro (SUPPORT laying plates), the first on the sorcerer's baked figure (bigger, rooted, steel-cyan: the baked budget is spent) and the second on a baked figure
 ## of its own from the crossbowman's body (trapper), no Meshy; no elite version, one a fight.
 const BEAM_PALE := Color(0.7, 0.95, 1.0)
+
+## Chapter II, A-4 (docs/design/cap2/docs/02_FATIA_JOGAVEL.md): the four enemies of the first slice, each an EXISTING behaviour on a
+## model of Chapter I (provisional figures until the painted ones exist; rose and green tints, D2-1: no violet). The life and damage are
+## PROVISIONAL, scaled from Chapter I's commons (skeleton 250/10, runner 200/7, archer 150/5, saltador 175/9) for the balance-designer.
+## Each hurts only where the floor said so (ground_warning, the wind-up shows its shape); roles shared with Chapter I (react, sweep, control, leap) so the sounds and pools need no new code.
+func _bosque_ones() -> void:
+	var B := EnemyDef.Behavior
+	var T := EnemyDef.Tell
+	# the Esporinho: a small mushroom with short legs that runs in and bursts a cloud of spores all around itself (PULSE, as the runner),
+	# in groups; low life
+	_enemy({"id": &"esporinho", "ground_warning": true, "model": &"runner", "behavior": B.PULSE, "size": 0.8, "hp": 140.0, "speed": 330.0 / U, "damage": 6.0, "radius": 0.4,
+		"attack_damage": 6.0, "attack_range": 1.5, "attack_width": 2.4, "attack_cooldown": 1.6, "attack_windup": 0.9,
+		"magic_color": Color(0.85, 0.42, 0.55), "rating": 5.0, "role": &"react", "tell": T.TREMBLE, "sway": 6.0, "windup_shake": 0.04, "strike_at": 0.1,
+		"tint": Color(1.0, 0.62, 0.72), "vivid": 0.1, "stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "recover_time": ENEMY_RECOVER.runner[0], "poise": POISE, "sw_poise": 75.0})
+	# the Retorcido: tall, long arms of wood; it walks up, stops and swings a wide cone after a long wind-up (CONE, the wind-up marks it on the floor)
+	_enemy({"id": &"retorcido", "ground_warning": true, "model": &"sweeper", "behavior": B.CONE, "size": 1.6, "hp": 330.0, "speed": 250.0 / U, "damage": 12.0, "radius": 0.65,
+		"heavy": true, "attack_damage": 12.0, "attack_range": 3.6, "attack_width": 110.0, "attack_cooldown": 2.2, "attack_windup": 1.1, "aim_lock": 0.3,
+		"recover_time": 1.2, "rating": 14.0, "role": &"sweep", "tell": T.GLINT, "tell_at": Vector3(0.3, 2.3, 1.3), "tint": Color(0.62, 0.78, 0.52),
+		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "poise": POISE, "sw_poise": 200.0})
+	# the Flor Espinhosa: a flower head that keeps its distance and seeds a fan of three slow orbs (ARCHER with shot_count and keep_away);
+	# low life, the one to hunt first
+	_enemy({"id": &"flor_espinhosa", "ground_warning": true, "model": &"mage", "behavior": B.ARCHER, "size": 1.05, "hp": 120.0, "speed": 3.2, "damage": 5.0, "radius": 0.5,
+		"attack_damage": 5.0, "attack_range": 11.0, "attack_cooldown": 3.0, "attack_windup": 0.9, "magic_color": Color(0.9, 0.4, 0.6), "shot_orb": true,
+		"shot_speed": 7.0, "shot_count": 3, "shot_spread": 36.0, "shot_line": true, "keep_away": 0.75, "retreat_far": 6.0, "retreat_time": Vector2(1.0, 1.4),
+		"max_attackers": 1, "windup_gap": 0.5, "rating": 11.0, "role": &"control", "tell": T.GLINT, "tell_at": Vector3(0.0, 1.7, 0.5),
+		"tint": Color(1.0, 0.7, 0.8), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "recover_time": ENEMY_RECOVER.archer[0], "poise": POISE, "sw_poise": 75.0})
+	# the Sapo do Brejo: potbellied; it marks where the paladin stands, leaps there and the landing hurts the marked square (LEAP, as the saltador)
+	_enemy({"id": &"sapo_brejo", "ground_warning": true, "model": &"gravedigger", "behavior": B.LEAP, "size": 1.15, "hp": 210.0, "speed": 3.8, "damage": 10.0, "radius": 0.55,
+		"attack_damage": 10.0, "attack_range": 7.0, "attack_cooldown": 3.4, "attack_windup": 0.85, "aim_lock": 0.3, "leap_time": 0.55, "leap_half": 1.9,
+		"recover_time": 1.0, "max_attackers": 1, "windup_gap": 0.5, "magic_color": Color(0.55, 0.8, 0.35), "rating": 13.0, "role": &"leap",
+		"per_room": 2, "tint": Color(0.7, 0.9, 0.55), "tell": T.TREMBLE, "sway": 5.0, "windup_shake": 0.03, "stun_time": STUN,
+		"stun_heavy_time": STUN_HEAVY, "poise": POISE, "sw_poise": 120.0})
+
 
 
 func _beam_and_trap() -> void:
@@ -1410,6 +1445,58 @@ func _stage() -> void:
 	st.boss_layout = _chamber()
 	_place_breakables(st)
 	_save(st, "res://data/stages/catacombs.tres")
+	_bosque_stage(st)
+
+
+## Chapter II, A-1 (docs/design/cap2/docs/02_FATIA_JOGAVEL.md): the second region, "O Bosque Submerso" (Regions.PATHS[1]). A GREYBOX of the first
+## slice: the layouts, the guardian's room (the Ancião Retorcido does not exist yet: the Padre Ancião stands in) and Morvath's chamber are
+## Chapter I's until the room-designer's A-6 and C2-C replace them; the enemies are the four of A-4. Five rooms before the guardian (D2-8: the
+## 5th opens only his door), then the shop and the chamber. Numbers PROVISIONAL, for the balance-designer. Chapter I's file is never touched.
+func _bosque_stage(base: StageDef) -> void:
+	var Tier := StageDef.Tier
+	var st: StageDef = base.duplicate()
+	st.rooms = 6
+	st.arena_max_uses = 3
+	st.miniboss_depth_min = 5
+	st.miniboss_depth_max = 5
+	st.minibosses = [&"priest_elder"]  # (placeholder for the Ancião Retorcido, C2-C; D2-8: a list so the Rei do Brejo joins by data)
+	st.miniboss2_depth_min = 0
+	st.miniboss2_depth_max = 0
+	st.fountain_depth_min = 3
+	st.fountain_depth_max = 4
+	st.fountain_more_chance = 0.0
+	st.fountains_per_path = 1
+	st.rest_after_guardian = false
+	st.fixed_rewards = {}
+	st.enemies = [&"esporinho", &"retorcido", &"flor_espinhosa", &"sapo_brejo"]
+	st.mods = []
+	st.mod_chance = 0.0
+	st.big_chance = 0.0
+	st.elite_from_depth = 99
+	st.max_elite_types = 0
+	st.room_budget = PackedFloat32Array()
+	st.long_depths = PackedInt32Array([2, 3, 4])
+	st.cost_curve = PackedFloat32Array([4, 6, 8, 10, 10, 10])
+	# one silhouette at a time first (the spec: each shown alone before they mix)
+	st.opening_waves = {
+		1: _wave_lists([["esporinho"], ["esporinho", "esporinho"]]),
+		2: _wave_lists([["retorcido"], ["retorcido", "esporinho"]]),
+		3: _wave_lists([["flor_espinhosa"], ["flor_espinhosa", "esporinho", "esporinho"]]),
+		4: _wave_lists([["sapo_brejo"], ["sapo_brejo", "retorcido"]]),
+	}
+	st.pools = [
+		_pool(Tier.COMMON, 0.0, 0.4, 1.0, [&"react", &"sweep"]),
+		_pool(Tier.COMMON, 0.2, 1.0, 2.0, [&"react", &"sweep", &"control"]),
+		_pool(Tier.COMMON, 0.4, 1.0, 2.0, [&"control", &"leap", &"sweep"]),
+		_pool(Tier.HARD, 0.5, 1.0, 2.0, [&"control", &"leap", &"react"]),
+		_pool(Tier.HARD, 0.5, 1.0, 2.0, [&"sweep", &"control", &"leap"]),
+	]
+	st.altar_depth_max = 4
+	st.trial_depth_max = 4
+	st.route_shop_chance = 0.0
+	st.psalm_from_depth = 3
+	st.enchant_second_from = 4
+	_save(st, "res://data/stages/bosque.tres")
 
 
 # ---------- arenas (cycle C12) ----------

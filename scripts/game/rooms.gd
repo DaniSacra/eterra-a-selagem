@@ -88,6 +88,8 @@ const PSALM_COLOR := Color(0.78, 0.62, 0.34)
 
 var game: Game
 var stage: StageDef
+## Chapter II, A-1: which region the run is in (index and passages made; see Regions).
+var regions := Regions.new()
 var map: RunMap
 var room: RunMap.Room
 var next_rooms: Array[RunMap.Room] = []
@@ -196,19 +198,9 @@ var _gems: Array[Node3D] = []
 func setup(g: Game, rng: RandomNumberGenerator) -> void:
 	game = g
 	_rng = rng
-	stage = load(STAGE)
 	first_def = FirstDescentDef.live() if g.first_run else null
-	if first_def != null:
-		# SW-O4: the guided first descent: its own stage and graph, no Ofício, Juramento nor shorter descent in it
-		stage = FirstDescent.stage_for(stage, first_def)
-	elif Dev.has("short"):
-		stage = short_stage(stage, 4)
-	elif Dev.has("medium"):
-		stage = short_stage(stage, 6)
-	if first_def == null and g.oficios != null and not g.oficios.works.is_empty():
-		stage = Vendor.stage_for(stage, Vendor.load_catalog(), g.oficios.works)  # Fatia 3: the Obras made
-	if first_def == null and g.juramentos:
-		stage = g.juramentos.stage_for(stage)  # E6: more elites, dearer shop
+	regions.index = Regions.start_region(chapter2_on()) if first_def == null else 0
+	stage = _stage_of(regions.index)
 	trials = Trials.new(Trials.load_catalog())
 	sign_silver = stage.silver_elite
 	var forced := -1
@@ -231,6 +223,44 @@ func setup(g: Game, rng: RandomNumberGenerator) -> void:
 	_fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	game.ui.add_child(_fade)
+
+
+## Chapter II, A-1: whether the `chapter2` switch is on (--chapter2 or the save's option; off: the game is Chapter I as it was).
+func chapter2_on() -> bool:
+	return Regions.enabled(Save.data.options.get(Regions.OPTION, false))
+
+
+## The stage of a region with everything the run applies to it (the guided descent, the shorter test descents, the Obras, the Juramentos).
+## Region 0 is exactly the stage the game always played.
+func _stage_of(region: int) -> StageDef:
+	var st: StageDef = load(Regions.path(region))
+	if first_def != null:
+		# SW-O4: the guided first descent: its own stage and graph, no Ofício, Juramento nor shorter descent in it
+		st = FirstDescent.stage_for(st, first_def)
+	elif region == 0 and Dev.has("short"):
+		st = short_stage(st, 4)
+	elif region == 0 and Dev.has("medium"):
+		st = short_stage(st, 6)
+	if first_def == null and game.oficios != null and not game.oficios.works.is_empty():
+		st = Vendor.stage_for(st, Vendor.load_catalog(), game.oficios.works)  # Fatia 3: the Obras made
+	if first_def == null and game.juramentos:
+		st = game.juramentos.stage_for(st)  # E6: more elites, dearer shop
+	return st
+
+
+## Chapter II, A-1: the passage to the next region (the Átrio's portal calls it). IDEMPOTENT (a second call does nothing, returns false) and
+## it keeps the whole run: the hero, Blessings, gold, the Provação's curse, the tally and the log live in Game and in this node and are not
+## touched; only the stage, its enemies and the graph change. The caller enters `map.first()`.
+func enter_region(target: int) -> bool:
+	if not regions.pass_to(target, chapter2_on()):
+		return false
+	stage = _stage_of(target)
+	sign_silver = stage.silver_elite
+	for id in stage.enemies:
+		_defs[id] = game.horde.def(id)
+	map = new_map(stage)
+	next_rooms = []
+	return true
 
 
 ## The shorter descents kept for tests (C13-01): rooms 4 is the old one of 5 (fight, fountain, guardian, shop, Morvath
@@ -261,7 +291,7 @@ static func short_stage(full: StageDef, rooms_: int) -> StageDef:
 
 ## The descent's graph of a run (DV-1), on its own dice: the run's seed and MAP_SALT.
 func new_map(st: StageDef, forced := -1) -> RunMap:
-	var m := RunMap.new(st, hash([_rng.seed, MAP_SALT]), forced, trials.shortest_curse(), game != null and game.boons.stat(&"traveler") > 0.0)
+	var m := RunMap.new(st, hash([_rng.seed, MAP_SALT]) if regions.index == 0 else hash([_rng.seed, MAP_SALT, regions.index]), forced, trials.shortest_curse(), game != null and game.boons.stat(&"traveler") > 0.0)
 	var of := game.oficios if game != null else null
 	if of != null and game.oficios_def != null:
 		# Ofícios, Roteiro A: the veins and the head's room, on dice of their own (the map stays as it was)

@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/knight_move.gd" id="1_wtljj"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_vc4j6"]
+
+[resource]
+script = ExtResource("2_vc4j6")
+id = &"esporinho"
+name_key = &"enemy_esporinho"
+model = &"runner"
+size = 0.8
+tint = Color(1, 0.62, 0.72, 1)
+magic_color = Color(0.85, 0.42, 0.55, 1)
+vivid = 0.1
+sway = 6.0
+windup_shake = 0.04
+tell = 2
+ground_warning = true
+behavior = 7
+hp = 140.0
+speed = 4.7437499999999995
+radius = 0.4
+poise = 100.0
+poise_stun = 2.0
+poise_mult = 1.78
+stun_time = 0.5
+stun_heavy_time = 1.1
+attack_damage = 6.0
+attack_range = 1.5
+attack_cooldown = 1.4400000000000002
+attack_windup = 0.7200000000000001
+recover_time = 0.8
+strike_at = 0.1
+recharge_windup = 0.6400000000000001
+roar_marks = PackedFloat32Array()
+guard_up_hit_windup = 0.68
+volley_windup = 0.8
+attack_width = 2.4
+close_windup = 0.52
+rating = 5.0
+cost = 2
+role = &"react"

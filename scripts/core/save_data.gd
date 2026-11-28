@@ -48,6 +48,8 @@ static func defaults() -> Dictionary:
 			"music_moved": false, "music_hub_moved": false,
 			# DT-RS2: the visual profile (VisualProfile.NAMES); a save from before has none and opens stylized
 			"look": "stylized",
+			# Chapter II, A-1: the switch (Regions); a save from before has none and opens with it off
+			"chapter2": false,
 			# T5 (the PO's review): the piece chosen for each place (MusicCatalog; Music.piece_for falls back to the default)
 			"music_title": String(MusicCatalog.DEFAULT[MusicCatalog.TITLE]), "music_hub": String(MusicCatalog.DEFAULT[MusicCatalog.HUB]),
 			"music_dungeon": String(MusicCatalog.DEFAULT[MusicCatalog.DUNGEON]),
