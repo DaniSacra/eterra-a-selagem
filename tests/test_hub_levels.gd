@@ -17,7 +17,7 @@ func test_the_upper_terrace_stations_stand_high_and_the_rest_low() -> void:
 	for id: StringName in [HubPlan.VINE, HubPlan.VENDOR, HubPlan.TREE]:
 		assert_eq(HubPlan.height_at(HubPlan.USE[id]), 0.0, "%s on the lower one" % id)
 	assert_eq(HubPlan.height_at(HubPlan.ARRIVAL), 0.0, "he arrives low")
-	assert_eq(HubPlan.ramp_at(HubPlan.VINE_BED.x * Vector2.RIGHT + Vector2(0.0, 2.0)), 0.0, "the garden's fountain stays low")
+	assert_eq(HubPlan.ramp_at(Vector2(HubPlan.VINE_BED.x, HubPlan.VINE_BED.y)), 0.0, "the Videira's plaza stays low")
 	assert_eq(HubPlan.ramp_at(Vector2(-6.0, 17.5)), HubPlan.TIER_H, "the gallery over the garden is high")
 
 
@@ -47,11 +47,7 @@ func test_the_field_has_no_pop_between_neighbours_on_the_floor() -> void:
 		var v := -26.0
 		while v < 32.0:
 			var p := Vector2(x, v)
-			# (under the planter between the plaza's flights the floor is never reached: a solid piece stands on it)
-			var pb := HubPlan.PLANTER_BOX
-			if absf(p.x - pb.x) <= pb.z + 0.3 and absf(p.y - pb.y) <= pb.w + 0.6:
-				v += step
-				continue
+			# (the retaining wall's slits and the plaza's wall are not floor: the field jumps only across them)
 			if l.floor.covers(_w(p)):
 				for q: Vector2 in [p + Vector2(step, 0.0), p + Vector2(0.0, step)]:
 					if l.floor.covers(_w(q)):
@@ -109,25 +105,18 @@ func test_the_flight_is_drawn_tread_by_tread() -> void:
 	assert_gte(tops, HubPlan.STAIR_STEPS, "a block per tread on the Forja's flight")
 
 
-## Round 3 (2026-11-26): the chasm south of the Videira is a lower plaza reached by two flights; nothing of the old void stays.
-func test_the_plaza_is_a_lower_floor_reached_by_its_two_flights() -> void:
+## PT28-11 step 2: the south yard is plain floor (no sunken plaza, no raised block), and the Videira's plaza is open floor held
+## by a retaining wall of slits against the terrace.
+func test_the_south_yard_is_flat_open_floor_and_the_plaza_is_held_by_a_wall() -> void:
 	var a := Arena.new()
 	add_child_autofree(a)
 	a.build(HubPlan.layout(YAW))
-	var mid := Vector2(-4.5, -15.7)
-	assert_true(a.nav.walkable(_w(mid)), "the plaza's middle is floor")
-	assert_eq(HubPlan.height_at(mid), -HubPlan.PLAZA_DROP, "PLAZA_DROP under the lower terrace")
-	assert_eq(a.ground_at(_w(mid)), -HubPlan.PLAZA_DROP)
-	assert_true(a.nav.reachable(_w(HubPlan.ARRIVAL), _w(mid)), "on foot, from the arrival")
-	for f in HubPlan.PLAZA_FLIGHTS:
-		var uc := (f.x + f.z) * 0.5
-		assert_eq(HubPlan.height_at(Vector2(uc, f.w + 0.2)), 0.0, "the head of a flight is the terrace")
-		assert_eq(HubPlan.height_at(Vector2(uc, f.y - 0.2)), -HubPlan.PLAZA_DROP, "its foot is the plaza")
-		assert_true(a.nav.walkable(_w(Vector2(uc, (f.y + f.w) * 0.5))), "the flight is floor")
-	# the slit keeps the corridors and the Portão's way apart from it: no floor between, and the way is not lowered
-	assert_false(a.nav.walkable(_w(Vector2(-12.0, -14.0))), "a slit of void by the corridor")
-	assert_eq(HubPlan.height_at(Vector2(4.5, -12.0)), 0.0, "the way to the Portão stays at the terrace")
-	assert_eq(HubPlan.height_at(Vector2(-14.0, -14.0)), 0.0, "and the corridor of the first future door")
-	var l := HubPlan.layout(YAW)
-	for b: Vector4 in [HubPlan.PLANTER_BOX, HubPlan.PLAZA_BED]:
-		assert_true(l.floor.covers(_w(Vector2(b.x, b.y))), "the bed and the planter stand on floor")
+	for p: Vector2 in [Vector2(-4.5, -15.7), Vector2(-5.5, -11.0)]:
+		assert_true(a.nav.walkable(_w(p)), "the south yard is floor: %s" % p)
+		assert_eq(HubPlan.height_at(p), 0.0)
+	assert_true(a.nav.reachable(_w(HubPlan.ARRIVAL), _w(Vector2(-4.5, -15.7))), "on foot, from the arrival")
+	for o in HubPlan.layout(YAW).obstacles:
+		assert_ne(o.piece, &"hub_planter", "no raised block in the middle")
+	assert_gt(HubPlan.garden_walls().size(), 0, "the wall slits")
+	assert_true(a.nav.walkable(_w(Vector2(-10.0, 10.0))), "the plaza is walkable")
+	assert_false(a.nav.walkable(_w(Vector2(-13.0, 12.0))), "the wall stands on the terrace's edge")

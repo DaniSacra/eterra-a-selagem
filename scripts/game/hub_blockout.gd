@@ -33,9 +33,11 @@ const GATE_SHEET_DIM := 0.3
 const GATE_LIGHT_DIM := 0.4
 const GATE_DARK := Color(0.02, 0.05, 0.035)
 const DOOR_WOOD := Color(0.36, 0.21, 0.11)
+## PT28-11: the future rooms' gates are heavy dark leaves of iron-banded stone-grey timber under a stone arch, no padlock (they read as chests).
+const GATE_LEAF := Color(0.2, 0.19, 0.2)
 const DOOR_IRON := Color(0.09, 0.09, 0.1)
 ## Hub refine round 1: an open door shows the warm light of the room inside (the art's doors are lit), and the future
-## rooms' doors carry a gold padlock (the art's Area Futura).
+## rooms' gates are dark iron-banded leaves (no padlock, PT28-11).
 const DOOR_GLOW := Color(1.0, 0.56, 0.22)
 const DOOR_GLOW_ENERGY := 0.45  # final pass 2026-11-26: the box face samples only a slice of the gradient, so the doorway read as a flat orange plate; dimmer
 ## Round 2: the doorway is dark inside with the warm light coming up from the foot (HubLook.lit_opening), the open
@@ -49,8 +51,6 @@ const DOOR_REVEAL := 0.14  # the dark reveal strips each side of an open doorway
 const ARCH_SPRING := 0.8  # round 4: lower, so the arches in front of the camera do not hide the court
 const ARCH_RING := 0.38
 const ARCH_ARC := 0.52
-const LOCK_GOLD := Color(0.72, 0.55, 0.22)
-const LOCK_SIZE := Vector3(0.44, 0.38, 0.1)
 var _glow: StandardMaterial3D
 
 var look: HubLook
@@ -160,8 +160,6 @@ func _door(id: StringName, closed: bool) -> void:
 			var y := h * (0.3 + 0.4 * k)
 			var strap := Vector3(long_half * 2.0, 0.1, depth + 0.04) if across_u else Vector3(depth + 0.04, 0.1, long_half * 2.0)
 			look.fm.block(HubLook.at(c.x, y, c.y), strap, 0.0, look._plain(DOOR_IRON, 0.6), false)
-		if id == HubPlan.FUTURE_A or id == HubPlan.FUTURE_B:
-			_padlock(c, h)
 	else:
 		var gap := Vector3(long_half * 2.0, h, 0.04) if across_u else Vector3(0.04, h, long_half * 2.0)
 		look._bar(HubLook.at(c.x, h * 0.5, c.y), gap, _door_glow())
@@ -185,28 +183,17 @@ func _door_glow() -> StandardMaterial3D:
 
 
 ## A future room's door (closed): a ring of stone voussoirs round a pointed wooden leaf with iron straps, set into the wall
-## facing the camera (south), and the gold padlock on it.
+## facing the camera (south).
 func _arched_door(c: Vector2, span: float) -> void:
 	var h := HubPlan.DOOR_HEIGHT
 	var foot := HubLook.at(c.x, 0.0, c.y - 0.1)
 	look.fm.voussoir_arch(foot, Vector2(0.0, 1.0), span, ARCH_SPRING, ARCH_RING, 0.5, look.stone(), ARCH_ARC)
 	var leaf := MeshInstance3D.new()
 	leaf.mesh = HubFacades.ogive_mesh(span, ARCH_SPRING, ARCH_ARC, [], 8)
-	leaf.material_override = look._plain(DOOR_WOOD, 0.85)
+	leaf.material_override = look._plain(GATE_LEAF, 0.9)
 	leaf.position = foot
 	look.frame.add_child(leaf)
 	for k in 2:
 		look._bar(foot + Vector3(0, ARCH_SPRING * (0.4 + 0.45 * k), 0.03), Vector3(span * 0.96, 0.1, 0.04), look._plain(DOOR_IRON, 0.6))
 	for sd: float in [-1.0, 1.0]:
 		look.fm.block(HubLook.at(c.x + sd * (span * 0.5 + ARCH_RING * 0.5), 0.0, c.y - 0.1), Vector3(ARCH_RING, ARCH_SPRING + 0.1, 0.5), 0.0, look.stone(), false)
-	_padlock(c, h)
-
-
-## A gold padlock on the leaf's south face: a body and a shackle (two posts and a bar), seen from the camera.
-func _padlock(c: Vector2, h: float) -> void:
-	var gold := look._plain(LOCK_GOLD, 0.45)
-	var p := HubLook.at(c.x, h * 0.46, c.y - 0.2)
-	look._bar(p, LOCK_SIZE, gold)
-	for sd: float in [-1.0, 1.0]:
-		look._bar(p + Vector3(sd * 0.13, LOCK_SIZE.y * 0.5 + 0.16, 0), Vector3(0.06, 0.32, 0.06), gold)
-	look._bar(p + Vector3(0, LOCK_SIZE.y * 0.5 + 0.34, 0), Vector3(0.32, 0.06, 0.06), gold)

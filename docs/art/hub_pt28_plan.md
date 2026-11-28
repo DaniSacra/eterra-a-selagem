@@ -93,3 +93,14 @@ tools/gpu.sh shot <s>/hub_portao.png --hub --hub-open=all --hero-at=portal --sho
 tools/gpu.sh shot <s>/hub_videira.png --hub --hub-open=all --hero-at=tree --shot-at=3
 ```
 As três vão para `docs/gallery/hub/pt28/` e para `C:\Users\danie\Downloads` lado a lado com a `hub_aprovacao.png`.
+
+## Passo 2 feito em parte (environment-artist, 2026-11-28)
+
+Capturas CPU na pose da placa em `docs/gallery/hub_pt28/` (`before.png`, `mid.png` sem a montanha, `after.png`). Feito: a bacia do
+jardim (antigo `WATER_2`, agora `HubPlan.GARDEN`) virou praça aberta de piso, sustentada por um muro de contenção (fendas
+`garden_walls`, desenhadas em `HubLevels._garden_wall`); a Videira sozinha no canteiro redondo no centro da praça (`VINE_BED`
+(-2.7, 8.9), vaso e ponto de uso encostados); o pátio sul é piso plano (`PLAZA_DROP` 0, sem bloco elevado nem canteiro); os portões
+futuros sem cadeado, em folha escura de ferro; montanha de rocha a leste e oeste (`HubScenery._mountain`); penhasco menos
+engolido pela névoa. Falta para os 30 px: as construções (Forja, Alquimista, Vigília, Dons, Mercador, Livro) e o Portão ainda
+estão nas posições da planta antiga (mais espalhadas que na arte); Mirante cortado pelo quadro; telhados e muros altos sem
+malha extra; chão claro demais (a placa pintada cobre).

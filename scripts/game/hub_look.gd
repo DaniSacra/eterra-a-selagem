@@ -177,8 +177,8 @@ const CLIFF_SHADER := preload("res://assets/shaders/hub_cliff.gdshader")
 const CLIFF_ROCK_A := Color(0.46, 0.42, 0.45)
 const CLIFF_ROCK_B := Color(0.3, 0.28, 0.34)
 const CLIFF_MOSS := Color(0.17, 0.3, 0.12)
-const CLIFF_MIST_SHARE := 0.55
-const CLIFF_FADE := Vector2(1.0, 15.0)
+const CLIFF_MIST_SHARE := 0.4
+const CLIFF_FADE := Vector2(8.0, 36.0)
 ## Round 2: the face's cool shadow (violet, the rock away from the light) and how much it darkens going down.
 const CLIFF_SHADE := Color(0.17, 0.17, 0.3)
 const CLIFF_DEEP_DARK := 0.65
@@ -243,7 +243,7 @@ const STY_POOLS: Array[Array] = [
 	[HubPlan.VENDOR, Vector3(11.5, 0.8, 7.8), Vector3(12.9, 8.0, 3.6), 9.0, 28.0, 12.0, Color(1.0, 0.8, 0.55)],
 	[HubPlan.TREE, Vector3(14.6, 1.0, -4.2), Vector3(12.8, 9.0, -8.6), 5.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
 	# V2 and PT-9: the Videira's vase and the heroes' standards
-	[HubPlan.VINE, Vector3(-7.0, 1.0, -2.7), Vector3(-8.8, 9.0, -7.2), 5.0, 28.0, 13.0, Color(0.9, 1.0, 0.62)],
+	[HubPlan.VINE, Vector3(-2.5, 1.0, 4.8), Vector3(-4.3, 9.0, 0.3), 5.0, 28.0, 13.0, Color(0.9, 1.0, 0.62)],
 	[HubPlan.PORTAL, Vector3(-1.0, 0.9, 21.4), Vector3(-1.0, 8.0, 14.6), 14.0, 38.0, 13.0, Color(1.0, 0.78, 0.4)],
 ]
 ## P1-A2 of the cycle's art review: the portal's pool (the last row) green and wide enough to read at the top of the

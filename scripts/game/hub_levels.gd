@@ -210,6 +210,7 @@ static func stairs(look: HubLook) -> void:
 			look._bar(HubLook.at(uc, top - rise * RISER_SHADOW * 0.5 - 0.02, v0 - 0.015), Vector3(wide, rise * RISER_SHADOW, 0.03), shade)
 
 	_plaza_flights(look, stone, tread, nosing, shade)
+	_garden_wall(look, stone, nosing)
 	# the parapet over the slit beside the main axis' flight: a stepped wall, coped, from the lower floor
 	var b := HubPlan.STAIR_B
 	var cut := HubPlan.STAIR_CUT
@@ -248,3 +249,31 @@ static func _plaza_flights(look: HubLook, stone: Material, tread: Material, nosi
 			look._bar(HubLook.at(uc, top - TREAD_THICK * 0.5 + 0.02, vc), Vector3(wide, TREAD_THICK, run), stone)
 			look._bar(HubLook.at(uc, top + 0.01, vs + NOSING.y * 0.5), Vector3(wide + 0.04, NOSING.x, NOSING.y), nosing)
 			look._bar(HubLook.at(uc, top - rise * RISER_SHADOW * 0.5, vs - 0.015), Vector3(wide, rise * RISER_SHADOW, 0.03), shade)
+
+
+## PT28-11: the retaining wall of the open plaza (HubPlan.GARDEN_WALL_LINE): a stone wall from under the lower floor to a hand
+## over the terrace (or the flight) it holds, coped, in short blocks that follow the flights' height (absolute, after the lift).
+const WALL_STEP := 0.5
+const WALL_OVER := 0.35
+const WALL_DEPTH := 0.4
+static func _garden_wall(look: HubLook, stone: Material, coping: Material) -> void:
+	if HubPlan.TIER_H <= 0.0:
+		return
+	var line := HubPlan.GARDEN_WALL_LINE
+	for i in line.size() - 1:
+		var a := line[i]
+		var b := line[i + 1]
+		var dir := (b - a).normalized()
+		var normal := Vector2(-dir.y, dir.x)
+		var mid := (a + b) * 0.5
+		if HubPlan.ramp_at(mid - normal * 0.4) > HubPlan.ramp_at(mid + normal * 0.4):
+			normal = -normal
+		var yaw := atan2(dir.y, dir.x)
+		var n := maxi(1, ceili(a.distance_to(b) / WALL_STEP))
+		var len := a.distance_to(b) / n
+		for k in n:
+			var c := a + dir * (len * (k + 0.5))
+			var top := HubPlan.ramp_at(c + normal * 0.4) + WALL_OVER
+			var basis := Basis(Vector3.UP, yaw)
+			look._bar(HubLook.at(c.x, (top - FOOT) * 0.5 - 0.1, c.y), Vector3(len + 0.02, top + FOOT + 0.2, WALL_DEPTH), stone, basis)
+			look._bar(HubLook.at(c.x, top + COPING.y * 0.5, c.y), Vector3(len + COPING.z, COPING.y, WALL_DEPTH + COPING.x), coping, basis)
