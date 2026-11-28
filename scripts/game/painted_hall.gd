@@ -62,7 +62,7 @@ const ROOMS := {
 	&"seal_chamber": {&"painting": "res://assets/rooms/painted/seal_chamber.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 86.0, &"at": Vector2(-5.0, -2.0), &"v_span": UNIFORM},
 	# PT28-11 (docs/art/hub_pt28_plan.md): the Santuario. Pose = the plan's base capture (centre of the hub, 95 m). Waits for its
 	# painting (AWAITING): until the file exists key_of skips it and the hub is the game's own 3D, untouched.
-	&"hub": {&"painting": "res://assets/rooms/painted/hub.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 95.0, &"at": Vector2(1.6, -9.1), &"v_span": STRETCH,
+	&"hub": {&"painting": "res://assets/rooms/painted/hub.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 105.0, &"at": Vector2(1.6, -9.1), &"v_span": STRETCH,
 		&"keep": HUB_KEEP, &"hide": HUB_HIDE},
 }
 ## Entries whose painting is not delivered yet: they are only used once their file exists (delivered, key_of).

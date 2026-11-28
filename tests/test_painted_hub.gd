@@ -27,7 +27,7 @@ func test_the_hub_entry_waits_for_its_painting() -> void:
 	a.layout = l
 	assert_eq(PaintedHall.wanted(a), has_file)
 	var p := PaintedHall.pose_of(&"hub")
-	assert_eq([p[&"yaw"], p[&"pitch"], p[&"fov"], p[&"dist"]], [35.0, 30.0, 24.0, 95.0], "the plan's base capture")
+	assert_eq([p[&"yaw"], p[&"pitch"], p[&"fov"], p[&"dist"]], [35.0, 30.0, 24.0, 105.0], "the plan's base capture")
 	var soon := {&"hub": {&"painting": "res://assets/rooms/painted/sala01.png"}}
 	assert_true(PaintedHall.delivered(&"hub", soon), "a painting that exists counts")
 	assert_false(PaintedHall.delivered(&"hub", {&"hub": {&"painting": "res://nope.png"}}), "one that is missing does not")
