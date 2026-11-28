@@ -376,4 +376,4 @@ func test_an_older_log_line_reads_with_no_materials_nor_angels() -> void:
 	assert_eq(old.angels, [])
 	assert_eq(old.forge, {})
 	assert_eq(old.talents_opened, 0)
-	assert_eq(RunLog.VERSION, 9)  # (6: the Ofícios; test_oficios.gd; 7: uses; 8: cause and per-room hazard; 9: SW-O onboarding, test_run_log.gd)
+	assert_eq(RunLog.VERSION, 10)  # (6: the Ofícios; test_oficios.gd; 7: uses; 8: cause and per-room hazard; 9: SW-O onboarding, test_run_log.gd)

@@ -214,6 +214,7 @@ func test_a_tap_throws_three_bolts_at_once_in_a_fan_as_one_cast() -> void:
 
 func test_a_burst_of_one_cast_makes_one_reaction_a_target_and_pays_back_once() -> void:
 	_start()
+	game.arcane.kit = game.arcane.kit.duplicate()  # (never touch the shared maga.tres kit: other tests read it)
 	game.arcane.kit.reaction_magick = 3.0
 	game.player.magick.value = 10.0
 	var spark: Array[StringName] = [&"light", &"bolt", &"arcane", &"fire"]

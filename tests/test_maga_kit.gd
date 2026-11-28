@@ -133,6 +133,7 @@ func test_fire_then_ice_on_one_enemy_is_a_thermal_shock_of_45() -> void:
 
 func test_a_reaction_gives_back_three_magick_once_a_cast_when_the_kit_turns_it_on() -> void:
 	_start()
+	game.arcane.kit = game.arcane.kit.duplicate()  # (never touch the shared maga.tres kit: other tests read it)
 	game.arcane.kit.reaction_magick = 3.0  # (Maga Redesign V1: off by default, configurable)
 	game.player.magick.value = 10.0
 	game.arcane._conj = 1

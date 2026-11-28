@@ -58,7 +58,7 @@ func test_each_phase_begins_once_and_in_order() -> void:
 
 func test_morvath_keeps_hades_life_and_his_numbers_are_data() -> void:
 	var enemy: EnemyDef = load("res://data/enemies/morvath.tres")
-	assert_eq(enemy.hp, 14400.0)  # Gawain 6000 (SWORN Kingswood) x2.4 (PT-27b: the hero hits 2.25x, Morvath is the wall)
+	assert_eq(enemy.hp, 12600.0)  # Gawain 6000 (SWORN Kingswood) x2.1 (F1 2026-11-28; was x2.4)
 	assert_eq(def.enemy, &"morvath")
 	assert_eq(def.ritual_phase, 2)
 	assert_eq(def.ritual_time, 20.0)

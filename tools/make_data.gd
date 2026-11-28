@@ -230,7 +230,7 @@ const ELITE_RANGED_HP_X := 0.7
 const CAPTAIN_HP_X := 1.2
 const BIG_HP_X := 1.5
 const GUARDIAN_HP_X := 1.5
-const MORVATH_HP_X := 2.4
+const MORVATH_HP_X := 2.1  # F1 2026-11-28: 14400 -> 12600 (docs/design/balance/ch1_difficulty_2026-11-28.md)
 
 
 func _hp_scale(id: String) -> float:
@@ -484,7 +484,8 @@ func _enemies() -> void:
 		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35), "material": &"armor"})
 	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest_elder", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 2500.0, "speed": 2.0,
 		"damage": 10.0, "radius": 1.0, "heavy": true, "elite": true, "attack_damage": 5.0, "attack_range": 9.0,
-		"attack_cooldown": 3.9, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA, "shot_orb": true, "shot_speed": 6.0,
+		"attack_cooldown": 4.6,  # F1 2026-11-28 (was 3.9)
+		 "attack_windup": 1.0, "magic_color": DEAD_MAGENTA, "shot_orb": true, "shot_speed": 6.0,
 		"escort": [&"guard"] as Array[StringName],
 		# Daniel 2026-11-23: it calls two archers at a time to the floor's edge, away from him (3 standing at most, one call every 10 to 14 s),
 		# so he has to go after them; the orbs stay

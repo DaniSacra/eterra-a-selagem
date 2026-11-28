@@ -577,6 +577,7 @@ func test_agilidade_arcana_charges_the_held_spells_in_0_42() -> void:
 
 func test_reciprocidade_adds_three_to_the_resonance_once_a_cast() -> void:
 	_start([&"fluxo_arcano", &"reciprocidade"])
+	game.arcane.kit = game.arcane.kit.duplicate()  # (never touch the shared maga.tres kit: other tests read it)
 	game.arcane.kit.reaction_magick = 3.0  # (the Ressonância is off by default in Maga Redesign V1: the Dom rides on it when it is on)
 	for i in 3:
 		game.arcane.apply_element(_dummy(Vector2(4 + i * 0.5, 0)), F)

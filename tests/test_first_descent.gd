@@ -184,7 +184,7 @@ func test_a_skipped_save_goes_to_the_santuario_and_a_new_one_to_the_descent() ->
 
 
 func test_the_run_log_has_first_in_version_nine() -> void:
-	assert_eq(RunLog.VERSION, 9)
+	assert_eq(RunLog.VERSION, 10)
 	var old := RunLog.normalized({"version": 8, "outcome": "death"})
 	assert_false(bool(old.first), "an old line is a descent like any other")
 
