@@ -148,6 +148,8 @@ var _hold := -1.0
 var _playing := false
 var _gave_control := false
 var _captioned := false
+## The caption's text key (Chapter II, A-3: the region's title when the hero comes through the Átrio's portal); the first arrival's line by default.
+var caption_key: StringName = CAPTION_KEY
 var _landed := false
 var _head: MeshInstance3D
 var _core: MeshInstance3D
@@ -686,7 +688,7 @@ func _caption(seconds: float) -> void:
 	_captioned = true
 	var caption: Variant = game.hud.get(&"arrival_caption") if game.hud != null else null
 	if caption != null and caption.has_method(&"show_line"):
-		caption.show_line(CAPTION_KEY, seconds)
+		caption.show_line(caption_key, seconds)
 
 
 ## The scene is over: its covers go, the crystals stay as the Antessala's scenery (their glow low).

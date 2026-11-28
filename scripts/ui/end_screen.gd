@@ -86,6 +86,9 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	new_best = new_best and Save.enabled
+	if bool(stats.get("preview", false)):
+		_open_preview(stats)
+		return
 	if victory:
 		_open_victory(stats, new_best)
 		return
@@ -143,6 +146,28 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 	_opened(v, stats)
 	_hide_hud()
 	_ways(v, false)
+
+
+## Chapter II, A-6: "Fim da prévia do Capítulo II". No victory (the sealing of Chapter I was banked and logged when Morvath fell): a title, a line,
+## the numbers of the descent and one way on, to the Santuário.
+func _open_preview(stats: Dictionary) -> void:
+	var v := UiKit.page(self, T.t(&"end_preview"), DEFEAT_WIDTH, 0.75, 40)
+	v.name = "preview"
+	v.add_theme_constant_override(&"separation", 8)
+	var title := v.get_node(^"header").get_child(0) as Label
+	title.add_theme_color_override(&"font_color", UiKit.GOLD)
+	var sub := UiKit.label(T.t(&"end_preview_sub"), UiKit.PALE, 19)
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sub.custom_minimum_size.x = DEFEAT_WIDTH - 60.0
+	v.add_child(sub)
+	var grid := _grid(v)
+	_stat(grid, T.t(&"end_time"), SaveData.format_time(stats.time))
+	_stat(grid, T.t(&"end_kills"), str(stats.kills))
+	_stat_rooms(grid, stats)
+	_hide_hud()
+	_ways(v, true)
+	home_only()
 
 
 ## The victory: the sealing (the seal, the title, a line on what was done), then the spoils of the descent and the

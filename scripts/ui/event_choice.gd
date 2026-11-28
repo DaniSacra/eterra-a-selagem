@@ -37,6 +37,14 @@ func open_altar(options: Array[Dictionary]) -> void:
 	_ready_cards()
 
 
+## Chapter II, A-2: Galael's Graças (Atrio.options); one must be taken (the portal waits for it), the heal is always possible.
+func open_grace(options: Array[Dictionary]) -> void:
+	var row := _page(T.t(&"grace_title"), T.t(&"grace_hint"), T.t(&"grace_lead"))
+	for o in options:
+		_add(row, BoonCard.new().setup_grace(o), int(o.option))
+	_ready_cards()
+
+
 func _add(row: HBoxContainer, card: BoonCard, index: int) -> void:
 	card.pressed.connect(_choose.bind(index))
 	_cards.append(card)

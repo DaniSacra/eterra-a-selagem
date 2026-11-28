@@ -62,7 +62,7 @@ func usable() -> bool:
 			for p in _pedestals:
 				if game.player.pos.distance_to(p.at) < TOUCH:
 					return true
-			if _at_altar():
+			if _at_altar() or _atrio_at() != &"":
 				return true
 			var door := game.arena.exit_at(game.player.pos)
 			return door >= 0 and door < next_rooms.size() and not _door_locked()
@@ -90,6 +90,16 @@ var game: Game
 var stage: StageDef
 ## Chapter II, A-1: which region the run is in (index and passages made; see Regions).
 var regions := Regions.new()
+## Chapter II, A-2: the Átrio's state (the Graça) and its two spots (the Graça's and the portal's), each {at, kind, node, away}.
+var atrio := Atrio.new()
+var _atrio_spots: Array[Dictionary] = []
+var _atrio_dice: RandomNumberGenerator
+## The last Graça applied (Atrio.apply's report), for the HUD word and the tests.
+var grace_report := {}
+## The hero comes from the Átrio's portal (the next room's arrival is the comet with the region's title).
+var _from_atrio := false
+## The preview's end was reached (the screen is open or opening).
+var preview_ended := false
 var map: RunMap
 var room: RunMap.Room
 var next_rooms: Array[RunMap.Room] = []
@@ -350,6 +360,9 @@ func start_at(kind: RunMap.Kind) -> void:
 	if kind == RunMap.Kind.ANTE or kind == RunMap.Kind.SALA00:
 		await _enter_first(_prologue_room(kind))
 		return
+	if kind == RunMap.Kind.ATRIO:
+		await _enter_first(_atrio_room())  # (dev, --start=atrio with --chapter2)
+		return
 	if kind == RunMap.Kind.ALTAR and stage.altar_layout != null:
 		var st: StageDef = stage.duplicate()
 		st.altar_chance = 1.0
@@ -397,6 +410,8 @@ func step(dt: float) -> void:
 				_step_ante(dt)
 			elif room.kind == RunMap.Kind.SALA00:
 				_step_sala00(use)
+			elif room.kind == RunMap.Kind.ATRIO:
+				_step_atrio(use)
 			var door := game.arena.exit_at(game.player.pos)
 			if door >= 0 and door < next_rooms.size() and use and not (first_def != null and FirstDescent.arrival_only()) \
 					and not _door_locked():
@@ -430,6 +445,8 @@ func use_kind() -> StringName:
 					return &"shop"
 			if _at_altar():
 				return &"altar_bless"
+			if _atrio_at() != &"":
+				return _atrio_at()
 			var door := game.arena.exit_at(game.player.pos)
 			if door >= 0 and door < next_rooms.size() and not _door_locked():
 				return &"door"
@@ -543,6 +560,8 @@ func use_spot() -> Vector2:
 			return game.arena.door_label(game.arena.exit_at(game.player.pos))
 		&"altar_bless":
 			return _altar_front()
+		&"grace", &"atrio_portal":
+			return _atrio_spots[_atrio_index(use_kind())].at
 	return game.player.pos
 
 
@@ -567,6 +586,7 @@ func _enter(next: RunMap.Room) -> void:
 ## wait: on a screen, the room's build is spread over the black frames (Game.rebuild_room with it, QA P1-1).
 func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 	_from_ante = room != null and room.kind == RunMap.Kind.ANTE
+	_from_atrio = room != null and room.kind == RunMap.Kind.ATRIO
 	room = next
 	map.enter(room)
 	if room.kind != RunMap.Kind.TRIAL:
@@ -593,6 +613,8 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 			layout = stage.ante_layout
 		RunMap.Kind.SALA00:
 			layout = stage.sala00_layout
+		RunMap.Kind.ATRIO:
+			layout = stage.shop_layout  # (greybox: the shop's hall until the Átrio's own painted plan)
 	var variant := room.variant
 	first_room = _first_room_of(room)
 	_hp_scale = first_room.hp_scale if first_room != null else 1.0
@@ -664,6 +686,7 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 	_ante_open = false
 	_sala_open = false
 	altar = Prologue.Grant.new()
+	_atrio_spots.clear()
 	_hp_in = game.player.hp if room.kind == RunMap.Kind.ANTE else -1.0
 	game.player.guard_death = room.kind == RunMap.Kind.ANTE
 	_wire_player()
@@ -720,6 +743,9 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 		RunMap.Kind.SHOP:
 			_build_shop()
 			_open_doors()
+		RunMap.Kind.ATRIO:
+			phase = Phase.OPEN
+			_build_atrio()
 		RunMap.Kind.TRIAL:
 			_build_trial()
 		RunMap.Kind.ALTAR:
@@ -770,6 +796,8 @@ func _first_room_of(r: RunMap.Room) -> FirstRoomDef:
 ## as in any room.
 func _play_arrival() -> bool:
 	var how := Prologue.arrival(room.kind, _from_ante)
+	if _from_atrio and room.kind != RunMap.Kind.ATRIO:
+		how = Prologue.Arrival.FULL  # A-3: the portal's other side, the comet again
 	if how == Prologue.Arrival.NONE or not _arrival_wanted() or not ResourceLoader.exists(ARRIVAL_SCENE):
 		return false
 	var def := first_def if first_def != null else FirstDescentDef.live()
@@ -781,7 +809,9 @@ func _play_arrival() -> bool:
 	add_child(scene)
 	var from := Prologue.SHORT_FROM if how == Prologue.Arrival.SHORT else 0.0
 	# (the line of the first arrival is a new save's, once: the Antessala's)
-	scene.call(&"play", game, ArrivalScene.birth_spot(game.arena), from, room.kind == RunMap.Kind.ANTE)
+	if _from_atrio:
+		scene.set(&"caption_key", StringName("region_title_%d" % regions.index))  # A-3: "O Bosque Submerso" at the foot
+	scene.call(&"play", game, ArrivalScene.birth_spot(game.arena), from, room.kind == RunMap.Kind.ANTE or _from_atrio)
 	if scene.has_signal(&"finished"):
 		scene.connect(&"finished", func() -> void:
 			if is_instance_valid(_arrival):
@@ -1674,6 +1704,9 @@ static func _angel_line(r: RunMap.Room) -> String:
 
 
 func _leave(next: RunMap.Room) -> void:
+	if Regions.preview_over(regions.index, next.kind):
+		_end_preview()
+		return
 	if room.kind == RunMap.Kind.ANTE:
 		# the Antessala is crossed: the save never meets it again (even if he closes the game in the Sala 00); the trap's blows left him no
 		# poorer than he came and no richer (Player.guard_death)
@@ -1857,6 +1890,153 @@ func _log_leaving(next: RunMap.Room) -> void:
 			"offered": next_rooms.map(func(r: RunMap.Room) -> int: return r.id),
 			"angels": next_rooms.map(func(r: RunMap.Room) -> String: return "meeting" if r.meeting else String(r.angel))})
 	_promised = door_word(next)
+
+
+# ---------- Chapter II, A-2 and A-3: the Átrio, the portal and the end of the preview ----------
+
+## Where Galael stands (the Graça's spot) and the portal, on the hall's free floor (tests/test_atrio.gd): the Graça where the altar stands, the
+## portal on the east side, off the shop's slots and the fountain; the hero comes in from the south-west.
+const ATRIO_GRACE := Vector2(0.0, -3.8)
+const ATRIO_PORTAL := Vector2(10.0, 8.0)
+const ATRIO_SALT := 9117
+
+
+## Morvath is sealed and the switch is on: the descent goes on to the Átrio instead of the end screen. False (the end screen opens as it
+## always did) when the switch is off, there is no next region, it is the guided descent, or the Átrio was already entered (a repeat).
+func begin_atrio() -> bool:
+	if not Regions.leads_on(regions.index, chapter2_on()) or first_def != null or room == null or room.kind == RunMap.Kind.ATRIO:
+		return false
+	game.hero_gifts.state.boss_room = false  # (Ainda de Pé guards Morvath's fight; the Átrio and the Bosque are other rooms)
+	phase = Phase.LEAVING
+	var t := _fade_tween()
+	t.tween_property(_fade, "color:a", 1.0, FADE)
+	t.tween_callback(func() -> void: _go(_atrio_room()))
+	return true
+
+
+## The Átrio's room: no graph node (id -1, depth 0), no door (the portal is its way on).
+func _atrio_room() -> RunMap.Room:
+	var r := RunMap.Room.new(RunMap.Kind.ATRIO, RunMap.Reward.NONE, 0, -1, 0)
+	r.arena = &"atrio"
+	return r
+
+
+func _build_atrio() -> void:
+	atrio = Atrio.new()
+	grace_report = {}
+	_atrio_dice = RandomNumberGenerator.new()
+	_atrio_dice.seed = hash([_rng.seed, ATRIO_SALT])
+	game.spawn_fountain(FOUNTAIN_SPOT)  # (Game's fountain: 40% of the life, once)
+	_build_shop()  # (the merchant: today's shop, not obliged)
+	_atrio_spots = [
+		{"at": ATRIO_GRACE, "kind": &"grace", "done": false, "node": _marker(ATRIO_GRACE, RunMap.Reward.NONE,
+			T.t(&"atrio_grace_sign") + "\n" + T.t(&"atrio_grace_hint"), RunMap.Kind.ALTAR, DoorGlyph.Kind.ALTAR)},
+		{"at": ATRIO_PORTAL, "kind": &"atrio_portal", "done": false, "node": _marker(ATRIO_PORTAL, RunMap.Reward.NONE,
+			T.t(&"atrio_portal_sign") + "\n" + T.t(&"atrio_portal_shut"), RunMap.Kind.ALTAR, DoorGlyph.Kind.ALTAR)}]
+	var caption: Variant = game.hud.get(&"arrival_caption") if game.hud != null else null
+	if caption != null and caption.has_method(&"show_line"):
+		caption.call(&"show_line", &"atrio_galael_line", 5.0)  # (D2-4: Galael receives him; the line is to be confirmed with the Daniel)
+
+
+## What the hero stands at in the Átrio now: &"grace" (until taken), &"atrio_portal", or &"".
+func _atrio_at() -> StringName:
+	if room == null or room.kind != RunMap.Kind.ATRIO:
+		return &""
+	for s in _atrio_spots:
+		if not s.done and game.player.pos.distance_to(s.at) < TOUCH:
+			return s.kind
+	return &""
+
+
+func _atrio_index(kind: StringName) -> int:
+	for i in _atrio_spots.size():
+		if _atrio_spots[i].kind == kind:
+			return i
+	return -1
+
+
+func _step_atrio(use: bool) -> void:
+	if not use:
+		return
+	match _atrio_at():
+		&"grace":
+			_choose_grace()
+		&"atrio_portal":
+			take_portal()
+
+
+## The Graça on its screen; the robot and --autopick take Atrio.bot_choice.
+func _choose_grace() -> void:
+	var opts := Atrio.options(game.boons)
+	if _no_screen():
+		take_grace(Atrio.bot_choice(opts) if game.bot != null else Atrio.Grace.HEAL)
+		return
+	var screen := EventChoice.new()
+	game.open_screen(screen)
+	screen.open_grace(opts)
+	screen.picked.connect(func(option: int) -> void:
+		game.close_screen()
+		if option != EventChoice.NONE:
+			take_grace(option))
+
+
+## Takes Galael's Graça (once): applies it (an ineligible one falls back to the heal), opens the portal. False when it cannot be taken now.
+func take_grace(option: int) -> bool:
+	if room == null or room.kind != RunMap.Kind.ATRIO or atrio.portal_open():
+		return false
+	var old_hp_bonus := game.boons.stat(&"max_hp")
+	grace_report = Atrio.apply(option, game.boons, _atrio_dice)
+	atrio.choose(int(grace_report.option))
+	var p := game.player
+	if float(grace_report.heal) > 0.0:
+		var amount := p.max_hp * float(grace_report.heal)
+		p.heal(amount)
+		game.fx.word(Vector3(p.pos.x, 3.0, p.pos.y), "+%d %s" % [int(amount), T.t(&"hud_life")], Color(1.0, 0.4, 0.5))
+	if not (grace_report.boons as Array).is_empty():
+		game.refresh_boon_stats(old_hp_bonus)
+		for id: StringName in grace_report.boons:
+			game.fx.word(Vector3(p.pos.x, 3.0, p.pos.y), T.t("boon_" + String(id)), Color(1.0, 0.85, 0.45))
+	var i := _atrio_index(&"grace")
+	if i >= 0:
+		_atrio_spots[i].done = true
+		if is_instance_valid(_atrio_spots[i].node):
+			(_atrio_spots[i].node as Node3D).queue_free()
+	# the portal's sign says it is open now
+	var j := _atrio_index(&"atrio_portal")
+	if j >= 0 and is_instance_valid(_atrio_spots[j].node):
+		(_atrio_spots[j].node as Node3D).queue_free()
+		_atrio_spots[j].node = _marker(ATRIO_PORTAL, RunMap.Reward.NONE, T.t(&"atrio_portal_sign") + "\n" + T.t(&"atrio_portal_open"),
+			RunMap.Kind.ALTAR, DoorGlyph.Kind.ALTAR)
+	Audio.play(&"heal")
+	game.hud.show_notice(T.t(&"atrio_portal_opened"), 2.5)
+	return true
+
+
+## The portal: shut before the Graça is taken (a word says so), else to the Bosque: the passage (once, Regions) and its first room, arriving
+## as the comet with the region's title. False when it did not go.
+func take_portal() -> bool:
+	if room == null or room.kind != RunMap.Kind.ATRIO or phase != Phase.OPEN:
+		return false
+	if not atrio.portal_open():
+		game.hud.show_notice(T.t(&"atrio_portal_shut_notice"), 2.0)
+		return false
+	if not enter_region(regions.index + 1):
+		return false
+	var first := map.first()
+	phase = Phase.LEAVING
+	var t := _fade_tween()
+	t.tween_property(_fade, "color:a", 1.0, FADE)
+	t.tween_callback(func() -> void: _go(first))
+	return true
+
+
+## The hero would walk into the Bosque's stand-in chamber: the preview ends (Game.end_preview), never a victory.
+func _end_preview() -> void:
+	if preview_ended:
+		return
+	preview_ended = true
+	phase = Phase.LEAVING
+	game.end_preview()
 
 
 # ---------- E5: the Provação ----------
@@ -2453,6 +2633,8 @@ func bot_goal() -> Variant:
 				return p.at
 		if slab != null and _bot_trial and float(slab.armed) <= 0.0:
 			return slab.at
+		if room.kind == RunMap.Kind.ATRIO and not _atrio_spots.is_empty():
+			return _atrio_spots[0 if not atrio.portal_open() else 1].at  # (A-2: the Graça first, then the portal)
 		if room.kind == RunMap.Kind.SALA00 and altar.may_offer():
 			return _altar_front()  # (2026-11-26: the Blessing of the descent first, then the door)
 		if room.kind == RunMap.Kind.ALTAR and not _spots.is_empty():
