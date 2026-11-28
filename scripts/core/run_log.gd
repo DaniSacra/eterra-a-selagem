@@ -21,7 +21,8 @@ const PATH := "user://runs.jsonl"
 ## courage (Coragem's stacks) and, in each room, the hazard's blows on him and on the enemies (RunLog.annotate_rooms).
 ## A room's life walking in is hp_in (hp_enter reads it).
 ## 9 (SW-O4): first (the line is the guided first descent: the balance and QA tools leave it out of their averages).
-const VERSION := 9
+## 10 (Chapter II, A-1): region (the region index the run ended in; 0 the catacombs, 1 the Bosque) and passages (the regions crossed).
+const VERSION := 10
 ## The counts of `uses`: Q, E, Shift (the ultimate), Space (dodges) and the blows taken with 0 dodge charges.
 const USE_KEYS: Array[String] = ["q", "e", "shift", "space", "dry_hits"]
 ## The field of version 7 and what an older line reads as (nothing counted).
@@ -46,6 +47,8 @@ const OFICIOS_FIELDS := {"oficios": {}}
 const CAUSE_FIELDS := {"cause": "", "oaths": {}, "courage": 0}
 ## The field of version 9 and what an older line reads as (a descent like any other).
 const FIRST_FIELDS := {"first": false}
+## The fields of version 10 and what an older line reads as (the catacombs, no passage).
+const REGION_FIELDS := {"region": 0, "passages": 0}
 ## What strikes from the floor or the walls (DefeatCause keys): a blow from one of these is a hazard's.
 const HAZARD_SOURCES: Array[String] = ["runes", "plates", "chain", "roots", "slit", "trap", "crystal", "rocks", "urn", "oil", "niche",
 	"plant", "sag", "spikes", "spikeplate", "gap"]
@@ -104,7 +107,7 @@ static func normalized(e: Dictionary) -> Dictionary:
 	if int(e.get("version", 1)) >= VERSION:
 		return e
 	var out := e.duplicate(true)
-	for fields: Dictionary in [HERO_FIELDS, MAP_FIELDS, KEEP_FIELDS, OFICIOS_FIELDS, USES_FIELDS, CAUSE_FIELDS, FIRST_FIELDS]:
+	for fields: Dictionary in [HERO_FIELDS, MAP_FIELDS, KEEP_FIELDS, OFICIOS_FIELDS, USES_FIELDS, CAUSE_FIELDS, FIRST_FIELDS, REGION_FIELDS]:
 		for k: String in fields:
 			if not out.has(k):
 				out[k] = fields[k].duplicate() if fields[k] is Array or fields[k] is Dictionary else fields[k]

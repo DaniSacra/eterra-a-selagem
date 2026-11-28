@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/knight_move.gd" id="1_80opg"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_2rbx8"]
+
+[resource]
+script = ExtResource("2_2rbx8")
+id = &"sapo_brejo"
+name_key = &"enemy_sapo_brejo"
+model = &"gravedigger"
+size = 1.15
+tint = Color(0.7, 0.9, 0.55, 1)
+magic_color = Color(0.55, 0.8, 0.35, 1)
+sway = 5.0
+windup_shake = 0.03
+tell = 2
+ground_warning = true
+behavior = 11
+hp = 210.0
+speed = 4.369999999999999
+damage = 10.0
+radius = 0.55
+poise = 100.0
+poise_stun = 2.0
+poise_mult = 1.11
+stun_time = 0.5
+stun_heavy_time = 1.1
+attack_range = 7.0
+attack_cooldown = 3.06
+attack_windup = 0.68
+recover_time = 1.0
+recharge_windup = 0.6400000000000001
+aim_lock = 0.3
+roar_marks = PackedFloat32Array()
+guard_up_hit_windup = 0.68
+volley_windup = 0.8
+windup_gap = 0.5
+max_attackers = 1
+leap_time = 0.55
+leap_half = 1.9
+per_room = 2
+close_windup = 0.52
+rating = 13.0
+cost = 3
+role = &"leap"

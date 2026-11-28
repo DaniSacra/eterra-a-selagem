@@ -68,7 +68,8 @@ static func entry(g: Game, outcome: String, gain: Dictionary) -> Dictionary:
 		"last_hurt": {"attack": String(g.last_hurt.get("attack", &"")), "enemy": String(g.last_hurt.get("enemy", &""))},
 		"defeated_by": String(g.defeated_by()) if outcome == "death" else "", "source": RunLog.source(g.bot != null),
 		"slot": Save.slot, "cause": DefeatCause.key(g.last_hurt) if outcome == "death" else "",
-		"oaths": g.juramentos.to_dict() if g.juramentos else {}, "courage": g.courage_stacks, "first": g.first_run}
+		"oaths": g.juramentos.to_dict() if g.juramentos else {}, "courage": g.courage_stacks, "first": g.first_run,
+		"region": g.rooms.regions.index if g.rooms else 0, "passages": g.rooms.regions.passages if g.rooms else 0}
 	var by := gain.duplicate()
 	by.erase("total")
 	var xp_now := int(SaveData.hero(Save.data, String(g.hero.id)).mastery_xp)
