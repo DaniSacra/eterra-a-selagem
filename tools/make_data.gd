@@ -103,8 +103,9 @@ const U := 80.0
 const HERO_X := 2.25
 ## PT-25-4 and PT-25-11 (Daniel: "atacar e andar um pouquinho é sempre melhor"): the short step each blow of the combo
 ## takes forward the moment it lands (ComboNode.step, meters): cut1, cut2 and the finisher. The finisher's is the longest,
-## to reach what the first two pushed away. It stops at bodies (BodyBlock) and walls; it replaces the planted blows of E1c.
-const STEP := [0.3, 0.3, 0.8]
+## to reach what the first two pushed away. PT-28-1: +67% (0.3,0.3,0.8 to 0.5,0.5,1.4), the Esmagador 0.7, the Corte Circular 0.5, and Player._step_in
+## steers it at the enemy ahead (StepRules.steer). It stops at bodies (BodyBlock) and walls; it replaces the planted blows of E1c.
+const STEP := [0.5, 0.5, 1.4]
 
 
 ## The paladin's moves, built on the timings, damage and reach of the first weapon of Hades II (study only:
@@ -141,13 +142,13 @@ func _tree(fifth: bool) -> ComboTree:
 	# Esmagador (CHARGE_LIGHT): its windup and glint play inside the charge (GF-08), so it lands when the charge fills.
 	var smash := _move(&"smash", CL, &"Slash_A", [&"light", &"omega", &"smash"],
 		{"magick_cost": 12.0, "charge_time": 0.6, "damage": 200.0, "reach": 2.6, "width": 120.0, "knockback": 12.0, "windup": 0.22,
-		"glint": FINISHER_GLINT, "recovery": 0.5, "move_hold": 0.5, "step": 0.4, "chain_window": 0.4, "hit_stop_ms": 90.0, "shake": 1.8,
+		"glint": FINISHER_GLINT, "recovery": 0.5, "move_hold": 0.5, "step": 0.7, "chain_window": 0.4, "hit_stop_ms": 90.0, "shake": 1.8,
 		"move_scale": 0.0, "sound": &"blade_heavy", "layers": LAYER_TURN}, [], &"move_smash")
 	# Corte Circular (HEAVY, a tap): the Poder. Tags shout and cast: the Blessings of the Poder slot count on it, the Quebra reads the
 	# `shout` weight. It is no Brado: no buff, no Effect.SHOUT. Legs held 0.35 s after it lands.
 	var sweep := _move(&"sweep", H, &"Slash_C", [&"shout", &"cast", &"sweep"],
 		{"damage": HERO_X * 40.0, "shape": ComboNode.Shape.CIRCLE, "reach": 3.4, "knockback": 14.0, "windup": 0.18,
-		"recovery": 0.30, "move_hold": 0.35, "chain_window": 0.4, "hit_stop_ms": 80.0, "shake": 1.6, "move_scale": 0.0,
+		"recovery": 0.30, "move_hold": 0.35, "step": 0.5, "chain_window": 0.4, "hit_stop_ms": 80.0, "shake": 1.6, "move_scale": 0.0,
 		"sound": &"blade_spin", "sound_at": 0.18 - SWISH_PEAK, "layers": LAYER_SPIN}, [], &"move_sweep")
 	# Lança da Emeth (CHARGE, held 0.8 s, 20 Magia): a long line of light to the front and to the back (the Omega attack of before,
 	# kept whole; only its button and its tags changed: the Especial slot, `lance`). Its windup and glint play inside the charge
@@ -221,7 +222,12 @@ func _enemy(props: Dictionary) -> void:
 
 ## 2026-11-27 (PT-27b): the hero hits HERO_X harder, so the tough ones (the commons stay at the SWORN life: a skeleton is 4 to 5 blows)
 ## are lengthened to keep a fight with them long enough: elites and the Captain, the bigger ones, the guardians, Morvath.
-const ELITE_HP_X := 1.8
+## PT-28-7 (Daniel, room 12: an elite skeleton mage "nao morria", 2340 life against blows of 45): elites back to x1.0 of the SWORN Major
+## (a melee elite 1350 to 1500 falls in 13 to 15 s of a decent player's blows, about 105 a second when they land), the ranged ones
+## (mage, archer, priest: they kite) x0.7 (910, 875, 910), the Captain x1.2 (1800). Was 1.8 for all (the mage 2340).
+const ELITE_HP_X := 1.0
+const ELITE_RANGED_HP_X := 0.7
+const CAPTAIN_HP_X := 1.2
 const BIG_HP_X := 1.5
 const GUARDIAN_HP_X := 1.5
 const MORVATH_HP_X := 2.4
@@ -232,8 +238,10 @@ func _hp_scale(id: String) -> float:
 		return MORVATH_HP_X
 	if id == "knight" or id == "priest_elder":
 		return GUARDIAN_HP_X
-	if id.ends_with("_elite") or id == "capitao":
-		return ELITE_HP_X if id != "trinca_elite" else 1.0
+	if id == "capitao":
+		return CAPTAIN_HP_X
+	if id.ends_with("_elite"):
+		return ELITE_RANGED_HP_X if id in ["mage_elite", "archer_elite", "priest_elite"] else ELITE_HP_X
 	if id.ends_with("_big"):
 		return BIG_HP_X
 	return 1.0

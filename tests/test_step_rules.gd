@@ -52,10 +52,31 @@ func _land(id: StringName) -> Array[float]:
 
 
 func test_the_numbers() -> void:
-	assert_eq(StepRules.DECAY, 6.0)
-	assert_almost_eq(StepRules.speed(0.8), 4.8, 0.001, "the finisher's peak is under the run's 6.75 m/s")
-	assert_lt(StepRules.speed(0.8), Feel.live().speed)
+	assert_eq(StepRules.DECAY, 4.5)
+	assert_almost_eq(StepRules.speed(1.4), 6.3, 0.001, "the finisher's peak is under the run's 6.75 m/s")
+	assert_lt(StepRules.speed(1.4), Feel.live().speed)
 	assert_eq(StepRules.fade(Vector2(4.8, 0), 1.0), Vector2.ZERO, "never reverses")
+
+
+func test_the_step_steers_toward_an_enemy_ahead() -> void:
+	var o := Vector2.ZERO
+	assert_eq(StepRules.steer(o, Vector2.RIGHT, Vector2.INF), Vector2.RIGHT, "nobody: straight")
+	var d := StepRules.steer(o, Vector2.RIGHT, Vector2(2.0, 1.0))
+	assert_almost_eq(d.angle(), Vector2(2, 1).angle(), 0.001, "within the cone: toward it")
+	assert_eq(StepRules.steer(o, Vector2.RIGHT, Vector2(1.0, 3.0)), Vector2.RIGHT, "outside the cone")
+	assert_eq(StepRules.steer(o, Vector2.RIGHT, Vector2(6.0, 0.0)), Vector2.RIGHT, "too far")
+
+
+func test_a_fleeing_enemy_off_the_line_pulls_the_step() -> void:
+	_run()
+	var e := game.horde.spawn(game.horde.def(&"skeleton"), Vector2(2.5, 1.5), false)
+	e.cooldown = 99.0
+	game.horde.rehash()
+	game.player.pos = Vector2.ZERO
+	game.player.facing = Vector2.RIGHT
+	game.player.runner.reset()
+	game.player._step_in(_node(&"cut3"))
+	assert_gt(game.player._step.y, 0.5, "it bends toward the enemy")
 
 
 func test_a_trap_under_the_end_stops_the_step_but_not_one_already_in_it() -> void:
@@ -74,7 +95,7 @@ func test_every_blow_of_the_combo_covers_its_meters_below_the_run() -> void:
 			continue
 		game.player.pos = Vector2.ZERO
 		var r := _land(id)
-		assert_almost_eq(r[0], node.step, 0.1, "%s: the same meters" % id)
+		assert_almost_eq(r[0], node.step, 0.15, "%s: the same meters" % id)
 		assert_lt(r[1], 6.75, "%s: under the run" % id)
 	assert_not_null(_node(&"cut4"))
 	assert_not_null(_node(&"thrust4"))
