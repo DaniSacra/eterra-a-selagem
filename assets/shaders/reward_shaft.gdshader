@@ -17,9 +17,10 @@ uniform float cap = 1.0;
 uniform float strength = 1.0;
 uniform float body = 0.3;
 uniform float side_soft = 2.2;
+// HUD sweep 2026-11-27: no bright core line (a 2 px white streak from the pool up through the banner at 1080p); the pool carries the light.
 uniform float core_width = 10.0;
-uniform float core_light = 0.4;
-uniform float core_white = 0.3;
+uniform float core_light = 0.0;
+uniform float core_white = 0.0;
 // Full from the floor to full_to of its height, down to top_keep of it at the top.
 uniform float full_to = 0.15;
 uniform float top_keep = 0.35;
