@@ -13,7 +13,7 @@
 | PT28-3 | Sala 8: peças 3D por cima da pintura (postes) parecem sobrepostas | environment-artist | **FEITO em parte: a chama e a luz da bacia do Jardim (2,9, -14,6) sobre a grade da pintura saem (`PaintedHall.PROPS`); sala 8 exata não identificada, demais salas conferidas por lista de chamas/luzes, sem outra sobreposição certa; ver `docs/gallery/pt28/`** |
 | PT28-4 | Pedir ao ChatGPT o desenho de TODOS os ícones de Bênção, e os símbolos das portas e da loja (hoje estranhos) | ai-art-producer |
 | PT28-5 | Cartas de Bênção com tamanho fixo (todas iguais, com pouco ou muito texto) | ui-ux-designer | Feito |
-| PT28-6 | Ícones das Bênçãos à direita: agrupados por anjo (semelhantes juntas), só aparecem segurando TAB, como o SWORN | ui-ux-designer | Feito |
+| PT28-6 | Ícones das Bênçãos à direita: agrupados por anjo (semelhantes juntas), só aparecem segurando TAB, como o SWORN | ui-ux-designer | Feito; Feito (opção A, esquerda): coluna de 5 lugares fixos (`SlotColumn`), Tab abre as demais por anjo com cartões e 3 fixados (`BlessingTab`), passivas fora da coluna |
 | PT28-7 | Esqueleto mago (elite) na sala 12 não morria: elites x1,8 exagerou (mago elite ~2300 de vida) | balance-designer, gameplay-engineer **Feito 2026-11-27:** elites x1,8 para x1,0 (corpo a corpo 1350 a 1500), à distância (mago, arqueiro, sacerdote) x0,7 (910, 875, 910), Capitão x1,2 (1800); ver `docs/design/balance/pt28-elites.md` |
 | PT28-8 | Habilidade em recarga fica cinza e "enche" de cor de baixo para cima (como um copo), sem o círculo | ui-ux-designer | Feito |
 | PT28-9 | Tirar a barra amarela (armadura) dos chefes, só vida | ui-ux-designer | Feito |
