@@ -50,3 +50,14 @@ func pass_to(target: int, on: bool) -> bool:
 	index = target
 	passages += 1
 	return true
+
+
+## Chapter II, A-2: whether sealing Morvath leads to the Átrio and the next region instead of the end screen (the switch is on and there is a next region).
+static func leads_on(region: int, on: bool) -> bool:
+	return on and has_next(region)
+
+
+## Chapter II, A-6: the preview ends when the hero would walk into the chamber of a region past the first (the Bosque has no chief yet, its
+## chamber is a stand-in): the end is "Fim da prévia", never a victory.
+static func preview_over(region: int, entering: RunMap.Kind) -> bool:
+	return region > 0 and entering == RunMap.Kind.BOSS

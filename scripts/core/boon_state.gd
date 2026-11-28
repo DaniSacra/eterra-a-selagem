@@ -326,6 +326,15 @@ func take(b: Boon, at: Boon.Rarity = Boon.Rarity.COMMON, at_level: int = 0) -> i
 	return levels[b.id]
 
 
+## Chapter II, A-2: one rarity up on a held Blessing (the Graça); false for an Elo, one not held or the legendary.
+func raise_rarity(b: Boon) -> bool:
+	if level(b.id) <= 0 or not b.has_rarity() or rarity(b.id) >= Boon.Rarity.LEGENDARY:
+		return false
+	rarities[b.id] = rarity(b.id) + 1
+	_invalidate()
+	return true
+
+
 ## Takes a card of a draw (its rarity, its level).
 func take_card(c: Card) -> int:
 	if not c.grow and not still_free(c.boon):

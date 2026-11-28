@@ -46,9 +46,9 @@ static func cross_ante(data: Dictionary) -> void:
 	data["ante"] = 1
 
 
-## Whether this kind is a room of the prologue (not of the graph).
+## Whether this kind is a room outside the count of the graph: the prologue's (Antessala, Sala 00) and the Átrio (Chapter II, A-2): no tally, no log, its name on the HUD.
 static func is_prologue(kind: RunMap.Kind) -> bool:
-	return kind == RunMap.Kind.ANTE or kind == RunMap.Kind.SALA00
+	return kind == RunMap.Kind.ANTE or kind == RunMap.Kind.SALA00 or kind == RunMap.Kind.ATRIO
 
 
 ## The Blessing of the Sala 00: offered once and taken once. The altar opens its choice a single time; the screen is modal (its angels' pair

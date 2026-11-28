@@ -848,6 +848,42 @@ func setup_altar(o: Dictionary) -> BoonCard:
 	return self
 
 
+## Chapter II, A-2: one of Galael's Graças (Atrio.options: {id, ok, why, share}): the altar's shell with its name, what it gives and, when it
+## cannot be taken, why (dimmed, not pickable).
+const GRACE_LOOK := {&"heal": [Color(0.4, 0.85, 0.7), SealMedal.Glyph.CANDLE], &"rarity": [Color(0.98, 0.78, 0.45), SealMedal.Glyph.POMEGRANATE],
+	&"levels": [Color(0.62, 0.78, 0.98), SealMedal.Glyph.OPEN_ARCH]}
+
+
+func setup_grace(o: Dictionary) -> BoonCard:
+	var id := StringName(o.get("id", &"heal"))
+	altar = id
+	var look: Array = GRACE_LOOK.get(id, GRACE_LOOK[&"heal"])
+	var box := _shell(ALTAR_GLOW, ALTAR_SIZE, ALTAR_ART_H)
+	var medal := SealMedal.new().setup(look[1], look[0], ALTAR_ICON)
+	medal.name = &"Medal"
+	crest = medal
+	_art(box, ALTAR_ART_H).add_child(medal)
+	var title := _name(T.t(StringName("grace_" + String(id))))
+	title.name = &"Name"
+	box.add_child(title)
+	box.add_child(_rule())
+	var what := _text(T.t(StringName("grace_%s_desc" % id), {"n": int(round(float(o.get("share", 0.0)) * 100.0))}), UiKit.PALE, 17)
+	what.name = &"What"
+	what.custom_minimum_size.x = ALTAR_SIZE.x - PAD * 2.0
+	what.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(what)
+	if not bool(o.get("ok", true)):
+		var why := _text(T.t(StringName(o.get("why", &"grace_cannot"))), WARN, 15, UiKit.BOLD_FONT)
+		why.name = &"Cannot"
+		why.custom_minimum_size.x = ALTAR_SIZE.x - PAD * 2.0
+		box.add_child(why)
+		disabled = true
+		focus_mode = Control.FOCUS_NONE
+		modulate = Color(0.58, 0.56, 0.6)
+	_finish()
+	return self
+
+
 func _add_glow(color: Color, art_h: float = ART_H) -> void:
 	if _glow == null:
 		var g := Gradient.new()

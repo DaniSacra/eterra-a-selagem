@@ -37,7 +37,7 @@ const FOUNTAIN_HEAL := 0.4
 const LEVEL_HEAL := 0.15
 ## --start= in the room mode: which room to begin in.
 const ROOM_STARTS := {"boss": RunMap.Kind.BOSS, "miniboss": RunMap.Kind.MINIBOSS, "shop": RunMap.Kind.SHOP, "fountain": RunMap.Kind.FOUNTAIN,
-	"trial": RunMap.Kind.TRIAL, "altar": RunMap.Kind.ALTAR, "ante": RunMap.Kind.ANTE, "sala00": RunMap.Kind.SALA00,
+	"trial": RunMap.Kind.TRIAL, "altar": RunMap.Kind.ALTAR, "ante": RunMap.Kind.ANTE, "sala00": RunMap.Kind.SALA00, "atrio": RunMap.Kind.ATRIO,
 	"combat": RunMap.Kind.COMBAT}  # combat: the first fight room (with --arena=id --variant=n: that arena, e.g. GP-8 base captures)
 const SPAWN_MIN := 19.0
 const SPAWN_MAX := 25.0
@@ -1205,6 +1205,21 @@ func _on_chosen(b: Boon) -> void:
 	_back_to_play()
 
 
+## The hero's numbers read again from the Blessings held (a Blessing taken, or raised by the Átrio's Graça): dodges, speed, shield, most
+## life (the rise in the most life is healed). old_hp_bonus: the `max_hp` stat before the change.
+func refresh_boon_stats(old_hp_bonus: float) -> void:
+	player.dodge_max = hero.dodge_charges + int(boons.stat(&"dodge_charges"))
+	player.speed_bonus = boons.stat(&"move_speed_pct")
+	combat.celestial.refresh_move()
+	var shield := boons.stat(&"shield_cooldown")
+	if shield > 0.0 and player.shield_cooldown <= 0.0:
+		player.shield_ready = true
+	player.shield_cooldown = shield
+	var hp_bonus := boons.stat(&"max_hp")
+	player.max_hp = _base_max_hp() + hp_bonus + life_bonus
+	player.heal(hp_bonus - old_hp_bonus)
+
+
 func _take(b: Boon) -> void:
 	var old_hp_bonus := boons.stat(&"max_hp")
 	var card: BoonState.Card = null
@@ -1222,16 +1237,7 @@ func _take(b: Boon) -> void:
 	gifts_taken.append(b.id)
 	if b.is_duo():
 		elos_formed[b.id] = true
-	player.dodge_max = hero.dodge_charges + int(boons.stat(&"dodge_charges"))
-	player.speed_bonus = boons.stat(&"move_speed_pct")
-	combat.celestial.refresh_move()
-	var shield := boons.stat(&"shield_cooldown")
-	if shield > 0.0 and player.shield_cooldown <= 0.0:
-		player.shield_ready = true
-	player.shield_cooldown = shield
-	var hp_bonus := boons.stat(&"max_hp")
-	player.max_hp = _base_max_hp() + hp_bonus + life_bonus
-	player.heal(hp_bonus - old_hp_bonus)
+	refresh_boon_stats(old_hp_bonus)
 	if courage_poms > 0:
 		courage_poms -= 1
 		grow_random()
@@ -1490,7 +1496,8 @@ func _on_player_died() -> void:
 		bot.on_died()
 	if boss:
 		boss.record_death()
-	Save.data.runs += 1
+	if not _logged:
+		Save.data.runs += 1  # (a death in Chapter II after a sealing: that run was counted, and logged, at the sealing)
 	if first_run:
 		FirstDescent.finish(Save.data, &"death")  # (SW-O4: played once, whatever came of it; the Coragem still counts the death)
 	Save.write()
@@ -1524,7 +1531,22 @@ func _on_boss_defeated() -> void:
 	Save.write()
 	log_run("victory")
 	await _play_ending(at)
+	if rooms != null and rooms.begin_atrio():
+		# Chapter II (the switch on): the sealing is banked above (the win counts as ever); the descent goes on to the Átrio
+		mode = Mode.PLAY
+		return
 	_open_end(true, new_best)
+
+
+## Chapter II, A-6: the end of the preview (the hero was to walk into the Bosque's stand-in chamber): "Fim da prévia do Capítulo II" and the way
+## back to the Santuário. Not a victory: nothing is added to `wins`, `runs`, the record or the log (the sealing of Chapter I was banked when
+## Morvath fell, and logged once).
+func end_preview() -> void:
+	if mode == Mode.ENDING or mode == Mode.OVER:
+		return
+	mode = Mode.ENDING
+	Music.play(&"catacombs", Music.WALK)
+	_open_end(false, false, true)
 
 
 ## SW-O4: Morvath's short fight is over (Boss.tutorial_end, or his fall if the boss lacks it): the guided descent ends. Not a
@@ -1595,11 +1617,11 @@ func _victory_caption() -> void:
 		delay += VICTORY_CAPTION_GAP
 
 
-func _open_end(victory: bool, new_best: bool) -> void:
+func _open_end(victory: bool, new_best: bool, preview := false) -> void:
 	var end := EndScreen.new()
 	_screen = end
 	ui.add_child(end)
-	end.open(victory, {"first_done": first_won, "time": time, "level": level if rooms == null else 0, "kills": kills, "best_combo": combat.best_combo, "boons": boons.owned().size(),
+	end.open(victory, {"preview": preview, "first_done": first_won, "time": time, "level": level if rooms == null else 0, "kills": kills, "best_combo": combat.best_combo, "boons": boons.owned().size(),
 		"defeated_by": defeated_by() if not victory and not last_hurt.is_empty() else &"", "mastery": mastery_report,
 		"rooms_won": rooms.won.size() if rooms != null else 0, "gold": rooms.gold if rooms != null else 0,
 		"opened": RunSpoils.opened(milestones_before, Milestones.reached(Save.data))}, new_best)
