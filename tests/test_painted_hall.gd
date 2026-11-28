@@ -184,7 +184,7 @@ func test_lote4_rooms_resolve_to_their_entries() -> void:
 	var st := _stage()
 	var layouts: Array[RoomLayout] = []
 	layouts.assign(st.layouts)
-	for l: RoomLayout in [st.altar_layout]:
+	for l: RoomLayout in [st.altar_layout, st.boss_layout]:
 		if l != null:
 			layouts.append(l)
 	var seen := {}

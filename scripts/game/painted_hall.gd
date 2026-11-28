@@ -53,6 +53,7 @@ const ROOMS := {
 	&"runes:1": {&"painting": "res://assets/rooms/painted/runes_1.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 84.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
 	&"trial": {&"painting": "res://assets/rooms/painted/trial.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 60.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
 	&"altar": {&"painting": "res://assets/rooms/painted/altar.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 50.0, &"at": Vector2(0.0, 0.0), &"v_span": UNIFORM},
+	&"seal_chamber": {&"painting": "res://assets/rooms/painted/seal_chamber.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 86.0, &"at": Vector2(-5.0, -2.0), &"v_span": UNIFORM},
 }
 ## A node (and its subtree) the painting never dresses: set this meta to true.
 const KEEP_3D := &"keep_3d"
