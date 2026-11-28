@@ -161,3 +161,10 @@ func test_pull_in_keeps_the_ring_inside_the_screen() -> void:
 		assert_gte(c.x - px, margin - 0.5, "dx %s: left edge clear" % dx)
 		assert_lte(c.x + px, screen.x - margin + 0.5, "dx %s: right edge clear" % dx)
 	assert_eq(RewardGem.pull_in(cam, Vector3(0, 4.7, 0), screen, margin), Vector3.ZERO, "a medallion in the middle stays")
+
+
+func test_f5_blessing_medallion_has_wings_wider_than_its_disc() -> void:
+	var m := RewardGem.wing_mesh()
+	var box := m.get_aabb()
+	assert_gt(box.size.x, RewardGem.RADIUS * 2.0 * 2.0, "wings reach well past the disc, so the silhouette is not the heart's circle")
+	assert_eq(m.get_surface_count(), 1)

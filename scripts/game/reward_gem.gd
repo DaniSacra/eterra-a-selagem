@@ -149,6 +149,15 @@ static func make(parent: Node3D, reward: RunMap.Reward, kind: RunMap.Kind, color
 	halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	halo.sorting_offset = -1.0
 	frame.add_child(halo)
+	# F5 (PT-27a): a Blessing's medallion is the only one with wings, so the angel's door never reads as the heart's
+	if reward == RunMap.Reward.BOON and stand == Stand.FLOAT:
+		var wings := MeshInstance3D.new()
+		wings.mesh = wing_mesh()
+		wings.material_override = _wing_material()
+		wings.position = held + Vector3(0, lift, -0.08 * s)
+		wings.scale = Vector3(s, s, s)
+		wings.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		frame.add_child(wings)
 	# a door's medallion pulses in a ring of its room's colour (DoorRing; DoorTip makes it burn when he is near)
 	if stand == Stand.FLOAT and door_of(parent) >= 0:
 		var ring := DoorRing.make(door_of(parent), color, s)
@@ -469,6 +478,44 @@ class Sway extends Node3D:
 	func _pose() -> void:
 		# the frame it hangs in is already turned to the camera
 		rotation = Vector3(-deg_to_rad(Feel.live().cam_pitch) * LEAN, sin(phase * TAU / TURN) * SWAY, 0.0)
+
+
+## F5: the pair of folded wings behind a Blessing's disc (a flat fan of feathers each side, in the disc's plane, tips
+## out to WING_SPAN radii). Pure: the same mesh for every door.
+const WING_SPAN := 2.3
+const WING_FEATHERS := 4
+static var _wing_mesh: ArrayMesh
+static var _wing_mat: StandardMaterial3D
+
+
+static func wing_mesh() -> ArrayMesh:
+	if _wing_mesh != null:
+		return _wing_mesh
+	var verts := PackedVector3Array()
+	for side: float in [1.0, -1.0]:
+		var root := Vector3(side * RADIUS * 0.85, 0.0, 0.0)
+		for i in WING_FEATHERS:
+			# feathers fan from level (top) to drooping (bottom), shorter towards the bottom
+			var k := float(i) / float(WING_FEATHERS - 1)
+			var tip := Vector3(side * RADIUS * (WING_SPAN - 0.35 * k), RADIUS * (0.55 - 1.0 * k), 0.0)
+			var up := Vector3(side * RADIUS * 0.95, RADIUS * (0.34 - 0.62 * k) + 0.2, 0.0)
+			var dn := Vector3(side * RADIUS * 0.95, RADIUS * (0.34 - 0.62 * k) - 0.2, 0.0)
+			verts.append_array([root, up, tip, root, tip, dn])
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	_wing_mesh = ArrayMesh.new()
+	_wing_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return _wing_mesh
+
+
+static func _wing_material() -> StandardMaterial3D:
+	if _wing_mat == null:
+		_wing_mat = StandardMaterial3D.new()
+		_wing_mat.albedo_color = Color(0.93, 0.85, 0.6)
+		_wing_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_wing_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return _wing_mat
 
 
 static func _ready() -> void:
