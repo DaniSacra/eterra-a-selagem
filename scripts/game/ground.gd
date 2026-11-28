@@ -55,9 +55,11 @@ const GAP_SOURCE := &"gap"
 ## (the paladin's, hurting only them) and the rift's breath (no harm) do not.
 const ROOM_SOURCES: Array[StringName] = [HAZARD_SOURCE, PLATE_SOURCE, CHAIN_SOURCE, ROOT_SOURCE, SLIT_SOURCE, TRAP_SOURCE,
 	CRYSTAL_SOURCE, ROCKS_SOURCE, URN_SOURCE, OIL_SOURCE, NICHE_SOURCE, PLANT_SOURCE, SAG_SOURCE, SPIKES_SOURCE,
-	SPIKE_PLATE_SOURCE, SPORE_SOURCE]
+	SPIKE_PLATE_SOURCE, SPORE_SOURCE, ROOTGRID_SOURCE]
 ## Chapter II, A-5: the garden's cloud of spores (SporeFloor): the Esporinho's burst (add_warning) as a floor's own warning.
 const SPORE_SOURCE := &"spore"
+## Chapter II: the Templo's roots, a grid of tiles struck as the runes are (RuneFloor, HazardDef.rune_source): "Derrotado por: Raízes".
+const ROOTGRID_SOURCE := &"rootgrid"
 const SPORE_COLOR := Color(0.85, 0.42, 0.55)
 const POOL := 48
 ## C1e, the Armadilheiro's plates (Zone.tags): the zone's own fill is hidden; C1eMarks draws the X and Ground the dust where one lands.
@@ -351,7 +353,7 @@ func room_live(groups: Dictionary = {}) -> int:
 	var n := 0
 	for z in zones:
 		if z.kind == Kind.WARNING and z.floor_own and z.life > 0.0 and ROOM_SOURCES.has(z.source):
-			if z.source == HAZARD_SOURCE or z.source == CRYSTAL_SOURCE or z.source == OIL_SOURCE:
+			if z.source == HAZARD_SOURCE or z.source == ROOTGRID_SOURCE or z.source == CRYSTAL_SOURCE or z.source == OIL_SOURCE:
 				groups[z.source] = true
 			else:
 				n += 1

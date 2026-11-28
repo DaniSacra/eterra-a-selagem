@@ -215,3 +215,16 @@ func test_the_fight_in_the_garden_and_the_temple_run_their_floors() -> void:
 		game.rooms._room_cleared()
 		assert_null(game.rooms.spores)
 		assert_null(game.rooms.runes)
+
+
+func test_the_templo_roots_have_their_own_defeat_name() -> void:
+	var st := load("res://data/stages/bosque.tres") as StageDef
+	var found := false
+	for l: RoomLayout in st.layouts:
+		if l.hazard != null and l.hazard.kind == HazardDef.Kind.GRID and l.hazard.rune_source == Ground.ROOTGRID_SOURCE:
+			found = true
+	assert_true(found, "the Templo's root grid names itself")
+	assert_true(Ground.ROOM_SOURCES.has(Ground.ROOTGRID_SOURCE), "it counts against the two at once")
+	var cause := DefeatCause.of(Ground.ROOTGRID_SOURCE, &"")
+	assert_eq(DefeatCause.text_key(cause), &"killer_rootgrid")
+	assert_eq(T.t(&"killer_rootgrid"), "Raízes")

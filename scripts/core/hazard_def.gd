@@ -163,6 +163,8 @@ func rearm_at(progress: float) -> float:
 @export var crystal_radius := 0.6
 @export var crystal_from := 0.0
 @export var crystal_source: StringName = &"crystal"
+## What names the warnings of a runes-kind floor in "Derrotado por" (the Templo's root grid says &"rootgrid"); grouped as the runes are.
+@export var rune_source: StringName = &"runes"
 
 ## DROPS, RP-20 (stones from the torn vault): the parts of the floor stones may fall on, the side of a stone's square
 ## (m), at most drop_count stones at once, one every drop_every seconds after start_delay; drop_aim the share aimed at

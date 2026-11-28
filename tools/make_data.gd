@@ -1555,6 +1555,7 @@ func _bosque_roots() -> HazardDef:
 	h.start_delay = 4.0
 	h.max_share = 0.2
 	h.islands = 2
+	h.rune_source = &"rootgrid"
 	h.spare_hero = true
 	h.keep_route = true
 	return h

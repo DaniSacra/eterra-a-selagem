@@ -63,7 +63,7 @@ const ROOMS := {
 	# PT28-11 (docs/art/hub_pt28_plan.md): the Santuario. Pose = the plan's base capture (centre of the hub, 95 m). Waits for its
 	# painting (AWAITING): until the file exists key_of skips it and the hub is the game's own 3D, untouched.
 	&"hub": {&"painting": "res://assets/rooms/painted/hub.png", &"yaw": 35.0, &"pitch": 30.0, &"fov": 24.0, &"dist": 105.0, &"at": Vector2(1.6, -9.1), &"v_span": STRETCH,
-		&"keep": HUB_KEEP, &"hide": HUB_HIDE},
+		&"local": 0.95, &"edge_local": 0.8, &"keep": HUB_KEEP, &"hide": HUB_HIDE},
 }
 ## Entries whose painting is not delivered yet: they are only used once their file exists (delivered, key_of).
 const AWAITING: Array[StringName] = [&"hub"]
@@ -98,7 +98,7 @@ const MASKS := {
 	&"garden:1": [{&"at": Vector2(-8.0, -5.0), &"radius": 5.5, &"reach": 10.0}],
 }
 ## The angle (radians, painter's ray against the game camera's, to the object) where the painted object gives way to its 3D: from, to.
-const SWAP_ANGLE := Vector2(0.08, 0.2)
+const SWAP_ANGLE := Vector2(0.02, 0.06)
 ## The far planes: the one under the room (depth below the floor) and the wall beyond it (how far behind the painter's
 ## point, along the camera's way, how high), both this wide.
 const UNDER_DEPTH := 34.0
@@ -293,6 +293,8 @@ func _material(p: Dictionary, see: float, from: ShaderMaterial = null) -> Shader
 	mat.set_shader_parameter(&"projector", projector(p))
 	mat.set_shader_parameter(&"v_span", float(p.get(&"v_span", 1.0)))
 	mat.set_shader_parameter(&"plate_eye", eye_of(p))
+	mat.set_shader_parameter(&"fallback_local", float(p.get(&"local", 0.5)))
+	mat.set_shader_parameter(&"fallback_edge", float(p.get(&"edge_local", 0.0)))
 	var ms := masks_of(room)
 	if not ms.is_empty():
 		var padded := ms.duplicate()

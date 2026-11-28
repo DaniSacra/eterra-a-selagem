@@ -30,6 +30,10 @@ uniform float see_gap = 0.4;
 uniform vec3 plate_eye = vec3(0.0, 100.0, 100.0);
 // the angle (radians) between the painter's ray and the game camera's ray to a point where a steep face starts, and ends, to be dressed
 uniform vec2 trust_angle = vec2(0.18, 0.45);
+// how much of the fallback stone's tone is the painting's local (blurred) colour, the rest being the room's average
+uniform float fallback_local = 0.5;
+// and how much of it outside the frame, where the painting's edge row stands in (0: the room's average only)
+uniform float fallback_edge = 0.0;
 // footprints of the painted 3D objects (a tree), floor only: (x, z, radius, reach away from the painter), and how much they
 // show now (0: the painting as it is, 1: gone, the object being the game's 3D); mask_color is what the floor is there
 uniform vec4 masks[4];
@@ -49,8 +53,8 @@ float hash21(vec2 p) {
 // the stone's plain look: the painting's own average there, in blocks
 vec3 stone_of(vec2 uv, vec3 w, vec3 n, float inside) {
 	// the room's average tone, and the painting's soft local one only inside the frame (its edge is sky, not stone)
-	vec3 local = textureLod(painting, clamp(uv, vec2(0.0), vec2(1.0, v_span)), 5.0).rgb;
-	vec3 base = mix(textureLod(painting, vec2(0.5, 0.5 * v_span), 9.0).rgb, local, 0.5 * inside) * 0.8;
+	vec3 local = textureLod(painting, clamp(uv, vec2(0.0), vec2(1.0, v_span)), 4.0).rgb;
+	vec3 base = mix(textureLod(painting, vec2(0.5, 0.5 * v_span), 9.0).rgb, local, fallback_local * max(inside, fallback_edge)) * 0.8;
 	vec2 g = abs(n.y) > 0.7 ? w.xz : (abs(n.x) > abs(n.z) ? vec2(w.z, w.y) : vec2(w.x, w.y));
 	g /= vec2(1.1, 0.55);
 	float row = floor(g.y);

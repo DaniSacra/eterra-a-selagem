@@ -149,5 +149,6 @@ Primeira sala do grande ajuste de layout. Vale para toda sala que reusa o `hall`
 `painted.gdshader` pesa a placa por fragmento: faces íngremes (normal longe da vertical) que o pintor vê de lado, ou que a câmera do jogo vê
 de ângulo bem diferente do pintor (`trust_angle` 0,18 a 0,45 rad), caem na pedra em blocos (média suave da placa, tom da sala); UV fora do
 quadro nunca mostra a placa. Chão plano fica sempre pintado. `PaintedHall.MASKS` (por sala: pé, raio, alcance) apaga a silhueta da árvore
-pintada no chão do Jardim e mostra a árvore 3D (`painted_hide`) quando a câmera sai da pose (`SWAP_ANGLE`); na pose a placa é a mesma.
+pintada no chão do Jardim e mostra a árvore 3D (`painted_hide`) quando a câmera sai da pose (`SWAP_ANGLE`, 0,02 a 0,06 rad; o `--showcase --cam-dist=37` mantém a direção da pose e ainda fica a 0,11 rad do pé da árvore, por isso a faixa antiga de 0,08 a 0,2 deixava o tronco deitado e sem árvore 3D); na pose a placa é a mesma.
+A pedra de reserva toma a cor local da placa (`fallback_local`; `fallback_edge` fora do quadro: a linha de borda borrada), por entrada da `ROOMS` (`local`, `edge_local`; só o Santuário usa).
 `PaintedHall.DISABLED` desliga uma entrada por dado (Santuário, se a chegada não servir).
