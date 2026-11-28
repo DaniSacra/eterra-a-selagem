@@ -5,7 +5,7 @@ extends Node
 ## The player went from keys and mouse to a gamepad (pad true) or back.
 signal device_changed(pad: bool)
 
-const ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"shout", &"rush", &"ultimate", &"interact", &"pause", &"feel_panel"]
+const ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"shout", &"rush", &"ultimate", &"interact", &"pause", &"show_blessings", &"feel_panel"]
 ## GP-1 and GP-5: no hero has a Brado nor an Investida button now (Q has no action; E interacts). `shout` and `rush` stay in the map
 ## (Q and C, never remappable) only because the HUD, the how-to and the objective line still look their labels up; nothing in play reads them.
 ## Actions the player may rebind in Options.
@@ -16,6 +16,8 @@ const REMAPPABLE: Array[StringName] = [&"move_up", &"move_down", &"move_left", &
 const DEFAULT_KEYS := {
 	&"move_left": [KEY_A, KEY_LEFT], &"move_right": [KEY_D, KEY_RIGHT], &"move_up": [KEY_W, KEY_UP], &"move_down": [KEY_S, KEY_DOWN],
 	&"dodge": [KEY_SPACE], &"shout": [KEY_Q], &"rush": [KEY_C], &"ultimate": [KEY_SHIFT], &"interact": [KEY_E], &"pause": [KEY_ESCAPE, KEY_P],
+	# PT28-6: held, shows the Blessings grouped by angel (the HUD)
+	&"show_blessings": [KEY_TAB],
 	# debug builds only: the live tuning panel (scripts/ui/feel_panel.gd)
 	&"feel_panel": [KEY_F1],
 }
@@ -26,7 +28,7 @@ const DEFAULT_MOUSE := {&"light_attack": MOUSE_BUTTON_LEFT, &"heavy_attack": MOU
 ## remapped simply reads the new defaults, and one that remapped something keeps it (a key two actions would share goes
 ## to the spare, never to both).
 const SPARE_KEYS := {&"interact": [KEY_F, KEY_G, KEY_T, KEY_B, KEY_N], &"ultimate": [KEY_X, KEY_C, KEY_V, KEY_B]}
-const DEFAULT_PAD := {&"interact": JOY_BUTTON_A, &"light_attack": JOY_BUTTON_X, &"heavy_attack": JOY_BUTTON_Y, &"dodge": JOY_BUTTON_B, &"shout": JOY_BUTTON_RIGHT_SHOULDER, &"rush": JOY_BUTTON_RIGHT_STICK, &"ultimate": JOY_BUTTON_LEFT_SHOULDER, &"pause": JOY_BUTTON_START}
+const DEFAULT_PAD := {&"interact": JOY_BUTTON_A, &"light_attack": JOY_BUTTON_X, &"heavy_attack": JOY_BUTTON_Y, &"dodge": JOY_BUTTON_B, &"shout": JOY_BUTTON_RIGHT_SHOULDER, &"rush": JOY_BUTTON_RIGHT_STICK, &"ultimate": JOY_BUTTON_LEFT_SHOULDER, &"pause": JOY_BUTTON_START, &"show_blessings": JOY_BUTTON_BACK}
 const PAD_AXES := {&"move_left": [JOY_AXIS_LEFT_X, -1.0], &"move_right": [JOY_AXIS_LEFT_X, 1.0], &"move_up": [JOY_AXIS_LEFT_Y, -1.0], &"move_down": [JOY_AXIS_LEFT_Y, 1.0]}
 const STICK_DEADZONE := 0.3
 ## Menu actions, never rebound: LB and RB (PageUp and PageDown on the keyboard) step through a screen's tabs

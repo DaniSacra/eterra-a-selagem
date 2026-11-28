@@ -35,6 +35,8 @@ extends Button
 ## SIZE.y nor under MIN_H; the cards of a row stand as tall as the tallest (the row's container).
 const SIZE := Vector2(300, 450)
 const MIN_H := 300.0
+## The smallest the description's font shrinks to inside the fixed card (PT28-5).
+const MIN_DESC_SIZE := 11
 ## BC-1: a row's height (from the least to the most), its medallion, the width its words ask, the numbers' column.
 const ROW_MIN_H := 112.0
 const ROW_MAX_H := 176.0
@@ -297,7 +299,7 @@ func _art(box: VBoxContainer, art_h: float = ART_H) -> CenterContainer:
 ## the height of what it says (fit_height, once laid out).
 func _finish(fit := false) -> void:
 	if fit:
-		custom_minimum_size.y = ROW_MIN_H if listed else MIN_H
+		custom_minimum_size.y = ROW_MIN_H if listed else SIZE.y
 		_fits = 2
 		_fit_later.call_deferred()
 	var frame := Control.new()
@@ -331,8 +333,16 @@ func fit_height() -> void:
 		var tall := maxf(line.get_combined_minimum_size().y, _box.get_combined_minimum_size().y)
 		custom_minimum_size.y = clampf(ceilf(tall + PAD), ROW_MIN_H, ROW_MAX_H)
 		return
+	# PT28-5: a tall card is always the same size; long words shrink the description's font inside, never the box
+	custom_minimum_size.y = SIZE.y
 	var need := _box.get_combined_minimum_size().y + _box.offset_top - _box.offset_bottom
-	custom_minimum_size.y = clampf(ceilf(need), MIN_H, SIZE.y)
+	var desc := _box.find_child("Desc", true, false) as RichTextLabel
+	if desc != null and need > SIZE.y:
+		var px := desc.get_theme_font_size(&"normal_font_size")
+		if px > MIN_DESC_SIZE:
+			desc.add_theme_font_size_override(&"normal_font_size", px - 1)
+			desc.add_theme_font_size_override(&"bold_font_size", px - 1)
+			_fits = maxi(_fits, 2)
 
 
 ## The colour of the outer edge: the rarity's (rarity_color), the chain's metal for an Elo. Never changed by focus.

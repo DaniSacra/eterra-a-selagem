@@ -46,9 +46,7 @@ const READY_FLASH := 0.25
 const IVORY := Color(1.0, 0.97, 0.88)
 ## The glyph while the action recharges, and the veil over the gem.
 const BUSY_ALPHA := 0.6
-const VEIL := Color(0.0, 0.0, 0.02, 0.62)
 ## The level of old gold that rises in the gem as it recharges (its opacity).
-const REFILL_ALPHA := 0.42
 ## The body's opacity with someone behind it (Hud).
 const SEE_THROUGH := 0.45
 ## The dodge gems: half width in pixels, the gap between them, lit and spent.
@@ -259,6 +257,40 @@ static func height_for(side_px: float, drop: float) -> float:
 	return side_px + maxf(KEY_H, MOUSE_H) * 0.5 + drop + NAME_H
 
 
+const FILL_SHADER := preload("res://assets/shaders/fill_up.gdshader")
+
+
+## PT28-8: how much of the slot's colour shows, 0..1 from the bottom: a recharge fills it up as it ends, a cost not
+## affordable keeps it grey (0). 1: nothing to do.
+static func fill_share(wait_ratio: float, no_magick: bool) -> float:
+	var f := 1.0 - clampf(wait_ratio, 0.0, 1.0)
+	return 0.0 if no_magick else f
+
+
+## The share now: a recharge only counts when the slot is busy (a charge left means ready).
+func _fill_now() -> float:
+	return fill_share(wait if busy() else 0.0, starved)
+
+
+## Puts the grey-and-fill shader on the slot while it is unavailable and takes it off when it is not (a draw costs nothing then).
+func _ensure_fill_material() -> void:
+	if _fill_now() >= 1.0:
+		material = null
+	elif not material is ShaderMaterial:
+		var m := ShaderMaterial.new()
+		m.shader = FILL_SHADER
+		material = m
+
+
+func _set_fill(c: Vector2, r: float) -> void:
+	var m := material as ShaderMaterial
+	if m == null:
+		return
+	m.set_shader_parameter(&"y0", c.y - r)
+	m.set_shader_parameter(&"y1", c.y + r)
+	m.set_shader_parameter(&"fill", _fill_now())
+
+
 ## Called every frame by the HUD; redraws only when something changed.
 func refresh(b: Boon, wait_ratio: float, n: int = 0, n_max: int = 0, no_magick: bool = false, secs: float = 0.0) -> void:
 	var key := UiKit.action_label(action)
@@ -280,6 +312,7 @@ func refresh(b: Boon, wait_ratio: float, n: int = 0, n_max: int = 0, no_magick: 
 	charges_max = n_max
 	starved = no_magick
 	_key = key
+	_ensure_fill_material()
 	queue_redraw()
 
 
@@ -405,10 +438,7 @@ func _draw() -> void:
 	var ink := Color(IVORY, BUSY_ALPHA) if busy() else IVORY
 	if starved and shape != Shape.DIAMOND:
 		ink.a *= 0.5
-	if busy():
-		draw_colored_polygon(_poly(c, core), VEIL)
-		for part in _band(c, core, wait, 1.0):
-			draw_colored_polygon(part, Color(UiKit.OLD_GOLD, REFILL_ALPHA))
+	_set_fill(c, r)
 	if locked > 0.0:
 		draw_colored_polygon(_poly(c, core), LOCK_VEIL)
 		ink = Color(IVORY, LOCK_GLYPH)
@@ -446,10 +476,6 @@ func _draw() -> void:
 			var ring := _trace(c, out, 1.0 - wait)
 			if ring.size() > 1:
 				draw_polyline(ring, UiKit.OLD_GOLD.lightened(0.3), RING_W, true)
-		else:
-			var done := _trace(c, r - UiKit.FRAME * 0.5, 1.0 - wait)
-			if done.size() > 1:
-				draw_polyline(done, UiKit.PALE, UiKit.FRAME, true)
 	if _flash > 0.0:
 		draw_polyline(_loop(c, r + 2.0 + 4.0 * (1.0 - _flash)), Color(UiKit.PALE, _flash * 0.8), 1.5, true)
 	if secs_left > 0 and waiting:

@@ -223,6 +223,8 @@ var _oficios_seen := {}
 ## H3: the coins' corner, H1: the build column, H6: the low-life vignette, and the Brado's buff over its diamond.
 var _coins: CoinCorner
 var _column: BuildColumn
+## PT28-6: the Blessings by angel, shown while Tab is held.
+var _groups: BlessingGroups
 var _column_hidden := false
 var _vignette: LifeVignette
 var _buff: BuffMark
@@ -398,7 +400,6 @@ func _build_top() -> void:
 	_boss_name.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_boss_box.add_child(_boss_name)
 	_boss_bar = HudBar.new().setup(BOSS_COLOR, BOSS, 11, true)
-	_boss_bar.over_color = Horde.ARMOR_COLOR
 	_boss_box.add_child(_boss_bar)
 	_boss_opening = OpeningDots.new()
 	_boss_box.add_child(_boss_opening)
@@ -545,6 +546,12 @@ func _build_column() -> void:
 	_column.offset_left = -BuildColumn.WIDTH - BuildColumn.MARGIN
 	_column.offset_top = -BuildColumn.height_for(0) * 0.5
 	_column.offset_bottom = BuildColumn.height_for(0) * 0.5
+	_groups = BlessingGroups.new().setup()
+	add_child(_groups)
+	_groups.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
+	_groups.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_groups.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_groups.offset_right = -BuildColumn.MARGIN
 
 
 ## Bottom centre: the action diamonds, centred; the gifts that act alone sit in the bottom right corner over the coins.
@@ -837,12 +844,15 @@ func _process(delta: float) -> void:
 	# diamonds: the pile of Blessings and the diamonds wait under it (art review 2026-11-25 sweep)
 	var picking := game._screen is BoonChoice
 	_action_row.visible = not picking
+	_groups.visible = Controls.held(&"show_blessings") and _groups.has_content() and not meeting and not picking
 	if meeting or picking:
 		_column.visible = false
 		_column_hidden = true
-	elif _column_hidden:
-		_column_hidden = false
-		_build_key = ""
+	else:
+		_column.visible = _column.has_content() and game.mode == Game.Mode.PAUSE  # PT28-6: in play only the Tab panel
+		if _column_hidden:
+			_column_hidden = false
+			_build_key = ""
 	_update_passives()
 	_update_elos()
 	_update_psalms()
@@ -1065,11 +1075,12 @@ func _update_column() -> void:
 		return
 	_build_key = key
 	_column.show_build(game.boons, BoonIcon.ULT_GLYPH + kind if kind >= 0 else -1, psalm)
+	_groups.show_boons(game.boons.owned())
 	# UI 15: only the Blessings gained; the banner is as tall as they are, around the same middle
 	var h := _column.custom_minimum_size.y
 	_column.offset_top = -h * 0.5
 	_column.offset_bottom = h * 0.5
-	_column.visible = _column.has_content()
+	_column.visible = _column.has_content() and game.mode == Game.Mode.PAUSE  # PT28-6: in play only the Tab panel
 
 
 ## The ultimate's diamond (T5): sealed with the Mastery level it needs, or its charge; a refused press shows why for
@@ -1299,10 +1310,8 @@ func _update_boss(b: Enemy) -> void:
 	game.horde.top_bar_for = b
 	if b:
 		_boss_name.text = T.t(b.def.name_key)
-		_boss_bar.show_value(b.hp / b.max_hp, "", b.armor / b.max_armor if b.max_armor > 0.0 else 0.0)
+		_boss_bar.show_value(b.hp / b.max_hp)  # PT28-9: life only, no yellow armour over-bar
 		var boss := game.boss if game.boss and game.boss.e == b else null
-		if boss != null and boss.def.posture > 0.0:
-			_boss_bar.show_value(b.hp / b.max_hp, "", boss.posture_ratio())
 		# a boss's bar: notches where his next phases begin, veiled in his colour while the ritual's shield stands
 		_shield_t = move_toward(_shield_t, 1.0 if boss and boss.shielded() else 0.0, get_process_delta_time() * 4.0)
 		_boss_bar.show_boss(boss.def.thresholds if boss else PackedFloat32Array(), _shield_t)
