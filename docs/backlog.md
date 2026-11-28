@@ -21,6 +21,7 @@
 | PT28-9 | Tirar a barra amarela (armadura) dos chefes, só vida | ui-ux-designer | Feito |
 | PT28-10 | Sala do Morvath (Câmara do Selo) sem pintura | ai-art-producer, environment-artist |
 | PT28-11 | Santuário muito feio: melhorar bastante (a gente passa muito tempo lá) | art-director, environment-artist |
+| PT28-12 | Salas pintadas: pilares e peças altas "escorrem" quando a câmera sai da pose da pintura. Capturar cada sala de vários ângulos (cantos, centro, portas) na GPU e corrigir (peças altas em 3D por cima, esconder a parte pintada). Modelo: a loja (Salão) e a sala 6, que o Daniel adorou (coisas acontecendo fora da tela e atrás) | sessão principal (capturas), environment-artist |
 
 **Exe `bf27962f` entregue (22h20), fecha as Etapas 1 a 5:** depois do crash do WSL (C: cheio; limpo para 118 GB livres), tudo das
 Etapas já estava no ramo; a varredura final juntou o robô do Santuário (BG-4, `--hub --smoke`), o clipe de chamado do Capitão
