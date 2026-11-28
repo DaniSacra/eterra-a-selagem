@@ -20,7 +20,8 @@ func test_the_hub_entry_waits_for_its_painting() -> void:
 	assert_true(PaintedHall.ROOMS.has(&"hub"), "the hub has its entry")
 	assert_true(&"hub" in PaintedHall.AWAITING)
 	var l := HubPlan.layout()
-	var has_file := ResourceLoader.exists(PaintedHall.ROOMS[&"hub"][&"painting"])
+	# on only with its painting and not switched off (DISABLED: the plate smears near the arrival, 2026-11-28)
+	var has_file := ResourceLoader.exists(PaintedHall.ROOMS[&"hub"][&"painting"]) and not &"hub" in PaintedHall.DISABLED
 	assert_eq(PaintedHall.key_of(l) == &"hub", has_file, "painted only once hub.png is there")
 	var a := Arena.new()
 	add_child_autofree(a)

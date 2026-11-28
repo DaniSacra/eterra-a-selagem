@@ -68,7 +68,7 @@ const ROOMS := {
 ## Entries whose painting is not delivered yet: they are only used once their file exists (delivered, key_of).
 const AWAITING: Array[StringName] = [&"hub"]
 ## Entries switched off by data (PT28-12: the Santuario if its arrival cannot look right yet): put the key here and the room is the game's own 3D.
-const DISABLED: Array[StringName] = []
+const DISABLED: Array[StringName] = [&"hub"]
 ## A node (and its subtree) the painting never dresses: set this meta to true.
 const KEEP_3D := &"keep_3d"
 ## A node the painting replaces (the painted tree of the Jardim): hidden when the room is painted, its collision stays.
