@@ -87,24 +87,25 @@ func test_the_tree_has_the_four_moves_of_the_kit() -> void:
 	var tree := (load(HeroDef.maga().combos) as ComboTree)
 	var N := ComboNode.In
 	var spark := ComboTree.find(tree.neutral, N.LIGHT)
-	var arc := ComboTree.find(tree.neutral, N.CHARGE_LIGHT)
-	var shard := ComboTree.find(tree.neutral, N.HEAVY)
-	var frost := ComboTree.find(tree.neutral, N.CHARGE)
-	assert_eq(tree.neutral.size(), 4, "no Combustão, no Suspensão, no Q or E move")
-	assert_true(spark.has_tag(&"fire") and spark.next.size() == 1, "the Centelha is a chain of three")
-	assert_eq([arc.magick_cost, arc.charge_time, arc.effect], [8.0, 0.35, ComboNode.Effect.ARC])
-	assert_eq([shard.magick_cost, shard.cooldown, shard.wave_stops], [4.0, 0.0, false])
-	assert_eq([frost.magick_cost, frost.effect], [15.0, ComboNode.Effect.FROST])
+	var combust := ComboTree.find(tree.neutral, N.CHARGE_LIGHT)
+	var breath := ComboTree.find(tree.neutral, N.HEAVY)
+	var winter := ComboTree.find(tree.neutral, N.CHARGE)
+	assert_eq(tree.neutral.size(), 4, "no Suspensão, no Q or E move; the Estilhaço, the Arco and the Geada left (Maga Redesign V1)")
+	assert_true(spark.has_tag(&"fire") and spark.next.is_empty(), "the Centelha is one cast of three bolts, not a chain")
+	assert_eq([combust.id, combust.magick_cost, combust.magick_cost_max, combust.charge_time, combust.charge_max],
+		[&"combust", 15.0, 25.0, 0.6, 1.5])
+	assert_eq([breath.id, breath.magick_cost, breath.cooldown, breath.effect], [&"breath", 0.0, 0.0, ComboNode.Effect.CONE])
+	assert_eq([winter.id, winter.magick_cost, winter.magick_cost_max, winter.effect], [&"winter", 10.0, 30.0, ComboNode.Effect.FROST])
 	assert_eq(tree.dodge_window, 0.0)
 
 
-func test_one_ultimate_the_convergence_at_mastery_2() -> void:
+func test_one_ultimate_the_celestial_storm_at_mastery_2() -> void:
 	var hero := HeroDef.maga()
-	assert_eq(hero.ultimates.size(), 1)
+	assert_eq(hero.ultimates.size(), 1, "one Supremo for her weapon")
 	var u := hero.ultimates[0]
-	assert_eq([u.id, u.kind, u.mastery_level, u.weapon], [&"converge", UltDef.Kind.CONVERGE, 2, &"bastao"])
-	assert_eq(u.charge, 50.0, "the reactions fill it too (GP-5)")
-	assert_eq(hero.arcane.converge_plan().count(), 9)
+	assert_eq([u.id, u.kind, u.mastery_level, u.weapon], [&"storm", UltDef.Kind.CHAIN, 2, &"bastao"])
+	assert_eq(u.charge, 50.0, "the charge rule is kept: the reactions fill it too (GP-5)")
+	assert_eq(hero.arcane.converge_plan().count(), 9, "the Convergência's plan stays in the kit for a reserve Supremo")
 
 
 # ---------- the elements in play ----------
@@ -120,19 +121,6 @@ func test_every_spark_hit_lights_the_target_and_it_burns() -> void:
 	assert_gt(float(game.horde.dealt.by.get("elemental", 0.0)), 0.0, "counted as elemental")
 
 
-func test_the_spark_is_a_chain_of_three_11_11_22() -> void:
-	var tree := load(HeroDef.maga().combos) as ComboTree
-	var one := ComboTree.find(tree.neutral, ComboNode.In.LIGHT)
-	var two: ComboNode = one.next[0]
-	var three: ComboNode = two.next[0]
-	assert_eq([one.effect_power, two.effect_power, three.effect_power], [11.0, 11.0, 22.0])
-	assert_eq([one.id, two.id, three.id], [&"spark", &"spark2", &"spark3"])
-	assert_true(three.has_tag(&"finisher") and three.has_tag(&"fire"))
-	assert_false(three.wave_stops, "the Lança de Brasa goes through the crowd")
-	assert_eq([three.knockback, three.hit_stop_ms, three.magick_cost], [5.0, 40.0, 0.0])
-	assert_true(three.next.is_empty())
-
-
 func test_fire_then_ice_on_one_enemy_is_a_thermal_shock_of_45() -> void:
 	_start()
 	var e := _dummy(Vector2(4, 0))
@@ -143,8 +131,9 @@ func test_fire_then_ice_on_one_enemy_is_a_thermal_shock_of_45() -> void:
 	assert_gte(hp - e.hp, 45.0, "the shock of 45 (and no less)")
 
 
-func test_a_reaction_gives_back_three_magick_once_a_cast_with_no_gift() -> void:
+func test_a_reaction_gives_back_three_magick_once_a_cast_when_the_kit_turns_it_on() -> void:
 	_start()
+	game.arcane.kit.reaction_magick = 3.0  # (Maga Redesign V1: off by default, configurable)
 	game.player.magick.value = 10.0
 	game.arcane._conj = 1
 	for i in 3:
@@ -250,7 +239,8 @@ func test_the_arc_hits_up_to_three_and_marks_them_volt() -> void:
 	var near: Array[Enemy] = []
 	for i in 5:
 		near.append(_dummy(Vector2(3 + i * 1.5, 0)))
-	var node := ComboTree.find(game.player.tree.neutral, ComboNode.In.CHARGE_LIGHT)
+	var node := ComboNode.new()  # (the Arco left her tree in Maga Redesign V1; its code waits for a Gift)
+	node.effect = ComboNode.Effect.ARC
 	game.arcane.cast(node, game.player.pos, Vector2.RIGHT)
 	var hit := 0
 	for e in near:
@@ -308,7 +298,12 @@ func test_the_dome_still_slows_and_holds_what_comes_in() -> void:
 
 func test_the_convergence_runs_three_phases_and_makes_the_reactions() -> void:
 	_start()
-	var def := HeroDef.maga().ultimates[0]
+	var def := UltDef.new()  # (the Convergência left her kit in Maga Redesign V1: its code waits as a reserve Supremo)
+	def.kind = UltDef.Kind.CONVERGE
+	def.radius = 5.0
+	def.radius_cap = 6.5
+	def.duration = 4.5
+	def.tick = 0.5
 	game.ults.equip(def)
 	var e := _dummy(Vector2(4, 0))
 	var n := _dummy(Vector2(5, 1))
@@ -329,9 +324,3 @@ func test_the_boss_takes_a_quarter_of_the_convergence() -> void:
 	assert_eq(def.converge_share(false, true, false), def.guardian_share)
 	assert_eq(def.converge_share(false, false, true), def.elite_share)
 	assert_eq(def.converge_share(false, false, false), 1.0)
-
-
-func test_the_hud_pin_shows_the_step_of_the_chain_0_1_2() -> void:
-	var tree := load(HeroDef.maga().combos) as ComboTree
-	var one := ComboTree.find(tree.neutral, ComboNode.In.LIGHT)
-	assert_eq([Hud.chain_step(null), Hud.chain_step(one), Hud.chain_step(one.next[0]), Hud.chain_step(one.next[0].next[0])], [0, 1, 2, 0])

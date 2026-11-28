@@ -6,7 +6,7 @@ extends Control
 
 ## Glyph ids of the bare actions: ACTION_GLYPH + Boon.Slot (attack, special, circle of light, dodge, Investida, ultimate: 100 to 106).
 const ACTION_GLYPH := 100
-## Glyph ids of the ultimates: ULT_GLYPH + UltDef.Kind (the cleave, the Voragem).
+## Glyph ids of the ultimates: ULT_GLYPH + UltDef.Kind (the cleave, the Voragem, the Convergência, the Tempestade Celestial).
 const ULT_GLYPH := 110
 ## The glyph of the Brado de Guerra (E): a mouth with the cry rippling out in arcs.
 const SHOUT_GLYPH := 120
@@ -16,6 +16,9 @@ const RUSH_GLYPH := 121
 const BOLT_GLYPH := 130
 const BLAST_GLYPH := 131
 const DOME_GLYPH := 132
+## Maga Redesign V1: the Sopro Glacial's cone and the Inverno Eterno's frozen ground.
+const CONE_GLYPH := 133
+const GROUND_GLYPH := 134
 ## Glyph of the most Magia (T5, the Provação's Reserva): a cut crystal with a light down its middle.
 const MAGICK_GLYPH := 107
 
@@ -275,11 +278,19 @@ static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent
 				var p := c + Vector2((k - 1) * r * 0.55, (1 - k % 2) * r * 0.1 + (k - 1) * r * 0.1)
 				ci.draw_arc(p, r * 0.34, 0.0, TAU, 16, w, th, true)
 				ci.draw_circle(p, r * 0.08, w)
-		113:  # the Suspensão Absoluta: a large dome over the ground with a smaller one inside it and a seal at the foot
-			ci.draw_arc(c + Vector2(0, r * 0.5), r * 0.95, PI, TAU, 24, w, th, true)
-			ci.draw_arc(c + Vector2(0, r * 0.5), r * 0.55, PI, TAU, 16, w, th * 0.8, true)
-			ci.draw_line(c + Vector2(-r * 0.95, r * 0.5), c + Vector2(r * 0.95, r * 0.5), w, th, true)
-			ci.draw_circle(c + Vector2(0, r * 0.15), r * 0.14, w)
+		113:  # the Tempestade Celestial (ULT_GLYPH + Kind.CHAIN): a bolt that leaps through four points
+			var pts := PackedVector2Array([c + Vector2(-r * 0.85, r * 0.7), c + Vector2(-r * 0.3, -r * 0.1), c + Vector2(r * 0.15, r * 0.35), c + Vector2(r * 0.85, -r * 0.7)])
+			ci.draw_polyline(pts, w, th, true)
+			for q in pts:
+				ci.draw_circle(q, r * 0.13, w)
+		133:  # the Sopro Glacial: a cone opening to the right with three lines of wind
+			ci.draw_polyline(PackedVector2Array([c + Vector2(-r * 0.8, 0), c + Vector2(r * 0.8, -r * 0.7), c + Vector2(r * 0.8, r * 0.7), c + Vector2(-r * 0.8, 0)]), w, th, true)
+			for y in [-0.3, 0.0, 0.3]:
+				ci.draw_line(c + Vector2(-r * 0.3, r * y * 0.6), c + Vector2(r * 0.6, r * y), w, th * 0.8, true)
+		134:  # the Inverno Eterno: a flat ring of ground with ice crystals rising in it
+			ci.draw_arc(c + Vector2(0, r * 0.3), r * 0.85, 0.0, TAU, 24, w, th, true)
+			for x in [-0.4, 0.0, 0.4]:
+				ci.draw_colored_polygon(PackedVector2Array([c + Vector2(r * x - r * 0.12, r * 0.3), c + Vector2(r * x, -r * (0.5 - absf(x) * 0.5)), c + Vector2(r * x + r * 0.12, r * 0.3)]), w)
 		_:
 			ci.draw_circle(c, r * 0.5, w)
 

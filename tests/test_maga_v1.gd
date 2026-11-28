@@ -107,15 +107,16 @@ func test_her_body_and_magia_numbers() -> void:
 
 func test_four_blows_two_buttons_no_recharge() -> void:
 	var tree := load(HeroDef.maga().combos) as ComboTree
-	assert_eq(tree.neutral.size(), 4, "no Combustão, no Suspensão, nothing on Q or E")
+	assert_eq(tree.neutral.size(), 4, "no Suspensão, nothing on Q or E")
 	var N := ComboNode.In
-	var want := {N.LIGHT: [&"spark", 0.0], N.CHARGE_LIGHT: [&"arc", 8.0], N.HEAVY: [&"shard", 4.0], N.CHARGE: [&"frost", 15.0]}
+	var want := {N.LIGHT: [&"spark", 0.0], N.CHARGE_LIGHT: [&"combust", 15.0], N.HEAVY: [&"breath", 0.0], N.CHARGE: [&"winter", 10.0]}
 	for input: ComboNode.In in want:
 		var n := _node(input)
 		assert_eq([n.id, n.magick_cost, n.cooldown], [want[input][0], want[input][1], 0.0], "%s" % want[input][0])
 	var k := HeroDef.maga().arcane
-	assert_eq([k.arc_damage, k.arc_targets, k.shard_damage, k.frost_dps, k.frost_time, k.frost_radius], [20.0, 3, 10.0, 6.0, 4.0, 2.5])
-	assert_eq([_node(N.CHARGE_LIGHT).charge_time, _node(N.CHARGE).charge_time], [0.35, 0.45])
+	assert_eq([k.arc_damage, k.arc_targets, k.shard_damage, k.frost_dps, k.frost_time], [20.0, 3, 10.0, 6.0, 5.0])
+	assert_eq([_node(N.CHARGE_LIGHT).charge_time, _node(N.CHARGE).charge_time], [0.6, 0.6])
+	assert_eq([_node(N.CHARGE_LIGHT).charge_max, _node(N.CHARGE).charge_max], [1.5, 1.8])
 
 
 func test_the_tags_put_each_blow_in_its_slot() -> void:
@@ -239,28 +240,30 @@ func test_a_tap_on_the_left_is_the_centelha_and_costs_nothing() -> void:
 	assert_eq(game.player.magick.spent, 0.0)
 
 
-func test_a_tap_on_the_right_is_the_estilhaco_for_four() -> void:
+func test_a_tap_on_the_right_is_the_sopro_glacial_and_costs_nothing() -> void:
 	_start()
 	_dummy(Vector2(4, 0))
 	_tap(&"heavy_attack")
-	assert_eq(strikes, [&"shard"])
-	assert_almost_eq(game.player.magick.spent, 4.0, 0.001)
+	assert_eq(strikes, [&"breath"])
+	assert_eq(game.player.magick.spent, 0.0)
 
 
-func test_a_hold_on_the_left_is_the_arco_for_eight_and_never_the_tap_too() -> void:
+func test_a_hold_on_the_left_is_the_combustao_paid_on_the_release_and_never_the_tap_too() -> void:
 	_start()
 	_dummy(Vector2(4, 0))
 	_hold(&"light_attack", 70)
-	assert_eq(strikes, [&"arc"], "the Arco only, not the Centelha")
-	assert_almost_eq(game.player.magick.spent, 8.0, 0.001)
+	assert_eq(strikes, [&"combust"], "the Combustão only, not the Centelha")
+	assert_almost_eq(game.player.magick.spent, _node(ComboNode.In.CHARGE_LIGHT).cost_at(game.player.strike_share), 0.001)
+	assert_between(game.player.magick.spent, 15.0, 25.0)
 
 
-func test_a_hold_on_the_right_is_the_geada_for_fifteen() -> void:
+func test_a_hold_on_the_right_is_the_inverno_eterno_paid_on_the_release() -> void:
 	_start()
 	_dummy(Vector2(4, 0))
 	_hold(&"heavy_attack", 70)
-	assert_eq(strikes, [&"frost"])
-	assert_almost_eq(game.player.magick.spent, 15.0, 0.001)
+	assert_eq(strikes, [&"winter"])
+	assert_almost_eq(game.player.magick.spent, _node(ComboNode.In.CHARGE).cost_at(game.player.strike_share), 0.001)
+	assert_between(game.player.magick.spent, 10.0, 30.0)
 	assert_not_null(game.arcane.frost)
 
 
@@ -273,7 +276,7 @@ func test_without_the_magia_a_hold_is_refused_and_nothing_strikes() -> void:
 	game.player.magick.value = 0.0
 	_hold(&"light_attack", 40)
 	assert_gte(refused[0], 1, "the bar says why")
-	assert_false(strikes.has(&"arc"))
+	assert_false(strikes.has(&"combust"))
 
 
 func test_the_dodge_cuts_the_charge_and_spends_nothing() -> void:
@@ -287,7 +290,7 @@ func test_the_dodge_cuts_the_charge_and_spends_nothing() -> void:
 	pad.press(&"dodge")
 	_step(60)
 	assert_false(game.player.charging)
-	assert_false(strikes.has(&"arc"))
+	assert_false(strikes.has(&"combust"))
 	assert_eq(game.player.magick.spent, 0.0)
 
 
@@ -400,7 +403,9 @@ func test_one_cast_gives_ten_at_most() -> void:
 		game.arcane.apply_element(e, F)
 		near.append(e)
 	game.arcane.react_charge = 0.0
-	game.arcane.cast(_node(ComboNode.In.CHARGE_LIGHT), game.player.pos, Vector2.RIGHT)
+	var arc := ComboNode.new()  # (the Arco left her tree in Maga Redesign V1; its code waits for a Gift)
+	arc.effect = ComboNode.Effect.ARC
+	game.arcane.cast(arc, game.player.pos, Vector2.RIGHT)
 	assert_eq(game.arcane.tally.overload, 3, "the Arco set off the three")
 	assert_eq(game.arcane.react_charge, 10.0, "two of the three count")
 
@@ -419,6 +424,13 @@ func test_an_area_gives_charge_once_a_cast() -> void:
 func test_the_convergence_charges_no_next_supremo() -> void:
 	_start()
 	var e := _dummy(Vector2(4, 0))
+	var def := UltDef.new()  # (the Convergência is a reserve Supremo since Maga Redesign V1)
+	def.kind = UltDef.Kind.CONVERGE
+	def.radius = 5.0
+	def.radius_cap = 6.5
+	def.duration = 4.5
+	def.tick = 0.5
+	game.ults.equip(def)
 	game.ults._open_vortex(Vector2(4.5, 0))
 	_step(int(4.7 / DT))
 	assert_gt(game.arcane.tally.reactions, 0)
@@ -514,8 +526,8 @@ func test_trindade_leaves_no_residue_for_an_area_and_none_without_the_dom() -> v
 func test_permanencia_and_expansao_only_reach_the_geada_and_the_embers() -> void:
 	_start([&"permanencia", &"expansao"])
 	game.arcane.cast(_node(ComboNode.In.CHARGE), game.player.pos, Vector2.RIGHT)
-	assert_almost_eq(game.arcane.frost.radius, 3.125, 0.001)
-	assert_almost_eq(game.arcane.frost.life, 5.2, 0.001)
+	assert_almost_eq(game.arcane.frost.radius, 2.5, 0.001, "2 m at the least charge, 25% wider")
+	assert_almost_eq(game.arcane.frost.life, 6.5, 0.001, "5 s, 30% longer")
 	assert_eq(game.arcane.book.overload_radius, 1.8, "the Sobrecarga is not an area to grow (D-15)")
 
 
@@ -560,11 +572,12 @@ func test_confluencia_shocks_who_stands_in_the_geada_and_an_ember_every_two_seco
 func test_agilidade_arcana_charges_the_held_spells_in_0_42() -> void:
 	_start([&"fluxo_arcano", &"agilidade_arcana"])
 	game.player._charge_held = ComboNode.In.CHARGE_LIGHT
-	assert_almost_eq(game.player._charge_time(), 0.245, 0.001)
+	assert_almost_eq(game.player._charge_time(), 0.42, 0.001)
 
 
 func test_reciprocidade_adds_three_to_the_resonance_once_a_cast() -> void:
 	_start([&"fluxo_arcano", &"reciprocidade"])
+	game.arcane.kit.reaction_magick = 3.0  # (the Ressonância is off by default in Maga Redesign V1: the Dom rides on it when it is on)
 	for i in 3:
 		game.arcane.apply_element(_dummy(Vector2(4 + i * 0.5, 0)), F)
 	game.player.magick.value = 10.0
@@ -583,10 +596,11 @@ func test_transcendencia_makes_the_next_held_spell_free_and_quick_and_it_is_kept
 		game.arcane.shot_landed(e, _shot(SHARD))
 	assert_true(game.arcane.transcend_ready(), "three reactions")
 	var arc := _node(ComboNode.In.CHARGE_LIGHT)
-	assert_eq(game.player.cost_of(arc, 0.0), 0.0)
+	assert_eq(game.player.cost_of(arc, 0.0), 0.0, "free, whatever the share of the charge")
+	assert_eq(game.player.cost_of(arc, 0.0, 1.0), 0.0)
 	game.player._charge_held = ComboNode.In.CHARGE_LIGHT
 	assert_almost_eq(game.player._charge_time(), Feel.live().hold_threshold, 0.001, "only the threshold")
-	assert_eq(game.player.cost_of(_node(ComboNode.In.HEAVY), 0.0), 4.0, "a tap is not held: it pays")
+	assert_eq(game.player.cost_of(_node(ComboNode.In.CHARGE_LIGHT), 0.0, 0.0) + game.player.cost_of(_node(ComboNode.In.HEAVY), 0.0), 0.0, "taps are free anyway")
 	# let go before it filled: kept
 	for i in 5:
 		pad.press(&"light_attack")
@@ -599,7 +613,7 @@ func test_transcendencia_makes_the_next_held_spell_free_and_quick_and_it_is_kept
 		_dummy(Vector2(3 + k * 1.5, 0))
 	game.player.magick.value = 0.0
 	_hold(&"light_attack", 40)
-	assert_true(strikes.has(&"arc"), "it strikes with no Magia")
+	assert_true(strikes.has(&"combust"), "it strikes with no Magia")
 	assert_false(game.arcane.transcend_ready(), "spent on the strike")
 	assert_eq(game.player.magick.spent, 0.0, "no Magia spent, so no Supremo charge from it")
 
@@ -610,7 +624,9 @@ func test_the_free_spells_reactions_do_not_count_for_the_next() -> void:
 	game.arcane.take_transcend()
 	for i in 3:
 		game.arcane.apply_element(_dummy(Vector2(3 + i * 1.5, 0)), F)
-	game.arcane.cast(_node(ComboNode.In.CHARGE_LIGHT), game.player.pos, Vector2.RIGHT)
+	var arc := ComboNode.new()  # (the Arco left her tree in Maga Redesign V1; its code waits for a Gift)
+	arc.effect = ComboNode.Effect.ARC
+	game.arcane.cast(arc, game.player.pos, Vector2.RIGHT)
 	assert_eq(game.arcane.tally.overload, 3)
 	assert_eq(game.arcane.transcend_progress(), 0)
 	assert_false(game.arcane.transcend_ready())
@@ -686,15 +702,15 @@ func test_the_antessala_teaches_the_maga_with_her_words() -> void:
 
 
 func test_the_maga_tips_exist_and_come_once() -> void:
-	for key: StringName in [&"tip_hold_maga", &"tip_maga_v1", &"tip_regen"]:
+	for key: StringName in [&"tip_hold_maga", &"tip_maga_v1", &"tip_maga_rd", &"tip_regen"]:
 		assert_ne(T.t(key), String(key))
 		assert_false(T.t(key).contains("—"))
 	var data := SaveData.defaults()
 	data["runs"] = 9
 	var ctx := {"fighting": true, "fight_t": 2.0, "maga": true}
-	assert_eq(FirstTips.pick(data, ctx), &"maga_v1", "an old save is told too")
-	FirstTips.mark(data, &"maga_v1")
-	assert_ne(FirstTips.pick(data, ctx), &"maga_v1")
+	assert_eq(FirstTips.pick(data, ctx), &"maga_rd", "an old save is told too (the redesign's notice)")
+	FirstTips.mark(data, &"maga_rd")
+	assert_ne(FirstTips.pick(data, ctx), &"maga_rd")
 	assert_eq(FirstTips.key_of(&"hold", true), &"tip_hold_maga")
 	assert_eq(FirstTips.key_of(&"hold", false), &"tip_hold")
 	ctx["fight_t"] = 0.0

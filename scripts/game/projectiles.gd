@@ -124,6 +124,10 @@ class Shot:
 	var through := false
 	## The paladin's shot ends at the first enemy it touches (the Maga's: the others pass through).
 	var stops := false
+	## Maga Redesign V1: the cast it belongs to (the shots of one Centelha's fan are one conjuration: 0, its own) and the radius of the burst
+	## it makes where it lands (the Combustão's, grown by its charge; 0: the kit's).
+	var group := 0
+	var blast := 0.0
 	## Held in the air (the Suspensão Arcana): it neither flies nor hurts until Arcane lets it go.
 	var frozen := false
 	## A Gift's wave drawn bolder (bolden): its own fade at the end.

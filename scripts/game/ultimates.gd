@@ -89,6 +89,8 @@ var boss_damage := 0.0
 ## Where the charge came from in this run (RESULT ultimate.charged: magick, damage, hurt; T5).
 var charged := {"magick": 0.0, "damage": 0.0, "hurt": 0.0, "react": 0.0}
 var vortex: Vortex
+## The Tempestade Celestial's strikes still to fall: {t: seconds to wait, e: the body, share: its damage share, from: where the bolt leaps from}.
+var _storm: Array[Dictionary] = []
 ## Where the Voragem will land (chosen on the press) and the band's warning while the gesture lasts.
 var _target := Vector2.ZERO
 var _warn: MeshInstance3D
@@ -137,6 +139,7 @@ func step(dt: float) -> void:
 		if p.state != Player.State.ULT:
 			_warn.visible = false
 	_step_rift(dt)
+	_step_storm(dt)
 	if vortex != null:
 		if vortex.converge:
 			_step_converge(dt)
@@ -146,6 +149,7 @@ func step(dt: float) -> void:
 
 ## Everything on the floor goes (a new room, the end of the run). The charge is kept.
 func clear() -> void:
+	_storm.clear()
 	if vortex != null:
 		vortex.node.queue_free()
 		vortex = null
@@ -192,11 +196,12 @@ func worth(from: Vector2, dir: Vector2) -> bool:
 	var n := 0
 	var at := def.vortex_at(from, dir)
 	var size := def.vortex_radius(game.boons.stat(&"cast_size_pct", def.tags))
+	var chain := def.kind == UltDef.Kind.CHAIN
 	for e: Enemy in game.horde.list:
 		if not e.alive or e.invulnerable:
 			continue
 		var inside := def.cleave_damage(from, dir, e.pos, e.def.radius) > 0.0 if def.kind == UltDef.Kind.CLEAVE \
-			else e.pos.distance_to(at) <= size
+			else e.pos.distance_to(from) <= game.hero.arcane.storm_reach if chain else e.pos.distance_to(at) <= size
 		if inside:
 			n += 1
 			if e.def.elite or e.def.behavior == EnemyDef.Behavior.BOSS or n >= WORTH_PACK:
@@ -217,7 +222,7 @@ func _on_started(dir: Vector2) -> void:
 	if def.kind == UltDef.Kind.CLEAVE:
 		_floor_mark(GroundLook.Style.WARNING, GroundLook.Shape.LINE, p, dir, def.length, def.width)
 		GroundLook.put(_warn.material_override as ShaderMaterial, &"progress", 0.0)
-	else:
+	elif def.kind != UltDef.Kind.CHAIN:  # (the Tempestade marks no floor: it is her bolt, not a danger)
 		_target = _land_spot(def.vortex_at(p, dir, game.aim_floor() if Controls.aims_with_mouse() else Vector2.INF))
 		var size := def.vortex_radius(game.boons.stat(&"cast_size_pct", def.tags))
 		_floor_mark(GroundLook.Style.WARNING, GroundLook.Shape.CIRCLE, _target, Vector2.DOWN, size, 0.0)
@@ -229,6 +234,8 @@ func _on_landed(dir: Vector2) -> void:
 		_warn.visible = false
 	if def.kind == UltDef.Kind.CLEAVE:
 		_cleave(game.player.pos, dir)
+	elif def.kind == UltDef.Kind.CHAIN:
+		_storm_start(dir)
 	else:
 		_open_vortex(_target)
 
@@ -505,7 +512,7 @@ func _implode(v: Vortex) -> void:
 
 ## The ultimate's colour: the Emeth's emerald for the Warrior's, the fire's for the Maga's Convergência.
 func _color() -> Color:
-	return ElementLook.FIRE if def.kind == UltDef.Kind.CONVERGE else Combat.EMETH
+	return ElementLook.VOLT if def.kind == UltDef.Kind.CHAIN else ElementLook.FIRE if def.kind == UltDef.Kind.CONVERGE else Combat.EMETH
 
 
 ## Every `tick` seconds (the first at once) each enemy inside takes the tick's damage and the elements of its phase: ice, fire,
@@ -538,6 +545,61 @@ func _converge_tick(v: Vortex) -> void:
 			for el in v.plan.elements_at(v.step_i):
 				game.arcane.apply_element(e, el, Arcane.ULT)
 	game.fx.ring(v.at, v.radius * 0.8, color, 0.25, 0.1, true)
+
+
+## The Tempestade Celestial lets go (Maga Redesign V1): ChainPlan chooses the route from the body nearest where she aims (up to storm_reach
+## from her), the strikes are queued storm_step seconds apart so each leap reads, and none goes back to a body it crossed (but for the
+## isolated one, which takes `storm_solo` weaker strikes). A boss takes storm_boss_share, a guardian and an elite their UltDef shares.
+func _storm_start(dir: Vector2) -> void:
+	var kit := game.hero.arcane
+	var origin := game.player.pos
+	var bodies: Array[Enemy] = []
+	var points: Array[Vector2] = []
+	for e: Enemy in game.horde.list:
+		if e.alive and not e.invulnerable:
+			bodies.append(e)
+			points.append(e.pos)
+	var aim := game.arcane.cursor(origin, dir, kit.storm_reach)
+	var route := kit.storm_plan().route(origin, aim, points)
+	_storm.clear()
+	var from := origin
+	var wait := 0.0
+	for strike in route:
+		var e: Enemy = bodies[int(strike.index)]
+		_storm.append({"t": wait, "e": e, "share": float(strike.share), "from": from})
+		wait += kit.storm_step
+		from = e.pos
+	if route.is_empty():  # nothing in reach: the bolt goes out ahead all the same (it is spent)
+		game.fx.arc_leap(origin, origin + dir * 4.0)
+	game.fx.shake(1.2)
+	Audio.play(CombatSounds.EVENTS[&"ult_implode"])
+
+
+func _step_storm(dt: float) -> void:
+	if _storm.is_empty():
+		return
+	for s in _storm:
+		s.t = float(s.t) - dt
+	while not _storm.is_empty() and float(_storm[0].t) <= 0.0:
+		_storm_strike(_storm.pop_front())
+
+
+func _storm_strike(s: Dictionary) -> void:
+	var e: Enemy = s.e
+	var kit := game.hero.arcane
+	var from: Vector2 = s.from
+	var at := Vector3(e.pos.x, 1.0 + e.y, e.pos.y)
+	var fx := game.fx
+	fx.arc_leap(from, e.pos)
+	fx.burst(&"spark", at)
+	fx.ring(e.pos, 1.0, ElementLook.VOLT, 0.25, 0.1, true)
+	if not e.alive or e.invulnerable:
+		return
+	var boss := e.def.behavior == EnemyDef.Behavior.BOSS
+	var share := def.converge_share(boss, not boss and e.def.stun_time <= 0.0, e.def.elite, kit.storm_boss_share)
+	var away := (e.pos - from).normalized() if e.pos.distance_to(from) > 0.01 else Vector2.RIGHT
+	if not _hit(e, kit.storm_damage * float(s.share) * share, away, 0.0, 0.0):
+		game.arcane.apply_element(e, ElementBook.VOLT, Arcane.ULT)  # (Eletrização; a reaction it makes plays, nothing chains)
 
 
 static func _phase_color(element: StringName) -> Color:

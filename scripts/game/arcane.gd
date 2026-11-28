@@ -1,8 +1,10 @@
 class_name Arcane
 extends Node3D
-## The Maga's kit in play (redesign 2026-11-24, 04_PLANO C; GP-5 docs/design/heroes/maga_v1_2026-11-26.md; HeroDef.arcane): Centelha
-## (fire bolt), Estilhaço (ice bolt through the crowd), Geada (cold area), Arco Voltaico (volt chain) and the Passo. The Combustão and the
-## Suspensão Arcana are out of her tree (no node) and their code waits here for a Gift.
+## The Maga's kit in play (redesign 2026-11-24, 04_PLANO C; GP-5 docs/design/heroes/maga_v1_2026-11-26.md; Maga Redesign V1
+## docs/design/heroes/maga_redesign_v1_pack/; HeroDef.arcane): Centelha (a fan of three fire bolts), Sopro Glacial (a cone of ice), Combustão
+## (a fire ball that grows with the hold and bursts), Inverno Eterno (a cold ground that grows with the hold, the old Geada), the Passo and,
+## through Ultimates, the Tempestade Celestial. The Estilhaço, the Arco Voltaico and the Suspensão Arcana are out of her tree (no node) and
+## their code waits here for a Gift.
 ## The states (Queimadura, Frio, Eletrizado) and their reactions are ElementBook (pure, tested); this node applies what the
 ## book answers in the room. Her bolts go through Combat.on_shot_hit (shot_landed), her spells through the combo tree's
 ## effects (cast), the Convergência through Ultimates (apply_element). A reaction never applies a state, so none chains.
@@ -70,7 +72,7 @@ var pips: StatePips
 ## How many reaction names the screen takes (UX-08): the first three of each, six words a second.
 var words := WordBudget.new()
 ## What the kit did in this run (RESULT arcane).
-var tally := {"sparks": 0, "combusts": 0, "shards": 0, "frosts": 0, "arcs": 0, "domes": 0, "held": 0, "freezes": 0,
+var tally := {"sparks": 0, "breaths": 0, "combusts": 0, "shards": 0, "frosts": 0, "arcs": 0, "domes": 0, "held": 0, "freezes": 0,
 	"thermal": 0, "overload": 0, "crystal": 0, "burn_damage": 0.0, "reactions": 0}
 ## The burst of a reaction lives this long (CF-07: 0.25 s at most) and, but for the Sobrecarga's, rings this wide.
 const REACT_TIME := 0.25
@@ -114,6 +116,7 @@ func clear() -> void:
 		p.node.queue_free()
 	_embers.clear()
 	_end_dome()
+	_hide_preview()
 	_shards_used = 0
 	_shard_t = 0.0
 	_cj.clear()
@@ -157,6 +160,7 @@ func step(dt: float) -> void:
 	_step_confluence(dt)
 	_step_dome(dt)
 	_step_shard(dt)
+	_step_preview()
 	pips.update(game.horde.list, book)
 
 
@@ -246,7 +250,7 @@ func _spread(e: Enemy, element: StringName) -> void:
 ## Frio: slowed (the Gifts lengthen it) and, at the third hit, frozen if it is a common body (a boss never; thaw_t spaces freezes).
 func _chill(e: Enemy, resists: bool) -> void:
 	if e.def.behavior != EnemyDef.Behavior.BOSS:
-		e.slow_t = maxf(e.slow_t, kit.shard_slow_time * (1.0 + _stat(&"slow_pct") / maxf(kit.slow_pct, 0.01)))
+		e.slow_for(kit.shard_slow_time * (1.0 + _stat(&"slow_pct") / maxf(kit.slow_pct, 0.01)), 1.0 - kit.slow_pct)  # (Maga Redesign V1: 30% for 2 s)
 	if book.cold_full(e) and not resists and e.thaw_t <= 0.0 and e.frozen_t <= 0.0:
 		var time := kit.freeze_time * (0.4 if e.def.heavy else 1.0)
 		e.frozen_t = time
@@ -394,7 +398,7 @@ func shot_landed(e: Enemy, shot: Projectiles.Shot) -> void:
 		game.player.magick.gain(game.hero_gifts.feed.take(gain))
 	if not e.alive or e.invulnerable:
 		return
-	_conj = shot.get_instance_id()  # (one bolt is one conjuration: what it spreads, repays and charges is counted once)
+	_conj = shot.group if shot.group != 0 else shot.get_instance_id()  # (one bolt, or one fan of them, is one conjuration: what it spreads, repays and charges is counted once)
 	if spark:
 		tally.sparks += 1
 		if book.count_hit(e, kit.spark_hits, kit.spark_window):
@@ -417,8 +421,9 @@ func _combust(first: Enemy, shot: Projectiles.Shot) -> void:
 	tally.combusts += 1
 	var mult := shot_mult(shot)
 	var at := first.pos
+	var radius := shot.blast if shot.blast > 0.0 else kit.combust_radius
 	apply_element(first, ElementBook.FIRE)
-	game.horde.in_circle(at, kit.combust_radius, _found)
+	game.horde.in_circle(at, radius, _found)
 	for n: Enemy in _found.duplicate():
 		if n == first or not n.alive or n.invulnerable:
 			continue
@@ -426,9 +431,9 @@ func _combust(first: Enemy, shot: Projectiles.Shot) -> void:
 		if not game.combat.hit_enemy(n, shot.damage * mult, shot.tags, away, kit.combust_knockback, false, true):
 			apply_element(n, ElementBook.FIRE)
 	var fx := game.fx
-	fx.ring(at, kit.combust_radius, ElementLook.FIRE, 0.35, 0.15, true)
+	fx.ring(at, radius, ElementLook.FIRE, 0.35, 0.15, true)
 	fx.burst(&"fire", Vector3(at.x, 0.6, at.y))
-	fx.shake(1.6)
+	fx.shake(1.8 if radius >= 2.5 else 0.8)  # (a subtle shake, and only for the big ones)
 	Audio.play(CombatSounds.EVENTS[&"circle_burst"])
 	if _stat(&"ember_floor") > 0.0:
 		_lay_embers(at)
@@ -439,7 +444,9 @@ func _combust(first: Enemy, shot: Projectiles.Shot) -> void:
 func cast(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	match node.effect:
 		ComboNode.Effect.FROST:
-			_frost(origin, dir)
+			_frost(node, origin, dir)
+		ComboNode.Effect.CONE:
+			_breath(node, origin, dir)
 		ComboNode.Effect.ARC:
 			_arc(node, origin, dir)
 		ComboNode.Effect.DOME:
@@ -456,13 +463,93 @@ func cursor(origin: Vector2, dir: Vector2, reach: float) -> Vector2:
 	return near.pos if near != null else origin + dir * reach * AHEAD_SHARE
 
 
+## The share (0..1) of a release-charged spell's growth this cast reached (Player.strike_share); 0 for a spell with no charge of its own.
+func _share_of(node: ComboNode) -> float:
+	return game.player.strike_share if node.is_release() else 0.0
+
+
+## The Centelha's fan and the Combustão's ball (Combat.strike, Effect.WAVE): `node.effect_fan` shots at once over `effect_fan_deg` degrees,
+## ONE conjuration (what they spread, repay and charge counts once), each with the burst radius the charge grew (Shot.blast).
+func throw_spell(node: ComboNode, origin: Vector2, dir: Vector2, color: Color, tags: Array[StringName]) -> void:
+	var share := _share_of(node)
+	var group := _new_conj()
+	for way in ArcaneKit.fan(dir, node.effect_fan, node.effect_fan_deg):
+		var shot := game.combat.throw_wave(node, origin, way, color, tags, share)
+		shot.group = group
+	thrown(node)
+
+
+## The Sopro Glacial (Effect.CONE): a cone of ice in front of her (kit.breath_deg wide, breath_range long): damage, a shove, Frio and the
+## 30% slow to everyone in it. One conjuration. It prepares; the held spells resolve (Fogo then Sopro is a Choque Termico).
+func _breath(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
+	_new_conj()
+	var reach := kit.breath_range * (1.0 + _stat(&"reach_pct", node.tags))
+	var mult := 1.0 + (_stat(&"dome_shot_pct") if _in_dome(origin) else 0.0)
+	var fx := game.fx
+	game.horde.in_arc(origin, dir, reach, kit.breath_deg, _found)
+	for e: Enemy in _found.duplicate():
+		if not e.alive or e.invulnerable:
+			continue
+		var away := (e.pos - origin).normalized() if e.pos.distance_to(origin) > 0.01 else dir
+		if not game.combat.hit_enemy(e, kit.breath_damage * mult, node.tags, away, kit.breath_knockback, false):
+			apply_element(e, ElementBook.ICE)
+	tally.breaths += 1
+	# the cone's edge reads (a pale ribbon), crystals along it and a thin mist at the tip (no blood, no neon)
+	fx.slash(origin, dir, reach, kit.breath_deg, ElementLook.COLD, 0.22, false, 0.9, false, Fx.BLADE_REACH, true)
+	for k in [-0.5, 0.0, 0.5]:
+		var way := dir.rotated(deg_to_rad(kit.breath_deg) * k * 0.9)
+		var tip := origin + way * reach * 0.85
+		fx.chips(Vector3(tip.x, 0.9, tip.y), Vector3(way.x, 0.25, way.y), ElementLook.COLD, 3, 4.0, 0.1, 0.35, 0.5)
+	var mid := origin + dir * reach * 0.6
+	fx.burst(&"frost", Vector3(mid.x, 0.8, mid.y))
+	Audio.play(CombatSounds.EVENTS[&"circle"])
+
+
+# ---------- the preview of a held spell (the area it would make, grown by the hold and capped by her Magia) ----------
+
+var _preview: MeshInstance3D
+
+
+## While a release-charged spell is held: a pale disc at the spot it would fall on, as big as it would be if let go now, in its element's
+## colour (amber for the Combustao, ice blue for the Inverno). It hides when nothing is held.
+func _step_preview() -> void:
+	var p := game.player
+	var node := p.charging_release_node()
+	if node == null:
+		_hide_preview()
+		return
+	var share := p.charge_share_now()
+	var cold := node.effect == ComboNode.Effect.FROST
+	var radius := node.area_at(share)
+	if cold:
+		radius = (radius + _stat(&"geada_radius_add")) * (1.0 + _stat(&"area_size_pct"))
+	var reach := kit.frost_range if cold else node.effect_radius
+	var spot := ArcaneKit.spot(p.pos, cursor(p.pos, p.facing, reach), reach)
+	if game.arena:
+		spot = game.arena.resolve(spot, 0.5)
+	if _preview == null:
+		_preview = _disc(1.0, ElementLook.COLD, 0.16)
+	var m := _preview.material_override as StandardMaterial3D
+	var c := ElementLook.COLD if cold else ElementLook.FIRE
+	m.albedo_color = Color(c.r, c.g, c.b, 0.12 + 0.12 * share)
+	_preview.visible = true
+	_preview.position = Vector3(spot.x, 0.06, spot.y)
+	_preview.scale = Vector3(radius, 1.0, radius)
+
+
+func _hide_preview() -> void:
+	if _preview != null:
+		_preview.visible = false
+
+
 ## The Geada: an area at the cursor (up to frost_range), Frio on all inside every frost_step, frost_dps a second.
-func _frost(origin: Vector2, dir: Vector2) -> void:
+func _frost(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	_end_frost()
 	var p := Patch.new()
 	p.at = game.arena.resolve(ArcaneKit.spot(origin, cursor(origin, dir, kit.frost_range), kit.frost_range), 0.5) if game.arena else origin
 	# Expansão and Permanência: only the Geada and the embers are longer and wider (D-15)
-	p.radius = (kit.frost_radius + _stat(&"geada_radius_add")) * (1.0 + _stat(&"area_size_pct"))
+	var base := node.area_at(_share_of(node)) if node.area > 0.0 else kit.frost_radius  # (the Inverno's ground grows with the hold)
+	p.radius = (base + _stat(&"geada_radius_add")) * (1.0 + _stat(&"area_size_pct"))
 	p.life = (kit.frost_time + _stat(&"geada_time_add")) * (1.0 + _stat(&"area_time_pct"))
 	p.tick = 0.0
 	p.conj = _new_conj()
@@ -686,7 +773,7 @@ func _step_dome(dt: float) -> void:
 	var push := _stat(&"push_pct", d.tags)  # (Galael: the rim shoves outward)
 	for e: Enemy in _found:
 		if e.def.behavior != EnemyDef.Behavior.BOSS:
-			e.slow_t = maxf(e.slow_t, kit.dome_slow)
+			e.slow_for(kit.dome_slow)
 			if push > 0.0 and e.pos.distance_to(at) >= d.radius * DOME_RIM:
 				var out := (e.pos - at).normalized()
 				e.pos = game.arena.sweep(e.pos, e.pos + out * DOME_PUSH * push * dt, e.def.radius) if game.arena else e.pos + out * DOME_PUSH * push * dt

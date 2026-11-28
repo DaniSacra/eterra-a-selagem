@@ -71,6 +71,12 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - Bênçãos: slot CAST = Poder (Corte Circular), SPECIAL = Lança (tags `lance`, `heavy`); `circulo_mare` = `cel_speed`; Pastor e Onda Gêmea na Lança. Encantos `reserve` (Eco do Passo) não entram no sorteio.
 - Save versão 17 (`SaveData.migrate_removed_dons`, idempotente): devolve a Memória dos Dons removidos e limpa as teclas guardadas.
 
+### Maga Redesign V1 (2026-11-28; spec `docs/design/heroes/maga_redesign_v1.md`, pacote `maga_redesign_v1_pack/`; testes `tests/test_maga_redesign.gd`; vale sobre as Maga V1 e V2 abaixo)
+- **Kit**: M1 toque Centelha (3 tiros de 8 em leque de 24 graus, uma conjuração), M2 toque Sopro Glacial (cone 90 graus, 5 m, 12, Frio e 30% de lentidão por 2 s), M1 segurar Combustão (bola 50 a 150, explosão 1,5 a 3,5 m, 15 a 25 Mana), M2 segurar Inverno Eterno (chão 2 a 6 m, 5 s, 6 por s, 10 a 30 Mana), Shift Tempestade Celestial (`UltDef.Kind.CHAIN`, `ChainPlan`: 90, até 6 corpos distintos a 5 m, 10% a menos por salto, alvo isolado 3 golpes). Saíram do kit ativo o Arco Voltaico, o Estilhaço, a Geada e a Convergência (código e textos ficam).
+- **Segurar e soltar** (só dela): `ComboNode.charge_max` etc. (`is_release`, `charge_share`, `power_at`, `area_at`, `cost_at`, `afford_share`); `Player._step_release_charge` solta na soltura, guarda `strike_share` (limitada pela Mana), cobra em `_on_move_hit` (esquiva no preparo não custa), recusa sem Mana para a carga mínima; `Arcane._step_preview` mostra o disco da área; o HUD mostra o custo que cresce.
+- **Mana**: 50, 3 por segundo também andando, nada por ataque; `ArcaneKit.reaction_magick` 0 por padrão (configurável). Lentidão do Frio 30% (`Enemy.slow_keep`, `slow_for`).
+- **HUD**: a Maga usa os mesmos quatro quadrados de golpe do Guerreiro (M1, M2, segurar M1, segurar M2) com as marcas `MAGA_BLOW_GLYPHS`; o pino da cadeia saiu. Dica `maga_rd`. Os 12 Dons novos esperam aprovação; os de hoje mudaram só de texto e de alvo (tabela no doc).
+
 ### Maga V1 (GP-5, 2026-11-26; spec `docs/design/heroes/maga_v1_2026-11-26.md`; testes `tests/test_maga_v1.gd`; vale sobre a M2 abaixo, que ficou história)
 - **Botões pelo `ButtonIntent`** (o caminho `_read_legacy_attacks` e `Controls.MAGA_ONLY` saíram): esquerdo toque = **Centelha** (8, grátis, não gera Magia), segurar = **Arco
   Voltaico** (`arc`, 12 em até 3, 10 Magia, carga 0,6 s, tags `omega light arcane volt`, fonte `omega_attack`); direito toque = **Estilhaço** (`shard`, 6, atravessa, 5 Magia, tags

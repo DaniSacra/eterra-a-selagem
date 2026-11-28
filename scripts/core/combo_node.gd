@@ -7,8 +7,9 @@ extends Resource
 ## any state may start (docs/design/heroes/guerreiro.md).
 enum In { LIGHT, HEAVY, CHARGE, CHARGE_LIGHT, SHOUT, RUSH }
 enum Shape { ARC, CIRCLE, LINE }
-## FROST, ARC, DOME: the Maga's Geada, Arco Voltaico and Suspensão Arcana (Arcane, 04_PLANO C.1).
-enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, SHOUT, FROST, ARC, DOME }
+## FROST, ARC, DOME: the Maga's Geada, Arco Voltaico and Suspensão Arcana (Arcane, 04_PLANO C.1). CONE: the Sopro Glacial (a cone of ice
+## in front of her, Arcane._breath; Maga Redesign V1).
+enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, SHOUT, FROST, ARC, DOME, CONE }
 
 @export var id: StringName
 ## The input that leads here from the previous node: E (light), D (heavy) or a released charge.
@@ -126,6 +127,22 @@ enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, SHOUT, FROST, ARC, DOME }
 @export var wave_speed := 0.0
 @export var wave_stops := false
 @export var wave_color := Color(0, 0, 0, 0)
+## WAVE: how many shots leave at once, spread evenly over `effect_fan_deg` degrees in all (the Centelha's three at 24; 1: one straight shot).
+@export var effect_fan := 1
+@export var effect_fan_deg := 0.0
+
+@export_group("Release charge")
+## Maga Redesign V1: a held move that grows while the button is down and strikes when it is LET GO (0: the old kind, which strikes by
+## itself when `charge_time` fills). `charge_time` is then the least hold that strikes (let go before it: nothing, nothing paid) and
+## `charge_max` the hold that gives the most; past it the charge stays full (it never grows on).
+@export var charge_max := 0.0
+## The Magia at the least and at the most charge (`magick_cost` is the least; 0: the same), paid when the spell lands, never before.
+@export var magick_cost_max := 0.0
+## The damage (`effect_power` is the least; 0: the same) and the area radius in metres (the Combustão's burst, the Inverno's ground)
+## at the least and at the most charge.
+@export var power_max := 0.0
+@export var area := 0.0
+@export var area_max := 0.0
 
 @export_group("Tree")
 ## The moves that may follow this one (ComboNode each; read them typed with following()). Kept as Resource: a typed
@@ -183,3 +200,41 @@ func move_scale_with(feel: Feel) -> float:
 ## alternate: the flip to use when the move does not say.
 func sweep_flip(alternate: bool) -> bool:
 	return alternate if sweep == 0 else sweep == 2
+
+
+# ---------- the release charge (Maga Redesign V1; pure) ----------
+
+## Whether the move grows with the hold and strikes on the release.
+func is_release() -> bool:
+	return charge_max > charge_time and charge_time > 0.0
+
+
+## The share (0..1) of the growth `held` seconds of hold have reached: 0 at the least charge, 1 at charge_max.
+func charge_share(held: float) -> float:
+	if not is_release():
+		return 1.0
+	return clampf((held - charge_time) / (charge_max - charge_time), 0.0, 1.0)
+
+
+## The damage, the area and the Magia at a share (0..1) of the growth.
+func power_at(share: float) -> float:
+	return lerpf(effect_power, power_max, share) if power_max > 0.0 else effect_power
+
+
+func area_at(share: float) -> float:
+	return lerpf(area, area_max, share) if area_max > 0.0 else area
+
+
+func cost_at(share: float) -> float:
+	return lerpf(magick_cost, magick_cost_max, share) if magick_cost_max > 0.0 else magick_cost
+
+
+## The most of the growth `magick` can pay for (0..1): 0 when it does not even pay the least (`cost_scale` is the Blessings' share on
+## the price, 1 for none). A move that costs the same all along is affordable or not (0 or 1).
+func afford_share(magick: float, cost_scale: float = 1.0) -> float:
+	var low := magick_cost * cost_scale
+	if magick + 0.0001 < low:
+		return 0.0
+	if magick_cost_max <= magick_cost:
+		return 1.0
+	return clampf((magick - low) / ((magick_cost_max - magick_cost) * cost_scale), 0.0, 1.0)

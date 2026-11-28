@@ -178,6 +178,9 @@ const SLOTS: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.
 ## The Maga's marks over the diamonds that carry no Blessing (M1b); Q and E always wear theirs.
 const MAGA_GLYPHS := {&"light_attack": BoonIcon.BOLT_GLYPH, &"heavy_attack": BoonIcon.BLAST_GLYPH, &"shout": BoonIcon.ACTION_GLYPH + Boon.Slot.CAST,
 	&"rush": BoonIcon.DOME_GLYPH}
+## Maga Redesign V1: the mark of each of her four blows over its square when no Blessing rides on the button: the fan of bolts, the Combustão,
+## the Sopro Glacial's cone, the Inverno Eterno's ground (keys: the button, then 0 for the touch and 1 for the hold).
+const MAGA_BLOW_GLYPHS := {&"light_attack": [BoonIcon.BOLT_GLYPH, BoonIcon.BLAST_GLYPH], &"heavy_attack": [BoonIcon.CONE_GLYPH, BoonIcon.GROUND_GLYPH]}
 ## HUD v3: the four blows of the Warrior's two buttons, in the row's order: the button, whether it is the hold, the art of the slot.
 ## (Daniel's mock: left tap, right tap, left hold, right hold; the mouse under each is lit white for a tap and gold for a hold.)
 const BLOWS: Array[Array] = [[&"light_attack", false, &"icon_attack"], [&"heavy_attack", false, &"icon_power"],
@@ -589,11 +592,9 @@ func _build_actions() -> void:
 	var tall := ROW_SLOT
 	# the Warrior's two buttons split into touch and hold (four slots); the Maga's stay one slot each (her buttons are tap and hold too,
 	# but her Blessings and glyphs ride on the button)
+	# Maga Redesign V1: the Maga's four blows are the Warrior's four squares too (M1, M2, hold M1, hold M2), then the Supremo, then the dodge
 	var blows: Array[Array] = []
-	if arcane:
-		blows = [[&"light_attack", false, &"icon_attack"], [&"heavy_attack", false, &"icon_power"]]
-	else:
-		blows.assign(BLOWS)
+	blows.assign(BLOWS)
 	for spec: Array in blows:
 		var s := _new_slot(spec[0], SLOTS[ACTIONS.find(spec[0])], ROW_SLOT, ActionSlot.Shape.SQUARE, tall)
 		s.piece = spec[2]
@@ -989,8 +990,9 @@ func _update_slots(p: Player) -> void:
 	var arcane := game.hero.arcane != null
 	for s in _slots:
 		if arcane:
-			var mine: int = MAGA_GLYPHS.get(s.action, -1)
-			s.glyph = mine if mine >= 0 and (by_action.get(s.action) == null or s.action == &"shout" or s.action == &"rush") else -1
+			var pair: Array = MAGA_BLOW_GLYPHS.get(s.action, [])
+			var mine: int = int(pair[1 if s.hold else 0]) if not pair.is_empty() else -1
+			s.glyph = mine if mine >= 0 and by_action.get(s.action) == null else -1
 		if s.action == &"shout":
 			# the Brado (Q), the Maga's: its recharge and the Blessing of its slot, hidden for a hero without it
 			s.visible = ComboTree.find(p.tree.neutral, ComboNode.In.SHOUT) != null
@@ -1003,10 +1005,7 @@ func _update_slots(p: Player) -> void:
 			continue
 		var b: Boon = by_action.get(s.action)
 		var starved := not p.magick.can_pay(_omega(p, s.slot))
-		if arcane and s.action == &"light_attack":
-			# Maga V2: the 3-point pin of the Centelha's chain (0 at rest, 1 after the first bolt, 2 after the second)
-			s.show_lights(chain_step(p.runner.node), 3, ElementLook.FIRE)
-		if not arcane and (s.action == &"light_attack" or s.action == &"heavy_attack"):
+		if s.action == &"light_attack" or s.action == &"heavy_attack":
 			_update_button(s, p, b)
 			continue
 		match s.slot:
@@ -1030,19 +1029,14 @@ func _update_slots(p: Player) -> void:
 	_update_buff(p)
 
 
-## The Centelha's chain step the pin shows after `last` (null: none under way): 0, 1 or 2 (the third bolt closes the chain).
-static func chain_step(last: ComboNode) -> int:
-	if last == null:
-		return 0
-	return 1 if last.id == &"spark" else 2 if last.id == &"spark2" else 0
-
-
 ## HUD v3: one slot of the Warrior's two buttons (a touch or a hold): the Magia of its blow (the node's cost, with Força Titânica and the
 ## discount) and dim on its own when it lacks; the ring of the held blow filling on the hold's slot while it charges; the Ritmo's arc on
 ## the blows it reinforces (the hold, and the right button's Corte Circular); the Curse's lock on the whole right button.
 func _update_button(s: ActionSlot, p: Player, b: Boon) -> void:
 	var moves: Array = Player.INTENT_MOVES[s.action]
 	var price := _cost_of(p, moves[1 if s.hold else 0])
+	if s.hold and p.charging_release_node() != null and Controls.held(s.action):
+		price = roundi(p.charge_cost_now())  # Maga Redesign V1: the price the spell has when let go now (it grows with the hold)
 	s.refresh(b, 0.0, 0, 0, price > 0 and not p.magick.can_pay(price))
 	s.cost = price
 	s.charge = p.charge_progress() if s.hold and p.charging and Controls.held(s.action) else 0.0
