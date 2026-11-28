@@ -380,8 +380,8 @@ func in_wall(i: int) -> bool:
 
 
 ## The north door's arch stands in the back of its recess (the fire bowls in front of it).
-func door_arch(edge_mid: Vector2, inward: Vector2, width: float, back := 0.5, height := WALL_DOOR.y) -> void:
-	super.door_arch(edge_mid, inward, width, maxf(back, DOOR_BACK), height)
+func door_arch(edge_mid: Vector2, inward: Vector2, width: float, back := 0.5, height := WALL_DOOR.y, leaves := true) -> void:
+	super.door_arch(edge_mid, inward, width, maxf(back, DOOR_BACK), height, leaves)
 
 
 func dress() -> void:

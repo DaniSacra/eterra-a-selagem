@@ -71,6 +71,9 @@ const HIDDEN: Array[String] = ["floor_decal", "abyss_fog", "abyss_mist", "abyss_
 ## Hall: the brazier on the east pier of the doors' wall (17, -14.8) is a plain wall in the painting.
 const PROPS := {
 	&"hall": [{&"at": Vector2(17.0, -14.8), &"radius": 0.8, &"kinds": [&"fire", &"light"]}],
+	# PT28-3: the Jardim's door bowl at (2.9, -14.6) is an iron grille in both plates: its flame would burn in the air over it
+	&"garden:0": [{&"at": Vector2(2.9, -14.6), &"radius": 0.8, &"kinds": [&"fire", &"light"]}],
+	&"garden:1": [{&"at": Vector2(2.9, -14.6), &"radius": 0.8, &"kinds": [&"fire", &"light"]}],
 }
 ## The far planes: the one under the room (depth below the floor) and the wall beyond it (how far behind the painter's
 ## point, along the camera's way, how high), both this wide.

@@ -2204,8 +2204,20 @@ func in_wall(_i: int) -> bool:
 
 
 ## SL-02: opens the leaves of door i, for an arena whose doors have them (the Cripta's); nothing otherwise.
-func open_door_leaves(_i: int) -> void:
-	pass
+func open_door_leaves(i: int) -> void:
+	# PT28-2: the closed leaves of door_arch; the door nearest to the exit's mouth is the one that opens
+	if i < 0 or i >= layout.exits.size():
+		return
+	var c := layout.exits[i].mouth.get_center()
+	var best: HallDoor = null
+	var best_d := INF
+	for l: Dictionary in _leaf_doors:
+		var d: float = (l[&"at"] as Vector2).distance_to(c)
+		if d < best_d:
+			best_d = d
+			best = l[&"door"]
+	if best != null:
+		best.open()
 
 
 ## 2026-11-27 (Daniel: "an entrance floating in the air, make a space the hero could have come from"): the way he came in,
@@ -2350,16 +2362,18 @@ func _doors() -> void:
 ## The pointed arch of a door in a wall over its opening (spec 0.4): voussoirs over two jambs, its foot `edge_mid` (the
 ## middle of the opening on the floor's edge), facing `inward`, the opening `width` wide (at least WALL_DOOR.x) and
 ## WALL_DOOR.y high; the jambs JAMB thick, set back `back` meters out of the room (in the wall's thickness).
-func door_arch(edge_mid: Vector2, inward: Vector2, width: float, back := 0.5, height := WALL_DOOR.y) -> void:
+func door_arch(edge_mid: Vector2, inward: Vector2, width: float, back := 0.5, height := WALL_DOOR.y, leaves := true) -> void:
 	var mat := ashlar()
 	var o := edge_mid - inward * back
 	var foot := Vector3(o.x, 0.0, o.y)
 	var w := maxf(WALL_DOOR.x, width + 0.4)
 	var spring := height - w * 0.55
+	var rad := w * DOOR_ARC
+	var rise := sqrt(rad * rad - (rad - w * 0.5) * (rad - w * 0.5))
 	for sd: float in [-1.0, 1.0]:
 		var side := Vector2(-inward.y, inward.x) * sd * (w * 0.5 + JAMB * 0.5)
 		m.block(foot + Vector3(side.x, 0.0, side.y), Vector3(JAMB, spring, 0.9), atan2(inward.x, inward.y), mat)
-	m.voussoir_arch(foot, inward, w, spring, 0.5, 0.9, mat)
+	m.voussoir_arch(foot, inward, w, spring, 0.5, 0.9, mat, DOOR_ARC)
 	# Daniel 2026-11-27: the opening behind a door is just dark (a deep black passage), never grilles or wall: a black face, lit by nothing,
 	# fills the doorway under the arch
 	var dark := MeshInstance3D.new()
@@ -2370,13 +2384,24 @@ func door_arch(edge_mid: Vector2, inward: Vector2, width: float, back := 0.5, he
 	dark.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	dark.position = foot + Vector3(0.0, (spring + DOOR_DARK_OVER) * 0.5, 0.0) + Vector3(inward.x, 0.0, inward.y) * 0.1
 	dark.rotation.y = atan2(inward.x, inward.y)
+	# the black behind the leaves is the game's own over the plate (PaintedHall keeps it)
+	dark.set_meta(PaintedHall.KEEP_3D, true)
 	add_child(dark)
+	if leaves:
+		# PT28-2: the closed leaves stand in the opening under the arch (they open when the room is cleared)
+		var door := HallDoor.make(self, foot + Vector3(inward.x, 0.0, inward.y) * DOOR_LEAF_SET, w, spring + rise, DOOR_ARC)
+		door.rotation.y = atan2(inward.x, inward.y)
+		_leaf_doors.append({&"at": edge_mid, &"door": door})
 
 
 ## True when p lies over (within OTHER_MOUTH_GROW of) the mouth of a door other than `skip` (PT-6b: the doors stand
 ## side by side, and what hangs beside one must not stand in the other).
 const OTHER_MOUTH_GROW := 0.5
 const DOOR_DARK_OVER := 0.35
+## PT28-2: the arch's radius as a share of its span (Masonry.voussoir_arch's, HallDoor's) and how far the closed leaves stand in front of the black.
+const DOOR_ARC := 0.8
+const DOOR_LEAF_SET := 0.16
+var _leaf_doors: Array[Dictionary] = []
 var _black_mat: StandardMaterial3D
 
 

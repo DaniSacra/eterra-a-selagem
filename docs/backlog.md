@@ -9,8 +9,8 @@
 | id | o quê | dono |
 |---|---|---|
 | PT28-1 | Golpes do Guerreiro avançam um pouco mais (o inimigo foge antes do golpe); substitui o "golpe plantado" de 2026-11-16 | gameplay-engineer |
-| PT28-2 | Portas fechadas de verdade de novo (hoje só o vão escuro); abrem ao vencer a sala | environment-artist |
-| PT28-3 | Sala 8: peças 3D por cima da pintura (postes) parecem sobrepostas | environment-artist |
+| PT28-2 | Portas fechadas de verdade de novo (hoje só o vão escuro); abrem ao vencer a sala | environment-artist | **FEITO (worktree): `ArenaRoom.door_arch` põe as folhas fechadas (`HallDoor`) no vão de cada porta em parede, abrem em `open_door_leaves(i)`; pontes (escada sobre o abismo) não têm vão; `tests/test_painted_hall.gd`** |
+| PT28-3 | Sala 8: peças 3D por cima da pintura (postes) parecem sobrepostas | environment-artist | **FEITO em parte: a chama e a luz da bacia do Jardim (2,9, -14,6) sobre a grade da pintura saem (`PaintedHall.PROPS`); sala 8 exata não identificada, demais salas conferidas por lista de chamas/luzes, sem outra sobreposição certa; ver `docs/gallery/pt28/`** |
 | PT28-4 | Pedir ao ChatGPT o desenho de TODOS os ícones de Bênção, e os símbolos das portas e da loja (hoje estranhos) | ai-art-producer |
 | PT28-5 | Cartas de Bênção com tamanho fixo (todas iguais, com pouco ou muito texto) | ui-ux-designer |
 | PT28-6 | Ícones das Bênçãos à direita: agrupados por anjo (semelhantes juntas), só aparecem segurando TAB, como o SWORN | ui-ux-designer |
