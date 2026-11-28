@@ -181,7 +181,7 @@ vale a regra do Daniel (sempre commit e push). As seções abaixo ficam como his
 | BG-1 | Efeitos a confirmar no jogo de hoje e corrigir só se ainda acontecem: facho de recompensa (`RewardShaft`) ligado à sala vencida, loja e fonte; contato com miolo branco e pontas em cruz; traço branco vertical sobre a vítima; `glint` cobrindo o herói; lascas acesas acima da cabeça; clarão de Morvath perdendo o violeta; onda do especial acertando em cruz de 4 pontas; Círculo com disco branco chapado; preparo do Feiticeiro acima do teto | PK-1 fase B | technical-artist, art-director confere |
 | BG-2 | Bolinha escura ao lado do medalhão da Bênção; na Provação os dois medalhões se encostam e o título aparece duas vezes | sobras SW fase 1 | ui-ux-designer **Feito 2026-11-27:** medalhões da Provação menores e título uma vez (63f52a50); varredura: miolo branco do facho de recompensa apagado (traço fino no HUD 1080p) |
 | BG-3 | Retângulo (`Rect2`) negativo na Maga | PK-3 testes | gameplay-engineer | **2026-11-27: não reproduz** (testes da Maga e `--smoke --hero=maga` sem erro); reabrir se aparecer o texto do erro |
-| BG-4 | `--smoke` ignora `--hub`: o robô não testa o Santuário | QA 26b | qa-performance |
+| BG-4 | `--smoke` ignora `--hub`: o robô não testa o Santuário. **Feito 2026-11-27:** `--hub --smoke=N --bot` anda por cada estação pela `NavGrid` e entra no portal aventura (RESULT `hub ... reached= stuck= gate=`); `tests/test_hub_smoke.gd` trava o alcance dos pontos de uso | QA 26b | qa-performance |
 
 ### 2. Erros e dívidas técnicas
 | id | o quê | dono |
@@ -196,7 +196,7 @@ vale a regra do Daniel (sempre commit e push). As seções abaixo ficam como his
 | id | o quê | dono |
 |---|---|---|
 | QW-1 | Números de dano empilhados (`fx.gd`) | technical-artist **Feito 2026-11-27:** espalha para o lado (NUMBER_SIDE_TRIES, 2802f22c) |
-| QW-2 | Capitão chama ajudantes na pose de andar (falta pose de chamado) | gameplay-engineer |
+| QW-2 | Capitão chama ajudantes na pose de andar (falta pose de chamado). **Feito 2026-11-27:** clipe `summon` (Cheer, braço erguido) no atlas do `guard`; `test_enemy_look` exige o clipe | gameplay-engineer |
 | QW-3 | Aviso da pedra que cai (`DropFloor`) chapado; xadrez claro das Runas; torres de ruína chapadas da ponte | environment-artist |
 | QW-4 | Faixa de água e musgo da sala com brilho forte que compete com os avisos no chão | environment-artist |
 | QW-5 | Linha de objetivo no Santuário: ligar ou apagar as chaves | ui-ux-designer **Feito 2026-11-27:** linha apagada no Santuário e chaves removidas (63f52a50) |

@@ -90,7 +90,7 @@ func test_every_animation_the_game_asks_for_is_baked() -> void:
 		&"priest_elder": [&"cast", &"cast_hold", &"summon"], &"archer": [&"aim"],
 		# cycle 7: the soldier raises its blade before it lunges, the brute braces behind its shield before it charges;
 		# T5: the knight too, both run their charge and sag after it
-		&"skeleton": [&"windup", &"strafe_l", &"strafe_r", &"back"], &"guard": [&"brace", &"charge", &"recover"],
+		&"skeleton": [&"windup", &"strafe_l", &"strafe_r", &"back"], &"guard": [&"brace", &"charge", &"recover", &"summon"],
 		&"knight": [&"brace", &"charge", &"recover"],
 		&"morvath": [&"slash1", &"slash2", &"slash3", &"dash_windup", &"blades_windup", &"dash", &"summon", &"rain", &"volley", &"roar", &"stunned"],
 	}
