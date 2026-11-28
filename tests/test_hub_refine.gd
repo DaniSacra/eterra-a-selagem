@@ -48,17 +48,10 @@ func test_the_ways_glow_lies_on_floor_on_both_sides() -> void:
 				assert_true(_on_floor(p) and _on_floor(p + side) and _on_floor(p - side), "the glow at %s is on the floor" % p)
 
 
-func test_the_garden_takes_the_big_basin_and_the_fountain_the_vines_bed() -> void:
-	var basins := HubPlan.water()
-	var areas: Array[float] = []
-	for b in basins:
-		var a := 0.0
-		for i in b.size():
-			a += b[i].cross(b[(i + 1) % b.size()])
-		areas.append(absf(a) * 0.5)
-	assert_eq(areas.find(areas.max()), HubScenery.GARDEN_BASIN, "the garden fills the biggest basin")
+func test_the_videira_stands_alone_in_the_open_plaza() -> void:
 	var bed := Vector2(HubPlan.VINE_BED.x, HubPlan.VINE_BED.y)
-	assert_true(_on_floor(bed), "the fountain stands on floor (the Videira's bed)")
+	assert_true(_on_floor(bed), "the Videira's bed stands on floor, in the old garden basin")
+	assert_true(Geometry2D.is_point_in_polygon(bed, PackedVector2Array(HubPlan.GARDEN)), "at the open plaza's centre")
 
 
 func test_the_hub_builds_with_its_rock_lanterns_and_lights() -> void:

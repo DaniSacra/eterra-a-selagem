@@ -64,7 +64,7 @@ const OUTLINE: Array[Vector2] = [
 	Vector2(-9.0, -17.0), Vector2(-9.0, -24.0), Vector2(-20.0, -24.0),
 ]
 const WATER_1: Array[Vector2] = [Vector2(4.7, 17.0), Vector2(6.0, 15.96), Vector2(6.0, 15.24), Vector2(9.15, 16.81), Vector2(9.58, 17.0)]
-const WATER_2: Array[Vector2] = [Vector2(-11.73, 14.0), Vector2(-13.0, 14.0), Vector2(-13.0, 6.53), Vector2(-14.76, 3.0), Vector2(-13.0, 3.0), Vector2(-13.0, 5.0), Vector2(0.0, 5.0), Vector2(0.0, -3.5), Vector2(0.2, -3.5), Vector2(1.5, 0.41), Vector2(1.5, 12.0), Vector2(2.0, 12.0), Vector2(2.0, 14.04), Vector2(-1.46, 16.8)]
+const GARDEN: Array[Vector2] = [Vector2(-11.73, 14.0), Vector2(-13.0, 14.0), Vector2(-13.0, 6.53), Vector2(-14.76, 3.0), Vector2(-13.0, 3.0), Vector2(-13.0, 5.0), Vector2(0.0, 5.0), Vector2(0.0, -3.5), Vector2(0.2, -3.5), Vector2(1.5, 0.41), Vector2(1.5, 12.0), Vector2(2.0, 12.0), Vector2(2.0, 14.04), Vector2(-1.46, 16.8)]
 ## (round 2: the Mercador's pool ends at v 10, short of the main axis' stairs that start at STAIR_B's v 10.4)
 const WATER_3: Array[Vector2] = [Vector2(6.5, 8.99), Vector2(8.47, 8.0), Vector2(9.0, 8.0), Vector2(9.0, 10.0), Vector2(6.5, 10.0)]
 ## The cut of the future rooms: the floor south of v -17 (their doors stand at the corridors' mouths, DOORS).
@@ -90,13 +90,20 @@ const STAIR_EPS := 0.01
 ## go down into it from the Videira's side (rects u0, v0 (foot), u1, v1 (head); they descend toward -v). The tab joins the
 ## floor between them (no enclosed hole); a planter (PLANTER_BOX) fills the space between the flights and a flower bed
 ## (PLAZA_BED) stands in the middle of the plaza. PLAZA_DROP 0 turns it into plain floor again (the field).
-const PLAZA_DROP := 1.2
+## PT28-11 step 2: 0, the south is plain floor again (the art has no sunken yard and no raised block there).
+const PLAZA_DROP := 0.0
 const PLAZA_GAP := 0.4
 const PLAZA: Array[Vector2] = [
 	Vector2(-11.8, -17.0), Vector2(2.8, -17.0), Vector2(2.8, -15.3), Vector2(1.25, -11.6), Vector2(0.0, -11.6),
 	Vector2(0.0, -9.0), Vector2(-3.8, -9.0), Vector2(-3.8, -8.3), Vector2(-7.8, -8.3), Vector2(-7.8, -9.0), Vector2(-11.8, -9.0),
 ]
 ## The part of the plaza the field lowers (what the tab's top, over the planter, leaves out).
+## The notch of OUTLINE itself, filled as flat floor when PLAZA_DROP is 0 (YARD_OVERLAP: how far the fill bites into its walls).
+const YARD: Array[Vector2] = [
+	Vector2(-12.25, -17.0), Vector2(-12.25, -12.86), Vector2(-12.93, -8.76), Vector2(-7.0, -8.02), Vector2(-7.0, -8.5),
+	Vector2(0.35, -8.5), Vector2(3.25, -15.26), Vector2(3.25, -17.0),
+]
+const YARD_OVERLAP := 0.3
 const PLAZA_LOW: Array[Vector2] = [
 	Vector2(-11.8, -17.0), Vector2(2.8, -17.0), Vector2(2.8, -15.3), Vector2(1.25, -11.6), Vector2(0.0, -11.6),
 	Vector2(0.0, -8.95), Vector2(-11.8, -8.95),
@@ -113,7 +120,7 @@ const PLAZA_U := Vector2(-12.4, 3.6)
 const PLAZA_ZONE_BOX := Rect2(-13.5, -18.5, 18.0, 11.3)
 const PLAZA_FOOT := -17.6
 const PLAZA_TOP := -8.0
-## The basin that keeps the lower level (WATER_2, the Videira's garden) is index 1 of water().
+## The plaza that keeps the lower level (GARDEN, the Videira's plaza) is not a hole any more (garden_walls).
 
 ## Where the hero appears (the Ponto de Vigília, a corner of the west) and the camera's point: the far camera looks
 ## at CAM_TARGET and goes as far as CAM_REACH from it (71 m of floor: wherever he walks); the near camera follows him
@@ -132,15 +139,15 @@ const ARRIVAL_EASE := 1.0
 ## shows of it while it is in focus (u, v, height; frame_for).
 const USE := {
 	PORTAL: Vector2(-1.0, 19.4), VENDOR: Vector2(12.0, 6.0), TREE: Vector2(10.0, -3.0), SMITH: Vector2(-17.6, 16.2),
-	BOOK: Vector2(19.0, 19.0), VINE: Vector2(-7.0, -5.0),
+	BOOK: Vector2(19.0, 19.0), VINE: Vector2(-2.5, 2.5),
 }
 const ANCHOR := {
 	PORTAL: Vector3(-1.0, 20.2, 1.8), VENDOR: Vector3(11.5, 8.6, 3.1), TREE: Vector3(14.6, -4.2, 4.4),
-	SMITH: Vector3(-19.8, 17.3, 2.4), BOOK: Vector3(21.1, 19.4, 2.6), VINE: Vector3(-7.0, -2.6, 2.6),
+	SMITH: Vector3(-19.8, 17.3, 2.4), BOOK: Vector3(21.1, 19.4, 2.6), VINE: Vector3(-2.5, 4.4, 2.6),
 }
 const SHOW := {
 	PORTAL: Vector3(-1.0, 23.0, 5.0), VENDOR: Vector3(11.5, 10.2, 5.0), TREE: Vector3(14.6, -4.2, 8.0),
-	SMITH: Vector3(-23.4, 17.7, 7.6), BOOK: Vector3(19.0, 21.7, 4.8), VINE: Vector3(-7.0, -2.5, 3.4),
+	SMITH: Vector3(-23.4, 17.7, 7.6), BOOK: Vector3(19.0, 21.7, 4.8), VINE: Vector3(-2.5, 5.4, 3.4),
 }
 const SHOW_MARGIN := 0.06
 ## The apex of the gate (u, v, height): the far camera keeps it in the screen from everywhere.
@@ -171,7 +178,7 @@ const DOORS := {
 	SMITH: Vector4(-19.6, 18.85, 0.9, 0.15), ALCHEMIST_ID: Vector4(-21.25, 7.0, 0.15, 0.9),
 	BOOK: Vector4(15.0, 22.05, 0.9, 0.15),
 	VENDOR: Vector4(14.45, 11.4, 0.15, 0.9), TREE: Vector4(18.25, -6.0, 0.15, 0.9),
-	VINE: Vector4(-7.0, -3.3, 1.4, 0.12),
+	VINE: Vector4(-2.5, 3.7, 1.6, 0.12),
 	FUTURE_A: Vector4(-14.0, -16.6, 1.75, 0.15), FUTURE_B: Vector4(5.0, -16.6, 1.75, 0.15),
 }
 const DOOR_HEIGHT := 2.6
@@ -189,12 +196,12 @@ const DAIS := Vector3(14.6, -4.2, 3.2)
 const LECTERN := Vector2(21.1, 19.4)
 const SHELF := Vector2(19.0, 21.65)
 const SHELF_HALF := Vector2(2.0, 0.45)
-const VINE_ARCH := Vector2(-7.0, -2.6)
+const VINE_ARCH := Vector2(-2.5, 5.0)
 const VINE_ARCH_HALF := Vector2(1.5, 0.5)
 ## Hub art 2026-11-27: the centre is the Videira alone, a great tree in a low round stone planter (centre u, v, radius; the
 ## layout's collider is a circle). VINE_BED.z is the planter's wall (BED_HEIGHT high); HubScenery draws the tree, the
 ## little fountain at its foot and the flowers on its rim.
-const VINE_BED := Vector3(-6.5, 1.5, 3.2)
+const VINE_BED := Vector3(-2.7, 8.9, 3.2)
 ## The red carpet's flight (HERO_STEPS before): centre u, v and half u, v, solid (a monument's stair: the Portão's use point
 ## is at its foot), GATE_STEP_COUNT treads rising to GATE_TERRACE, the height of the Portão's terrace (HubBlockout reads it).
 const GATE_STEPS := Vector2(-1.0, 21.6)
@@ -227,34 +234,63 @@ static var _polys: Array[PackedVector2Array] = []
 static func floor_polys() -> Array[PackedVector2Array]:
 	if _polys.is_empty():
 		var cut: Array[PackedVector2Array] = [PackedVector2Array(OUTLINE)]
+		# the south yard between the future rooms' corridors: the lowered plaza and its flights, or (PLAZA_DROP 0) plain floor
+		# filling the notch (overlapping its walls so the polygons merge)
+		var add: Array[PackedVector2Array] = []
+		if PLAZA_DROP > 0.0:
+			add.append(PackedVector2Array(PLAZA))
+			for f in PLAZA_FLIGHTS:
+				add.append(PackedVector2Array([Vector2(f.x, f.y), Vector2(f.z, f.y), Vector2(f.z, f.w + 0.3), Vector2(f.x, f.w + 0.3)]))
+		else:
+			add.append_array(Geometry2D.offset_polygon(PackedVector2Array(YARD), YARD_OVERLAP))
+		for q in add:
+			var merged: Array[PackedVector2Array] = []
+			var cur := q
+			for p in cut:
+				var m := Geometry2D.merge_polygons(p, cur)
+				if m.size() == 1:
+					cur = m[0]
+				else:
+					merged.append(p)
+			merged.append(cur)
+			cut = merged
 		for r in FUTURE_CUT:
 			var box := PackedVector2Array([Vector2(r.x, r.y), Vector2(r.z, r.y), Vector2(r.z, r.w), Vector2(r.x, r.w)])
 			var next: Array[PackedVector2Array] = []
 			for p in cut:
 				next.append_array(Geometry2D.clip_polygons(p, box))
 			cut = next
-		if PLAZA_DROP > 0.0:
-			var add: Array[PackedVector2Array] = [PackedVector2Array(PLAZA)]
-			for f in PLAZA_FLIGHTS:
-				add.append(PackedVector2Array([Vector2(f.x, f.y), Vector2(f.z, f.y), Vector2(f.z, f.w + 0.3), Vector2(f.x, f.w + 0.3)]))
-			for q in add:
-				var merged: Array[PackedVector2Array] = []
-				var cur := q
-				for p in cut:
-					var m := Geometry2D.merge_polygons(p, cur)
-					if m.size() == 1:
-						cur = m[0]
-					else:
-						merged.append(p)
-				merged.append(cur)
-				cut = merged
 		_polys = cut
 	return _polys
 
 
 ## The basins (local): the holes of the floor.
 static func water() -> Array[PackedVector2Array]:
-	var out: Array[PackedVector2Array] = [PackedVector2Array(WATER_1), PackedVector2Array(WATER_2), PackedVector2Array(WATER_3)]
+	var out: Array[PackedVector2Array] = [PackedVector2Array(WATER_1), PackedVector2Array(WATER_3)]
+	return out
+
+
+## PT28-11 step 2 (2026-11-28): the art's centre is one open round plaza, so the old garden basin (GARDEN, once WATER_2) is floor,
+## lowered under the upper terrace. Where it meets that terrace (or the flights that climb to it) the wall is a thin slit of
+## the floor (a hole, GARDEN_WALL wide) that HubLevels covers with a retaining wall: the floor mesh never spans the step.
+const GARDEN_WALL := 0.2
+const GARDEN_WALL_LINE: Array[Vector2] = [
+	Vector2(-13.0, 10.0), Vector2(-13.0, 14.0), Vector2(-11.73, 14.0), Vector2(-1.46, 16.8), Vector2(1.5, 14.44), Vector2(1.5, 10.4),
+]
+static var _garden_walls: Array[PackedVector2Array] = []
+
+
+## The slits of the plaza's retaining wall (local u, v; made once).
+static func garden_walls() -> Array[PackedVector2Array]:
+	if _garden_walls.is_empty():
+		_garden_walls.assign(Geometry2D.offset_polyline(PackedVector2Array(GARDEN_WALL_LINE), GARDEN_WALL, Geometry2D.JOIN_MITER, Geometry2D.END_BUTT))
+	return _garden_walls
+
+
+## Everything that is a hole of the floor: the basins and the plaza's wall slits.
+static func holes() -> Array[PackedVector2Array]:
+	var out := water()
+	out.append_array(garden_walls())
 	return out
 
 
@@ -264,7 +300,7 @@ static var _garden: Array[PackedVector2Array] = []
 ## Whether a point (local u, v) is inside the garden's basin, in from its edge (made once).
 static func _in_garden(p: Vector2) -> bool:
 	if _garden.is_empty():
-		_garden = Geometry2D.offset_polygon(PackedVector2Array(WATER_2), -GARDEN_SHRINK)
+		_garden = Geometry2D.offset_polygon(PackedVector2Array(GARDEN), -GARDEN_SHRINK)
 	for g in _garden:
 		if Geometry2D.is_point_in_polygon(p, g):
 			return true
@@ -445,18 +481,18 @@ static func layout(yaw_deg: float = Feel.live().cam_yaw, closed: Array[StringNam
 		for p in poly:
 			q.append(w.call(p))
 		walk.append(q)
-	var holes: Array[PackedVector2Array] = []
-	for poly in water():
+	var cuts: Array[PackedVector2Array] = []
+	for poly in holes():
 		var q := PackedVector2Array()
 		for p in poly:
 			q.append(w.call(p))
-		holes.append(q)
+		cuts.append(q)
 	if TIER_H > 0.0:
 		var slit := PackedVector2Array()
 		for p in STAIR_CUT:
 			slit.append(w.call(p))
-		holes.append(slit)
-	l.floor = FloorShape.poly(walk, holes)
+		cuts.append(slit)
+	l.floor = FloorShape.poly(walk, cuts)
 	l.half = l.floor.extent()
 	l.hero_spawn = w.call(ARRIVAL)
 	l.hero_facing = w.call(Vector2(1.0, 0.0))  # east, to the Videira and the way to the gate
@@ -478,10 +514,11 @@ static func layout(yaw_deg: float = Feel.live().cam_yaw, closed: Array[StringNam
 		box.call(GATE_STEPS, GATE_STEPS_HALF, &"hub_gate_steps", GATE_TERRACE),
 		ArenaObstacle.circle(w.call(Vector2(VINE_BED.x, VINE_BED.y)), VINE_BED.z, &"hub_bed", BED_HEIGHT),
 		box.call(Vector2(VIGIL_ARCH.x, VIGIL_ARCH.y), Vector2(VIGIL_ARCH.z, VIGIL_ARCH.w), &"hub_vigil_arch", 3.5),
-		box.call(Vector2(PLANTER_BOX.x, PLANTER_BOX.y), Vector2(PLANTER_BOX.z, PLANTER_BOX.w), &"hub_planter", PLANTER_HEIGHT),
-		box.call(Vector2(PLAZA_BED.x, PLAZA_BED.y), Vector2(PLAZA_BED.z, PLAZA_BED.w), &"hub_plaza_bed", PLAZA_BED_HEIGHT),
 		box.call(Vector2(ALCHEMIST_BENCH.x, ALCHEMIST_BENCH.y), Vector2(ALCHEMIST_BENCH.z, ALCHEMIST_BENCH.w), &"hub_alchemist", 2.2),
 	]
+	if PLAZA_DROP > 0.0:
+		obstacles.append(box.call(Vector2(PLANTER_BOX.x, PLANTER_BOX.y), Vector2(PLANTER_BOX.z, PLANTER_BOX.w), &"hub_planter", PLANTER_HEIGHT))
+		obstacles.append(box.call(Vector2(PLAZA_BED.x, PLAZA_BED.y), Vector2(PLAZA_BED.z, PLAZA_BED.w), &"hub_plaza_bed", PLAZA_BED_HEIGHT))
 	for bench in MIRADOR_BENCHES:
 		obstacles.append(box.call(Vector2(bench.x, bench.y), Vector2(bench.z, bench.w), &"hub_bench", BENCH_HEIGHT))
 	for b in BUILDINGS:

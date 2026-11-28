@@ -178,22 +178,11 @@ const PIECE_PAD := 0.9
 const SEED := 4417
 
 # ---------- garden, fountain, rails, planters, cliffs, path (hub refine round 1) ----------
-## The big basin (WATER_2, a rectangle of water north of the Videira) becomes a raised garden of flowers: the art's plaza
-## is a round one with a fountain in the middle, so the water stays small (the other two basins) and the Videira's bed
-## takes the fountain. Nobody walks there (it is a hole of the floor): soil this much over the floor, in a stone kerb.
-const GARDEN_BASIN := 1
-const GARDEN_RAISE := 0.36
+## PT28-11: the big basin is now the open plaza (floor, HubPlan.GARDEN); the soil colour stays for the planters.
 const GARDEN_SOIL := Color(0.2, 0.13, 0.09)
-const GARDEN_EVERY := 1.15
-const GARDEN_EDGE := 0.55
-## Round 2: the garden's shares of lilac and magenta clumps (half what they were; the rest is shrub or bare earth).
-const GARDEN_LILAC := 0.3
 const CREAM_SHARE := 0.15  # round 3: the share of the lilac clumps that are cream-white
 const CREAM_A := Color(0.72, 0.66, 0.54)
 const CREAM_B := Color(0.97, 0.93, 0.84)
-const GARDEN_MAGENTA := 0.2
-const GARDEN_BARE := 0.8
-const GARDEN_CYPRESS_EDGE := 1.3
 ## The fountain on the Videira's bed (the middle of the pergola): basin radius, rim height, water radius, pedestal radius.
 const FOUNTAIN_BASIN := Vector4(0.85, 0.2, 0.74, 0.2)  # hub art 2026-11-27: a small one at the tree's foot
 const FOUNTAIN_AT := Vector2(1.2, -1.7)  # from the planter's centre
@@ -250,8 +239,8 @@ const CLIFF_TUFT_EVERY := 2.2
 const CLIFF_TUFT_DEPTH := Vector2(0.5, 8.5)
 const LEDGE_EVERY := 4.0
 ## Round 3: stacks of rock stepping out and down the face (the talus), and ivy hanging from the lip.
-const ROCK_STEP_EVERY := 3.4
-const ROCK_STEPS := Vector2i(2, 4)
+const ROCK_STEP_EVERY := 2.4
+const ROCK_STEPS := Vector2i(3, 6)
 const ROCK_CHAMFER := 0.28
 const ROCK_TILT := 0.14
 const ROCK_TALL_SHARE := 0.35
@@ -409,6 +398,7 @@ func build(layout: RoomLayout) -> void:
 	_edges()
 	_planters()
 	_cliffs()
+	_mountain()
 	_backdrop()
 	_red_tree()
 	_wall_flowers()
@@ -486,7 +476,7 @@ func _on_floor(p: Vector2) -> bool:
 			inside = true
 	if not inside:
 		return false
-	for w in HubPlan.water():
+	for w in HubPlan.holes():
 		if Geometry2D.is_point_in_polygon(p, w):
 			return false
 	return true
@@ -687,9 +677,6 @@ func _water() -> void:
 	var basins := HubPlan.water()
 	for bi in basins.size():
 		var poly := basins[bi]
-		if bi == GARDEN_BASIN:
-			_garden(poly)
-			continue
 		var idx := Geometry2D.triangulate_polygon(poly)
 		if idx.is_empty():
 			continue
@@ -747,62 +734,6 @@ func _fish(p: Vector2, normal: Vector2) -> void:
 	var tail := p + side * (FISH.x * 0.5 + 0.04)
 	var t := look._bar(_at(tail.x, KERB.y * 0.5, tail.y), Vector3(FISH.y * 1.1, FISH.y * 1.1, 0.02), gold, Basis(Vector3.UP, yaw) * Basis(Vector3.BACK, PI * 0.25))
 	t.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-
-
-## The big basin as a raised garden: soil over the hole at GARDEN_RAISE in a taller kerb, lilac and magenta flowers and
-## shrubs on a jittered grid (clear of the kerb), a few cypresses deeper in.
-func _garden(poly: PackedVector2Array) -> void:
-	var idx := Geometry2D.triangulate_polygon(poly)
-	if idx.is_empty():
-		return
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for i in idx:
-		var p := poly[i]
-		st.set_normal(Vector3.UP)
-		st.add_vertex(_at(p.x, GARDEN_RAISE, p.y))
-	var mi := MeshInstance3D.new()
-	mi.name = "Garden"
-	mi.mesh = st.commit()
-	mi.material_override = look._plain(GARDEN_SOIL, 1.0)
-	look.frame.add_child(mi)
-	_kerb(poly, GARDEN_RAISE + 0.12, false)
-	var lo := poly[0]
-	var hi := poly[0]
-	for p in poly:
-		lo = Vector2(minf(lo.x, p.x), minf(lo.y, p.y))
-		hi = Vector2(maxf(hi.x, p.x), maxf(hi.y, p.y))
-	var x := lo.x
-	while x < hi.x:
-		var y := lo.y
-		while y < hi.y:
-			var p := Vector2(x + _rng.randf_range(-0.35, 0.35), y + _rng.randf_range(-0.35, 0.35))
-			y += GARDEN_EVERY
-			if not Geometry2D.is_point_in_polygon(p, poly):
-				continue
-			var edge := _edge_distance(p, poly)
-			if edge < GARDEN_EDGE:
-				continue
-			var roll := _rng.randf()
-			var spot := Vector3(p.x, GARDEN_RAISE, p.y)
-			if roll < 0.08 and edge > GARDEN_CYPRESS_EDGE:
-				_cypress_spots.append(spot)
-				_cypress_tall.append(_rng.randf_range(2.4, 3.4))
-			elif roll < GARDEN_LILAC:
-				plant(0, spot, _rng.randf_range(0.7, 1.2))
-			elif roll < GARDEN_LILAC + GARDEN_MAGENTA:
-				plant(1, spot, _rng.randf_range(0.7, 1.2))
-			elif roll < GARDEN_BARE:
-				plant(2, spot, _rng.randf_range(0.6, 1.1))
-		x += GARDEN_EVERY
-
-
-func _edge_distance(p: Vector2, poly: PackedVector2Array) -> float:
-	var best := INF
-	for i in poly.size():
-		var c := Geometry2D.get_closest_point_to_segment(p, poly[i], poly[(i + 1) % poly.size()])
-		best = minf(best, p.distance_to(c))
-	return best
 
 
 ## A plant in a crown list: 0 lilac, 1 magenta, anything else a green shrub.
@@ -1023,7 +954,7 @@ func _in_plan(p: Vector2) -> bool:
 	for poly in HubPlan.floor_polys():
 		if Geometry2D.is_point_in_polygon(p, poly):
 			return true
-	for w in HubPlan.water():
+	for w in HubPlan.holes():
 		if Geometry2D.is_point_in_polygon(p, w):
 			return true
 	for r in HubPlan.FUTURE_CUT:
@@ -1612,6 +1543,38 @@ func _cliffs() -> void:
 		look.fm.block(_at(c.x, -depth - size.y, c.y), size, atan2(along.y, along.x), rock, false)
 		_leaf_spots.append(Vector3(c.x, -depth, c.y))
 		_leaf_tall.append(_rng.randf_range(0.7, 1.3))
+
+
+## PT28-11: the mountain the art shows round the village where the plan has no floor: tall columns of the cliff's rock past the
+## east and west edges (centre u, v, width, top height over the paving), from MOUNTAIN_BASE up, a smaller cap on each and moss
+## on top. Outside the floor, never in the way.
+const MOUNTAIN_BASE := -16.0
+const MOUNTAIN: Array[Vector4] = [
+	Vector4(29.5, 5.0, 5.0, 0.4), Vector4(29.5, 9.5, 5.0, 1.0), Vector4(29.5, 14.0, 5.0, 2.2), Vector4(28.5, 18.5, 5.5, 3.6),
+	Vector4(29.0, 23.0, 5.5, 5.0), Vector4(28.5, 27.5, 5.5, 6.2), Vector4(33.5, 7.0, 6.0, -1.0), Vector4(34.0, 14.0, 6.5, 0.8),
+	Vector4(33.5, 21.0, 6.5, 2.4), Vector4(33.5, 28.0, 6.5, 3.4),
+	Vector4(-31.5, -1.0, 5.0, 0.6), Vector4(-31.5, 3.5, 5.0, 1.4), Vector4(-31.5, 8.0, 5.0, 2.0), Vector4(-31.5, 13.0, 5.0, 2.6),
+	Vector4(-31.5, 18.0, 5.0, 3.6), Vector4(-31.5, 23.0, 5.0, 4.4), Vector4(-35.5, 5.0, 6.0, 0.0), Vector4(-35.5, 14.0, 6.0, 1.4),
+	Vector4(-35.5, 22.0, 6.0, 2.4),
+]
+const MOUNTAIN_CAP := 1.4  # the cap block's height
+func _mountain() -> void:
+	var rock := _rock_material()
+	for col in MOUNTAIN:
+		var w := col.z * _rng.randf_range(0.9, 1.15)
+		var height := col.w - MOUNTAIN_BASE
+		var size := Vector3(w, height, w * _rng.randf_range(0.8, 1.0))
+		var yaw := _rng.randf_range(-0.35, 0.35)
+		var mi := look.fm.block(_at(col.x, MOUNTAIN_BASE, col.y), size, 0.0, rock, false)
+		mi.mesh = look.fm.bevel_mesh(size, ROCK_CHAMFER * 2.0, _rng.randi_range(0, 7), _rng.randf_range(0.2, 0.5))
+		mi.basis = Basis.from_euler(Vector3(0.0, yaw, 0.0))
+		var cap := Vector3(w * 0.7, MOUNTAIN_CAP, w * 0.62)
+		var cm := look.fm.block(_at(col.x - 0.5, col.w - 0.25, col.y + 0.3), cap, 0.0, rock, false)
+		cm.mesh = look.fm.bevel_mesh(cap, ROCK_CHAMFER, _rng.randi_range(0, 7), _rng.randf_range(0.2, 0.5))
+		cm.basis = Basis.from_euler(Vector3(0.0, yaw * -1.4, 0.0))
+		for k in 3:
+			_leaf_spots.append(Vector3(col.x + _rng.randf_range(-w * 0.4, w * 0.4), col.w + MOUNTAIN_CAP - 0.3, col.y + _rng.randf_range(-w * 0.4, w * 0.4)))
+			_leaf_tall.append(_rng.randf_range(0.9, 1.6))
 
 
 ## True under the south bridge's face or its falls (the arches and the water stay seen).

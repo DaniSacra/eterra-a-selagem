@@ -11,7 +11,7 @@ const MAIN: Array[Vector2] = [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -5
 ## The walk from the arrival to each station, by the package's paths (u, v), the use point last (HubPlan.USE). The
 ## other hub tests walk these too.
 const ROUTES := {
-	&"vine": [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -5)],
+	&"vine": [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -5), Vector2(-2.5, 2.5)],
 	&"portal": [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -5), Vector2(2, -6), Vector2(4, 0), Vector2(4, 12), Vector2(4, 17), Vector2(-1, 19.4)],
 	&"tree": [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -6), Vector2(2, -6), Vector2(4, 0), Vector2(7, -3), Vector2(10, -3)],
 	&"vendor": [Vector2(-24, -7), Vector2(-15, -7), Vector2(-7, -6), Vector2(2, -6), Vector2(4, 0), Vector2(4, 8), Vector2(8, 6), Vector2(12, 6)],
@@ -43,11 +43,13 @@ func test_the_floor_is_the_packages_outline_less_the_basins_and_the_future_rooms
 			area -= hole[i].cross(hole[(i + 1) % hole.size()]) * 0.5
 	assert_gt(area, 1000.0, "a monastery, not a room: more than 1000 m2 of floor (%.0f)" % area)
 	assert_lt(area, 2600.0)
-	assert_eq(l.floor.holes.size(), 3 + (1 if HubPlan.TIER_H > 0.0 else 0), "three basins and the slit beside the main axis' stairs")
+	assert_eq(l.floor.holes.size(), HubPlan.holes().size() + (1 if HubPlan.TIER_H > 0.0 else 0), "two basins, the plaza's wall slits and the slit beside the main axis' stairs")
 	for p: Vector2 in [Vector2(-14, -20), Vector2(5, -20), Vector2(-24, -7), Vector2(-7, 0), Vector2(30, -6)]:
 		assert_eq(l.floor.covers(_w(p)), p.y > -17.0, "the floor ends at the future rooms' doors: %s" % p)
-	for p: Vector2 in [Vector2(-5, 10), Vector2(0.5, 3)]:
+	for p: Vector2 in [Vector2(7.0, 16.7), Vector2(7.5, 9.2)]:
 		assert_false(l.floor.covers(_w(p)), "water, not floor: %s" % p)
+	for p: Vector2 in [Vector2(-5, 10), Vector2(0.5, 3)]:
+		assert_true(l.floor.covers(_w(p)), "the old garden basin is the open plaza now: %s" % p)
 
 
 func test_the_arrival_and_every_station_stand_on_the_floor() -> void:
@@ -99,7 +101,7 @@ func test_the_way_from_the_vigilia_to_the_videira_and_the_gate_is_short() -> voi
 	var total := 0.0
 	for i in MAIN.size() - 1:
 		total += MAIN[i].distance_to(MAIN[i + 1])
-	assert_lt(to_vine, 20.0, "the Videira is the first station, about 19 m from the Ponto de Vigilia")
+	assert_lt(to_vine, 27.0, "the Videira (at the plaza's centre, PT28-11) is the first station, about 25 m from the Ponto de Vigilia")
 	assert_lt(total, 75.0, "the Portao is about 8 s away at 6.5 m/s: the return to the adventure stays quick (%.0f m)" % total)
 
 
